@@ -285,10 +285,12 @@ Execution order (decided at the start of Phase 2, 2026-10-22). The app identity 
 - Add "M6E is based on Firefox source code, licensed under the Mozilla Public License 2.0" to `about:license`, the About dialog and `about:rights`. Keep `LICENSE`, the MPL headers and `AUTHORS` intact.
 - **Verify:** all three show the notice.
 
-### P2.5 Modern macOS UI (needs user review)
-- Capture screenshots of the main window, tab strip, urlbar, menus, `about:preferences` and New Tab. Propose a short list of concrete changes, and wait for the user's choice before changing CSS.
-- Implement the agreed changes in `browser/themes/osx` and `browser/themes/shared`, keeping them light-only.
-- **Verify:** compare before and after screenshots with the user.
+### P2.5 Modern macOS UI (done)
+- **The user chose two changes:** a neutral macOS toolbar and the macOS accent colour. Compact density and translucency were not chosen.
+- **Implementation:** `toolkit/themes/shared/m6e-tokens.css` holds the overrides, imported from the generated `tokens-shared.css`. The token generator's header helper (`custom-file-header.mjs`) emits that import too, so `mach buildtokens` keeps it. The design tokens are in cascade layers, so these unlayered overrides win in browser chrome, `about:` pages and New Tab alike.
+  - **Accent:** `--color-accent-primary` (and its hover, active and selected states), the primary button text and `--focus-outline-color` follow `AccentColor` and `AccentColorText`, the macOS system accent.
+  - **Toolbar:** a neutral grey tab strip (`#e8e8ea`) and toolbar (`#f6f6f7`), no Nova gradient, a white selected tab with a neutral edge in place of the violet-to-orange one, and a white page canvas.
+- **Verify:** screenshots in `artifacts/shots-P2.5` (main window and New Tab, Settings, About dialog).
 
 ## Phase 3: Features and privacy
 

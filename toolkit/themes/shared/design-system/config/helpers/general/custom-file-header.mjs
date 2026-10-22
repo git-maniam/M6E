@@ -29,9 +29,17 @@ export const customFileHeader = ({ surface, platform, file }) => {
 
   const layerString = !surface && !platform ? getLayerString() : "";
 
+  // M6E: every token entry point imports the shared tokens, so the M6E
+  // overrides load everywhere the tokens do. They are unlayered and win
+  // over the layered tokens regardless of order.
+  const m6eImport =
+    !surface && !platform
+      ? `@import url("chrome://global/skin/m6e-tokens.css");\n\n`
+      : "";
+
   return `${licenseString}
 
 ${commentString}
 
-${cssImport}${layerString}`;
+${cssImport}${layerString}${m6eImport}`;
 };

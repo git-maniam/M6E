@@ -7,6 +7,8 @@
 
 @layer tokens-foundation, tokens-browser-theme, tokens-foundation-brand, tokens-foundation-nova, tokens-browser-theme-nova, tokens-foundation-brand-nova, tokens-prefers-contrast, tokens-prefers-contrast-nova, tokens-forced-colors, tokens-forced-colors-nova;
 
+@import url("chrome://global/skin/m6e-tokens.css");
+
 :root,
 :host(.anonymous-content-host) {
   @layer tokens-foundation {

@@ -1,0 +1,35 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* M6E design overrides, loaded right after the design-system tokens in
+ * browser chrome (global-shared.css) and in-content pages
+ * (common-shared.css). The tokens themselves are generated, so M6E changes
+ * live here instead. */
+
+/* Buttons, selections and focus rings follow the macOS accent colour, on a
+ * plain white page background. */
+:root,
+:host(.anonymous-content-host) {
+  --background-color-canvas: #ffffff;
+  --color-accent-primary: AccentColor;
+  --color-accent-primary-hover: color-mix(in srgb, AccentColor 88%, black);
+  --color-accent-primary-active: color-mix(in srgb, AccentColor 76%, black);
+  --color-accent-primary-selected: color-mix(in srgb, AccentColor 76%, black);
+  --button-text-color-primary: AccentColorText;
+  --button-text-color-primary-hover: AccentColorText;
+  --button-text-color-primary-active: AccentColorText;
+  --button-text-color-primary-selected: AccentColorText;
+  --focus-outline-color: AccentColor;
+}
+
+/* A neutral, Safari-like toolbar instead of the tinted gradient. */
+:root:not([lwtheme]) {
+  --toolbox-background-color: #e8e8ea;
+  --toolbox-background-color-inactive: #f2f2f4;
+  --toolbox-background-gradient: image(transparent);
+  --toolbar-background-color: #f6f6f7;
+  --tab-background-color-selected: #ffffff;
+  --tab-border-color-selected-leading: rgba(0, 0, 0, 0.14);
+  --tab-border-color-selected-trailing: rgba(0, 0, 0, 0.14);
+}
