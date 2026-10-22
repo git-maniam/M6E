@@ -8,7 +8,11 @@
 add_task(async function () {
   let prefName = "browser.toolbars.bookmarks.visibility";
   let toolbar = document.querySelector("#PersonalToolbar");
-  for (let state of ["always", "never"]) {
+  // M6E: the default is a pref (m6e.js), so test the states that differ.
+  let defaultState = Services.prefs.getDefaultBranch("").getCharPref(prefName);
+  for (let state of ["always", "never", "newtab"].filter(
+    s => s != defaultState
+  )) {
     info(`Testing setting toolbar state to '${state}'`);
 
     await resetCustomization();
