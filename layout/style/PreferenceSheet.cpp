@@ -128,14 +128,8 @@ void PreferenceSheet::Prefs::LoadColors(bool aIsLight) {
 
 auto PreferenceSheet::ColorSchemeSettingForChrome()
     -> ChromeColorSchemeSetting {
-  switch (StaticPrefs::browser_theme_toolbar_theme()) {
-    case 0:  // Dark
-      return ChromeColorSchemeSetting::Dark;
-    case 1:  // Light
-      return ChromeColorSchemeSetting::Light;
-    default:
-      return ChromeColorSchemeSetting::System;
-  }
+  // M6E: the browser chrome is always light.
+  return ChromeColorSchemeSetting::Light;
 }
 
 ColorScheme PreferenceSheet::ThemeDerivedColorSchemeForContent() {

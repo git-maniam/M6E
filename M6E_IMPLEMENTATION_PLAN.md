@@ -154,14 +154,17 @@ Commit P0.1 and P0.2 only. The baselines are local notes.
 - **Verify:** `about:preferences` has no language switcher; spell-check offers en-GB.
 
 ### P1.6 Light-only browser chrome
-- Lock `browser.theme.toolbar-theme` to light. Leave `layout.css.prefers-color-scheme.content-override` following the system, so web pages still see the macOS appearance (spec: keep the content plumbing).
-- Force `color-scheme: light` at the chrome document roots, so `light-dark()` in the design tokens resolves to light. Then remove the 40 `prefers-color-scheme: dark` blocks from chrome CSS (`browser/themes`, `toolkit/themes`, `browser/components`, `toolkit/content`, `toolkit/components`).
-- Remove the built-in `dark`, `alpenglow`, `aiwindow` and `aiwindow-nova` themes from `browser/themes/addons`, along with their registration.
-  - Check what `privatewindow` is used for before deciding whether it stays.
-- Make the default theme light-only, and block installation of theme add-ons: hide the Themes category in `about:addons` and reject theme installs.
-- Native macOS UI (menus, context menus, dialogs) follows the app's appearance. Force the Aqua appearance for the app in `widget/cocoa`.
-- **Risk:** forcing the app appearance can change what `prefers-color-scheme` reports to web content. Verify it separately.
-- **Verify:** with macOS in Dark Mode, chrome, menus and dialogs are light, and a test page that styles on `prefers-color-scheme` still shows its dark styling.
+Split into two commits.
+- **P1.6a, forced-light core (done):**
+  - `PreferenceSheet::ColorSchemeSettingForChrome()` always returns Light, which also makes `Services.appinfo.chromeColorSchemeIsDark` false (DevTools "auto", toast notifications).
+  - `Document::PreferredColorScheme()` returns Light for documents with `ChromeRulesEnabled()` (`chrome:`, `resource:` and privileged `about:` pages). This makes `prefers-color-scheme`, `light-dark()` and system colours resolve light across all browser UI, including about: pages, the PDF viewer and the native window appearance that macOS menus inherit. So no chrome CSS needs editing.
+  - `browser.theme.dark-private-windows` is locked off.
+  - Web content still follows macOS.
+  - Not done, deliberately: forcing the app-wide Aqua appearance in `widget/cocoa`. `SystemWantsDarkTheme()` reads it, so web pages would lose `prefers-color-scheme: dark`.
+- **P1.6b, themes:**
+  - Remove the built-in Dark, Light and Alpenglow themes (`browser/themes/BuiltInThemeConfig.sys.mjs` and `browser/themes/addons/`), and update their consumers: the about:welcome theme picker, profile themes, about:addons and the bundled theme localisation. The AI window themes go with D3 in P1.13.
+  - Block theme add-on installs, and hide the Themes category in `about:addons`.
+- **Verify:** with `ui.systemUsesDarkTheme` set to 1, chrome, `about:preferences` and `chromeColorSchemeIsDark` are light, while a web page sees `prefers-color-scheme: dark`. No theme other than the default can be selected or installed.
 
 ### P1.7 Firefox View
 - Remove `browser/components/firefoxview`, its toolbar button and tab-strip entry, its menu items, and its tests. Remove `browser.tabs.firefox-view*` prefs.

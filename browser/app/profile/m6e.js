@@ -10,3 +10,7 @@
 pref("intl.multilingual.enabled", false, locked);
 pref("intl.multilingual.downloadEnabled", false, locked);
 pref("intl.multilingual.aboutWelcome.languageMismatchEnabled", false, locked);
+
+// The browser chrome is light-only, so private windows don't switch to the
+// dark private-browsing theme.
+pref("browser.theme.dark-private-windows", false, locked);

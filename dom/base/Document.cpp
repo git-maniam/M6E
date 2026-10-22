@@ -21712,6 +21712,12 @@ ColorScheme Document::PreferredColorScheme(IgnoreRFP aIgnoreRFP) const {
     return ColorScheme::Light;
   }
 
+  // M6E: browser UI documents (chrome:, resource: and privileged about:) are
+  // always light. Web content keeps following the system color scheme.
+  if (ChromeRulesEnabled()) {
+    return ColorScheme::Light;
+  }
+
   if (nsPresContext* pc = GetPresContext()) {
     if (auto scheme = pc->GetOverriddenOrEmbedderColorScheme()) {
       return *scheme;
