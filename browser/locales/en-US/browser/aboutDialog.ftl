@@ -86,6 +86,9 @@ helpus-referrals2 = Want to help? <label data-l10n-name="helpus-donateLink">Make
 
 bottomLinks-license = Licensing Information
 
+aboutdialog-m6e-welcome = Welcome to { -brand-short-name }, a hyper-optimized, macOS-exclusive browser engineered by Ravi Subramaniam using Claude Code to make the web fast, private, and beautifully simple. Inspired by the agility & versatile nature of the Autorickshaw (Tuk Tuk), { -brand-short-name } ('Am Sexy) strips away legacy bloat to deliver uncompromising built-in tracker blocking, a pristine light-themed interface, and a custom Reading Mode that removes page clutter for effortless reading. The focus of this browser is speed and privacy.
+aboutdialog-m6e-experimental = Please note: { -brand-short-name } is currently an experimental release, so while it is built for pure performance, you may occasionally encounter bugs or website compatibility issues.
+
 # Shown in the About dialog. "Firefox", "Mozilla" and the licence name must stay
 # untranslated: they are required attribution under the Mozilla Public License.
 aboutdialog-m6e-based-on = { -brand-short-name } is based on Firefox source code from the Mozilla project, licensed under the <label data-l10n-name="license-link">Mozilla Public License 2.0</label>.
