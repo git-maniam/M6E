@@ -1108,15 +1108,6 @@ if (Services.prefs.getBoolPref("browser.toolbars.tab-groups.enabled", false)) {
   });
 }
 
-CustomizableWidgets.push({
-  id: "firefox-view-button",
-  l10nId: "toolbar-button-firefox-view-3",
-  onCreated(node) {
-    node.setAttribute("role", "button");
-    node.setAttribute("aria-pressed", "false");
-  },
-});
-
 if (Services.prefs.getBoolPref("browser.mini-window.enabled", false)) {
   CustomizableWidgets.push({
     id: "mini-window-button",

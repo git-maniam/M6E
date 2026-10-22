@@ -42,7 +42,6 @@ var NonBrowserWindow = {
       "Browser:BookmarkAllTabs",
       "View:PageInfo",
       "History:UndoCloseTab",
-      "menu_openFirefoxView",
     ];
     var element;
 

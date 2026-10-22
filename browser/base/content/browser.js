@@ -782,7 +782,6 @@ var gPageIcons = {
 var gInitialPages = [
   "about:blank",
   "about:home",
-  "about:firefoxview",
   "about:newtab",
   "about:opentabs",
   "about:privatebrowsing",
@@ -5157,34 +5156,11 @@ var FirefoxViewHandler = {
     }
   },
   openTab(section) {
-    let viewURL = "about:firefoxview";
-    if (section) {
-      viewURL = `${viewURL}#${section}`;
+    // M6E: Firefox View is removed. Requests for its history view open the
+    // history sidebar instead.
+    if (section == "history") {
+      SidebarController.show("viewHistorySidebar");
     }
-    // Need to account for navigation to Firefox View pages, but keep a tab
-    // that hasn't committed its first load yet, e.g. when a click follows the
-    // mousedown that opened it.
-    if (
-      this.tab &&
-      !this.tab.linkedBrowser.browsingContext.currentWindowGlobal
-        .isInitialDocument &&
-      this.tab.linkedBrowser.currentURI.spec.split("#")[0] != viewURL
-    ) {
-      gBrowser.removeTab(this.tab);
-      this.tab = null;
-    }
-    if (!this.tab) {
-      this.tab = gBrowser.addTrustedTab(viewURL);
-      this.tab.addEventListener("TabClose", this, { once: true });
-      gBrowser.tabContainer.addEventListener("TabSelect", this);
-      window.addEventListener("activate", this);
-      gBrowser.hideTab(this.tab);
-      this.button?.setAttribute("aria-controls", this.tab.linkedPanel);
-    }
-    // we put this here to avoid a race condition that would occur
-    // if this was called in response to "TabSelect"
-    this._closeDeviceConnectedTab();
-    gBrowser.selectedTab = this.tab;
   },
   openToolbarMouseEvent(event, section) {
     if (event?.type == "mousedown" && event?.button != 0) {

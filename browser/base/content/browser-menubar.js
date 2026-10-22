@@ -66,9 +66,6 @@ document.addEventListener(
         case "sync-reauthitem":
           gSync.openSignInAgainPage("menubar");
           break;
-        case "menu_openFirefoxView":
-          FirefoxViewHandler.openTab();
-          break;
         case "hiddenUndoCloseWindow":
           SessionWindowUI.undoCloseWindow(0);
           break;
