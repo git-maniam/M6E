@@ -14,6 +14,9 @@
 namespace CommandLineServiceMac {
 
 static const int kArgsGrowSize = 20;
+#ifndef MOZ_UPDATER
+static const char kRelaunchShell[] = "/bin/sh";
+#endif
 
 static char** sArgs = nullptr;
 static int sArgsAllocated = 0;
@@ -52,6 +55,8 @@ void SetupMacCommandLine(int& argc, char**& argv, bool forRestart) {
   sArgsUsed = 0;
 
   NSString* path = [NSString stringWithUTF8String:argv[0]];
+  bool relaunchExecutable = false;
+#ifdef MOZ_UPDATER
   if (forRestart &&
       [path hasSuffix:[NSString stringWithUTF8String:MOZ_APP_NAME]]) {
     // When we restart, we ask the updater binary to restart us instead.
@@ -72,6 +77,31 @@ void SetupMacCommandLine(int& argc, char**& argv, bool forRestart) {
                                               processIdentifier]]
             .UTF8String);
   }
+#else
+  // M6E: there is no updater to relaunch through, so a shell waits for this
+  // process to exit (or become a zombie) and then runs the executable again,
+  // inheriting the environment. A command line already set up this way is
+  // left alone.
+  if (forRestart && [path isEqualToString:@(kRelaunchShell)]) {
+    free(sArgs);
+    sArgs = nullptr;
+    return;
+  }
+  if (forRestart &&
+      [path hasSuffix:[NSString stringWithUTF8String:MOZ_APP_NAME]]) {
+    AddToCommandLine(kRelaunchShell);
+    AddToCommandLine("-c");
+    AddToCommandLine(
+        "while /bin/ps -o stat= -p \"$0\" | /usr/bin/grep -q '^[^Z]'; do "
+        "/bin/sleep 0.05; done; exec \"$@\"");
+    AddToCommandLine(
+        [NSString stringWithFormat:@"%d", [[NSProcessInfo processInfo]
+                                              processIdentifier]]
+            .UTF8String);
+    path = [[NSBundle mainBundle] executablePath];
+    relaunchExecutable = true;
+  }
+#endif
 
   // We adjust the path to point to the .app bundle, rather than the executable
   // itself, to allow for the use of the NSWorkspace API for launching and
@@ -83,7 +113,8 @@ void SetupMacCommandLine(int& argc, char**& argv, bool forRestart) {
   // versions of macOS and we may be able to switch to the NSWorkspace API once
   // we no longer support the older versions of macOS where these errors occur.
   // See bug 1911178.
-  if (![path hasSuffix:@"org.mozilla.updater"] && ![path hasSuffix:@".app"]) {
+  if (!relaunchExecutable && ![path hasSuffix:@"org.mozilla.updater"] &&
+      ![path hasSuffix:@".app"]) {
     // Ensure that the path in the first argument points to the .app bundle.
     // This strips three last path components, for example:
     //
@@ -92,7 +123,8 @@ void SetupMacCommandLine(int& argc, char**& argv, bool forRestart) {
     path = [[[path stringByDeletingLastPathComponent]
         stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
   }
-  if (![path hasSuffix:@"org.mozilla.updater"] && ![path hasSuffix:@".app"]) {
+  if (!relaunchExecutable && ![path hasSuffix:@"org.mozilla.updater"] &&
+      ![path hasSuffix:@".app"]) {
     // We were unable to obtain the path to the .app bundle and are unable to
     // build a valid command line.
     return;

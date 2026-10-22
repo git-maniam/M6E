@@ -96,10 +96,6 @@ class TestRelaunchDockOverlap(MarionetteTestCase):
             "MacOS",
             "org.mozilla.updater",
         )
-        if not os.path.exists(self.relauncher):
-            self.skipTest(
-                f"Build has no updater to relaunch through: {self.relauncher}"
-            )
 
     def _time_relauncher(self, args):
         """Run the relauncher and return how long it took to exit."""
@@ -125,6 +121,12 @@ class TestRelaunchDockOverlap(MarionetteTestCase):
         so the relauncher should sit and wait for it. We do not want to end it,
         so we let the wait run into its timeout instead.
         """
+        # M6E: builds without the updater relaunch through a shell instead,
+        # which test_relaunch_does_not_overlap_previous_process covers.
+        if not os.path.exists(self.relauncher):
+            self.skipTest(
+                f"Build has no updater to relaunch through: {self.relauncher}"
+            )
         # Measure what it costs to merely start the relauncher and have it
         # bail out, so that the comparison below does not depend on how fast
         # this machine is.
