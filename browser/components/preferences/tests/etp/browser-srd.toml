@@ -27,3 +27,5 @@ tags = "os_integration"
 ["browser_etp_exceptions_dialog.js"]
 
 ["browser_etp_status.js"]
+
+["browser_m6e_privacy_shield.js"]

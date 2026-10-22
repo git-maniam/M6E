@@ -22,8 +22,6 @@ tags = "os_integration"
 
 ["browser_m6e_initial_category.js"]
 
-["browser_m6e_privacy_shield.js"]
-
 ["browser_statePartitioning_PBM_strings.js"]
 
 ["browser_statePartitioning_strings.js"]
