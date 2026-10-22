@@ -11,6 +11,8 @@ const { AppConstants } = ChromeUtils.importESModule(
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
+  CustomizableUI:
+    "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
   ICON_CATALOG: "moz-src:///browser/components/shell/CustomIconManager.sys.mjs",
   resolvePreview:
     "moz-src:///browser/components/shell/CustomIconManager.sys.mjs",
@@ -21,6 +23,7 @@ ChromeUtils.defineLazyGetter(lazy, "WindowsUIUtils", () =>
 
 const PREF_ICON_ID = "browser.shell.customIcon.id";
 const PREF_UI_DENSITY = "browser.uidensity";
+const PREF_BOOKMARKS_TOOLBAR = "browser.toolbars.bookmarks.visibility";
 
 const FORCED_COLORS_QUERY = matchMedia("(forced-colors)");
 // The readout thumbnail follows this (chrome) document's color scheme, so a
@@ -59,6 +62,7 @@ Preferences.addAll([
   { id: "layout.css.prefers-color-scheme.content-override", type: "int" },
   { id: PREF_UI_DENSITY, type: "int" },
   { id: "browser.touchmode.auto", type: "bool" },
+  { id: PREF_BOOKMARKS_TOOLBAR, type: "string" },
 ]);
 
 Preferences.addSetting({
@@ -214,6 +218,21 @@ Preferences.addSetting({
   },
 });
 
+// M6E: shows the bookmarks toolbar on every page, or hides it everywhere.
+Preferences.addSetting({
+  id: "showBookmarksToolbar",
+  pref: PREF_BOOKMARKS_TOOLBAR,
+  get: val => val == "always",
+  set(checked) {
+    let visibility = checked ? "always" : "never";
+    lazy.CustomizableUI.setToolbarVisibility(
+      lazy.CustomizableUI.AREA_BOOKMARKS,
+      visibility
+    );
+    return visibility;
+  },
+});
+
 Preferences.addSetting({
   id: "browser-icon-button",
   onUserClick: e => {
@@ -351,6 +370,18 @@ SettingGroupManager.registerGroups({
             l10nId: "appearance-window-density-touch",
           },
         ],
+      },
+    ],
+  },
+  bookmarksToolbar: {
+    l10nId: "appearance-bookmarks-toolbar-group",
+    iconSrc: "chrome://browser/skin/bookmarks-toolbar.svg",
+    headingLevel: 2,
+    items: [
+      {
+        id: "showBookmarksToolbar",
+        l10nId: "appearance-bookmarks-toolbar-show",
+        control: "moz-toggle",
       },
     ],
   },

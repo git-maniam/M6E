@@ -28,8 +28,8 @@ add_task(async function () {
     ok(CustomizableUI.inDefaultState, "Back in default state after reset");
     is(
       Services.prefs.getCharPref(prefName),
-      "newtab",
-      "Pref should get reset to 'newtab'"
+      Services.prefs.getDefaultBranch("").getCharPref(prefName),
+      "Pref should get reset to its default"
     );
   }
 });

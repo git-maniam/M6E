@@ -183,3 +183,7 @@ pref("app.releaseNotesURL.aboutDialog", "about:blank", locked);
 // Google and Bing, from the bundled search configuration, are the only search
 // engines. OpenSearch, custom, add-on and policy engines are never added.
 pref("browser.search.bundledEnginesOnly", true, locked);
+
+// The bookmarks toolbar is hidden until the user turns it on in Settings,
+// Appearance. The setting is on or off, so there is no new-tab-only default.
+pref("browser.toolbars.bookmarks.visibility", "never");

@@ -37,6 +37,8 @@ add_setup(async function () {
     set: [
       ["browser.newtab.preload", false],
       ["test.wait300msAfterTabSwitch", true],
+      // M6E defaults the toolbar to "never"; this covers the "newtab" mode.
+      ["browser.toolbars.bookmarks.visibility", "newtab"],
     ],
   });
   // Move all existing bookmarks in the Bookmarks Toolbar and

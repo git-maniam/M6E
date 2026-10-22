@@ -3,6 +3,13 @@
 
 "use strict";
 
+// M6E defaults the toolbar to "never"; these tests cover the "newtab" mode.
+add_setup(async function () {
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.toolbars.bookmarks.visibility", "newtab"]],
+  });
+});
+
 add_task(async function bookmarks_toolbar_shown_on_newtab() {
   let newtab = await BrowserTestUtils.openNewForegroundTab({
     gBrowser,

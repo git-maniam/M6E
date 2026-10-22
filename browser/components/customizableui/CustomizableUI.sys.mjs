@@ -440,7 +440,10 @@ var CustomizableUIInternal = {
       {
         type: CustomizableUI.TYPE_TOOLBAR,
         defaultPlacements: ["personal-bookmarks"],
-        defaultCollapsed: "newtab",
+        // M6E: the default visibility comes from the pref's default (m6e.js).
+        defaultCollapsed: Services.prefs
+          .getDefaultBranch("")
+          .getCharPref("browser.toolbars.bookmarks.visibility", "newtab"),
       },
       true
     );

@@ -2509,6 +2509,13 @@ browser-theme-group =
 browser-theme-manage-link =
     .label = Manage { -brand-short-name } themes
 
+appearance-bookmarks-toolbar-group =
+    .label = Bookmarks toolbar
+
+appearance-bookmarks-toolbar-show =
+    .label = Show bookmarks toolbar
+    .description = Show your bookmarks below the address bar on every page.
+
 appearance-window-density-group =
     .label = Window density
     .description = Adjust the spacing around window elements like toolbar, tabs, and sidebar.

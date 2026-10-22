@@ -27,12 +27,37 @@ add_task(async function test_appearance_pane_loads_setting_groups() {
     () => doc.querySelector('setting-group[groupid="appearance"]')
   );
 
-  for (let groupId of ["appearance", "browserTheme", "relatedSettings"]) {
+  for (let groupId of ["appearance", "bookmarksToolbar", "relatedSettings"]) {
     let group = doc.querySelector(`setting-group[groupid="${groupId}"]`);
     ok(group, `${groupId} setting-group exists`);
     is_element_visible(group, `${groupId} setting-group is visible`);
   }
 
+  await BrowserTestUtils.removeTab(tab);
+});
+
+add_task(async function test_bookmarks_toolbar_toggle() {
+  const PREF = "browser.toolbars.bookmarks.visibility";
+  let tab = await openPrefsTab("appearance");
+  let doc = tab.linkedBrowser.contentDocument;
+
+  let toggle = await TestUtils.waitForCondition(
+    () => doc.getElementById("showBookmarksToolbar"),
+    "Wait for the bookmarks toolbar toggle"
+  );
+  let toolbar = document.getElementById("PersonalToolbar");
+  ok(!toggle.pressed, "The toggle starts off");
+  ok(toolbar.collapsed, "The toolbar starts hidden");
+
+  synthesizeClick(toggle);
+  await TestUtils.waitForCondition(() => !toolbar.collapsed);
+  is(Services.prefs.getCharPref(PREF), "always", "On shows it on every page");
+
+  synthesizeClick(toggle);
+  await TestUtils.waitForCondition(() => toolbar.collapsed);
+  is(Services.prefs.getCharPref(PREF), "never", "Off hides it everywhere");
+
+  Services.prefs.clearUserPref(PREF);
   await BrowserTestUtils.removeTab(tab);
 });
 
