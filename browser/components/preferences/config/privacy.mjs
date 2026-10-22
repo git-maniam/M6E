@@ -4130,19 +4130,18 @@ Preferences.addSetting({
 });
 
 // M6E: the Privacy Shield master switch (P3.5) and its maximum mode.
-Preferences.addSetting({
-  id: "privacyShieldMaximumPref",
-  pref: "m6e.privacyShield.maximum",
-});
+Preferences.addAll([
+  { id: "m6e.privacyShield.enabled", type: "bool" },
+  { id: "m6e.privacyShield.maximum", type: "bool" },
+]);
 
 Preferences.addSetting({
   id: "privacyShieldEnabled",
   pref: "m6e.privacyShield.enabled",
-  deps: ["privacyShieldMaximumPref"],
-  set(enabled, { privacyShieldMaximumPref }) {
+  set(enabled) {
     lazy.M6EPrivacyShield.apply({
       enabled,
-      maximum: privacyShieldMaximumPref.value,
+      maximum: Services.prefs.getBoolPref("m6e.privacyShield.maximum", false),
     });
     return enabled;
   },
