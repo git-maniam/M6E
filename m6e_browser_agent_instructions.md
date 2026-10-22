@@ -77,14 +77,23 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
   - **Images:** keep only essential inline article images.
 - **Privacy:**
   - Arkenfox-style hardening defaults, with Fingerprinting Protection rather than full fingerprinting resistance (D18).
-  - A prominent "Privacy Shield" section in Settings (`about:preferences`, not a new page), whose master toggle switches strict privacy (fingerprinting resistance, strict blocking) off when a site breaks.
+  - A prominent "Privacy Shield" section in Settings (`about:preferences`, not a new page). Its master toggle sets the browser's default behaviour for every site (D20):
+    - **On (default):** trackers and ads are blocked and the privacy hardening applies. A "Maximum protection" option adds full fingerprinting resistance.
+    - **Off:** no tracker blocking on any site, and the hardening is at Firefox's values. Total Cookie Protection stays on, because it isolates cookies rather than blocking anything.
+    - **Overrides:** the Tracker Blocker's per-site switch overrides this default in either direction.
 - **Push notifications:** must work reliably, with native macOS notifications (D12).
 - **Tracker Blocker button (D19):**
   - **Placement:** a small button at the left of the address bar.
   - **Icon:** shows how many trackers and other privacy invasions have been blocked on the current tab. The state is always visible:
     - **Enabled:** the active Tracker Blocker icon with the number of blocked items.
     - **Disabled:** a distinct, inactive icon with no number.
-  - **Panel:** clicking the button opens a dropdown panel that lists what was blocked: trackers, ads, social trackers, fingerprinters, cryptominers, cross-site cookies and other privacy threats, each with the blocked domains. The panel has a toggle switch that turns the Tracker Blocker on or off.
+  - **Panel:** clicking the button opens a dropdown panel that lists what was blocked: trackers, ads, social trackers, fingerprinters, cryptominers, cross-site cookies and other privacy threats, each with the blocked domains. The panel has a toggle switch that turns the Tracker Blocker on or off for the current site.
+  - **Per-site switch (D20):** it overrides the global Privacy Shield for the current site, in either direction.
+    - **Shield on:** turn protection off for an important site that breaks.
+    - **Shield off:** turn protection on for a high-risk site.
+    - **Duration:** the choice lasts until M6E quits (session only).
+    - **What it covers:** everything the Shield covers that can apply per site: tracker and ad blocking (every category), fingerprinting protection (and full fingerprinting resistance in Maximum mode), and HTTPS-Only.
+    - **Global only:** TLS options, punycode display, WebRTC IP handling, PDF scripting, referrer trimming, GPC and window move or resize. The engine applies these per connection or browser-wide, not per site.
 
 ### Phase 4: Performance
 - Apply compile-flag optimisations first: LTO, the optimisation levels (`-O3`, Rust `opt-level = 3`) and Apple Silicon CPU tuning.
@@ -117,7 +126,8 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D16 | Remove `about:mozilla` and `about:rights` (which only redirected to Mozilla's online terms), and Mozilla's default bookmarks. | No Mozilla content. |
 | D17 | Keep the build toolchain on Homebrew (pinned), with `mach bootstrap` disabled. | The network's TLS inspection (Cloudflare Gateway) breaks `mach bootstrap` downloads. |
 | D18 | Hardening defaults use strict Enhanced Tracking Protection, which includes Fingerprinting Protection, rather than full fingerprinting resistance (`privacy.resistFingerprinting`). Full resistance is part of the Privacy Shield's strict mode. | Full resistance spoofs the time zone to UTC, letterboxes windows and breaks more sites. The gentler protection blocks most fingerprinting without that. |
-| D19 (agent) | The Tracker Blocker builds on Firefox's tracking protection icon and protections panel rather than a new widget. Its toggle turns blocking on or off for the current site (Firefox's per-site exception), and the count covers the current tab's page. Blocking is turned off everywhere with the Privacy Shield (P3.5). | One blocking engine and one exception list. A per-site switch is how you fix one broken site without lowering protection elsewhere. |
+| D19 (agent) | The Tracker Blocker builds on Firefox's tracking protection icon and protections panel rather than a new widget. The count covers the current tab's page. | One blocking engine and one place to see what was blocked. |
+| D20 | The global Privacy Shield sets the default for every site, and the Tracker Blocker's per-site switch overrides it both ways. With the Shield on, it turns protection off for an important site that breaks. With the Shield off, it turns protection on for a high-risk site. Shield off means no tracker blocking (Total Cookie Protection stays: agent). Per-site choices last for the session only. The switch covers everything the Shield covers that the engine can apply per site. | The user's model (2026-10-23): one global default, with per-site exceptions in either direction. Global-only hardening is an engine limit. |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.

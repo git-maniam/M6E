@@ -1,6 +1,6 @@
 # M6E Implementation Plan
 
-How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D19) refer to the spec's decision log.
+How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D20) refer to the spec's decision log.
 
 ## 1. Working method
 
@@ -208,9 +208,16 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Tests:** `etp/browser_m6e_privacy_shield.js`, which is in `browser-srd.toml` because the Shield exists only with the settings redesign. The `etp` suite gives 875 and 923 passed.
   - **Not a bug:** the security warning card on the Privacy pane appears only in Marionette and test profiles. They turn off password saving and the popup blocker.
 
-## 4. Next step: P3.6 Reliable push notifications
+## 4. Next step: P3.5b Privacy Shield off means no blocking (D20)
 
-See P3.6 in section 5. After it comes P3.7, the Tracker Blocker button (D19).
+Rework `M6EPrivacyShield.apply()` so that off turns every blocking feature off rather than switching to Standard:
+- the category becomes `custom`, with tracking content, social, fingerprinting, cryptomining and email tracker blocking off in normal and private windows;
+- Fingerprinting Protection is off, and `cookieBehavior` stays 5 (Total Cookie Protection);
+- on returns to strict.
+
+Keep the rule that hand-changed prefs are left alone, update `browser_m6e_privacy_shield.js`, and update the Settings description strings.
+
+Then P3.6 (push) and P3.7 (the Tracker Blocker button, with the two-way session-only per-site switch from D20).
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 
@@ -231,8 +238,14 @@ Build on Firefox's tracking protection icon (`#tracking-protection-icon-containe
   - Draw new SVG icons in `browser/themes/shared/icons/` in the M6E style.
 - **Panel:**
   - List each category and the blocked domains (the panel's subviews already hold the per-category lists; show them inline or one click away).
-  - Keep the toggle. It is Firefox's per-site ETP switch, relabelled "Tracker Blocker".
+  - The toggle, relabelled "Tracker Blocker", becomes a two-way, session-only override of the Privacy Shield for the current site (D20).
   - Drop the panel's Mozilla links, which have no support site (D7).
+- **Per-site override (D20):** store it as a session-expiring site permission (`EXPIRE_SESSION`), with `allow` meaning protection off and `deny` meaning protection on.
+  - **Shield on, protection off:** use Firefox's existing ETP exception (`trackingprotection` permission). Also add HTTPS-Only's exception (`https-only-load-insecure`) and an FPP/RFP exemption for the site through `privacy.fingerprintingProtection.granularOverrides`.
+  - **Shield off, protection on:** blocking is globally off, so the tracking protection checks (C++ `ContentBlockingAllowList` and the URL classifier features) and HTTPS-Only (`nsHTTPSOnlyUtils`) need an M6E "protect this site" permission that turns them on for that site. Fingerprinting protection (and RFP in Maximum mode) gets a per-site override.
+  - **Global only:** TLS, punycode, WebRTC IP handling, PDF scripting, referrer trimming, GPC and window move or resize.
+  - This needs C++ changes, so build with `./mach build binaries`.
+- **Check (overrides):** with the Shield on, turning a site off shows the inactive icon and loads it unblocked over HTTP if needed. With the Shield off, turning a site on blocks its trackers, counts them, and upgrades it to HTTPS. Both overrides end when M6E quits.
 - **Strings:** "Tracker Blocker", and an accessible label that includes the count.
 - **Check:** on a page with known trackers, the badge counts up and matches the panel's lists. Turning the toggle off shows the inactive icon with no number and reloads the page unblocked. Turning it on restores the count. Also check tab switches, private windows, and with the Privacy Shield off. Run `browser/base/content/test/protectionsUI`.
 
