@@ -4,6 +4,8 @@
 
 import React from "react";
 
+// M6E: the home page shows the M6E splash image above the search box, in
+// place of the logo and wordmark.
 function Logo() {
   return (
     <h1 className="logo-and-wordmark-wrapper">
@@ -12,8 +14,11 @@ function Logo() {
         role="img"
         data-l10n-id="newtab-logo-and-wordmark"
       >
-        <div className="logo" />
-        <div className="wordmark" />
+        <img
+          className="m6e-home-splash"
+          src="chrome://newtab/content/data/content/assets/m6e-home-splash.jpg"
+          alt=""
+        />
       </div>
     </h1>
   );

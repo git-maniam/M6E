@@ -72,6 +72,16 @@
     margin-block-end: calc(var(--space-large) + var(--space-xlarge));
   }
 
+  // M6E: the splash image (3:2) scales with the window: at most half its
+  // width and a third of its height.
+  .m6e-home-splash {
+    display: block;
+    width: min(50vw, 50vh);
+    height: auto;
+    aspect-ratio: 3 / 2;
+    border-radius: var(--border-radius-large);
+  }
+
   .logo {
     display: inline-block;
     height: $logo-size;
