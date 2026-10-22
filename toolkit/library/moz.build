@@ -127,8 +127,6 @@ if CONFIG["OS_ARCH"] == "WINNT":
 
 LOCAL_INCLUDES += [
     "/config",
-    # need widget/windows for resource.h (included from widget.rc)
-    "/widget/windows",
 ]
 
 if CONFIG["OS_ARCH"] == "WINNT" and CONFIG["CC_TYPE"] not in ("clang", "gcc"):

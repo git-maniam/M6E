@@ -1440,18 +1440,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crashreporter-android-export"
-version = "0.1.0"
-dependencies = [
- "android_logger",
- "crashping",
- "log",
- "minidump-analyzer",
- "mozilla-central-workspace-hack",
- "serde_json",
-]
-
-[[package]]
 name = "crashtest"
 version = "0.1.0"
 dependencies = [
@@ -3122,7 +3110,6 @@ dependencies = [
  "webext-storage",
  "webrender_bindings",
  "wgpu_bindings",
- "widget_windows",
  "win32_process_mitigations",
  "wpf-gpu-raster",
  "xdg_alerts",
@@ -5464,18 +5451,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "msixcomserver_s"
-version = "0.1.0"
-dependencies = [
- "futures-executor",
- "mozbuild",
- "mozilla-central-workspace-hack",
- "windows",
- "windows-core",
- "windows-future",
-]
-
-[[package]]
 name = "mtu"
 version = "0.4.1"
 source = "git+https://github.com/mozilla/neqo?tag=v0.33.0#1ec4c2a3ccd7ada264112d1b70b070381557d844"
@@ -6756,21 +6731,6 @@ dependencies = [
  "url",
  "viaduct",
  "viaduct-dev",
-]
-
-[[package]]
-name = "pushnotificationhelper"
-version = "0.1.0"
-dependencies = [
- "clap",
- "fnv",
- "mozbuild",
- "mozilla-central-workspace-hack",
- "serde_json",
- "tempfile",
- "thiserror 2.0.12",
- "url",
- "windows-sys",
 ]
 
 [[package]]
@@ -9568,20 +9528,6 @@ dependencies = [
  "cc",
  "cfg-if",
  "libc",
-]
-
-[[package]]
-name = "widget_windows"
-version = "0.1.0"
-dependencies = [
- "libc",
- "moz_task",
- "nserror",
- "nsstring",
- "thin-vec",
- "windows",
- "windows-collections",
- "xpcom",
 ]
 
 [[package]]

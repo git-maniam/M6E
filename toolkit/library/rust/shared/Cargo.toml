@@ -149,7 +149,6 @@ webext-storage = "0.1"
 [target.'cfg(target_os = "windows")'.dependencies]
 backgroundtaskregistrar = { path = "../../../../toolkit/components/taskscheduler/rust", optional = true }
 win32_process_mitigations = { path = "../../../crashreporter/win32_process_mitigations" }
-widget_windows = { path = "../../../../widget/windows/rust" }
 shell_windows = { path = "../../../../browser/components/shell/rust/shell_windows", optional = true }
 
 [features]

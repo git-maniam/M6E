@@ -145,8 +145,6 @@ extern crate backgroundtaskregistrar;
 #[cfg(all(target_os = "windows", feature = "shell_windows"))]
 extern crate shell_windows;
 #[cfg(target_os = "windows")]
-extern crate widget_windows;
-#[cfg(target_os = "windows")]
 extern crate win32_process_mitigations;
 
 extern crate origin_trials_ffi;
