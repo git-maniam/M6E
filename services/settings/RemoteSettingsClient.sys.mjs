@@ -655,6 +655,10 @@ export class RemoteSettingsClient extends EventEmitter {
       lazy.console.debug(`${this.identifier} Skip remote sync.`);
       return;
     }
+    if (!lazy.Utils.isAllowedCollection(this.bucketName, this.collectionName)) {
+      lazy.console.debug(`${this.identifier} Not allowed to sync in M6E.`);
+      return;
+    }
 
     // We want to know which timestamp we are expected to obtain in order to leverage
     // cache busting. We don't provide ETag because we don't want a 304.
@@ -714,6 +718,11 @@ export class RemoteSettingsClient extends EventEmitter {
     // during shutdown.
     if (Services.startup.shuttingDown) {
       lazy.console.warn(`${this.identifier} sync interrupted by shutdown`);
+      return;
+    }
+
+    if (!lazy.Utils.isAllowedCollection(this.bucketName, this.collectionName)) {
+      lazy.console.debug(`${this.identifier} Not allowed to sync in M6E.`);
       return;
     }
 

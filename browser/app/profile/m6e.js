@@ -42,3 +42,57 @@ pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 pref("toolkit.telemetry.firstShutdownPing.enabled", false, locked);
 pref("browser.newtabpage.activity-stream.telemetry", false, locked);
 pref("browser.discovery.enabled", false, locked);
+
+// Crash reporting is not built. Never offer to send crash reports.
+pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
+pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
+pref("browser.tabs.crashReporting.sendReport", false, locked);
+
+// No Mozilla update, study or add-on services. Extensions are installed and
+// updated manually.
+pref("extensions.systemAddon.update.enabled", false, locked);
+pref("extensions.systemAddon.update.url", "", locked);
+pref("app.normandy.enabled", false, locked);
+pref("app.normandy.api_url", "", locked);
+pref("app.shield.optoutstudies.enabled", false, locked);
+pref("extensions.getAddons.cache.enabled", false, locked);
+pref("extensions.getAddons.showPane", false, locked);
+pref("extensions.htmlaboutaddons.recommendations.enabled", false, locked);
+pref("extensions.update.enabled", false, locked);
+pref("extensions.update.autoUpdateDefault", false, locked);
+pref("extensions.abuseReport.enabled", false, locked);
+
+// No Safe Browsing lookups. The Mozilla provider's update URL is kept: it
+// delivers the tracking protection lists through Remote Settings.
+pref("browser.safebrowsing.malware.enabled", false, locked);
+pref("browser.safebrowsing.phishing.enabled", false, locked);
+pref("browser.safebrowsing.blockedURIs.enabled", false, locked);
+pref("browser.safebrowsing.downloads.enabled", false, locked);
+pref("browser.safebrowsing.downloads.remote.enabled", false, locked);
+pref("browser.safebrowsing.provider.google4.updateURL", "", locked);
+pref("browser.safebrowsing.provider.google4.gethashURL", "", locked);
+pref("browser.safebrowsing.provider.google.updateURL", "", locked);
+pref("browser.safebrowsing.provider.google.gethashURL", "", locked);
+pref("browser.safebrowsing.provider.mozilla.gethashURL", "", locked);
+
+// Widevine and OpenH264 keep installing automatically, but from the download
+// lists bundled in toolkit/content/gmp-sources (Google and Cisco only) rather
+// than from Mozilla's update server.
+pref("media.gmp-manager.url", "", locked);
+
+// DNS over HTTPS defaults to Increased Protection with the default provider.
+// The user can change or turn it off in Settings.
+pref("network.trr.mode", 2);
+
+// No captive portal, connectivity or region checks.
+pref("network.captive-portal-service.enabled", false, locked);
+pref("network.connectivity-service.enabled", false, locked);
+pref("captivedetect.canonicalURL", "", locked);
+pref("browser.region.network.url", "", locked);
+pref("browser.region.update.enabled", false, locked);
+
+// No welcome or what's-new pages from mozilla.org or firefox.com.
+pref("startup.homepage_welcome_url", "", locked);
+pref("startup.homepage_welcome_url.additional", "", locked);
+pref("startup.homepage_override_url", "", locked);
+pref("browser.startup.homepage_override.mstone", "ignore", locked);

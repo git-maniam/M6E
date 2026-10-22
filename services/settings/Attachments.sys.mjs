@@ -182,7 +182,10 @@ export class Downloader {
    */
   async cacheAll(force = false) {
     // If we're offline, don't try
-    if (lazy.Utils.isOffline) {
+    if (
+      lazy.Utils.isOffline ||
+      !lazy.Utils.isAllowedCollection(this.bucketName, this.collectionName)
+    ) {
       return null;
     }
 
@@ -561,6 +564,11 @@ export class Downloader {
    * @returns {ArrayBuffer} the file content.
    */
   async downloadAsBytes(record, options = {}) {
+    if (!lazy.Utils.isAllowedCollection(this.bucketName, this.collectionName)) {
+      throw new Error(
+        `${this.bucketName}/${this.collectionName}: attachment downloads are not allowed in M6E`
+      );
+    }
     const {
       attachment: { location, hash, size },
     } = record;

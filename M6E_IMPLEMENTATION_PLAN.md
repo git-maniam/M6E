@@ -186,31 +186,22 @@ Split into two commits.
 - **Verified:** `Services.telemetry.canRecordBase` and `canRecordExtended` are false. The Glean and Telemetry modules stay built as dormant code.
 - **Build cost:** changing a configure flag rewrites the global config header and rebuilds the whole tree (1 h 54 min here). So P1.11 and P1.12's configure changes (`--disable-crashreporter`, `--disable-updater`, `MOZ_NORMANDY`) are batched into one rebuild.
 
-### P1.11 Crash reporting
-- Add `--disable-crashreporter` to the mozconfig. Remove the crash-report UI (`about:crashes` entry points, the "send crash reports" setting).
-- **Verify:** build passes; no crash-report settings.
+### P1.11 Crash reporting (done, committed with P1.12)
+- `--disable-crashreporter` in the mozconfig. The crash-report settings, unsubmitted-report prompts and tab-crash "send report" option are off, and `browser.crashReports.*` and `browser.tabs.crashReporting.sendReport` are locked off.
+- The Linux crash-reporter crates (`rust_minidump_writer_linux`, `breakpad-client/linux`) stay: the crash helper's Cargo manifests reference them, and they aren't compiled on macOS.
 
-### P1.12 Updates, AMO, Normandy, Remote Settings, Safe Browsing
-- **Updates:** add `--disable-updater` to the mozconfig, and remove the update UI from the About dialog and preferences.
-- **Normandy:** change `MOZ_NORMANDY` to `False` in `browser/moz.configure`. Lock `app.normandy.enabled` and `app.shield.optoutstudies.enabled` to `false`, and disable Nimbus experiments.
-- **AMO:**
-  - Set `extensions.getAddons.cache.enabled` and `extensions.htmlaboutaddons.recommendations.enabled` to `false`, and `extensions.getAddons.showPane` to `false`.
-  - Remove the "Find more add-ons" links and the recommended-extensions pane.
-  - Keep manual installation of `.xpi` files.
-- **Remote Settings (D2):**
-  - List every `RemoteSettings("...")` client in the tree and classify it as security or privacy protection, or other.
-  - Add the allowlist from D2 as one hard-coded list in `services/settings/` (not a pref, so it cannot be widened by accident), and make the sync skip every collection not on it.
-  - Keep content-signature verification on.
-  - Document the final list in this plan.
-- **Media plugins (D10):** keep `media.eme.enabled` and automatic plugin installs. Set `media.gmp-manager.url` to an empty value, so `GMPInstallManager` fails its Mozilla check and falls back to the bundled `gmp-sources` lists (Google and Cisco only). Confirm that the fallback triggers on an empty URL; if it doesn't, make the bundled lists the primary source in `GMPInstallManager.sys.mjs`.
-- **DNS over HTTPS (D11):** default `network.trr.mode` to 2 with the default Cloudflare provider; keep the Privacy pane's DoH settings; remove the DoH rollout and its heuristics probes.
-- **Web Push (D12):** leave `dom.push.enabled`, `dom.push.connection.enabled` and `dom.push.serverURL` at their defaults. Keep the Megaphone broadcast channel from triggering Remote Settings syncs (D2).
-- **Safe Browsing:** set `browser.safebrowsing.malware.enabled`, `browser.safebrowsing.phishing.enabled` and `browser.safebrowsing.downloads.remote.enabled` to `false`, and blank the provider URLs.
-- **Verify:**
-  - The network capture shows no `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com` or Safe Browsing hosts, except `push.services.mozilla.com` (D12), the three Remote Settings hosts (D2) and the DoH resolver (D11).
-  - Remote Settings fetches only allowlisted collections, and `search-config*` never syncs.
-  - On a fresh profile, Widevine and OpenH264 download from Google and Cisco only, and a DRM test page plays.
-  - An `.xpi` still installs from disk.
+### P1.12 Updates, AMO, Normandy, Remote Settings, Safe Browsing (done)
+- **Configure:** `--disable-updater`, and `MOZ_NORMANDY` `False` (Normandy's code is still built, only its startup and `about:studies` are gated). With telemetry, health report, crash reporter and Normandy all off, `MOZ_DATA_REPORTING` is off, which removes the Settings data-collection section. The last Windows installer file (`updater_append.ini`) is gone with the updater.
+- **Prefs (`m6e.js`, locked):**
+  - **Add-ons:** system add-on updates, Normandy and studies, AMO recommendations, the discover pane, add-on update checks and abuse reports are all off.
+  - **Safe Browsing:** malware, phishing, download and blocked-URI checks are off, and the Google provider URLs are blank. The Mozilla provider's `moz-sbrs:` update URL stays, because it delivers the tracking-protection lists through Remote Settings.
+  - **Startup checks:** captive-portal, connectivity and region checks are off, and the welcome and what's-new URLs are blank.
+- **Remote Settings (D2):** `Utils.isAllowedCollection()` in `services/settings/Utils.sys.mjs` is the single hard-coded allowlist. It covers the `security-state` and `blocklists` buckets, plus these `main` collections: `anti-tracking-url-decoration`, `bounce-tracking-protection-exceptions`, `fingerprinting-protection-overrides`, `partitioning-exempt-urls`, `query-stripping`, `third-party-cookie-blocking-exempt-urls`, `tracking-protection-lists` and `url-classifier-exceptions`. It is enforced in:
+  - `RemoteSettingsClient.sync()` and `maybeSync()`;
+  - the attachment downloader (`downloadAsBytes`, `cacheAll`);
+  - `pullStartupBundle()`, which never runs, because the bundle carries other collections.
+- **Media plugins (D10):** `media.gmp-manager.url` is blank, so the installer falls back to the bundled lists. Verified: OpenH264 comes from `ciscobinary.openh264.org`, and Widevine from `edgedl.me.gvt1.com` with `www.google.com` as mirror. Installs are triggered by the `BrowserGlue` idle task, which doesn't need the updater.
+- **DNS over HTTPS (D11):** `network.trr.mode` defaults to 2 (not locked), with `mozilla.cloudflare-dns.com`. The region-based rollout (`DoHController`) is no longer started.
 
 ### P1.13 Sponsored content and AI features
 - Lock `browser.newtabpage.activity-stream.showSponsoredTopSites`, `browser.newtabpage.activity-stream.showSponsored` and `browser.urlbar.suggest.quicksuggest.sponsored` to `false`. Remove the sponsored settings UI and the Firefox Suggest online paths in `browser/extensions/newtab` and the urlbar.

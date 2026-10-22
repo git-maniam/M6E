@@ -256,85 +256,9 @@ function remoteSettingsFunction() {
    * @throws {Error} If the signature of any bundled changeset is invalid.
    */
   remoteSettings.pullStartupBundle = async () => {
-    if (lazy.Utils.shouldSkipRemoteActivity) {
-      return [];
-    }
-
-    if (remoteSettings._ongoingExtractBundlePromise) {
-      return await remoteSettings._ongoingExtractBundlePromise;
-    }
-
-    const startedAt = new Date();
-    let extractedAt;
-    remoteSettings._ongoingExtractBundlePromise = (async () => {
-      lazy.console.info("Download Remote Settings startup changesets bundle.");
-
-      let changesets;
-      try {
-        changesets = await lazy.Utils.fetchChangesetsBundle();
-      } catch (e) {
-        lazy.console.error(
-          `Remote Settings startup changesets bundle could not be extracted (${e})`
-        );
-        return [];
-      }
-
-      extractedAt = new Date();
-      const pulled = [];
-      for (const changeset of changesets) {
-        const bucket = lazy.Utils.actualBucketName(changeset.metadata.bucket);
-        const collection = changeset.metadata.id;
-        const identifier = `${bucket}/${collection}`;
-
-        if (pulled.includes(identifier)) {
-          // The startup bundles contain both main and preview changesets.
-          // Importing both increases complexity down the line, and brings no value.
-          // On preview mode, this will skip main, and vice-versa.
-          continue;
-        }
-
-        const { metadata, timestamp, changes: records } = changeset;
-
-        const signerName = SIGNERS_BY_BUCKET[bucket] || DEFAULT_SIGNER;
-        const client = RemoteSettings(collection, {
-          bucketName: bucket,
-          signerName,
-        });
-        if (client.verifySignature) {
-          lazy.console.debug(
-            `${identifier}: Verify signature of bundled changeset`
-          );
-          try {
-            await client.validateCollectionSignature(
-              records,
-              timestamp,
-              metadata
-            );
-          } catch (e) {
-            // Bundle content is not valid. Skip import.
-            lazy.console.error(
-              `${identifier}: Signature of bundled changeset is invalid: ${e}.`
-            );
-            continue;
-          }
-        }
-        // Only import changes if the signature succeeds.
-        await client.db.importChanges(metadata, timestamp, records, {
-          clear: true,
-        });
-        lazy.console.debug(`${identifier} imported from changesets bundle`);
-        pulled.push(identifier);
-      }
-      return pulled;
-    })();
-    const pulled = await RemoteSettings._ongoingExtractBundlePromise;
-    const durationMilliseconds = new Date() - startedAt;
-    const downloadMilliseconds = extractedAt - startedAt;
-    const extractMilliseconds = durationMilliseconds - downloadMilliseconds;
-    lazy.console.info(
-      `Import of changesets bundle done (duration=${durationMilliseconds}ms, download=${downloadMilliseconds}ms, extraction=${extractMilliseconds}ms)`
-    );
-    return pulled;
+    // M6E: the startup bundle carries collections outside the M6E allowlist
+    // (see Utils.isAllowedCollection), so it is never downloaded.
+    return [];
   };
 
   /**

@@ -106,7 +106,38 @@ function _isUndefined(value) {
   return typeof value === "undefined";
 }
 
+// M6E: Remote Settings only synchronizes security and privacy-protection
+// data. Every other collection keeps using its bundled dump, which matters most
+// for search-config*: syncing it would bring back every removed search engine.
+const M6E_ALLOWED_BUCKETS = new Set(["security-state", "blocklists"]);
+const M6E_ALLOWED_MAIN_COLLECTIONS = new Set([
+  "anti-tracking-url-decoration",
+  "bounce-tracking-protection-exceptions",
+  "fingerprinting-protection-overrides",
+  "partitioning-exempt-urls",
+  "query-stripping",
+  "third-party-cookie-blocking-exempt-urls",
+  "tracking-protection-lists",
+  "url-classifier-exceptions",
+]);
+
 export var Utils = {
+  /**
+   * Whether M6E may synchronize this collection, or download its attachments,
+   * from the Remote Settings server.
+   *
+   * @param {string} bucketName The bucket, with or without the -preview suffix.
+   * @param {string} collectionName The collection.
+   * @returns {boolean}
+   */
+  isAllowedCollection(bucketName, collectionName) {
+    const bucket = bucketName.replace("-preview", "");
+    return (
+      M6E_ALLOWED_BUCKETS.has(bucket) ||
+      (bucket == "main" && M6E_ALLOWED_MAIN_COLLECTIONS.has(collectionName))
+    );
+  },
+
   get SERVER_URL() {
     return lazy.allowServerURL
       ? // eslint-disable-next-line mozilla/valid-lazy
