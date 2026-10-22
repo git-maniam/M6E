@@ -33,7 +33,6 @@ DIRS += [
 TEST_DIRS += ["tests/mochitest"]
 
 BROWSER_CHROME_MANIFESTS += [
-    "tests/browser/atk/browser.toml",
     "tests/browser/bounds/browser.toml",
     "tests/browser/browser.toml",
     "tests/browser/caching_granularity/browser.toml",
@@ -59,8 +58,6 @@ BROWSER_CHROME_MANIFESTS += [
     "tests/browser/text/browser.toml",
     "tests/browser/tree/browser.toml",
     "tests/browser/treeupdate/browser.toml",
-    "tests/browser/windows/ia2/browser.toml",
-    "tests/browser/windows/uia/browser.toml",
 ]
 
 with Files("**"):
