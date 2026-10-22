@@ -51,12 +51,9 @@ class MachCommandReference:
 
 
 MACH_COMMANDS = {
-    "adb": MachCommandReference("mobile/android/mach_commands.py"),
     "addstory": MachCommandReference("toolkit/content/widgets/mach_commands.py"),
     "addtest": MachCommandReference("testing/mach_commands.py"),
     "addwidget": MachCommandReference("toolkit/content/widgets/mach_commands.py"),
-    "android": MachCommandReference("mobile/android/mach_commands.py"),
-    "android-emulator": MachCommandReference("mobile/android/mach_commands.py"),
     "android-test": MachCommandReference("testing/android-test/mach_commands.py"),
     "artifact": MachCommandReference(
         "python/mozbuild/mozbuild/artifact_commands.py",
@@ -146,8 +143,6 @@ MACH_COMMANDS = {
     "glean": MachCommandReference(
         "toolkit/components/glean/build_scripts/mach_commands.py"
     ),
-    "gradle": MachCommandReference("mobile/android/mach_commands.py"),
-    "gradle-install": MachCommandReference("mobile/android/mach_commands.py"),
     "gtest": MachCommandReference(
         "python/mozbuild/mozbuild/mach_commands.py", ["test"]
     ),
