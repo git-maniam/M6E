@@ -23,3 +23,22 @@ pref("browser.aboutwelcome.enabled", false, locked);
 // The Mozilla VPN integration (IP Protection) is removed.
 pref("browser.ipProtection.enabled", false, locked);
 pref("browser.ipProtection.blockIPProtectionCallouts", true, locked);
+
+// Telemetry and data collection are off and cannot be turned back on. The
+// upload prefs are defined here because builds without health reporting
+// no longer define them.
+pref("datareporting.healthreport.uploadEnabled", false, locked);
+pref("datareporting.usage.uploadEnabled", false, locked);
+pref("datareporting.policy.dataSubmissionEnabled", false, locked);
+pref("datareporting.policy.dataSubmissionPolicyBypassNotification", true, locked);
+pref("toolkit.telemetry.enabled", false, locked);
+pref("toolkit.telemetry.unified", false, locked);
+pref("toolkit.telemetry.archive.enabled", false, locked);
+pref("toolkit.telemetry.server", "", locked);
+pref("toolkit.telemetry.newProfilePing.enabled", false, locked);
+pref("toolkit.telemetry.shutdownPingSender.enabled", false, locked);
+pref("toolkit.telemetry.updatePing.enabled", false, locked);
+pref("toolkit.telemetry.bhrPing.enabled", false, locked);
+pref("toolkit.telemetry.firstShutdownPing.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.telemetry", false, locked);
+pref("browser.discovery.enabled", false, locked);

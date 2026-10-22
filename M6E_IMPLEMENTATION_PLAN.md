@@ -180,16 +180,11 @@ Split into two commits.
 - Lock `browser.ipProtection.enabled` off and `browser.ipProtection.blockIPProtectionCallouts` on, and remove its startup and quit hooks from `BrowserComponents.manifest`. The service, toolbar button and Settings section are all gated on that pref, so none of them load.
 - As with Sync, the dormant code stays built: removing it would touch about 20 files (Settings, CustomizableUI, policies) with no user-visible difference.
 
-### P1.10 Telemetry and data collection
-- In `browser/moz.configure`, change `MOZ_SERVICES_HEALTHREPORT` to `False`. Together with P1.11 and P1.12 this turns off `MOZ_DATA_REPORTING`. Keep `MOZ_TELEMETRY_REPORTING` off by never setting `MOZILLA_OFFICIAL`.
-- Lock data upload off and blank the endpoints:
-  - `datareporting.healthreport.uploadEnabled` and `datareporting.policy.dataSubmissionEnabled`: `false`.
-  - `toolkit.telemetry.*`: off.
-  - Glean upload: off.
-  - `toolkit.telemetry.server` and similar endpoint prefs: empty.
-- Remove the "Firefox Data Collection and Use" section from `privacy.inc.xhtml`, and the data-reporting notification bar.
-- Keep `toolkit/components/glean` and `toolkit/components/telemetry` as dead-but-compiling code (see Baseline facts).
-- **Verify:** the network capture shows no telemetry hosts (`incoming.telemetry.mozilla.org` and similar).
+### P1.10 Telemetry and data collection (done)
+- `MOZ_SERVICES_HEALTHREPORT` is `False` in `browser/moz.configure`. `MOZ_TELEMETRY_REPORTING` stays off because `MOZILLA_OFFICIAL` is never set.
+- `m6e.js` defines and locks every upload pref off, including the health-report and usage prefs the flag no longer defines: telemetry, the archive, the ping senders, the server URL, new-tab telemetry and discovery. The data-submission notification bar is bypassed.
+- **Verified:** `Services.telemetry.canRecordBase` and `canRecordExtended` are false. The Glean and Telemetry modules stay built as dormant code.
+- **Build cost:** changing a configure flag rewrites the global config header and rebuilds the whole tree (1 h 54 min here). So P1.11 and P1.12's configure changes (`--disable-crashreporter`, `--disable-updater`, `MOZ_NORMANDY`) are batched into one rebuild.
 
 ### P1.11 Crash reporting
 - Add `--disable-crashreporter` to the mozconfig. Remove the crash-report UI (`about:crashes` entry points, the "send crash reports" setting).
