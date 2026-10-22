@@ -31,6 +31,8 @@ Firefox contains significant code for features, platforms, and themes that are u
   * Completely rip out **Pocket**, **Firefox View**, **Firefox Sync**, and **Firefox VPN** integrations.
   * Strip all **Telemetry**, **Crashpad**, and **Data Collection** modules.
   * Disable updates, AMO, Normandy, Remote Settings and Safe Browsing lookups. Extensions are installed manually.
+  * Keep DRM working: Widevine and OpenH264 still download automatically, directly from Google and Cisco and without Mozilla's update server.
+  * Keep site push notifications working well. Web Push stays on Mozilla's push service, the only Mozilla service M6E keeps, with native macOS notifications.
   * Remove Sponsored Top Sites and Sponsored Search suggestions.
 
 ## 3. Phase 2: Rebranding & UI Modernization
@@ -83,6 +85,8 @@ Firefox contains significant code for features, platforms, and themes that are u
 * **Rebranding:** Use Mozilla's branding mechanism (a `browser/branding/m6e` directory and the related configure options) rather than a blind repo-wide replace. "Mozilla" and "Firefox" must not appear in anything user-visible (UI, app bundle, about pages, displayed URLs). Keep `LICENSE`, MPL headers and `AUTHORS` intact, and add a "Based on Firefox source" note in the license/about text. Do not rename internal identifiers such as `MOZ_` prefixes.
 * **Theme:** The browser chrome is always light, regardless of macOS appearance. Keep the `prefers-color-scheme` plumbing for web content.
 * **Network services:** Disable updates, AMO, Normandy, Remote Settings and Safe Browsing lookups. Extensions are installed manually.
+* **DRM:** Widevine and OpenH264 keep downloading automatically (from Google and Cisco directly), so DRM sites work.
+* **Push notifications:** Must work, and work well. Web Push uses Mozilla's push service (`push.services.mozilla.com`), the single deliberate exception to "no Mozilla services".
 * **Icon:** The application icon is `M6E-Icon.png` (repository root), a PNG rather than an SVG. Crop it to the white rounded-square tile (dropping the grey background and the watermark), place it on a 1024x1024 transparent canvas, and generate the `.icns` and all other branding images from that master. Use stable asset names so the icon can be replaced later by regenerating from a new `M6E-Icon.png`.
 * **Reading mode:** Modify the existing Reader View in place; do not build a separate reader.
 * **Privacy panel:** Implement the "Privacy Shield" as a section inside the existing settings page (`about:preferences`), not as a new `about:m6e` page.

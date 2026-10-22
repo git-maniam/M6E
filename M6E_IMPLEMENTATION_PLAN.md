@@ -50,6 +50,9 @@ Each decision has a default, which this plan assumes unless changed. Settle D9 f
 - **D7 Support links.** Default: hide every "Learn more" link that points to `support.mozilla.org` and set `app.support.baseURL` to empty, so no Mozilla URL shows in the UI.
 - **D8 Code signing.** Default: ad-hoc signing (`codesign -s -`) for local use. Notarized distribution needs an Apple Developer ID.
 - **D9 Upstream base.** Default: keep the checked-in `160.0a1` Nightly snapshot. Since updates are disabled, security fixes arrive only when upstream changes are merged by hand, and this snapshot has no upstream history to merge from. Alternative: replace the base now with a Release or ESR source tree (more stable, smaller security merges later). Either way, record the exact upstream revision in this file.
+- **D10 DRM and media plugins. Confirmed by the user: keep automatic downloads, so DRM sites work.** Widevine (from Google) and OpenH264 (from Cisco) install automatically on first run. Firefox normally asks `aus5.mozilla.org` which versions to fetch. M6E skips that request and uses the download lists bundled in `toolkit/content/gmp-sources/`, which point straight at Google and Cisco and carry SHA-512 hashes (P1.12). Those lists are fixed at the snapshot's versions, so refresh them whenever upstream changes are merged.
+- **D11 DNS over HTTPS.** Default: off, using system DNS, with the setting kept visible so the user can turn it on. Firefox's automatic DoH rollout and its Cloudflare probe are disabled.
+- **D12 Web Push. Confirmed by the user: site push notifications must work, and work well.** Web Push is relayed through a push server, and Firefox's is Mozilla's autopush (`wss://push.services.mozilla.com/`). The only alternative is self-hosting autopush. So M6E keeps Mozilla's push service as the single deliberate exception to "no Mozilla services". Message contents are end-to-end encrypted (RFC 8291), but Mozilla sees subscription metadata, timing and the connecting IP. Pushes only arrive while M6E is running, which P3.6 addresses.
 
 ## Phase 0: Setup and baseline
 
@@ -182,8 +185,13 @@ Commit P0.1 and P0.2 only. The baselines are local notes.
   - Remove the "Find more add-ons" links and the recommended-extensions pane.
   - Keep manual installation of `.xpi` files.
 - **Remote Settings (D2):** point `services.settings.server` at nothing, so only the bundled dumps load.
+- **Media plugins (D10):** keep `media.eme.enabled` and automatic plugin installs. Set `media.gmp-manager.url` to an empty value, so `GMPInstallManager` fails its Mozilla check and falls back to the bundled `gmp-sources` lists (Google and Cisco only). Confirm that the fallback triggers on an empty URL; if it doesn't, make the bundled lists the primary source in `GMPInstallManager.sys.mjs`.
+- **Web Push (D12):** leave `dom.push.enabled`, `dom.push.connection.enabled` and `dom.push.serverURL` at their defaults. Keep the Megaphone broadcast channel from triggering Remote Settings syncs (D2).
 - **Safe Browsing:** set `browser.safebrowsing.malware.enabled`, `browser.safebrowsing.phishing.enabled` and `browser.safebrowsing.downloads.remote.enabled` to `false`, and blank the provider URLs.
-- **Verify:** the network capture shows no `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com` or Safe Browsing hosts. An `.xpi` still installs from disk.
+- **Verify:**
+  - The network capture shows no `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com` or Safe Browsing hosts, except `push.services.mozilla.com` (D12).
+  - On a fresh profile, Widevine and OpenH264 download from Google and Cisco only, and a DRM test page plays.
+  - An `.xpi` still installs from disk.
 
 ### P1.13 Sponsored content and AI features
 - Lock `browser.newtabpage.activity-stream.showSponsoredTopSites`, `browser.newtabpage.activity-stream.showSponsored` and `browser.urlbar.suggest.quicksuggest.sponsored` to `false`. Remove the sponsored settings UI and the Firefox Suggest online paths in `browser/extensions/newtab` and the urlbar.
@@ -192,8 +200,10 @@ Commit P0.1 and P0.2 only. The baselines are local notes.
 
 ### P1.14 Pocket leftovers and Phase 1 check
 - Search for leftover Pocket prefs, strings and icons (`extensions.pocket`, `pocket` in `browser/` front-end files) and remove them.
-- Repeat the P0.4 network capture. Expected: no outbound connections except captive-portal and connectivity checks, which M6E should also disable or point at a neutral host.
-- **Verify:** the network log is empty for 5 idle minutes; `./mach run` works for basic browsing.
+- Repeat the P0.4 network capture. Expected:
+  - **Allowed:** `push.services.mozilla.com` (D12), and the Widevine and OpenH264 downloads from Google and Cisco on a first run (D10).
+  - **Off:** captive-portal and connectivity checks, region lookup (`location.services.mozilla.com`), the first-run welcome page, new-tab DNS prefetching, and the automatic DoH probe (D11).
+- **Verify:** the 5-minute idle log contains only the allowed hosts above; `./mach run` works for basic browsing.
 
 ## Phase 2: Rebranding and UI
 
@@ -270,6 +280,7 @@ All changes are inside `toolkit/components/reader` and `toolkit/themes/shared/ab
   - **Storage:** first-party isolation, through Total Cookie Protection, which Strict mode includes.
   - **Leaks:** stricter referrer trimming, no prefetching or speculative connections, and WebRTC IP-leak protection.
 - Skip Arkenfox prefs whose only job is to disable things already removed in Phase 1.
+- Do not disable Web Push, notifications or DRM (D10, D12). Check that `privacy.resistFingerprinting` doesn't block or spoof the Notification and Push APIs; if it does, exempt them.
 - **Verify:** a fresh profile shows the expected values in `about:config`. Run a fingerprinting test page (manual) and five popular sites as a compatibility sample, and record what breaks.
 
 ### P3.5 Privacy Shield panel
@@ -277,6 +288,12 @@ All changes are inside `toolkit/components/reader` and `toolkit/themes/shared/ab
 - A small module (for example `browser/modules/M6EPrivacyShield.sys.mjs`) applies the strict set from P3.4 when the toggle is on. When it is off, it restores compatibility values: Standard ETP and fingerprinting resistance off. It must respect any pref the user changed by hand.
 - Show plainly what the toggle changes, and keep the existing detailed controls below it.
 - **Verify:** toggling flips the listed prefs both ways and survives restart; preference tests for the Privacy pane pass.
+
+### P3.6 Reliable push notifications (D12)
+- **Native alerts:** route notifications through macOS Notification Center (`alerts.useSystemBackend`), and make sure the macOS notification-permission request appears on first use.
+- **Stay running:** M6E receives pushes only while it runs. Keep it running after its last window closes (the macOS default; confirm nothing in Phase 1 changed that).
+- **Launch at login:** add an optional, off-by-default "Open M6E at login, hidden" setting, using a macOS login item through `SMAppService`. Agree its scope with the user before building it, since it needs native code.
+- **Verify:** subscribe on a Web Push test page, close every window, send a push, and confirm a native macOS notification arrives. Repeat with the Privacy Shield on and off, and after a restart.
 
 ## Phase 4: Performance
 
@@ -335,3 +352,5 @@ Run on the packaged app with a fresh profile:
   - Arkenfox-style prefs breaking sites. Mitigated by the Privacy Shield toggle.
   - LTO and PGO lengthening builds.
   - Security exposure from the frozen base (D2, D9).
+  - Dependence on Mozilla's push service (D12). If Mozilla changes or restricts it, push notifications stop until M6E self-hosts autopush.
+  - Stale DRM plugin versions in the bundled `gmp-sources` lists (D10). Refresh them during upstream merges.
