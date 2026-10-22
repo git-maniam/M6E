@@ -65,6 +65,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P1.4b | Lint configs repaired; file modes fixed | `c2f28c435a` |
 | P2.3b | fluent-lint accepts de-branded words | `5998fb7ec1` |
 | P3.2 | Bookmarks toolbar setting | `e4970f95a9` |
+| P3.3 | Reading Mode | `c1a620c1de` |
 
 ## 3. Results by phase (as built)
 
@@ -160,23 +161,24 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Known failures, from earlier phases:**
     - `browser_bookmarks_toolbar_collapsed_restore_default.js` fails because M6E is never in the default customization state. `TabsToolbar` defaults still list the AI buttons `smartwindow-group-tabs-button` and `ai-window-toggle`, which P1.13 leaves unplaced, so Restore Defaults is always enabled.
     - `browser_bookmarks_toolbar_telemetry.js` fails because telemetry is off.
+- **Reading Mode (P3.3):** Reader View is modified in place, and `readability/` is untouched.
+  - **Trigger:** the urlbar button still appears on detected articles. The View menu item and the shortcut work on any http(s) page (`AboutReaderParent.updateReaderButton`).
+  - **Clutter:**
+    - `ReaderMode._readerParse()` removes ad slots (`AD_SLOT_SELECTOR`: ad ids and classes, `data-ad*`, advertisement labels) from a clone before Readability runs. Readability rewrites those containers and drops their ids and classes.
+    - `AboutReader._removeClutter()` then removes iframes, embeds, video, audio, `nav`, `aside`, forms, "Advertisement" labels, figures without media, and inline colours and backgrounds.
+  - **Typography:** `_TEXT_SCALE` 1.25 multiplies every font-size step, so the default is 25 px instead of 20 px.
+  - **Colours:** `reader.color_scheme` is locked to `light`, with `light` its only value. The light foreground is `#000000`, and the colours menu is `hidden` when there is a single scheme. High contrast mode still applies.
+  - **Images:** images under 48 px in both dimensions are dropped; article images are kept.
+  - **Checked:** a clutter test page, plus Wikipedia (Auto rickshaw), the Rust 1.0 blog post and a Gutenberg book, all black on white at 25 px with the images kept.
+  - **Tests:** `browser_readerMode_m6e.js` is new, and the colour-scheme tests are removed. The reader suite gives 149 passed. The one failure, `browser_localfile_readerMode.js`, happens only locally, because test files under `obj-m6e/_tests` are symlinks and the address bar shows the resolved source path.
 
-## 4. Next step: P3.3 Reader View
+## 4. Next step: P3.4 Privacy hardening defaults
 
-See P3.3 in section 5.
+See P3.4 in section 5.
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (`AREA_TABSTRIP` and the vertical-tabs `AREA_NAVBAR` list), so that `inDefaultState` can be true and the restore-default test passes.
 
 ## 5. Remaining steps
-
-### P3.3 Reader View
-All changes go in `toolkit/components/reader` and `toolkit/themes/shared/aboutReader.css`. Don't edit the vendored `readability/` library; post-process its output in `AboutReader.sys.mjs`.
-- **Trigger:** keep the reader button for detected articles, and add a View-menu item that forces Reader View on any page.
-- **Clutter:** after Readability runs, remove every remaining `iframe`, `nav`, `aside`, form and ad-like element.
-- **Typography:** base text 1.25 times the stock base, derived from how `reader.font_size` maps to pixels. The user can still resize.
-- **Colours:** `#000000` on `#FFFFFF`. Remove the other colour schemes from `reader.color_scheme.values`, along with their controls, background images and page colours.
-- **Images:** keep inline article `img` and `picture` elements. Drop tiny or tracking images (under about 48 px) and video embeds.
-- **Check:** `./mach test toolkit/components/reader` passes, plus three real articles look right.
 
 ### P3.4 Privacy hardening defaults
 - Add a curated Arkenfox subset to `m6e.js`, each pref with its reason:
