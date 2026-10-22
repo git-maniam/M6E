@@ -85,6 +85,10 @@ helpus = Want to help? <label data-l10n-name="helpus-donateLink">Make a donation
 helpus-referrals2 = Want to help? <label data-l10n-name="helpus-donateLink">Make a donation</label>, <label data-l10n-name="helpus-shareFirefoxLink">share { -brand-product-name }</label>, or <label data-l10n-name="helpus-getInvolvedLink">get involved!</label>
 
 bottomLinks-license = Licensing Information
+
+# Shown in the About dialog. "Firefox", "Mozilla" and the licence name must stay
+# untranslated: they are required attribution under the Mozilla Public License.
+aboutdialog-m6e-based-on = { -brand-short-name } is based on Firefox source code from the Mozilla project, licensed under the <label data-l10n-name="license-link">Mozilla Public License 2.0</label>.
 bottom-links-terms = Terms of Use
 bottom-links-privacy = Privacy Notice
 
