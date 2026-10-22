@@ -237,3 +237,8 @@ pref("dom.disable_window_move_resize", true);
 // fingerprinting resistance (M6EPrivacyShield.sys.mjs).
 pref("m6e.privacyShield.enabled", true);
 pref("m6e.privacyShield.maximum", false);
+
+// Tracker Blocker (P3.7, D19): the urlbar's trust icon shows how many items
+// were blocked on the current page.
+pref("browser.urlbar.trackerCount.featureGate", true);
+pref("browser.urlbar.trackerCount.enabled", true);
