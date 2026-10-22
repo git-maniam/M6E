@@ -30,3 +30,6 @@ user_pref("extensions.formautofill.useml", false);
 // M6E turns on DNS over HTTPS by default (m6e.js), which would make tests
 // contact the resolver.
 user_pref("network.trr.mode", 0);
+// M6E starts new profiles in strict tracking protection; tests expect
+// Firefox's standard defaults.
+user_pref("browser.contentblocking.initialCategory", "");

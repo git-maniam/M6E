@@ -1,6 +1,6 @@
 # M6E Implementation Plan
 
-How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D17) refer to the spec's decision log.
+How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D18) refer to the spec's decision log.
 
 ## 1. Working method
 

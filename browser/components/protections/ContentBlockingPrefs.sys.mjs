@@ -518,6 +518,20 @@ export let ContentBlockingPrefs = {
 
   init() {
     this.setPrefExpectationsAndUpdate();
+    // M6E: a profile that has never had a category starts in the one named by
+    // browser.contentblocking.initialCategory, as if the user had chosen it.
+    // Choosing another category later persists.
+    let initialCategory = Services.prefs.getStringPref(
+      "browser.contentblocking.initialCategory",
+      ""
+    );
+    if (
+      initialCategory &&
+      !Services.prefs.prefHasUserValue(this.PREF_CB_CATEGORY)
+    ) {
+      Services.prefs.setStringPref(this.PREF_CB_CATEGORY, initialCategory);
+      this.updateCBCategory();
+    }
     this.matchCBCategory();
 
     for (let prefix of PREF_PREFIXES_TO_OBSERVE) {

@@ -192,3 +192,42 @@ pref("browser.toolbars.bookmarks.visibility", "never");
 // applies its own colours.
 pref("reader.color_scheme", "light", locked);
 pref("reader.color_scheme.values", "[\"light\"]", locked);
+
+// Privacy hardening (P3.4), as defaults rather than locks: the Privacy Shield
+// (P3.5) switches them. Fingerprinting resistance (privacy.resistFingerprinting)
+// stays off by default; the Privacy Shield's strict mode turns it on (D18).
+//
+// New profiles start in strict Enhanced Tracking Protection, which includes
+// Fingerprinting Protection (see ContentBlockingPrefs.init).
+pref("browser.contentblocking.initialCategory", "strict");
+
+// Ask sites not to sell or share data (Global Privacy Control).
+pref("privacy.globalprivacycontrol.enabled", true);
+
+// HTTPS-Only mode, with a warning page before any HTTP-only site.
+pref("dom.security.https_only_mode", true);
+
+// Cross-origin requests send only the origin as the referrer.
+pref("network.http.referer.XOriginTrimmingPolicy", 2);
+
+// WebRTC stays on for calls, but doesn't expose local IP addresses: only the
+// default route's address is used, and only the proxy when behind one.
+pref("media.peerconnection.ice.default_address_only", true);
+pref("media.peerconnection.ice.proxy_only_if_behind_proxy", true);
+
+// TLS: no 0-RTT data (replayable), and refuse servers without safe
+// renegotiation. Certificate pinning keeps Firefox's level, which allows
+// locally trusted roots: strict pinning breaks pinned sites behind TLS
+// inspection, such as corporate gateways.
+pref("security.tls.enable_0rtt_data", false);
+pref("security.ssl.require_safe_negotiation", true);
+pref("browser.xul.error_pages.expert_bad_cert", true);
+
+// Show internationalized domain names as punycode, against lookalike domains.
+pref("network.IDN_show_punycode", true);
+
+// No scripts in PDFs, no HTTP authentication prompts from cross-origin
+// subresources, and pages can't move or resize the window.
+pref("pdfjs.enableScripting", false);
+pref("network.auth.subresource-http-auth-allow", 1);
+pref("dom.disable_window_move_resize", true);

@@ -76,7 +76,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
   - **Colours:** strict black (`#000000`) on white (`#FFFFFF`), with no background images or page colours.
   - **Images:** keep only essential inline article images.
 - **Privacy:**
-  - Arkenfox-style hardening defaults.
+  - Arkenfox-style hardening defaults, with Fingerprinting Protection rather than full fingerprinting resistance (D18).
   - A prominent "Privacy Shield" section in Settings (`about:preferences`, not a new page), whose master toggle switches strict privacy (fingerprinting resistance, strict blocking) off when a site breaks.
 - **Push notifications:** must work reliably, with native macOS notifications (D12).
 
@@ -110,6 +110,7 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D15 | macOS look: the neutral toolbar and the macOS accent colour only, not compact density or translucency. | The user's choice in P2.5. |
 | D16 | Remove `about:mozilla` and `about:rights` (which only redirected to Mozilla's online terms), and Mozilla's default bookmarks. | No Mozilla content. |
 | D17 | Keep the build toolchain on Homebrew (pinned), with `mach bootstrap` disabled. | The network's TLS inspection (Cloudflare Gateway) breaks `mach bootstrap` downloads. |
+| D18 | Hardening defaults use strict Enhanced Tracking Protection, which includes Fingerprinting Protection, rather than full fingerprinting resistance (`privacy.resistFingerprinting`). Full resistance is part of the Privacy Shield's strict mode. | Full resistance spoofs the time zone to UTC, letterboxes windows and breaks more sites. The gentler protection blocks most fingerprinting without that. |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.
