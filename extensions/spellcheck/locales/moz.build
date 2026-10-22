@@ -6,3 +6,8 @@ LOCALIZED_FILES.dictionaries += [
     "en-US/hunspell/*.aff",
     "en-US/hunspell/*.dic",
 ]
+
+FINAL_TARGET_FILES.dictionaries += [
+    "en-GB/hunspell/en-GB.aff",
+    "en-GB/hunspell/en-GB.dic",
+]

@@ -256,8 +256,8 @@ LICENSES["hunspell-en"].title = "English Spellchecking Dictionary Licenses"
 LICENSES["hunspell-en"].text = "hunspell-en.html"
 LICENSES["hunspell-en"].spdx = "BSD-2-Clause"
 LICENSES["hunspell-en"].notice = """
-<p>These licenses apply to certain files in the directory <code>extensions/spellcheck/locales/en-US/hunspell/</code>,
-            and the Canadian English dictionary. (This code only ships in some localized versions of this product.)</p>
+<p>These licenses apply to certain files in the directories <code>extensions/spellcheck/locales/en-US/hunspell/</code>
+            and <code>extensions/spellcheck/locales/en-GB/hunspell/</code>, and the Canadian English dictionary. (This code only ships in some localized versions of this product.)</p>
 """
 
 LICENSES += ["hunspell-ee"]

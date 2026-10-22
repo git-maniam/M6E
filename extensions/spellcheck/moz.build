@@ -18,5 +18,6 @@ with Files("**"):
 
 LICENSED_UNDER += ["hunspell-en"]
 LICENSED_UNDER["hunspell-en"].paths = [
+    "locales/en-GB/hunspell",
     "locales/en-US/hunspell",
 ]
