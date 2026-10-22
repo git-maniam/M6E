@@ -434,7 +434,8 @@ CLAUDE.local.md
 # lint-ignore-next-line: git-only
 /*.json.gz
 
-# M6E
+# M6E (mozconfig is the M6E build definition, so it is tracked)
+!/mozconfig
 __pycache__/
 .gradle/
 obj-*/
