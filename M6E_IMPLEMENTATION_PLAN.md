@@ -73,7 +73,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.5b | Privacy Shield off means no blocking (D20; reworked in P3.7) | `48b7b26941` |
 | P3.6 | Push notifications verified; push check tool | `4b25cc5ac6` |
 | P2.6 | Fox artwork replaced with the M6E icon | `f6b2bfd7eb` |
-| P3.7 | Tracker Blocker button with a two-way, session-only per-site switch | see `git log --grep P3.7` |
+| P3.7 | Tracker Blocker button with a two-way, session-only per-site switch | `94d2a79bd4` |
+| P3.2b | No AI buttons in the default toolbar layout | see `git log --grep P3.2b` |
 
 ## 3. Results by phase (as built)
 
@@ -171,7 +172,8 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Checked:** the switch works both ways and follows View-menu changes. Import from Safari, Chrome and Chromium is available.
   - **Tests:** `browser_appearance_pane.js` and the new-tab toolbar tests pass. The new-tab tests pin `newtab`.
   - **Known failures, from earlier phases:**
-    - `browser_bookmarks_toolbar_collapsed_restore_default.js` fails because M6E is never in the default customization state. `TabsToolbar` defaults still list the AI buttons `smartwindow-group-tabs-button` and `ai-window-toggle`, which P1.13 leaves unplaced, so Restore Defaults is always enabled.
+    - (Fixed in P3.2b.) The default placements no longer list the AI buttons `smartwindow-group-tabs-button` and `ai-window-toggle`, which P1.13 leaves unplaced, so Customize starts in its default state. `browser_bookmarks_toolbar_collapsed_restore_default.js` cycles through the visibility states that differ from M6E's default, and passes.
+    - Customize tests still fail where they rely on the accounts button or Synced Tabs, which P1.8 removed: `browser_923857_…`, `browser_remote_tabs_button.js` and `browser_synced_tabs_menu.js`. They also leave dirty state that can fail the tests run after them.
     - `browser_bookmarks_toolbar_telemetry.js` fails because telemetry is off.
 - **Reading Mode (P3.3):** Reader View is modified in place, and `readability/` is untouched.
   - **Trigger:** the urlbar button still appears on detected articles. The View menu item and the shortcut work on any http(s) page (`AboutReaderParent.updateReaderButton`).
@@ -258,8 +260,6 @@ Don't start the next step until the current one builds and checks out. Split a s
 Phase 3 is complete. Start a fresh session for Phase 4 (see section 7).
 - **P4.1:** run `measure.py` on the current build, on a quiet machine with nothing else running, and compare it with `artifacts/baseline-P0` and `artifacts/phase1-P1.14b`.
 - **Then P4.2:** build flags one at a time. Each is a full rebuild.
-
-**Small follow-up:** drop the AI buttons from CustomizableUI's default placements (see P3.2), so that Restore Defaults is only enabled after a real customisation.
 
 ## 5. Remaining steps
 
