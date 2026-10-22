@@ -1226,10 +1226,13 @@ class TrustPanel {
   }
 
   #toggleTrackingProtection() {
-    M6EPrivacyShield.setSiteProtected(
-      window.gBrowser.selectedBrowser,
-      !this.#trackingProtectionEnabled
-    );
+    let protect = !this.#trackingProtectionEnabled;
+    M6EPrivacyShield.setSiteProtected(window.gBrowser.selectedBrowser, protect);
+    if (protect) {
+      Glean.securityUiProtectionspopup.clickEtpToggleOn.record();
+    } else {
+      Glean.securityUiProtectionspopup.clickEtpToggleOff.record();
+    }
 
     this.#closingReason = CLOSING_REASONS.ETP_TOGGLED;
     PanelMultiView.hidePopup(this.#popup);

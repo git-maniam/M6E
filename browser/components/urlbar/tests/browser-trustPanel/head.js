@@ -12,6 +12,15 @@ registerCleanupFunction(async () => {
   await UrlbarTestUtils.promisePopupClose(window);
 });
 
+// M6E locks breach alerts off; these tests cover the upstream feature.
+for (let pref of [
+  "browser.urlbar.trustPanel.breachAlerts",
+  "browser.urlbar.trustPanel.breachAlerts.featureGate",
+]) {
+  Services.prefs.unlockPref(pref);
+  Services.prefs.setBoolPref(pref, true);
+}
+
 async function loadBadCertPage(url) {
   const loaded = BrowserTestUtils.waitForErrorPage(gBrowser.selectedBrowser);
   const loadFlagsSkipCache =
