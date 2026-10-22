@@ -170,3 +170,12 @@ pref("network.prefetch-next", false);
 pref("network.http.speculative-parallel-limit", 0);
 pref("browser.places.speculativeConnect.enabled", false);
 pref("browser.urlbar.speculativeConnect.enabled", false);
+
+// No Mozilla support, feedback or web-compatibility sites. Support links hide
+// themselves when app.support.baseURL is empty.
+pref("app.support.baseURL", "", locked);
+pref("app.feedback.baseURL", "", locked);
+pref("ui.new-webcompat-reporter.enabled", false, locked);
+pref("browser.preferences.moreFromMozilla", false, locked);
+pref("browser.newtabpage.activity-stream.default.sites", "https://www.wikipedia.org/,https://www.youtube.com/,https://www.reddit.com/", locked);
+pref("app.releaseNotesURL.aboutDialog", "about:blank", locked);

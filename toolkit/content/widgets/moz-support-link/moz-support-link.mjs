@@ -106,6 +106,12 @@ export class MozSupportLink extends StylesMixin(HTMLAnchorElement, styles) {
   }
 
   #setHref() {
+    // M6E: without a support site, support links are hidden.
+    if (!MozSupportLink.SUPPORT_URL) {
+      this.hidden = true;
+      this.removeAttribute("href");
+      return;
+    }
     let supportPage = this.getAttribute("support-page") ?? "";
     let base = MozSupportLink.SUPPORT_URL + supportPage;
     this.href = this.hasAttribute("utm-content")

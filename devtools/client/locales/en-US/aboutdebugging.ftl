@@ -146,7 +146,7 @@ about-debugging-setup-usb-step-enable-debug2 = Enable USB Debugging in the Andro
 about-debugging-setup-usb-step-enable-file-transfer = Enable file transfer and ensure that your device is not in charging-only mode.
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Enable USB Debugging in Firefox on the Android device.
+about-debugging-setup-usb-step-enable-debug-firefox2 = Enable USB Debugging in the browser on the Android device.
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Connect the Android device to your computer.
@@ -236,7 +236,7 @@ about-debugging-browser-version-too-old = The connected browser has an old versi
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
 # from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = This version of Firefox cannot debug Firefox for Android (68). We recommend installing Firefox for Android Nightly on your phone for testing. <a>More details</a>
+about-debugging-browser-version-too-old-fennec = This version of { -brand-shorter-name } cannot debug this Android browser (68). Install a newer browser version on your phone for testing. <a>More details</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://firefox-source-docs.mozilla.org/devtools-user/about_colon_debugging/
@@ -244,7 +244,7 @@ about-debugging-browser-version-too-old-fennec = This version of Firefox cannot 
 # { $localID } is the build ID of the current Firefox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = The connected browser is more recent ({ $runtimeVersion }, buildID { $runtimeID }) than your { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). This is an unsupported setup and may cause DevTools to fail. Please update Firefox. <a>Troubleshooting</a>
+about-debugging-browser-version-too-recent = The connected browser is more recent ({ $runtimeVersion }, buildID { $runtimeID }) than your { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). This is an unsupported setup and may cause DevTools to fail. Please update { -brand-shorter-name }. <a>Troubleshooting</a>
 
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"

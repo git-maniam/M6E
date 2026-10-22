@@ -276,7 +276,7 @@ mr2022-onboarding-privacy-segmentation-button-secondary-label = Show detailed in
 ## MR2022 Multistage Gratitude screen strings
 
 mr2022-onboarding-gratitude-title = You’re helping us build a better web
-mr2022-onboarding-gratitude-subtitle = Thank you for using { -brand-short-name }, backed by the Mozilla Foundation. With your support, we’re working to make the internet more open, accessible, and better for everyone.
+mr2022-onboarding-gratitude-subtitle = Thank you for using { -brand-short-name }.
 mr2022-onboarding-gratitude-primary-button-label = See what’s new
 mr2022-onboarding-gratitude-secondary-button-label = Start browsing
 
@@ -332,7 +332,7 @@ onboarding-mobile-download-security-and-privacy-subtitle = When you’re synced 
 
 # Gratitude screen
 onboarding-gratitude-security-and-privacy-title = { -brand-short-name } has your back
-onboarding-gratitude-security-and-privacy-subtitle = Thank you for using { -brand-short-name }, backed by the Mozilla Foundation. With your support, we’re working to make the internet safer and more accessible for everyone.
+onboarding-gratitude-security-and-privacy-subtitle = Thank you for using { -brand-short-name }.
 
 # Sign up or Sign in screen
 onboarding-sign-up-title = Sync your data across devices

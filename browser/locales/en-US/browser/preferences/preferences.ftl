@@ -1135,7 +1135,7 @@ addressbar-locbar-suggest-sponsored-option-2 =
 # with their own vendor name, since the online suggest is created and maintained
 # by Mozilla.
 addressbar-firefox-suggest-online =
-    .label = Retrieve suggestions from Mozilla as you type
+    .label = Retrieve online suggestions as you type
 
 addressbar-dismissed-suggestions-label-2 =
     .label = Dismissed suggestions
@@ -1249,10 +1249,10 @@ containers-site-remove-button =
 ## Account and sync
 
 account-sync-section =
-    .heading = Account and sync
+    .heading = General
 
-pane-account-sync-title2 = Account and sync
-    .title = Account and sync
+pane-account-sync-title2 = General
+    .title = General
 
 sync-group-label =
     .label = Sync
@@ -1294,7 +1294,7 @@ sync-signedout-account-short =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Download Firefox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> or <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> to sync with your mobile device.
+sync-mobile-promo = Download a browser for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> or <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> to sync with your mobile device.
 
 ## Firefox account - Signed in
 
@@ -1487,7 +1487,7 @@ sync-engine-payment-methods2 =
 
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Extensions and themes for Firefox desktop
+    .tooltiptext = Extensions and themes for { -brand-short-name }
     .accesskey = A
 
 sync-engine-settings =

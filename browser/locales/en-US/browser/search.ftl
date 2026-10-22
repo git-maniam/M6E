@@ -77,7 +77,7 @@ add-engine-suggest-url = Suggestions URL with %s in place of search term (option
 ## The following placeholders are shown in the inputs when adding a new engine.
 
 add-engine-name-placeholder =
-    .placeholder = e.g., Mozilla Developer Network
+    .placeholder = e.g., Example Search
 add-engine-url-placeholder =
     .placeholder = e.g., https://developer.mozilla.com/search?q=%s
 add-engine-keyword-placeholder =

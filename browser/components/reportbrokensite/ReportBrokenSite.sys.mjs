@@ -678,7 +678,9 @@ export var ReportBrokenSite = new (class ReportBrokenSite {
     // Altering the disabled attribute on the command does not propagate
     // the change to the related menuitems (see bug 805653), so we change them all.
     const cmd = document.getElementById("cmd_reportBrokenSite");
-    const allowedByPolicy = Services.policies.isAllowed("feedbackCommands");
+    // M6E: hide the reporter whenever it cannot send reports, not only when
+    // policy forbids it.
+    const allowedByPolicy = this.enabled;
     cmd.toggleAttribute("hidden", !allowedByPolicy);
     // Note that this element does not exist until the protections popup is actually opened.
     const prot = document.getElementById(

@@ -15,20 +15,20 @@
 ## https://mozilla-l10n.github.io/styleguides/mozilla_general/#brands-copyright-and-trademark
 
 -facebook-container-brand-name = Facebook Container
--monitor-brand-name = Firefox Monitor
+-monitor-brand-name = Monitor
 -monitor-brand-short-name = Monitor
--mozmonitor-brand-name = Mozilla Monitor
+-mozmonitor-brand-name = Monitor
 -pocket-brand-name = Pocket
--send-brand-name = Firefox Send
--screenshots-brand-name = Firefox Screenshots
--mozilla-vpn-brand-name = Mozilla VPN
--profiler-brand-name = Firefox Profiler
--translations-brand-name = Firefox Translations
--relay-brand-name = Firefox Relay
+-send-brand-name = Send
+-screenshots-brand-name = Screenshots
+-mozilla-vpn-brand-name = VPN
+-profiler-brand-name = Profiler
+-translations-brand-name = Translations
+-relay-brand-name = Relay
 -relay-brand-short-name = Relay
 -fakespot-brand-name = Fakespot
 -solo-ai-brand-name = Solo
--thunderbird-brand-name = Mozilla Thunderbird
+-thunderbird-brand-name = Thunderbird
 -thunderbird-brand-short-name = Thunderbird
 -mdn-brand-name = MDN Web Docs
 -yelp-brand-name = Yelp
@@ -39,25 +39,25 @@
 -fakespot-website-name = Fakespot.com
 
 # The particle "by" can be localized, "Fakespot" and "Mozilla" should not be localized or transliterated.
--fakespot-brand-full-name = Fakespot by Mozilla
+-fakespot-brand-full-name = Fakespot
 
 # “Suggest” can be localized, “Firefox” must be treated as a brand
 # and kept in English.
--firefox-suggest-brand-name = Firefox Suggest
+-firefox-suggest-brand-name = { -brand-short-name } Suggest
 
 # ”Home" can be localized, “Firefox” must be treated as a brand
 # and kept in English.
--firefox-home-brand-name = Firefox Home
+-firefox-home-brand-name = { -brand-short-name } Home
 
 # View" can be localized, “Firefox” must be treated as a brand
 # and kept in English.
--firefoxview-brand-name = Firefox View
+-firefoxview-brand-name = { -brand-short-name } View
 
 # Firefox Labs is the name for a page in Settings to allow users to learn about
 # experimental and in-development features, and turn those features on and off.
 # The "Labs" portion can be localized, “Firefox” must be treated as a brand
 # and kept in English.
--firefoxlabs-brand-name = Firefox Labs
+-firefoxlabs-brand-name = { -brand-short-name } Labs
 
 -smart-window-brand-name =
     { $plural-form ->
