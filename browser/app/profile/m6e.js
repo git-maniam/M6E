@@ -14,3 +14,8 @@ pref("intl.multilingual.aboutWelcome.languageMismatchEnabled", false, locked);
 // The browser chrome is light-only, so private windows don't switch to the
 // dark private-browsing theme.
 pref("browser.theme.dark-private-windows", false, locked);
+
+// Mozilla accounts and Sync are removed. These are the prefs the
+// DisableFirefoxAccounts enterprise policy locks.
+pref("identity.fxaccounts.enabled", false, locked);
+pref("browser.aboutwelcome.enabled", false, locked);

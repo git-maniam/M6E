@@ -847,7 +847,8 @@ SettingGroupManager.registerGroups({
   }),
   accountDisabled: {
     inProgress: true,
-    hidden: accountsEnabled,
+    // M6E: accounts are removed, not disabled by an administrator.
+    hidden: true,
     items: [
       {
         id: "fxaAccountDisabled",

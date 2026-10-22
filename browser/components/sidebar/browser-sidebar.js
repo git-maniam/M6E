@@ -190,6 +190,11 @@ var SidebarController = {
       ],
     ]);
 
+    // M6E: Mozilla accounts are removed, so there are no synced tabs.
+    if (!Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
+      this._sidebars.delete("viewTabsSidebar");
+    }
+
     this.registerPrefSidebar(
       "browser.ml.chat.enabled",
       "viewGenaiChatSidebar",

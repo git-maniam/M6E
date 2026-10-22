@@ -170,12 +170,11 @@ Split into two commits.
 - Remove `browser/components/firefoxview`, its toolbar button and tab-strip entry, its menu items, and its tests. Remove `browser.tabs.firefox-view*` prefs.
 - **Verify:** no Firefox View button or menu entry; `about:firefoxview` does not resolve.
 
-### P1.8 Sync and Mozilla accounts
-- Change `imply_option("MOZ_SERVICES_SYNC", True)` to `False` in `browser/moz.configure`.
-- Lock `identity.fxaccounts.enabled` to `false`.
-- Remove the Sync pane (`sync.inc.xhtml`, `sync.js`, `fxaPairDevice.*`) from preferences, plus the account button and the toolbar and menu sign-in entry points.
-- Keep `services/fxaccounts` code only where other code still imports it; remove imports where feasible.
-- **Verify:** no sign-in or Sync UI anywhere; build passes.
+### P1.8 Sync and Mozilla accounts (done)
+- Lock `identity.fxaccounts.enabled` and `browser.aboutwelcome.enabled` off: the prefs the `DisableFirefoxAccounts` enterprise policy locks. That hides the account button, the app-menu sign-in, the Tools-menu Sync items and Send Tab.
+- **Settings:** hide the "account disabled" group, which would otherwise read as an administrator lockout. The Account & Sync pane keeps Default browser, Import and Backup; its title is renamed in P2.4.
+- **Sidebar:** don't register the synced-tabs sidebar tool when accounts are off.
+- **Deviation from the original plan:** `MOZ_SERVICES_SYNC` stays on and `services/sync` stays built. About 24 browser and toolkit modules import Sync modules (`resource://services-sync/...`), so building without them would turn each import into a runtime failure. With no account, Sync never runs and makes no network requests (checked in P1.14).
 
 ### P1.9 VPN (IP Protection)
 - Remove `browser/components/ipprotection` from the build, along with its toolbar button, panel, prefs and tests.
