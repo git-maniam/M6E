@@ -12,6 +12,10 @@
 //       Draw a 1024x1024 document icon: a page with the app icon on it.
 //   swift icon-tool.swift dmg-background <out.png> <width> <height>
 //       Draw the DMG window background with an arrow towards Applications.
+//   swift icon-tool.swift fit <icon.png> <target>
+//       Replace an existing PNG or GIF image with the icon, centred at the
+//       largest size that fits, on a transparent canvas of the target's pixel
+//       size. Used by replace-fox-art.sh.
 
 import CoreGraphics
 import Foundation
@@ -195,11 +199,29 @@ func dmgBackground(_ outPath: String, _ width: Int, _ height: Int) {
     writePNG(ctx.makeImage()!, outPath)
 }
 
+func fit(_ iconPath: String, _ targetPath: String) {
+    let target = loadImage(targetPath)
+    let icon = loadImage(iconPath)
+    let width = target.width, height = target.height
+    let side = CGFloat(min(width, height))
+    let ctx = makeContext(width, height)
+    ctx.draw(icon, in: CGRect(
+        x: (CGFloat(width) - side) / 2, y: (CGFloat(height) - side) / 2,
+        width: side, height: side))
+    let type = targetPath.lowercased().hasSuffix(".gif") ? UTType.gif : UTType.png
+    guard let dest = CGImageDestinationCreateWithURL(
+        URL(fileURLWithPath: targetPath) as CFURL, type.identifier as CFString, 1, nil)
+    else { fail("cannot write \(targetPath)") }
+    CGImageDestinationAddImage(dest, ctx.makeImage()!, nil)
+    if !CGImageDestinationFinalize(dest) { fail("cannot write \(targetPath)") }
+}
+
 let args = CommandLine.arguments
 switch args.count > 1 ? args[1] : "" {
 case "master" where args.count == 4: master(args[2], args[3])
 case "document" where args.count == 4: document(args[2], args[3])
 case "dmg-background" where args.count == 5:
     dmgBackground(args[2], Int(args[3]) ?? 1440, Int(args[4]) ?? 880)
+case "fit" where args.count == 4: fit(args[2], args[3])
 default: fail("usage: see the comment at the top of icon-tool.swift")
 }

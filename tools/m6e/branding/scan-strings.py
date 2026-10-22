@@ -82,13 +82,19 @@ def main():
     ]
     hits = []
     for path in files:
-        ext = path[path.rfind("."):]
+        ext = path[path.rfind(".") :]
         with open(path, encoding="utf-8") as fh:
             lines = fh.read().split("\n")
         for n, key, names, text in SCANNERS[ext](path, lines):
             if key in ATTRIBUTION_KEYS:
                 continue
-            hits.append({"file": path, "line": n, "key": key, "names": names, "text": text})
+            hits.append({
+                "file": path,
+                "line": n,
+                "key": key,
+                "names": names,
+                "text": text,
+            })
 
     by_file = {}
     for h in hits:

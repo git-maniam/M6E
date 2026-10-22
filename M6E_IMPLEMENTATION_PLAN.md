@@ -23,6 +23,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | `measure.py` | Startup timings, memory, and every host a fresh profile contacts in 5 idle minutes (plain launch, not Marionette) |
 | `push/push_check.py` | Web Push end to end: subscribes, sends real pushes, and checks notifications with the page open, with its tab closed, after a restart, and with no windows (`--rfp` repeats it with fingerprinting resistance) |
 | `branding/make-icons.sh` | Regenerates every branding image from `M6E-Icon.png` |
+| `branding/replace-fox-art.sh` | Replaces every image listed in `branding/fox-art.txt` (Firefox's fox mascot Kit, fox illustrations and Firefox logos) with the M6E icon, keeping each file's name and size |
 | `branding/scan-strings.py` | Lists user-visible en-US strings that still name Firefox or Mozilla; the expected result is 0 |
 
 **Marionette pitfalls:** its test profile disables New Tab feeds, plugin updates, Safe Browsing and update traffic. Pass `browser.newtabpage.activity-stream.testing.shouldInitializeFeeds=true` at launch when checking New Tab, and select a tab before measuring its layout. `Services.search` doesn't exist in this tree; import `moz-src:///toolkit/components/search/SearchService.sys.mjs`.
@@ -70,7 +71,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.4 | Privacy hardening defaults (D18) | `1d0df295aa` |
 | P3.5 | Privacy Shield | `1bce2fc615` |
 | P3.5b | Privacy Shield off means no blocking (D20) | `48b7b26941` |
-| P3.6 | Push notifications verified; push check tool | see `git log --grep P3.6` |
+| P3.6 | Push notifications verified; push check tool | `4b25cc5ac6` |
+| P2.6 | Fox artwork replaced with the M6E icon | see `git log --grep P2.6` |
 
 ## 3. Results by phase (as built)
 
@@ -125,6 +127,10 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Hidden:** Help-menu links to Mozilla and the web-compatibility reporter, support links (`moz-support-link` hides itself when there is no support URL), and More from Mozilla.
   - **Renamed and replaced:** the Settings landing pane is now "General"; the Kit mascot and Firefox glyph are replaced; the New Tab defaults are Wikipedia, YouTube and Reddit.
 - **Attribution (P2.4):** the About dialog shows the description text from spec §1 and the MPL attribution, with Licensing Information as its only link. `about:license` opens with the attribution. `about:rights` is removed.
+- **Fox artwork (P2.6, requested 2026-10-23):** 123 images of Firefox's fox mascot (Kit), fox illustrations and Firefox logos now show the M6E icon. They appear in error pages, feature callouts, the Trust panel, profiles, sidebar, New Tab, onboarding and about:debugging.
+  - **Finding them:** 90 by file name (`fox`, `kit`, `firefox`), and 33 more by reviewing contact sheets of every illustration-sized image (artifacts `sheet-*.png`).
+  - **Tool:** `tools/m6e/branding/replace-fox-art.sh` with the list `fox-art.txt`. An SVG embeds the 256 px icon centred in its original viewBox; a PNG or GIF is redrawn at its pixel size (`icon-tool.swift fit`). File names are unchanged.
+  - **Left out:** the Windows-only `browser/components/shell/icons/kit.ico`, which macOS never shows.
 - **macOS look (P2.5, D15):** `toolkit/themes/shared/m6e-tokens.css` is imported from the generated `tokens-shared.css`, and the token generator's header helper keeps that import.
   - **Accent:** follows `AccentColor`.
   - **Toolbar:** a neutral grey tab strip and toolbar with no Nova gradient, a white selected tab with a neutral edge, and a white page canvas.
@@ -298,7 +304,7 @@ Build on Firefox's tracking protection icon (`#tracking-protection-icon-containe
   - **Phase 3 features:** the bookmarks toggle, Reader View rules, the Privacy Shield, the Tracker Blocker button and push all work.
   - **Performance:** startup and memory at least as good as Phase 0.
 - **P5.3 Maintenance:** with updates disabled, security fixes need manual upstream merges (D9). After each merge:
-  - rerun `prune-search-config.py` and `scan-strings.py`;
+  - rerun `prune-search-config.py`, `scan-strings.py` and `replace-fox-art.sh`, and look for new fox artwork to add to `fox-art.txt`;
   - review the Remote Settings allowlist (D2) against upstream's collections;
   - refresh `gmp-sources` (D10);
   - check that the `m6e-tokens.css` import survives in `tokens-shared.css`.
