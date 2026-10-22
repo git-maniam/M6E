@@ -1,6 +1,6 @@
 # M6E Implementation Plan
 
-How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D18) refer to the spec's decision log.
+How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D19) refer to the spec's decision log.
 
 ## 1. Working method
 
@@ -204,6 +204,18 @@ See P3.5 in section 5. The Shield switches between M6E's strict set (P3.4: stric
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 
+**Checkpoint (2026-10-23):** P3.5 is in progress, with work in progress committed.
+- **Done:**
+  - **Module:** `browser/components/protections/M6EPrivacyShield.sys.mjs`. `apply({enabled, maximum})` switches strict and Standard ETP, sets the hardening prefs to the compatibility values or back, and handles `privacy.resistFingerprinting` for maximum mode. It only touches prefs still in the state being left, and leaves a Custom category alone.
+  - **Prefs:** `m6e.privacyShield.enabled` and `m6e.privacyShield.maximum` in `m6e.js`; the base test profile sets `enabled` to false.
+  - **Settings:** a `privacyShield` group, first in the Privacy pane (`config/privacy.mjs`, `preferences.js`, `preferences.ftl`).
+  - **Checked in the browser:** off, on, maximum and Custom all behave correctly, and the screenshot is in `artifacts/shots-P3.5`.
+- **Remaining:**
+  - Move `browser_m6e_privacy_shield.js` from `etp/browser.toml`, which runs with the redesign off, to `etp/browser-srd.toml`, and make it pass.
+  - Run the `etp` tests, lint, commit as `M6E P3.5`, and record it here.
+
+**Then:** P3.6 push, then P3.7 Tracker Blocker button (new requirement, D19).
+
 ## 5. Remaining steps
 
 ### P3.5 Privacy Shield
@@ -216,6 +228,20 @@ See P3.5 in section 5. The Shield switches between M6E's strict set (P3.4: stric
 - M6E keeps running after its last window closes, the macOS default; confirm that.
 - Optional and off by default: an "Open M6E at login, hidden" login item using `SMAppService`. It's native code, so agree its scope with the user first.
 - **Check:** subscribe on a Web Push test page, close every window, send a push, and see a native notification. Repeat with the Privacy Shield on and off, and after a restart.
+
+### P3.7 Tracker Blocker button (D19)
+Build on Firefox's tracking protection icon (`#tracking-protection-icon-container` in the urlbar's identity box) and the protections panel (`browser/base/content/browser-siteProtections.js`, `#protections-popup`). Don't add a second widget.
+- **Count badge:** add a number to the icon showing the items blocked on the current tab. Use the content-blocking log the panel already reads (`gBrowser.selectedBrowser.getContentBlockingLog()`, or the `onContentBlockingEvent` notifications), counting every blocked tracker, ad, social tracker, fingerprinter, cryptominer and cross-site cookie. Update it on each blocking event and on tab switches, and reset it on navigation.
+- **States:**
+  - **Enabled:** the active Tracker Blocker icon with the count.
+  - **Disabled:** a distinct inactive icon with no count, when the site has a tracking protection exception or blocking is off.
+  - Draw new SVG icons in `browser/themes/shared/icons/` in the M6E style.
+- **Panel:**
+  - List each category and the blocked domains (the panel's subviews already hold the per-category lists; show them inline or one click away).
+  - Keep the toggle. It is Firefox's per-site ETP switch, relabelled "Tracker Blocker".
+  - Drop the panel's Mozilla links, which have no support site (D7).
+- **Strings:** "Tracker Blocker", and an accessible label that includes the count.
+- **Check:** on a page with known trackers, the badge counts up and matches the panel's lists. Turning the toggle off shows the inactive icon with no number and reloads the page unblocked. Turning it on restores the count. Also check tab switches, private windows, and with the Privacy Shield off. Run `browser/base/content/test/protectionsUI`.
 
 ### Phase 4: Performance
 - **P4.1 Measure:** repeat `measure.py` on the Phase 3 build and compare with the baselines.
@@ -240,7 +266,7 @@ See P3.5 in section 5. The Shield switches between M6E's strict set (P3.4: stric
   - **Theme:** Dark Mode leaves the browser UI light, while web pages still follow it.
   - **Search:** only Google and Bing.
   - **Removed features:** absent.
-  - **Phase 3 features:** the bookmarks toggle, Reader View rules, the Privacy Shield and push all work.
+  - **Phase 3 features:** the bookmarks toggle, Reader View rules, the Privacy Shield, the Tracker Blocker button and push all work.
   - **Performance:** startup and memory at least as good as Phase 0.
 - **P5.3 Maintenance:** with updates disabled, security fixes need manual upstream merges (D9). After each merge:
   - rerun `prune-search-config.py` and `scan-strings.py`;

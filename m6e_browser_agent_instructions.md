@@ -31,7 +31,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 0 | Toolchain, mozconfig, baseline build and measurements | Done |
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
-| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push | In progress: P3.1–P3.4 done (search, bookmarks toolbar, Reading Mode, privacy hardening); next P3.5 Privacy Shield |
+| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | In progress: P3.1–P3.4 done (search, bookmarks toolbar, Reading Mode, privacy hardening); next P3.5 Privacy Shield |
 | 4 | Performance | Not started |
 | 5 | Packaging (`.dmg`) and acceptance | Not started |
 
@@ -79,6 +79,12 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
   - Arkenfox-style hardening defaults, with Fingerprinting Protection rather than full fingerprinting resistance (D18).
   - A prominent "Privacy Shield" section in Settings (`about:preferences`, not a new page), whose master toggle switches strict privacy (fingerprinting resistance, strict blocking) off when a site breaks.
 - **Push notifications:** must work reliably, with native macOS notifications (D12).
+- **Tracker Blocker button (D19):**
+  - **Placement:** a small button at the left of the address bar.
+  - **Icon:** shows how many trackers and other privacy invasions have been blocked on the current tab. The state is always visible:
+    - **Enabled:** the active Tracker Blocker icon with the number of blocked items.
+    - **Disabled:** a distinct, inactive icon with no number.
+  - **Panel:** clicking the button opens a dropdown panel that lists what was blocked: trackers, ads, social trackers, fingerprinters, cryptominers, cross-site cookies and other privacy threats, each with the blocked domains. The panel has a toggle switch that turns the Tracker Blocker on or off.
 
 ### Phase 4: Performance
 - Apply compile-flag optimisations first: LTO, the optimisation levels (`-O3`, Rust `opt-level = 3`) and Apple Silicon CPU tuning.
@@ -111,6 +117,7 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D16 | Remove `about:mozilla` and `about:rights` (which only redirected to Mozilla's online terms), and Mozilla's default bookmarks. | No Mozilla content. |
 | D17 | Keep the build toolchain on Homebrew (pinned), with `mach bootstrap` disabled. | The network's TLS inspection (Cloudflare Gateway) breaks `mach bootstrap` downloads. |
 | D18 | Hardening defaults use strict Enhanced Tracking Protection, which includes Fingerprinting Protection, rather than full fingerprinting resistance (`privacy.resistFingerprinting`). Full resistance is part of the Privacy Shield's strict mode. | Full resistance spoofs the time zone to UTC, letterboxes windows and breaks more sites. The gentler protection blocks most fingerprinting without that. |
+| D19 (agent) | The Tracker Blocker builds on Firefox's tracking protection icon and protections panel rather than a new widget. Its toggle turns blocking on or off for the current site (Firefox's per-site exception), and the count covers the current tab's page. Blocking is turned off everywhere with the Privacy Shield (P3.5). | One blocking engine and one exception list. A per-site switch is how you fix one broken site without lowering protection elsewhere. |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.
