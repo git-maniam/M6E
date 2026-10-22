@@ -55,16 +55,46 @@ return { classes: [...icon.classList], short: short?.textContent, shortVisible: 
   log: Object.keys(JSON.parse(gBrowser.selectedBrowser.getContentBlockingLog())).length,
   hasException: ContentBlockingAllowList.includes(gBrowser.selectedBrowser) };
 """
-print("on:", json.dumps(c.execute_script(STATE)))
-print("log:", json.dumps(c.execute_script("""
+def state(label):
+    time.sleep(8)
+    r = c.execute_script(STATE + "")
+    r["blocked"] = c.execute_script("""
 const log = JSON.parse(gBrowser.selectedBrowser.getContentBlockingLog());
-return Object.fromEntries(Object.entries(log).slice(0, 8).map(([o, a]) => [o, a.map(x => '0x' + x[0].toString(16) + (x[1] ? ' blocked' : ''))]));
-""")))
-print("tables:", c.execute_script("return [Services.prefs.getCharPref('urlclassifier.trackingTable'), Services.prefs.getCharPref('browser.safebrowsing.provider.mozilla.updateURL'), Services.prefs.getBoolPref('privacy.trackingprotection.enabled'), Services.prefs.getStringPref('browser.contentblocking.category')]"))
+return Object.values(log).filter(a => a.some(([s, b]) => b && (s & 0x1000 || s & 0x40 || s & 0x800 || s & 0x10000 || s & 0x20000000))).length;
+""")
+    r["protected"] = c.execute_script("const { M6EPrivacyShield } = ChromeUtils.importESModule('moz-src:///browser/components/protections/M6EPrivacyShield.sys.mjs'); return M6EPrivacyShield.isSiteProtected(gBrowser.selectedBrowser);")
+    print(label + ":", json.dumps({k: r[k] for k in ("classes", "short", "longVisible", "blocked", "protected", "hasException")}))
+    return r
+
+TOGGLE = """
+const icon = document.getElementById("trust-icon-container");
+icon.click();
+await new Promise(r => setTimeout(r, 1500));
+document.getElementById("trustpanel-toggle").click();
+"""
+def toggle():
+    c.execute_async_script("const done = arguments[0]; (async () => {" + TOGGLE + "})().then(done, e => done(String(e)));")
+
+state("shield on")
 open("artifacts/shots-P3.7/on.png", "wb").write(base64.b64decode(c.screenshot(element=c.find_element("id", "urlbar"))))
-c.execute_script("ContentBlockingAllowList.add(gBrowser.selectedBrowser); gBrowser.reload();")
-time.sleep(8)
-print("off:", json.dumps(c.execute_script(STATE)))
+toggle()
+state("shield on, site turned off")
 open("artifacts/shots-P3.7/off.png", "wb").write(base64.b64decode(c.screenshot(element=c.find_element("id", "urlbar"))))
-c.execute_script("ContentBlockingAllowList.remove(gBrowser.selectedBrowser);")
+print("permissions:", c.execute_script("""
+return [...Services.perms.all].filter(p => /trackingprotection|https-only|m6e-protect/.test(p.type)).map(p => p.type + ' ' + p.principal.origin + ' expire=' + p.expireType);
+"""))
+toggle()
+state("shield on, site turned back on")
+c.execute_script("""
+const { M6EPrivacyShield } = ChromeUtils.importESModule('moz-src:///browser/components/protections/M6EPrivacyShield.sys.mjs');
+Services.prefs.setBoolPref(M6EPrivacyShield.PREF_ENABLED, false);
+M6EPrivacyShield.apply({ enabled: false, maximum: false });
+gBrowser.reload();
+""")
+state("shield off")
+toggle()
+state("shield off, site turned on")
+print("permissions:", c.execute_script("""
+return [...Services.perms.all].filter(p => /trackingprotection|https-only|m6e-protect/.test(p.type)).map(p => p.type + ' ' + p.principal.origin + ' expire=' + p.expireType);
+"""))
 c.quit()
