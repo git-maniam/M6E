@@ -9,6 +9,7 @@
 #include "mozilla/dom/Document.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/PermissionManager.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/ScopeExit.h"
 #include "nsContentUtils.h"
 #include "nsGlobalWindowInner.h"
@@ -146,6 +147,17 @@ nsresult ContentBlockingAllowList::Check(
       // Stop checking the next permisson type if we decided to override.
       break;
     }
+  }
+
+  // M6E: with the Privacy Shield off, every site is on the allow list unless
+  // the user turned the Tracker Blocker on for it (D20).
+  if (!aIsAllowListed && !Preferences::GetBool("m6e.privacyShield.enabled",
+                                               true)) {
+    uint32_t protect = nsIPermissionManager::UNKNOWN_ACTION;
+    nsresult rv = permManager->TestPermissionFromPrincipal(
+        aContentBlockingAllowListPrincipal, "m6e-protect"_ns, &protect);
+    NS_ENSURE_SUCCESS(rv, rv);
+    aIsAllowListed = protect != nsIPermissionManager::ALLOW_ACTION;
   }
 
   if (!aIsAllowListed) {

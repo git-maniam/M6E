@@ -9,6 +9,7 @@
 #include "mozilla/Components.h"
 #include "mozilla/NullPrincipal.h"
 #include "mozilla/OriginAttributes.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/StoragePrincipalHelper.h"
 #include "mozilla/TimeStamp.h"
@@ -705,6 +706,19 @@ bool nsHTTPSOnlyUtils::TestIfPrincipalIsExempt(nsIPrincipal* aPrincipal,
 
   bool checkForHTTPSFirst = aUpgradeMode == HTTPS_FIRST_MODE ||
                             aUpgradeMode == SCHEMELESS_HTTPS_FIRST_MODE;
+
+  // M6E: with the Privacy Shield off, every site is exempt unless the user
+  // turned the Tracker Blocker on for it (D20).
+  if (aUpgradeMode == HTTPS_ONLY_MODE &&
+      !mozilla::Preferences::GetBool("m6e.privacyShield.enabled", true)) {
+    uint32_t protect;
+    rv = sPermMgr->TestPermissionFromPrincipal(aPrincipal, "m6e-protect"_ns,
+                                               &protect);
+    NS_ENSURE_SUCCESS(rv, false);
+    if (protect != nsIPermissionManager::ALLOW_ACTION) {
+      return true;
+    }
+  }
 
   return perm == nsIHttpsOnlyModePermission::LOAD_INSECURE_ALLOW ||
          perm == nsIHttpsOnlyModePermission::LOAD_INSECURE_ALLOW_SESSION ||

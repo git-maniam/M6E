@@ -2781,15 +2781,9 @@ bool nsContentUtils::ETPSaysShouldNotResistFingerprinting(
   // A positive return from this function should always be obeyed.
   // A negative return means we should keep checking things.
 
-  // We do not want this check to apply to RFP, only to FPP.
-  if (nsRFPService::IsRFPPrefEnabled(aIsPBM)) {
-    // In RFP, never use the ETP toggle to exempt.
-    // We can safely return false here even if we are not in PBM mode
-    // and RFP_pbmode is enabled because we will later see that and
-    // return false from the ShouldRFP function entirely.
-    return false;
-  }
-
+  // M6E: upstream applies this only to FPP and never exempts RFP. In M6E the
+  // Tracker Blocker's per-site switch covers RFP too (D20).
+  (void)aIsPBM;
   return ContentBlockingAllowList::Check(aCookieJarSettings);
 }
 
