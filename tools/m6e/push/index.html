@@ -1,0 +1,31 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Push test</title>
+  </head>
+  <body>
+    <script>
+      window.received = [];
+      navigator.serviceWorker.addEventListener("message", e =>
+        window.received.push(e.data)
+      );
+      window.setup = async () => {
+        const reg = await navigator.serviceWorker.register("sw.js");
+        await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true });
+        return { endpoint: sub.endpoint, permission: Notification.permission };
+      };
+      window.notifications = async () => {
+        const reg = await navigator.serviceWorker.ready;
+        return (await reg.getNotifications()).map(
+          n => n.title + " | " + n.body
+        );
+      };
+    </script>
+  </body>
+</html>

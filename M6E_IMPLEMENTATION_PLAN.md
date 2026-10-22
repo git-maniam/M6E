@@ -21,6 +21,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 |---|---|
 | `chrome_eval.py` | `./mach python tools/m6e/chrome_eval.py --binary obj-m6e/dist/M6E.app/Contents/MacOS/m6e --script check.js --headless` runs a JS snippet with chrome privileges on a fresh profile and prints the JSON it returns |
 | `measure.py` | Startup timings, memory, and every host a fresh profile contacts in 5 idle minutes (plain launch, not Marionette) |
+| `push/push_check.py` | Web Push end to end: subscribes, sends real pushes, and checks notifications with the page open, with its tab closed, after a restart, and with no windows (`--rfp` repeats it with fingerprinting resistance) |
 | `branding/make-icons.sh` | Regenerates every branding image from `M6E-Icon.png` |
 | `branding/scan-strings.py` | Lists user-visible en-US strings that still name Firefox or Mozilla; the expected result is 0 |
 
@@ -68,7 +69,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.3 | Reading Mode | `c1a620c1de` |
 | P3.4 | Privacy hardening defaults (D18) | `1d0df295aa` |
 | P3.5 | Privacy Shield | `1bce2fc615` |
-| P3.5b | Privacy Shield off means no blocking (D20) | see `git log --grep P3.5b` |
+| P3.5b | Privacy Shield off means no blocking (D20) | `48b7b26941` |
+| P3.6 | Push notifications verified; push check tool | see `git log --grep P3.6` |
 
 ## 3. Results by phase (as built)
 
@@ -209,20 +211,25 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Tests:** `etp/browser_m6e_privacy_shield.js`, which is in `browser-srd.toml` because the Shield exists only with the settings redesign. The `etp` suite gives 875 and 923 passed.
   - **Off means no blocking (P3.5b, D20):** with a strict or standard category, off switches to `custom` with every blocking feature off (`NO_BLOCKING_VALUES`): tracking content, social trackers, fingerprinters, cryptominers, email trackers, the level-2 list, query stripping and Fingerprinting Protection, in normal and private windows. `cookieBehavior` stays 5 (Total Cookie Protection). On returns to strict when the category is standard or blocking is still all off. A custom setup the user made is kept.
   - **Not a bug:** the security warning card on the Privacy pane appears only in Marionette and test profiles. They turn off password saving and the popup blocker.
+- **Push notifications (P3.6, D12):** no code change was needed, because M6E's defaults already give reliable push.
+  - **Defaults:** `dom.push.enabled`, `dom.push.connection.enabled`, `wss://push.services.mozilla.com/`, and `alerts.useSystemBackend` (macOS Notification Center).
+  - **`tools/m6e/push/push_check.py`:** serves a service-worker page on localhost, subscribes through Mozilla's push service, sends real pushes to the endpoint with curl, and checks delivery and the shown notification in four cases:
+    - with the page open;
+    - with its tab closed;
+    - after an in-app restart;
+    - that the app keeps running with no windows.
 
-## 4. Next step: P3.6 Reliable push notifications
+    All pass, with and without fingerprinting resistance (`--rfp`). Marionette turns `dom.push.connection.enabled` off, so the tool turns it back on.
+  - **Manual check:** the native banner and the macOS permission prompt on first use (System Settings, Notifications, M6E), because headless runs can't show them.
+  - **Not done:** the optional "open at login, hidden" login item. It's native code and needs the user's agreement first.
 
-See P3.6 in section 5. Then comes P3.7, the Tracker Blocker button, with the two-way, session-only per-site override (D19, D20).
+## 4. Next step: P3.7 Tracker Blocker button (D19, D20)
+
+See P3.7 in section 5.
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 
 ## 5. Remaining steps
-
-### P3.6 Reliable push notifications (D12)
-- Notifications go through macOS Notification Center (`alerts.useSystemBackend`), and the macOS permission request appears on first use.
-- M6E keeps running after its last window closes, the macOS default; confirm that.
-- Optional and off by default: an "Open M6E at login, hidden" login item using `SMAppService`. It's native code, so agree its scope with the user first.
-- **Check:** subscribe on a Web Push test page, close every window, send a push, and see a native notification. Repeat with the Privacy Shield on and off, and after a restart.
 
 ### P3.7 Tracker Blocker button (D19)
 Build on Firefox's tracking protection icon (`#tracking-protection-icon-container` in the urlbar's identity box) and the protections panel (`browser/base/content/browser-siteProtections.js`, `#protections-popup`). Don't add a second widget.
