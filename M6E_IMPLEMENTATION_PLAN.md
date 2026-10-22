@@ -66,7 +66,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P2.3b | fluent-lint accepts de-branded words | `5998fb7ec1` |
 | P3.2 | Bookmarks toolbar setting | `e4970f95a9` |
 | P3.3 | Reading Mode | `c1a620c1de` |
-| P3.4 | Privacy hardening defaults (D18) | see `git log --grep P3.4` |
+| P3.4 | Privacy hardening defaults (D18) | `1d0df295aa` |
+| P3.5 | Privacy Shield | see `git log --grep P3.5` |
 
 ## 3. Results by phase (as built)
 
@@ -197,31 +198,23 @@ Don't start the next step until the current one builds and checks out. Split a s
     - The `etp` Settings tests pass, `browser_m6e_initial_category.js` is new, and the TCP section test expects a hidden support link (D7).
   - **Maintenance:** after merges, check `ContentBlockingPrefs` still honours `initialCategory`.
   - **Network (`artifacts/P3.4-measure`):** 8 hosts. The Widevine component came from `www.google.com/dl/…` this time. Google rotates that download between `edgedl.me.gvt1.com`, `dl.google.com` and `www.google.com`, all D10.
+- **Privacy Shield (P3.5):**
+  - **Module:** `browser/components/protections/M6EPrivacyShield.sys.mjs`. `apply({enabled, maximum})` does the switching:
+    - **Off:** strict ETP becomes Standard, and each hardening pref from P3.4 still at M6E's value gets Firefox's value (`COMPATIBILITY_VALUES`).
+    - **On:** the reverse.
+    - **Maximum:** while the Shield is on, maximum mode adds `privacy.resistFingerprinting` (D18).
+    - Prefs changed by hand and a Custom category are left alone.
+  - **Settings:** the `privacyShield` group is first in the Privacy pane. It has a "Privacy Shield" switch (`m6e.privacyShield.enabled`, default on) and a nested "Maximum protection" checkbox (`m6e.privacyShield.maximum`), which is disabled while the Shield is off. Changing either one offers to reload tabs.
+  - **Tests:** `etp/browser_m6e_privacy_shield.js`, which is in `browser-srd.toml` because the Shield exists only with the settings redesign. The `etp` suite gives 875 and 923 passed.
+  - **Not a bug:** the security warning card on the Privacy pane appears only in Marionette and test profiles. They turn off password saving and the popup blocker.
 
-## 4. Next step: P3.5 Privacy Shield
+## 4. Next step: P3.6 Reliable push notifications
 
-See P3.5 in section 5. The Shield switches between M6E's strict set (P3.4: strict ETP and the `m6e.js` hardening block) plus, in its strict mode, `privacy.resistFingerprinting` (D18), and a compatibility set (Standard ETP, the hardening prefs at Firefox's values).
+See P3.6 in section 5. After it comes P3.7, the Tracker Blocker button (D19).
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 
-**Checkpoint (2026-10-23):** P3.5 is in progress, with work in progress committed.
-- **Done:**
-  - **Module:** `browser/components/protections/M6EPrivacyShield.sys.mjs`. `apply({enabled, maximum})` switches strict and Standard ETP, sets the hardening prefs to the compatibility values or back, and handles `privacy.resistFingerprinting` for maximum mode. It only touches prefs still in the state being left, and leaves a Custom category alone.
-  - **Prefs:** `m6e.privacyShield.enabled` and `m6e.privacyShield.maximum` in `m6e.js`; the base test profile sets `enabled` to false.
-  - **Settings:** a `privacyShield` group, first in the Privacy pane (`config/privacy.mjs`, `preferences.js`, `preferences.ftl`).
-  - **Checked in the browser:** off, on, maximum and Custom all behave correctly, and the screenshot is in `artifacts/shots-P3.5`.
-- **Remaining:**
-  - Move `browser_m6e_privacy_shield.js` from `etp/browser.toml`, which runs with the redesign off, to `etp/browser-srd.toml`, and make it pass.
-  - Run the `etp` tests, lint, commit as `M6E P3.5`, and record it here.
-
-**Then:** P3.6 push, then P3.7 Tracker Blocker button (new requirement, D19).
-
 ## 5. Remaining steps
-
-### P3.5 Privacy Shield
-- Add a "Privacy Shield" group at the top of the Settings Privacy pane (the config format), with a master toggle backed by `m6e.privacyShield.enabled`.
-- A small module, for example `browser/modules/M6EPrivacyShield.sys.mjs`, applies the P3.4 strict set when the toggle is on. When it is off, it restores compatibility values (Standard tracking protection, fingerprinting resistance off). It respects prefs the user changed by hand.
-- **Check:** the toggle flips the prefs both ways, the state survives a restart, and the Privacy-pane tests pass.
 
 ### P3.6 Reliable push notifications (D12)
 - Notifications go through macOS Notification Center (`alerts.useSystemBackend`), and the macOS permission request appears on first use.
