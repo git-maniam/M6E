@@ -3,17 +3,39 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
- * M6E: the Privacy Shield (P3.5) switches between M6E's privacy hardening
- * (strict tracking protection and the hardening defaults in m6e.js) and a
- * compatibility set for sites that break. Its maximum mode adds fingerprinting
- * resistance (D18).
+ * M6E: the Privacy Shield (P3.5) sets the default for every site (D20). On, it
+ * applies M6E's privacy hardening: strict tracking protection and the
+ * hardening defaults in m6e.js. Its maximum mode adds fingerprinting
+ * resistance (D18). Off, nothing is blocked and the hardening prefs have
+ * Firefox's values. Total Cookie Protection stays, because it isolates
+ * cookies rather than blocking them.
  *
  * Switching only changes prefs that still hold the value of the state being
- * left, so prefs the user changed by hand are kept.
+ * left, so prefs the user changed by hand, and a custom tracking protection
+ * setup, are kept.
  */
 
 const PREF_CATEGORY = "browser.contentblocking.category";
 const PREF_RFP = "privacy.resistFingerprinting";
+
+/**
+ * Every blocking feature of tracking protection, with its value when the
+ * Shield is off.
+ */
+const NO_BLOCKING_VALUES = {
+  "privacy.trackingprotection.enabled": false,
+  "privacy.trackingprotection.pbmode.enabled": false,
+  "privacy.trackingprotection.socialtracking.enabled": false,
+  "privacy.trackingprotection.fingerprinting.enabled": false,
+  "privacy.trackingprotection.cryptomining.enabled": false,
+  "privacy.trackingprotection.emailtracking.enabled": false,
+  "privacy.trackingprotection.emailtracking.pbmode.enabled": false,
+  "privacy.annotate_channels.strict_list.enabled": false,
+  "privacy.query_stripping.enabled": false,
+  "privacy.query_stripping.enabled.pbmode": false,
+  "privacy.fingerprintingProtection": false,
+  "privacy.fingerprintingProtection.pbmode": false,
+};
 
 /**
  * The hardening prefs from m6e.js with their Firefox values, which the
@@ -60,6 +82,7 @@ export const M6EPrivacyShield = {
   PREF_ENABLED: "m6e.privacyShield.enabled",
   PREF_MAXIMUM: "m6e.privacyShield.maximum",
   COMPATIBILITY_VALUES,
+  NO_BLOCKING_VALUES,
 
   /**
    * Applies the Shield's state to the privacy prefs.
@@ -71,10 +94,17 @@ export const M6EPrivacyShield = {
    */
   apply({ enabled, maximum }) {
     let category = Services.prefs.getStringPref(PREF_CATEGORY, "standard");
-    if (enabled && category == "standard") {
+    let blockingOff = Object.entries(NO_BLOCKING_VALUES).every(
+      ([pref, value]) => getPref(pref) === value
+    );
+    if (enabled && (category == "standard" || blockingOff)) {
+      // Setting the category applies its prefs (ContentBlockingPrefs).
       Services.prefs.setStringPref(PREF_CATEGORY, "strict");
-    } else if (!enabled && category == "strict") {
-      Services.prefs.setStringPref(PREF_CATEGORY, "standard");
+    } else if (!enabled && category != "custom") {
+      Services.prefs.setStringPref(PREF_CATEGORY, "custom");
+      for (let [pref, value] of Object.entries(NO_BLOCKING_VALUES)) {
+        Services.prefs.setBoolPref(pref, value);
+      }
     }
 
     let defaults = Services.prefs.getDefaultBranch("");

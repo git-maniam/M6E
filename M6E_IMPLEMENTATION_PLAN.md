@@ -67,7 +67,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.2 | Bookmarks toolbar setting | `e4970f95a9` |
 | P3.3 | Reading Mode | `c1a620c1de` |
 | P3.4 | Privacy hardening defaults (D18) | `1d0df295aa` |
-| P3.5 | Privacy Shield | see `git log --grep P3.5` |
+| P3.5 | Privacy Shield | `1bce2fc615` |
+| P3.5b | Privacy Shield off means no blocking (D20) | see `git log --grep P3.5b` |
 
 ## 3. Results by phase (as built)
 
@@ -206,18 +207,12 @@ Don't start the next step until the current one builds and checks out. Split a s
     - Prefs changed by hand and a Custom category are left alone.
   - **Settings:** the `privacyShield` group is first in the Privacy pane. It has a "Privacy Shield" switch (`m6e.privacyShield.enabled`, default on) and a nested "Maximum protection" checkbox (`m6e.privacyShield.maximum`), which is disabled while the Shield is off. Changing either one offers to reload tabs.
   - **Tests:** `etp/browser_m6e_privacy_shield.js`, which is in `browser-srd.toml` because the Shield exists only with the settings redesign. The `etp` suite gives 875 and 923 passed.
+  - **Off means no blocking (P3.5b, D20):** with a strict or standard category, off switches to `custom` with every blocking feature off (`NO_BLOCKING_VALUES`): tracking content, social trackers, fingerprinters, cryptominers, email trackers, the level-2 list, query stripping and Fingerprinting Protection, in normal and private windows. `cookieBehavior` stays 5 (Total Cookie Protection). On returns to strict when the category is standard or blocking is still all off. A custom setup the user made is kept.
   - **Not a bug:** the security warning card on the Privacy pane appears only in Marionette and test profiles. They turn off password saving and the popup blocker.
 
-## 4. Next step: P3.5b Privacy Shield off means no blocking (D20)
+## 4. Next step: P3.6 Reliable push notifications
 
-Rework `M6EPrivacyShield.apply()` so that off turns every blocking feature off rather than switching to Standard:
-- the category becomes `custom`, with tracking content, social, fingerprinting, cryptomining and email tracker blocking off in normal and private windows;
-- Fingerprinting Protection is off, and `cookieBehavior` stays 5 (Total Cookie Protection);
-- on returns to strict.
-
-Keep the rule that hand-changed prefs are left alone, update `browser_m6e_privacy_shield.js`, and update the Settings description strings.
-
-Then P3.6 (push) and P3.7 (the Tracker Blocker button, with the two-way session-only per-site switch from D20).
+See P3.6 in section 5. Then comes P3.7, the Tracker Blocker button, with the two-way, session-only per-site override (D19, D20).
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 

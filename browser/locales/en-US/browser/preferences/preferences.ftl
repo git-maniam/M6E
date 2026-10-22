@@ -1922,11 +1922,11 @@ content-blocking-enhanced-tracking-protection = Enhanced Tracking Protection
 
 privacy-shield-group =
     .label = Privacy Shield
-    .description = { -brand-short-name } blocks trackers and fingerprinting, and only connects to sites securely. If a site doesn’t work, turn the shield off.
+    .description = Choose how { -brand-short-name } protects every site by default. To change it for one site, use the Tracker Blocker in the address bar.
 
 privacy-shield-enabled =
     .label = Privacy Shield
-    .description = Strict tracking protection, HTTPS-Only mode, and { -brand-short-name }’s privacy hardening.
+    .description = Blocks trackers, ads and fingerprinting, connects to sites securely, and applies { -brand-short-name }’s privacy hardening. When it’s off, nothing is blocked.
 
 privacy-shield-maximum =
     .label = Maximum protection
