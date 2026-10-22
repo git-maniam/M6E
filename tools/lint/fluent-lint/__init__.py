@@ -488,7 +488,9 @@ def get_branding_list(root, brand_files):
             self.generic_visit(node)
 
         def visit_TextElement(self, node):
-            if self.last_message_id:
+            # M6E: text after a placeable, such as " View" in
+            # "{ -brand-short-name } View", is not a brand name by itself.
+            if self.last_message_id and not node.value[:1].isspace():
                 self.brands += [node.value]
                 self.last_message_id = None
             self.generic_visit(node)
@@ -511,6 +513,9 @@ def lint(paths, config, fix=None, **lintargs):
     exclusions = get_exclusions(root)
     brand_files = config.get("brand-files")
     brand_names = get_branding_list(root, brand_files)
+    # M6E: some terms no longer name a product and are plain words.
+    generic_names = set(config.get("generic-names", []))
+    brand_names = [name for name in brand_names if name not in generic_names]
     results = []
     for path in files:
         contents = open(path, encoding="utf-8").read()
