@@ -3112,7 +3112,6 @@ dependencies = [
  "wgpu_bindings",
  "win32_process_mitigations",
  "wpf-gpu-raster",
- "xdg_alerts",
  "xpcom",
  "zlib-rs",
 ]
@@ -9788,18 +9787,6 @@ name = "writeable"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9edde0db4769d2dc68579893f2306b26c6ecfbe0ef499b013d731b7b9247e0b9"
-
-[[package]]
-name = "xdg_alerts"
-version = "0.1.0"
-dependencies = [
- "dbus",
- "log",
- "nserror",
- "nsstring",
- "thin-vec",
- "xpcom",
-]
 
 [[package]]
 name = "xml-rs"

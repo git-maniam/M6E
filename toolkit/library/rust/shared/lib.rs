@@ -125,8 +125,6 @@ extern crate viaduct_necko;
 
 extern crate gecko_logger;
 extern crate gecko_tracing;
-#[cfg(feature = "with_dbus")]
-extern crate xdg_alerts;
 
 #[cfg(feature = "oxidized_breakpad")]
 extern crate rust_minidump_writer_linux;

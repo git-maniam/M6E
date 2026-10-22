@@ -227,7 +227,6 @@ MACH_COMMANDS = {
         "python/mozbuild/mozbuild/licensing_commands.py",
     ),
     "settings": MachCommandReference("python/mach/mach/commands/settings.py"),
-    "shell-test": MachCommandReference("browser/installer/linux/mach_commands.py"),
     "show-log": MachCommandReference("python/mozbuild/mozbuild/mach_commands.py"),
     "source-package": MachCommandReference("python/mozbuild/mozbuild/mach_commands.py"),
     "static-analysis": MachCommandReference(

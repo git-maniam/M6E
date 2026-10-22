@@ -109,6 +109,15 @@ Commit P0.1 and P0.2 only. The baselines are local notes.
   - Vendored crates in `third_party/rust/` (for example `winapi-*`). Cargo checks every vendored file against `.cargo-checksum.json`, so deleting them breaks the macOS build.
   - `widget/headless`, which macOS uses for headless tests.
   - Cross-platform directories that merely contain platform files, such as `browser/components/shell`.
+  - `build/rust/windows`: the root `Cargo.toml` patches the `windows` crate to it, so Cargo needs it on every platform.
+  - Vendored upstream code (for example the Chromium sandbox sources), even where parts are platform-specific.
+- **Also check, for every removed directory** (each of these broke a build in P1.1 to P1.3):
+  - **Cargo:** workspace `members` in the root `Cargo.toml`, and `path =` dependencies in any `Cargo.toml`, even `cfg(...)`-targeted or optional ones, because Cargo resolves every target. After editing, prune `Cargo.lock` offline: copy `.cargo/config.toml.in` to `.cargo/config.toml`, run `cargo metadata --offline --format-version 1 > /dev/null`, then delete `.cargo/config.toml`. Check that only the removed crates disappear from the lock. A build with no Rust changes never runs Cargo, so a broken workspace can hide until a later step.
+  - **Glean:** entries in `toolkit/components/glean/metrics_index.py`. If any remaining code records a metric from a removed `metrics.yaml` (search for `glean::<category>::<metric>` and `Glean.<category>.<metric>`), restore just that `metrics.yaml` at its original path, so the generated header keeps its name. Otherwise drop the entry.
+  - **Test manifests:** `include` lines in `testing/crashtest/crashtests.list` and `layout/reftests/reftest.list`.
+  - **Licence metadata:** `LICENSED_UNDER[...].paths` entries (for example in `security/sandbox/moz.build`).
+  - **mach:** command mappings in `python/mach/mach/command_util.py`.
+- `./mach build-backend` reports most of these in seconds, so run it before the full build.
 
 ### P1.1 Android and iOS
 - Remove `mobile/android` and `mobile/ios`, plus the root Gradle files (`build.gradle`, `settings.gradle`, `gradle.properties`, `gradlew`, `gradlew.bat`, `gradle/`).
@@ -130,9 +139,11 @@ Commit P0.1 and P0.2 only. The baselines are local notes.
 - Remove `widget/gtk`, `security/sandbox/linux`, `toolkit/system/gnome`, `toolkit/system/unixproxy`, and other directories reached only behind `gtk` or `Linux` conditions.
 - **Verify:** build passes.
 
-### P1.4 Platform test fixtures
+### P1.4 Platform source subdirectories and test fixtures
+- Remove per-platform source subdirectories without their own `moz.build` that only Windows, Linux, Android or iOS branches reference. Examples: `uriloader/exthandler/{win,android,uikit,unix}`, `hal/{android,linux,windows}`, `dom/gamepad/{android,linux,windows}`, `netwerk/wifi/win`, `dom/media/platforms/android` and `js/src/threading/windows`. Check each with the rules above. Leave Rust sources that `cfg(target_os)` selects.
 - Remove test data that exists only for removed platforms, such as Windows `.exe` and `.dll` fixtures whose tests live in removed directories.
 - Leave fixtures used by cross-platform tests.
+- Linux crash-reporter pieces (`toolkit/crashreporter/rust_minidump_writer_linux`, `toolkit/crashreporter/breakpad-client/linux`) wait for P1.11, because the crash reporter's own crates depend on them.
 - **Verify:** build passes.
 
 ### P1.5 Language and locale UI
