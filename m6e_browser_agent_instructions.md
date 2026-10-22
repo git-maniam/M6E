@@ -24,14 +24,14 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 >
 > Please note: M6E is currently an experimental release, so while it is built for pure performance, you may occasionally encounter bugs or website compatibility issues.
 
-## 2. Status (2026-10-22)
+## 2. Status (2026-10-23)
 
 | Phase | Scope | Status |
 |---|---|---|
 | 0 | Toolchain, mozconfig, baseline build and measurements | Done |
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
-| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push | **Next: P3.1 search engines** |
+| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push | In progress: P3.1 search done; next, an in-app restart fix, then P3.2 bookmarks |
 | 4 | Performance | Not started |
 | 5 | Packaging (`.dmg`) and acceptance | Not started |
 
@@ -64,7 +64,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 - **Icon:** every branding image is generated from `M6E-Icon.png` by `tools/m6e/branding/make-icons.sh`. To change the icon, replace the artwork and rerun the script.
 - **macOS look (D15):** a neutral, Safari-like grey toolbar with a white selected tab, and accent colours that follow the macOS system accent.
 
-### Phase 3: Features and privacy (next)
+### Phase 3: Features and privacy (in progress)
 - **Search engines:**
   - Google is the default and Bing the only alternative. Every other engine is removed from the bundled search configuration.
   - Mozilla partner codes are removed from search URLs (D4), and users can't add engines (D5).

@@ -60,6 +60,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P2.4 | Licence attribution | `575089f9fd` |
 | P2.5 | Native macOS look | `06ecd100a0` |
 | — | About dialog description text | `2095eac911` |
+| P3.1 | Search limited to Google and Bing; adding engines blocked | `faed4d1811` |
 
 ## 3. Results by phase (as built)
 
@@ -118,40 +119,39 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Accent:** follows `AccentColor`.
   - **Toolbar:** a neutral grey tab strip and toolbar with no Nova gradient, a white selected tab with a neutral edge, and a white page canvas.
 
-## 4. Next step: P3.1 search engines (D4, D5)
+### Phase 3: Features and privacy
+- **Search (P3.1, D4, D5):**
+  - **Configuration:** `tools/m6e/search/prune-search-config.py` rewrites `search-config-v2.json` and `-v3.json` to just `google` and `bing`.
+    - Each engine has a single variant for all regions and locales. Google is the global and private default, with no region defaults, engine orders or listed locales.
+    - Removed: `partnerCode`, the `pc`, `form`, `channel` and `ep` parameters, and any `{partnerCode}` value.
+    - Kept: Google's `client=firefox` on suggestions and trending, because it selects the JSON format the browser parses.
+    - The script also cuts the icons to Google's and Bing's bundled images (and updates `moz.build`) and empties the default-override allowlist. Rerun it after every upstream merge.
+  - **No added engines:** the locked pref `browser.search.bundledEnginesOnly` drives three `M6E:` changes:
+    - `SearchService.addUserEngine()` and `addOpenSearchEngine()` throw `not-allowed`;
+    - `#addEngineToStore()` skips every engine that isn't a `ConfigSearchEngine` (add-on, policy, and engines saved in the profile);
+    - `Services.policies.isAllowed("installSearchEngine")` returns false, which hides the Settings Add button, the context-menu and urlbar offers, and page OpenSearch offers.
+  - **Tests:** `./mach test toolkit/components/search/tests/xpcshell` gives 107 passed and 3 searchconfigs passed.
+    - `head_search.js` unlocks the gate and the region URL, because upstream tests use OpenSearch, add-on and region fixtures. `test_m6e_bundled_engines_only.js` checks the shipped behaviour.
+    - Removed: `test_searchconfig.js`, `test_searchconfig_google_additional.js`, `test_distributions.js` and `test_appProvided_icons_updates.js`.
+  - **Test-harness fixes found on the way:**
+    - mozinfo reports `appname` `firefox` for M6E, otherwise `firefox-appdir` is ignored and xpcshell loads no browser files;
+    - `testing/profiles/base/user.js` sets `network.trr.mode` 0;
+    - manifestparser runs on Python 3.15.
+  - **Checked in the browser:** only Google and Bing, default Google; plain `https://www.google.com/search?q=…` and Bing URLs; user and OpenSearch adds refused; Settings lists the two engines with no Add button; a urlbar search opens a plain Google URL.
+  - **Network (`artifacts/P3.1-measure`):** the same 8 hosts. Widevine came from `dl.google.com` this time instead of `edgedl.me.gvt1.com`.
 
-**Goal:** the only engines are Google (default everywhere) and Bing. Their URLs carry no Mozilla partner codes, and users can't add engines from any entry point.
+## 4. Next step: fix in-app restart, then P3.2
 
-**Facts checked:**
-- **Bundled configuration:** `services/settings/dumps/main/search-config-v2.json` has 155 `engine` records, plus one record each for `defaultEngines` (global default `google`, with 10 region and locale overrides), `engineOrders` (2 orders) and `availableLocales`.
-- **Config v3:** `search-config-v3.json` has the same shape and is used when `browser.search.configV3.featureGate` is on.
-- **Partner codes:** Google's partner codes sit in its 11 `variants`. Bing has `partnerCode: MOZI` and `pc`/`form` search parameters.
-- **Sync:** both configurations already stay on the bundled copy, because D2 blocks syncing them.
+**Restart bug, found in P3.1:**
+- `Services.startup.quit(eAttemptQuit | eRestart)` quits M6E and never relaunches it. This breaks `measure.py`'s startup runs and Marionette `restart()`, and probably every "Restart M6E" prompt.
+- It worked at P1.14b, and `toolkit/xre` and `AppShutdown.cpp` are unchanged, so look first at the P2.2 identity changes: the bundle ID, executable `m6e`, Info.plist and `MOZ_APP_BASENAME`.
+- **Path:** `AppShutdown::MaybeDoRestart()` → `LaunchChild()` → `LaunchMacApp()` (NSTask when `argv[0]` isn't a `.app`).
+- **Check:** `artifacts/restart_probe.py` sees a new process, `measure.py` completes, and a restart from the running app works.
 
-**Steps:**
-1. **Prune script:** write `tools/m6e/search/prune-search-config.py`, a deterministic filter that can be rerun after every upstream merge. For both config dumps it:
-   - keeps only the `google` and `bing` engine records;
-   - sets `defaultEngines` to `google` globally, with no region overrides;
-   - reduces `engineOrders` to Google then Bing;
-   - removes Mozilla partner and attribution parameters (`client`, `channel`, `pc`, `form`, `partnerCode`) from every Google variant and from Bing;
-   - prunes `search-config-icons.json` (and its attachment files) to the two engines' icons, and empties `search-default-override-allowlist.json`.
-2. **Block user-added engines (D5):**
-   - **Central refusal:** in `SearchService`, refuse to add any engine that doesn't come from the app configuration, whether from OpenSearch, a user, an extension or a policy. Mark the change `M6E:`. This is the same central-enforcement approach used for themes.
-   - **UI:** hide the "Add search engine" entry points: the urlbar's "add engine" offers, the Settings search pane's Add button and its "find more search engines" link, and the search bar's context menu.
-3. **Tests:** remove the region and engine tests in `toolkit/components/search/tests/xpcshell/searchconfigs/` that assert removed engines, and update the remaining search tests to the two-engine configuration.
-4. **Build:** `./mach build faster` (data and JS only).
-5. **Check in the running browser (`chrome_eval.py`):**
-   - `SearchService.getVisibleEngines()` returns exactly `Google`, `Bing`, and the default is Google;
-   - `getSubmission("test")` for each engine has no partner parameters;
-   - adding an OpenSearch engine and a user engine is refused;
-   - the Settings search pane lists two engines and shows no Add button;
-   - a search from the urlbar opens a plain `www.google.com/search?q=…` URL.
-6. **Network:** run `measure.py` and confirm no new hosts.
-7. **Commit and push:** `M6E P3.1: Limit search to Google and Bing`.
-
-**Risks:**
-- Search tests are numerous. Removing tests for removed engines is expected; keep the remaining ones passing with `./mach test toolkit/components/search`.
-- If `SearchService` validates the dump against a schema, keep the record shapes intact and only drop records.
+**Lint is broken by Phase 1 leftovers:**
+- `eslint-subdirs.config.mjs` imports `mobile/android/.eslintrc.mjs`.
+- Several `tools/lint/*.yml` files, `l10n.yml` and `android-fenix.yml` among them, list removed directories.
+- Fix this in its own step, so that `./mach lint` works again.
 
 ## 5. Remaining steps
 
