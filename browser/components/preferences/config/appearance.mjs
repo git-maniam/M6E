@@ -354,21 +354,6 @@ SettingGroupManager.registerGroups({
       },
     ],
   },
-  browserTheme: {
-    l10nId: "browser-theme-group",
-    iconSrc: "chrome://browser/skin/customize.svg",
-    headingLevel: 2,
-    items: [
-      {
-        id: "web-appearance-manage-themes-link",
-        l10nId: "browser-theme-manage-link",
-        control: "moz-box-link",
-        controlAttrs: {
-          href: "about:addons",
-        },
-      },
-    ],
-  },
   browserIconEntry: {
     l10nId: "appearance-browser-icon-entry-group",
     iconSrc: "chrome://browser/skin/sidebar/firefox.svg",

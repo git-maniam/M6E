@@ -5,17 +5,6 @@
 browser.jar:
 %  resource builtin-themes %content/builtin-themes/
 
-  content/builtin-themes/alpenglow                 (alpenglow/*.svg)
-  content/builtin-themes/alpenglow/manifest.json   (alpenglow/manifest.json)
-
-  content/builtin-themes/dark/preview.svg          (dark/preview.svg)
-  content/builtin-themes/dark/icon.svg             (dark/icon.svg)
-  content/builtin-themes/dark/manifest.json        (dark/manifest.json)
-
-  content/builtin-themes/light/preview.svg         (light/preview.svg)
-  content/builtin-themes/light/icon.svg            (light/icon.svg)
-  content/builtin-themes/light/manifest.json       (light/manifest.json)
-
   content/builtin-themes/aiwindow/manifest.json        (aiwindow/manifest.json)
   content/builtin-themes/aiwindow/aiwindow-theme.css   (aiwindow/aiwindow-theme.css)
 

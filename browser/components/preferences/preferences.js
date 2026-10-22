@@ -278,7 +278,6 @@ const CONFIG_PANES = Object.freeze({
     l10nId: "preferences-appearance-header",
     groupIds: [
       "appearance",
-      "browserTheme",
       "browserIconEntry",
       "windowDensity",
       "relatedSettings",

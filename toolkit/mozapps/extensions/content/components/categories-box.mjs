@@ -404,6 +404,10 @@ class CategoriesBox extends MozLitElement {
     if (name === "discover") {
       return isDiscoverEnabled();
     }
+    // M6E: the default theme is the only theme, so there is nothing to manage.
+    if (name === "theme") {
+      return false;
+    }
     if (!defaultHidden) {
       return true;
     }

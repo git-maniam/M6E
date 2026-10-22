@@ -2756,6 +2756,14 @@ export const XPIDatabase = {
       }
     }
 
+    // M6E: the default theme is the only usable theme.
+    if (
+      aAddon.type == "theme" &&
+      aAddon.id != lazy.AddonSettings.DEFAULT_THEME_ID
+    ) {
+      return false;
+    }
+
     if (aAddon.location.isSystem || aAddon.location.isBuiltin) {
       return true;
     }

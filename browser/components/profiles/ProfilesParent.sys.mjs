@@ -299,12 +299,18 @@ export class ProfilesParent extends JSWindowActorParent {
       let themesList = await lazy.getThemesList({
         installSource: "about:newprofile",
       });
-      return themesList.getThemesInfo();
+      // M6E: the default theme is the only theme.
+      return themesList
+        .getThemesInfo()
+        .filter(theme => theme.id == "default-theme@mozilla.org");
     }
 
     let lightDark = isDark ? "dark" : "light";
     let themes = [];
     for (let [themeId, themeObj] of PROFILE_THEMES_MAP) {
+      if (themeId != "default-theme@mozilla.org") {
+        continue;
+      }
       if (Object.hasOwn(themeObj, "isDark") && themeObj.isDark !== isDark) {
         continue;
       }

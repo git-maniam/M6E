@@ -20,28 +20,5 @@
  *   non-native appearance. See Document.forceNonNativeTheme and the
  *   (-moz-native-theme) media query.
  */
-export const BuiltInThemeConfig = new Map([
-  [
-    "firefox-compact-light@mozilla.org",
-    {
-      version: "1.3.4",
-      path: "resource://builtin-themes/light/",
-      inApp: true,
-    },
-  ],
-  [
-    "firefox-compact-dark@mozilla.org",
-    {
-      version: "1.3.4",
-      path: "resource://builtin-themes/dark/",
-      inApp: true,
-    },
-  ],
-  [
-    "firefox-alpenglow@mozilla.org",
-    {
-      version: "1.5.3",
-      path: "resource://builtin-themes/alpenglow/",
-    },
-  ],
-]);
+// M6E ships no built-in themes besides the default theme.
+export const BuiltInThemeConfig = new Map([]);
