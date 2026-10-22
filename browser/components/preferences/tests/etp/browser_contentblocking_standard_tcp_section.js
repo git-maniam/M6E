@@ -65,15 +65,20 @@ async function testTCPSection({ dFPIEnabled }) {
       learnMoreLink,
       "Learn more link should be visible."
     );
-    ok(
-      learnMoreLink.href && !learnMoreLink.href.startsWith("about:blank"),
-      "Learn more link should be valid."
-    );
-    is(
-      learnMoreLink.href,
-      LEARN_MORE_URL,
-      "Learn more link should have the correct target."
-    );
+    if (Services.prefs.getStringPref("app.support.baseURL")) {
+      ok(
+        learnMoreLink.href && !learnMoreLink.href.startsWith("about:blank"),
+        "Learn more link should be valid."
+      );
+      is(
+        learnMoreLink.href,
+        LEARN_MORE_URL,
+        "Learn more link should have the correct target."
+      );
+    } else {
+      // M6E has no support site, so support links hide themselves (D7).
+      ok(learnMoreLink.hidden, "Learn more link is hidden");
+    }
 
     let description = etpStandardTCPBox.querySelector("description");
     ok(description, "Should have a description element.");

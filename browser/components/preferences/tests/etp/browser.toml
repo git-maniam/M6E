@@ -20,6 +20,8 @@ tags = "os_integration"
 
 ["browser_etp_exceptions_dialog.js"]
 
+["browser_m6e_initial_category.js"]
+
 ["browser_statePartitioning_PBM_strings.js"]
 
 ["browser_statePartitioning_strings.js"]
