@@ -230,41 +230,56 @@ Split into two commits.
 
 ## Phase 2: Rebranding and UI
 
-### P2.1 Branding directory
-- Copy `browser/branding/unofficial` to `browser/branding/m6e`.
-- Set the brand names to M6E in `locales/en-US/brand.ftl` and `brand.properties`, and set the display name in `configure.sh` (`MOZ_APP_DISPLAYNAME=M6E`).
-- Add `--with-branding=browser/branding/m6e` to the mozconfig.
-- Remove the `aurora`, `nightly` and `official` branding directories once nothing references them. `official` holds Mozilla's trademarked logos.
-- **Verify:** the app is `M6E.app`; the menu bar and About dialog say M6E.
+Execution order (decided at the start of Phase 2, 2026-10-22). The app identity is configure-level, so P2.2 needs one full rebuild (40 minutes to 2 hours). Everything else is front-end and only needs `./mach build faster`.
 
-### P2.2 Icon pipeline
-- Write `browser/branding/m6e/generate-icons.sh`, using a small Swift/CoreGraphics script (no third-party dependencies), that turns `M6E-Icon.png` into every branding image.
-  - **Crop:** find the white rounded tile automatically (roughly x 757 to 2058 and y 138 to 1398 in the current 2816x1536 source) instead of hardcoding it. The crop discards the grey background and the watermark.
-  - **Mask:** make the area outside the tile's rounded corners transparent.
-  - **Canvas:** centre the tile on a 1024x1024 transparent canvas at Apple's icon-grid size (an 824x824 tile with margin for the shadow). Never stretch.
-  - **Outputs:** the full `.iconset` via `sips`, then `iconutil -c icns`; plus every other image the branding directory expects (the about-dialog logo, in-app logos, `content/` images, DMG background and volume icon).
-- Commit the script, the 1024x1024 master and the generated assets, using the stable names the branding directory already uses.
-- **Verify:** Dock, Finder, the About dialog and the DMG show the autorickshaw at every size; replacing `M6E-Icon.png` and rerunning the script updates everything with no build changes.
+### P2.1 Icon pipeline
+- **Script:** `tools/m6e/branding/make-icons.sh`, with a Swift/CoreGraphics helper and no third-party dependencies. Its input is `M6E-Icon.png`, and it writes every macOS branding asset into `browser/branding/m6e/`.
+- **Master:** detect the white rounded tile automatically (the threshold is the light-grey background), crop it, and make the area outside its rounded corners transparent. Place it on a 1024x1024 transparent canvas at Apple's icon-grid size (an 824x824 tile with shadow margin). The crop drops the grey background and the sparkle watermark. Never stretch the image.
+- **Outputs:**
+  - **App and document icons:** `firefox.icns` (app icon; the name is kept because `browser/app/moz.build` and `package-manifest.in` reference it), `document.icns` and `disk.icns` (DMG volume icon).
+  - **Asset catalog:** `Assets.car`, compiled with `actool` from an `AppIcon` appiconset, because `Info.plist` sets `CFBundleIconName = AppIcon`.
+  - **In-browser images:** `default16` to `default256` PNGs, and `content/about-logo{,@2x,-private,-private@2x}.png` plus `about-logo.svg` (the PNG master embedded).
+  - **Wordmarks and DMG:** M6E wordmarks (`about-wordmark.svg`, `firefox-wordmark.svg`) and the DMG `background.png`.
+- **Not produced:** the Windows-only assets (`.ico`, MSIX, VisualElements, NSIS), which the macOS build never reads.
+- **Stable names:** the output names never change, so a new `M6E-Icon.png` plus a rerun of the script updates every icon with no build changes.
+- **Verify:** inspect the master, the `.icns` sizes (`iconutil`) and the `Assets.car` contents (`assetutil`).
 
-### P2.3 App identity (D6)
-- In `browser/moz.configure` and the branding `configure.sh`, set `MOZ_APP_VENDOR=M6E`, a new `MOZ_APP_ID` GUID, `MOZ_APP_NAME=m6e` and bundle ID `org.m6e.browser`.
-- **Verify:** profile created in `~/Library/Application Support/M6E`; an installed Firefox and M6E run side by side without sharing profiles.
+### P2.2 Branding directory and app identity (D6), one full rebuild
+- **Branding directory:** create `browser/branding/m6e`, starting from `unofficial`'s macOS-relevant files:
+  - `configure.sh`: `MOZ_APP_DISPLAYNAME=M6E` and `MOZ_MACBUNDLE_ID=browser`;
+  - `brand.ftl` and `brand.properties`: every brand term set to M6E, with no Mozilla vendor name;
+  - `pref/firefox-branding.js`: no Mozilla URLs;
+  - the generated P2.1 assets.
+  - Point `MOZ_BRANDING_DIRECTORY` and `MOZ_OFFICIAL_BRANDING_DIRECTORY` (`browser/confvars.sh`) at it, and add `--with-branding=browser/branding/m6e` to the mozconfig.
+- **Identity:**
+  - **App name and profile folder:** `export MOZ_APP_BASENAME=M6E` in the mozconfig makes `MOZ_APP_NAME` `m6e` (binary and process name) and the macOS profile folder `~/Library/Application Support/M6E`.
+  - **Bundle ID:** `--with-distribution-id=org.m6e` combined with `MOZ_MACBUNDLE_ID=browser` gives `org.m6e.browser`.
+  - **Vendor:** `MOZ_APP_VENDOR` becomes `M6E` (`browser/moz.configure`).
+  - **Deviation from D6:** `MOZ_APP_ID` keeps Firefox's GUID. It's internal and never shown, and add-ons, language packs and dictionaries signed for Firefox check against it. This follows the spec rule against renaming internal identifiers.
+- **Removals:** `browser/branding/aurora`, `nightly` and `official` go once nothing references them. `official` holds Mozilla's trademarked logos.
+- **Verify:**
+  - the app is `obj-m6e/dist/M6E.app` with bundle ID `org.m6e.browser`, the executable `m6e`, and the M6E icon;
+  - the menu bar and About dialog say M6E;
+  - the profile is created in `~/Library/Application Support/M6E`.
 
-### P2.4 User-visible strings
-- Write a script that lists every literal "Firefox" and "Mozilla" in the `en-US` `.ftl`, `.properties` and `.dtd` files, and in user-visible `.xhtml` and `.html`, skipping comments.
-- Replace each with the brand terms (`-brand-short-name` and similar) or reword it. Literal names include "Firefox Account", "Mozilla VPN" and "Firefox Relay"; most belong to features removed in Phase 1 and can be deleted along with them.
-- Remove `about:mozilla`. Rewrite `about:rights` and the About dialog's credits.
-- Apply D7 (hide `support.mozilla.org` "Learn more" links). Remove "More from Mozilla" (`moreFromMozilla.*`).
-- **Keep** "Mozilla"/"Firefox" in license text, MPL headers, `AUTHORS`, code identifiers and internal URLs that users never see.
-- **Verify:** unpack `obj-m6e/dist/bin` and its `omni.ja` archives, then search the user-visible localization files and markup for `Firefox` and `Mozilla`. The only hits allowed are licensing and attribution.
+### P2.3 User-visible strings
+- Write `tools/m6e/branding/scan-strings.py`. It lists every literal "Firefox" or "Mozilla" in user-visible `en-US` strings (`.ftl` values and attributes, `.properties` and `.dtd` values, visible text in `.xhtml` and `.html`), skipping comments, IDs, URLs that aren't shown, and licence text.
+- Replace each with the brand terms (`{ -brand-short-name }`, `{ -brand-product-name }`) or reword it. Delete strings that only belonged to features removed in Phase 1. Keep message IDs unchanged, so code needs no edits.
+- **Settings:**
+  - hide "More from Mozilla" (`browser.preferences.moreFromMozilla`) and the referrals group;
+  - rename the "Account & Sync" pane, which now holds Default browser, Import and Backup;
+  - hide `support.mozilla.org` "Learn more" links (D7): blank `app.support.baseURL`, and make links hide themselves when it is blank.
+- **New Tab:** remove the default "Add-ons for Firefox" shortcut.
+- Remove `about:mozilla`, and rewrite `about:rights`.
+- **Verify:** rerun the scan against the built `omni.ja` files. The only hits allowed are licence and attribution text.
 
-### P2.5 Licence attribution
-- Add "M6E is based on Firefox source code, licensed under the MPL 2.0" to `about:license` and the About dialog.
-- **Verify:** both show the notice.
+### P2.4 Licence attribution
+- Add "M6E is based on Firefox source code, licensed under the Mozilla Public License 2.0" to `about:license`, the About dialog and `about:rights`. Keep `LICENSE`, the MPL headers and `AUTHORS` intact.
+- **Verify:** all three show the notice.
 
-### P2.6 Modern macOS UI (needs user review)
-- Before changing CSS, capture screenshots of the main window, menus, tabs, the urlbar, `about:preferences` and new tab. Agree a short list of concrete changes with the user (for example spacing, tab shape, toolbar density, vibrancy).
-- Implement the changes in `browser/themes/osx` and `browser/themes/shared`, keeping them light-only (P1.6).
+### P2.5 Modern macOS UI (needs user review)
+- Capture screenshots of the main window, tab strip, urlbar, menus, `about:preferences` and New Tab. Propose a short list of concrete changes, and wait for the user's choice before changing CSS.
+- Implement the agreed changes in `browser/themes/osx` and `browser/themes/shared`, keeping them light-only.
 - **Verify:** compare before and after screenshots with the user.
 
 ## Phase 3: Features and privacy
