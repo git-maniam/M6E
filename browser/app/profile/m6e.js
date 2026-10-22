@@ -242,3 +242,6 @@ pref("m6e.privacyShield.maximum", false);
 // were blocked on the current page.
 pref("browser.urlbar.trackerCount.featureGate", true);
 pref("browser.urlbar.trackerCount.enabled", true);
+// No data breach alerts: they offer scans with Mozilla Monitor.
+pref("browser.urlbar.trustPanel.breachAlerts", false, locked);
+pref("browser.urlbar.trustPanel.breachAlerts.featureGate", false, locked);

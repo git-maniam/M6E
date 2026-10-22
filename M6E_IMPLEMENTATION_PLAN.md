@@ -236,11 +236,17 @@ See P3.7 in section 5.
 
   So P3.7 builds on the Trust panel, not on `browser-siteProtections.js`.
 - **Done:** `m6e.js` turns on `browser.urlbar.trackerCount.featureGate`. Checked on BBC News with `tools/m6e/trackers/tracker_count_check.py`: on shows the shield and "N trackers blocked"; off for the site shows the inactive shield and no number.
-- **Remaining:**
-  - relabel the panel toggle as "Tracker Blocker", and check that the panel lists every category and has no Mozilla links;
-  - the D20 two-way, session-only per-site override;
-  - tests;
-  - commit as `M6E P3.7`.
+- **Done:** the panel toggle and labels read "Tracker Blocker" (`browser.ftl`), and breach alerts are locked off, because they offered Mozilla Monitor scans.
+- **Design for D20, being implemented:** central exemption hooks rather than per-feature changes.
+  - **Shield off:** every site is exempt unless the user turned the Tracker Blocker on for it, which is a session permission `m6e-protect`. Hooks:
+    - `ContentBlockingAllowList::Check()` (C++), which covers tracking protection, cookie restrictions and FPP;
+    - `nsContentUtils::ETPSaysShouldNotResistFingerprinting()`, which lets the allow list exempt RFP too;
+    - `nsHTTPSOnlyUtils::TestIfPrincipalIsExempt()`, for HTTPS-Only.
+  - **Shield on:** the per-site off is the ETP allow-list permission plus the HTTPS-Only session exemption, both made `EXPIRE_SESSION`.
+  - **Prefs:** the blocking prefs stay strict whichever way the Shield is set. `M6EPrivacyShield` only flips the global-only hardening prefs, which reverts the pref flipping from P3.5b.
+  - **Cookies:** an exempt site also loses Total Cookie Protection, which is what Firefox's per-site off does. This replaces the D20 agent note that Total Cookie Protection stays.
+  - **Tests:** the base test profile must leave `m6e.privacyShield.enabled` at its default (true), otherwise every test site becomes exempt.
+- **Remaining:** that implementation (`./mach build binaries`), tests, and the commit as `M6E P3.7`.
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 

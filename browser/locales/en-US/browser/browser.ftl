@@ -1679,20 +1679,20 @@ urlbar-trust-icon-trackers-blocked-longform-label = { $count ->
   *[other] { $count } trackers blocked
 }
 
-trustpanel-etp-label-enabled = Enhanced Tracking Protection is on
-trustpanel-etp-label-disabled = Enhanced Tracking Protection is off
+trustpanel-etp-label-enabled = Tracker Blocker is on
+trustpanel-etp-label-disabled = Tracker Blocker is off
 
 # Variables
 #  $host (String): the hostname of the site that is being displayed.
 trustpanel-etp-toggle-on =
-  .aria-label = Enhanced Tracking Protection: On for { $host }
+  .aria-label = Tracker Blocker: On for { $host }
 # Variables
 #  $host (String): the hostname of the site that is being displayed.
 trustpanel-etp-toggle-off =
-  .aria-label = Enhanced Tracking Protection: Off for { $host }
+  .aria-label = Tracker Blocker: Off for { $host }
 
-trustpanel-etp-description-enabled = If something looks broken on this site, try turning off protections.
-trustpanel-etp-description-disabled = { -brand-product-name } thinks companies should follow you less. We block as many trackers as we can when you turn on protections.
+trustpanel-etp-description-enabled = If something looks broken on this site, turn off the Tracker Blocker for it until { -brand-short-name } quits.
+trustpanel-etp-description-disabled = Turn on the Tracker Blocker to block trackers, ads and fingerprinting on this site until { -brand-short-name } quits.
 
 trustpanel-connection-label-secure = Connection secure
 trustpanel-connection-label-insecure = Connection not secure
