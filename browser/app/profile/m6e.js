@@ -19,3 +19,7 @@ pref("browser.theme.dark-private-windows", false, locked);
 // DisableFirefoxAccounts enterprise policy locks.
 pref("identity.fxaccounts.enabled", false, locked);
 pref("browser.aboutwelcome.enabled", false, locked);
+
+// The Mozilla VPN integration (IP Protection) is removed.
+pref("browser.ipProtection.enabled", false, locked);
+pref("browser.ipProtection.blockIPProtectionCallouts", true, locked);

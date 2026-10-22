@@ -176,9 +176,9 @@ Split into two commits.
 - **Sidebar:** don't register the synced-tabs sidebar tool when accounts are off.
 - **Deviation from the original plan:** `MOZ_SERVICES_SYNC` stays on and `services/sync` stays built. About 24 browser and toolkit modules import Sync modules (`resource://services-sync/...`), so building without them would turn each import into a runtime failure. With no account, Sync never runs and makes no network requests (checked in P1.14).
 
-### P1.9 VPN (IP Protection)
-- Remove `browser/components/ipprotection` from the build, along with its toolbar button, panel, prefs and tests.
-- **Verify:** no VPN UI; build passes.
+### P1.9 VPN (IP Protection) (done)
+- Lock `browser.ipProtection.enabled` off and `browser.ipProtection.blockIPProtectionCallouts` on, and remove its startup and quit hooks from `BrowserComponents.manifest`. The service, toolbar button and Settings section are all gated on that pref, so none of them load.
+- As with Sync, the dormant code stays built: removing it would touch about 20 files (Settings, CustomizableUI, policies) with no user-visible difference.
 
 ### P1.10 Telemetry and data collection
 - In `browser/moz.configure`, change `MOZ_SERVICES_HEALTHREPORT` to `False`. Together with P1.11 and P1.12 this turns off `MOZ_DATA_REPORTING`. Keep `MOZ_TELEMETRY_REPORTING` off by never setting `MOZILLA_OFFICIAL`.
