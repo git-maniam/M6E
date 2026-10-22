@@ -8,7 +8,7 @@
 **Core Identity:**
 
 * **Name:** M6E
-* **Icon/Branding:** A stylized Bangalore Autorickshaw. A blank placeholder icon is used until the user uploads the SVG.
+* **Icon/Branding:** A stylized Bangalore Autorickshaw (yellow body, green canopy, on a white rounded-square tile). The source asset is `M6E-Icon.png` in the repository root.
 * **Language:** Strictly English (US/UK).
 * **Platform:** macOS ONLY, Apple Silicon (arm64) only. No Intel or universal build.
 
@@ -37,7 +37,11 @@ Firefox contains significant code for features, platforms, and themes that are u
 
 * **Name & Asset Replacement:** 
   * Use Mozilla's branding mechanism (a `browser/branding/m6e` directory and the related configure options) instead of a blind repo-wide replace. "Mozilla" and "Firefox" must not appear in anything user-visible (UI, app bundle, about pages, displayed URLs). Keep `LICENSE`, MPL headers and `AUTHORS` intact, and add a "Based on Firefox source" note in the license/about text. Do not rename internal identifiers such as `MOZ_` prefixes.
-  * Replace the default macOS app icons (`.icns`) with a blank placeholder icon for now. The user will upload the **Bangalore Autorickshaw** SVG later; build scripts must reference stable asset names so swapping it in is a drop-in replacement.
+  * Replace the default macOS app icons (`.icns`) with the **Bangalore Autorickshaw** icon generated from `M6E-Icon.png` (repository root).
+    * **Source properties:** 2816x1536 PNG. It is not square, and it is not transparent. The white rounded-square tile with the autorickshaw sits centred on an opaque light-grey background, and a small sparkle watermark is in the bottom-right corner, outside the tile.
+    * **Preparation:** Crop to the white rounded-square tile only, which discards the grey background and the watermark. Make the area outside the tile's rounded corners transparent, and fit the result onto a square 1024x1024 transparent canvas. Never stretch or squash the non-square source.
+    * **Generation:** Build the full macOS iconset (16, 32, 128, 256 and 512 px, each at @1x and @2x) from the 1024x1024 master using `sips`, then `iconutil -c icns`. Commit the generated master PNG and `.icns` under `browser/branding/m6e/`. Also derive every other branding image Firefox's branding directory expects (in-app logos, about-dialog artwork, DMG artwork) from the same master.
+    * **Stable names:** Build scripts must reference stable asset names, so a revised icon can later be dropped in by replacing `M6E-Icon.png` and regenerating, without build-script changes.
 
 * **Modern UI:** 
   * Refine the default CSS to ensure a clean, modern, minimalist aesthetic that looks native to modern macOS environments. 
@@ -79,7 +83,7 @@ Firefox contains significant code for features, platforms, and themes that are u
 * **Rebranding:** Use Mozilla's branding mechanism (a `browser/branding/m6e` directory and the related configure options) rather than a blind repo-wide replace. "Mozilla" and "Firefox" must not appear in anything user-visible (UI, app bundle, about pages, displayed URLs). Keep `LICENSE`, MPL headers and `AUTHORS` intact, and add a "Based on Firefox source" note in the license/about text. Do not rename internal identifiers such as `MOZ_` prefixes.
 * **Theme:** The browser chrome is always light, regardless of macOS appearance. Keep the `prefers-color-scheme` plumbing for web content.
 * **Network services:** Disable updates, AMO, Normandy, Remote Settings and Safe Browsing lookups. Extensions are installed manually.
-* **Icon:** Use a blank placeholder icon for now. The user will upload the Bangalore Autorickshaw SVG later; wire the build to reference stable asset names so swapping it in is a drop-in replacement.
+* **Icon:** The application icon is `M6E-Icon.png` (repository root), a PNG rather than an SVG. Crop it to the white rounded-square tile (dropping the grey background and the watermark), place it on a 1024x1024 transparent canvas, and generate the `.icns` and all other branding images from that master. Use stable asset names so the icon can be replaced later by regenerating from a new `M6E-Icon.png`.
 * **Reading mode:** Modify the existing Reader View in place; do not build a separate reader.
 * **Privacy panel:** Implement the "Privacy Shield" as a section inside the existing settings page (`about:preferences`), not as a new `about:m6e` page.
 * **Search engines:** Google is the default and Bing is the only other option. Remove all other engines outright in Phase 3.
