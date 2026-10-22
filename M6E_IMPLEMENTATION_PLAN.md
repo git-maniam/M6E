@@ -21,7 +21,7 @@ The spec was written before the tree was inspected. These findings adjust how so
 
 | Spec item | What the tree actually has | Consequence for the plan |
 |---|---|---|
-| Base version | Firefox `160.0a1`, a **Nightly** snapshot. No upstream VCS history. | Nightly enables nightly-only features and code paths (`NIGHTLY_BUILD`). See decision D9. |
+| Base version | Firefox `160.0a1`, a **Nightly** snapshot of upstream `mozilla-firefox/firefox` commit `034cd8a8207e38b04afec5e6f75e5161f75a112f` (2026-10-21), identified in Phase 0. No upstream VCS history in this repository. | Nightly enables nightly-only features and code paths (`NIGHTLY_BUILD`). See decision D9. |
 | Pocket | Already removed upstream (`browser/components/pocket` does not exist). | P1.14 only checks for leftovers. |
 | Firefox VPN | Lives in `browser/components/ipprotection` ("IP Protection"). | P1.9 targets that component. |
 | Language stripping | Only `en-US` strings are in-tree. The other 114 locales in `browser/locales/all-locales` come from a separate l10n repository. `en-GB` UI strings are **not** in the tree. | Language stripping means switching off locale plumbing and language-switching UI, not deleting files. `en-GB` needs decision D1. |
@@ -34,8 +34,8 @@ The spec was written before the tree was inspected. These findings adjust how so
 | User-visible "Firefox"/"Mozilla" | About 630 literal lines in about 300 `en-US` files (`browser`, `toolkit`, `dom`, `devtools` locales), on top of 670 brand-term references that the branding directory handles. | A dedicated string pass (P2.4). |
 | App identity | `browser/moz.configure` sets `MOZ_APP_VENDOR = "Mozilla"` and Firefox's `MOZ_APP_ID`. | New identity in P2.3, so M6E never shares a profile with an installed Firefox. |
 | AI features | `browser/components/aiwindow`, `browser/components/genai`, `toolkit/components/ml`, `browser/components/translations`. | Not in the spec. See decision D3. |
-| `.gitignore` | Upstream's `.gitignore`/`.hgignore` were not imported. The current file ignores only Python bytecode, `.gradle/` and `.DS_Store`. | P0.1 must ignore the objdir before the first build, or a "commit everything" would sweep in gigabytes. |
-| Toolchain | Xcode 27, `~/.mozbuild` present, arm64, 14 cores, 48 GB RAM, about 315 GB free. No `mozconfig` yet. | P0.2 to P0.3. |
+| Root dotfiles | The initial import dropped every hidden file in the repository root, including `.cargo/config.toml.in`, which the build requires. | Restored in Phase 0 from upstream `034cd8a8`, together with upstream's `.gitignore`. CI, Phabricator, GitHub workflow and AI/IDE configs were deliberately not restored. |
+| Toolchain | Xcode 27, arm64, 14 cores, 48 GB RAM. Cloudflare Gateway inspects TLS on this network, and `./mach bootstrap` rejects its certificate. | Phase 0 uses Homebrew toolchains with `--disable-bootstrap` instead (see P0.2 and P0.3). |
 
 ## Decisions to confirm before execution
 
@@ -66,6 +66,10 @@ ac_add_options --target=aarch64-apple-darwin
 ac_add_options --enable-optimize
 ac_add_options --disable-debug
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-m6e
+ac_add_options --disable-bootstrap
+ac_add_options --with-wasi-sysroot=/opt/homebrew/share/wasi-sysroot
+export WASM_CC=/opt/homebrew/opt/llvm/bin/clang
+export WASM_CXX=/opt/homebrew/opt/llvm/bin/clang++
 # P1.11: ac_add_options --disable-crashreporter
 # P1.12: ac_add_options --disable-updater
 # P2.1:  ac_add_options --with-branding=browser/branding/m6e
@@ -76,7 +80,7 @@ mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-m6e
 - **Verify:** `./mach configure` succeeds.
 
 ### P0.3 Bootstrap and baseline build
-- Run `./mach bootstrap` (choose Firefox for Desktop), then `./mach build`. Expect tens of minutes.
+- Install the toolchain with Homebrew: `brew install rust cbindgen nasm llvm lld wasi-libc wasi-runtimes` (Node and Xcode were already present). `./mach bootstrap` cannot be used on this network (see Baseline facts). Then run `./mach build`; the baseline build took 21 minutes.
 - **Verify:** `./mach run` launches stock Firefox.
 
 ### P0.4 Record baselines
@@ -84,7 +88,8 @@ Record these in `artifacts/baseline.md`, which is not committed. Phase 4 and the
 - **Startup:** time to first paint and to a usable window, with a Firefox Profiler startup profile (`MOZ_PROFILER_STARTUP=1`).
 - **Memory:** idle memory with one blank tab and with five typical sites (from `about:memory`).
 - **Network:** every outbound host contacted by a fresh profile left idle for 5 minutes. Capture with `MOZ_LOG="nsHttp:3,nsHostResolver:3" MOZ_LOG_FILE=artifacts/net.log`, then extract the host names.
-- **Upstream:** the upstream revision this snapshot corresponds to (D9).
+- **Upstream:** the upstream revision this snapshot corresponds to (D9). Recorded: `034cd8a8207e38b04afec5e6f75e5161f75a112f`.
+- **Tooling:** `./mach python tools/m6e/measure.py --binary <app binary> --out artifacts/<name>` records all of the above, writing `results.json` and `summary.md`.
 
 Commit P0.1 and P0.2 only. The baselines are local notes.
 
