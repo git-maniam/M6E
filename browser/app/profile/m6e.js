@@ -103,6 +103,7 @@ pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false, locked);
 pref("browser.newtabpage.activity-stream.showSponsoredCheckboxes", false, locked);
 pref("browser.newtabpage.activity-stream.system.showSponsored", false, locked);
 pref("browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
+pref("browser.newtabpage.activity-stream.feeds.system.topstories", false, locked);
 pref("browser.newtabpage.activity-stream.showWeather", false, locked);
 pref("browser.newtabpage.activity-stream.system.showWeather", false, locked);
 pref("browser.newtabpage.activity-stream.unifiedAds.tiles.enabled", false, locked);
@@ -139,3 +140,33 @@ pref("browser.translations.select.enable", false, locked);
 pref("pdfjs.enableAltText", false, locked);
 // With every AI feature removed, there is nothing for the AI settings pane to control.
 pref("browser.preferences.aiControls", false, locked);
+
+// New Tab widgets that fetch content from Mozilla's Merino services, and
+// wallpapers, which load from Remote Settings attachments outside the
+// allowlist. Local widgets (clocks, lists, focus timer) stay available.
+pref("browser.newtabpage.activity-stream.newtabWallpapers.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.crossword.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.crossword.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.solitaire.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.solitaire.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.horoscopes.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.horoscopes.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.stocks.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.stocks.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.travel.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.travel.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.weather.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.weather.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.weatherForecast.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.weatherForecast.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.system.pictureOfTheDay.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.widgets.pictureOfTheDay.enabled", false, locked);
+
+// No DNS prefetching, link prefetching or speculative connections. These are
+// defaults, not locks: the Privacy Shield (P3.5) manages hardening prefs.
+pref("network.dns.disablePrefetch", true);
+pref("network.dns.disablePrefetchFromHTTPS", true);
+pref("network.prefetch-next", false);
+pref("network.http.speculative-parallel-limit", 0);
+pref("browser.places.speculativeConnect.enabled", false);
+pref("browser.urlbar.speculativeConnect.enabled", false);

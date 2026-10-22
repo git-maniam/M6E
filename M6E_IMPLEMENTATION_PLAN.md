@@ -209,12 +209,24 @@ Split into two commits.
 - As with Sync, the AI, ML and Translations code stays built: around 150 external references across those directories, with no user-visible difference once the switches are off.
 - **Verified:** New Tab shows the default shortcuts and widgets only, the chatbot sidebar tool is hidden, and the AI pane is gone. Marionette's test profile disables New Tab feeds, so checking New Tab needs `browser.newtabpage.activity-stream.testing.shouldInitializeFeeds` set at launch.
 
-### P1.14 Pocket leftovers and Phase 1 check
-- Search for leftover Pocket prefs, strings and icons (`extensions.pocket`, `pocket` in `browser/` front-end files) and remove them.
-- Repeat the P0.4 network capture. Expected:
-  - **Allowed:** `push.services.mozilla.com` (D12); the Remote Settings hosts, for allowlisted collections only (D2); the DoH resolver `mozilla.cloudflare-dns.com` (D11); and the Widevine and OpenH264 downloads from Google and Cisco on a first run (D10).
-  - **Off:** captive-portal and connectivity checks, region lookup (`location.services.mozilla.com`), the first-run welcome page, new-tab DNS prefetching, and the DoH rollout probes.
-- **Verify:** the 5-minute idle log contains only the allowed hosts above; `./mach run` works for basic browsing.
+### P1.14 Pocket leftovers and Phase 1 check (done)
+- **Pocket:** removed upstream. What's left is New Tab's dormant stories code; `feeds.system.topstories` is locked off, which also hides the Customize-panel stories toggle.
+- **Network capture:** the first capture still showed New Tab's crossword widget loading from Merino, wallpapers loading Remote Settings attachments directly (outside the allowlist), and DNS prefetching of the New Tab shortcuts.
+  - **Locked off:** wallpapers and every server-backed widget (crossword, solitaire, horoscopes, stocks, travel, weather, weather forecast, picture of the day). Local widgets stay.
+  - **Defaults off (managed by the Privacy Shield, P3.5):** DNS prefetching, link prefetching and speculative connections.
+- **Result** (fresh profile, 5 idle minutes, `artifacts/phase1-P1.14b`): 8 hosts, every one of them allowed. Phase 0 had 21 hosts with requests plus 40 DNS-only lookups; Phase 1 has no DNS-only lookups.
+
+  | Host | Why |
+  |---|---|
+  | `firefox.settings.services.mozilla.com`, `firefox-settings-attachments.cdn.mozilla.net`, `content-signature-2.cdn.mozilla.net` | Remote Settings, allowlisted collections only (D2) |
+  | `push.services.mozilla.com` | Web Push (D12) |
+  | `mozilla.cloudflare-dns.com` | DNS over HTTPS (D11) |
+  | `ciscobinary.openh264.org`, `edgedl.me.gvt1.com`, `update.googleapis.com` | OpenH264 and Widevine (D10) |
+
+- **Startup and memory against Phase 0:**
+  - **First paint:** 777 ms against 785 ms, which is within noise.
+  - **Idle memory, blank tab:** 448 MB against 698 MB (8 processes each), so 36% less.
+  - **Five sites:** not comparable. Live sites vary between runs, and this run used 28 processes against 13.
 
 ## Phase 2: Rebranding and UI
 
