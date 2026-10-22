@@ -31,7 +31,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 0 | Toolchain, mozconfig, baseline build and measurements | Done |
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
-| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push | In progress: P3.1 search done; next, an in-app restart fix, then P3.2 bookmarks |
+| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push | In progress: P3.1 search and P3.2 bookmarks toolbar done; next P3.3 Reader View |
 | 4 | Performance | Not started |
 | 5 | Packaging (`.dmg`) and acceptance | Not started |
 

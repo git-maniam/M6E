@@ -61,6 +61,10 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P2.5 | Native macOS look | `06ecd100a0` |
 | — | About dialog description text | `2095eac911` |
 | P3.1 | Search limited to Google and Bing; adding engines blocked | `faed4d1811` |
+| P1.11b | In-app restart works without the updater | `29b3f07e31` |
+| P1.4b | Lint configs repaired; file modes fixed | `c2f28c435a` |
+| P2.3b | fluent-lint accepts de-branded words | `5998fb7ec1` |
+| P3.2 | Bookmarks toolbar setting | `e4970f95a9` |
 
 ## 3. Results by phase (as built)
 
@@ -139,26 +143,31 @@ Don't start the next step until the current one builds and checks out. Split a s
     - manifestparser runs on Python 3.15.
   - **Checked in the browser:** only Google and Bing, default Google; plain `https://www.google.com/search?q=…` and Bing URLs; user and OpenSearch adds refused; Settings lists the two engines with no Add button; a urlbar search opens a plain Google URL.
   - **Network (`artifacts/P3.1-measure`):** the same 8 hosts. Widevine came from `dl.google.com` this time instead of `edgedl.me.gvt1.com`.
+- **Restart (P1.11b):**
+  - **Cause:** macOS restarts used to go through the updater binary as a relauncher (bug 2036593). P1.11 removed the updater, so a restart quit M6E for good.
+  - **Fix:** without `MOZ_UPDATER`, `SetupMacCommandLine()` (`toolkit/xre/nsCommandLineServiceMac.mm`) has `/bin/sh` wait until the old process has exited or become a zombie, then exec the executable with the inherited environment.
+  - **Checked:** the overlap test in `test_relaunch_dock_overlap.py` passes, and `measure.py` completes again (`artifacts/P3.1b-measure`: 447 MB blank-tab memory and the same 8 hosts; that startup run overlapped with lint, so it isn't a valid timing).
+- **Lint (P1.4b, P2.3b):**
+  - **Configs:** the Android linters are removed, along with stale include and exclude paths and the `mobile/` entries in `eslint-subdirs.config.mjs`.
+  - **Linter changes:** lintpref skips locked prefs. fluent-lint reads the M6E brand file and has a `generic-names` list for de-branded words.
+  - **File modes:** the import had made every file executable, so 463,326 files are now 644. Only `#!` scripts and binaries keep the executable bit.
+  - **Status:** `./mach lint` works, except for clang-format, pnpm-audit and cargo-audit, which need `mach bootstrap` (D17). For C++, use Homebrew's `/opt/homebrew/opt/llvm/bin/clang-format`.
+- **Bookmarks toolbar (P3.2):**
+  - **Setting:** Settings, Appearance has a "Bookmarks toolbar" group with a "Show bookmarks toolbar" switch (`showBookmarksToolbar` in `config/appearance.mjs`). On means `always` and off means `never`, applied through `CustomizableUI.setToolbarVisibility()` so every window updates.
+  - **Default:** `never` (`m6e.js`), because the switch can't represent Firefox's `newtab` default. CustomizableUI reads the area's default from that pref, so Restore Defaults matches.
+  - **Checked:** the switch works both ways and follows View-menu changes. Import from Safari, Chrome and Chromium is available.
+  - **Tests:** `browser_appearance_pane.js` and the new-tab toolbar tests pass. The new-tab tests pin `newtab`.
+  - **Known failures, from earlier phases:**
+    - `browser_bookmarks_toolbar_collapsed_restore_default.js` fails because M6E is never in the default customization state. `TabsToolbar` defaults still list the AI buttons `smartwindow-group-tabs-button` and `ai-window-toggle`, which P1.13 leaves unplaced, so Restore Defaults is always enabled.
+    - `browser_bookmarks_toolbar_telemetry.js` fails because telemetry is off.
 
-## 4. Next step: fix in-app restart, then P3.2
+## 4. Next step: P3.3 Reader View
 
-**Restart bug, found in P3.1:**
-- `Services.startup.quit(eAttemptQuit | eRestart)` quits M6E and never relaunches it. This breaks `measure.py`'s startup runs and Marionette `restart()`, and probably every "Restart M6E" prompt.
-- It worked at P1.14b, and `toolkit/xre` and `AppShutdown.cpp` are unchanged, so look first at the P2.2 identity changes: the bundle ID, executable `m6e`, Info.plist and `MOZ_APP_BASENAME`.
-- **Path:** `AppShutdown::MaybeDoRestart()` → `LaunchChild()` → `LaunchMacApp()` (NSTask when `argv[0]` isn't a `.app`).
-- **Check:** `artifacts/restart_probe.py` sees a new process, `measure.py` completes, and a restart from the running app works.
+See P3.3 in section 5.
 
-**Lint is broken by Phase 1 leftovers:**
-- `eslint-subdirs.config.mjs` imports `mobile/android/.eslintrc.mjs`.
-- Several `tools/lint/*.yml` files, `l10n.yml` and `android-fenix.yml` among them, list removed directories.
-- Fix this in its own step, so that `./mach lint` works again.
+**Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (`AREA_TABSTRIP` and the vertical-tabs `AREA_NAVBAR` list), so that `inDefaultState` can be true and the restore-default test passes.
 
 ## 5. Remaining steps
-
-### P3.2 Bookmarks toolbar setting
-- Keep the bookmark manager and browser import (`MOZ_PROFILE_MIGRATOR`).
-- Add a "Show bookmarks toolbar" setting to the Settings General or Appearance pane, bound to `browser.toolbars.bookmarks.visibility` (`always`/`never`), in the redesigned config format (`browser/components/preferences/config/*.mjs`).
-- **Check:** the setting toggles the toolbar both ways, and import from Safari and Chrome works.
 
 ### P3.3 Reader View
 All changes go in `toolkit/components/reader` and `toolkit/themes/shared/aboutReader.css`. Don't edit the vendored `readability/` library; post-process its output in `AboutReader.sys.mjs`.
