@@ -203,10 +203,11 @@ Split into two commits.
 - **Media plugins (D10):** `media.gmp-manager.url` is blank, so the installer falls back to the bundled lists. Verified: OpenH264 comes from `ciscobinary.openh264.org`, and Widevine from `edgedl.me.gvt1.com` with `www.google.com` as mirror. Installs are triggered by the `BrowserGlue` idle task, which doesn't need the updater.
 - **DNS over HTTPS (D11):** `network.trr.mode` defaults to 2 (not locked), with `mozilla.cloudflare-dns.com`. The region-based rollout (`DoHController`) is no longer started.
 
-### P1.13 Sponsored content and AI features
-- Lock `browser.newtabpage.activity-stream.showSponsoredTopSites`, `browser.newtabpage.activity-stream.showSponsored` and `browser.urlbar.suggest.quicksuggest.sponsored` to `false`. Remove the sponsored settings UI and the Firefox Suggest online paths in `browser/extensions/newtab` and the urlbar.
-- Apply D3: remove `browser/components/aiwindow` and `browser/components/genai`, and disable Translations.
-- **Verify:** new tab shows no sponsored tiles or stories; no AI sidebar or window.
+### P1.13 Sponsored content and AI features (done)
+- **Sponsored content:** lock off New Tab's sponsored tiles and stories, recommended (Pocket) stories, weather, the unified-ads endpoints, Contile, Firefox Suggest and Merino, and extension/feature recommendations (CFR). New Tab's own `DefaultPrefs.init()` never replaces an existing default, so the locked values hold.
+- **AI (D3):** lock `browser.ai.control.*` to `blocked`, with each feature's switch off, as the `AIControls` enterprise policy does: sidebar chatbot, Translations, PDF alt text, link-preview key points, smart tab groups, Smart Window, speech recognition, and the ML engine `browser.ml.enable`. Hide the Settings AI pane (`browser.preferences.aiControls`).
+- As with Sync, the AI, ML and Translations code stays built: around 150 external references across those directories, with no user-visible difference once the switches are off.
+- **Verified:** New Tab shows the default shortcuts and widgets only, the chatbot sidebar tool is hidden, and the AI pane is gone. Marionette's test profile disables New Tab feeds, so checking New Tab needs `browser.newtabpage.activity-stream.testing.shouldInitializeFeeds` set at launch.
 
 ### P1.14 Pocket leftovers and Phase 1 check
 - Search for leftover Pocket prefs, strings and icons (`extensions.pocket`, `pocket` in `browser/` front-end files) and remove them.

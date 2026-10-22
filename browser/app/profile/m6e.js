@@ -96,3 +96,46 @@ pref("startup.homepage_welcome_url", "", locked);
 pref("startup.homepage_welcome_url.additional", "", locked);
 pref("startup.homepage_override_url", "", locked);
 pref("browser.startup.homepage_override.mstone", "ignore", locked);
+
+// No sponsored content, recommended stories, weather or Firefox Suggest.
+pref("browser.newtabpage.activity-stream.showSponsored", false, locked);
+pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false, locked);
+pref("browser.newtabpage.activity-stream.showSponsoredCheckboxes", false, locked);
+pref("browser.newtabpage.activity-stream.system.showSponsored", false, locked);
+pref("browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
+pref("browser.newtabpage.activity-stream.showWeather", false, locked);
+pref("browser.newtabpage.activity-stream.system.showWeather", false, locked);
+pref("browser.newtabpage.activity-stream.unifiedAds.tiles.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.unifiedAds.spocs.enabled", false, locked);
+pref("browser.newtabpage.activity-stream.unifiedAds.endpoint", "", locked);
+pref("browser.newtabpage.activity-stream.discoverystream.endpoints", "", locked);
+pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false, locked);
+pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false, locked);
+pref("browser.topsites.contile.enabled", false, locked);
+pref("browser.urlbar.quicksuggest.enabled", false, locked);
+pref("browser.urlbar.suggest.quicksuggest.sponsored", false, locked);
+pref("browser.urlbar.suggest.quicksuggest.nonsponsored", false, locked);
+pref("browser.urlbar.merino.endpointURL", "", locked);
+
+// No AI features. These are the prefs the AIControls enterprise policy sets
+// when every feature is blocked, plus the shared machine learning engine.
+pref("browser.ai.control.default", "blocked", locked);
+pref("browser.ai.control.translations", "blocked", locked);
+pref("browser.ai.control.pdfjsAltText", "blocked", locked);
+pref("browser.ai.control.smartTabGroups", "blocked", locked);
+pref("browser.ai.control.linkPreviewKeyPoints", "blocked", locked);
+pref("browser.ai.control.sidebarChatbot", "blocked", locked);
+pref("browser.ai.control.smartWindow", "blocked", locked);
+pref("browser.ai.control.speechRecognition", "blocked", locked);
+pref("browser.ml.enable", false, locked);
+pref("browser.ml.chat.enabled", false, locked);
+pref("browser.ml.chat.page", false, locked);
+pref("browser.ml.linkPreview.enabled", false, locked);
+pref("browser.smartwindow.enabled", false, locked);
+pref("browser.tabs.groups.smart.enabled", false, locked);
+pref("browser.tabs.groups.smart.userEnabled", false, locked);
+pref("browser.translations.enable", false, locked);
+pref("browser.translations.select.enable", false, locked);
+pref("pdfjs.enableAltText", false, locked);
+// With every AI feature removed, there is nothing for the AI settings pane to control.
+pref("browser.preferences.aiControls", false, locked);
