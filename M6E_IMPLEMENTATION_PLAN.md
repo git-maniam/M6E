@@ -232,7 +232,7 @@ Split into two commits.
 
 Execution order (decided at the start of Phase 2, 2026-10-22). The app identity is configure-level, so P2.2 needs one full rebuild (40 minutes to 2 hours). Everything else is front-end and only needs `./mach build faster`.
 
-### P2.1 Icon pipeline
+### P2.1 Icon pipeline (done)
 - **Script:** `tools/m6e/branding/make-icons.sh`, with a Swift/CoreGraphics helper and no third-party dependencies. Its input is `M6E-Icon.png`, and it writes every macOS branding asset into `browser/branding/m6e/`.
 - **Master:** detect the white rounded tile automatically (the threshold is the light-grey background), crop it, and make the area outside its rounded corners transparent. Place it on a 1024x1024 transparent canvas at Apple's icon-grid size (an 824x824 tile with shadow margin). The crop drops the grey background and the sparkle watermark. Never stretch the image.
 - **Outputs:**
@@ -244,7 +244,8 @@ Execution order (decided at the start of Phase 2, 2026-10-22). The app identity 
 - **Stable names:** the output names never change, so a new `M6E-Icon.png` plus a rerun of the script updates every icon with no build changes.
 - **Verify:** inspect the master, the `.icns` sizes (`iconutil`) and the `Assets.car` contents (`assetutil`).
 
-### P2.2 Branding directory and app identity (D6), one full rebuild
+### P2.2 Branding directory and app identity (D6), one full rebuild (done)
+- **Result:** `obj-m6e/dist/M6E.app`, with bundle ID `org.m6e.browser`, executable `m6e`, and profiles in `~/Library/Application Support/M6E`. The Windows-only `browser/app/desktop-launcher` was removed as well.
 - **Branding directory:** create `browser/branding/m6e`, starting from `unofficial`'s macOS-relevant files:
   - `configure.sh`: `MOZ_APP_DISPLAYNAME=M6E` and `MOZ_MACBUNDLE_ID=browser`;
   - `brand.ftl` and `brand.properties`: every brand term set to M6E, with no Mozilla vendor name;
@@ -262,7 +263,13 @@ Execution order (decided at the start of Phase 2, 2026-10-22). The app identity 
   - the menu bar and About dialog say M6E;
   - the profile is created in `~/Library/Application Support/M6E`.
 
-### P2.3 User-visible strings
+### P2.3 User-visible strings (done)
+- **Result:** the scan found 76 strings and every one was rewritten, so the scan now reports 0. Also:
+  - the default bookmarks are empty, and `about:mozilla` is removed;
+  - Help menu Get Help, Report Broken Site, Share Ideas and Switch Devices are hidden;
+  - support links hide themselves, and More from Mozilla is hidden;
+  - the landing pane is renamed "General";
+  - the Kit mascot and the Firefox glyph (`browser/themes/shared/sidebar/firefox.svg`) are replaced with M6E art.
 - Write `tools/m6e/branding/scan-strings.py`. It lists every literal "Firefox" or "Mozilla" in user-visible `en-US` strings (`.ftl` values and attributes, `.properties` and `.dtd` values, visible text in `.xhtml` and `.html`), skipping comments, IDs, URLs that aren't shown, and licence text.
 - Replace each with the brand terms (`{ -brand-short-name }`, `{ -brand-product-name }`) or reword it. Delete strings that only belonged to features removed in Phase 1. Keep message IDs unchanged, so code needs no edits.
 - **Settings:**
@@ -273,7 +280,8 @@ Execution order (decided at the start of Phase 2, 2026-10-22). The app identity 
 - Remove `about:mozilla`, and rewrite `about:rights`.
 - **Verify:** rerun the scan against the built `omni.ja` files. The only hits allowed are licence and attribution text.
 
-### P2.4 Licence attribution
+### P2.4 Licence attribution (done)
+- **Result:** the About dialog and `about:license` carry the attribution. `about:rights` is removed rather than rewritten, because it only redirected to Mozilla's online terms.
 - Add "M6E is based on Firefox source code, licensed under the Mozilla Public License 2.0" to `about:license`, the About dialog and `about:rights`. Keep `LICENSE`, the MPL headers and `AUTHORS` intact.
 - **Verify:** all three show the notice.
 
