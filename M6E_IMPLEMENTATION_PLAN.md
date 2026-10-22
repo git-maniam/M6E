@@ -227,6 +227,21 @@ Don't start the next step until the current one builds and checks out. Split a s
 
 See P3.7 in section 5.
 
+**Checkpoint (2026-10-23):** P3.7 is in progress.
+- **Finding:** this Nightly's **Trust panel** (`browser/base/content/browser-trustPanel.js`, on by default through `browser.urlbar.trustPanel.featureGate`) has replaced the old tracking protection icon. It already has:
+  - the urlbar trust icon (`#trust-icon-container`) with an `inactive` state, a shield with an X, when protection is off for the site;
+  - a tracker count pill (`#computeTrackerCount`, "N trackers blocked", which shortens to N);
+  - the per-site protection toggle (`#trustpanel-toggle`);
+  - per-blocker subviews listing the blocked domains.
+
+  So P3.7 builds on the Trust panel, not on `browser-siteProtections.js`.
+- **Done:** `m6e.js` turns on `browser.urlbar.trackerCount.featureGate`. Checked on BBC News with `tools/m6e/trackers/tracker_count_check.py`: on shows the shield and "N trackers blocked"; off for the site shows the inactive shield and no number.
+- **Remaining:**
+  - relabel the panel toggle as "Tracker Blocker", and check that the panel lists every category and has no Mozilla links;
+  - the D20 two-way, session-only per-site override;
+  - tests;
+  - commit as `M6E P3.7`.
+
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 
 ## 5. Remaining steps
