@@ -33,3 +33,18 @@ user_pref("network.trr.mode", 0);
 // M6E starts new profiles in strict tracking protection; tests expect
 // Firefox's standard defaults.
 user_pref("browser.contentblocking.initialCategory", "");
+// M6E's privacy hardening (m6e.js, P3.4) at Firefox's values, so tests run
+// against the behaviour they were written for. HTTPS-Only would otherwise
+// block the test harness, which loads http://mochi.test.
+user_pref("dom.security.https_only_mode", false);
+user_pref("privacy.globalprivacycontrol.enabled", false);
+user_pref("network.http.referer.XOriginTrimmingPolicy", 0);
+user_pref("media.peerconnection.ice.default_address_only", false);
+user_pref("media.peerconnection.ice.proxy_only_if_behind_proxy", false);
+user_pref("security.tls.enable_0rtt_data", true);
+user_pref("security.ssl.require_safe_negotiation", false);
+user_pref("browser.xul.error_pages.expert_bad_cert", false);
+user_pref("network.IDN_show_punycode", false);
+user_pref("pdfjs.enableScripting", true);
+user_pref("network.auth.subresource-http-auth-allow", 2);
+user_pref("dom.disable_window_move_resize", false);
