@@ -231,3 +231,9 @@ pref("network.IDN_show_punycode", true);
 pref("pdfjs.enableScripting", false);
 pref("network.auth.subresource-http-auth-allow", 1);
 pref("dom.disable_window_move_resize", true);
+
+// The Privacy Shield (P3.5) in Settings, Privacy: on applies the hardening
+// above, off switches to compatibility values, and maximum adds
+// fingerprinting resistance (M6EPrivacyShield.sys.mjs).
+pref("m6e.privacyShield.enabled", true);
+pref("m6e.privacyShield.maximum", false);

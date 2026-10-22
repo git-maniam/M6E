@@ -10,6 +10,7 @@ JAR_MANIFESTS += ["jar.mn"]
 
 MOZ_SRC_FILES += [
     "ContentBlockingPrefs.sys.mjs",
+    "M6EPrivacyShield.sys.mjs",
     "PrivacyMetricsService.sys.mjs",
 ]
 

@@ -25,6 +25,8 @@ const lazy = XPCOMUtils.declareLazy({
   ExtensionSettingsStore:
     "resource://gre/modules/ExtensionSettingsStore.sys.mjs",
   FirefoxRelay: "resource://gre/modules/FirefoxRelay.sys.mjs",
+  M6EPrivacyShield:
+    "moz-src:///browser/components/protections/M6EPrivacyShield.sys.mjs",
   Management: "resource://gre/modules/Extension.sys.mjs",
   Sanitizer: "resource:///modules/Sanitizer.sys.mjs",
   SiteDataManager: "resource:///modules/SiteDataManager.sys.mjs",
@@ -542,6 +544,25 @@ if (SECURITY_PRIVACY_STATUS_CARD_ENABLED) {
 }
 
 SettingGroupManager.registerGroups({
+  privacyShield: {
+    l10nId: "privacy-shield-group",
+    iconSrc: "chrome://browser/skin/controlcenter/tracking-protection.svg",
+    headingLevel: 2,
+    items: [
+      {
+        id: "privacyShieldEnabled",
+        l10nId: "privacy-shield-enabled",
+        control: "moz-toggle",
+        items: [
+          {
+            id: "privacyShieldMaximum",
+            l10nId: "privacy-shield-maximum",
+            control: "moz-checkbox",
+          },
+        ],
+      },
+    ],
+  },
   httpsOnly: {
     l10nId: "httpsonly-group",
     supportPage: "https-only-prefs",
@@ -4103,6 +4124,45 @@ Preferences.addSetting({
 Preferences.addSetting({
   id: "etpAllowListConvenienceEnabledCustom",
   pref: "privacy.trackingprotection.allow_list.convenience.enabled",
+  onUserChange() {
+    PrivacySettingHelpers.maybeNotifyUserToReload();
+  },
+});
+
+// M6E: the Privacy Shield master switch (P3.5) and its maximum mode.
+Preferences.addSetting({
+  id: "privacyShieldMaximumPref",
+  pref: "m6e.privacyShield.maximum",
+});
+
+Preferences.addSetting({
+  id: "privacyShieldEnabled",
+  pref: "m6e.privacyShield.enabled",
+  deps: ["privacyShieldMaximumPref"],
+  set(enabled, { privacyShieldMaximumPref }) {
+    lazy.M6EPrivacyShield.apply({
+      enabled,
+      maximum: privacyShieldMaximumPref.value,
+    });
+    return enabled;
+  },
+  onUserChange() {
+    PrivacySettingHelpers.maybeNotifyUserToReload();
+  },
+});
+
+Preferences.addSetting({
+  id: "privacyShieldMaximum",
+  pref: "m6e.privacyShield.maximum",
+  deps: ["privacyShieldEnabled"],
+  disabled: ({ privacyShieldEnabled }) => !privacyShieldEnabled.value,
+  set(maximum, { privacyShieldEnabled }) {
+    lazy.M6EPrivacyShield.apply({
+      enabled: privacyShieldEnabled.value,
+      maximum,
+    });
+    return maximum;
+  },
   onUserChange() {
     PrivacySettingHelpers.maybeNotifyUserToReload();
   },

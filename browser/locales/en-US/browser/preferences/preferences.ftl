@@ -1920,6 +1920,18 @@ sitedata-cookies-exceptions3 =
 
 content-blocking-enhanced-tracking-protection = Enhanced Tracking Protection
 
+privacy-shield-group =
+    .label = Privacy Shield
+    .description = { -brand-short-name } blocks trackers and fingerprinting, and only connects to sites securely. If a site doesn’t work, turn the shield off.
+
+privacy-shield-enabled =
+    .label = Privacy Shield
+    .description = Strict tracking protection, HTTPS-Only mode, and { -brand-short-name }’s privacy hardening.
+
+privacy-shield-maximum =
+    .label = Maximum protection
+    .description = Also resist fingerprinting. Sites see your time zone as UTC, windows get grey margins, and more sites may not work.
+
 content-blocking-section-top-level-description = Trackers follow you around online to collect information about your browsing habits and interests. { -brand-short-name } blocks many of these trackers and other malicious scripts.
 
 content-blocking-learn-more = Learn more

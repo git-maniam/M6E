@@ -445,6 +445,7 @@ const CONFIG_PANES = Object.freeze({
     l10nId: "pane-privacy-section",
     iconSrc: "chrome://browser/skin/preferences/category-privacy-security.svg",
     groupIds: [
+      "privacyShield",
       "securityPrivacyStatus",
       "securityPrivacyWarnings",
       "etpStatus",
