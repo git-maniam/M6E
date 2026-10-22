@@ -31,8 +31,8 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 0 | Toolchain, mozconfig, baseline build and measurements | Done |
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
-| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | In progress: P3.1–P3.6 done (search, bookmarks toolbar, Reading Mode, privacy hardening, Privacy Shield, push); next P3.7 Tracker Blocker button |
-| 4 | Performance | Not started |
+| 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | Done |
+| 4 | Performance | **Next** |
 | 5 | Packaging (`.dmg`) and acceptance | Not started |
 
 ## 3. Requirements
@@ -64,7 +64,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 - **Icon:** every branding image is generated from `M6E-Icon.png` by `tools/m6e/branding/make-icons.sh`. To change the icon, replace the artwork and rerun the script.
 - **macOS look (D15):** a neutral, Safari-like grey toolbar with a white selected tab, and accent colours that follow the macOS system accent.
 
-### Phase 3: Features and privacy (in progress)
+### Phase 3: Features and privacy (done)
 - **Search engines:**
   - Google is the default and Bing the only alternative. Every other engine is removed from the bundled search configuration.
   - Mozilla partner codes are removed from search URLs (D4), and users can't add engines (D5).
@@ -79,7 +79,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
   - Arkenfox-style hardening defaults, with Fingerprinting Protection rather than full fingerprinting resistance (D18).
   - A prominent "Privacy Shield" section in Settings (`about:preferences`, not a new page). Its master toggle sets the browser's default behaviour for every site (D20):
     - **On (default):** trackers and ads are blocked and the privacy hardening applies. A "Maximum protection" option adds full fingerprinting resistance.
-    - **Off:** no tracker blocking on any site, and the hardening is at Firefox's values. Total Cookie Protection stays on, because it isolates cookies rather than blocking anything.
+    - **Off:** no tracker blocking on any site, which is Firefox's per-site "protections off" applied everywhere and includes cookie isolation. The hardening that can't apply per site is at Firefox's values.
     - **Overrides:** the Tracker Blocker's per-site switch overrides this default in either direction.
 - **Push notifications:** must work reliably, with native macOS notifications (D12).
 - **Tracker Blocker button (D19):**
@@ -127,7 +127,7 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D17 | Keep the build toolchain on Homebrew (pinned), with `mach bootstrap` disabled. | The network's TLS inspection (Cloudflare Gateway) breaks `mach bootstrap` downloads. |
 | D18 | Hardening defaults use strict Enhanced Tracking Protection, which includes Fingerprinting Protection, rather than full fingerprinting resistance (`privacy.resistFingerprinting`). Full resistance is part of the Privacy Shield's strict mode. | Full resistance spoofs the time zone to UTC, letterboxes windows and breaks more sites. The gentler protection blocks most fingerprinting without that. |
 | D19 (agent) | The Tracker Blocker builds on Firefox's tracking protection icon and protections panel rather than a new widget. The count covers the current tab's page. | One blocking engine and one place to see what was blocked. |
-| D20 | The global Privacy Shield sets the default for every site, and the Tracker Blocker's per-site switch overrides it both ways. With the Shield on, it turns protection off for an important site that breaks. With the Shield off, it turns protection on for a high-risk site. Shield off means no tracker blocking (Total Cookie Protection stays: agent). Per-site choices last for the session only. The switch covers everything the Shield covers that the engine can apply per site. | The user's model (2026-10-23): one global default, with per-site exceptions in either direction. Global-only hardening is an engine limit. |
+| D20 | The global Privacy Shield sets the default for every site, and the Tracker Blocker's per-site switch overrides it both ways. With the Shield on, it turns protection off for an important site that breaks. With the Shield off, it turns protection on for a high-risk site. Shield off means no tracker blocking, which also lifts cookie isolation, as Firefox's per-site off does (agent: implemented through the content blocking allow list). Per-site choices last for the session only. The switch covers everything the Shield covers that the engine can apply per site. | The user's model (2026-10-23): one global default, with per-site exceptions in either direction. Global-only hardening is an engine limit. |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.

@@ -70,9 +70,10 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.3 | Reading Mode | `c1a620c1de` |
 | P3.4 | Privacy hardening defaults (D18) | `1d0df295aa` |
 | P3.5 | Privacy Shield | `1bce2fc615` |
-| P3.5b | Privacy Shield off means no blocking (D20) | `48b7b26941` |
+| P3.5b | Privacy Shield off means no blocking (D20; reworked in P3.7) | `48b7b26941` |
 | P3.6 | Push notifications verified; push check tool | `4b25cc5ac6` |
-| P2.6 | Fox artwork replaced with the M6E icon | see `git log --grep P2.6` |
+| P2.6 | Fox artwork replaced with the M6E icon | `f6b2bfd7eb` |
+| P3.7 | Tracker Blocker button with a two-way, session-only per-site switch | see `git log --grep P3.7` |
 
 ## 3. Results by phase (as built)
 
@@ -217,6 +218,29 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Tests:** `etp/browser_m6e_privacy_shield.js`, which is in `browser-srd.toml` because the Shield exists only with the settings redesign. The `etp` suite gives 875 and 923 passed.
   - **Off means no blocking (P3.5b, D20):** with a strict or standard category, off switches to `custom` with every blocking feature off (`NO_BLOCKING_VALUES`): tracking content, social trackers, fingerprinters, cryptominers, email trackers, the level-2 list, query stripping and Fingerprinting Protection, in normal and private windows. `cookieBehavior` stays 5 (Total Cookie Protection). On returns to strict when the category is standard or blocking is still all off. A custom setup the user made is kept.
   - **Not a bug:** the security warning card on the Privacy pane appears only in Marionette and test profiles. They turn off password saving and the popup blocker.
+- **Tracker Blocker button (P3.7, D19, D20):**
+  - **Trust panel:** this Nightly's Trust panel (`browser-trustPanel.js`, `#trust-icon-container`) already provides the button, the count pill and the panel, so P3.7 builds on it.
+    - `m6e.js` turns on `browser.urlbar.trackerCount.featureGate`, so the pill reads "N trackers blocked" and then N.
+    - With protection off for the site, the shield has an X and shows no number.
+    - The panel lists blocked trackers, cookies, social trackers, fingerprinters and cryptominers with their domains.
+    - The toggle is labelled "Tracker Blocker". Breach alerts are locked off, because they offered Mozilla Monitor scans.
+  - **Two-way, session-only override (D20):** `M6EPrivacyShield.isSiteProtected()` and `setSiteProtected()` drive the panel toggle.
+    - **Shield on:** off for a site adds the ETP allow-list permission and the HTTPS-Only session exemption. `ContentBlockingAllowList` now always uses `EXPIRE_SESSION`.
+    - **Shield off:** on for a site adds a session `m6e-protect` permission for its http and https origins.
+    - **C++ hooks:** with the Shield off, every site is exempt unless it has `m6e-protect`:
+      - `ContentBlockingAllowList::Check()` covers tracking protection, cookie restrictions and FPP;
+      - `nsContentUtils::ETPSaysShouldNotResistFingerprinting()` makes the allow list exempt RFP too;
+      - `nsHTTPSOnlyUtils::TestIfPrincipalIsExempt()` covers HTTPS-Only.
+    - The blocking prefs stay strict either way, so P3.5b's pref flipping was reverted. The Shield only flips the global-only hardening prefs.
+  - **Checked on BBC News (`tools/m6e/trackers/tracker_count_check.py`):**
+    - Shield on: 7 blocked; site off: inactive, 0 blocked, session-only permissions; site back on: blocking resumes.
+    - Shield off: inactive, 0 blocked; site on: 9 blocked with the count showing.
+    - HTTPS-Only on `http.badssl.com`: enforced with the Shield on, not enforced with it off, and enforced again with the Shield off and the site turned on.
+  - **Tests:**
+    - `etp/browser_m6e_privacy_shield.js` covers the Shield and both override directions through the page's `cookieJarSettings.isOnContentBlockingAllowList`, plus the session expiry.
+    - The Trust panel suite gives 498 passed. Its `head.js` unlocks breach alerts for the upstream tests.
+    - The `browser-protectionsUI` suite gives 734 checks with 0 unexpected. It must run without `--headless`, and alone, because window focus matters.
+  - **Marionette:** profiles have no tracker lists (see the build-environment notes); the check tool restores them.
 - **Push notifications (P3.6, D12):** no code change was needed, because M6E's defaults already give reliable push.
   - **Defaults:** `dom.push.enabled`, `dom.push.connection.enabled`, `wss://push.services.mozilla.com/`, and `alerts.useSystemBackend` (macOS Notification Center).
   - **`tools/m6e/push/push_check.py`:** serves a service-worker page on localhost, subscribes through Mozilla's push service, sends real pushes to the endpoint with curl, and checks delivery and the shown notification in four cases:
@@ -229,54 +253,15 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Manual check:** the native banner and the macOS permission prompt on first use (System Settings, Notifications, M6E), because headless runs can't show them.
   - **Not done:** the optional "open at login, hidden" login item. It's native code and needs the user's agreement first.
 
-## 4. Next step: P3.7 Tracker Blocker button (D19, D20)
+## 4. Next step: Phase 4, performance (P4.1 measure)
 
-See P3.7 in section 5.
+Phase 3 is complete. Start a fresh session for Phase 4 (see section 7).
+- **P4.1:** run `measure.py` on the current build, on a quiet machine with nothing else running, and compare it with `artifacts/baseline-P0` and `artifacts/phase1-P1.14b`.
+- **Then P4.2:** build flags one at a time. Each is a full rebuild.
 
-**Checkpoint (2026-10-23):** P3.7 is in progress.
-- **Finding:** this Nightly's **Trust panel** (`browser/base/content/browser-trustPanel.js`, on by default through `browser.urlbar.trustPanel.featureGate`) has replaced the old tracking protection icon. It already has:
-  - the urlbar trust icon (`#trust-icon-container`) with an `inactive` state, a shield with an X, when protection is off for the site;
-  - a tracker count pill (`#computeTrackerCount`, "N trackers blocked", which shortens to N);
-  - the per-site protection toggle (`#trustpanel-toggle`);
-  - per-blocker subviews listing the blocked domains.
-
-  So P3.7 builds on the Trust panel, not on `browser-siteProtections.js`.
-- **Done:** `m6e.js` turns on `browser.urlbar.trackerCount.featureGate`. Checked on BBC News with `tools/m6e/trackers/tracker_count_check.py`: on shows the shield and "N trackers blocked"; off for the site shows the inactive shield and no number.
-- **Done:** the panel toggle and labels read "Tracker Blocker" (`browser.ftl`), and breach alerts are locked off, because they offered Mozilla Monitor scans.
-- **Design for D20, being implemented:** central exemption hooks rather than per-feature changes.
-  - **Shield off:** every site is exempt unless the user turned the Tracker Blocker on for it, which is a session permission `m6e-protect`. Hooks:
-    - `ContentBlockingAllowList::Check()` (C++), which covers tracking protection, cookie restrictions and FPP;
-    - `nsContentUtils::ETPSaysShouldNotResistFingerprinting()`, which lets the allow list exempt RFP too;
-    - `nsHTTPSOnlyUtils::TestIfPrincipalIsExempt()`, for HTTPS-Only.
-  - **Shield on:** the per-site off is the ETP allow-list permission plus the HTTPS-Only session exemption, both made `EXPIRE_SESSION`.
-  - **Prefs:** the blocking prefs stay strict whichever way the Shield is set. `M6EPrivacyShield` only flips the global-only hardening prefs, which reverts the pref flipping from P3.5b.
-  - **Cookies:** an exempt site also loses Total Cookie Protection, which is what Firefox's per-site off does. This replaces the D20 agent note that Total Cookie Protection stays.
-  - **Tests:** the base test profile must leave `m6e.privacyShield.enabled` at its default (true), otherwise every test site becomes exempt.
-- **Remaining:** that implementation (`./mach build binaries`), tests, and the commit as `M6E P3.7`.
-
-**Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
+**Small follow-up:** drop the AI buttons from CustomizableUI's default placements (see P3.2), so that Restore Defaults is only enabled after a real customisation.
 
 ## 5. Remaining steps
-
-### P3.7 Tracker Blocker button (D19)
-Build on Firefox's tracking protection icon (`#tracking-protection-icon-container` in the urlbar's identity box) and the protections panel (`browser/base/content/browser-siteProtections.js`, `#protections-popup`). Don't add a second widget.
-- **Count badge:** add a number to the icon showing the items blocked on the current tab. Use the content-blocking log the panel already reads (`gBrowser.selectedBrowser.getContentBlockingLog()`, or the `onContentBlockingEvent` notifications), counting every blocked tracker, ad, social tracker, fingerprinter, cryptominer and cross-site cookie. Update it on each blocking event and on tab switches, and reset it on navigation.
-- **States:**
-  - **Enabled:** the active Tracker Blocker icon with the count.
-  - **Disabled:** a distinct inactive icon with no count, when the site has a tracking protection exception or blocking is off.
-  - Draw new SVG icons in `browser/themes/shared/icons/` in the M6E style.
-- **Panel:**
-  - List each category and the blocked domains (the panel's subviews already hold the per-category lists; show them inline or one click away).
-  - The toggle, relabelled "Tracker Blocker", becomes a two-way, session-only override of the Privacy Shield for the current site (D20).
-  - Drop the panel's Mozilla links, which have no support site (D7).
-- **Per-site override (D20):** store it as a session-expiring site permission (`EXPIRE_SESSION`), with `allow` meaning protection off and `deny` meaning protection on.
-  - **Shield on, protection off:** use Firefox's existing ETP exception (`trackingprotection` permission). Also add HTTPS-Only's exception (`https-only-load-insecure`) and an FPP/RFP exemption for the site through `privacy.fingerprintingProtection.granularOverrides`.
-  - **Shield off, protection on:** blocking is globally off, so the tracking protection checks (C++ `ContentBlockingAllowList` and the URL classifier features) and HTTPS-Only (`nsHTTPSOnlyUtils`) need an M6E "protect this site" permission that turns them on for that site. Fingerprinting protection (and RFP in Maximum mode) gets a per-site override.
-  - **Global only:** TLS, punycode, WebRTC IP handling, PDF scripting, referrer trimming, GPC and window move or resize.
-  - This needs C++ changes, so build with `./mach build binaries`.
-- **Check (overrides):** with the Shield on, turning a site off shows the inactive icon and loads it unblocked over HTTP if needed. With the Shield off, turning a site on blocks its trackers, counts them, and upgrades it to HTTPS. Both overrides end when M6E quits.
-- **Strings:** "Tracker Blocker", and an accessible label that includes the count.
-- **Check:** on a page with known trackers, the badge counts up and matches the panel's lists. Turning the toggle off shows the inactive icon with no number and reloads the page unblocked. Turning it on restores the count. Also check tab switches, private windows, and with the Privacy Shield off. Run `browser/base/content/test/protectionsUI`.
 
 ### Phase 4: Performance
 - **P4.1 Measure:** repeat `measure.py` on the Phase 3 build and compare with the baselines.
