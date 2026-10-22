@@ -37,12 +37,17 @@ The spec was written before the tree was inspected. These findings adjust how so
 | Root dotfiles | The initial import dropped every hidden file in the repository root, including `.cargo/config.toml.in`, which the build requires. | Restored in Phase 0 from upstream `034cd8a8`, together with upstream's `.gitignore`. CI, Phabricator, GitHub workflow and AI/IDE configs were deliberately not restored. |
 | Toolchain | Xcode 27, arm64, 14 cores, 48 GB RAM. Cloudflare Gateway inspects TLS on this network, and `./mach bootstrap` rejects its certificate. | Phase 0 uses Homebrew toolchains with `--disable-bootstrap` instead (see P0.2 and P0.3). |
 
-## Decisions to confirm before execution
+## Decisions
 
-Each decision has a default, which this plan assumes unless changed. Settle D9 first: it is cheapest to change before any work starts.
+All decisions were confirmed by the user on 2026-10-22. D2, D10, D11 and D12 replace the original defaults; the rest keep them.
 
 - **D1 en-GB.** Default: ship the UI in `en-US` only, with no language switcher, and bundle an `en-GB` spell-check dictionary. Alternative: fetch `en-GB` strings from the l10n repository and ship both as built-in UI locales that follow the macOS language. Expect extra work every time strings change.
-- **D2 Remote Settings.** Default (per the spec): disabled completely. Trade-off: this also stops updates to certificate revocation (CRLite), intermediate certificates, the add-on blocklist and the Translations models. The bundled dumps (search config and others) keep working. The alternative, keeping only the security collections, means contacting Mozilla servers.
+- **D2 Remote Settings. Confirmed by the user: keep security blocklist updates.** Remote Settings stays on behind an M6E allowlist of security and privacy-protection collections only:
+  - the `security-state` bucket (OneCRL, intermediate certificates, CRLite certificate revocation);
+  - the `blocklists` bucket (add-on and graphics-driver blocklists);
+  - `main/tracking-protection-lists`, which Enhanced Tracking Protection's list updates use (`moz-sbrs:://antitracking`);
+  - the small privacy collections, such as query-parameter stripping and URL-decoration lists.
+  Every other collection uses only its bundled dump and never syncs. Above all, `search-config*` must not sync: the server would restore every engine M6E removes (P3.1). This is the second deliberate Mozilla exception (with D12); the hosts are `firefox.settings.services.mozilla.com`, `firefox-settings-attachments.cdn.mozilla.net` and `content-signature-2.cdn.mozilla.net`, which verifies the data's signatures.
 - **D3 AI features.** Default: remove the AI window and the chatbot sidebar (`genai`), and disable Translations, which cannot fetch models once Remote Settings is off. Keep `toolkit/components/ml` only if something still needs it.
 - **D4 Search partner codes.** Default: strip Mozilla partner and attribution parameters (`client`, `channel` and similar) from the Google and Bing URLs.
 - **D5 User-added search engines.** Default: block them. Disable OpenSearch discovery and the "Add search engine" UI, so Google and Bing stay the only engines.
@@ -51,8 +56,8 @@ Each decision has a default, which this plan assumes unless changed. Settle D9 f
 - **D8 Code signing.** Default: ad-hoc signing (`codesign -s -`) for local use. Notarized distribution needs an Apple Developer ID.
 - **D9 Upstream base.** Default: keep the checked-in `160.0a1` Nightly snapshot. Since updates are disabled, security fixes arrive only when upstream changes are merged by hand, and this snapshot has no upstream history to merge from. Alternative: replace the base now with a Release or ESR source tree (more stable, smaller security merges later). Either way, record the exact upstream revision in this file.
 - **D10 DRM and media plugins. Confirmed by the user: keep automatic downloads, so DRM sites work.** Widevine (from Google) and OpenH264 (from Cisco) install automatically on first run. Firefox normally asks `aus5.mozilla.org` which versions to fetch. M6E skips that request and uses the download lists bundled in `toolkit/content/gmp-sources/`, which point straight at Google and Cisco and carry SHA-512 hashes (P1.12). Those lists are fixed at the snapshot's versions, so refresh them whenever upstream changes are merged.
-- **D11 DNS over HTTPS.** Default: off, using system DNS, with the setting kept visible so the user can turn it on. Firefox's automatic DoH rollout and its Cloudflare probe are disabled.
-- **D12 Web Push. Confirmed by the user: site push notifications must work, and work well.** Web Push is relayed through a push server, and Firefox's is Mozilla's autopush (`wss://push.services.mozilla.com/`). The only alternative is self-hosting autopush. So M6E keeps Mozilla's push service as the single deliberate exception to "no Mozilla services". Message contents are end-to-end encrypted (RFC 8291), but Mozilla sees subscription metadata, timing and the connecting IP. Pushes only arrive while M6E is running, which P3.6 addresses.
+- **D11 DNS over HTTPS. Confirmed by the user: on by default, and the user can turn it off in Settings.** Default to Increased Protection (`network.trr.mode` 2: DoH first, falling back to system DNS if DoH fails) with Firefox's default provider, Cloudflare (`mozilla.cloudflare-dns.com`, under Mozilla's Trusted Recursive Resolver policy). Keep the existing DNS over HTTPS controls in the Privacy pane (Off, Increased, Max, and provider choice). Remove the region-based DoH rollout and its probes, since the default no longer depends on them. On managed or corporate networks, internal host names may not resolve over DoH; the fallback and the Off setting cover that.
+- **D12 Web Push. Confirmed by the user: site push notifications must work, and work well.** Web Push is relayed through a push server, and Firefox's is Mozilla's autopush (`wss://push.services.mozilla.com/`). The only alternative is self-hosting autopush. So M6E keeps Mozilla's push service as a deliberate exception to "no Mozilla services" (the other is the Remote Settings security allowlist, D2). Message contents are end-to-end encrypted (RFC 8291), but Mozilla sees subscription metadata, timing and the connecting IP. Pushes only arrive while M6E is running, which P3.6 addresses.
 
 ## Phase 0: Setup and baseline
 
@@ -184,12 +189,18 @@ Commit P0.1 and P0.2 only. The baselines are local notes.
   - Set `extensions.getAddons.cache.enabled` and `extensions.htmlaboutaddons.recommendations.enabled` to `false`, and `extensions.getAddons.showPane` to `false`.
   - Remove the "Find more add-ons" links and the recommended-extensions pane.
   - Keep manual installation of `.xpi` files.
-- **Remote Settings (D2):** point `services.settings.server` at nothing, so only the bundled dumps load.
+- **Remote Settings (D2):**
+  - List every `RemoteSettings("...")` client in the tree and classify it as security or privacy protection, or other.
+  - Add the allowlist from D2 as one hard-coded list in `services/settings/` (not a pref, so it cannot be widened by accident), and make the sync skip every collection not on it.
+  - Keep content-signature verification on.
+  - Document the final list in this plan.
 - **Media plugins (D10):** keep `media.eme.enabled` and automatic plugin installs. Set `media.gmp-manager.url` to an empty value, so `GMPInstallManager` fails its Mozilla check and falls back to the bundled `gmp-sources` lists (Google and Cisco only). Confirm that the fallback triggers on an empty URL; if it doesn't, make the bundled lists the primary source in `GMPInstallManager.sys.mjs`.
+- **DNS over HTTPS (D11):** default `network.trr.mode` to 2 with the default Cloudflare provider; keep the Privacy pane's DoH settings; remove the DoH rollout and its heuristics probes.
 - **Web Push (D12):** leave `dom.push.enabled`, `dom.push.connection.enabled` and `dom.push.serverURL` at their defaults. Keep the Megaphone broadcast channel from triggering Remote Settings syncs (D2).
 - **Safe Browsing:** set `browser.safebrowsing.malware.enabled`, `browser.safebrowsing.phishing.enabled` and `browser.safebrowsing.downloads.remote.enabled` to `false`, and blank the provider URLs.
 - **Verify:**
-  - The network capture shows no `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com` or Safe Browsing hosts, except `push.services.mozilla.com` (D12).
+  - The network capture shows no `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com` or Safe Browsing hosts, except `push.services.mozilla.com` (D12), the three Remote Settings hosts (D2) and the DoH resolver (D11).
+  - Remote Settings fetches only allowlisted collections, and `search-config*` never syncs.
   - On a fresh profile, Widevine and OpenH264 download from Google and Cisco only, and a DRM test page plays.
   - An `.xpi` still installs from disk.
 
@@ -201,8 +212,8 @@ Commit P0.1 and P0.2 only. The baselines are local notes.
 ### P1.14 Pocket leftovers and Phase 1 check
 - Search for leftover Pocket prefs, strings and icons (`extensions.pocket`, `pocket` in `browser/` front-end files) and remove them.
 - Repeat the P0.4 network capture. Expected:
-  - **Allowed:** `push.services.mozilla.com` (D12), and the Widevine and OpenH264 downloads from Google and Cisco on a first run (D10).
-  - **Off:** captive-portal and connectivity checks, region lookup (`location.services.mozilla.com`), the first-run welcome page, new-tab DNS prefetching, and the automatic DoH probe (D11).
+  - **Allowed:** `push.services.mozilla.com` (D12); the Remote Settings hosts, for allowlisted collections only (D2); the DoH resolver `mozilla.cloudflare-dns.com` (D11); and the Widevine and OpenH264 downloads from Google and Cisco on a first run (D10).
+  - **Off:** captive-portal and connectivity checks, region lookup (`location.services.mozilla.com`), the first-run welcome page, new-tab DNS prefetching, and the DoH rollout probes.
 - **Verify:** the 5-minute idle log contains only the allowed hosts above; `./mach run` works for basic browsing.
 
 ## Phase 2: Rebranding and UI
@@ -352,5 +363,6 @@ Run on the packaged app with a fresh profile:
   - Arkenfox-style prefs breaking sites. Mitigated by the Privacy Shield toggle.
   - LTO and PGO lengthening builds.
   - Security exposure from the frozen base (D2, D9).
+  - Remote Settings allowlist drift (D2): upstream may add security collections or move existing ones, so review the allowlist on every upstream merge.
   - Dependence on Mozilla's push service (D12). If Mozilla changes or restricts it, push notifications stop until M6E self-hosts autopush.
   - Stale DRM plugin versions in the bundled `gmp-sources` lists (D10). Refresh them during upstream merges.

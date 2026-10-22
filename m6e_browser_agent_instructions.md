@@ -30,9 +30,11 @@ Firefox contains significant code for features, platforms, and themes that are u
 * **Feature Eradication:**
   * Completely rip out **Pocket**, **Firefox View**, **Firefox Sync**, and **Firefox VPN** integrations.
   * Strip all **Telemetry**, **Crashpad**, and **Data Collection** modules.
-  * Disable updates, AMO, Normandy, Remote Settings and Safe Browsing lookups. Extensions are installed manually.
+  * Disable updates, AMO, Normandy and Safe Browsing lookups. Extensions are installed manually.
+  * Keep Remote Settings only for security blocklist updates (certificate revocation, intermediate certificates, add-on and driver blocklists) and Enhanced Tracking Protection lists. Every other collection, including the search engine list, stays on the bundled copy and never syncs.
+  * Turn DNS over HTTPS on by default (Increased Protection, Cloudflare); the user can turn it off in Settings.
   * Keep DRM working: Widevine and OpenH264 still download automatically, directly from Google and Cisco and without Mozilla's update server.
-  * Keep site push notifications working well. Web Push stays on Mozilla's push service, the only Mozilla service M6E keeps, with native macOS notifications.
+  * Keep site push notifications working well. Web Push stays on Mozilla's push service, with native macOS notifications.
   * Remove Sponsored Top Sites and Sponsored Search suggestions.
 
 ## 3. Phase 2: Rebranding & UI Modernization
@@ -84,9 +86,12 @@ Firefox contains significant code for features, platforms, and themes that are u
 * **Platform stripping:** Remove only top-level platform directories (e.g. `mobile/android`, `widget/windows`, `widget/gtk`). Leave `#ifdef` branches in shared code in place.
 * **Rebranding:** Use Mozilla's branding mechanism (a `browser/branding/m6e` directory and the related configure options) rather than a blind repo-wide replace. "Mozilla" and "Firefox" must not appear in anything user-visible (UI, app bundle, about pages, displayed URLs). Keep `LICENSE`, MPL headers and `AUTHORS` intact, and add a "Based on Firefox source" note in the license/about text. Do not rename internal identifiers such as `MOZ_` prefixes.
 * **Theme:** The browser chrome is always light, regardless of macOS appearance. Keep the `prefers-color-scheme` plumbing for web content.
-* **Network services:** Disable updates, AMO, Normandy, Remote Settings and Safe Browsing lookups. Extensions are installed manually.
+* **Network services:** Disable updates, AMO, Normandy and Safe Browsing lookups. Extensions are installed manually.
+* **Remote Settings:** Kept only for security blocklist updates and tracking-protection lists, behind a hard-coded allowlist. Everything else, including the search engine list, uses the bundled copy.
+* **Mozilla service exceptions:** M6E contacts Mozilla for exactly two things: Web Push (`push.services.mozilla.com`) and the Remote Settings security allowlist (`firefox.settings.services.mozilla.com` and its attachment and signature CDNs). Nothing else.
+* **DNS over HTTPS:** On by default (Increased Protection, Cloudflare), and the user can turn it off in Settings.
 * **DRM:** Widevine and OpenH264 keep downloading automatically (from Google and Cisco directly), so DRM sites work.
-* **Push notifications:** Must work, and work well. Web Push uses Mozilla's push service (`push.services.mozilla.com`), the single deliberate exception to "no Mozilla services".
+* **Push notifications:** Must work, and work well. Web Push uses Mozilla's push service (`push.services.mozilla.com`).
 * **Icon:** The application icon is `M6E-Icon.png` (repository root), a PNG rather than an SVG. Crop it to the white rounded-square tile (dropping the grey background and the watermark), place it on a 1024x1024 transparent canvas, and generate the `.icns` and all other branding images from that master. Use stable asset names so the icon can be replaced later by regenerating from a new `M6E-Icon.png`.
 * **Reading mode:** Modify the existing Reader View in place; do not build a separate reader.
 * **Privacy panel:** Implement the "Privacy Shield" as a section inside the existing settings page (`about:preferences`), not as a new `about:m6e` page.
