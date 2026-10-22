@@ -47,6 +47,13 @@ SearchTestUtils.init(this);
 
 const SETTINGS_FILENAME = "search.json.mozlz4";
 
+// M6E: these tests use OpenSearch, user and add-on engines as fixtures, and
+// point region lookups at a local server.
+// test_m6e_bundled_engines_only.js covers the shipped, locked behaviour.
+Services.prefs.unlockPref("browser.search.bundledEnginesOnly");
+Services.prefs.setBoolPref("browser.search.bundledEnginesOnly", false);
+Services.prefs.unlockPref("browser.region.network.url");
+
 // Expand the amount of information available in error logs
 Services.prefs.setBoolPref("browser.search.log", true);
 Services.prefs.setBoolPref("browser.region.log", true);

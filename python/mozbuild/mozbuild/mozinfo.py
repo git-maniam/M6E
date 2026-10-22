@@ -47,6 +47,10 @@ def build_dict(config, env=os.environ):
     # Application name
     if "MOZ_APP_NAME" in substs:
         d["appname"] = substs["MOZ_APP_NAME"]
+        # M6E: the renamed browser still runs Firefox's test manifests, which
+        # key on appname (for example "firefox-appdir").
+        if d["appname"] == "m6e":
+            d["appname"] = "firefox"
 
     # Build app name
     if "MOZ_BUILD_APP" in substs:

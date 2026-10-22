@@ -6,13 +6,10 @@ subsuite = "a11y"
 support-files = [
   "!/accessible/tests/mochitest/*.js",
   "*.sys.mjs",
-  "atk/a11y_setup.py",
   "doc_mathml.html",
   "head.js",
   "python_runner_wsh.py",
   "shared-head.js",
-  "windows/a11y_setup.py",
-  "windows/a11y_setup_requirements.txt",
 ]
 prefs = [
   # Required for the eval in invokeContentTask in shared-head.js

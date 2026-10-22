@@ -190,7 +190,9 @@ def scan(text):
             (r"true|false", bool_token),
             (r"[a-zA-Z_]\w*", ident_token),
             (r"[0-9]+", int_token),
-            (r'("[^"]*")|(\'[^\']*\')', string_token),
+            # Non-capturing groups: Python 3.15 rejects capturing groups in
+            # re.Scanner patterns.
+            (r'(?:"[^"]*")|(?:\'[^\']*\')', string_token),
             (r"==", eq_op_token()),
             (r"!=", neq_op_token()),
             (r"<=", le_op_token()),

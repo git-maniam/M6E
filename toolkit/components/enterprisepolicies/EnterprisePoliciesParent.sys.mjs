@@ -487,6 +487,14 @@ EnterprisePoliciesManager.prototype = {
   },
 
   isAllowed(feature) {
+    // M6E: the bundled search engines are the only ones, so every "add search
+    // engine" entry point stays hidden, as with the PreventInstalls policy.
+    if (
+      feature == "installSearchEngine" &&
+      Services.prefs.getBoolPref("browser.search.bundledEnginesOnly", true)
+    ) {
+      return false;
+    }
     return !(feature in DisallowedFeatures);
   },
 

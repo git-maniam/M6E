@@ -62,9 +62,7 @@ add_task(async function test_selector_db_out_of_date() {
 
   let engineIdentifiers = result.engines.map(e => e.identifier);
   Assert.ok(
-    ["google", "bing", "ddg", "wikipedia"].every(id =>
-      engineIdentifiers.includes(id)
-    ),
+    ["google", "bing"].every(id => engineIdentifiers.includes(id)),
     "Should have returned the correct engine identifiers."
   );
 });

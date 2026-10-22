@@ -749,6 +749,13 @@ export const SearchService = new (class SearchService {
    *   The generated search engine object.
    */
   async addUserEngine(formInfo) {
+    // M6E: users cannot add search engines.
+    if (lazy.SearchUtils.bundledEnginesOnly) {
+      throw new lazy.SearchEngineInstallError(
+        "not-allowed",
+        "Adding search engines is not supported"
+      );
+    }
     await this.init();
 
     let newEngine = new lazy.UserSearchEngine({ formInfo });
@@ -829,6 +836,13 @@ export const SearchService = new (class SearchService {
    *   If the description file cannot be successfully loaded.
    */
   async addOpenSearchEngine(engineURL, iconURL, originAttributes) {
+    // M6E: OpenSearch engines are never fetched or added.
+    if (lazy.SearchUtils.bundledEnginesOnly) {
+      throw new lazy.SearchEngineInstallError(
+        "not-allowed",
+        "Adding search engines is not supported"
+      );
+    }
     lazy.logConsole.debug("addOpenSearchEngine: Adding", engineURL);
     await this.init();
     let engineData = await lazy.loadAndParseOpenSearchEngine(
@@ -2617,6 +2631,17 @@ export const SearchService = new (class SearchService {
    */
   #addEngineToStore(engine, skipDuplicateCheck = false) {
     if (this.#engineMatchesIgnoreLists(engine)) {
+      return;
+    }
+
+    // M6E: only the bundled configuration engines (Google and Bing) exist.
+    // OpenSearch, user, add-on and policy engines, including ones saved in
+    // an existing profile, are never added.
+    if (
+      lazy.SearchUtils.bundledEnginesOnly &&
+      !(engine instanceof lazy.ConfigSearchEngine)
+    ) {
+      lazy.logConsole.warn("Not adding a non-bundled engine:", engine.name);
       return;
     }
 

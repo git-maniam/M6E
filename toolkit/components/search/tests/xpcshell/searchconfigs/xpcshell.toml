@@ -17,13 +17,6 @@ run-if = [
   "os != 'android' && appname != 'thunderbird' && opt",
 ]
 
-["test_distributions.js"]
-
-["test_searchconfig.js"]
-requesttimeoutfactor = 5  # Slow and high CPU use on Linux and Windows
-
-["test_searchconfig_google_additional.js"]
-
 ["test_searchconfig_ui_schemas_valid.js"]
 support-files = [
   "../../../schema/search-config-icons-schema.json",

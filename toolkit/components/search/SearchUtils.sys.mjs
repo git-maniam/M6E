@@ -22,6 +22,10 @@ const lazy = XPCOMUtils.declareLazy({
     pref: "browser.search.configV3.featureGate",
     default: false,
   },
+  bundledEnginesOnly: {
+    pref: "browser.search.bundledEnginesOnly",
+    default: true,
+  },
 });
 
 const BinaryInputStream = Components.Constructor(
@@ -140,7 +144,7 @@ class LoadListener {
  */
 export class SearchEngineInstallError extends Error {
   /**
-   * @param {"duplicate-title"|"corrupted"|"download-failure"} type
+   * @param {"duplicate-title"|"corrupted"|"download-failure"|"not-allowed"} type
    * @param {Parameters<ErrorConstructor>} params
    */
   constructor(type, ...params) {
@@ -171,6 +175,14 @@ export var SearchUtils = {
    */
   get configV3FeatureGate() {
     return lazy.configV3FeatureGate;
+  },
+
+  /**
+   * M6E: whether only the bundled configuration engines may exist, so that
+   * OpenSearch, user, add-on and policy engines are never added.
+   */
+  get bundledEnginesOnly() {
+    return lazy.bundledEnginesOnly;
   },
 
   /**

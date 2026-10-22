@@ -179,3 +179,7 @@ pref("ui.new-webcompat-reporter.enabled", false, locked);
 pref("browser.preferences.moreFromMozilla", false, locked);
 pref("browser.newtabpage.activity-stream.default.sites", "https://www.wikipedia.org/,https://www.youtube.com/,https://www.reddit.com/", locked);
 pref("app.releaseNotesURL.aboutDialog", "about:blank", locked);
+
+// Google and Bing, from the bundled search configuration, are the only search
+// engines. OpenSearch, custom, add-on and policy engines are never added.
+pref("browser.search.bundledEnginesOnly", true, locked);

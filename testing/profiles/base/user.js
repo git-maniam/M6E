@@ -26,3 +26,7 @@ user_pref("browser.startup.couldRestoreSession.count", -1);
 // This is used to disable address autofill telemetry since we cannot download
 // the model within tests.
 user_pref("extensions.formautofill.useml", false);
+
+// M6E turns on DNS over HTTPS by default (m6e.js), which would make tests
+// contact the resolver.
+user_pref("network.trr.mode", 0);

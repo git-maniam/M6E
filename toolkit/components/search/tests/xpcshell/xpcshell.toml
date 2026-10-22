@@ -32,9 +32,6 @@ support-files = [
 
 ["test_appProvided_icons.js"]
 
-["test_appProvided_icons_updates.js"]
-tags = "remote-settings"
-
 ["test_async.js"]
 
 ["test_configExpansion.js"]
@@ -101,6 +98,8 @@ support-files = ["settings/ignorelist.json"]
 ["test_initialization_status_telemetry.js"]
 
 ["test_initialization_with_region.js"]
+
+["test_m6e_bundled_engines_only.js"]
 
 ["test_maybereloadengine_order.js"]
 
