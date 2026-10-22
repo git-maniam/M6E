@@ -1123,9 +1123,7 @@ class TrustPanel {
   // M6E: the Tracker Blocker follows the Privacy Shield and its per-site
   // override (D20).
   get #trackingProtectionEnabled() {
-    return M6EPrivacyShield.isSiteProtected(
-      window.gBrowser.selectedBrowser
-    );
+    return M6EPrivacyShield.isSiteProtected(window.gBrowser.selectedBrowser);
   }
 
   async #hasMonitorAccount() {
