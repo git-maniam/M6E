@@ -39,6 +39,7 @@ iconutil -c icns "$work/app.iconset" -o "$out/firefox.icns"
 cp "$out/firefox.icns" "$out/disk.icns"
 make_iconset "$work/document-1024.png" "$work/document.iconset"
 iconutil -c icns "$work/document.iconset" -o "$out/document.icns"
+sips -s format ico "$work/document.iconset/icon_256x256.png" --out "$out/document.ico" >/dev/null
 
 # Info.plist names the icon AppIcon in an asset catalog (CFBundleIconName).
 catalog=$work/Assets.xcassets
