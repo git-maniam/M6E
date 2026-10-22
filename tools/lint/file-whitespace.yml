@@ -99,7 +99,6 @@ file-whitespace:
         - layout/xul/tree
         - modules/libjar/zipwriter/test/unit/data/test_bug399727.html
         # Room-generated database schemas for migration
-        - mobile/android/android-components/components/lib/crash/schemas
         - netwerk/test/crashtests
         - netwerk/test/mochitests/test1.css
         - netwerk/test/mochitests/test2.css
@@ -127,7 +126,6 @@ file-whitespace:
         - widget/cocoa/crashtests
         - widget/nsFilePickerProxy.cpp
         - widget/tests
-        - widget/windows/tests/TestUrisToValidate.h
         - xpcom/reflect/xptcall/porting.html
         - xpcom/tests/unit/data/bug121341.properties
         # Excluded below files because tests were failing unexpectedly

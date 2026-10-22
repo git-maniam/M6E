@@ -45,7 +45,7 @@ PATTERN = re.compile(
             |
             [^,)]+          # other literals: true, false, integers
         )
-        (\s*,.*)?           # optional pref-attr: "sticky" | "locked"
+        (\s*,(?P<attr>.*))? # optional pref-attr: "sticky" | "locked"
     \s*\)
     \s*;.*
     """,
@@ -111,7 +111,8 @@ def read_prefs(path):
     with open(path, encoding="utf-8") as source:
         for lineno, line in enumerate(source, start=1):
             match = PATTERN.match(line)
-            if match:
+            # M6E: m6e.js repeats some static pref defaults to lock them.
+            if match and "locked" not in (match.group("attr") or ""):
                 prefs.append({
                     "name": match.group("pref"),
                     "value": evaluate_pref(match.group("val")),

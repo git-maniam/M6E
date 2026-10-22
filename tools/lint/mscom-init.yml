@@ -33,16 +33,8 @@ forbid-mscom-init:
         # ApartmentRegion and moving them to _that_ lint's exception-list.
         - image/DecodePool.cpp
         - ipc/glue/IOThread.cpp
-        - netwerk/system/win32/nsNotifyAddrListener.cpp
         - toolkit/components/bitsdownload/bits_client/bits/src/lib.rs
         - toolkit/crashreporter/google-breakpad/src/common/windows/pdb_source_line_writer.cc
-        - toolkit/mozapps/defaultagent/proxy/main.cpp
-        - uriloader/exthandler/win/nsOSHelperAppService.cpp
-        - widget/windows/TaskbarPreview.cpp
-        - widget/windows/WinTaskbar.cpp
-        - widget/windows/nsWindow.cpp
-        - widget/windows/nsWindow.h
-        - widget/windows/tests/TestUriValidation.cpp
         - xpcom/io/nsLocalFileWin.cpp
 
 forbid-apartment-region:
@@ -65,4 +57,3 @@ forbid-apartment-region:
         # These files have been reviewed and approved by MSCOM peers.
         - ipc/mscom/ProcessRuntime.cpp
         - ipc/mscom/ProcessRuntime.h
-        - widget/windows/filedialog/WinFileDialogCommands.cpp

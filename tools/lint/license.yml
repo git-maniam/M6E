@@ -33,12 +33,9 @@ license:
         - intl/l10n/rust/l10nregistry-tests
         # tests
         - js/src/devtools/rootAnalysis/t/
-        - mobile/android/geckoview/src/main/AndroidManifest_overlay.jinja
-        - mobile/android/geckoview_example/src/main
         - testing/webcompat/interventions/
         - testing/webcompat/shims/
         # TODO - Bug 1882443: temporarily ignored for firefox-android migration
-        - mobile/android/android-components/docs/
         # Almost empty file
         - modules/libpref/greprefs.js
         - parser/html/java/named-character-references.html
@@ -81,8 +78,6 @@ license:
         - '**/values-*/strings.xml'
         # Android resource XML files (drawables, layouts, colors,
         # etc.) don't have license headers.
-        - 'mobile/android/fenix/app/src/main/res/'
-        - 'mobile/android/focus-android/app/src/main/res/'
         - '**/lint-baseline.xml'
     extensions:
         - .c

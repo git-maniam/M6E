@@ -104,30 +104,6 @@ export default [
   ...(await convertConfigurationFile("dom/media/mediasource/test")),
   ...(await convertConfigurationFile("dom/quota/test/modules/system/worker")),
   ...(await convertConfigurationFile("js/src/builtin")),
-  ...(await convertConfigurationFile("mobile/android")),
-  ...(await convertConfigurationFile(
-    "mobile/android/android-components/components/feature/webcompat-reporter/src/main/assets/extensions/webcompat-reporter"
-  )),
-  ...(await convertConfigurationFile(
-    "mobile/android/examples/messaging_example/app/src/main/assets/messaging"
-  )),
-  ...(await convertConfigurationFile(
-    "mobile/android/examples/port_messaging_example/app/src/main/assets/messaging"
-  )),
-  ...(await convertConfigurationFile(
-    "mobile/android/fenix/app/src/androidTest/java/org/mozilla/fenix/syncintegration"
-  )),
-  ...(await convertConfigurationFile(
-    "mobile/android/geckoview/src/androidTest/assets/web_extensions"
-  )),
-  ...(await convertConfigurationFile("mobile/shared")),
-  ...(await convertConfigurationFile("mobile/shared/components/extensions")),
-  ...(await convertConfigurationFile(
-    "mobile/shared/components/extensions/test/mochitest"
-  )),
-  ...(await convertConfigurationFile(
-    "mobile/shared/components/extensions/test/xpcshell"
-  )),
   ...(await convertConfigurationFile("netwerk/test/perf")),
   ...(await convertConfigurationFile("remote/marionette")),
   ...(await convertConfigurationFile("remote/marionette/test/xpcshell")),

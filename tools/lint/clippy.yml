@@ -106,7 +106,6 @@ clippy:
         - toolkit/library/rust/
         - tools/fuzzing/rust/
         - tools/lint/mozcheck/
-        - widget/windows/rust/
         # - tools/profiler/rust-api/
         # - xpcom/rust/gecko_logger/
         - xpcom/rust/gecko_tracing/

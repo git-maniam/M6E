@@ -12,9 +12,6 @@ rumdl:
         - intl/docs/
         - ipc/docs/
         - layout/docs/
-        - mobile/android/docs/
-        - mobile/android/fenix/docs/
-        - mobile/android/focus-android/docs/
         - modules/libpref/docs/
         - python/docs/
         - services/docs/
@@ -31,7 +28,6 @@ rumdl:
         - tools/update-verify/docs/
         - uriloader/docs/
         - widget/cocoa/docs/
-        - widget/windows/docs/
         - xpcom/docs/
     exclude:
         # Generated MyST documentation (list-table directives that rumdl
