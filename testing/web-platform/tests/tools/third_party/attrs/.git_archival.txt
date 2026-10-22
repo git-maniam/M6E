@@ -1,0 +1,4 @@
+node: 034cd8a8207e38b04afec5e6f75e5161f75a112f
+node-date: 2026-10-21T20:52:44Z
+describe-name: FIREFOX_BETA_159_BASE-3838-g034cd8a8207e3
+ref-names: HEAD -> main
