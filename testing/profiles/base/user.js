@@ -48,4 +48,3 @@ user_pref("network.IDN_show_punycode", false);
 user_pref("pdfjs.enableScripting", true);
 user_pref("network.auth.subresource-http-auth-allow", 2);
 user_pref("dom.disable_window_move_resize", false);
-user_pref("m6e.privacyShield.enabled", false);

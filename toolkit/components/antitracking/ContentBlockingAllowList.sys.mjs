@@ -54,10 +54,9 @@ export const ContentBlockingAllowList = {
       : "trackingprotection";
   },
 
-  _expiryFor(browser) {
-    return lazy.PrivateBrowsingUtils.isBrowserPrivate(browser)
-      ? Ci.nsIPermissionManager.EXPIRE_SESSION
-      : Ci.nsIPermissionManager.EXPIRE_NEVER;
+  // M6E: per-site exceptions last until the session ends (D20).
+  _expiryFor() {
+    return Ci.nsIPermissionManager.EXPIRE_SESSION;
   },
 
   /**

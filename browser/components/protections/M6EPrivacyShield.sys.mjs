@@ -3,47 +3,39 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
- * M6E: the Privacy Shield (P3.5) sets the default for every site (D20). On, it
- * applies M6E's privacy hardening: strict tracking protection and the
- * hardening defaults in m6e.js. Its maximum mode adds fingerprinting
- * resistance (D18). Off, nothing is blocked and the hardening prefs have
- * Firefox's values. Total Cookie Protection stays, because it isolates
- * cookies rather than blocking them.
+ * M6E: the Privacy Shield (P3.5) sets the default for every site, and the
+ * Tracker Blocker's per-site switch overrides it for the session (D20).
  *
- * Switching only changes prefs that still hold the value of the state being
- * left, so prefs the user changed by hand, and a custom tracking protection
- * setup, are kept.
+ * The blocking prefs keep their strict values whichever way the Shield is
+ * set. With the Shield off, C++ hooks treat every site as exempt from
+ * tracking protection, fingerprinting protection and HTTPS-Only, unless the
+ * site has the "m6e-protect" permission:
+ * - ContentBlockingAllowList::Check();
+ * - nsContentUtils::ETPSaysShouldNotResistFingerprinting();
+ * - nsHTTPSOnlyUtils::TestIfPrincipalIsExempt().
+ * The hardening prefs that only apply globally are switched here instead.
+ *
+ * Switching the Shield only changes prefs that still hold the value of the
+ * state being left, so prefs the user changed by hand are kept.
  */
 
-const PREF_CATEGORY = "browser.contentblocking.category";
+const lazy = {};
+ChromeUtils.defineESModuleGetters(lazy, {
+  ContentBlockingAllowList:
+    "resource://gre/modules/ContentBlockingAllowList.sys.mjs",
+});
+
+const PREF_ENABLED = "m6e.privacyShield.enabled";
 const PREF_RFP = "privacy.resistFingerprinting";
+const PROTECT_PERMISSION = "m6e-protect";
+const HTTPS_ONLY_PERMISSION = "https-only-load-insecure";
 
 /**
- * Every blocking feature of tracking protection, with its value when the
- * Shield is off.
- */
-const NO_BLOCKING_VALUES = {
-  "privacy.trackingprotection.enabled": false,
-  "privacy.trackingprotection.pbmode.enabled": false,
-  "privacy.trackingprotection.socialtracking.enabled": false,
-  "privacy.trackingprotection.fingerprinting.enabled": false,
-  "privacy.trackingprotection.cryptomining.enabled": false,
-  "privacy.trackingprotection.emailtracking.enabled": false,
-  "privacy.trackingprotection.emailtracking.pbmode.enabled": false,
-  "privacy.annotate_channels.strict_list.enabled": false,
-  "privacy.query_stripping.enabled": false,
-  "privacy.query_stripping.enabled.pbmode": false,
-  "privacy.fingerprintingProtection": false,
-  "privacy.fingerprintingProtection.pbmode": false,
-};
-
-/**
- * The hardening prefs from m6e.js with their Firefox values, which the
- * compatibility set uses. Keep in sync with m6e.js and
- * testing/profiles/base/user.js.
+ * The hardening prefs from m6e.js that can't apply per site, with their
+ * Firefox values, which the Shield uses when it is off. Keep in sync with
+ * m6e.js and testing/profiles/base/user.js.
  */
 const COMPATIBILITY_VALUES = {
-  "dom.security.https_only_mode": false,
   "privacy.globalprivacycontrol.enabled": false,
   "network.http.referer.XOriginTrimmingPolicy": 0,
   "media.peerconnection.ice.default_address_only": false,
@@ -78,14 +70,34 @@ function setPref(pref, value) {
   }
 }
 
+/**
+ * The http and https principals of a site, since permissions are per origin
+ * and HTTPS-Only checks the http one.
+ *
+ * @param {nsIPrincipal} principal
+ * @returns {nsIPrincipal[]}
+ */
+function sitePrincipals(principal) {
+  return ["http", "https"].map(scheme =>
+    Services.scriptSecurityManager.createContentPrincipal(
+      Services.io.newURI(`${scheme}://${principal.hostPort}`),
+      principal.originAttributes
+    )
+  );
+}
+
 export const M6EPrivacyShield = {
-  PREF_ENABLED: "m6e.privacyShield.enabled",
+  PREF_ENABLED,
   PREF_MAXIMUM: "m6e.privacyShield.maximum",
+  PROTECT_PERMISSION,
   COMPATIBILITY_VALUES,
-  NO_BLOCKING_VALUES,
+
+  get enabled() {
+    return Services.prefs.getBoolPref(PREF_ENABLED, true);
+  },
 
   /**
-   * Applies the Shield's state to the privacy prefs.
+   * Applies the Shield's state to the global privacy prefs.
    *
    * @param {object} state
    * @param {boolean} state.enabled Whether the Shield is on.
@@ -93,20 +105,6 @@ export const M6EPrivacyShield = {
    *   Only applies while the Shield is on.
    */
   apply({ enabled, maximum }) {
-    let category = Services.prefs.getStringPref(PREF_CATEGORY, "standard");
-    let blockingOff = Object.entries(NO_BLOCKING_VALUES).every(
-      ([pref, value]) => getPref(pref) === value
-    );
-    if (enabled && (category == "standard" || blockingOff)) {
-      // Setting the category applies its prefs (ContentBlockingPrefs).
-      Services.prefs.setStringPref(PREF_CATEGORY, "strict");
-    } else if (!enabled && category != "custom") {
-      Services.prefs.setStringPref(PREF_CATEGORY, "custom");
-      for (let [pref, value] of Object.entries(NO_BLOCKING_VALUES)) {
-        Services.prefs.setBoolPref(pref, value);
-      }
-    }
-
     let defaults = Services.prefs.getDefaultBranch("");
     for (let [pref, compatValue] of Object.entries(COMPATIBILITY_VALUES)) {
       let value = getPref(pref);
@@ -121,6 +119,84 @@ export const M6EPrivacyShield = {
       Services.prefs.setBoolPref(PREF_RFP, true);
     } else {
       Services.prefs.clearUserPref(PREF_RFP);
+    }
+  },
+
+  /**
+   * Whether the Tracker Blocker protects the site shown in a browser.
+   *
+   * @param {MozBrowser} browser
+   * @returns {boolean}
+   */
+  isSiteProtected(browser) {
+    if (!lazy.ContentBlockingAllowList.canHandle(browser)) {
+      return true;
+    }
+    if (this.enabled) {
+      return !lazy.ContentBlockingAllowList.includes(browser);
+    }
+    let principal =
+      lazy.ContentBlockingAllowList._basePrincipalForAntiTrackingCommon(
+        browser
+      );
+    return (
+      Services.perms.testPermissionFromPrincipal(
+        principal,
+        PROTECT_PERMISSION
+      ) == Services.perms.ALLOW_ACTION
+    );
+  },
+
+  /**
+   * Turns the Tracker Blocker on or off for the site shown in a browser,
+   * until the session ends. With the Shield on, off adds the tracking
+   * protection and HTTPS-Only exceptions; with the Shield off, on adds the
+   * "m6e-protect" permission.
+   *
+   * @param {MozBrowser} browser
+   * @param {boolean} protect
+   */
+  setSiteProtected(browser, protect) {
+    let principal =
+      lazy.ContentBlockingAllowList._basePrincipalForAntiTrackingCommon(
+        browser
+      );
+    if (!principal) {
+      return;
+    }
+    let session = Ci.nsIPermissionManager.EXPIRE_SESSION;
+    let principals = sitePrincipals(principal);
+    if (this.enabled) {
+      if (protect) {
+        lazy.ContentBlockingAllowList.remove(browser);
+      } else {
+        lazy.ContentBlockingAllowList.add(browser);
+      }
+      for (let p of principals) {
+        if (protect) {
+          Services.perms.removeFromPrincipal(p, HTTPS_ONLY_PERMISSION);
+        } else {
+          Services.perms.addFromPrincipal(
+            p,
+            HTTPS_ONLY_PERMISSION,
+            Ci.nsIHttpsOnlyModePermission.LOAD_INSECURE_ALLOW_SESSION,
+            session
+          );
+        }
+      }
+    } else {
+      for (let p of principals) {
+        if (protect) {
+          Services.perms.addFromPrincipal(
+            p,
+            PROTECT_PERMISSION,
+            Services.perms.ALLOW_ACTION,
+            session
+          );
+        } else {
+          Services.perms.removeFromPrincipal(p, PROTECT_PERMISSION);
+        }
+      }
     }
   },
 };

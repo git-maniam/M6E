@@ -14,6 +14,8 @@ ChromeUtils.defineESModuleGetters(this, {
   E10SUtils: "resource://gre/modules/E10SUtils.sys.mjs",
   FX_MONITOR_OAUTH_CLIENT_ID: "resource://gre/modules/FxAccountsCommon.sys.mjs",
   identifyType: "resource://gre/modules/TrackingDBService.sys.mjs",
+  M6EPrivacyShield:
+    "moz-src:///browser/components/protections/M6EPrivacyShield.sys.mjs",
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
   PanelMultiView:
     "moz-src:///browser/components/customizableui/PanelMultiView.sys.mjs",
@@ -329,9 +331,10 @@ class TrustPanel {
     this.#lastEvent = event;
 
     // Check whether the user has added an exception for this site.
+    // M6E: or whether the Privacy Shield leaves it unprotected (D20).
     this.hasException =
       ContentBlockingAllowList.canHandle(window.gBrowser.selectedBrowser) &&
-      ContentBlockingAllowList.includes(window.gBrowser.selectedBrowser);
+      !M6EPrivacyShield.isSiteProtected(window.gBrowser.selectedBrowser);
 
     // Update blocker state and find if they detected or blocked anything.
     for (let blocker of Object.values(this.#blockers)) {
@@ -1117,10 +1120,11 @@ class TrustPanel {
       .replaceChildren(...(await Promise.all(children)));
   }
 
+  // M6E: the Tracker Blocker follows the Privacy Shield and its per-site
+  // override (D20).
   get #trackingProtectionEnabled() {
-    return (
-      !ContentBlockingAllowList.canHandle(window.gBrowser.selectedBrowser) ||
-      !ContentBlockingAllowList.includes(window.gBrowser.selectedBrowser)
+    return M6EPrivacyShield.isSiteProtected(
+      window.gBrowser.selectedBrowser
     );
   }
 
@@ -1224,13 +1228,10 @@ class TrustPanel {
   }
 
   #toggleTrackingProtection() {
-    if (this.#trackingProtectionEnabled) {
-      ContentBlockingAllowList.add(window.gBrowser.selectedBrowser);
-      Glean.securityUiProtectionspopup.clickEtpToggleOff.record();
-    } else {
-      ContentBlockingAllowList.remove(window.gBrowser.selectedBrowser);
-      Glean.securityUiProtectionspopup.clickEtpToggleOn.record();
-    }
+    M6EPrivacyShield.setSiteProtected(
+      window.gBrowser.selectedBrowser,
+      !this.#trackingProtectionEnabled
+    );
 
     this.#closingReason = CLOSING_REASONS.ETP_TOGGLED;
     PanelMultiView.hidePopup(this.#popup);
