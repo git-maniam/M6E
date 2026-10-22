@@ -192,7 +192,8 @@ async function testTextLayoutFocus() {
 }
 
 add_task(async function () {
-  await testTextLayout("font_size", 7, "font-size", "24px");
+  // M6E: text is 25% larger than the stock 24px for this step.
+  await testTextLayout("font_size", 7, "font-size", "30px");
   await testTextLayout("font_type", "monospace", "font-family", "monospace");
   await testTextLayout("font_weight", "bold", "font-weight", "bolder");
   await testTextLayout("content_width", 7, "content-width", "50em");

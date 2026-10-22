@@ -27,6 +27,14 @@ const CLASSES_TO_PRESERVE = [
   "wp-smiley",
 ];
 
+// M6E: elements that mark ad slots. They are removed before Readability runs,
+// because it rewrites their containers and drops the ids and classes.
+const AD_SLOT_SELECTOR =
+  "[data-ad], [data-ad-slot], [aria-label='advertisement' i], " +
+  "[id='ad' i], [id^='ad-' i], [id^='ad_' i], [id*='advert' i], " +
+  "[id*='sponsor' i], [class~='ad' i], [class~='ads' i], [class^='ad-' i], " +
+  "[class*=' ad-' i], [class*='advert' i], [class*='adsbygoogle' i]";
+
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const lazy = {};
@@ -365,6 +373,16 @@ export var ReaderMode = {
     // convert text/plain document, if any, to XHTML format
     if (this._isDocumentPlainText(doc)) {
       doc = this._convertPlainTextDocument(doc);
+    }
+
+    let root = doc.documentElement ?? doc;
+    if (root.querySelector(AD_SLOT_SELECTOR)) {
+      // Work on a copy so that the page is unchanged when leaving reader mode.
+      root = root.cloneNode(true);
+      for (let slot of root.querySelectorAll(AD_SLOT_SELECTOR)) {
+        slot.remove();
+      }
+      doc = root;
     }
 
     let serializer = new XMLSerializer();

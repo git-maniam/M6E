@@ -188,10 +188,16 @@ export class AboutReaderParent extends JSWindowActorParent {
       button.hidden = !browser.isArticle;
       doc.l10n.setAttributes(button, "reader-view-enter-button");
 
-      menuitem.hidden = !browser.isArticle;
+      // M6E: the menu item and shortcut open Reader View on any web page, not
+      // only on pages detected as articles.
+      let canEnter =
+        browser.isArticle ||
+        browser.currentURI.schemeIs("https") ||
+        browser.currentURI.schemeIs("http");
+      menuitem.hidden = !canEnter;
       doc.l10n.setAttributes(menuitem, "menu-view-enter-readerview");
 
-      key.toggleAttribute("disabled", !browser.isArticle);
+      key.toggleAttribute("disabled", !canEnter);
 
       if (browser.isArticle) {
         Services.obs.notifyObservers(null, "reader-mode-available");

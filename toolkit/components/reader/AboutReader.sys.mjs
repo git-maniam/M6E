@@ -225,6 +225,11 @@ export var AboutReader = function (
 
   this._setColorSchemePref(colorScheme);
 
+  // M6E: with a single colour scheme there is nothing to choose.
+  if (colorSchemeValues.length < 2) {
+    doc.querySelector(".colors-dropdown").hidden = true;
+  }
+
   // Differentiates between the tick mark labels for width vs spacing controls
   // for localization purposes.
   const [standardSpacingLabel, wideSpacingLabel] = lazy.l10n.formatMessagesSync(
@@ -427,6 +432,20 @@ AboutReader.prototype = {
     ".content figure img",
 
   _TABLES_SELECTOR: ".content table",
+
+  // M6E: page furniture and embedded media that Readability can leave in the
+  // article. ReaderMode removes ad slots before parsing.
+  _CLUTTER_SELECTOR:
+    "iframe, frame, embed, object, video, audio, nav, aside, form, " +
+    "[role='navigation'], [role='complementary']",
+
+  _AD_LABEL: /^(advertisement|sponsored( content)?|ad)$/i,
+
+  // M6E: images smaller than this in both dimensions are icons or trackers.
+  _MIN_IMAGE_SIZE: 48,
+
+  // M6E: base text is 25% larger than the stock size for every font size step.
+  _TEXT_SCALE: 1.25,
 
   FONT_SIZE_MIN: 1,
 
@@ -726,7 +745,7 @@ AboutReader.prototype = {
     }
 
     let readerBody = this._doc.body;
-    readerBody.style.setProperty("--font-size", size + "px");
+    readerBody.style.setProperty("--font-size", size * this._TEXT_SCALE + "px");
     return lazy.AsyncPrefs.set("reader.font_size", this._fontSize);
   },
 
@@ -1316,6 +1335,80 @@ AboutReader.prototype = {
     doc.getElementsByTagName("head")[0].appendChild(link);
   },
 
+  /**
+   * M6E: removes what Readability leaves around the article text: page
+   * furniture, embedded media, ad slots, tiny images and page colours, so the
+   * article shows black text on white with its essential images.
+   */
+  _removeClutter() {
+    let content = this._contentElement;
+    for (let element of content.querySelectorAll(this._CLUTTER_SELECTOR)) {
+      element.remove();
+    }
+    for (let element of content.querySelectorAll("p, div, span")) {
+      if (
+        !element.firstElementChild &&
+        this._AD_LABEL.test(element.textContent.trim())
+      ) {
+        element.remove();
+      }
+    }
+    for (let element of content.querySelectorAll(
+      "[style], [bgcolor], [background], [color]"
+    )) {
+      for (let property of [
+        "background",
+        "background-color",
+        "background-image",
+        "color",
+      ]) {
+        element.style?.removeProperty(property);
+      }
+      element.removeAttribute("bgcolor");
+      element.removeAttribute("background");
+      element.removeAttribute("color");
+    }
+
+    let isTiny = (width, height) =>
+      width > 0 &&
+      height > 0 &&
+      width < this._MIN_IMAGE_SIZE &&
+      height < this._MIN_IMAGE_SIZE;
+    let removeImage = img => {
+      let figure = img.closest("figure");
+      (img.closest("picture") ?? img).remove();
+      if (figure && !figure.querySelector("img, picture, svg, table, pre")) {
+        figure.remove();
+      }
+    };
+    for (let img of content.querySelectorAll("img")) {
+      let width = parseInt(img.getAttribute("width"), 10);
+      let height = parseInt(img.getAttribute("height"), 10);
+      if (isTiny(width, height)) {
+        removeImage(img);
+      } else if (img.complete) {
+        if (isTiny(img.naturalWidth, img.naturalHeight)) {
+          removeImage(img);
+        }
+      } else {
+        img.addEventListener(
+          "load",
+          () => {
+            if (isTiny(img.naturalWidth, img.naturalHeight)) {
+              removeImage(img);
+            }
+          },
+          { once: true }
+        );
+      }
+    }
+    for (let figure of content.querySelectorAll("figure")) {
+      if (!figure.querySelector("img, picture, svg, table, pre")) {
+        figure.remove();
+      }
+    }
+  },
+
   _updateImageMargins() {
     let windowWidth = this._win.innerWidth;
     let bodyWidth = this._doc.body.clientWidth;
@@ -1501,6 +1594,7 @@ AboutReader.prototype = {
     );
     this._contentElement.innerHTML = "";
     this._contentElement.appendChild(contentFragment);
+    this._removeClutter();
     this._maybeSetTextDirection(article);
     this._languageDeferred.resolve(article.detectedLanguage);
 

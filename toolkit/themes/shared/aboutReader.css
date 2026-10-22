@@ -8,7 +8,8 @@
 :root {
   --gray-theme-background: var(--color-gray-30);
   --light-theme-background: #fff;
-  --light-theme-foreground: rgb(21, 20, 26);
+  /* M6E: Reader View is strictly black on white. */
+  --light-theme-foreground: #000000;
   --dark-theme-background: rgb(28, 27, 34);
   --dark-theme-foreground: rgb(251, 251, 254);
   --body-padding: 64px;
@@ -73,6 +74,11 @@ body {
 
 body.light {
   color-scheme: light;
+}
+
+/* M6E: AboutReader hides the colours menu when there is one scheme. */
+.colors-dropdown[hidden] {
+  display: none;
 }
 
 body.sepia {

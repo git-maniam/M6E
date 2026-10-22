@@ -34,14 +34,16 @@ support-files = ["readerModeArticle.html"]
 ["browser_readerMode_cached.js"]
 support-files = ["readerModeRandom.sjs"]
 
-["browser_readerMode_colorSchemePref.js"]
-support-files = ["readerModeArticle.html"]
-
-["browser_readerMode_customColorScheme.js"]
-support-files = ["readerModeArticle.html"]
-
 ["browser_readerMode_hidden_nodes.js"]
 support-files = ["readerModeArticleHiddenNodes.html"]
+
+["browser_readerMode_m6e.js"]
+support-files = [
+  "readerModeArticleClutter.html",
+  "readerModeClutterPhoto.png",
+  "readerModeClutterPixel.png",
+  "readerModeNonArticle.html",
+]
 
 ["browser_readerMode_menu.js"]
 support-files = ["readerModeArticleShort.html"]
