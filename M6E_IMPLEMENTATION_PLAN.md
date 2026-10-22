@@ -66,6 +66,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P2.3b | fluent-lint accepts de-branded words | `5998fb7ec1` |
 | P3.2 | Bookmarks toolbar setting | `e4970f95a9` |
 | P3.3 | Reading Mode | `c1a620c1de` |
+| P3.4 | Privacy hardening defaults (D18) | see `git log --grep P3.4` |
 
 ## 3. Results by phase (as built)
 
@@ -171,36 +172,39 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Images:** images under 48 px in both dimensions are dropped; article images are kept.
   - **Checked:** a clutter test page, plus Wikipedia (Auto rickshaw), the Rust 1.0 blog post and a Gutenberg book, all black on white at 25 px with the images kept.
   - **Tests:** `browser_readerMode_m6e.js` is new, and the colour-scheme tests are removed. The reader suite gives 149 passed. The one failure, `browser_localfile_readerMode.js`, happens only locally, because test files under `obj-m6e/_tests` are symlinks and the address bar shows the resolved source path.
+- **Privacy hardening (P3.4, D18):** all of these are defaults, not locks, so the Privacy Shield (P3.5) can switch them.
+  - **Strict ETP:** new profiles start in the strict category. `browser.contentblocking.initialCategory` is `strict` in `m6e.js`, and `ContentBlockingPrefs.init()` applies it when the profile has no category yet, as if the user had chosen it. Choosing Standard or Custom persists.
+    - Strict includes Fingerprinting Protection (`privacy.fingerprintingProtection`). `privacy.resistFingerprinting` stays off.
+    - Setting strict values as pref defaults doesn't work: "Standard" means "every pref at its default", so the UI would show Standard and choosing it would change nothing.
+  - **Other prefs:**
+    - GPC;
+    - HTTPS-Only;
+    - `XOriginTrimmingPolicy` 2;
+    - WebRTC `default_address_only` and `proxy_only_if_behind_proxy`;
+    - no TLS 0-RTT and safe renegotiation required;
+    - expert bad-cert pages;
+    - punycode IDNs;
+    - no PDF scripting;
+    - no cross-origin subresource HTTP auth;
+    - no window move or resize.
+  - **Rejected:** strict certificate pinning (`security.cert_pinning.enforcement_level` 2) breaks pinned sites behind TLS inspection, such as YouTube via Cloudflare Gateway on this network.
+  - **Checked:**
+    - Notification, Push and service workers are intact, and the time zone isn't spoofed.
+    - Google, Wikipedia, YouTube, Reddit and BBC load.
+    - An HTTP-only site gets the HTTPS-Only page.
+  - **Tests:**
+    - `testing/profiles/base/user.js` sets `initialCategory` empty and the P3.4 prefs to Firefox's values. HTTPS-Only otherwise blocks the harness on `http://mochi.test`.
+    - The `etp` Settings tests pass, `browser_m6e_initial_category.js` is new, and the TCP section test expects a hidden support link (D7).
+  - **Maintenance:** after merges, check `ContentBlockingPrefs` still honours `initialCategory`.
+  - **Network (`artifacts/P3.4-measure`):** 8 hosts. The Widevine component came from `www.google.com/dl/…` this time. Google rotates that download between `edgedl.me.gvt1.com`, `dl.google.com` and `www.google.com`, all D10.
 
-## 4. Next step: P3.4 Privacy hardening defaults (in progress)
+## 4. Next step: P3.5 Privacy Shield
 
-See P3.4 in section 5. Decision D18: strict ETP with Fingerprinting Protection, not `privacy.resistFingerprinting`.
+See P3.5 in section 5. The Shield switches between M6E's strict set (P3.4: strict ETP and the `m6e.js` hardening block) plus, in its strict mode, `privacy.resistFingerprinting` (D18), and a compatibility set (Standard ETP, the hardening prefs at Firefox's values).
 
-**Checkpoint (2026-10-23):** committed as work in progress.
-- **Done:**
-  - **Hardening prefs:** in `m6e.js`, the P3.4 block: GPC, HTTPS-Only, referrer trimming, WebRTC IP protection, TLS, punycode, PDF scripting, and cross-origin HTTP auth.
-  - **Strict by default:** new profiles start in strict ETP, through `browser.contentblocking.initialCategory` (read in `ContentBlockingPrefs.init`). Choosing Standard persists.
-  - **Pinning:** strict pinning (level 2) was dropped because it breaks pinned sites behind TLS inspection, such as YouTube via Cloudflare Gateway.
-  - **Browser checks:** done. Notification, Push and service workers are intact, the time zone isn't spoofed, and the five-site sample loads.
-- **Remaining:**
-  - Add Firefox's values for the P3.4 prefs to `testing/profiles/base/user.js`, because HTTPS-Only blocks the mochitest harness on `http://mochi.test`.
-  - Rerun `browser/components/preferences/tests/etp` and `browser_appearance_pane.js`.
-  - Commit as `M6E P3.4`.
-
-**Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (`AREA_TABSTRIP` and the vertical-tabs `AREA_NAVBAR` list), so that `inDefaultState` can be true and the restore-default test passes.
+**Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (see P3.2).
 
 ## 5. Remaining steps
-
-### P3.4 Privacy hardening defaults
-- Add a curated Arkenfox subset to `m6e.js`, each pref with its reason:
-  - Strict Enhanced Tracking Protection;
-  - `privacy.resistFingerprinting`;
-  - HTTPS-Only mode;
-  - referrer trimming;
-  - WebRTC IP-leak protection.
-- Prefetching and speculative connections are already off (P1.14). These are defaults, not locks: P3.5 manages them.
-- Don't disable Web Push, notifications or DRM (D10, D12). Check that fingerprinting resistance doesn't block or spoof the Notification and Push APIs; exempt them if it does.
-- **Check:** the expected values on a fresh profile, a fingerprinting test page, and a five-site compatibility sample, with any breakage recorded.
 
 ### P3.5 Privacy Shield
 - Add a "Privacy Shield" group at the top of the Settings Privacy pane (the config format), with a master toggle backed by `m6e.privacyShield.enabled`.
