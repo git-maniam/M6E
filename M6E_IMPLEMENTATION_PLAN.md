@@ -172,9 +172,20 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Checked:** a clutter test page, plus Wikipedia (Auto rickshaw), the Rust 1.0 blog post and a Gutenberg book, all black on white at 25 px with the images kept.
   - **Tests:** `browser_readerMode_m6e.js` is new, and the colour-scheme tests are removed. The reader suite gives 149 passed. The one failure, `browser_localfile_readerMode.js`, happens only locally, because test files under `obj-m6e/_tests` are symlinks and the address bar shows the resolved source path.
 
-## 4. Next step: P3.4 Privacy hardening defaults
+## 4. Next step: P3.4 Privacy hardening defaults (in progress)
 
-See P3.4 in section 5.
+See P3.4 in section 5. Decision D18: strict ETP with Fingerprinting Protection, not `privacy.resistFingerprinting`.
+
+**Checkpoint (2026-10-23):** committed as work in progress.
+- **Done:**
+  - **Hardening prefs:** in `m6e.js`, the P3.4 block: GPC, HTTPS-Only, referrer trimming, WebRTC IP protection, TLS, punycode, PDF scripting, and cross-origin HTTP auth.
+  - **Strict by default:** new profiles start in strict ETP, through `browser.contentblocking.initialCategory` (read in `ContentBlockingPrefs.init`). Choosing Standard persists.
+  - **Pinning:** strict pinning (level 2) was dropped because it breaks pinned sites behind TLS inspection, such as YouTube via Cloudflare Gateway.
+  - **Browser checks:** done. Notification, Push and service workers are intact, the time zone isn't spoofed, and the five-site sample loads.
+- **Remaining:**
+  - Add Firefox's values for the P3.4 prefs to `testing/profiles/base/user.js`, because HTTPS-Only blocks the mochitest harness on `http://mochi.test`.
+  - Rerun `browser/components/preferences/tests/etp` and `browser_appearance_pane.js`.
+  - Commit as `M6E P3.4`.
 
 **Follow-up for a later step:** drop the AI buttons from CustomizableUI's default placements (`AREA_TABSTRIP` and the vertical-tabs `AREA_NAVBAR` list), so that `inDefaultState` can be true and the restore-default test passes.
 
