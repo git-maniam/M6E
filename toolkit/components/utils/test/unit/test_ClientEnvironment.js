@@ -6,7 +6,6 @@ ChromeUtils.defineESModuleGetters(this, {
   AppConstants: "resource://gre/modules/AppConstants.sys.mjs",
   ClientEnvironmentBase:
     "resource://gre/modules/components-utils/ClientEnvironment.sys.mjs",
-  NormandyTestUtils: "resource://testing-common/NormandyTestUtils.sys.mjs",
   Region: "resource://gre/modules/Region.sys.mjs",
   RegionTestUtils: "resource://testing-common/RegionTestUtils.sys.mjs",
   TelemetryController: "resource://gre/modules/TelemetryController.sys.mjs",
@@ -159,7 +158,9 @@ add_task(
     // Should generate an id if none is set
     await Services.prefs.clearUserPref("app.normandy.user_id");
     Assert.ok(
-      NormandyTestUtils.isUuid(ClientEnvironmentBase.legacyRandomizationId),
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+        ClientEnvironmentBase.legacyRandomizationId
+      ),
       "legacyRandomizationId should be available"
     );
 
