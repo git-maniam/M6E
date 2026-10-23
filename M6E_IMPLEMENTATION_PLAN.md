@@ -81,6 +81,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.1 | Phase 3 build measured: 681 ms first paint, 449 MB, 8 hosts; `measure.py` defaults to 10 runs | `bc97a8ada7` |
 | P4.2a | Homebrew clang 23, ld64 and cross-language ThinLTO: Speedometer +12%, first paint 647 ms | `3e02d45126` |
 | P4.2b | Apple Silicon CPU tuning and Rust opt-level 3: within noise, kept as the spec asks | `e3c330b3d2` |
+| P4.2c | PGO: Speedometer +15% (median +18%), first paint 597 ms; DMG packaging works | this commit |
 
 ## 3. Results by phase (as built)
 
@@ -277,7 +278,18 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2a and P4.2b are done. On 2026-10-23 the user added P4.5 to P4.9 (platform removal including `#ifdef`s, security hardening, dormant-feature deletion; see section 5 and spec D21 to D24), to finish before Phase 4 ends. P4.2c (PGO, `ac_add_options MOZ_PGO=1`) is in `mozconfig` and its build is running. `LLVM_PROFDATA` must be set in `mozconfig`, because configure doesn't find Homebrew's `llvm-profdata` by itself. If a session drops mid-build, rerun `./mach build`. `./mach build` then does an instrumented build in `obj-m6e/instrumented`, runs `make package` on it (M6E's first packaging run, an early check for P5.1), runs `build/pgo/profileserver.py` (its pages, including Speedometer 3, are served from 127.0.0.1, and its prefs come from `testing/profiles`), and finally rebuilds `obj-m6e` with the profile. Compare against `artifacts/build-P4.2b/`.
+**Checkpoint:** P4.1 and P4.2 (a, b and c) are done. PGO is now off in `mozconfig` for the P4.5 to P4.8 source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. On 2026-10-23 the user added P4.5 to P4.9 (platform removal including `#ifdef`s, security hardening, dormant-feature deletion; see section 5 and spec D21 to D24). Fixes for the review of M6E's changes (P4.8d) are committed but not yet built or tested. Next is P4.5, the upstream merge.
+
+**P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
+- **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
+- **First paint:** 597 ms against 612 ms for P4.2b, measured back to back on a quiet machine. A run made during git activity gave 816 ms, so never measure while git or builds are running.
+- **Memory and hosts:** 449 MB, 8 hosts.
+- **Build fixes needed:**
+  - `LLVM_PROFDATA` set by hand in `mozconfig`.
+  - `xpcom/tests` and `uriloader/exthandler/tests` skip installing `SIMPLE_PROGRAMS` in the instrumented pass. `rules.mk` doesn't build them there, but the harness install still depended on them.
+  - `STRIP=/usr/bin/strip`: LLVM 23's `llvm-strip` rejects the `LC_DYLD_ENVIRONMENT` load command that `browser/app/moz.build` adds for Safari's staged frameworks.
+  - `MOZ_PKG_FORMAT=DMG`: developer builds default to a TAR made with GNU-only `tar --mode`.
+- **Build cost:** any `mozconfig` change recompiles the whole tree.
 
 **P4.2b results:** `-mcpu=apple-m1` (C/C++), `-C target-cpu=apple-m1` (Rust) and `RUSTC_OPT_LEVEL=3`. Speedometer 3: 37.17 ± 4.60 (median 38.78) against P4.2a's 36.52 ± 4.60 (median 38.51), measured in the same session. First paint 670 ms (range 639–688), 449 MB, 8 hosts. That is within noise. The flags are kept anyway: the spec asks for them, they build reliably, and they don't cost anything. A same-session rerun of P4.2a gave 36.5 against the 39.0 measured earlier, so only compare scores taken in the same session.
 
