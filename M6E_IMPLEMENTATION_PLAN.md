@@ -88,6 +88,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.6c | `#ifdef`s stripped from 1,403 first-party files (about 62,000 lines); binaries' symbols unchanged | `12a394ab1c` |
 | P4.6d | Front-end `#ifdef`s stripped from 19 preprocessed files; outputs unchanged | `14020b7897` |
 | P4.7a | 20 platform-only orphan subtrees deleted (193 files); push still works | `596062f662` |
+| P4.7b | Normandy and about:studies removed | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -415,6 +416,10 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - the Linux crash injector.
 
   Cross-platform HLS telemetry in `DecoderTraits.cpp` goes with them (`MOZ_ANDROID_HLS_SUPPORT` is now on the strip list). `push_check.py` passes. Crash-reporter crates, packaging scripts, fuzzing targets and PHC stay (crates are needed by cargo; the rest is tooling).
+- **P4.7b results (Normandy):** `toolkit/components/normandy` (65 files) and the unregistered `about:studies` (`browser/components/nimbus`) are deleted.
+  - Nimbus and `ClientEnvironment` use `Services.uuid` instead of `NormandyUtils`. The legacy Heartbeat Nimbus feature, Normandy's startup hooks and prefs, its ESLint config and the policy test that imported it are gone.
+  - **Glean:** Nimbus still records enrolment under Glean's `normandy` category, so those metric definitions moved to `toolkit/components/nimbus/metrics-normandy.yaml`. Deleting them made Nimbus throw a `TypeError` when recording an enrolment, which the Nimbus tests caught.
+  - **Tests:** 12 Nimbus xpcshell tests fail, and they fail identically on the tree before P4.7b (M6E's Nimbus lockdown). P4.9 adapts them.
 - **P4.7 Dormant features (D23):** for Sync, Glean telemetry, Normandy, AI/ML, Translations, VPN (IP protection), the crash reporter, the updater, the default browser agent and others: try deleting each, keeping a deletion only if the build and tests pass. Show that whatever stays is unreachable.
 - **P4.8 Security hardening (D22):**
   - **a:** attack-surface reduction prefs and build options, including Nightly-only experimental features.
