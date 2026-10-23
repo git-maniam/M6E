@@ -287,7 +287,12 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. P4.8 is done (a to g). Next is P4.9: turn PGO back on in `mozconfig` (`ac_add_options MOZ_PGO=1`, together with P4.8b's `-ftrivial-auto-var-init=zero`), do the final build, then the full test pass and measurements. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
+**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. P4.8 is done (a to g).
+- **In progress:** P4.9. PGO is back on in `mozconfig`, and the final three-stage build, including `-ftrivial-auto-var-init=zero`, started on 2026-10-23. If the session drops, rerun `./mach build`.
+- **Then:**
+  1. The test pass: M6E's own tests, the suites for the areas changed today, `push_check.py`, `measure.py`, Speedometer against `artifacts/build-P4.2b`, `scan-strings.py` and lint.
+  2. P4.3, profiling.
+  3. Phase 5. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
