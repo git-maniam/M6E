@@ -146,3 +146,38 @@ add_task(async function test_site_override_with_shield_off() {
   });
   Services.prefs.clearUserPref(M6EPrivacyShield.PREF_ENABLED);
 });
+
+add_task(async function test_site_override_after_shield_switch() {
+  await BrowserTestUtils.withNewTab(TEST_URL, async browser => {
+    M6EPrivacyShield.setSiteProtected(browser, false);
+    Services.prefs.setBoolPref(M6EPrivacyShield.PREF_ENABLED, false);
+    M6EPrivacyShield.setSiteProtected(browser, true);
+    await reload(browser);
+    ok(M6EPrivacyShield.isSiteProtected(browser), "Turned on for the site");
+    ok(
+      !(await isOnAllowList(browser)),
+      "No allow list entry is left from the Shield-on override"
+    );
+    is(
+      Services.perms.testExactPermissionFromPrincipal(
+        browser.contentPrincipal,
+        "https-only-load-insecure"
+      ),
+      Services.perms.UNKNOWN_ACTION,
+      "No HTTPS-Only exception is left either"
+    );
+
+    Services.prefs.clearUserPref(M6EPrivacyShield.PREF_ENABLED);
+    M6EPrivacyShield.setSiteProtected(browser, true);
+    await reload(browser);
+    ok(M6EPrivacyShield.isSiteProtected(browser), "Protected with the Shield on");
+    is(
+      Services.perms.testExactPermissionFromPrincipal(
+        browser.contentPrincipal,
+        M6EPrivacyShield.PROTECT_PERMISSION
+      ),
+      Services.perms.UNKNOWN_ACTION,
+      "The Shield-off override is cleared"
+    );
+  });
+});

@@ -378,7 +378,8 @@ export var ReaderMode = {
     let root = doc.documentElement ?? doc;
     if (root.querySelector(AD_SLOT_SELECTOR)) {
       // Work on a copy so that the page is unchanged when leaving reader mode.
-      root = root.cloneNode(true);
+      // An inert document runs no page script and loads nothing.
+      root = doc.implementation.createHTMLDocument("").importNode(root, true);
       for (let slot of root.querySelectorAll(AD_SLOT_SELECTOR)) {
         slot.remove();
       }

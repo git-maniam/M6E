@@ -457,6 +457,26 @@ nsHTTPSOnlyUtils::PotentiallyDowngradeHttpsFirstRequest(
   if (!(httpsOnlyStatus & nsILoadInfo::HTTPS_ONLY_UPGRADED_HTTPS_FIRST)) {
     return nullptr;
   }
+  // M6E: with the Privacy Shield off, sites the user turned the Tracker
+  // Blocker on for keep HTTPS-Only behaviour: no plain http fallback (D20).
+  if (!mozilla::Preferences::GetBool("m6e.privacyShield.enabled", true)) {
+    nsCOMPtr<nsIURI> uri;
+    channel->GetURI(getter_AddRefs(uri));
+    nsCOMPtr<nsIPermissionManager> permMgr =
+        mozilla::components::PermissionManager::Service();
+    if (uri && permMgr) {
+      nsCOMPtr<nsIPrincipal> principal =
+          mozilla::BasePrincipal::CreateContentPrincipal(
+              uri, loadInfo->GetOriginAttributes());
+      uint32_t protect = nsIPermissionManager::UNKNOWN_ACTION;
+      if (principal &&
+          NS_SUCCEEDED(permMgr->TestPermissionFromPrincipal(
+              principal, "m6e-protect"_ns, &protect)) &&
+          protect == nsIPermissionManager::ALLOW_ACTION) {
+        return nullptr;
+      }
+    }
+  }
   // Once loading is in progress we set that flag so that timeout counter
   // measures do not kick in.
   loadInfo->SetHttpsOnlyStatus(
@@ -706,19 +726,6 @@ bool nsHTTPSOnlyUtils::TestIfPrincipalIsExempt(nsIPrincipal* aPrincipal,
 
   bool checkForHTTPSFirst = aUpgradeMode == HTTPS_FIRST_MODE ||
                             aUpgradeMode == SCHEMELESS_HTTPS_FIRST_MODE;
-
-  // M6E: with the Privacy Shield off, every site is exempt unless the user
-  // turned the Tracker Blocker on for it (D20).
-  if (aUpgradeMode == HTTPS_ONLY_MODE &&
-      !mozilla::Preferences::GetBool("m6e.privacyShield.enabled", true)) {
-    uint32_t protect;
-    rv = sPermMgr->TestPermissionFromPrincipal(aPrincipal, "m6e-protect"_ns,
-                                               &protect);
-    NS_ENSURE_SUCCESS(rv, false);
-    if (protect != nsIPermissionManager::ALLOW_ACTION) {
-      return true;
-    }
-  }
 
   return perm == nsIHttpsOnlyModePermission::LOAD_INSECURE_ALLOW ||
          perm == nsIHttpsOnlyModePermission::LOAD_INSECURE_ALLOW_SESSION ||

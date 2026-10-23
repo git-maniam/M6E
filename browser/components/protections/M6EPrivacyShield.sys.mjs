@@ -8,11 +8,13 @@
  *
  * The blocking prefs keep their strict values whichever way the Shield is
  * set. With the Shield off, C++ hooks treat every site as exempt from
- * tracking protection, fingerprinting protection and HTTPS-Only, unless the
- * site has the "m6e-protect" permission:
+ * tracking protection and fingerprinting protection, unless the site has the
+ * "m6e-protect" permission:
  * - ContentBlockingAllowList::Check();
- * - nsContentUtils::ETPSaysShouldNotResistFingerprinting();
- * - nsHTTPSOnlyUtils::TestIfPrincipalIsExempt().
+ * - nsContentUtils::ETPSaysShouldNotResistFingerprinting().
+ * HTTPS-Only falls back to Firefox's HTTPS-First, and
+ * nsHTTPSOnlyUtils::PotentiallyDowngradeHttpsFirstRequest() refuses the
+ * plain http fallback for "m6e-protect" sites.
  * The hardening prefs that only apply globally are switched here instead.
  *
  * Switching the Shield only changes prefs that still hold the value of the
@@ -46,6 +48,7 @@ const COMPATIBILITY_VALUES = {
   "pdfjs.enableScripting": true,
   "network.auth.subresource-http-auth-allow": 2,
   "dom.disable_window_move_resize": false,
+  "dom.security.https_only_mode": false,
 };
 
 function getPref(pref, branch = Services.prefs) {
@@ -132,8 +135,11 @@ export const M6EPrivacyShield = {
     if (!lazy.ContentBlockingAllowList.canHandle(browser)) {
       return true;
     }
+    if (lazy.ContentBlockingAllowList.includes(browser)) {
+      return false;
+    }
     if (this.enabled) {
-      return !lazy.ContentBlockingAllowList.includes(browser);
+      return true;
     }
     let principal =
       lazy.ContentBlockingAllowList._basePrincipalForAntiTrackingCommon(
@@ -164,38 +170,34 @@ export const M6EPrivacyShield = {
     if (!principal) {
       return;
     }
-    let session = Ci.nsIPermissionManager.EXPIRE_SESSION;
+    // Clear the overrides of both Shield states first, since the Shield may
+    // have been switched since they were added.
+    lazy.ContentBlockingAllowList.remove(browser);
     let principals = sitePrincipals(principal);
-    if (this.enabled) {
-      if (protect) {
-        lazy.ContentBlockingAllowList.remove(browser);
-      } else {
-        lazy.ContentBlockingAllowList.add(browser);
-      }
+    for (let p of principals) {
+      Services.perms.removeFromPrincipal(p, HTTPS_ONLY_PERMISSION);
+      Services.perms.removeFromPrincipal(p, PROTECT_PERMISSION);
+    }
+
+    let session = Ci.nsIPermissionManager.EXPIRE_SESSION;
+    if (this.enabled && !protect) {
+      lazy.ContentBlockingAllowList.add(browser);
       for (let p of principals) {
-        if (protect) {
-          Services.perms.removeFromPrincipal(p, HTTPS_ONLY_PERMISSION);
-        } else {
-          Services.perms.addFromPrincipal(
-            p,
-            HTTPS_ONLY_PERMISSION,
-            Ci.nsIHttpsOnlyModePermission.LOAD_INSECURE_ALLOW_SESSION,
-            session
-          );
-        }
+        Services.perms.addFromPrincipal(
+          p,
+          HTTPS_ONLY_PERMISSION,
+          Ci.nsIHttpsOnlyModePermission.LOAD_INSECURE_ALLOW_SESSION,
+          session
+        );
       }
-    } else {
+    } else if (!this.enabled && protect) {
       for (let p of principals) {
-        if (protect) {
-          Services.perms.addFromPrincipal(
-            p,
-            PROTECT_PERMISSION,
-            Services.perms.ALLOW_ACTION,
-            session
-          );
-        } else {
-          Services.perms.removeFromPrincipal(p, PROTECT_PERMISSION);
-        }
+        Services.perms.addFromPrincipal(
+          p,
+          PROTECT_PERMISSION,
+          Services.perms.ALLOW_ACTION,
+          session
+        );
       }
     }
   },

@@ -117,6 +117,8 @@ pref("browser.urlbar.quicksuggest.enabled", false, locked);
 pref("browser.urlbar.suggest.quicksuggest.sponsored", false, locked);
 pref("browser.urlbar.suggest.quicksuggest.nonsponsored", false, locked);
 pref("browser.urlbar.merino.endpointURL", "", locked);
+// Its Rust Remote Settings client bypasses the D2 allowlist.
+pref("toolkit.contentRelevancy.enabled", false, locked);
 
 // No AI features. These are the prefs the AIControls enterprise policy sets
 // when every feature is blocked, plus the shared machine learning engine.

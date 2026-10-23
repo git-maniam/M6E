@@ -100,3 +100,5 @@ support-files = [
 ["browser_tlds.js"]
 
 ["browser_upgrade_onion.js"]
+
+["browser_m6e_shield_off_no_downgrade.js"]
