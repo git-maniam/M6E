@@ -336,7 +336,11 @@ Don't start the next step until the current one builds and checks out. Split a s
 
 ### Phase 4 additions (user request 2026-10-23; spec D21 to D24)
 Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PGO is off from P4.5 to P4.8 (D24).
-- **P4.5 Upstream merge:** apply upstream `034cd8a8..main` (364 commits on 2026-10-23) before deleting anything, while it still applies cleanly. The repo has no upstream history (snapshot import), so it comes in as a diff. Resolve conflicts with M6E's deletions by keeping the deletion. Then rerun the P5.3 maintenance scripts.
+- **P4.5 Upstream merge:** apply upstream `034cd8a8..main` (364 commits on 2026-10-23) before deleting anything, while it still applies cleanly. Preparation (2026-10-23):
+  - **Source:** the shallow upstream clone is `../m6e-upstream.git` (base `034cd8a8`, upstream `main` at `cfa0508a3b`). The diff is `../m6e-upstream-diff/upstream.diff`: 1,576 files, +43,780/−32,916 lines.
+  - **Dry run** (`git apply --check`):
+    - 274 changes are to files M6E deleted. Exclude them and keep the deletions.
+    - Only 3 conflicts, all in `browser/components/preferences/tests/etp/`. Upstream deletes `browser-srd.toml` and `browser_contentblocking_standard_tcp_section.js`, both of which P3.5 modified. The repo has no upstream history (snapshot import), so it comes in as a diff. Resolve conflicts with M6E's deletions by keeping the deletion. Then rerun the P5.3 maintenance scripts.
 - **P4.6 Platform removal (D21):**
   - **a:** delete platform-only files and directories (first-party and vendored), checking for references first.
   - **b:** remove WINNT, Linux, GTK and Android branches from `moz.build`, `moz.configure`, makefiles and mozconfigs.
