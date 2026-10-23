@@ -287,7 +287,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.7c, the remaining dormant features (crash reporter, updater, Translations, ML, VPN, Sync and so on).
+**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.8, security hardening. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -467,6 +467,7 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
      - Add-on updates are off, so installed add-ons never get security fixes.
      - Turning a site off with the Shield on also allows plain http for it (D20).
      - The RUSTSEC ignores in `.cargo/audit.toml` need re-checking.
+  - **g:** prove the features marked for deletion (D30) unreachable: locked prefs, no listening sockets, no network traffic, and no entry points from web content or IPC.
 - **P4.9 Full test pass:** build, xpcshell and mochitest suites for the changed areas, `push_check.py`, `measure.py`, `speedometer.py`, `scan-strings.py` and the Phase 3 feature checks. Then the final PGO build, measure, and push.
 
 ### Phase 5: Packaging and acceptance
@@ -487,6 +488,11 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - review the Remote Settings allowlist (D2) against upstream's collections;
   - refresh `gmp-sources` (D10);
   - check that the `m6e-tokens.css` import survives in `tokens-shared.css`.
+
+### After Phase 5
+- **P6.1 Delete the dormant features (D30):**
+  - **Features:** the VPN (IP protection), Translations, Sync and Mozilla accounts, the updater, AI/ML, the crash reporter (crates included, removed from the cargo workspace) and Nimbus experiments.
+  - **Method:** as for Normandy in P4.7b. Remove the importers, deleting a feature only if the build and tests pass, and compare the test results with the tree before the change.
 
 ## 6. Risks
 
