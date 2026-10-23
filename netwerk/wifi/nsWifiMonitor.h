@@ -32,11 +32,9 @@ class nsWifiAccessPoint;
 // Period between scans when on mobile network.
 #define WIFI_SCAN_INTERVAL_MS_PREF "network.wifi.scanning_period"
 
-#ifdef XP_MACOSX
 // Use a larger stack size for the wifi monitor thread of macOS, to
 // accommodate Core WLAN making large stack allocations.
 #  define kMacOSWifiMonitorStackSize (512 * 1024)
-#endif
 
 struct WifiListenerData {
   bool mShouldPoll;

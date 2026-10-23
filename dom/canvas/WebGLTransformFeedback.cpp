@@ -134,7 +134,6 @@ void WebGLTransformFeedback::EndTransformFeedback() {
   gl->fEndTransformFeedback();
 
   if (gl->WorkAroundDriverBugs()) {
-#ifdef XP_MACOSX
     // Multi-threaded GL on mac will generate INVALID_OP in some cases for at
     // least BindBufferBase after an EndTransformFeedback if there is not a
     // flush between the two. Single-threaded GL does not have this issue. This
@@ -142,7 +141,6 @@ void WebGLTransformFeedback::EndTransformFeedback() {
     // BindBufferBase because the client thinks we're still in transform
     // feedback.
     gl->fFlush();
-#endif
   }
 
   ////

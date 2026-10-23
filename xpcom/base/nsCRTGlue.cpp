@@ -12,10 +12,6 @@
 #include "nsXPCOM.h"
 #include "prtime.h"
 
-#ifdef XP_WIN
-#  include <io.h>
-#  include <windows.h>
-#endif
 
 #ifdef FUZZING_SNAPSHOT
 #  include <mozilla/fuzzing/NyxWrapper.h>

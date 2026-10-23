@@ -7,12 +7,6 @@
 #include "mozilla/ipc/ProcessUtils.h"
 #include "nsXPCOM.h"
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-#  include "mozilla/sandboxTarget.h"
-#  include "nsAppShell.h"
-#elif defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxSettings.h"
-#endif
 
 namespace mozilla {
 namespace gfx {
@@ -22,12 +16,6 @@ using namespace ipc;
 GPUProcessImpl::~GPUProcessImpl() = default;
 
 bool GPUProcessImpl::Init(int aArgc, char* aArgv[]) {
-#if defined(MOZ_SANDBOX) && defined(XP_WIN)
-  nsAppShell::PrecacheEventWindow();
-  mozilla::SandboxTarget::Instance()->StartSandbox();
-#elif defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-  StartOpenBSDSandbox(GeckoProcessType_GPU);
-#endif
 
   Maybe<const char*> parentBuildID =
       geckoargs::sParentBuildID.Get(aArgc, aArgv);

@@ -30,10 +30,8 @@ Message::Message(routeid_t routing_id, msgid_t type, uint32_t segment_capacity,
   header()->num_handles = 0;
   header()->txid = -1;
   header()->seqno = 0;
-#if defined(XP_DARWIN)
   header()->cookie = 0;
   header()->num_send_rights = 0;
-#endif
   header()->event_footer_size = 0;
   header()->_padding = 0;
 }
@@ -130,10 +128,8 @@ void Message::SetAttachedFileHandles(
 
 bool Message::has_any_attachments() const {
   return !attached_ports_.IsEmpty() || !attached_handles_.IsEmpty()
-#if defined(XP_DARWIN)
          || !attached_send_rights_.IsEmpty() ||
          !attached_receive_rights_.IsEmpty()
-#endif
       ;
 }
 
@@ -165,7 +161,6 @@ void Message::SetAttachedPorts(nsTArray<mozilla::ipc::ScopedPort> ports) {
   attached_ports_ = std::move(ports);
 }
 
-#if defined(XP_DARWIN)
 bool Message::WriteMachSendRight(mozilla::UniqueMachSendRight port) {
   uint32_t index = attached_send_rights_.Length();
   WriteUInt32(index);
@@ -223,7 +218,6 @@ bool Message::ConsumeMachReceiveRight(
 uint32_t Message::num_receive_rights() const {
   return attached_receive_rights_.Length();
 }
-#endif
 
 bool Message::WillBeRoutedExternally(
     mojo::core::ports::UserMessageEvent& event) {

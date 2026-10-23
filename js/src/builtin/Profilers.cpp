@@ -17,11 +17,9 @@
 #  include <valgrind/callgrind.h>
 #endif
 
-#ifdef __APPLE__
 #  ifdef MOZ_INSTRUMENTS
 #    include "devtools/Instruments.h"
 #  endif
-#endif
 
 #include "js/CharacterEncoding.h"
 #include "js/PropertyAndElement.h"  // JS_DefineFunctions
@@ -38,20 +36,17 @@ using namespace js;
 
 static char gLastError[2000];
 
-#if defined(__APPLE__) || defined(__linux__) || defined(MOZ_CALLGRIND)
 static void MOZ_FORMAT_PRINTF(1, 2) UnsafeError(const char* format, ...) {
   va_list args;
   va_start(args, format);
   (void)VsprintfLiteral(gLastError, format, args);
   va_end(args);
 }
-#endif
 
 JS_PUBLIC_API const char* JS_UnsafeGetLastProfilingError() {
   return gLastError;
 }
 
-#ifdef __APPLE__
 static bool StartOSXProfiling(const char* profileName, pid_t pid) {
   bool ok = true;
   const char* profiler = nullptr;
@@ -69,33 +64,18 @@ static bool StartOSXProfiling(const char* profileName, pid_t pid) {
   }
   return true;
 }
-#endif
 
 JS_PUBLIC_API bool JS_StartProfiling(const char* profileName, pid_t pid) {
   bool ok = true;
-#ifdef __APPLE__
   ok = StartOSXProfiling(profileName, pid);
-#endif
-#ifdef __linux__
-  if (!js_StartPerf(profileName)) {
-    ok = false;
-  }
-#endif
   return ok;
 }
 
 JS_PUBLIC_API bool JS_StopProfiling(const char* profileName) {
   bool ok = true;
-#ifdef __APPLE__
 #  ifdef MOZ_INSTRUMENTS
   Instruments::Stop(profileName);
 #  endif
-#endif
-#ifdef __linux__
-  if (!js_StopPerf()) {
-    ok = false;
-  }
-#endif
   return ok;
 }
 
@@ -107,7 +87,6 @@ static bool ControlProfilers(bool toState) {
   bool ok = true;
 
   if (!probes::ProfilingActive && toState) {
-#ifdef __APPLE__
 #  if defined(MOZ_INSTRUMENTS)
     const char* profiler;
 #    ifdef MOZ_INSTRUMENTS
@@ -118,7 +97,6 @@ static bool ControlProfilers(bool toState) {
       UnsafeError("Failed to start %s", profiler);
     }
 #  endif
-#endif
 #ifdef MOZ_CALLGRIND
     if (!js_StartCallgrind()) {
       UnsafeError("Failed to start Callgrind");
@@ -126,11 +104,9 @@ static bool ControlProfilers(bool toState) {
     }
 #endif
   } else if (probes::ProfilingActive && !toState) {
-#ifdef __APPLE__
 #  ifdef MOZ_INSTRUMENTS
     Instruments::Pause();
 #  endif
-#endif
 #ifdef MOZ_CALLGRIND
     if (!js_StopCallgrind()) {
       UnsafeError("failed to stop Callgrind");
@@ -429,136 +405,3 @@ JS_PUBLIC_API bool js_DumpCallgrind(const char* outfile) {
 
 #endif /* MOZ_CALLGRIND */
 
-#ifdef __linux__
-
-/*
- * Code for starting and stopping |perf|, the Linux profiler.
- *
- * Output from profiling is written to mozperf.data in your cwd.
- *
- * To enable, set MOZ_PROFILE_WITH_PERF=1 in your environment.
- *
- * To pass additional parameters to |perf record|, provide them in the
- * MOZ_PROFILE_PERF_FLAGS environment variable.  If this variable does not
- * exist, we default it to "-g".  (If you don't want -g but don't want to
- * pass any other args, define MOZ_PROFILE_PERF_FLAGS to the empty string.)
- *
- * If you include --pid or --output in MOZ_PROFILE_PERF_FLAGS, you're just
- * asking for trouble.
- *
- * Our split-on-spaces logic is lame, so don't expect MOZ_PROFILE_PERF_FLAGS to
- * work if you pass an argument which includes a space (e.g.
- * MOZ_PROFILE_PERF_FLAGS="-e 'foo bar'").
- */
-
-#  include <signal.h>
-#  include <sys/wait.h>
-#  include <unistd.h>
-
-static bool perfInitialized = false;
-static pid_t perfPid = 0;
-
-bool js_StartPerf(const char* profileName) {
-  const char* outfile =
-      (profileName && profileName[0]) ? profileName : "mozperf.data";
-
-  if (perfPid != 0) {
-    UnsafeError("js_StartPerf: called while perf was already running!\n");
-    return false;
-  }
-
-  // Bail if MOZ_PROFILE_WITH_PERF is empty or undefined.
-  if (!getenv("MOZ_PROFILE_WITH_PERF") ||
-      !strlen(getenv("MOZ_PROFILE_WITH_PERF"))) {
-    return true;
-  }
-
-  /*
-   * Delete mozperf.data the first time through -- we're going to append to it
-   * later on, so we want it to be clean when we start out.
-   */
-  if (!perfInitialized) {
-    perfInitialized = true;
-    unlink(outfile);
-    char cwd[4096];
-    printf("Writing perf profiling data to %s/%s\n", getcwd(cwd, sizeof(cwd)),
-           outfile);
-  }
-
-  pid_t mainPid = getpid();
-
-  pid_t childPid = fork();
-  if (childPid == 0) {
-    /* perf record --pid $mainPID --output=$outfile $MOZ_PROFILE_PERF_FLAGS */
-
-    char mainPidStr[16];
-    SprintfLiteral(mainPidStr, "%d", mainPid);
-    const char* defaultArgs[] = {"perf",     "record",   "--pid",
-                                 mainPidStr, "--output", outfile};
-
-    Vector<const char*, 0, SystemAllocPolicy> args;
-    if (!args.append(defaultArgs, std::size(defaultArgs))) {
-      return false;
-    }
-
-    const char* flags = getenv("MOZ_PROFILE_PERF_FLAGS");
-    if (!flags) {
-      flags = "-g";
-    }
-
-    UniqueChars flags2 = DuplicateString(flags);
-    if (!flags2) {
-      return false;
-    }
-
-    // Split |flags2| on spaces.
-    char* toksave;
-    char* tok = strtok_r(flags2.get(), " ", &toksave);
-    while (tok) {
-      if (!args.append(tok)) {
-        return false;
-      }
-      tok = strtok_r(nullptr, " ", &toksave);
-    }
-
-    if (!args.append((char*)nullptr)) {
-      return false;
-    }
-
-    execvp("perf", const_cast<char**>(args.begin()));
-
-    /* Reached only if execlp fails. */
-    fprintf(stderr, "Unable to start perf.\n");
-    exit(1);
-  }
-  if (childPid > 0) {
-    perfPid = childPid;
-
-    /* Give perf a chance to warm up. */
-    usleep(500 * 1000);
-    return true;
-  }
-  UnsafeError("js_StartPerf: fork() failed\n");
-  return false;
-}
-
-bool js_StopPerf() {
-  if (perfPid == 0) {
-    UnsafeError("js_StopPerf: perf is not running.\n");
-    return true;
-  }
-
-  if (kill(perfPid, SIGINT)) {
-    UnsafeError("js_StopPerf: kill failed\n");
-
-    // Try to reap the process anyway.
-    waitpid(perfPid, nullptr, WNOHANG);
-  } else {
-    waitpid(perfPid, nullptr, 0);
-  }
-
-  perfPid = 0;
-  return true;
-}
-
-#endif /* __linux__ */

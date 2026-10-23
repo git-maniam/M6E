@@ -8,14 +8,6 @@
 #include "jit/RegisterSets.h"
 #include "jit/Simulator.h"
 
-#if defined(__linux__)
-#  include <fcntl.h>
-#  include <unistd.h>
-
-#  if !defined(JS_SIMULATOR)
-#    include <sys/cachectl.h>
-#  endif
-#endif
 
 #define HWCAP_LOONGSON (1 << 27)
 #define HWCAP_R2 (1 << 26)
@@ -33,24 +25,6 @@ static uint32_t get_mips_flags() {
     flags |= HWCAP_R2;
   }
 #else
-#  ifdef __linux__
-  FILE* fp = fopen("/proc/cpuinfo", "r");
-  if (fp) {
-    char buf[1024] = {};
-    size_t len = fread(buf, sizeof(char), sizeof(buf) - 1, fp);
-    fclose(fp);
-    buf[len] = 0;
-    if (strstr(buf, "FPU")) {
-      flags |= HWCAP_FPU;
-    }
-    if (strstr(buf, "Loongson")) {
-      flags |= HWCAP_LOONGSON;
-    }
-    if (strstr(buf, "mips32r2") || strstr(buf, "mips64r2")) {
-      flags |= HWCAP_R2;
-    }
-  }
-#  endif
 #endif  // JS_SIMULATOR_MIPS64
   return flags;
 }

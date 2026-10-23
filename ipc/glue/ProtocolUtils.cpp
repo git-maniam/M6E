@@ -5,9 +5,7 @@
 #include "base/process_util.h"
 #include "base/task.h"
 
-#ifdef XP_UNIX
 #  include <errno.h>
-#endif
 
 #include "mozilla/IntegerPrintfMacros.h"
 
@@ -23,14 +21,7 @@
 #include "nsReadableUtils.h"
 #include "prtime.h"
 
-#if defined(MOZ_SANDBOX) && defined(XP_WIN)
-#  include "mozilla/sandboxTarget.h"
-#endif
 
-#if defined(XP_WIN)
-#  include "aclapi.h"
-#  include "sddl.h"
-#endif
 
 #ifdef FUZZING_SNAPSHOT
 #  include "mozilla/fuzzing/IPCFuzzController.h"
@@ -83,22 +74,16 @@ IPCResult IPCResult::FailForTesting(NotNull<IProtocol*> actor,
 
 void AnnotateSystemError() {
   uint32_t error = 0;
-#if defined(XP_WIN)
-  error = ::GetLastError();
-#else
   error = errno;
-#endif
   if (error) {
     CrashReporter::RecordAnnotationU32(
         CrashReporter::Annotation::IPCSystemError, error);
   }
 }
 
-#if defined(XP_MACOSX)
 void AnnotateCrashReportWithErrno(CrashReporter::Annotation tag, int error) {
   CrashReporter::RecordAnnotationU32(tag, static_cast<uint32_t>(error));
 }
-#endif  // defined(XP_MACOSX)
 
 #if defined(DEBUG) || defined(FUZZING)
 // If aTopLevelProtocol matches any token in aFilter, return true.
@@ -164,9 +149,6 @@ void LogMessageForProtocol(const char* aTopLevelProtocol,
       aDirection == MessageDirection::eReceiving ? "<-" : "->", aOtherPid,
       aTopLevelProtocol, aContextDescription,
       StringFromIPCMessageType(aMessageId));
-#ifdef ANDROID
-  __android_log_write(ANDROID_LOG_INFO, "GeckoIPC", logMessage.get());
-#endif
   fputs(logMessage.get(), stderr);
 }
 

@@ -14,9 +14,7 @@
 #include "nsPersistentProperties.h"
 #include "xpcAccessibleDocument.h"
 
-#ifdef MOZ_WIDGET_COCOA
 #  include "xpcAccessibleMacInterface.h"
-#endif
 
 using namespace mozilla::a11y;
 
@@ -357,7 +355,6 @@ xpcAccessible::GetCache(nsIPersistentProperties** aCachedFields) {
 NS_IMETHODIMP
 xpcAccessible::GetNativeInterface(
     [[maybe_unused]] nsISupports** aNativeInterface) {
-#ifdef MOZ_WIDGET_COCOA
   NS_ENSURE_ARG_POINTER(aNativeInterface);
 
   // We don't cache or store this instance anywhere so each get returns a
@@ -368,9 +365,6 @@ xpcAccessible::GetNativeInterface(
   macIface.swap(*aNativeInterface);
 
   return NS_OK;
-#else
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 NS_IMETHODIMP

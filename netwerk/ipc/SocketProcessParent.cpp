@@ -38,13 +38,6 @@
 #  include "mozilla/dom/ContentProcessManager.h"
 #  include "mozilla/net/WebrtcTCPSocketParent.h"
 #endif
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/java/GeckoProcessManagerWrappers.h"
-#  include "mozilla/java/GeckoProcessTypeWrappers.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
-#if defined(XP_WIN)
-#  include "mozilla/WinDllServices.h"
-#endif
 
 namespace mozilla {
 namespace net {
@@ -72,20 +65,6 @@ already_AddRefed<SocketProcessParent> SocketProcessParent::GetSingleton() {
 }
 
 void SocketProcessParent::ActorDestroy(ActorDestroyReason aWhy) {
-#if defined(MOZ_WIDGET_ANDROID)
-  nsCOMPtr<nsIEventTarget> launcherThread(ipc::GetIPCLauncher());
-  MOZ_ASSERT(launcherThread);
-
-  auto procType = java::GeckoProcessType::SOCKET();
-  auto selector =
-      java::GeckoProcessManager::Selector::New(procType, OtherPid());
-
-  launcherThread->Dispatch(NS_NewRunnableFunction(
-      "SocketProcessParent::ActorDestroy",
-      [selector = java::GeckoProcessManager::Selector::GlobalRef(selector)]() {
-        java::GeckoProcessManager::ShutdownProcess(selector);
-      }));
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   if (aWhy == AbnormalShutdown) {
     nsAutoString dumpID;
@@ -331,7 +310,6 @@ mozilla::ipc::IPCResult SocketProcessParent::RecvFOGData(ByteBuf&& aBuf) {
   return IPC_OK();
 }
 
-#if defined(XP_MACOSX) || defined(XP_IOS)
 mozilla::ipc::IPCResult SocketProcessParent::RecvAppleFastDatapathProbeResult(
     const bool& aAvailable) {
   if (mHost) {
@@ -349,7 +327,6 @@ mozilla::ipc::IPCResult SocketProcessParent::RecvAppleFastDatapathProbeResult(
   }
   return IPC_OK();
 }
-#endif
 
 mozilla::ipc::IPCResult SocketProcessParent::RecvGeckoTraceExport(
     ByteBuf&& aBuf) {
@@ -363,21 +340,6 @@ mozilla::ipc::IPCResult SocketProcessParent::RecvSSLTokensCacheData(
   return IPC_OK();
 }
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult SocketProcessParent::RecvGetModulesTrust(
-    ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-    GetModulesTrustResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetModulesTrust(std::move(aModIdents), aRunAtNormalPriority)
-      ->Then(
-          GetMainThreadSerialEventTarget(), __func__,
-          [aResolver](ModulesMapResult&& aResult) {
-            aResolver(Some(ModulesMapResult(std::move(aResult))));
-          },
-          [aResolver](nsresult aRv) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 }  // namespace net
 }  // namespace mozilla

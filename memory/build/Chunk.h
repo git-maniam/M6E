@@ -235,7 +235,6 @@ void pages_unmap(void* aAddr, size_t aSize);
 // Therefore the chunk cache is disabled on windows since arenas have a
 // chunk list for arena chunks, and non-arena chunks arbitrary sizes
 // don't cache well without splitting.
-#ifndef XP_WIN
 
 class ChunkCache {
  private:
@@ -272,6 +271,5 @@ class ChunkCache {
 
 extern ChunkCache gCache;
 
-#endif /* ! XP_WIN */
 
 #endif /* ! CHUNK_H */

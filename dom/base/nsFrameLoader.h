@@ -97,9 +97,6 @@ class MessageChannel;
 }  // namespace ipc
 }  // namespace mozilla
 
-#if defined(MOZ_WIDGET_GTK)
-typedef struct _GtkWidget GtkWidget;
-#endif
 
 // IID for nsFrameLoader, because some places want to QI to it.
 #define NS_FRAMELOADER_IID \

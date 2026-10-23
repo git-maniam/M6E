@@ -30,11 +30,9 @@
 #include "mozilla/dom/KeySystemNames.h"
 #include "nss.h"
 
-#ifndef XP_WIN
 #  include <sys/stat.h>
 #  include <sys/types.h>
 #  include <unistd.h>
-#endif
 
 #ifdef ENABLE_WMF
 #  include "WMFUtils.h"
@@ -101,51 +99,17 @@ const size_t TEST_READ_SIZE = 16 * 1024;
 bool CanReadSome(cdm::PlatformFile aFile) {
   std::vector<uint8_t> data;
   data.resize(TEST_READ_SIZE);
-#ifdef XP_WIN
-  DWORD bytesRead = 0;
-  return ReadFile(aFile, &data.front(), TEST_READ_SIZE, &bytesRead, nullptr) &&
-         bytesRead > 0;
-#else
   return read(aFile, &data.front(), TEST_READ_SIZE) > 0;
-#endif
 }
 
 void ClosePlatformFile(cdm::PlatformFile aFile) {
-#ifdef XP_WIN
-  CloseHandle(aFile);
-#else
   close(aFile);
-#endif
 }
 
 static uint32_t NumExpectedHostFiles(const cdm::HostFile* aHostFiles,
                                      uint32_t aNumFiles) {
-#if defined(ANDROID)
-  // We expect 1 binary: clearkey
-  return 1;
-#elif !defined(XP_WIN)
   // We expect 4 binaries: clearkey, libxul, plugin-container, and Firefox.
   return 4;
-#else
-  // On Windows we might be using the parent binary not plugin-container for the
-  // gmp processes. In which case we will have 3 not 4 files.
-  const std::wstring plugincontainer = L"plugin-container.exe";
-  for (uint32_t i = 0; i < aNumFiles; i++) {
-    const cdm::HostFile& hostFile = aHostFiles[i];
-    if (hostFile.file != cdm::kInvalidPlatformFile) {
-      std::wstring path = hostFile.file_path;
-      auto offset = path.find(plugincontainer);
-      if (offset != std::string::npos &&
-          offset == path.size() - plugincontainer.size()) {
-        // plugin-container found, we expect 4 files in total.
-        return 4;
-      }
-    }
-  }
-
-  // No plugin-container, we expect 3 files in total.
-  return 3;
-#endif
 }
 
 CDM_API

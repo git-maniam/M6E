@@ -181,13 +181,8 @@ const char* GetVFSName(bool exclusive) {
 }
 
 UniquePtr<sqlite3_vfs> ConstructVFS(bool exclusive) {
-#if defined(XP_WIN)
-#  define EXPECTED_VFS "win32"
-#  define EXPECTED_VFS_EXCL "win32"
-#else
 #  define EXPECTED_VFS "unix"
 #  define EXPECTED_VFS_EXCL "unix-excl"
-#endif
 
   if (sqlite3_vfs_find(GetVFSName(exclusive))) {
     return nullptr;

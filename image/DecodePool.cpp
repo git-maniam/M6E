@@ -27,11 +27,6 @@
 #include "nsXPCOMCIDInternal.h"
 #include "prsystem.h"
 
-#if defined(XP_WIN)
-#  include <objbase.h>
-
-#  include "mozilla/WindowsProcessMitigations.h"
-#endif
 
 using std::max;
 using std::min;
@@ -71,35 +66,10 @@ DecodePool* DecodePool::Singleton() {
 /* static */
 uint32_t DecodePool::NumberOfCores() { return sNumCores; }
 
-#if defined(XP_WIN)
-class IOThreadIniter final : public Runnable {
- public:
-  explicit IOThreadIniter() : Runnable("image::IOThreadIniter") {}
-
-  NS_IMETHOD Run() override {
-    MOZ_ASSERT(!NS_IsMainThread());
-
-    CoInitialize(nullptr);
-
-    return NS_OK;
-  }
-};
-#endif
 
 DecodePool::DecodePool() : mMutex("image::IOThread") {
   // Initialize the I/O thread.
-#if defined(XP_WIN)
-  // On Windows we use the io thread to get icons from the system. Any thread
-  // that makes system calls needs to call CoInitialize. And these system calls
-  // (SHGetFileInfo) should only be called from one thread at a time, in case
-  // we ever create more than one io thread. If win32k is locked down, we can't
-  // call SHGetFileInfo anyway, so we don't need the initializer.
-  nsCOMPtr<nsIRunnable> initer =
-      IsWin32kLockedDown() ? nullptr : new IOThreadIniter();
-  nsresult rv = NS_NewNamedThread("ImageIO", getter_AddRefs(mIOThread), initer);
-#else
   nsresult rv = NS_NewNamedThread("ImageIO", getter_AddRefs(mIOThread));
-#endif
   MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv) && mIOThread,
                      "Should successfully create image I/O thread");
 
@@ -124,15 +94,6 @@ DecodePool::Observe(nsISupports*, const char* aTopic, const char16_t*) {
   {
     MutexAutoLock lock(mMutex);
     ioThread.swap(mIOThread);
-#ifdef XP_WIN
-    if (mShellCallStart) {
-      gfxCriticalNote << "ImageIO shell call in flight for "
-                      << (AwakeTimeStamp::Now() - *mShellCallStart).ToSeconds()
-                      << "s"
-                      << (mShellCallStartedInShutdown ? ", started in shutdown"
-                                                      : "");
-    }
-#endif
   }
 
   if (ioThread) {
@@ -217,26 +178,6 @@ already_AddRefed<nsISerialEventTarget> DecodePool::GetIOEventTarget() {
   return target.forget();
 }
 
-#ifdef XP_WIN
-/* static */ void DecodePool::NoteShellCallStarted() {
-  if (!sSingleton) {
-    return;
-  }
-  MutexAutoLock lock(sSingleton->mMutex);
-  sSingleton->mShellCallStart = Some(AwakeTimeStamp::Now());
-  sSingleton->mShellCallStartedInShutdown =
-      AppShutdown::IsInOrBeyond(ShutdownPhase::AppShutdownConfirmed);
-}
-
-/* static */ void DecodePool::NoteShellCallFinished() {
-  if (!sSingleton) {
-    return;
-  }
-  MutexAutoLock lock(sSingleton->mMutex);
-  sSingleton->mShellCallStart.reset();
-  sSingleton->mShellCallStartedInShutdown = false;
-}
-#endif
 
 }  // namespace image
 }  // namespace mozilla

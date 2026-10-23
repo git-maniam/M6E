@@ -10,9 +10,7 @@
 
 #include "2D.h"
 
-#ifdef XP_DARWIN
 #  include <CoreGraphics/CGColorSpace.h>
-#endif
 
 class SkCanvas;
 class SkShader;
@@ -209,7 +207,6 @@ class DrawTargetSkia : public DrawTarget {
   bool mIsClear = false;
   bool mSupportsGlyphSourceText = false;
 
-#ifdef XP_DARWIN
   friend class BorrowedCGContext;
 
   CGContextRef BorrowCGContext(const DrawOptions& aOptions);
@@ -223,7 +220,6 @@ class DrawTargetSkia : public DrawTarget {
   uint8_t* mCanvasData;
   IntSize mCGSize;
   bool mNeedLayer;
-#endif
 };
 
 }  // namespace gfx

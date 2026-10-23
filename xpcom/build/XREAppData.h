@@ -12,11 +12,6 @@
 #include "nsIFile.h"
 #include "nsStringFwd.h"
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-namespace sandbox {
-class BrokerServices;
-}
-#endif
 
 namespace mozilla {
 
@@ -181,12 +176,6 @@ class XREAppData {
    */
   CharPtr updateURL;
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  /**
-   * Chromium sandbox BrokerServices.
-   */
-  sandbox::BrokerServices* sandboxBrokerServices = nullptr;
-#endif
 
   // Returns a name suitable for DBUS services. In particular, it ensures that
   // the name is a valid object-path element:

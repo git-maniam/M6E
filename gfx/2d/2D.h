@@ -35,11 +35,6 @@
 #include "mozilla/gfx/FontData.h"
 #include "nsRegionFwd.h"
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GTK)
-#  ifndef MOZ_ENABLE_FREETYPE
-#    define MOZ_ENABLE_FREETYPE
-#  endif
-#endif
 
 struct _cairo_surface;
 typedef _cairo_surface cairo_surface_t;
@@ -2291,24 +2286,12 @@ class GFX2D_API Factory {
       int32_t aStride, SurfaceFormat aFormat, bool aUninitialized = false,
       bool aIsClear = false);
 
-#ifdef XP_DARWIN
   static already_AddRefed<ScaledFont> CreateScaledFontForMacFont(
       CGFontRef aCGFont, const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
       bool aUseFontSmoothing = true, bool aApplySyntheticBold = false,
       bool aHasColorGlyphs = false);
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-  static already_AddRefed<ScaledFont> CreateScaledFontForFontconfigFont(
-      const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
-      RefPtr<SharedFTFace> aFace, FcPattern* aPattern);
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-  static already_AddRefed<ScaledFont> CreateScaledFontForFreeTypeFont(
-      const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
-      RefPtr<SharedFTFace> aFace, bool aApplySyntheticBold = false);
-#endif
 
   /**
    * This creates a NativeFontResource from TrueType data.
@@ -2439,63 +2422,6 @@ class GFX2D_API Factory {
  public:
 #endif
 
-#ifdef WIN32
-  static bool SetDirect3D11Device(ID3D11Device* aDevice);
-  static RefPtr<ID3D11Device> GetDirect3D11Device();
-  static RefPtr<IDWriteFactory> GetDWriteFactory();
-  static RefPtr<IDWriteFactory> EnsureDWriteFactory();
-  static RefPtr<IDWriteFontCollection> GetDWriteSystemFonts(
-      bool aUpdate = false);
-
-  static already_AddRefed<ScaledFont> CreateScaledFontForDWriteFont(
-      IDWriteFontFace* aFontFace, const gfxFontStyle* aStyle,
-      const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
-      bool aUseEmbeddedBitmap, bool aUseMultistrikeBold, bool aGDIForced);
-
-  static already_AddRefed<ScaledFont> CreateScaledFontForGDIFont(
-      const void* aLogFont, const RefPtr<UnscaledFont>& aUnscaledFont,
-      Float aSize);
-
-  static void SetSystemTextQuality(uint8_t aQuality);
-
-  static already_AddRefed<DataSourceSurface>
-  CreateBGRA8DataSourceSurfaceForD3D11Texture(
-      ID3D11Texture2D* aSrcTexture, uint32_t aArrayIndex,
-      gfx::ColorSpace2 aColorSpace, gfx::ColorRange aColorRange,
-      gfx::TransferFunction aTransferFunction);
-
-  static nsresult CreateSdbForD3D11Texture(
-      ID3D11Texture2D* aSrcTexture, const IntSize& aSrcSize,
-      layers::SurfaceDescriptorBuffer& aSdBuffer,
-      const std::function<layers::MemoryOrShmem(uint32_t)>& aAllocate);
-
-  static bool ReadbackTexture(DataSourceSurface* aDestCpuTexture,
-                              ID3D11Texture2D* aSrcTexture,
-                              uint32_t aArrayIndex,
-                              gfx::ColorSpace2 aColorSpace,
-                              gfx::ColorRange aColorRange,
-                              gfx::TransferFunction aTransferFunction);
-
- private:
-  static StaticRefPtr<ID3D11Device> mD3D11Device;
-  static StaticRefPtr<IDWriteFactory> mDWriteFactory;
-  static bool mDWriteFactoryInitialized;
-  static StaticRefPtr<IDWriteFontCollection> mDWriteSystemFonts;
-
-  static bool ReadbackTexture(uint8_t* aDestData, int32_t aDestStride,
-                              ID3D11Texture2D* aSrcTexture);
-
-  // DestTextureT can be TextureData or DataSourceSurface.
-  static bool ConvertSourceAndRetryReadback(
-      DataSourceSurface* aDestCpuTexture, ID3D11Texture2D* aSrcTexture,
-      uint32_t aArrayIndex, gfx::ColorSpace2 aColorSpace,
-      gfx::ColorRange aColorRange, gfx::TransferFunction aTransferFunction);
-
- protected:
-  // This guards access to the singleton devices above, as well as the
-  // singleton devices in DrawTargetD2D1.
-  static StaticMutex mDeviceLock;
-#endif  // WIN32
 };
 
 }  // namespace gfx

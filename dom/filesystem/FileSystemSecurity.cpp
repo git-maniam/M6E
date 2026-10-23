@@ -15,13 +15,8 @@ namespace {
 
 StaticRefPtr<FileSystemSecurity> gFileSystemSecurity;
 
-#if defined(XP_WIN)
-constexpr char16_t kWindowsPathSeparator = '\\';
-constexpr char16_t kPlatformPathSeparator = kWindowsPathSeparator;
-#else
 constexpr char16_t kPosixPathSeparator = '/';
 constexpr char16_t kPlatformPathSeparator = kPosixPathSeparator;
-#endif
 
 bool IsDescendantPath(const nsAString& aAuthorizedRoot,
                       const nsAString& aRequestedDescendant) {
@@ -116,13 +111,6 @@ bool FileSystemSecurity::ContentProcessHasAccessTo(ContentParentId aId,
     return false;
   }
 
-#if defined(XP_WIN)
-  if (StringBeginsWith(aPath, u"..\\"_ns) ||
-      FindInReadable(u"\\..\\"_ns, aPath) ||
-      StringEndsWith(aPath, u"\\.."_ns)) {
-    return false;
-  }
-#endif
   if (StringBeginsWith(aPath, u"../"_ns) || aPath.Contains(u"/../"_ns) ||
       StringEndsWith(aPath, u"/.."_ns) || aPath.EqualsLiteral("..")) {
     return false;

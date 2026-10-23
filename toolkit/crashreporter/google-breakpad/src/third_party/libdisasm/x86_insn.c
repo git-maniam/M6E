@@ -3,10 +3,6 @@
 
 #include "libdis.h"
 
-#ifdef _MSC_VER
-        #define snprintf        _snprintf
-        #define inline          __inline
-#endif
 
 int x86_insn_is_valid( x86_insn_t *insn ) {
 	if ( insn && insn->type != insn_invalid && insn->size > 0 ) {

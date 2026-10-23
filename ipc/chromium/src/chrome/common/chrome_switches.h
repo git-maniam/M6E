@@ -7,8 +7,6 @@
 #ifndef CHROME_COMMON_CHROME_SWITCHES_H_
 #define CHROME_COMMON_CHROME_SWITCHES_H_
 
-#if defined(_MSC_VER)
-#endif
 
 namespace switches {
 

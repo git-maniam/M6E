@@ -20,9 +20,6 @@
 #include "js/ValueArray.h"
 #include "vm/JSObject.h"
 
-#ifdef XP_WIN
-#  include "mozilla/Char16.h"
-#endif
 
 using JS::AutoStableStringChars;
 
@@ -122,17 +119,6 @@ JSObject* Library::Create(JSContext* cx, HandleValue path,
   if (!pathStr) {
     return nullptr;
   }
-#ifdef XP_WIN
-  // On Windows, converting to native charset may corrupt path string.
-  // So, we have to use Unicode path directly.
-  JS::UniqueTwoByteChars pathZeroTerminated(JS_CopyStringCharsZ(cx, pathStr));
-  if (!pathZeroTerminated) {
-    return nullptr;
-  }
-  char16ptr_t pathChars = pathZeroTerminated.get();
-  libSpec.value.pathname_u = pathChars;
-  libSpec.type = PR_LibSpec_PathnameU;
-#else
   // Convert to platform native charset if the appropriate callback has been
   // provided.
   JS::UniqueChars pathBytes;
@@ -168,7 +154,6 @@ JSObject* Library::Create(JSContext* cx, HandleValue path,
 
   libSpec.value.pathname = pathBytes.get();
   libSpec.type = PR_LibSpec_Pathname;
-#endif
 
   PRLibrary* library = PR_LoadLibraryWithFlags(libSpec, PR_LD_NOW);
 

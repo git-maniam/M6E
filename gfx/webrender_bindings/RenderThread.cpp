@@ -35,32 +35,12 @@
 #include "nsThreadUtils.h"
 #include "transport/runnable_utils.h"
 
-#ifdef XP_WIN
-#  include "GLContextEGL.h"
-#  include "GLLibraryEGL.h"
-#  include "mozilla/WindowsUserHandleValidation.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/webrender/DCLayerTree.h"
-#  include "mozilla/widget/WinCompositorWindowThread.h"
-// #  include "nsWindowsHelpers.h"
-// #  include <d3d11.h>
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "GLLibraryEGL.h"
-#  include "mozilla/webrender/RenderAndroidSurfaceTextureHost.h"
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-#  include "GLLibraryEGL.h"
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
-#ifdef XP_DARWIN
 #  include "GLContextEGL.h"
 #  include "GLLibraryEGL.h"
 #  include "mozilla/webrender/MetalDeviceManager.h"
-#endif
 
 using namespace mozilla;
 
@@ -85,11 +65,7 @@ static bool sRenderThreadEverStarted = false;
 size_t RenderThread::sRendererCount = 0;
 size_t RenderThread::sActiveRendererCount = 0;
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GTK)
-static bool USE_DEDICATED_GLYPH_RASTER_THREAD = true;
-#else
 static bool USE_DEDICATED_GLYPH_RASTER_THREAD = false;
-#endif
 
 RenderThread::RenderThread(RefPtr<nsIThread> aThread)
     : mThread(std::move(aThread)),
@@ -200,9 +176,6 @@ void RenderThread::Start(uint32_t aNamespace) {
             nsThread* nsthread = static_cast<nsThread*>(thread.get());
             nsthread->SetUseHangMonitor(true);
             nsthread->SetPriority(nsISupportsPriority::PRIORITY_HIGH);
-#ifdef XP_WIN
-            mozilla::ForceToGuiThreadAndFixTebValidateHandlesFlag();
-#endif
           }),
       {.stackSize = stackSize});
 
@@ -218,9 +191,6 @@ void RenderThread::Start(uint32_t aNamespace) {
   CrashReporter::RegisterAnnotationUSize(
       CrashReporter::Annotation::GraphicsNumActiveRenderers,
       &sActiveRendererCount);
-#ifdef XP_WIN
-  widget::WinCompositorWindowThread::Start();
-#endif
   layers::SharedSurfacesParent::Initialize();
 
   RefPtr<Runnable> runnable = WrapRunnable(
@@ -254,11 +224,6 @@ void RenderThread::ShutDown() {
 
   layers::SharedSurfacesParent::Shutdown();
 
-#ifdef XP_WIN
-  if (widget::WinCompositorWindowThread::Get()) {
-    widget::WinCompositorWindowThread::ShutDown();
-  }
-#endif
 
   // We null this out only after we finished shutdown to give everbody the
   // chance to check for sRenderThread->mHasShutdown. Hopefully everybody
@@ -301,9 +266,6 @@ void RenderThread::ShutDownTask() {
   // remaining textures from the texture map.
   layers::SharedSurfacesParent::ShutdownRenderThread();
 
-#ifdef XP_WIN
-  DCLayerTree::Shutdown();
-#endif
 
   ClearAllBlobImageResources();
   ClearSingletonGL();
@@ -1344,22 +1306,6 @@ void RenderThread::InitDeviceTask() {
   // lazy initialization to happen now.
   SingletonGL();
 
-#ifdef MOZ_WIDGET_ANDROID
-  // On Android we must report the GL context's strings to gfxInfo. This allows
-  // gfxInfo to avoid creating a GL context during startup.
-  if (mSingletonGL) {
-    gfx::GfxInfoGLStrings strings(mSingletonGL->VendorString(),
-                                  mSingletonGL->RendererString(),
-                                  mSingletonGL->VersionString(),
-                                  mSingletonGL->ExtensionStrings().Clone());
-    if (XRE_IsGPUProcess()) {
-      gfx::GPUParent::GetSingleton()->ReportGLStrings(std::move(strings));
-    } else if (nsCOMPtr<nsIGfxInfo> gfxInfo = components::GfxInfo::Service()) {
-      static_cast<widget::GfxInfoBase*>(gfxInfo.get())
-          ->ReportGLStrings(std::move(strings));
-    }
-  }
-#endif
 
   const auto maxDurationMs = 3 * 1000;
   const auto end = TimeStamp::Now();
@@ -1560,13 +1506,11 @@ RenderThread::GetProgramsForCompositorOGL() {
 }
 
 RefPtr<layers::SurfacePool> RenderThread::SharedSurfacePool() {
-#if defined(XP_DARWIN) || defined(MOZ_WAYLAND)
   if (!mSurfacePool) {
     size_t poolSizeLimit =
         StaticPrefs::gfx_webrender_compositor_surface_pool_size_AtStartup();
     mSurfacePool = layers::SurfacePool::Create(poolSizeLimit);
   }
-#endif
   return mSurfacePool;
 }
 
@@ -1680,7 +1624,6 @@ WebRenderProgramCache::~WebRenderProgramCache() {
 
 }  // namespace mozilla::wr
 
-#if defined(XP_WIN) || defined(XP_DARWIN)
 static already_AddRefed<gl::GLContext> CreateGLContextANGLE(
     nsACString& aError, RefPtr<layers::SyncObjectHost>* aOutSyncObject) {
   nsCString failureId;
@@ -1691,18 +1634,6 @@ static already_AddRefed<gl::GLContext> CreateGLContextANGLE(
     return nullptr;
   }
 
-#  if defined(XP_WIN)
-  RefPtr<ID3D11Device> d3d11Device;
-  RefPtr<layers::SyncObjectHost> syncObject;
-  gfx::DeviceManagerDx::Get()->GetCompositorDeviceAndSyncObject(&d3d11Device,
-                                                                &syncObject);
-  if (!d3d11Device) {
-    aError.Assign("RcANGLE(no compositor device for EGLDisplay)"_ns);
-    return nullptr;
-  }
-
-  const auto egl = lib->CreateDisplay(d3d11Device.get());
-#  elif defined(XP_DARWIN)
   // Providing an explicit device ID ensures ANGLE's display cache returns to us
   // a different EGLDisplay than if we simply called CreateDisplay(), even if it
   // would have selected the same underlying device. Importantly, this ensures a
@@ -1719,7 +1650,6 @@ static already_AddRefed<gl::GLContext> CreateGLContextANGLE(
     return nullptr;
   }
   const auto egl = lib->CreateDisplayForMetalDevice(*registryId);
-#  endif
 
   if (!egl) {
     aError.Assign(nsPrintfCString("RcANGLE(create EGLDisplay failed: %s)",
@@ -1750,34 +1680,10 @@ static already_AddRefed<gl::GLContext> CreateGLContextANGLE(
     return nullptr;
   }
 
-#  if defined(XP_WIN)
-  *aOutSyncObject = std::move(syncObject);
-#  endif
   return gl.forget();
 }
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GTK)
-static already_AddRefed<gl::GLContext> CreateGLContextEGL() {
-  // Create GLContext with dummy EGLSurface.
-  bool forHardwareWebRender = true;
-  // SW-WR uses CompositorOGL in native compositor.
-  if (gfx::gfxVars::UseSoftwareWebRender()) {
-    forHardwareWebRender = false;
-  }
-  RefPtr<gl::GLContext> gl =
-      gl::GLContextProviderEGL::CreateForCompositorWidget(
-          nullptr, forHardwareWebRender, /* aForceAccelerated */ true);
-  if (!gl || !gl->MakeCurrent()) {
-    gfxCriticalNote << "Failed GL context creation for hardware WebRender: "
-                    << forHardwareWebRender;
-    return nullptr;
-  }
-  return gl.forget();
-}
-#endif
 
-#ifdef XP_DARWIN
 static already_AddRefed<gl::GLContext> CreateGLContextCGL() {
   nsCString failureUnused;
   return gl::GLContextProvider::CreateHeadless(
@@ -1785,29 +1691,16 @@ static already_AddRefed<gl::GLContext> CreateGLContextCGL() {
        gl::CreateContextFlags::FORBID_SOFTWARE},
       &failureUnused);
 }
-#endif
 
 static already_AddRefed<gl::GLContext> CreateGLContext(
     nsACString& aError, RefPtr<layers::SyncObjectHost>* aOutSyncObject) {
   RefPtr<gl::GLContext> gl;
 
-#ifdef XP_WIN
-  if (gfx::gfxVars::UseWebRenderANGLE()) {
-    gl = CreateGLContextANGLE(aError, aOutSyncObject);
-  }
-#elif defined(MOZ_WIDGET_ANDROID)
-  gl = CreateGLContextEGL();
-#elif defined(MOZ_WIDGET_GTK)
-  if (gfx::gfxVars::UseEGL()) {
-    gl = CreateGLContextEGL();
-  }
-#elif XP_DARWIN
   if (gfx::gfxVars::UseWebRenderANGLE()) {
     gl = CreateGLContextANGLE(aError, aOutSyncObject);
   } else {
     gl = CreateGLContextCGL();
   }
-#endif
 
   wr::RenderThread::MaybeEnableGLDebugMessage(gl);
 

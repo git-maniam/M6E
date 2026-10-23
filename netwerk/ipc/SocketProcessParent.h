@@ -99,15 +99,8 @@ class SocketProcessParent final
   mozilla::ipc::IPCResult RecvSSLTokensCacheData(
       nsTArray<SSLTokensCacheRecordInfo>&& aRecords);
 
-#if defined(XP_MACOSX) || defined(XP_IOS)
   mozilla::ipc::IPCResult RecvAppleFastDatapathProbeResult(
       const bool& aAvailable);
-#endif
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvGetModulesTrust(
-      ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-      GetModulesTrustResolver&& aResolver);
-#endif  // defined(XP_WIN)
 
  private:
   ~SocketProcessParent();

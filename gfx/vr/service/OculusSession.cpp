@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef XP_WIN
 #  error "Oculus support only available for Windows"
-#endif
 
 #include "OculusSession.h"
 
@@ -115,13 +113,6 @@ static pfn_ovr_GetExternalCameras ovr_GetExternalCameras = nullptr;
 static pfn_ovr_SetExternalCameraProperties ovr_SetExternalCameraProperties =
     nullptr;
 
-#ifdef XP_WIN
-static pfn_ovr_CreateTextureSwapChainDX ovr_CreateTextureSwapChainDX = nullptr;
-static pfn_ovr_GetTextureSwapChainBufferDX ovr_GetTextureSwapChainBufferDX =
-    nullptr;
-static pfn_ovr_CreateMirrorTextureDX ovr_CreateMirrorTextureDX = nullptr;
-static pfn_ovr_GetMirrorTextureBufferDX ovr_GetMirrorTextureBufferDX = nullptr;
-#endif
 
 static pfn_ovr_CreateTextureSwapChainGL ovr_CreateTextureSwapChainGL = nullptr;
 static pfn_ovr_GetTextureSwapChainBufferGL ovr_GetTextureSwapChainBufferGL =
@@ -546,60 +537,7 @@ bool OculusSession::LoadOvrLib() {
     // Already loaded, early exit
     return true;
   }
-#if defined(_WIN32)
-  nsTArray<nsString> libSearchPaths;
-  nsString libName;
-  nsString searchPath;
-
-  for (;;) {
-    UINT requiredLength = ::GetSystemDirectoryW(
-        char16ptr_t(searchPath.BeginWriting()), searchPath.Length());
-    if (!requiredLength) {
-      break;
-    }
-    if (requiredLength < searchPath.Length()) {
-      searchPath.Truncate(requiredLength);
-      libSearchPaths.AppendElement(searchPath);
-      break;
-    }
-    searchPath.SetLength(requiredLength);
-  }
-  libName.AppendPrintf("LibOVRRT%d_%d.dll", BUILD_BITS, OVR_PRODUCT_VERSION);
-
-  // search the path/module dir
-  libSearchPaths.InsertElementsAt(0, 1, u""_ns);
-
-  // If the env var is present, we override libName
-  if (_wgetenv(L"OVR_LIB_PATH")) {
-    searchPath = _wgetenv(L"OVR_LIB_PATH");
-    libSearchPaths.InsertElementsAt(0, 1, searchPath);
-  }
-
-  if (_wgetenv(L"OVR_LIB_NAME")) {
-    libName = _wgetenv(L"OVR_LIB_NAME");
-  }
-
-  if (libName.IsEmpty()) {
-    return false;
-  }
-
-  for (uint32_t i = 0; i < libSearchPaths.Length(); ++i) {
-    nsString& libPath = libSearchPaths[i];
-    nsString fullName;
-    if (libPath.Length() == 0) {
-      fullName.Assign(libName);
-    } else {
-      fullName.Assign(libPath + u"\\"_ns + libName);
-    }
-
-    mOvrLib = LoadLibraryWithFlags(fullName.get());
-    if (mOvrLib) {
-      break;
-    }
-  }
-#else
 #  error "Unsupported platform!"
-#endif
 
   if (!mOvrLib) {
     return false;
@@ -679,14 +617,6 @@ bool OculusSession::LoadOvrLib() {
   REQUIRE_FUNCTION(ovr_GetExternalCameras);
   REQUIRE_FUNCTION(ovr_SetExternalCameraProperties);
 
-#ifdef XP_WIN
-
-  REQUIRE_FUNCTION(ovr_CreateTextureSwapChainDX);
-  REQUIRE_FUNCTION(ovr_GetTextureSwapChainBufferDX);
-  REQUIRE_FUNCTION(ovr_CreateMirrorTextureDX);
-  REQUIRE_FUNCTION(ovr_GetMirrorTextureBufferDX);
-
-#endif
 
   REQUIRE_FUNCTION(ovr_CreateTextureSwapChainGL);
   REQUIRE_FUNCTION(ovr_GetTextureSwapChainBufferGL);

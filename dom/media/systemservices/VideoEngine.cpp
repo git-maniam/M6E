@@ -7,15 +7,7 @@
 #include "libwebrtcglue/SystemTime.h"
 #include "video_engine/desktop_capture_impl.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/jni/Utils.h"
-#endif
 
-#if defined(ANDROID)
-namespace webrtc {
-int32_t SetCaptureAndroidVM(JavaVM* javaVM);
-}
-#endif
 
 namespace mozilla::camera {
 
@@ -25,24 +17,6 @@ mozilla::LazyLogModule gVideoEngineLog("VideoEngine");
               MOZ_LOG_EXPAND_ARGS args)
 #define LOG_ENABLED() MOZ_LOG_TEST(gVideoEngineLog, mozilla::LogLevel::Debug)
 
-#if defined(ANDROID)
-int VideoEngine::SetAndroidObjects() {
-  LOG(("{}", __PRETTY_FUNCTION__));
-
-  JavaVM* const javaVM = mozilla::jni::GetVM();
-  if (!javaVM || webrtc::SetCaptureAndroidVM(javaVM) != 0) {
-    LOG(("Could not set capture Android VM"));
-    return -1;
-  }
-#  ifdef WEBRTC_INCLUDE_INTERNAL_VIDEO_RENDER
-  if (webrtc::SetRenderAndroidVM(javaVM) != 0) {
-    LOG(("Could not set render Android VM"));
-    return -1;
-  }
-#  endif
-  return 0;
-}
-#endif
 
 VideoCaptureFactory::CreateVideoCaptureResult VideoEngine::CreateVideoCapture(
     int32_t aCaptureId, const char* aDeviceUniqueIdUTF8) {
@@ -85,14 +59,6 @@ VideoEngine::GetOrCreateVideoCaptureDeviceInfo() {
   LOG(("new device cache expiration is {}", mExpiryTime.ms()));
   LOG(("creating a new VideoCaptureDeviceInfo of type {}", capDevTypeName));
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (mCaptureDevType == CaptureDeviceType::Camera) {
-    if (SetAndroidObjects()) {
-      LOG(("VideoEngine::SetAndroidObjects Failed"));
-      return mDeviceInfo;
-    }
-  }
-#endif
 
   if (mDeviceInfo) {
     mDeviceInfo->DeRegisterVideoInputFeedBack(this);

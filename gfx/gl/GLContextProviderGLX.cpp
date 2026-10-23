@@ -2,12 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_WIDGET_GTK
-#  include <gdk/gdk.h>
-#  include <gdk/gdkx.h>
-#  define GET_NATIVE_WINDOW(aWidget) \
-    GDK_WINDOW_XID((GdkWindow*)aWidget->GetNativeData(NS_NATIVE_WINDOW))
-#endif
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -37,9 +31,6 @@
 #include "nsIWidget.h"
 #include "prenv.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include "gfxPlatformGtk.h"
-#endif
 
 namespace mozilla::gl {
 
@@ -80,9 +71,6 @@ bool GLXLibrary::EnsureInitialized(Display* aDisplay) {
     // which trigger glibc bug
     // http://sourceware.org/bugzilla/show_bug.cgi?id=12225
     const char* libGLfilename = "libGL.so.1";
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-    libGLfilename = "libGL.so";
-#endif
 
     const bool forceFeatureReport = false;
     ScopedGfxFeatureReporter reporter(libGLfilename, forceFeatureReport);
@@ -288,12 +276,6 @@ GLXLibrary::WrapperScope::~WrapperScope() {
 std::shared_ptr<XlibDisplay> GLXLibrary::GetDisplay() {
   std::shared_ptr<XlibDisplay> display;
 
-#ifdef MOZ_WIDGET_GTK
-  static const bool kHaveGtk = !!gdk_display_get_default();
-  if (kHaveGtk) {
-    display = XlibDisplay::Borrow(DefaultXDisplay());
-  }
-#endif
   if (display) {
     return display;
   }

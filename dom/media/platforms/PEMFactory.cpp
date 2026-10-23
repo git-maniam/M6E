@@ -10,14 +10,7 @@
 #  include "AppleEncoderModule.h"
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidDecoderModule.h"
-#  include "AndroidEncoderModule.h"
-#endif
 
-#ifdef XP_WIN
-#  include "WMFEncoderModule.h"
-#endif
 
 #ifdef MOZ_FFMPEG
 #  include "FFmpegRuntimeLinker.h"
@@ -85,12 +78,6 @@ void PEMFactory::InitGpuPEMs() {
   }
 #endif
 
-#ifdef XP_WIN
-  if (StaticPrefs::media_wmf_enabled() &&
-      StaticPrefs::media_gpu_process_encoder()) {
-    mCurrentPEMs.AppendElement(new WMFEncoderModule());
-  }
-#endif
 
 #ifndef MOZ_FFVPX_AUDIOONLY
   if (StaticPrefs::media_ffmpeg_encoder_enabled() &&
@@ -122,13 +109,6 @@ void PEMFactory::InitRddPEMs() {
   }
 #endif
 
-#ifdef XP_WIN
-  if (StaticPrefs::media_use_remote_encoder_video_platform() &&
-      StaticPrefs::media_wmf_enabled() &&
-      StaticPrefs::media_rdd_wmf_enabled()) {
-    mCurrentPEMs.AppendElement(new WMFEncoderModule());
-  }
-#endif
 
 #ifdef MOZ_FFVPX_AUDIOONLY
   if (StaticPrefs::media_use_remote_encoder_audio_software() &&
@@ -194,11 +174,6 @@ void PEMFactory::InitUtilityPEMs() {
   }
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (StaticPrefs::media_utility_android_media_codec_enabled()) {
-    mCurrentPEMs.AppendElement(new AndroidEncoderModule());
-  }
-#endif
 }
 
 void PEMFactory::InitContentPEMs() {
@@ -229,12 +204,6 @@ void PEMFactory::InitContentPEMs() {
     }
 #endif
 
-#ifdef XP_WIN
-    if (RefPtr<PlatformEncoderModule> pem =
-            RemoteEncoderModule::Create(RemoteMediaIn::UtilityProcess_WMF)) {
-      mCurrentPEMs.AppendElement(std::move(pem));
-    }
-#endif
 
     if (RefPtr<PlatformEncoderModule> pem = RemoteEncoderModule::Create(
             RemoteMediaIn::UtilityProcess_Generic)) {
@@ -248,15 +217,7 @@ void PEMFactory::InitContentPEMs() {
     mCurrentPEMs.AppendElement(m);
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-    if (AndroidDecoderModule::IsJavaDecoderModuleAllowed()) {
-      mCurrentPEMs.AppendElement(new AndroidEncoderModule());
-    }
-#endif
 
-#ifdef XP_WIN
-    mCurrentPEMs.AppendElement(new WMFEncoderModule());
-#endif
   }
 
 #ifdef MOZ_FFVPX_AUDIOONLY
@@ -309,15 +270,7 @@ void PEMFactory::InitDefaultPEMs() {
   mCurrentPEMs.AppendElement(m);
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (AndroidDecoderModule::IsJavaDecoderModuleAllowed()) {
-    mCurrentPEMs.AppendElement(new AndroidEncoderModule());
-  }
-#endif
 
-#ifdef XP_WIN
-  mCurrentPEMs.AppendElement(new WMFEncoderModule());
-#endif
 
   if (StaticPrefs::media_ffmpeg_encoder_enabled()) {
     if (RefPtr<PlatformEncoderModule> pem =

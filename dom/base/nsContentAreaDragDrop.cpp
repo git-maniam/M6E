@@ -92,9 +92,7 @@ class MOZ_STACK_CLASS DragDataProducer {
   nsString mUrlString;
   nsString mImageSourceString;
   nsString mImageDestFileName;
-#if defined(XP_MACOSX)
   nsString mImageRequestMime;
-#endif
   nsString mTitleString;
   // will be filled automatically if you fill urlstring
   nsString mHtmlString;
@@ -207,7 +205,6 @@ nsContentAreaDragDropDataProvider::GetFlavorData(nsITransferable* aTransferable,
     supportsString->GetData(targetFilename);
     if (targetFilename.IsEmpty()) return NS_ERROR_FAILURE;
 
-#if defined(XP_MACOSX)
     // Use the image request's MIME type to ensure the filename's
     // extension is compatible with the OS's handler for this type.
     // If it isn't, or is missing, replace the extension with the
@@ -238,7 +235,6 @@ nsContentAreaDragDropDataProvider::GetFlavorData(nsITransferable* aTransferable,
       targetFilename.ReplaceChar(
           u"" FILE_PATH_SEPARATOR FILE_ILLEGAL_CHARACTERS, u'-');
     }
-#endif /* defined(XP_MACOSX) */
 
     // get the target directory from the kFilePromiseDirectoryMime
     // flavor
@@ -359,24 +355,12 @@ nsresult DragDataProducer::GetImageData(imgIContainer* aImage,
   nsAutoCString fileName;
   aRequest->GetFileName(fileName);
 
-#if defined(XP_MACOSX)
   // Save the MIME type so we can make sure the extension
   // is compatible (and replace it if it isn't) when the
   // image is dropped. On Mac, we need to get the OS MIME
   // handler information in the parent due to sandboxing.
   CopyUTF8toUTF16(mimeType, mImageRequestMime);
   CopyUTF8toUTF16(fileName, mImageDestFileName);
-#else
-  nsCOMPtr<nsIMIMEService> mimeService = do_GetService("@mozilla.org/mime;1");
-  if (NS_WARN_IF(!mimeService)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  CopyUTF8toUTF16(fileName, mImageDestFileName);
-  mimeService->ValidateFileNameForSaving(mImageDestFileName, mimeType,
-                                         nsIMIMEService::VALIDATE_DEFAULT,
-                                         mImageDestFileName);
-#endif
 
   // and the image object
   mImage = aImage;
@@ -776,10 +760,8 @@ nsresult DragDataProducer::AddStringsToDataTransfer(
     AddString(aDataTransfer,
               NS_LITERAL_STRING_FROM_CSTRING(kFilePromiseDestFilename),
               mImageDestFileName, principal);
-#if defined(XP_MACOSX)
     AddString(aDataTransfer, NS_LITERAL_STRING_FROM_CSTRING(kImageRequestMime),
               mImageRequestMime, principal, /* aHidden= */ true);
-#endif
 
     // if not an anchor, add the image url
     if (!mIsAnchor) {

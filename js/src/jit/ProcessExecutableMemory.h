@@ -7,9 +7,6 @@
 
 #include "util/Poison.h"
 
-#ifdef XP_IOS
-#  include <BrowserEngineCore/BEMemory.h>
-#endif
 
 namespace js {
 namespace jit {
@@ -124,21 +121,13 @@ class MOZ_RAII AutoMarkJitCodeWritableForThread {
  public:
   MOZ_ALWAYS_INLINE_EVEN_DEBUG AutoMarkJitCodeWritableForThread() {
 #if defined(JS_USE_APPLE_FAST_WX)
-#  if defined(XP_IOS)
-    be_memory_inline_jit_restrict_rwx_to_rw_with_witness();
-#  else
     markExecutable(false);
-#  endif
 #endif
     checkConstructor();
   }
   MOZ_ALWAYS_INLINE_EVEN_DEBUG ~AutoMarkJitCodeWritableForThread() {
 #if defined(JS_USE_APPLE_FAST_WX)
-#  if defined(XP_IOS)
-    be_memory_inline_jit_restrict_rwx_to_rx_with_witness();
-#  else
     markExecutable(true);
-#  endif
 #endif
     checkDestructor();
   }

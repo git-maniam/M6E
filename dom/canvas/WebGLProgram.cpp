@@ -1156,7 +1156,6 @@ bool WebGLProgram::UseProgram() const {
 bool WebGLProgram::ValidateProgram() const {
   gl::GLContext* gl = mContext->gl;
 
-#ifdef XP_MACOSX
   // See bug 593867 for NVIDIA and bug 657201 for ATI. The latter is confirmed
   // with Mac OS 10.6.7.
   if (gl->WorkAroundDriverBugs()) {
@@ -1165,7 +1164,6 @@ bool WebGLProgram::ValidateProgram() const {
         " Mac to work around crashes.");
     return true;
   }
-#endif
 
   gl->fValidateProgram(mGLName);
   GLint ok = 0;

@@ -7,12 +7,8 @@
 // Note, this is not supported in configurations with more than one AvmCore
 // running in the same process.
 
-#ifdef WIN32
-#  include "util/WindowsWrapper.h"
-#else
 #  define __cdecl
 #  include <stdarg.h>
-#endif
 
 #include "vprof.h"
 
@@ -71,22 +67,7 @@ static long glock = LOCK_IS_FREE;
 #define Unlock(lock) \
   _InterlockedCompareExchange(lock, LOCK_IS_FREE, LOCK_IS_TAKEN);
 
-#if defined(WIN32)
-static void vprof_printf(const char* format, ...) {
-  va_list args;
-  va_start(args, format);
-
-  char buf[1024];
-  vsnprintf(buf, sizeof(buf), format, args);
-
-  va_end(args);
-
-  printf(buf);
-  ::OutputDebugStringA(buf);
-}
-#else
 #  define vprof_printf printf
-#endif
 
 static inline entry* reverse(entry* s) {
   entry_t e, n, p;
@@ -340,12 +321,7 @@ int histValue(void* id, int64_t value) {
   return 0;
 }
 
-#if defined(_MSC_VER) && defined(_M_IX86)
-uint64_t readTimestampCounter() {
-  // read the cpu cycle counter.  1 tick = 1 cycle on IA32
-  _asm rdtsc;
-}
-#elif defined(__GNUC__) && (__i386__ || __x86_64__)
+#if   defined(__GNUC__) && (__i386__ || __x86_64__)
 uint64_t readTimestampCounter() {
   uint32_t lo, hi;
   __asm__ __volatile__("rdtsc" : "=a"(lo), "=d"(hi));

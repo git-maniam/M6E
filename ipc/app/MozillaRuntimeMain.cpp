@@ -8,17 +8,6 @@
 #include "mozilla/ProcessType.h"
 #include "mozilla/RuntimeExceptionModule.h"
 #include "mozilla/ScopeExit.h"
-#if defined(XP_WIN)
-#  include "mozilla/WindowsDllBlocklist.h"
-#  include "mozilla/GeckoArgs.h"
-
-#  include "nsWindowsWMain.cpp"
-
-#  ifdef MOZ_SANDBOX
-#    include "mozilla/sandboxing/SandboxInitialization.h"
-#    include "mozilla/sandboxing/TargetGeckoServices.h"
-#  endif
-#endif  // defined(XP_WIN)
 
 using namespace mozilla;
 
@@ -76,18 +65,6 @@ int main(int argc, char* argv[]) {
 
   XREChildData childData;
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  if (IsSandboxedProcess()) {
-    childData.sandboxTargetServices =
-        mozilla::sandboxing::GetInitializedTargetServices();
-    if (!childData.sandboxTargetServices) {
-      return 1;
-    }
-
-    childData.setTargetGeckoServices =
-        mozilla::sandboxing::SetTargetGeckoServices;
-  }
-#endif
 
   nsresult rv = bootstrap->XRE_InitChildProcess(argc, argv, &childData);
 

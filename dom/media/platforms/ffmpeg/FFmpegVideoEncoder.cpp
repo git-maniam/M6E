@@ -25,9 +25,6 @@
 #include "mozilla/dom/ImageBitmapBinding.h"
 #include "mozilla/dom/ImageUtils.h"
 #include "mozilla/dom/VideoFrameBinding.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/gfx/gfxVars.h"
-#endif
 #include "nsStringFwd.h"
 
 // The ffmpeg namespace is introduced to avoid the PixelFormat's name conflicts
@@ -391,17 +388,6 @@ bool FFmpegVideoEncoder<LIBAV_VER>::SvcEnabled() const {
 }
 
 bool FFmpegVideoEncoder<LIBAV_VER>::ShouldTryHardware() const {
-#ifdef MOZ_WIDGET_ANDROID
-  // On Android, the MediaCodec encoders are the only ones available to us,
-  // which may be implemented in hardware or software.
-  if (mCodecID == AV_CODEC_ID_H264 || mCodecID == AV_CODEC_ID_HEVC) {
-    return StaticPrefs::media_ffvpx_hw_enabled();
-  }
-
-  if (StaticPrefs::media_ffvpx_hw_minimal()) {
-    return false;
-  }
-#endif
 
   if (mConfig.mHardwarePreference == HardwarePreference::RequireSoftware) {
     return false;
@@ -441,37 +427,13 @@ MediaResult FFmpegVideoEncoder<LIBAV_VER>::InitEncoderInternal(bool aHardware) {
   mCodecContext = r.unwrap();
   mCodecName = mCodecContext->codec->name;
 
-#ifdef MOZ_WIDGET_ANDROID
-  // We need to create a MediaCodec encoder for H264/HEVC but it may or may not
-  // be backed by actual hardware.
-  switch (mCodecID) {
-    case AV_CODEC_ID_H264:
-      mIsHardwareAccelerated = aHardware && gfx::gfxVars::UseH264HwEncode();
-      break;
-    case AV_CODEC_ID_HEVC:
-      mIsHardwareAccelerated = aHardware && gfx::gfxVars::UseHEVCHwEncode();
-      break;
-    default:
-      mIsHardwareAccelerated = aHardware;
-      break;
-  }
-  mUseDurationMap = aHardware;
-#else
 #  ifdef MOZ_FFMPEG_ENCODER_USE_DURATION_MAP
   mUseDurationMap = true;
 #  endif
   mIsHardwareAccelerated = aHardware;
-#endif
 
   // And now the video-specific part
-#ifdef MOZ_WIDGET_ANDROID
-  // COLOR_FormatYUV420SemiPlanar(NV12) is the most widely supported
-  // format by the Android hardware encoders.
-  mCodecContext->pix_fmt =
-      aHardware ? ffmpeg::FFMPEG_PIX_FMT_NV12 : ffmpeg::FFMPEG_PIX_FMT_YUV420P;
-#else
   mCodecContext->pix_fmt = ffmpeg::FFMPEG_PIX_FMT_YUV420P;
-#endif
 
   // Signal what the config knows; the codec writes it into the bitstream.
   // Unknown fields stay unspecified.
@@ -620,16 +582,6 @@ MediaResult FFmpegVideoEncoder<LIBAV_VER>::InitEncoderInternal(bool aHardware) {
     }
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  // If we are using MediaCodec, we can set more options.
-  if (aHardware) {
-    if (mConfig.mBitrateMode == BitrateMode::Constant) {
-      mLib->av_opt_set(mCodecContext->priv_data, "bitrate_mode", "cbr", 0);
-    } else {
-      mLib->av_opt_set(mCodecContext->priv_data, "bitrate_mode", "vbr", 0);
-    }
-  }
-#endif
 
   nsAutoCString h264Log;
   if (mConfig.mCodecSpecific.is<H264Specific>()) {
@@ -870,23 +822,6 @@ FFmpegVideoEncoder<LIBAV_VER>::ToMediaRawData(AVPacket* aPacket) {
   const bool isH264 =
       mCodecID == AV_CODEC_ID_H264 && mConfig.mCodecSpecific.is<H264Specific>();
 
-#ifdef MOZ_WIDGET_ANDROID
-  // If we have an AnnexB keyframe, and we failed to extract extradata from the
-  // packet, then we know that the SPS/PPS data is missing from the data. In
-  // that case we need to prepend our cached extradata to supply it in-band.
-  //
-  // When our minimum supported Android version is >= 9, then we can just use
-  // the prepend-sps-pps-to-idr-frames parameter with AMediaFormat.
-  if (data->mKeyframe && !extradataResult.isOk() && mLastExtraData && isH264 &&
-      mConfig.mCodecSpecific.as<H264Specific>().mFormat ==
-          H264BitStreamFormat::ANNEXB) {
-    if (!writer->Append(mLastExtraData->Elements(), mLastExtraData->Length())) {
-      return Err(
-          MediaResult(NS_ERROR_OUT_OF_MEMORY,
-                      "fail to append extradata to MediaRawData buffer"_ns));
-    }
-  }
-#endif
 
   if (!writer->Append(aPacket->data, aPacket->size)) {
     return Err(MediaResult(NS_ERROR_OUT_OF_MEMORY,

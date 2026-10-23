@@ -80,10 +80,6 @@ class nsNoAuthURLParser final : public nsBaseURLParser {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-#if defined(XP_WIN)
-  NS_IMETHOD ParseFilePath(const char*, int32_t, uint32_t*, int32_t*, uint32_t*,
-                           int32_t*, uint32_t*, int32_t*) override;
-#endif
 
   NS_IMETHOD ParseAuthority(const char* auth, int32_t authLen,
                             uint32_t* usernamePos, int32_t* usernameLen,

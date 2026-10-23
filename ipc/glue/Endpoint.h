@@ -142,12 +142,7 @@ class Endpoint final : public UntypedEndpoint {
   }
 };
 
-#if defined(XP_MACOSX)
 void AnnotateCrashReportWithErrno(CrashReporter::Annotation tag, int error);
-#else
-inline void AnnotateCrashReportWithErrno(CrashReporter::Annotation tag,
-                                         int error) {}
-#endif
 
 // This function is used internally to create a pair of Endpoints. See the
 // comment above Endpoint for a description of how it might be used.

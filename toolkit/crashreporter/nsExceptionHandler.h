@@ -22,16 +22,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if defined(XP_WIN)
-#  include <handleapi.h>
-#elif defined(XP_MACOSX)
 #  include <mach/mach.h>
-#elif defined(XP_LINUX)
-#  include <signal.h>
-#  if defined(MOZ_OXIDIZED_BREAKPAD)
-struct DirectAuxvDumpInfo;
-#  endif  // defined(MOZ_OXIDIZED_BREAKPAD)
-#endif    // defined(XP_LINUX)
 
 class nsIFile;
 
@@ -44,29 +35,11 @@ namespace CrashReporter {
 using mozilla::Maybe;
 using mozilla::Nothing;
 
-#if defined(XP_WIN)
-typedef HANDLE ProcessHandle;
-typedef DWORD ThreadId;
-typedef HANDLE FileHandle;
-const FileHandle kInvalidFileHandle = INVALID_HANDLE_VALUE;
-#elif defined(XP_MACOSX)
 typedef task_t ProcessHandle;
 typedef mach_port_t ThreadId;
 typedef int FileHandle;
 const FileHandle kInvalidFileHandle = -1;
-#else
-typedef int ProcessHandle;
-typedef int ThreadId;
-typedef int FileHandle;
-const FileHandle kInvalidFileHandle = -1;
-#endif
 
-#if defined(XP_LINUX) && defined(MOZ_OXIDIZED_BREAKPAD)
-void GetCurrentProcessAuxvInfo(DirectAuxvDumpInfo* aAuxvInfo);
-void RegisterChildAuxvInfo(pid_t aChildPid,
-                           const DirectAuxvDumpInfo& aAuxvInfo);
-void UnregisterChildAuxvInfo(pid_t aChildPid);
-#endif  // defined(XP_LINUX) && defined(MOZ_OXIDIZED_BREAKPAD)
 
 /**
  * Returns true if the crash reporter is using the dummy implementation.
@@ -198,15 +171,7 @@ bool WriteExtraFile(const nsAString& id, const AnnotationTable& annotations);
  */
 void MergeCrashAnnotations(AnnotationTable& aDst, const AnnotationTable& aSrc);
 
-#ifdef XP_WIN
-nsresult WriteMinidumpForException(EXCEPTION_POINTERS* aExceptionInfo);
-#endif
-#ifdef XP_LINUX
-bool WriteMinidumpForSigInfo(int signo, siginfo_t* info, void* uc);
-#endif
-#ifdef XP_MACOSX
 nsresult AppendObjCExceptionInfoToAppNotes(void* inException);
-#endif
 nsresult GetSubmitReports(bool* aSubmitReport);
 nsresult SetSubmitReports(bool aSubmitReport);
 
@@ -264,14 +229,8 @@ bool CreateMinidumpsAndPair(GeckoChildID aId, ThreadId aTargetBlamedThread,
                             nsIFile** aTargetDumpOut);
 
 // Parent-side API for children
-#if defined(MOZ_WIDGET_ANDROID)
-void SetCrashHelperPipes(FileHandle breakpadFd, FileHandle crashHelperFd);
-#endif
 bool RegisterChildIPCChannel(mozilla::geckoargs::ChildProcessArgs& aArgs,
                              GeckoChildID aID);
-#if defined(XP_WIN)
-bool ChildProcessProxyRendezvous(GeckoChildID aID, DWORD aPid, HANDLE aHandle);
-#endif  // defined(XP_WIN)
 
 // Child-side API
 

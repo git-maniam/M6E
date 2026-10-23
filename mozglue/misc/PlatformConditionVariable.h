@@ -8,9 +8,7 @@
 #include "mozilla/PlatformMutex.h"
 #include "mozilla/TimeStamp.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/Futex.h"
-#elif !defined(__wasi__)
+#if   !defined(__wasi__)
 #  include <pthread.h>
 #endif
 
@@ -46,9 +44,7 @@ class ConditionVariableImpl {
                              const mozilla::TimeDuration& rel_time);
 
  private:
-#if defined(XP_WIN)
-  Futex mFutex;
-#elif !defined(__wasi__)
+#if   !defined(__wasi__)
   pthread_cond_t mCond;
 #endif
 };

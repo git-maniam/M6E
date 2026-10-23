@@ -10,11 +10,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-#ifdef XP_WIN
-#  include <windows.h>
-#else
 #  include <unistd.h>
-#endif
 
 #include <utility>
 
@@ -510,19 +506,10 @@ SECStatus ConfigSecureServerWithNamedCert(
   return SECSuccess;
 }
 
-#ifdef XP_WIN
-using PidType = DWORD;
-constexpr bool IsValidPid(long long pid) {
-  // Excluding `(DWORD)-1` because it is not a valid process ID.
-  // See https://devblogs.microsoft.com/oldnewthing/20040223-00/?p=40503
-  return pid > 0 && pid < std::numeric_limits<PidType>::max();
-}
-#else
 using PidType = pid_t;
 constexpr bool IsValidPid(long long pid) {
   return pid > 0 && pid <= std::numeric_limits<PidType>::max();
 }
-#endif
 
 PidType ConvertPid(const char* pidStr) {
   long long pid = strtoll(pidStr, nullptr, 10);
@@ -691,21 +678,9 @@ int StartServer(int argc, char* argv[], SSLSNISocketConfig sniSocketConfig,
       }
       return;
     }
-#ifdef XP_WIN
-    HANDLE parent = OpenProcess(SYNCHRONIZE, false, ppid);
-    if (!parent) {
-      if (gDebugLevel >= DEBUG_ERRORS) {
-        fprintf(stderr, "OpenProcess failed\n");
-      }
-      return;
-    }
-    WaitForSingleObject(parent, INFINITE);
-    CloseHandle(parent);
-#else
     while (getppid() == ppid) {
       sleep(1);
     }
-#endif
     if (gDebugLevel >= DEBUG_ERRORS) {
       fprintf(stderr, "Parent process crashed\n");
     }

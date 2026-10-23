@@ -9,9 +9,6 @@
 
 #if defined(__GNUC__)
 #  define SCTP_PACKED __attribute__((packed))
-#elif defined(_MSC_VER)
-#  pragma pack(push, 1)
-#  define SCTP_PACKED
 #else
 #  error "Unsupported compiler"
 #endif
@@ -77,9 +74,5 @@ struct rtcweb_datachannel_ack {
 #define ERR_DATA_CHANNEL_ALREADY_OPEN 1
 #define ERR_DATA_CHANNEL_NONE_AVAILABLE 2
 
-#if defined(_MSC_VER)
-#  pragma pack(pop)
-#  undef SCTP_PACKED
-#endif
 
 #endif

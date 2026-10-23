@@ -5,18 +5,10 @@
 #ifndef mozilla_dom_NativeThreadId_h
 #define mozilla_dom_NativeThreadId_h
 
-#if defined(XP_DARWIN)
 #  include "mozilla/UniquePtrExtensions.h"
-#else
-#  include "nsExceptionHandler.h"
-#endif  // defined(XP_DARWIN)
 
 namespace mozilla::dom {
-#if defined(XP_DARWIN)
 typedef mozilla::UniqueMachSendRight NativeThreadId;
-#else
-typedef CrashReporter::ThreadId NativeThreadId;
-#endif  // defined(XP_DARWIN)
 }  // namespace mozilla::dom
 
 #endif

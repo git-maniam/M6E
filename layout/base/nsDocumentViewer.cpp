@@ -2787,13 +2787,7 @@ void nsDocumentViewer::OnDonePrinting() {
 // will take care of this.
 //
 // Otherwise the front-end code is responsible for cleaning the UI.
-#ifdef ANDROID
-  // Android doesn't support Content Analysis and prints in a different way,
-  // so use different logic to clean up.
-  bool closeWindowAfterPrint = !printJob->CreatedForPrintPreview();
-#else
   bool closeWindowAfterPrint = GetCloseWindowAfterPrint();
-#endif
   if (closeWindowAfterPrint) {
     if (mContainer) {
       if (nsCOMPtr<nsPIDOMWindowOuter> win = mContainer->GetWindow()) {

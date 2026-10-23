@@ -15,13 +15,8 @@ int32_t RotateOptionToBytes(int32_t aMegabytes);
 
 // These format strings result in 1024 byte lines on disk regardless
 // of OS, which makes various file sizes OS-agnostic.
-#ifdef XP_WIN
-#  define WHOLE_LINE "%01022d\n"
-#  define SHORT_LINE "%0510d\n"
-#else
 #  define WHOLE_LINE "%01023d\n"
 #  define SHORT_LINE "%0511d\n"
-#endif
 
 // Write the given number of 1k lines to the given file name.
 void WriteTestLogFile(const char* name, uint32_t numLines) {

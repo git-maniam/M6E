@@ -4,9 +4,6 @@
 
 #include "AwakeTimeStamp.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 #include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
@@ -15,9 +12,7 @@ namespace mozilla {
 
 static constexpr uint64_t kUSperS = 1000000;
 static constexpr uint64_t kUSperMS = 1000;
-#ifndef XP_WIN
 static constexpr uint64_t kNSperUS = 1000;
-#endif
 
 double AwakeTimeDuration::ToSeconds() const {
   return static_cast<double>(mValueUs) / kUSperS;
@@ -64,7 +59,6 @@ void AwakeTimeStamp::operator-=(const AwakeTimeDuration& aOther) {
 }
 
 // Apple things
-#if defined(__APPLE__) && defined(__MACH__)
 #  include <time.h>
 #  include <sys/time.h>
 #  include <sys/types.h>
@@ -76,42 +70,5 @@ AwakeTimeStamp AwakeTimeStamp::Now() {
 
 AwakeTimeStamp AwakeTimeStamp::NowLoRes() { return Now(); }
 
-#elif defined(XP_WIN)
-
-// Number of hundreds of nanoseconds in a microsecond
-static constexpr uint64_t kHNSperUS = 10;
-
-AwakeTimeStamp AwakeTimeStamp::NowLoRes() {
-  ULONGLONG interrupt_time;
-  DebugOnly<bool> rv = QueryUnbiasedInterruptTime(&interrupt_time);
-  MOZ_ASSERT(rv);
-
-  return AwakeTimeStamp(interrupt_time / kHNSperUS);
-}
-
-AwakeTimeStamp AwakeTimeStamp::Now() {
-  ULONGLONG interrupt_time;
-  QueryUnbiasedInterruptTimePrecise(&interrupt_time);
-
-  return AwakeTimeStamp(interrupt_time / kHNSperUS);
-}
-
-#else  // Linux and other POSIX but not macOS
-#  include <time.h>
-
-uint64_t TimespecToMicroseconds(struct timespec aTs) {
-  return aTs.tv_sec * kUSperS + aTs.tv_nsec / kNSperUS;
-}
-
-AwakeTimeStamp AwakeTimeStamp::Now() {
-  struct timespec ts = {0};
-  DebugOnly<int> rv = clock_gettime(CLOCK_MONOTONIC, &ts);
-  MOZ_ASSERT(!rv);
-  return AwakeTimeStamp(TimespecToMicroseconds(ts));
-}
-
-AwakeTimeStamp AwakeTimeStamp::NowLoRes() { return Now(); }
-
-#endif
 
 };  // namespace mozilla

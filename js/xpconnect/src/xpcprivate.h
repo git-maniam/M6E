@@ -139,15 +139,6 @@
 #include "js/TracingAPI.h"
 #include "js/WeakMapPtr.h"
 
-#ifdef XP_WIN
-// Nasty MS defines
-#  ifdef GetClassInfo
-#    undef GetClassInfo
-#  endif
-#  ifdef GetClassName
-#    undef GetClassName
-#  endif
-#endif /* XP_WIN */
 
 namespace mozilla {
 namespace dom {

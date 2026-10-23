@@ -21,22 +21,8 @@
 #include "nsTimerImpl.h"
 #include "prsystem.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#elif defined(XP_MACOSX)
 #  include <sys/resource.h>
-#elif defined(XP_LINUX) && !defined(ANDROID)
-#  include <sys/syscall.h>
-// <linux/ioprio.h> has no glibc wrapper and is absent from some sysroots, so
-// define the constants directly from the stable kernel ABI.
-#  define IOPRIO_WHO_THREAD 1
-#  define IOPRIO_CLASS_BE 2
-#  define IOPRIO_PRIO_VALUE(class, data) (((class) << 13) | (data))
-#endif
 
-#if defined(ANDROID)
-#  include <sys/prctl.h>
-#endif
 
 static mozilla::LazyLogModule sEventDispatchAndRunLog("events");
 #ifdef LOG1
@@ -473,12 +459,6 @@ bool NS_ProcessNextEvent(nsIThread* aThread, bool aMayWait) {
 
 void NS_SetCurrentThreadName(const char* aName) {
   PR_SetCurrentThreadName(aName);
-#if defined(ANDROID) && defined(DEBUG)
-  // Check nspr does the right thing on Android.
-  char buffer[16] = {'\0'};
-  prctl(PR_GET_NAME, buffer);
-  MOZ_ASSERT(0 == strncmp(buffer, aName, 15));
-#endif
   if (nsThreadManager::get().IsNSThread()) {
     nsThread* thread = nsThreadManager::get().GetCurrentThread();
     thread->SetThreadNameInternal(nsDependentCString(aName));
@@ -514,42 +494,16 @@ nsresult NS_DispatchBackgroundTask(
 
 // nsAutoLowPriorityIO
 nsAutoLowPriorityIO::nsAutoLowPriorityIO() {
-#if defined(XP_WIN)
-  lowIOPrioritySet =
-      SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN);
-#elif defined(XP_MACOSX)
   oldPriority = getiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_THREAD);
   lowIOPrioritySet =
       oldPriority != -1 &&
       setiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_THREAD, IOPOL_THROTTLE) != -1;
-#elif defined(XP_LINUX) && !defined(ANDROID)
-  // IOPRIO_CLASS_BE with priority 7 is the lowest best-effort I/O class,
-  // matching the throttled (not starved) semantics of macOS and Windows.
-  oldPriority =
-      static_cast<int>(syscall(__NR_ioprio_get, IOPRIO_WHO_THREAD, 0));
-  lowIOPrioritySet =
-      oldPriority >= 0 && syscall(__NR_ioprio_set, IOPRIO_WHO_THREAD, 0,
-                                  IOPRIO_PRIO_VALUE(IOPRIO_CLASS_BE, 7)) == 0;
-#else
-  lowIOPrioritySet = false;
-#endif
 }
 
 nsAutoLowPriorityIO::~nsAutoLowPriorityIO() {
-#if defined(XP_WIN)
-  if (MOZ_LIKELY(lowIOPrioritySet)) {
-    // On Windows the old thread priority is automatically restored
-    SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_END);
-  }
-#elif defined(XP_MACOSX)
   if (MOZ_LIKELY(lowIOPrioritySet)) {
     setiopolicy_np(IOPOL_TYPE_DISK, IOPOL_SCOPE_THREAD, oldPriority);
   }
-#elif defined(XP_LINUX) && !defined(ANDROID)
-  if (MOZ_LIKELY(lowIOPrioritySet)) {
-    syscall(__NR_ioprio_set, IOPRIO_WHO_THREAD, 0, oldPriority);
-  }
-#endif
 }
 
 namespace mozilla {
@@ -578,11 +532,7 @@ nsISerialEventTarget* GetMainThreadSerialEventTarget() {
 }
 
 size_t GetNumberOfProcessors() {
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  static const PRInt32 procs = PR_GetNumberOfProcessors();
-#else
   PRInt32 procs = PR_GetNumberOfProcessors();
-#endif
   MOZ_ASSERT(procs > 0);
   return static_cast<size_t>(procs);
 }

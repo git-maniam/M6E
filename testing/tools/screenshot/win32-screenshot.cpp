@@ -42,9 +42,7 @@
 
 // Link w/ subsystem windows so we don't get a console when executing
 // this binary.
-#ifndef __MINGW32__
 #  pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:wmainCRTStartup")
-#endif
 
 using namespace Gdiplus;
 
@@ -75,9 +73,6 @@ static int GetEncoderClsid(const WCHAR* format, CLSID* pClsid) {
   return -1;  // Failure
 }
 
-#ifdef __MINGW32__
-extern "C"
-#endif
     int
     wmain(int argc, wchar_t** argv) {
   GdiplusStartupInput gdiplusStartupInput;

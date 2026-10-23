@@ -99,14 +99,10 @@
 #include <algorithm>
 #include <bit>
 
-#ifdef XP_WIN
-#  include <process.h>
-#else
 #  include <sys/mman.h>
 #  include <sys/types.h>
 #  include <pthread.h>
 #  include <unistd.h>
-#endif
 
 #include "mozjemalloc.h"
 #include "BaseArray.h"
@@ -129,11 +125,6 @@ using namespace mozilla;
 // Utilities
 //---------------------------------------------------------------------------
 
-#ifdef ANDROID
-// Android doesn't have pthread_atfork defined in pthread.h.
-extern "C" MOZ_EXPORT int pthread_atfork(void (*)(void), void (*)(void),
-                                         void (*)(void));
-#endif
 
 #ifndef DISALLOW_COPY_AND_ASSIGN
 #  define DISALLOW_COPY_AND_ASSIGN(T) \
@@ -190,21 +181,6 @@ void StackTrace::Fill() {
 
 // These ifdefs should be kept in sync with the conditions in
 // phc_implies_frame_pointers in build/moz.configure/memory.configure
-#if defined(XP_WIN) && defined(_M_IX86)
-  // This avoids MozStackWalk(), which causes unusably slow startup on Win32
-  // when it is called during static initialization (see bug 1241684).
-  //
-  // This code is cribbed from the Gecko Profiler, which also uses
-  // FramePointerStackWalk() on Win32: Registers::SyncPopulate() for the
-  // frame pointer, and GetStackTop() for the stack end.
-  CONTEXT context;
-  RtlCaptureContext(&context);
-  void** fp = reinterpret_cast<void**>(context.Ebp);
-
-  PNT_TIB pTib = reinterpret_cast<PNT_TIB>(NtCurrentTeb());
-  void* stackEnd = static_cast<void*>(pTib->StackBase);
-  FramePointerStackWalk(StackWalkCallback, kMaxFrames, this, fp, stackEnd);
-#elif defined(XP_DARWIN)
   // This avoids MozStackWalk(), which has become unusably slow on Mac due to
   // changes in libunwind.
   //
@@ -217,9 +193,6 @@ void StackTrace::Fill() {
 #  pragma GCC diagnostic pop
   void* stackEnd = pthread_get_stackaddr_np(pthread_self());
   FramePointerStackWalk(StackWalkCallback, kMaxFrames, this, fp, stackEnd);
-#else
-  MozStackWalk(StackWalkCallback, nullptr, kMaxFrames, this);
-#endif
 }
 
 //---------------------------------------------------------------------------
@@ -321,12 +294,8 @@ static Delay CheckProbability(int64_t aProb) {
 // On MacOS, the first __thread/thread_local access calls malloc, which leads
 // to an infinite loop. So we use pthread-based TLS instead, which somehow
 // doesn't have this problem.
-#if !defined(XP_DARWIN)
-#  define PHC_THREAD_LOCAL(T) MOZ_THREAD_LOCAL(T)
-#else
 #  define PHC_THREAD_LOCAL(T) \
     detail::ThreadLocal<T, detail::ThreadLocalKeyStorage>
-#endif
 
 enum class AllocPageState {
   NeverAllocated = 0,
@@ -818,7 +787,6 @@ class PHC : public BaseAllocClass {
     *aInfo = {TagUnknown, nullptr, 0, 0};
   }
 
-#ifndef XP_WIN
   static void prefork() MOZ_NO_THREAD_SAFETY_ANALYSIS {
     PHC::sPHC->mMutex.Lock();
   }
@@ -826,7 +794,6 @@ class PHC : public BaseAllocClass {
     PHC::sPHC->mMutex.Unlock();
   }
   static void postfork_child() { PHC::sPHC->mMutex.Init(); }
-#endif
 
   void IncPageAllocHits() MOZ_REQUIRES(mMutex) {
 #if PHC_LOGGING
@@ -1429,12 +1396,10 @@ void phc_init() {
     return;
   }
 
-#ifndef XP_WIN
   // Avoid deadlocks when forking by acquiring our state lock prior to forking
   // and releasing it after forking. See |LogAlloc|'s |phc_init| for
   // in-depth details.
   pthread_atfork(PHC::prefork, PHC::postfork_parent, PHC::postfork_child);
-#endif
 }
 
 //---------------------------------------------------------------------------
@@ -1536,11 +1501,7 @@ void* PHC::MaybePageAlloc(const Maybe<arena_id_t>& aArenaId, size_t aReqSize,
   uint8_t* pagePtr = sRegion.AllocPagePtr(index);
   MOZ_ASSERT(pagePtr);
   bool ok =
-#ifdef XP_WIN
-      !!VirtualAlloc(pagePtr, kPhcPageSize, MEM_COMMIT, PAGE_READWRITE);
-#else
       mprotect(pagePtr, kPhcPageSize, PROT_READ | PROT_WRITE) == 0;
-#endif
 
   if (!ok) {
     UnpopNextFree(index);
@@ -1594,16 +1555,10 @@ void PHC::FreePage(uintptr_t aIndex, const Maybe<arena_id_t>& aArenaId,
     MOZ_REQUIRES(mMutex) {
   void* pagePtr = sRegion.AllocPagePtr(aIndex);
 
-#ifdef XP_WIN
-  if (!VirtualFree(pagePtr, kPhcPageSize, MEM_DECOMMIT)) {
-    Crash("VirtualFree failed");
-  }
-#else
   if (mmap(pagePtr, kPhcPageSize, PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON,
            -1, 0) == MAP_FAILED) {
     Crash("mmap failed");
   }
-#endif
 
   SetPageFreed(aIndex, aArenaId, aFreeStack, aReuseDelay);
 }
@@ -2156,22 +2111,13 @@ void SetPHCProbabilities(int64_t aAvgDelayFirst, int64_t aAvgDelayNormal,
 static size_t GetPid() { return size_t(getpid()); }
 
 static size_t GetTid() {
-#  if defined(XP_WIN)
-  return size_t(GetCurrentThreadId());
-#  else
   return size_t(pthread_self());
-#  endif
 }
 #endif  // PHC_LOGGING
 
 static void Log(const char* fmt, ...) {
 #if PHC_LOGGING
-#  if defined(XP_WIN)
-#    define LOG_STDERR \
-      reinterpret_cast<intptr_t>(GetStdHandle(STD_ERROR_HANDLE))
-#  else
 #    define LOG_STDERR 2
-#  endif
 
   char buf[256];
   size_t pos = SNPrintf(buf, sizeof(buf), "PHC[%zu,%zu,~%zu] ", GetPid(),

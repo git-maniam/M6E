@@ -61,13 +61,7 @@ static const int32_t kMaxTCPKeepIdle = 32767;  // ~9 hours.
 static const int32_t kMaxTCPKeepIntvl = 32767;
 static const int32_t kMaxTCPKeepCount = 127;
 static const int32_t kDefaultTCPKeepCount =
-#if defined(XP_WIN)
-    10;  // Hardcoded in Windows.
-#elif defined(XP_MACOSX)
     8;  // Hardcoded in OSX.
-#else
-    4;  // Specifiable in Linux.
-#endif
 
 class LinkedRunnableEvent final
     : public LinkedListElement<LinkedRunnableEvent> {
@@ -349,14 +343,6 @@ class nsSocketTransportService final : public nsPISocketTransportService,
 
   void MarkTheLastElementOfPendingQueue();
 
-#if defined(XP_WIN)
-  Atomic<bool> mPolling{false};
-  nsCOMPtr<nsITimer> mPollRepairTimer;
-  void StartPollWatchdog();
-  void DoPollRepair();
-  void StartPolling();
-  void EndPolling();
-#endif
 
   void TryRepairPollableEvent();
 

@@ -9,15 +9,8 @@
 #include "mozilla/dom/SerialPlatformService.h"
 #include "nsTHashMap.h"
 
-#ifdef XP_LINUX
-#  include <glib.h>
 
-#  include "mozilla/UdevLib.h"
-#endif
-
-#ifdef XP_MACOSX
 #  include <IOKit/IOKitLib.h>
-#endif
 
 namespace mozilla::dom {
 
@@ -52,21 +45,7 @@ class PosixSerialPlatformService final : public SerialPlatformService {
 
   nsresult StartMonitoring();
 
-#ifdef XP_LINUX
-  nsresult InitializeUdev();
-  static gboolean OnUdevMonitor(GIOChannel* source, GIOCondition condition,
-                                gpointer data);
-  void ReadUdevChange();
-  void PopulatePortInfoFromUdev(mozilla::udev_device* aDev,
-                                const char* aDevnode,
-                                IPCSerialPortInfo& aPortInfo);
 
-  mozilla::UniquePtr<mozilla::udev_lib> mUdevLib;
-  mozilla::udev_monitor* mMonitor;
-  guint mMonitorSourceID;
-#endif
-
-#ifdef XP_MACOSX
   nsresult InitializeMacOS();
   static void DeviceAddedCallback(void* context, io_iterator_t iterator);
   static void DeviceRemovedCallback(void* context, io_iterator_t iterator);
@@ -77,7 +56,6 @@ class PosixSerialPlatformService final : public SerialPlatformService {
   IONotificationPortRef mNotificationPort;
   io_iterator_t mAddedIterator;
   io_iterator_t mRemovedIterator;
-#endif
 
   // Should only be accessed on SerialPlatformService's thread
   nsTHashMap<nsString, mozilla::UniqueFileHandle> mOpenPorts;

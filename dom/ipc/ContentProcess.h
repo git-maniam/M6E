@@ -9,9 +9,6 @@
 #include "mozilla/ipc/ProcessChild.h"
 #include "nsXREDirProvider.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/mscom/ProcessRuntime.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -34,11 +31,6 @@ class ContentProcess : public mozilla::ipc::ProcessChild {
   void InfallibleInit(int aArgc, char* aArgv[]);
 
   ContentChild mContent;
-#if defined(XP_WIN)
-  // This object initializes and configures COM. This must happen prior to
-  // constructing mXREEmbed.
-  mozilla::mscom::ProcessRuntime mCOMRuntime;
-#endif
   nsXREDirProvider mDirProvider;
 };
 

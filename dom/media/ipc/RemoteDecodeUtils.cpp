@@ -24,10 +24,6 @@ SandboxingKind GetSandboxingKindFromLocation(RemoteMediaIn aLocation) {
       return SandboxingKind::UTILITY_AUDIO_DECODING_APPLE_MEDIA;
       break;
 #endif
-#ifdef XP_WIN
-    case RemoteMediaIn::UtilityProcess_WMF:
-      return SandboxingKind::UTILITY_AUDIO_DECODING_WMF;
-#endif
 #ifdef MOZ_WMF_MEDIA_ENGINE
     case RemoteMediaIn::UtilityProcess_MFMediaEngineCDM:
       return SandboxingKind::MF_MEDIA_ENGINE_CDM;
@@ -45,10 +41,6 @@ RemoteMediaIn GetRemoteMediaInFromKind(SandboxingKind aKind) {
 #ifdef MOZ_APPLEMEDIA
     case SandboxingKind::UTILITY_AUDIO_DECODING_APPLE_MEDIA:
       return RemoteMediaIn::UtilityProcess_AppleMedia;
-#endif
-#ifdef XP_WIN
-    case SandboxingKind::UTILITY_AUDIO_DECODING_WMF:
-      return RemoteMediaIn::UtilityProcess_WMF;
 #endif
 #ifdef MOZ_WMF_MEDIA_ENGINE
     case SandboxingKind::MF_MEDIA_ENGINE_CDM:
@@ -101,10 +93,6 @@ const char* RemoteMediaInToStr(RemoteMediaIn aLocation) {
 #ifdef MOZ_APPLEMEDIA
     case RemoteMediaIn::UtilityProcess_AppleMedia:
       return "Utility AppleMedia";
-#endif
-#ifdef XP_WIN
-    case RemoteMediaIn::UtilityProcess_WMF:
-      return "Utility WMF";
 #endif
 #ifdef MOZ_WMF_MEDIA_ENGINE
     case RemoteMediaIn::UtilityProcess_MFMediaEngineCDM:

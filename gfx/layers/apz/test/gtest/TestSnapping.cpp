@@ -138,7 +138,6 @@ TEST_F(APZCSnappingTesterMock, Snap_After_Pinch) {
 
 // Currently fails on Android because on the platform we have a different
 // VelocityTracker.
-#ifndef MOZ_WIDGET_ANDROID
 TEST_F(APZCSnappingTesterMock, SnapOnPanEndWithZeroVelocity) {
   // Use pref values for desktop everywhere.
   SCOPED_GFX_PREF_FLOAT("apz.fling_friction", 0.002);
@@ -292,4 +291,3 @@ TEST_F(APZCSnappingTesterMock, SnapOnPanEndWithPositiveVelocity) {
                 .y,
             100);
 }
-#endif

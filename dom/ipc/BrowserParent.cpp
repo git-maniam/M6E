@@ -98,9 +98,7 @@
 #include "nsQueryActor.h"
 #include "nsSHistory.h"
 #include "nsVariant.h"
-#ifndef XP_WIN
 #  include "nsJARProtocolHandler.h"
-#endif
 #include <algorithm>
 
 #include "BrowserChild.h"
@@ -140,23 +138,12 @@
 #include "nsSubDocumentFrame.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include "FxRWindowManager.h"
-#endif
 
-#if defined(XP_WIN) && defined(ACCESSIBILITY)
-#  include "mozilla/a11y/AccessibleWrap.h"
-#  include "mozilla/a11y/Compatibility.h"
-#  include "mozilla/a11y/nsWinUtils.h"
-#endif
 
 #ifdef MOZ_GECKOVIEW_HISTORY
 #  include "GeckoViewHistory.h"
 #endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/widget/nsWindow.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 using namespace mozilla::dom;
 using namespace mozilla::ipc;
@@ -638,25 +625,6 @@ void BrowserParent::SetOwnerElement(Element* aElement) {
     newTopLevelWin->AddBrowser(mBrowserHost);
   }
 
-#if defined(XP_WIN) && defined(ACCESSIBILITY)
-  if (!mIsDestroyed) {
-    uintptr_t newWindowHandle = 0;
-    if (nsCOMPtr<nsIWidget> widget = GetWidget()) {
-      newWindowHandle =
-          reinterpret_cast<uintptr_t>(widget->GetNativeData(NS_NATIVE_WINDOW));
-    }
-    a11y::DocAccessibleParent* doc = GetTopLevelDocAccessible();
-    if (doc) {
-      HWND hWnd = reinterpret_cast<HWND>(doc->GetEmulatedWindowHandle());
-      if (hWnd) {
-        HWND parentHwnd = reinterpret_cast<HWND>(newWindowHandle);
-        if (parentHwnd != ::GetParent(hWnd)) {
-          ::SetParent(hWnd, parentHwnd);
-        }
-      }
-    }
-  }
-#endif
 
   AddWindowListeners();
 
@@ -754,7 +722,6 @@ void BrowserParent::Destroy() {
   (void)SendDestroy();
   mIsDestroyed = true;
 
-#if !defined(MOZ_WIDGET_ANDROID)
   // We're beginning to destroy this BrowserParent. Immediately drop the
   // keepalive. This can start the shutdown timer, however the ShutDown message
   // will wait for the BrowserParent to be fully destroyed.
@@ -769,7 +736,6 @@ void BrowserParent::Destroy() {
   //    Android itself will), so we don't concern ourselves with the ForceKill
   //    timer either.
   mContentParentKeepAlive = nullptr;
-#endif
 
   // This `AddKeepAlive` will be cleared if `mHoldingGroupKeepAlive` is set in
   // `ActorDestroy`. Out of caution, we don't add the `KeepAlive` if our IPC
@@ -1039,14 +1005,6 @@ void BrowserParent::InitRendering() {
         widget->SupportsUnadjustedMovement());
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  MOZ_ASSERT(widget);
-
-  if (GetBrowsingContext()->IsTopContent()) {
-    (void)SendDynamicToolbarMaxHeightChanged(
-        widget->GetDynamicToolbarMaxHeight());
-  }
-#endif
 }
 
 bool BrowserParent::AttachWindowRenderer() {
@@ -1222,19 +1180,6 @@ void BrowserParent::DynamicToolbarOffsetChanged(ScreenIntCoord aOffset) {
   }
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-void BrowserParent::KeyboardHeightChanged(ScreenIntCoord aHeight) {
-  if (!mIsDestroyed) {
-    (void)SendKeyboardHeightChanged(aHeight);
-  }
-}
-
-void BrowserParent::AndroidPipModeChanged(bool aPipMode) {
-  if (!mIsDestroyed) {
-    (void)SendAndroidPipModeChanged(aPipMode);
-  }
-}
-#endif
 
 void BrowserParent::HandleAccessKey(const WidgetKeyboardEvent& aEvent,
                                     nsTArray<uint32_t>& aCharCodes) {
@@ -4262,16 +4207,10 @@ mozilla::ipc::IPCResult BrowserParent::RecvScrollForKeyboard(
 mozilla::ipc::IPCResult BrowserParent::RecvIsWindowSupportingProtectedMedia(
     const uint64_t& aOuterWindowID,
     IsWindowSupportingProtectedMediaResolver&& aResolve) {
-#ifdef XP_WIN
-  bool isFxrWindow =
-      FxRWindowManager::GetInstance()->IsFxRWindow(aOuterWindowID);
-  aResolve(!isFxrWindow);
-#else
 #  ifdef FUZZING_SNAPSHOT
   return IPC_FAIL(this, "Should only be called on Windows");
 #  endif
   MOZ_CRASH("Should only be called on Windows");
-#endif
 
   return IPC_OK();
 }
@@ -4279,13 +4218,7 @@ mozilla::ipc::IPCResult BrowserParent::RecvIsWindowSupportingProtectedMedia(
 mozilla::ipc::IPCResult BrowserParent::RecvIsWindowSupportingWebVR(
     const uint64_t& aOuterWindowID,
     IsWindowSupportingWebVRResolver&& aResolve) {
-#ifdef XP_WIN
-  bool isFxrWindow =
-      FxRWindowManager::GetInstance()->IsFxRWindow(aOuterWindowID);
-  aResolve(!isFxrWindow);
-#else
   aResolve(true);
-#endif
 
   return IPC_OK();
 }
@@ -4332,19 +4265,6 @@ mozilla::ipc::IPCResult BrowserParent::RecvReleasePointerCapture(
 }
 
 mozilla::ipc::IPCResult BrowserParent::RecvShowDynamicToolbar() {
-#if defined(MOZ_WIDGET_ANDROID)
-  nsCOMPtr<nsIWidget> widget = GetTopLevelWidget();
-  if (!widget) {
-    return IPC_OK();
-  }
-
-  RefPtr<nsWindow> window = nsWindow::From(widget);
-  if (!window) {
-    return IPC_OK();
-  }
-
-  window->ShowDynamicToolbar();
-#endif  // defined(MOZ_WIDGET_ANDROID)
   return IPC_OK();
 }
 

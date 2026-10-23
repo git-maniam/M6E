@@ -17,10 +17,6 @@
 #include "mozilla/StaticPrefs_gfx.h"
 #include "mozilla/gfx/MacIOSurface.h"
 
-#ifdef XP_IOS
-#  include <OpenGLES/EAGLIOSurface.h>
-#  include "GLContextEAGL.h"
-#endif
 
 #include "GLContext.h"
 #include "MozFramebuffer.h"
@@ -34,9 +30,6 @@ using gfx::IntRect;
 using gfx::IntRegion;
 using gfx::IntSize;
 using gl::GLContext;
-#ifdef XP_IOS
-using gl::GLContextEAGL;
-#endif
 
 /* static */ RefPtr<SurfacePool> SurfacePool::Create(size_t aPoolSizeLimit) {
   return new SurfacePoolCA(aPoolSizeLimit);
@@ -323,25 +316,10 @@ Maybe<GLuint> SurfacePoolCA::LockedPool::GetFramebufferForSurface(
   GLuint tex = aGL->CreateTexture();
   {
     const gl::ScopedBindTexture bindTex(aGL, tex, target);
-#ifdef XP_MACOSX
     auto surface = MakeRefPtr<MacIOSurface>(
         entry.mIOSurface, gfx::YUVColorSpace::Identity,
         gfx::TransferFunction::SRGB, MacIOSurface::AllowAlpha::Yes);
     surface->BindTexImage(aGL, 0, nullptr);
-#elif TARGET_OS_SIMULATOR
-    // texImageIOSurface is unavailable in simulator.
-    MOZ_CRASH("unimplemented");
-#else
-    RefPtr<GLContextEAGL> eagl = GLContextEAGL::Cast(aGL);
-    [eagl->GetEAGLContext() texImageIOSurface:entry.mIOSurface.get()
-                                       target:target
-                               internalFormat:LOCAL_GL_RGBA
-                                        width:entry.mSize.width
-                                       height:entry.mSize.height
-                                       format:LOCAL_GL_BGRA
-                                         type:LOCAL_GL_UNSIGNED_INT_8_8_8_8_REV
-                                        plane:0];
-#endif
   }
 
   auto fb = CreateFramebufferForTexture(aGL, entry.mSize, tex, target,

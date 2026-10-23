@@ -173,13 +173,7 @@ inline auto TiedFields<mozilla::wr::FontInstanceOptions>(
 template <>
 inline auto TiedFields<mozilla::wr::FontInstancePlatformOptions>(
     mozilla::wr::FontInstancePlatformOptions& a) {
-#if defined(XP_WIN)
-  return std::tie(a.gamma, a.contrast, a.cleartype_level);
-#elif defined(XP_MACOSX)
   return std::tie(a.unused);
-#else
-  return std::tie(a.lcd_filter, a.hinting, a.gamma, a.enhanced_contrast);
-#endif
 }
 
 template <>
@@ -299,21 +293,6 @@ template <>
 struct ParamTraits<mozilla::wr::FontInstanceOptions>
     : public ParamTraits_TiedFields<mozilla::wr::FontInstanceOptions> {};
 
-#if !(defined(XP_MACOSX) || defined(XP_WIN))
-
-template <>
-struct ParamTraits<mozilla::wr::FontLCDFilter>
-    : public ContiguousEnumSerializer<mozilla::wr::FontLCDFilter,
-                                      mozilla::wr::FontLCDFilter::None,
-                                      mozilla::wr::FontLCDFilter::Sentinel> {};
-
-template <>
-struct ParamTraits<mozilla::wr::FontHinting>
-    : public ContiguousEnumSerializer<mozilla::wr::FontHinting,
-                                      mozilla::wr::FontHinting::None,
-                                      mozilla::wr::FontHinting::Sentinel> {};
-
-#endif  // !(defined(XP_MACOSX) || defined(XP_WIN))
 
 template <>
 struct ParamTraits<mozilla::wr::FontInstancePlatformOptions>

@@ -16,11 +16,6 @@
 #include "mozilla/dom/WebAuthnHandler.h"
 #include "nsCycleCollectionParticipant.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/MozPromise.h"
-#  include "mozilla/java/GeckoResultNatives.h"
-#  include "mozilla/java/WebAuthnTokenManagerWrappers.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -150,11 +145,7 @@ already_AddRefed<Promise> PublicKeyCredential::GetClientCapabilities(
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"conditionalGet"_ns;
-#if defined(MOZ_WIDGET_ANDROID)
-  entry->mValue = false;
-#else
   entry->mValue = StaticPrefs::security_webauthn_enable_conditional_mediation();
-#endif
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"extension:appid"_ns;
@@ -176,19 +167,11 @@ already_AddRefed<Promise> PublicKeyCredential::GetClientCapabilities(
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"extension:credentialProtectionPolicy"_ns;
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_ANDROID)
   entry->mValue = false;
-#else
-  entry->mValue = true;
-#endif
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"extension:enforceCredentialProtectionPolicy"_ns;
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_ANDROID)
   entry->mValue = false;
-#else
-  entry->mValue = true;
-#endif
 
   // Bug 1844448: support the credBlob extension.
   // entry = capabilities.Entries().AppendElement();
@@ -201,11 +184,7 @@ already_AddRefed<Promise> PublicKeyCredential::GetClientCapabilities(
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"extension:largeBlob"_ns;
-#if defined(XP_MACOSX) || defined(XP_WIN) || defined(MOZ_WIDGET_ANDROID)
   entry->mValue = true;
-#else
-  entry->mValue = false;
-#endif
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"extension:minPinLength"_ns;
@@ -217,19 +196,11 @@ already_AddRefed<Promise> PublicKeyCredential::GetClientCapabilities(
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"hybridTransport"_ns;
-#if defined(XP_MACOSX) || defined(XP_WIN) || defined(MOZ_WIDGET_ANDROID)
   entry->mValue = true;
-#else
-  entry->mValue = false;
-#endif
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"passkeyPlatformAuthenticator"_ns;
-#if defined(XP_MACOSX) || defined(XP_WIN) || defined(MOZ_WIDGET_ANDROID)
   entry->mValue = true;
-#else
-  entry->mValue = false;
-#endif
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"relatedOrigins"_ns;
@@ -249,11 +220,7 @@ already_AddRefed<Promise> PublicKeyCredential::GetClientCapabilities(
 
   entry = capabilities.Entries().AppendElement();
   entry->mKey = u"userVerifyingPlatformAuthenticator"_ns;
-#if defined(XP_MACOSX) || defined(XP_WIN) || defined(MOZ_WIDGET_ANDROID)
   entry->mValue = true;
-#else
-  entry->mValue = false;
-#endif
 
   promise->MaybeResolve(capabilities);
   return promise.forget();
@@ -267,12 +234,8 @@ already_AddRefed<Promise> PublicKeyCredential::IsConditionalMediationAvailable(
   if (aError.Failed()) {
     return nullptr;
   }
-#if defined(MOZ_WIDGET_ANDROID)
-  promise->MaybeResolve(false);
-#else
   promise->MaybeResolve(
       StaticPrefs::security_webauthn_enable_conditional_mediation());
-#endif
   return promise.forget();
 }
 

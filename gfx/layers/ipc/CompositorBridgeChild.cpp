@@ -36,9 +36,6 @@
 #include "nsISupportsImpl.h"   // for MOZ_COUNT_CTOR, etc
 #include "nsTArray.h"          // for nsTArray, nsTArray_Impl
 #include "nsThreadUtils.h"
-#if defined(XP_WIN)
-#  include "WinUtils.h"
-#endif
 #include "mozilla/widget/CompositorWidget.h"
 #ifdef MOZ_WIDGET_SUPPORTS_OOP_COMPOSITING
 #  include "mozilla/widget/CompositorWidgetChild.h"

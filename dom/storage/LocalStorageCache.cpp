@@ -360,9 +360,7 @@ nsresult LocalStorageCache::SetItem(const LocalStorage* aStorage,
     return NS_OK;
   }
 
-#if !defined(MOZ_WIDGET_ANDROID)
   NotifyObservers(aStorage, aKey, aOld, aValue);
-#endif
 
   if (Persist(aStorage)) {
     StorageDBChild* storageChild = StorageDBChild::Get(mPrivateBrowsingId);
@@ -409,9 +407,7 @@ nsresult LocalStorageCache::RemoveItem(const LocalStorage* aStorage,
     return NS_OK;
   }
 
-#if !defined(MOZ_WIDGET_ANDROID)
   NotifyObservers(aStorage, aKey, aOld, VoidString());
-#endif
 
   if (Persist(aStorage)) {
     StorageDBChild* storageChild = StorageDBChild::Get(mPrivateBrowsingId);
@@ -458,11 +454,9 @@ nsresult LocalStorageCache::Clear(const LocalStorage* aStorage,
     return hadData ? NS_OK : NS_SUCCESS_DOM_NO_OPERATION;
   }
 
-#if !defined(MOZ_WIDGET_ANDROID)
   if (hadData) {
     NotifyObservers(aStorage, VoidString(), VoidString(), VoidString());
   }
-#endif
 
   if (Persist(aStorage) && (refresh || hadData)) {
     StorageDBChild* storageChild = StorageDBChild::Get(mPrivateBrowsingId);

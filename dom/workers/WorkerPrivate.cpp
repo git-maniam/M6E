@@ -122,9 +122,6 @@
 #include "nsThreadUtils.h"
 #include "nsUTF8Utils.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 // JS_MaybeGC will run once every second during normal execution.
 #define PERIODIC_GC_TIMER_DELAY_SEC 1

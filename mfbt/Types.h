@@ -34,9 +34,6 @@
  * These macros are designed for use by library interfaces -- not for normal
  * methods or data used cross-file.
  */
-#if defined(WIN32)
-#  define MOZ_EXPORT __declspec(dllexport)
-#else /* Unix */
 #  ifdef HAVE_VISIBILITY_ATTRIBUTE
 #    define MOZ_EXPORT __attribute__((visibility("default")))
 #  elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
@@ -44,7 +41,6 @@
 #  else
 #    define MOZ_EXPORT /* nothing */
 #  endif
-#endif
 
 /*
  * Whereas implementers use MOZ_EXPORT to declare and define library symbols,
@@ -53,21 +49,9 @@
  * the export or import version of the macro, depending upon the compilation
  * mode.
  */
-#ifdef _WIN32
-#  if defined(__MWERKS__)
-#    define MOZ_IMPORT_API /* nothing */
-#  else
-#    define MOZ_IMPORT_API __declspec(dllimport)
-#  endif
-#else
 #  define MOZ_IMPORT_API MOZ_EXPORT
-#endif
 
-#if defined(_WIN32) && !defined(__MWERKS__)
-#  define MOZ_IMPORT_DATA __declspec(dllimport)
-#else
 #  define MOZ_IMPORT_DATA MOZ_EXPORT
-#endif
 
 /*
  * Consistent with the above comment, the MFBT_API and MFBT_DATA macros expose

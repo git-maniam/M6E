@@ -7,13 +7,11 @@
 
 #include "base/basictypes.h"
 
-#if defined(XP_DARWIN)
 #  if defined(__OBJC__)
 @class NSAutoreleasePool;
 #  else   // __OBJC__
 class NSAutoreleasePool;
 #  endif  // __OBJC__
-#endif    // XP_DARWIN
 
 namespace base {
 
@@ -27,10 +25,6 @@ namespace base {
 // ugly #ifdefs.
 class ScopedNSAutoreleasePool {
  public:
-#if !defined(XP_DARWIN)
-  ScopedNSAutoreleasePool() {}
-  void Recycle() {}
-#else   // XP_DARWIN
   ScopedNSAutoreleasePool();
   ~ScopedNSAutoreleasePool();
 
@@ -42,7 +36,6 @@ class ScopedNSAutoreleasePool {
 
  private:
   NSAutoreleasePool* autorelease_pool_;
-#endif  // XP_DARWIN
 
  private:
   DISALLOW_COPY_AND_ASSIGN(ScopedNSAutoreleasePool);

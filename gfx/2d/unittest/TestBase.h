@@ -7,11 +7,6 @@
 #include <string>
 #include <vector>
 
-#if defined(_MSC_VER) && !defined(__clang__)
-// On MSVC otherwise our generic member pointer trick doesn't work.
-// JYA: Do we still need this?
-#  pragma pointers_to_members(full_generality, single_inheritance)
-#endif
 
 #define VERIFY(arg)                          \
   if (!(arg)) {                              \

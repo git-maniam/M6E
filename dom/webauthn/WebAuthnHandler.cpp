@@ -25,9 +25,6 @@
 #include "nsIURIMutator.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include "WinWebAuthnService.h"
-#endif
 
 using namespace mozilla::ipc;
 

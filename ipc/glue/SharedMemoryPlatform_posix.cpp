@@ -13,16 +13,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef XP_LINUX
-#  include "base/linux_memfd_defs.h"
-#endif
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
-#ifdef __FreeBSD__
-#  include <sys/capsicum.h>
-#endif
 
 #ifdef MOZ_VALGRIND
 #  include <valgrind/valgrind.h>
@@ -69,50 +60,7 @@ static int memfd_create(const char* aName, unsigned int aFlags) {
 // attempts to accomplish that.
 
 #ifdef HAVE_MEMFD_CREATE
-#  ifdef XP_LINUX
-#    define USE_MEMFD_CREATE 1
-
-// To create a read-only duplicate of an fd, we can use procfs; the
-// same operation could restore write access, but sandboxing prevents
-// child processes from accessing /proc.
-//
-// (Note: if this ever changes to not use /proc, also reconsider how
-// and if HaveMemfd should check whether this works.)
-
-static int DupReadOnly(int aFd) {
-  MOZ_DIAGNOSTIC_ASSERT(XRE_IsParentProcess() || XRE_IsGPUProcess());
-  std::string path = StringPrintf("/proc/self/fd/%d", aFd);
-  // procfs opens probably won't EINTR, but checking for it can't hurt
-  return HANDLE_EINTR(open(path.c_str(), O_RDONLY | O_CLOEXEC));
-}
-
-#  elif defined(__FreeBSD__)
-#    define USE_MEMFD_CREATE 1
-
-// FreeBSD's Capsicum framework allows irrevocably restricting the
-// operations permitted on a file descriptor.
-
-static int DupReadOnly(int aFd) {
-  int rofd = fcntl(aFd, F_DUPFD_CLOEXEC, 0);
-  if (rofd < 0) {
-    return -1;
-  }
-
-  cap_rights_t rights;
-  cap_rights_init(&rights, CAP_FSTAT, CAP_MMAP_R);
-  if (cap_rights_limit(rofd, &rights) < 0) {
-    int err = errno;
-    close(rofd);
-    errno = err;
-    return -1;
-  }
-
-  return rofd;
-}
-
-#  else  // unhandled OS
 #    warning "OS has memfd_create but no DupReadOnly implementation"
-#  endif  // OS selection
 #endif    // HAVE_MEMFD_CREATE
 
 // Runtime detection for memfd support.  Returns `Nothing()` if not
@@ -202,15 +150,6 @@ bool AppendPosixShmPrefix(std::string* aStr, pid_t aPid) {
     return false;
   }
   *aStr += '/';
-#ifdef MOZ_WIDGET_GTK
-  // The Snap package environment doesn't provide a private /dev/shm
-  // (it's used for communication with services like PulseAudio);
-  // instead AppArmor is used to restrict access to it.  Anything with
-  // this prefix is allowed:
-  if (const char* snap = mozilla::widget::GetSnapInstanceName()) {
-    StringAppendF(aStr, "snap.%s.", snap);
-  }
-#endif  // XP_LINUX
   // Hopefully the "implementation defined" name length limit is long
   // enough for this.
   StringAppendF(aStr, "org.mozilla.ipc.%d.", static_cast<int>(aPid));
@@ -476,11 +415,7 @@ bool Platform::Protect(char* aAddr, size_t aSize, Access aAccess) {
 }
 
 void* Platform::FindFreeAddressSpace(size_t aSize) {
-#ifndef __FreeBSD__
   constexpr int flags = MAP_ANONYMOUS | MAP_NORESERVE | MAP_PRIVATE;
-#else
-  constexpr int flags = MAP_ANONYMOUS | MAP_PRIVATE;
-#endif
   void* memory = mmap(nullptr, aSize, PROT_NONE, flags, -1, 0);
   if (memory == MAP_FAILED) {
     return nullptr;

@@ -17,10 +17,6 @@ UtilityActorName GetAudioActorName(const SandboxingKind aSandbox) {
     case UTILITY_AUDIO_DECODING_APPLE_MEDIA:
       return UtilityActorName::AudioDecoder_AppleMedia;
 #endif
-#ifdef XP_WIN
-    case UTILITY_AUDIO_DECODING_WMF:
-      return UtilityActorName::AudioDecoder_WMF;
-#endif
 #ifdef MOZ_WMF_MEDIA_ENGINE
     case MF_MEDIA_ENGINE_CDM:
       return UtilityActorName::MfMediaEngineCDM;

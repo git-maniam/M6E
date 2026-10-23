@@ -32,9 +32,6 @@
 #include "nsIWebProgress.h"
 #include "xpcAccessibleDocument.h"
 
-#if defined(ANDROID)
-#  include "mozilla/Monitor.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -280,9 +277,6 @@ void DocManager::Shutdown() {
   // state which is about to be torn down by PlatformShutdown. Iterate the array
   // backwards because destroying the document removes it from this array.
   if (sRemoteDocuments) {
-#if defined(ANDROID)
-    MonitorAutoLock mal(nsAccessibilityService::GetAndroidMonitor());
-#endif
     for (size_t i = sRemoteDocuments->Length(); i-- > 0;) {
       (*sRemoteDocuments)[i]->Destroy();
     }

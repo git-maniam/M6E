@@ -597,12 +597,6 @@ OffscreenCanvasDisplayHelper::GetSurfaceSnapshot() {
 
   {
     MutexAutoLock lock(mMutex);
-#ifdef MOZ_WIDGET_ANDROID
-    // On Android, we cannot both display a GL context and read back the pixels.
-    if (mCanvasElement) {
-      return nullptr;
-    }
-#endif
 
     hasAlpha = !mData.mIsOpaque;
     isAlphaPremult = mData.mIsAlphaPremult;

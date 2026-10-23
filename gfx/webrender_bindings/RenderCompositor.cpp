@@ -17,22 +17,10 @@
 #include "mozilla/webrender/RenderCompositorSWGL.h"
 #include "mozilla/widget/CompositorWidget.h"
 
-#ifdef XP_WIN
-#  include "mozilla/webrender/RenderCompositorANGLE.h"
-#  include "mozilla/widget/WinCompositorWidget.h"
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GTK)
-#  include "mozilla/webrender/RenderCompositorEGL.h"
-#endif
 
-#ifdef MOZ_WAYLAND
+
 #  include "mozilla/webrender/RenderCompositorNative.h"
-#endif
-
-#ifdef XP_DARWIN
-#  include "mozilla/webrender/RenderCompositorNative.h"
-#endif
 
 namespace mozilla::wr {
 
@@ -206,63 +194,21 @@ UniquePtr<RenderCompositor> RenderCompositor::Create(
   }
 
   if (aWidget->GetCompositorOptions().UseSoftwareWebRender()) {
-#ifdef XP_DARWIN
     // Mac uses NativeLayerCA
     if (!gfxPlatform::IsHeadless()) {
       return RenderCompositorNativeSWGL::Create(aWidget, aError);
     }
-#elif defined(MOZ_WAYLAND)
-    // Some widgets on Wayland (D&D popups for instance) can't use native
-    // compositor due to system limitations.
-    if (gfx::gfxVars::UseWebRenderCompositor() &&
-        aWidget->GetCompositorOptions().AllowNativeCompositor()) {
-      return RenderCompositorNativeSWGL::Create(aWidget, aError);
-    }
-#endif
     UniquePtr<RenderCompositor> comp =
         RenderCompositorLayersSWGL::Create(aWidget, aError);
     if (comp) {
       return comp;
     }
-#if defined(MOZ_WIDGET_ANDROID)
-    // On Android, we do not want to fallback from RenderCompositorOGLSWGL to
-    // RenderCompositorSWGL.
-    if (aWidget->GetCompositorOptions().AllowSoftwareWebRenderOGL()) {
-      return nullptr;
-    }
-#endif
     return RenderCompositorSWGL::Create(aWidget, aError);
   }
 
-#ifdef XP_WIN
-  if (gfx::gfxVars::UseWebRenderANGLE()) {
-    return RenderCompositorANGLE::Create(aWidget, aError);
-  }
-#endif
 
-#if defined(MOZ_WAYLAND)
-  if (gfx::gfxVars::UseWebRenderCompositor() &&
-      aWidget->GetCompositorOptions().AllowNativeCompositor()) {
-    if (StaticPrefs::gfx_webrender_layer_compositor()) {
-      return RenderCompositorLayerNativeOGL::Create(aWidget, aError);
-    } else {
-      return RenderCompositorNativeOGL::Create(aWidget, aError);
-    }
-  }
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GTK)
-  UniquePtr<RenderCompositor> eglCompositor =
-      RenderCompositorEGL::Create(aWidget, aError);
-  if (eglCompositor) {
-    return eglCompositor;
-  }
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // RenderCompositorOGL is not used on android
-  return nullptr;
-#elif defined(XP_DARWIN)
   if (gfx::gfxVars::UseWebRenderCompositor() &&
       aWidget->GetCompositorOptions().AllowNativeCompositor()) {
     if (StaticPrefs::gfx_webrender_layer_compositor()) {
@@ -275,9 +221,6 @@ UniquePtr<RenderCompositor> RenderCompositor::Create(
   }
   // Mac uses NativeLayerCA
   return RenderCompositorNativeOGL::Create(aWidget, aError);
-#else
-  return RenderCompositorOGL::Create(aWidget, aError);
-#endif
 }
 
 RenderCompositor::RenderCompositor(
@@ -298,13 +241,6 @@ void RenderCompositor::GetCompositorCapabilities(
 }
 
 void RenderCompositor::GetWindowVisibility(WindowVisibility* aVisibility) {
-#ifdef XP_WIN
-  auto* widget = mWidget->AsWindows();
-  if (!widget) {
-    return;
-  }
-  aVisibility->is_fully_occluded = widget->GetWindowIsFullyOccluded();
-#endif
 }
 
 void RenderCompositor::GetWindowProperties(WindowProperties* aProperties) {

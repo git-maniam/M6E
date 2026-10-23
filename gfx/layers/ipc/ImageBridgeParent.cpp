@@ -36,9 +36,6 @@
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"  // for XRE_GetAsyncIOEventTarget
 
-#if defined(XP_WIN)
-#  include "mozilla/layers/TextureD3D11.h"
-#endif
 
 namespace mozilla {
 namespace layers {
@@ -324,13 +321,8 @@ already_AddRefed<PTextureParent> ImageBridgeParent::AllocPTextureParent(
       break;
     case SurfaceDescriptor::TSurfaceDescriptorRemoteTexture:
       break;
-#ifdef MOZ_WIDGET_ANDROID
-    case SurfaceDescriptor::TSurfaceTextureDescriptor:
-      break;
-#elif defined(XP_MACOSX)
     case SurfaceDescriptor::TSurfaceDescriptorMacIOSurface:
       break;
-#endif
     default:
       MOZ_ASSERT_UNREACHABLE("Unexpected to be called!");
       return nullptr;

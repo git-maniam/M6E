@@ -12,31 +12,13 @@
 typedef struct DXGI_ADAPTER_DESC DXGI_ADAPTER_DESC;
 
 struct DxgiAdapterDesc {
-#if defined(XP_WIN)
-  WCHAR Description[128];
-  UINT VendorId;
-  UINT DeviceId;
-  UINT SubSysId;
-  UINT Revision;
-  SIZE_T DedicatedVideoMemory;
-  SIZE_T DedicatedSystemMemory;
-  SIZE_T SharedSystemMemory;
-  LUID AdapterLuid;
-
-  static const DxgiAdapterDesc& From(const DXGI_ADAPTER_DESC& aDesc);
-  const DXGI_ADAPTER_DESC& ToDesc() const;
-#endif
 
   bool operator==(const DxgiAdapterDesc& aOther) const;
 };
 
 namespace IPC {
 
-#if defined(XP_WIN)
-DECLARE_IPC_SERIALIZER(DxgiAdapterDesc);
-#else
 DEFINE_IPC_SERIALIZER_WITHOUT_FIELDS(DxgiAdapterDesc);
-#endif
 
 }  // namespace IPC
 

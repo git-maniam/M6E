@@ -426,10 +426,6 @@ void WorkerErrorReport::LogErrorToConsole(const ErrorData& aReport,
 
   static const char kErrorString[] = "JS error in Web Worker: %s [%s:%u]";
 
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_INFO, "Gecko", kErrorString, msg.get(),
-                      aReport.filename().get(), aReport.lineNumber());
-#endif
 
   fprintf(stderr, kErrorString, msg.get(), aReport.filename().get(),
           aReport.lineNumber());

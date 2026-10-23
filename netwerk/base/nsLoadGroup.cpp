@@ -821,9 +821,7 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
   TimeStamp responseEnd;
   rv = aTimedChannel->GetResponseEnd(&responseEnd);
   if (NS_FAILED(rv)) return;
-#ifndef ANDROID
   bool useHttp3 = false;
-#endif
   bool supportHttp3 = false;
   nsCOMPtr<nsIHttpChannelInternal> httpChannel =
       do_QueryInterface(aTimedChannel);
@@ -831,9 +829,7 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
     uint32_t major;
     uint32_t minor;
     if (NS_SUCCEEDED(httpChannel->GetResponseVersion(&major, &minor))) {
-#ifndef ANDROID
       useHttp3 = major == 3;
-#endif
       if (major == 2) {
         if (NS_FAILED(httpChannel->GetSupportsHTTP3(&supportHttp3))) {
           supportHttp3 = false;
@@ -853,7 +849,6 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
             domainLookupEnd - domainLookupStart);
       }
     }
-#ifndef ANDROID
     else {
       mozilla::glean::network::sub_dns_start.AccumulateRawDuration(
           domainLookupStart - asyncOpen);
@@ -862,7 +857,6 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
             domainLookupEnd - domainLookupStart);
       }
     }
-#endif
   }
   if (!connectEnd.IsNull()) {
     if (!connectStart.IsNull()) {
@@ -870,24 +864,20 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
         mozilla::glean::network::tcp_connection.AccumulateRawDuration(
             connectEnd - connectStart);
       }
-#ifndef ANDROID
       else {
         mozilla::glean::network::sub_tcp_connection.AccumulateRawDuration(
             connectEnd - connectStart);
       }
-#endif
     }
     if (!secureConnectionStart.IsNull()) {
       if (aDefaultRequest) {
         mozilla::glean::network::tls_handshake.AccumulateRawDuration(
             connectEnd - secureConnectionStart);
       }
-#ifndef ANDROID
       else {
         mozilla::glean::network::sub_tls_handshake.AccumulateRawDuration(
             connectEnd - secureConnectionStart);
       }
-#endif
     }
   }
   if (!requestStart.IsNull() && !responseEnd.IsNull()) {
@@ -902,7 +892,6 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
             responseStart - asyncOpen);
       }
     }
-#ifndef ANDROID
     else {
       mozilla::glean::network::sub_open_to_first_sent.AccumulateRawDuration(
           requestStart - asyncOpen);
@@ -913,22 +902,18 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
             .AccumulateRawDuration(responseStart - asyncOpen);
       }
     }
-#endif
   }
   if (!cacheReadStart.IsNull() && !cacheReadEnd.IsNull()) {
     if (aDefaultRequest) {
       mozilla::glean::network::first_from_cache.AccumulateRawDuration(
           cacheReadStart - asyncOpen);
-#ifndef ANDROID
       mozilla::glean::network::cache_read_time.AccumulateRawDuration(
           cacheReadEnd - cacheReadStart);
       if (!requestStart.IsNull() && !responseEnd.IsNull()) {
         mozilla::glean::network::http_revalidation.AccumulateRawDuration(
             responseEnd - requestStart);
       }
-#endif
     }
-#ifndef ANDROID
     else {
       mozilla::glean::network::sub_first_from_cache.AccumulateRawDuration(
           cacheReadStart - asyncOpen);
@@ -939,9 +924,7 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
             responseEnd - requestStart);
       }
     }
-#endif
   }
-#ifndef ANDROID
   if (!cacheReadEnd.IsNull()) {
     if (aDefaultRequest) {
       mozilla::glean::network::complete_load.AccumulateRawDuration(
@@ -967,9 +950,7 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
           responseEnd - asyncOpen);
     }
   }
-#endif
 
-#ifndef ANDROID
   if ((useHttp3 || supportHttp3) && cacheReadStart.IsNull() &&
       cacheReadEnd.IsNull()) {
     nsCString key = (useHttp3) ? ((aDefaultRequest) ? "uses_http3_page"_ns
@@ -1005,7 +986,6 @@ void nsLoadGroup::TelemetryReportChannel(nsITimedChannel* aTimedChannel,
       }
     }
   }
-#endif
 
   bool hasHTTPSRR = false;
   if (httpChannel && NS_SUCCEEDED(httpChannel->GetHasHTTPSRR(&hasHTTPSRR)) &&

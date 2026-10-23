@@ -21,13 +21,6 @@
 #include "prerror.h"
 #include "sslt.h"
 
-#ifdef XP_WIN
-// clang-format off
-// wincrypt.h depends on windows.h, so needs to go before
-#  include <windows.h>
-#  include <wincrypt.h>
-// clang-format on
-#endif
 
 class nsIDOMWindow;
 class nsIPrompt;

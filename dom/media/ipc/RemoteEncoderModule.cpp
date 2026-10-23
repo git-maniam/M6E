@@ -119,33 +119,6 @@ media::EncodeSupportSet RemoteEncoderModule::Supports(
   }
 #endif
 
-#ifdef XP_WIN
-  if (aConfig.mScalabilityMode != ScalabilityMode::None) {
-    switch (aConfig.mCodec) {
-      case CodecType::H264:
-      case CodecType::VP8:
-      case CodecType::VP9:
-        // The codec type support check is sufficient.
-        break;
-      case CodecType::AV1:
-        if (aConfig.mBitrateMode != BitrateMode::Constant) {
-          return media::EncodeSupportSet{};
-        }
-        break;
-      default:
-        return media::EncodeSupportSet{};
-    }
-  }
-
-  // Some hardware encoders have poor realtime performance, as measured by
-  // the latency between frames. If the config is realtime, and hardware
-  // is required, hardware is allowed, but otherwise not. See bug 2049606.
-  if ((aConfig.mCodec == CodecType::VP8 || aConfig.mCodec == CodecType::VP9) &&
-      aConfig.mUsage == Usage::Realtime &&
-      aConfig.mHardwarePreference == HardwarePreference::None) {
-    hwPref = HardwarePreference::RequireSoftware;
-  }
-#endif
 
   media::EncodeSupportSet supports = SupportsCodec(aConfig.mCodec);
   switch (hwPref) {

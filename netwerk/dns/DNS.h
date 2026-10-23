@@ -14,13 +14,8 @@
 #include "prio.h"
 #include "prnetdb.h"
 
-#if !defined(XP_WIN)
 #  include <arpa/inet.h>
-#endif
 
-#ifdef XP_WIN
-#  include "winsock2.h"
-#endif
 
 #ifndef AF_LOCAL
 #  define AF_LOCAL 1  // used for named pipe
@@ -70,17 +65,10 @@ enum HTTPSSVC_RECEIVED_STAGE : uint32_t {
 // because we don't want higher-level code depending on things
 // like INET6_ADDRSTRLEN and having to include the associated
 // platform-specific headers.
-#ifdef XP_WIN
-// Windows requires longer buffers for some reason.
-const int kIPv4CStrBufSize = 22;
-const int kIPv6CStrBufSize = 65;
-const int kNetAddrMaxCStrBufSize = kIPv6CStrBufSize;
-#else
 const int kIPv4CStrBufSize = 16;
 const int kIPv6CStrBufSize = 46;
 const int kLocalCStrBufSize = 108;
 const int kNetAddrMaxCStrBufSize = kLocalCStrBufSize;
-#endif
 
 // This was all created at a time in which we were using NSPR for host
 // resolution and we were propagating NSPR types like "PRAddrInfo" and
@@ -118,13 +106,11 @@ union NetAddr {
     IPv6Addr ip;       /* the actual 128 bits of address */
     uint32_t scope_id; /* set of interfaces for a scope */
   } inet6;
-#if defined(XP_UNIX) || defined(XP_WIN)
   struct {           /* Unix domain socket or
                         Windows Named Pipes address */
     uint16_t family; /* address family (AF_UNIX) */
     char path[104];  /* null-terminated pathname */
   } local;
-#endif
   // introduced to support nsTArray<NetAddr> comparisons and sorting
   bool operator==(const NetAddr& other) const;
   bool operator<(const NetAddr& other) const;

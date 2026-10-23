@@ -12,11 +12,7 @@
 #include "mozilla/_ipdltest/PTestMostNestedChild.h"
 #include "mozilla/_ipdltest/PTestMostNestedParent.h"
 
-#if defined(XP_UNIX)
 #  include <unistd.h>
-#else
-#  include <windows.h>
-#endif
 
 using namespace mozilla::ipc;
 

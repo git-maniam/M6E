@@ -13,64 +13,12 @@ using namespace js::jit;
 
 ABIArgGenerator::ABIArgGenerator(ABIKind kind)
     : ABIArgGeneratorShared(kind),
-#if defined(XP_WIN)
-      regIndex_(0)
-#else
       intRegIndex_(0),
       floatRegIndex_(0)
-#endif
 {
-#if defined(XP_WIN)
-  stackOffset_ += ShadowStackSpace;
-#endif
 }
 
 ABIArg ABIArgGenerator::next(MIRType type) {
-#if defined(XP_WIN)
-  static_assert(NumIntArgRegs == NumFloatArgRegs);
-  if (regIndex_ == NumIntArgRegs) {
-    if (type == MIRType::Simd128) {
-      // On Win64, >64 bit args need to be passed by reference.  However, wasm
-      // doesn't allow passing SIMD values to JS, so the only way to reach this
-      // is wasm to wasm calls.  Ergo we can break the native ABI here and use
-      // the Wasm ABI instead.
-      MOZ_ASSERT(kind_ == ABIKind::Wasm);
-      stackOffset_ = AlignBytes(stackOffset_, SimdMemoryAlignment);
-      current_ = ABIArg(stackOffset_);
-      stackOffset_ += Simd128DataSize;
-    } else {
-      current_ = ABIArg(stackOffset_);
-      stackOffset_ += sizeof(uint64_t);
-    }
-    return current_;
-  }
-  switch (type) {
-    case MIRType::Int32:
-    case MIRType::Int64:
-    case MIRType::Pointer:
-    case MIRType::WasmAnyRef:
-    case MIRType::WasmArrayData:
-    case MIRType::StackResults:
-      current_ = ABIArg(IntArgRegs[regIndex_++]);
-      break;
-    case MIRType::Float32:
-      current_ = ABIArg(FloatArgRegs[regIndex_++].asSingle());
-      break;
-    case MIRType::Double:
-      current_ = ABIArg(FloatArgRegs[regIndex_++]);
-      break;
-    case MIRType::Simd128:
-      MOZ_ASSERT(kind_ == ABIKind::Wasm);
-      // On Win64, >64 bit args need to be passed by reference, but wasm
-      // doesn't allow passing SIMD values to FFIs. The only way to reach
-      // here is asm to asm calls, so we can break the ABI here.
-      current_ = ABIArg(FloatArgRegs[regIndex_++].asSimd128());
-      break;
-    default:
-      MOZ_CRASH("Unexpected argument type");
-  }
-  return current_;
-#else
   switch (type) {
     case MIRType::Int32:
     case MIRType::Int64:
@@ -111,7 +59,6 @@ ABIArg ABIArgGenerator::next(MIRType type) {
       MOZ_CRASH("Unexpected argument type");
   }
   return current_;
-#endif
 }
 
 void Assembler::addPendingJump(JmpSrc src, ImmPtr target,

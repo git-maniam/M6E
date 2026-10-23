@@ -896,9 +896,7 @@ nsPrintSettingsService::InitPrintSettingsFromPrefs(nsIPrintSettings* aPS,
   }
 
   auto globalPrintSettings = aFlags;
-#ifndef MOZ_WIDGET_ANDROID
   globalPrintSettings &= nsIPrintSettings::kGlobalSettings;
-#endif
 
   nsAutoString prtName;
   // read any non printer specific prefs
@@ -949,7 +947,6 @@ nsresult nsPrintSettingsService::MaybeSavePrintSettingsToPrefs(
   nsresult rv = GetAdjustedPrinterName(aPS, true, prtName);
   NS_ENSURE_SUCCESS(rv, rv);
 
-#ifndef MOZ_WIDGET_ANDROID
   // On most platforms we should always use a prefix when saving print settings
   // to prefs.  Saving without a prefix risks breaking printing for users
   // without a good way for us to fix things for them (unprefixed prefs act as
@@ -959,7 +956,6 @@ nsresult nsPrintSettingsService::MaybeSavePrintSettingsToPrefs(
     MOZ_DIAGNOSTIC_CRASH("Print settings must be saved with a prefix");
     return NS_ERROR_FAILURE;
   }
-#endif
 
   return WritePrefs(aPS, prtName, aFlags);
 }

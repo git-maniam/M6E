@@ -4,11 +4,6 @@
 
 #include "mozilla/AvailableMemoryTracker.h"
 
-#if defined(XP_WIN)
-#  include <windows.h>
-
-#  include "nsIMemoryReporter.h"
-#endif
 
 #include "mozilla/Mutex.h"
 #include "mozilla/Services.h"
@@ -29,36 +24,6 @@ Atomic<uint32_t, MemoryOrdering::Relaxed> sNumLowPhysicalMemEvents;
 
 namespace {
 
-#if defined(XP_WIN)
-static int64_t LowMemoryEventsPhysicalDistinguishedAmount() {
-  return sNumLowPhysicalMemEvents;
-}
-
-class LowEventsReporter final : public nsIMemoryReporter {
-  ~LowEventsReporter() = default;
-
- public:
-  NS_DECL_ISUPPORTS
-
-  NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize) override {
-    // clang-format off
-    MOZ_COLLECT_REPORT(
-      "low-memory-events/physical", KIND_OTHER, UNITS_COUNT_CUMULATIVE,
-      LowMemoryEventsPhysicalDistinguishedAmount(),
-"Number of low-physical-memory events fired since startup. We fire such an "
-"event when a windows low memory resource notification is signaled. The "
-"machine will start to page if it runs out of physical memory.  This may "
-"cause it to run slowly, but it shouldn't cause it to crash.");
-    // clang-format on
-
-    return NS_OK;
-  }
-};
-
-NS_IMPL_ISUPPORTS(LowEventsReporter, nsIMemoryReporter)
-
-#endif  // defined(XP_WIN)
 
 /**
  * This runnable is executed in response to a memory-pressure event; we spin
@@ -69,9 +34,6 @@ NS_IMPL_ISUPPORTS(LowEventsReporter, nsIMemoryReporter)
 class nsJemallocFreeDirtyPagesRunnable final : public Runnable {
   ~nsJemallocFreeDirtyPagesRunnable() = default;
 
-#if defined(XP_WIN)
-  void OptimizeSystemHeap();
-#endif
 
  public:
   NS_DECL_NSIRUNNABLE
@@ -88,22 +50,10 @@ nsJemallocFreeDirtyPagesRunnable::Run() {
   jemalloc_free_dirty_pages();
 #endif
 
-#if defined(XP_WIN)
-  OptimizeSystemHeap();
-#endif
 
   return NS_OK;
 }
 
-#if defined(XP_WIN)
-void nsJemallocFreeDirtyPagesRunnable::OptimizeSystemHeap() {
-  HEAP_OPTIMIZE_RESOURCES_INFORMATION heapOptInfo = {
-      HEAP_OPTIMIZE_RESOURCES_CURRENT_VERSION};
-
-  ::HeapSetInformation(nullptr, HeapOptimizeResources, &heapOptInfo,
-                       sizeof(heapOptInfo));
-}
-#endif  // defined(XP_WIN)
 
 /**
  * The memory pressure watcher is used for listening to memory-pressure events
@@ -161,10 +111,6 @@ void Init() {
   RefPtr watcher = MakeRefPtr<nsMemoryPressureWatcher>();
   watcher->Init();
 
-#if defined(XP_WIN)
-  RegisterLowMemoryEventsPhysicalDistinguishedAmount(
-      LowMemoryEventsPhysicalDistinguishedAmount);
-#endif  // defined(XP_WIN)
 }
 
 }  // namespace AvailableMemoryTracker

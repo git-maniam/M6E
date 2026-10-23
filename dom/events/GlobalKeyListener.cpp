@@ -429,18 +429,6 @@ GlobalKeyListener::WalkHandlersResult GlobalKeyListener::WalkHandlersAndExecute(
     }
   }
 
-#ifdef XP_WIN
-  // Windows native applications ignore Windows-Logo key state when checking
-  // shortcut keys even if the key is pressed.  Therefore, if there is no
-  // shortcut key which exactly matches current modifier state, we should
-  // retry to look for a shortcut key without the Windows-Logo key press.
-  if (!aIgnoreModifierState.mMeta && widgetKeyboardEvent->IsMeta()) {
-    IgnoreModifierState ignoreModifierState(aIgnoreModifierState);
-    ignoreModifierState.mMeta = true;
-    return WalkHandlersAndExecute(aPurpose, aKeyEvent, aCharCode,
-                                  ignoreModifierState);
-  }
-#endif
 
   WalkHandlersResult result;
   result.mDisabledHandlerFound = foundDisabledHandler;

@@ -15,9 +15,6 @@
 #include "nsThreadPool.h"
 #include "nsThreadUtils.h"
 
-#if defined(XP_WIN)
-#  include <shlobj.h>
-#endif
 
 #include "DNSLogging.h"
 
@@ -105,20 +102,7 @@ void DNSServiceBase::DoReadEtcHostsFile(ParsingCallback aCallback) {
 
   auto readHostsTask = [aCallback]() {
     MOZ_ASSERT(!NS_IsMainThread(), "Must not run on the main thread");
-#if defined(XP_WIN)
-    nsCString path;
-    path.SetLength(MAX_PATH + 1);
-    if (!SHGetSpecialFolderPathA(NULL, path.BeginWriting(), CSIDL_SYSTEM,
-                                 false)) {
-      LOG(("Calling SHGetSpecialFolderPathA failed"));
-      return;
-    }
-
-    path.SetLength(strlen(path.get()));
-    path.Append("\\drivers\\etc\\hosts");
-#else
     nsAutoCString path("/etc/hosts"_ns);
-#endif
 
     LOG(("Reading hosts file at %s", path.get()));
     rust_parse_etc_hosts(&path, aCallback);

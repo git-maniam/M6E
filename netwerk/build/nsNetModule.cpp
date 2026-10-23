@@ -25,9 +25,7 @@
 
 #include "nsNetCID.h"
 
-#if defined(XP_MACOSX) || defined(XP_WIN) || defined(XP_LINUX)
 #  define BUILD_NETWORK_INFO_SERVICE 1
-#endif
 
 using namespace mozilla;
 

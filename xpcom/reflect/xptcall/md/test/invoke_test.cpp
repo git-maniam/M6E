@@ -8,13 +8,8 @@ typedef unsigned nsresult;
 typedef unsigned uint32_t;
 typedef unsigned nsXPCVariant;
 
-#if defined(WIN32)
-#  define NS_IMETHOD virtual nsresult __stdcall
-#  define NS_IMETHODIMP nsresult __stdcall
-#else
 #  define NS_IMETHOD virtual nsresult
 #  define NS_IMETHODIMP nsresult
-#endif
 
 class base {
  public:
@@ -70,44 +65,6 @@ NS_IMETHODIMP bar::callme3(int i, int j) {
 void docall(foo* f, int i, int j) { f->callme1(i, j); }
 
 /***************************************************************************/
-#if defined(WIN32)
-
-static uint32_t __stdcall invoke_count_words(uint32_t paramCount,
-                                             nsXPCVariant* s) {
-  return paramCount;
-}
-
-static void __stdcall invoke_copy_to_stack(uint32_t* d, uint32_t paramCount,
-                                           nsXPCVariant* s) {
-  for (uint32_t i = 0; i < paramCount; i++, d++, s++) {
-    *((uint32_t*)d) = *((uint32_t*)s);
-  }
-}
-
-static nsresult __stdcall DoInvoke(void* that, uint32_t index,
-                                   uint32_t paramCount, nsXPCVariant* params) {
-  __asm {
-        push    params
-        push    paramCount
-        call    invoke_count_words  // stdcall, result in eax
-        shl     eax,2  // *= 4
-        sub     esp,eax  // make space for params
-        mov     edx,esp
-        push    params
-        push    paramCount
-        push    edx
-        call    invoke_copy_to_stack  // stdcall
-        mov     ecx,that  // instance in ecx
-        push    ecx  // push this
-        mov     edx,[ecx]  // vtable in edx
-        mov     eax,index
-        shl     eax,2  // *= 4
-        add     edx,eax
-        call    [edx]  // stdcall, i.e. callee cleans up stack.
-  }
-}
-
-#else
 /***************************************************************************/
 // just Linux_x86 now. Add other later...
 
@@ -164,7 +121,6 @@ static nsresult DoInvoke(void* that, uint32_t index, uint32_t paramCount,
   return result;
 }
 
-#endif
 /***************************************************************************/
 
 int main() {

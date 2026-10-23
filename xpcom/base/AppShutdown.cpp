@@ -3,13 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ShutdownPhase.h"
-#ifdef XP_WIN
-#  include <windows.h>
-
-#  include "mozilla/PreXULSkeletonUI.h"
-#else
 #  include <unistd.h>
-#endif
 
 #include "AppShutdown.h"
 #include "ProfilerControl.h"
@@ -32,9 +26,7 @@
 #include "nsThreadUtils.h"
 
 // TODO: understand why on Android we cannot include this and if we should
-#ifndef ANDROID
 #  include "nsTerminator.h"
-#endif
 #include "prenv.h"
 
 #ifdef MOZ_BACKGROUNDTASKS
@@ -77,9 +69,7 @@ const char* sPhaseReadableNames[] = {"NotInShutdown",
 static_assert(sizeof(sPhaseReadableNames) / sizeof(sPhaseReadableNames[0]) ==
               (size_t)ShutdownPhase::ShutdownPhase_Length);
 
-#ifndef ANDROID
 static nsTerminator* sTerminator = nullptr;
-#endif
 
 static ShutdownPhase sFastShutdownPhase = ShutdownPhase::NotInShutdown;
 static ShutdownPhase sLateWriteChecksPhase = ShutdownPhase::NotInShutdown;
@@ -92,13 +82,8 @@ static Atomic<bool> sShutdownImpending(false);
 // These environment variable strings are all deliberately copied and leaked
 // due to requirements of PR_SetEnv and similar.
 static char* sSavedXulAppFile = nullptr;
-#ifdef XP_WIN
-static wchar_t* sSavedProfDEnvVar = nullptr;
-static wchar_t* sSavedProfLDEnvVar = nullptr;
-#else
 static char* sSavedProfDEnvVar = nullptr;
 static char* sSavedProfLDEnvVar = nullptr;
-#endif
 
 bool AppShutdown::IsShutdownImpending() { return sShutdownImpending; }
 
@@ -160,43 +145,17 @@ void AppShutdown::MaybeDoRestart() {
       PR_SetEnv(sSavedXulAppFile);
     }
 
-#ifdef XP_WIN
-    if (sSavedProfDEnvVar && !EnvHasValue("XRE_PROFILE_PATH")) {
-      SetEnvironmentVariableW(L"XRE_PROFILE_PATH", sSavedProfDEnvVar);
-    }
-    if (sSavedProfLDEnvVar && !EnvHasValue("XRE_PROFILE_LOCAL_PATH")) {
-      SetEnvironmentVariableW(L"XRE_PROFILE_LOCAL_PATH", sSavedProfLDEnvVar);
-    }
-    (void)NotePreXULSkeletonUIRestarting();
-#else
     if (sSavedProfDEnvVar && !EnvHasValue("XRE_PROFILE_PATH")) {
       PR_SetEnv(sSavedProfDEnvVar);
     }
     if (sSavedProfLDEnvVar && !EnvHasValue("XRE_PROFILE_LOCAL_PATH")) {
       PR_SetEnv(sSavedProfLDEnvVar);
     }
-#endif
 
     LaunchChild(true);
   }
 }
 
-#ifdef XP_WIN
-wchar_t* CopyPathIntoNewWCString(nsIFile* aFile) {
-  wchar_t* result = nullptr;
-  nsAutoString resStr;
-  aFile->GetPath(resStr);
-  if (resStr.Length() > 0) {
-    result = (wchar_t*)malloc((resStr.Length() + 1) * sizeof(wchar_t));
-    if (result) {
-      wcscpy(result, resStr.get());
-      result[resStr.Length()] = 0;
-    }
-  }
-
-  return result;
-}
-#endif
 
 void AppShutdown::Init(AppShutdownMode aMode, int aExitCode,
                        AppShutdownReason aReason) {
@@ -208,9 +167,7 @@ void AppShutdown::Init(AppShutdownMode aMode, int aExitCode,
 
   sExitCode = aExitCode;
 
-#ifndef ANDROID
   sTerminator = new nsTerminator();
-#endif
 
   // Late-write checks needs to find the profile directory, so it has to
   // be initialized before services::Shutdown or (because of
@@ -262,9 +219,7 @@ void AppShutdown::MaybeFastShutdown(ShutdownPhase aPhase) {
 
     DoImmediateExit(sExitCode);
   } else if (aPhase == sLateWriteChecksPhase) {
-#ifdef XP_MACOSX
     OnlyReportDirtyWrites();
-#endif /* XP_MACOSX */
     BeginLateWriteChecks();
   }
 }
@@ -278,10 +233,6 @@ void AppShutdown::OnShutdownConfirmed() {
     NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(profD));
     NS_GetSpecialDirectory(NS_APP_USER_PROFILE_LOCAL_50_DIR,
                            getter_AddRefs(profLD));
-#ifdef XP_WIN
-    sSavedProfDEnvVar = CopyPathIntoNewWCString(profD);
-    sSavedProfLDEnvVar = CopyPathIntoNewWCString(profLD);
-#else
     nsAutoCString profDStr;
     profD->GetNativePath(profDStr);
     sSavedProfDEnvVar =
@@ -290,22 +241,13 @@ void AppShutdown::OnShutdownConfirmed() {
     profLD->GetNativePath(profLDStr);
     sSavedProfLDEnvVar =
         Smprintf("XRE_PROFILE_LOCAL_PATH=%s", profLDStr.get()).release();
-#endif
     MOZ_LSAN_INTENTIONALLY_LEAK_OBJECT(sSavedProfDEnvVar);
     MOZ_LSAN_INTENTIONALLY_LEAK_OBJECT(sSavedProfLDEnvVar);
   }
 }
 
 void AppShutdown::DoImmediateExit(int aExitCode) {
-#ifdef XP_WIN
-  HANDLE process = ::GetCurrentProcess();
-  if (::TerminateProcess(process, aExitCode)) {
-    ::WaitForSingleObject(process, INFINITE);
-  }
-  MOZ_CRASH("TerminateProcess failed.");
-#else
   _exit(aExitCode);
-#endif
 }
 
 bool AppShutdown::IsRestarting() {
@@ -444,11 +386,9 @@ void AppShutdown::AdvanceShutdownPhaseInternal(
   // From now on any IsInOrBeyond checks will find the new phase set.
   sCurrentShutdownPhase = aPhase;
 
-#ifndef ANDROID
   if (sTerminator) {
     sTerminator->AdvancePhase(aPhase);
   }
-#endif
 
   AppShutdown::MaybeFastShutdown(aPhase);
 

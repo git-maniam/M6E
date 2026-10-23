@@ -20,23 +20,7 @@ namespace mozilla::gfx {
 class gfxVarReceiver;
 class MOZ_STACK_CLASS gfxVarsCollectUpdates;
 
-#ifdef MOZ_WIDGET_ANDROID
-#  define GFX_VARS_LIST_ANDROID(_)                               \
-    _(PlatformMediaCodecsSupported, MediaCodecsSupported,        \
-      MediaCodecsSupported())                                    \
-    _(PlatformMediaCodecs10BitSupported, MediaCodecsSupported,   \
-      MediaCodecsSupported())                                    \
-    _(PlatformH264HwDecodeMaxSize, IntSize, IntSize())           \
-    _(PlatformHEVCHwDecodeMaxSize, IntSize, IntSize())           \
-    _(PlatformVP8HwDecodeMaxSize, IntSize, IntSize())            \
-    _(PlatformVP9HwDecodeMaxSize, IntSize, IntSize())            \
-    _(PlatformAV1HwDecodeMaxSize, IntSize, IntSize())            \
-    _(PlatformUnmappedSwDecodeMimeTypes, nsCString, nsCString()) \
-    _(PlatformUnmappedHwDecodeMimeTypes, nsCString, nsCString()) \
-    _(WidevineSupport, DrmSchemeSupport, DrmSchemeSupport::Unknown)
-#else
 #  define GFX_VARS_LIST_ANDROID(_)
-#endif
 
 // Generator for graphics vars.
 #define GFX_VARS_LIST(_)                                           \

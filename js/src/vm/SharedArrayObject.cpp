@@ -209,24 +209,7 @@ void WasmSharedArrayRawBuffer::discard(size_t byteOffset, size_t byteLen) {
   //
   // https://devblogs.microsoft.com/oldnewthing/20170113-00/?p=95185
 
-#ifdef XP_WIN
-  // Discarding the entire region at once causes us to page the entire region
-  // into the working set, only to throw it out again. This can be actually
-  // disastrous when discarding already-discarded memory. To mitigate this, we
-  // discard a chunk of memory at a time - this comes at a small performance
-  // cost from syscalls and potentially less-optimal memsets.
-  size_t numPages = byteLen / wasm::StandardPageSizeBytes;
-  for (size_t i = 0; i < numPages; i++) {
-    AtomicOperations::memsetSafeWhenRacy(
-        addr + (i * wasm::StandardPageSizeBytes), 0,
-        wasm::StandardPageSizeBytes);
-    DebugOnly<bool> result =
-        VirtualUnlock(addr.unwrap() + (i * wasm::StandardPageSizeBytes),
-                      wasm::StandardPageSizeBytes);
-    MOZ_ASSERT(!result);  // this always "fails" when unlocking unlocked
-                          // memory...which is the only case we care about
-  }
-#elif defined(__wasi__)
+#if   defined(__wasi__)
   AtomicOperations::memsetSafeWhenRacy(addr, 0, byteLen);
 #else  // !XP_WIN
   void* data = MozTaggedAnonymousMmap(

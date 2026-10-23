@@ -21,9 +21,7 @@
  * The MOZ_ALWAYS_INLINE_EVEN_DEBUG macro is yet stronger. It tells the
  * compiler to inline even in DEBUG builds. It should be used very rarely.
  */
-#if defined(_MSC_VER)
-#  define MOZ_ALWAYS_INLINE_EVEN_DEBUG __forceinline
-#elif defined(__GNUC__)
+#if   defined(__GNUC__)
 #  define MOZ_ALWAYS_INLINE_EVEN_DEBUG __attribute__((always_inline)) inline
 #else
 #  define MOZ_ALWAYS_INLINE_EVEN_DEBUG inline
@@ -33,24 +31,15 @@
  * as a size of zero, it is not subject to the rule that each object must be
  * addressable and thus use at lease a byte
  */
-#if defined(_MSC_VER)
-// FIXME: should be [[no_unique_address]] for everyone in C++20
-#  define MOZ_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
-#else
 #  define MOZ_NO_UNIQUE_ADDRESS [[no_unique_address]]
-#endif
 
 #if !defined(DEBUG)
 #  define MOZ_ALWAYS_INLINE MOZ_ALWAYS_INLINE_EVEN_DEBUG
-#elif defined(_MSC_VER) && !defined(__cplusplus)
-#  define MOZ_ALWAYS_INLINE __inline
 #else
 #  define MOZ_ALWAYS_INLINE inline
 #endif
 
-#if defined(_MSC_VER)
-#  define MOZ_HAVE_NEVER_INLINE __declspec(noinline)
-#elif defined(__clang__)
+#if   defined(__clang__)
 /*
  * Per Clang documentation, "Note that marketing version numbers should not
  * be used to check for language features, as different vendors use different
@@ -581,15 +570,8 @@
  *     MOZ_POP_DISABLE_NONTRIVIAL_UNION_WARNINGS
  *   };
  */
-#  if defined(_MSC_VER)
-#    define MOZ_PUSH_DISABLE_NONTRIVIAL_UNION_WARNINGS          \
-      __pragma(warning(push)) __pragma(warning(disable : 4582)) \
-          __pragma(warning(disable : 4583))
-#    define MOZ_POP_DISABLE_NONTRIVIAL_UNION_WARNINGS __pragma(warning(pop))
-#  else
 #    define MOZ_PUSH_DISABLE_NONTRIVIAL_UNION_WARNINGS /* nothing */
 #    define MOZ_POP_DISABLE_NONTRIVIAL_UNION_WARNINGS  /* nothing */
-#  endif
 
 /*
  * The following macros are attributes that support the static analysis plugin
@@ -1135,21 +1117,7 @@
  * therefore __MINGW_WPRINTF_FORMAT has been implemented following the same
  * pattern seen in MinGW's source.
  */
-#ifdef __MINGW32__
-#  define MOZ_FORMAT_PRINTF(stringIndex, firstToCheck) \
-    __attribute__((format(__MINGW_PRINTF_FORMAT, stringIndex, firstToCheck)))
-#  ifndef __MINGW_WPRINTF_FORMAT
-#    if defined(__clang__)
-#      define __MINGW_WPRINTF_FORMAT wprintf
-#    elif defined(_UCRT) || __USE_MINGW_ANSI_STDIO
-#      define __MINGW_WPRINTF_FORMAT gnu_wprintf
-#    else
-#      define __MINGW_WPRINTF_FORMAT ms_wprintf
-#    endif
-#  endif
-#  define MOZ_FORMAT_WPRINTF(stringIndex, firstToCheck) \
-    __attribute__((format(__MINGW_WPRINTF_FORMAT, stringIndex, firstToCheck)))
-#elif __GNUC__ || __clang__
+#if   __GNUC__ || __clang__
 #  define MOZ_FORMAT_PRINTF(stringIndex, firstToCheck) \
     __attribute__((format(printf, stringIndex, firstToCheck)))
 #  define MOZ_FORMAT_WPRINTF(stringIndex, firstToCheck) \
@@ -1166,11 +1134,7 @@
  *
  *   virtual ReturnType MOZ_XPCOM_ABI foo();
  */
-#if defined(XP_WIN)
-#  define MOZ_XPCOM_ABI __stdcall
-#else
 #  define MOZ_XPCOM_ABI
-#endif
 
 /**
  * MSVC / clang-cl don't optimize empty bases correctly unless we explicitly
@@ -1179,11 +1143,7 @@
  * https://stackoverflow.com/questions/12701469/why-is-the-empty-base-class-optimization-ebo-is-not-working-in-msvc
  * https://devblogs.microsoft.com/cppblog/optimizing-the-layout-of-empty-base-classes-in-vs2015-update-2-3/
  */
-#if defined(_MSC_VER)
-#  define MOZ_EMPTY_BASES __declspec(empty_bases)
-#else
 #  define MOZ_EMPTY_BASES
-#endif
 
 // XXX: GCC somehow does not allow attributes before lambda return types, while
 // clang requires so. See also bug 1627007.

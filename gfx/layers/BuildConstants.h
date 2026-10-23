@@ -23,32 +23,16 @@ constexpr bool kIsDebug =
 #endif
 
 constexpr bool kIsWindows =
-#ifdef XP_WIN
-    true;
-#else
     false;
-#endif
 
 constexpr bool kIsMacOS =
-#ifdef XP_MACOSX
     true;
-#else
-    false;
-#endif
 
 constexpr bool kIsLinux =
-#ifdef MOZ_WIDGET_GTK
-    true;
-#else
     false;
-#endif
 
 constexpr bool kIsAndroid =
-#ifdef MOZ_WIDGET_ANDROID
-    true;
-#else
     false;
-#endif
 
 constexpr bool kIsDmd =
 #ifdef MOZ_DMD

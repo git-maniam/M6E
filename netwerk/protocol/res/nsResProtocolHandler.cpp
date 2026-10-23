@@ -13,9 +13,6 @@
 #include "nsNetUtil.h"
 #include "nsURLHelper.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#endif
 
 using mozilla::LogLevel;
 using mozilla::dom::ContentParent;
@@ -55,9 +52,6 @@ nsresult nsResProtocolHandler::Init() {
     mAppURI = mGREURI;
   }
 
-#ifdef ANDROID
-  rv = GetApkURI(mApkURI);
-#endif
 
   // XXXbsmedberg Neil wants a resource://pchrome/ for the profile chrome dir...
   // but once I finish multiple chrome registration I'm not sure that it is
@@ -69,17 +63,6 @@ nsresult nsResProtocolHandler::Init() {
   return rv;
 }
 
-#ifdef ANDROID
-nsresult nsResProtocolHandler::GetApkURI(nsACString& aResult) {
-  mozilla::jni::String::LocalRef path =
-      mozilla::java::GeckoAppShell::GetPackageResourcePath();
-  if (!path) {
-    return NS_ERROR_UNEXPECTED;
-  }
-  aResult = "jar:file://"_ns + path->ToCString() + "!"_ns;
-  return NS_OK;
-}
-#endif
 
 //----------------------------------------------------------------------------
 // nsResProtocolHandler::nsISupports
@@ -135,10 +118,6 @@ bool nsResProtocolHandler::ResolveSpecialCases(const nsACString& aHost,
     aResult.Assign(mAppURI);
   } else if (aHost.Equals(kGRE)) {
     aResult.Assign(mGREURI);
-#ifdef ANDROID
-  } else if (aHost.Equals(kAndroid)) {
-    aResult.Assign(mApkURI);
-#endif
   } else {
     return false;
   }
@@ -169,9 +148,6 @@ nsresult nsResProtocolHandler::SetSubstitutionWithFlags(const nsACString& aRoot,
 nsresult nsResProtocolHandler::HasSubstitution(const nsACString& aRoot,
                                                bool* aResult) {
   if (aRoot.EqualsLiteral(kAPP) || aRoot.EqualsLiteral(kGRE)
-#ifdef ANDROID
-      || aRoot.EqualsLiteral(kAndroid)
-#endif
   ) {
     *aResult = true;
     return NS_OK;

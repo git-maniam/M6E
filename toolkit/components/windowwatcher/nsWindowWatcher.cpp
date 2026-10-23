@@ -1357,10 +1357,8 @@ nsresult nsWindowWatcher::OpenWindowInternal(
     // Ideally, loadState should contain that value when passed in.
     if (!loadState->TriggeringPrincipal()) {
       loadState->SetTriggeringPrincipal(subjectPrincipal);
-#ifndef ANDROID
       MOZ_ASSERT(subjectPrincipal,
                  "nsWindowWatcher: triggeringPrincipal required");
-#endif
     }
 
     if (!loadState->GetReferrerInfo() && !aForceNoReferrer) {
@@ -2505,11 +2503,7 @@ bool nsWindowWatcher::IsWindowOpenLocationModified(
   // toolkit/modules/BrowserUtils.sys.mjs for modifier key handling, and
   // URILoadingHelper.openLinkIn in browser/modules/URILoadingHelper.sys.mjs
   // for loadInBackground pref handling.
-#ifdef XP_MACOSX
   bool metaKey = aModifiers.IsMeta();
-#else
-  bool metaKey = aModifiers.IsControl();
-#endif
   bool shiftKey = aModifiers.IsShift();
 
   bool middleMouse = aModifiers.IsMiddleMouse();

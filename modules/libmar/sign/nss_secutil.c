@@ -8,57 +8,17 @@
 #include "nss_secutil.h"
 
 #include "prprf.h"
-#ifdef XP_WIN
-#  include <io.h>
-#else
 #  include <unistd.h>
-#endif
 
-#if defined(_WINDOWS)
-char* quiet_fgets(char* buf, int length, FILE* input) {
-  int c;
-  char* end = buf;
-
-  /* fflush (input); */
-  memset(buf, 0, length);
-
-  if (!isatty(fileno(input))) {
-    return fgets(buf, length, input);
-  }
-
-  while (1) {
-#  if defined(_WIN32_WCE)
-    c = getchar(); /* gets a character from stdin */
-#  else
-    c = getch(); /* getch gets a character from the console */
-#  endif
-    if (c == '\b') {
-      if (end > buf) end--;
-    }
-
-    else if (--length > 0)
-      *end++ = c;
-
-    if (!c || c == '\n' || c == '\r') break;
-  }
-
-  return buf;
-}
-#endif
 
 char* GetPasswordString(void* arg, char* prompt) {
   FILE* input = stdin;
   char phrase[200] = {'\0'};
   int isInputTerminal = isatty(fileno(stdin));
 
-#ifndef _WINDOWS
   if (isInputTerminal) {
     static char consoleName[] = {
-#  ifdef XP_UNIX
         "/dev/tty"
-#  else
-        "CON:"
-#  endif
     };
 
     input = fopen(consoleName, "r");
@@ -67,7 +27,6 @@ char* GetPasswordString(void* arg, char* prompt) {
       return NULL;
     }
   }
-#endif
 
   if (isInputTerminal) {
     fprintf(stdout, "Please enter your password:\n");
@@ -76,11 +35,9 @@ char* GetPasswordString(void* arg, char* prompt) {
 
   if (!QUIET_FGETS(phrase, sizeof(phrase), input)) {
     fprintf(stderr, "QUIET_FGETS failed\n");
-#ifndef _WINDOWS
     if (isInputTerminal) {
       fclose(input);
     }
-#endif
     return NULL;
   }
 
@@ -88,11 +45,9 @@ char* GetPasswordString(void* arg, char* prompt) {
     fprintf(stdout, "\n");
   }
 
-#ifndef _WINDOWS
   if (isInputTerminal) {
     fclose(input);
   }
-#endif
 
   /* Strip off the newlines if present */
   if (phrase[PORT_Strlen(phrase) - 1] == '\n' ||

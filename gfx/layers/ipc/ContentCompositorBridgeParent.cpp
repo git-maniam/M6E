@@ -8,10 +8,6 @@
 
 #include "apz/src/APZCTreeManager.h"  // for APZCTreeManager
 #include "gfxUtils.h"
-#ifdef XP_WIN
-#  include "mozilla/gfx/DeviceManagerDx.h"  // for DeviceManagerDx
-#  include "mozilla/layers/ImageDataSerializer.h"
-#endif
 #include "GeckoProfiler.h"
 #include "mozilla/BaseProfilerMarkerTypes.h"
 #include "mozilla/StaticPrefs_dom.h"
@@ -210,21 +206,6 @@ ContentCompositorBridgeParent::RecvNotifyMemoryPressure() {
 mozilla::ipc::IPCResult ContentCompositorBridgeParent::RecvCheckContentOnlyTDR(
     const uint32_t& sequenceNum, bool* isContentOnlyTDR) {
   *isContentOnlyTDR = false;
-#ifdef XP_WIN
-  gfx::ContentDeviceData compositor;
-
-  gfx::DeviceManagerDx* dm = gfx::DeviceManagerDx::Get();
-
-  // Check that the D3D11 device sequence numbers match.
-  gfx::D3D11DeviceStatus status;
-  dm->ExportDeviceInfo(&status);
-
-  if (sequenceNum == static_cast<uint32_t>(status.sequenceNumber()) &&
-      !dm->HasDeviceReset()) {
-    *isContentOnlyTDR = true;
-  }
-
-#endif
   return IPC_OK();
 };
 
@@ -414,10 +395,6 @@ ContentCompositorBridgeParent::AllocPTextureParent(
       break;
     case SurfaceDescriptor::TSurfaceDescriptorRemoteTexture:
       break;
-#ifdef MOZ_WIDGET_ANDROID
-    case SurfaceDescriptor::TSurfaceTextureDescriptor:
-      break;
-#endif
     default:
       MOZ_ASSERT_UNREACHABLE("Unexpected to be called!");
       return nullptr;

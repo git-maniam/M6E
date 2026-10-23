@@ -15,12 +15,6 @@
 #  error "Wrong architecture. Only x86 and x64 should build this file!"
 #endif
 
-#ifdef _MSC_VER
-#  include <intrin.h>  // for __cpuid
-#  if defined(_M_X64) && (_MSC_FULL_VER >= 160040219)
-#    include <immintrin.h>  // for _xgetbv
-#  endif
-#endif
 
 using namespace js;
 using namespace js::jit;
@@ -243,26 +237,13 @@ static uintptr_t ReadXGETBV() {
   // xgetbv returns its results in %eax and %edx, and for our purposes here,
   // we're only interested in the %eax value.
   asm(".byte 0x0f, 0x01, 0xd0" : "=a"(xcr0EAX) : "c"(0) : "%edx");
-#elif defined(_MSC_VER) && defined(_M_IX86)
-  __asm {
-        xor ecx, ecx
-        _asm _emit 0x0f _asm _emit 0x01 _asm _emit 0xd0
-        mov xcr0EAX, eax
-  }
 #endif
   return xcr0EAX;
 }
 
 static void ReadCPUInfo(int* flagsEax, int* flagsEbx, int* flagsEcx,
                         int* flagsEdx) {
-#ifdef _MSC_VER
-  int cpuinfo[4];
-  __cpuid(cpuinfo, *flagsEax);
-  *flagsEax = cpuinfo[0];
-  *flagsEbx = cpuinfo[1];
-  *flagsEcx = cpuinfo[2];
-  *flagsEdx = cpuinfo[3];
-#elif defined(__GNUC__)
+#if   defined(__GNUC__)
   // Some older 32-bits processors don't fill the ecx register with cpuid, so
   // clobber it before calling cpuid, so that there's no risk of picking
   // random bits indicating SSE3/SSE4 are present. Also make sure that it's

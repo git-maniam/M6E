@@ -11,9 +11,6 @@
 #  include <signal.h>
 #endif
 
-#ifdef MOZ_WAYLAND
-#  include <gdk/gdk.h>
-#endif
 
 int glxtest(bool aWayland, int aOutputFd);
 
@@ -68,12 +65,6 @@ static int RunGlx(int argc, char** argv) {
         outputFd = atoi(optarg);
         break;
       case 'h':
-#ifdef MOZ_WAYLAND
-        // Dummy call to mozgtk to prevent the linker from removing
-        // the dependency with --as-needed.
-        // see toolkit/library/moz.build for details.
-        gdk_display_get_default();
-#endif
         PrintUsage();
         return 0;
       default:

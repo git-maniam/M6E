@@ -12,9 +12,7 @@
 #include "mozilla/ProfilerMarkers.h"
 #include "mozilla/StaticPrefs_media.h"
 #include "mozilla/SyncRunnable.h"  // for LaunchUtilityProcess
-#ifndef ANDROID
 #  include "mozilla/hwinference/HWInferenceParent.h"
-#endif  // !ANDROID
 #include "mozilla/ipc/UtilityProcessParent.h"
 #include "mozilla/ipc/UtilityMediaServiceChild.h"
 #include "mozilla/ipc/UtilityMediaServiceParent.h"
@@ -26,10 +24,6 @@
 #include "nsAppRunner.h"
 #include "nsContentUtils.h"
 
-#ifdef XP_WIN
-#  include "mozilla/dom/WindowsUtilsParent.h"
-#  include "mozilla/widget/filedialog/WinFileDialogParent.h"
-#endif
 
 #include "mozilla/GeckoArgs.h"
 
@@ -370,7 +364,6 @@ UtilityProcessManager::LaunchIndependentProcess(SandboxingKind aSandbox) {
   return keepAlive.forget();
 }
 
-#ifndef ANDROID
 already_AddRefed<UtilityProcessKeepAlive>
 UtilityProcessManager::LaunchIndependentHWInferenceProcess(
     RefPtr<hwinference::HWInferenceParent> aActor) {
@@ -382,7 +375,6 @@ UtilityProcessManager::LaunchIndependentHWInferenceProcess(
   }
   return keepAlive.forget();
 }
-#endif  // !ANDROID
 
 template <typename Actor>
 RefPtr<UtilityProcessManager::LaunchPromise<Ok>>
@@ -508,9 +500,6 @@ UtilityProcessManager::StartProcessForRemoteMediaDecoding(
 #ifdef MOZ_APPLEMEDIA
       && aSandbox != SandboxingKind::UTILITY_AUDIO_DECODING_APPLE_MEDIA
 #endif
-#ifdef XP_WIN
-      && aSandbox != SandboxingKind::UTILITY_AUDIO_DECODING_WMF
-#endif
 #ifdef MOZ_WMF_MEDIA_ENGINE
       && aSandbox != SandboxingKind::MF_MEDIA_ENGINE_CDM
 #endif
@@ -608,93 +597,6 @@ UtilityProcessManager::StartJSOracle(dom::JSOracleParent* aParent) {
           });
 }
 
-#ifdef XP_WIN
-
-// Windows Utils
-
-RefPtr<UtilityProcessManager::WindowsUtilsPromise>
-UtilityProcessManager::GetWindowsUtilsPromise() {
-  TimeStamp windowsUtilsStart = TimeStamp::Now();
-  RefPtr<UtilityProcessManager> self = this;
-  if (!mWindowsUtils) {
-    mWindowsUtils = new dom::WindowsUtilsParent();
-  }
-
-  RefPtr<dom::WindowsUtilsParent> wup = mWindowsUtils;
-  MOZ_ASSERT(wup, "Unable to get a singleton for WindowsUtils");
-  return StartUtility(wup, SandboxingKind::WINDOWS_UTILS)
-      ->Then(
-          GetMainThreadSerialEventTarget(), __func__,
-          [self, wup, windowsUtilsStart]() {
-            if (!wup->CanSend()) {
-              MOZ_ASSERT(false, "WindowsUtilsParent can't send");
-              return WindowsUtilsPromise::CreateAndReject(
-                  LaunchError("GetWindowsUtilsPromise: !wup->CanSend()"),
-                  __func__);
-            }
-            PROFILER_MARKER_TEXT(
-                "UtilityProcessManager::GetWindowsUtilsPromise", OTHER,
-                MarkerOptions(
-                    MarkerTiming::IntervalUntilNowFrom(windowsUtilsStart)),
-                "Resolve"_ns);
-            return WindowsUtilsPromise::CreateAndResolve(wup, __func__);
-          },
-          [self, windowsUtilsStart](LaunchError&& error) {
-            NS_WARNING("StartUtility rejected promise for PWindowsUtils");
-            PROFILER_MARKER_TEXT(
-                "UtilityProcessManager::GetWindowsUtilsPromise", OTHER,
-                MarkerOptions(
-                    MarkerTiming::IntervalUntilNowFrom(windowsUtilsStart)),
-                "Reject"_ns);
-            return WindowsUtilsPromise::CreateAndReject(std::move(error),
-                                                        __func__);
-          });
-}
-
-void UtilityProcessManager::ReleaseWindowsUtils() { mWindowsUtils = nullptr; }
-
-RefPtr<UtilityProcessManager::WinFileDialogPromise>
-UtilityProcessManager::CreateWinFileDialogActor() {
-  using RetPromise = WinFileDialogPromise;
-  TimeStamp startTime = TimeStamp::Now();
-  auto wfdp = MakeRefPtr<widget::filedialog::WinFileDialogParent>();
-
-  return StartUtility(wfdp, SandboxingKind::WINDOWS_FILE_DIALOG)
-      ->Then(
-          GetMainThreadSerialEventTarget(), __PRETTY_FUNCTION__,
-          [wfdp, startTime]() mutable {
-            LOGD("CreateWinFileDialogAsync() resolve: wfdp = [%p]", wfdp.get());
-            if (!wfdp->CanSend()) {
-              MOZ_ASSERT(false, "WinFileDialogParent can't send");
-              return RetPromise::CreateAndReject(
-                  LaunchError("CreateWinFileDialogActor: !wfdp->CanSend()"),
-                  __PRETTY_FUNCTION__);
-            }
-            PROFILER_MARKER_TEXT(
-                "UtilityProcessManager::CreateWinFileDialogAsync", OTHER,
-                MarkerOptions(MarkerTiming::IntervalUntilNowFrom(startTime)),
-                "Resolve"_ns);
-
-            return RetPromise::CreateAndResolve(
-                widget::filedialog::ProcessProxy(std::move(wfdp)),
-                __PRETTY_FUNCTION__);
-          },
-          [self = RefPtr(this), startTime](LaunchError&& error) {
-            LOGD("CreateWinFileDialogAsync() reject");
-            if (!self->IsShutdown()) {
-              MOZ_ASSERT_UNREACHABLE("failure when starting file-dialog actor");
-            }
-            PROFILER_MARKER_TEXT(
-                "UtilityProcessManager::CreateWinFileDialogAsync", OTHER,
-                MarkerOptions(MarkerTiming::IntervalUntilNowFrom(startTime)),
-                "Reject"_ns);
-
-            return RetPromise::CreateAndReject(std::move(error),
-                                               __PRETTY_FUNCTION__);
-          });
-}
-
-#endif  // XP_WIN
 
 #if defined(NIGHTLY_BUILD) && !defined(MOZ_NO_SMART_CARDS)
 RefPtr<UtilityProcessManager::PKCS11ModulePromise>

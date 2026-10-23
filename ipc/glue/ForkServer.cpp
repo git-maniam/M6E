@@ -23,14 +23,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxLaunch.h"
-#endif
 
-#if defined(XP_OPENBSD)
-#  include "BinaryPath.h"
-#  include <err.h>
-#endif
 
 #include <algorithm>
 
@@ -76,13 +69,6 @@ ForkServer::ForkServer(int* aArgc, char*** aArgv) : mArgc(aArgc), mArgv(aArgv) {
  */
 static void ForkServerPreload(int& aArgc, char** aArgv) {
   Omnijar::ChildProcessInit(aArgc, aArgv);
-#if defined(XP_OPENBSD)
-  char binaryPath[MAXPATHLEN];
-  nsresult rv = mozilla::BinaryPath::Get(binaryPath);
-  if (NS_FAILED(rv)) {
-    errx(1, "failed to cache binary path ?");
-  }
-#endif
 }
 
 /**
@@ -133,12 +119,6 @@ static bool ParseForkNewSubprocess(IPC::Message& aMsg,
   MOZ_ASSERT(aMsg.type() == Msg_ForkNewSubprocess__ID);
   IPC::MessageReader reader(aMsg);
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  ReadParamInfallible(&reader, &aOptions->fork_flags,
-                      "Error deserializing 'int'");
-  ReadParamInfallible(&reader, &aOptions->sandbox_chroot_server,
-                      "Error deserializing 'UniqueFileHandle'");
-#endif
   ReadParamInfallible(&reader, aExecFd,
                       "Error deserializing 'UniqueFileHandle'");
   reader.EndRead();
@@ -249,16 +229,9 @@ bool ForkServer::HandleForkNewSubprocess(UniquePtr<IPC::Message> aMessage) {
              "ForkServer before fork()/clone() should have a single arena.");
 #endif
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  mozilla::SandboxLaunch launcher;
-  if (!launcher.Prepare(&options)) {
-    MOZ_CRASH("SandboxLaunch::Prepare failed");
-  }
-#else
   struct {
     pid_t Fork() { return fork(); }
   } launcher;
-#endif
 
   // Avoid any contents of buffered stdout/stderr being sent by forked
   // children.

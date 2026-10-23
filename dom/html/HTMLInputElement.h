@@ -135,9 +135,6 @@ class HTMLInputElement final : public TextControlElement,
   using nsGenericHTMLElement::Focus;
 
   // nsINode
-#if !defined(ANDROID) && !defined(XP_MACOSX)
-  bool IsNodeApzAwareInternal() const override;
-#endif
 
   // Element
   bool IsInteractiveHTMLContent() const override;

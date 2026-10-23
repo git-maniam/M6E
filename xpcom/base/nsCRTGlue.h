@@ -127,30 +127,16 @@ void NS_MakeRandomString(char* aBuf, int32_t aBufLen);
 #define LFSTR "\012"
 #define CRLF "\015\012" /* A CR LF equivalent string */
 
-#if defined(ANDROID)
-// On mobile devices, the file system may be very limited in what it
-// considers valid characters. To avoid errors, sanitize conservatively.
-#  define OS_FILE_ILLEGAL_CHARACTERS "/:*?\"<>|;,+=[]"
-#else
 // Otherwise, we use the most restrictive filesystem as our default set of
 // illegal filename characters. This is currently Windows.
 #  define OS_FILE_ILLEGAL_CHARACTERS "/:*?\"<>|"
-#endif
 
 // We also provide a list of all known file path separators for all filesystems.
 // This can be used in replacement of FILE_PATH_SEPARATOR when you need to
 // identify or replace all known path separators.
 #define KNOWN_PATH_SEPARATORS "\\/"
 
-#if defined(XP_MACOSX)
 #  define FILE_PATH_SEPARATOR "/"
-#elif defined(XP_WIN)
-#  define FILE_PATH_SEPARATOR "\\"
-#elif defined(XP_UNIX)
-#  define FILE_PATH_SEPARATOR "/"
-#else
-#  error need_to_define_your_file_path_separator_and_maybe_illegal_characters
-#endif
 
 // Not all these control characters are illegal in all OSs, but we don't really
 // want them appearing in filenames

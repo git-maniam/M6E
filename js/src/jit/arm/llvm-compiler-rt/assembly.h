@@ -22,13 +22,8 @@
 #  define SEPARATOR ;
 #endif
 
-#if defined(__APPLE__)
 #  define HIDDEN_DIRECTIVE .private_extern
 #  define LOCAL_LABEL(name) L_##name
-#else
-#  define HIDDEN_DIRECTIVE .hidden
-#  define LOCAL_LABEL(name) .L_##name
-#endif
 
 #define GLUE2(a, b) a##b
 #define GLUE(a, b) GLUE2(a, b)

@@ -11,11 +11,6 @@
 #include "nsString.h"
 #include "prenv.h"
 
-#if defined(XP_WIN)
-#  include <d3d11.h>
-
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#endif  // defined(XP_WIN)
 
 #include <numbers>
 
@@ -104,14 +99,9 @@ bool LoadOSVRRuntime() {
   static PRLibrary* osvrClientKitLib = nullptr;
   // this looks up the path in the about:config setting, from greprefs.js or
   // modules\libpref\init\all.js we need all the libs to be valid
-#ifdef XP_WIN
-  constexpr static auto* pfnGetPathStringPref = mozilla::Preferences::GetString;
-  nsAutoString osvrUtilPath, osvrCommonPath, osvrClientPath, osvrClientKitPath;
-#else
   constexpr static auto* pfnGetPathStringPref =
       mozilla::Preferences::GetCString;
   nsAutoCString osvrUtilPath, osvrCommonPath, osvrClientPath, osvrClientKitPath;
-#endif
   if (NS_FAILED(pfnGetPathStringPref("gfx.vr.osvr.utilLibPath", osvrUtilPath,
                                      PrefValueKind::User)) ||
       NS_FAILED(pfnGetPathStringPref("gfx.vr.osvr.commonLibPath",
@@ -487,21 +477,12 @@ void OSVRSession::StopPresentation() {
   // TODO Implement
 }
 
-#if defined(XP_WIN)
-bool OSVRSession::SubmitFrame(
-    const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
-    ID3D11Texture2D* aTexture) {
-  return false;
-  // TODO Implement
-}
-#elif defined(XP_MACOSX)
 bool OSVRSession::SubmitFrame(
     const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
     const VRLayerTextureHandle& aTexture) {
   return false;
   // TODO Implement
 }
-#endif
 
 void OSVRSession::VibrateHaptic(uint32_t aControllerIdx, uint32_t aHapticIndex,
                                 float aIntensity, float aDuration) {}

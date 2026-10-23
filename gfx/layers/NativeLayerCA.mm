@@ -4,11 +4,9 @@
 
 #include "mozilla/layers/NativeLayerCA.h"
 
-#ifdef XP_MACOSX
 #  import <AppKit/NSAnimationContext.h>
 #  import <AppKit/NSColor.h>
 #  import <OpenGL/gl.h>
-#endif
 #import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
 
@@ -19,11 +17,7 @@
 #include "GLBlitHelper.h"
 #include "gfxPlatform.h"
 #include "gfxUtils.h"
-#ifdef XP_MACOSX
 #  include "GLContextCGL.h"
-#else
-#  include "GLContextEAGL.h"
-#endif
 #include "GLContextProvider.h"
 #include "MozFramebuffer.h"
 #include "ScopedGLHelpers.h"
@@ -49,9 +43,7 @@ using gfx::IntSize;
 using gfx::Matrix4x4;
 using gfx::SurfaceFormat;
 using gl::GLContext;
-#ifdef XP_MACOSX
 using gl::GLContextCGL;
-#endif
 
 static void EmitTelemetryForVideoLowPower(VideoLowPowerType aVideoLowPower) {
   switch (aVideoLowPower) {
@@ -125,22 +117,14 @@ static void EmitTelemetryForVideoLowPower(VideoLowPowerType aVideoLowPower) {
 // protection, see bug 1585523.
 struct MOZ_STACK_CLASS AutoCATransaction final {
   AutoCATransaction() {
-#ifdef XP_MACOSX
     [NSAnimationContext beginGrouping];
-#else
-    [CATransaction begin];
-#endif
     // By default, mutating a CALayer property triggers an animation which
     // smoothly transitions the property to the new value. We don't need these
     // animations, and this call turns them off:
     [CATransaction setDisableActions:YES];
   }
   ~AutoCATransaction() {
-#ifdef XP_MACOSX
     [NSAnimationContext endGrouping];
-#else
-    [CATransaction commit];
-#endif
   }
 };
 
@@ -329,7 +313,6 @@ bool NativeLayerRootCA::CommitToScreen() {
 }
 
 UniquePtr<NativeLayerRootSnapshotter> NativeLayerRootCA::CreateSnapshotter() {
-#ifdef XP_MACOSX
   MutexAutoLock lock(mMutex);
   MOZ_RELEASE_ASSERT(!mWeakSnapshotter,
                      "No NativeLayerRootSnapshotter for this NativeLayerRoot "
@@ -341,9 +324,6 @@ UniquePtr<NativeLayerRootSnapshotter> NativeLayerRootCA::CreateSnapshotter() {
     mWeakSnapshotter = cr.get();
   }
   return cr;
-#else
-  return nullptr;
-#endif
 }
 
 void NativeLayerRootCA::OnNativeLayerRootSnapshotterDestroyed(
@@ -442,7 +422,6 @@ NativeLayerRootCA::SnapshotterDelegate::SnapshotterDelegate(
     : mLayerRoot(aLayerRoot) {}
 NativeLayerRootCA::SnapshotterDelegate::~SnapshotterDelegate() = default;
 
-#ifdef XP_MACOSX
 /* static */ UniquePtr<NativeLayerRootSnapshotterCA>
 NativeLayerRootSnapshotterCA::Create(
     UniquePtr<SnapshotterCADelegate>&& aDelegate) {
@@ -468,7 +447,6 @@ NativeLayerRootSnapshotterCA::Create(
   return UniquePtr<NativeLayerRootSnapshotterCA>(
       new NativeLayerRootSnapshotterCA(std::move(aDelegate), std::move(gl)));
 }
-#endif
 
 void NativeLayerRootCA::DumpLayerTreeToFile(const char* aPath,
                                             const MutexAutoLock& aProofOfLock) {
@@ -628,7 +606,6 @@ VideoLowPowerType NativeLayerRootCA::CheckVideoLowPower(
   return VideoLowPowerType::LowPower;
 }
 
-#ifdef XP_MACOSX
 NativeLayerRootSnapshotterCA::NativeLayerRootSnapshotterCA(
     UniquePtr<SnapshotterCADelegate>&& aDelegate, RefPtr<GLContext>&& aGL)
     : mDelegate(std::move(aDelegate)), mGL(aGL) {}
@@ -793,7 +770,6 @@ NativeLayerRootSnapshotterCA::CreateAsyncReadbackBuffer(const IntSize& aSize) {
   return MakeAndAddRef<AsyncReadbackBufferNLRS>(mGL, aSize, bufferHandle,
                                                 /*bool aYFlip*/ true);
 }
-#endif
 
 NativeLayerCA::NativeLayerCA(const IntSize& aSize, bool aIsOpaque,
                              SurfacePoolHandleCA* aSurfacePoolHandle)
@@ -1260,10 +1236,8 @@ static NSString* NSStringForOSType(OSType type) {
 
   // List the buffer first, because it's likely the source of aSurfaceRef.
   if (aBuffer) {
-#ifdef XP_MACOSX
     CGColorSpaceRef colorSpace = CVImageBufferGetColorSpace(aBuffer);
     NSLog(@"ColorSpace is %@.\n", colorSpace);
-#endif
 
     if (@available(macOS 12.0, *)) {
       CFDictionaryRef bufferAttachments =
@@ -1683,16 +1657,12 @@ bool NativeLayerCARepresentation::EnqueueSurface(IOSurfaceRef aSurfaceRef,
   // property exactly once, at time of layer creation, but correct
   // HDR display seems to require that it is set before every call to
   // enqueueSampleBuffer.
-#ifdef XP_MACOSX
   if (@available(macOS 26.0, *)) {
     videoLayer.preferredDynamicRange =
         aIsHDR ? CADynamicRangeHigh : CADynamicRangeStandard;
   } else if (@available(macOS 14.0, *)) {
     videoLayer.wantsExtendedDynamicRangeContent = aIsHDR;
   }
-#else
-  (void)aIsHDR;
-#endif
 
 #ifdef NIGHTLY_BUILD
   if (mLogNextVideoSurface &&

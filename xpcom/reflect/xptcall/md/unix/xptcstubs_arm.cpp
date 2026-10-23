@@ -6,9 +6,6 @@
 
 #include "xptcprivate.h"
 
-#if !defined(__arm__) && !(defined(LINUX) || defined(ANDROID) || defined(XP_DARWIN))
-#error "This code is for Linux/iOS ARM only. Please check if it works for you, too.\nDepends strongly on gcc behaviour."
-#endif
 
 #ifdef __ARM_EABI__
 #define DOUBLEWORD_ALIGN(p) ((uint32_t *)((((uint32_t)(p)) + 7) & 0xfffffff8))
@@ -17,15 +14,9 @@
 #endif
 
 // Apple's iOS toolchain is lame.
-#ifdef __APPLE__
 #define GNU(str)
 #define APPLE(str) str
 #define UNDERSCORE "__"
-#else
-#define GNU(str) str
-#define APPLE(str)
-#define UNDERSCORE "_"
-#endif
 
 #ifdef __thumb__
 #define THUMB_FUNC ".thumb_func\n"

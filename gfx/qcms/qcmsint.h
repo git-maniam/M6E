@@ -9,11 +9,7 @@
 extern "C" {
 #endif
 
-#ifdef _MSC_VER
-#define ALIGN __declspec(align(16))
-#else
 #define ALIGN __attribute__(( aligned (16) ))
-#endif
 
 struct _qcms_transform;
 

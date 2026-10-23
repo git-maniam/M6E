@@ -138,19 +138,10 @@ static constexpr uint32_t kVideoDroppedRatio = 1;
 // Fingerprinting protections that are enabled by default. This can be
 // overridden using the privacy.fingerprintingProtection.overrides pref.
 // NOLINTBEGIN(bugprone-macro-parentheses)
-#if defined(MOZ_WIDGET_ANDROID)
-#  define ANDROID_DEFAULT(name) RFPTarget::name,
-#  define DESKTOP_DEFAULT(name)
-#else
 #  define ANDROID_DEFAULT(name)
 #  define DESKTOP_DEFAULT(name) RFPTarget::name,
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID) && !defined(NIGHTLY_BUILD)
-constinit
-#else
 MOZ_RUNINIT
-#endif
     const RFPTargetSet kDefaultFingerprintingProtectionsBase = {
 #include "RFPTargetsDefaultBaseline.inc"
 };
@@ -1036,15 +1027,7 @@ void nsRFPService::GetSpoofedUserAgent(nsACString& userAgent,
     userAgent.AppendLiteral(SPOOFED_UA_OS);
   }
   userAgent.AppendLiteral("; rv:" MOZILLA_UAVERSION ") Gecko/");
-#if defined(ANDROID)
-  if (aAndroidDesktopMode) {
-    userAgent.AppendLiteral(LEGACY_UA_GECKO_TRAIL);
-  } else {
-    userAgent.AppendLiteral(MOZILLA_UAVERSION);
-  }
-#else
   userAgent.AppendLiteral(LEGACY_UA_GECKO_TRAIL);
-#endif
   userAgent.AppendLiteral(" Firefox/" MOZILLA_UAVERSION);
 
   MOZ_ASSERT(userAgent.Length() <= preallocatedLength);
@@ -1807,11 +1790,7 @@ void nsRFPService::PotentiallyDumpImage(nsIPrincipal* aPrincipal,
                    aWidth, aHeight, calls);
 
     const char* logEnv = PR_GetEnv("MOZ_LOG_FILE");
-#ifdef XP_WIN
-    const char sep = '\\';
-#else
     const char sep = '/';
-#endif
     const char* dirEnd = nullptr;
     if (logEnv) {
       for (const char* it = logEnv; *it; ++it) {
@@ -3124,11 +3103,7 @@ void nsRFPService::GetMediaDeviceGroup(nsString& aGroup,
 uint16_t nsRFPService::ViewportSizeToAngle(int32_t aWidth, int32_t aHeight) {
   // Note that, if screen is square, we return portrait-primary.
   // That's why we use > on non-android and >= on Android.
-#ifdef MOZ_WIDGET_ANDROID
-  bool neutral = aHeight >= aWidth;
-#else
   bool neutral = aWidth > aHeight;
-#endif
   if (neutral) {
     return 0;
   }
@@ -3146,11 +3121,7 @@ dom::OrientationType nsRFPService::ViewportSizeToOrientationType(
 
 /* static */
 dom::OrientationType nsRFPService::GetDefaultOrientationType() {
-#ifdef MOZ_WIDGET_ANDROID
-  return dom::OrientationType::Portrait_primary;
-#else
   return dom::OrientationType::Landscape_primary;
-#endif
 }
 
 /* static */
@@ -3211,23 +3182,12 @@ CSSIntRect nsRFPService::GetSpoofedScreenAvailSize(const nsRect& aRect,
                                                    float aScale,
                                                    bool aIsFullscreen) {
   int spoofedHeightOffset = aIsFullscreen ? 0 :
-#ifdef XP_WIN
-                                          48;
-#elif defined(XP_MACOSX)
                                           76;
-#else
-                                          // Linux, Android and other platforms
-                                0;
-#endif
   spoofedHeightOffset =
       NS_lround(float(spoofedHeightOffset) / aScale * AppUnitsPerCSSPixel());
 
   int spoofedHeightStart = aIsFullscreen ? 0 :
-#ifdef XP_MACOSX
                                          25;
-#else
-                                         0;
-#endif
   spoofedHeightStart =
       NS_lround(float(spoofedHeightStart) / aScale * AppUnitsPerCSSPixel());
 
@@ -3386,17 +3346,7 @@ void nsRFPService::CalculateFontLocaleAllowlist() {
   static const FontInclusionRule fontInclusionRules[] = {
 #define FontInclusionByLocaleRules
 
-#ifdef XP_WIN
-#  include "../../gfx/thebes/StandardFonts-win10.inc"
-#elif defined(XP_MACOSX)
 #  include "../../gfx/thebes/StandardFonts-macos.inc"
-#elif defined(XP_LINUX)
-#  if defined(ANDROID)
-#    include "../../gfx/thebes/StandardFonts-android.inc"
-#  else
-#    include "../../gfx/thebes/StandardFonts-linux.inc"
-#  endif
-#endif
 
 #undef FontInclusionByLocaleRules
   };

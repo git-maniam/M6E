@@ -9,34 +9,6 @@
 #include "nsIWebAuthnAttObj.h"
 #include "nsString.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-
-#  include "mozilla/jni/Conversions.h"
-
-namespace mozilla::jni {
-
-template <>
-RefPtr<dom::WebAuthnRegisterResult> Java2Native(
-    mozilla::jni::Object::Param aData, JNIEnv* aEnv) {
-  MOZ_ASSERT(aData.IsInstanceOf<java::WebAuthnUtils::MakeCredentialResponse>());
-  java::WebAuthnUtils::MakeCredentialResponse::LocalRef response(aData);
-  RefPtr<dom::WebAuthnRegisterResult> result =
-      new dom::WebAuthnRegisterResult(response);
-  return result;
-}
-
-template <>
-RefPtr<dom::WebAuthnSignResult> Java2Native(mozilla::jni::Object::Param aData,
-                                            JNIEnv* aEnv) {
-  MOZ_ASSERT(aData.IsInstanceOf<java::WebAuthnUtils::GetAssertionResponse>());
-  java::WebAuthnUtils::GetAssertionResponse::LocalRef response(aData);
-  RefPtr<dom::WebAuthnSignResult> result =
-      new dom::WebAuthnSignResult(response);
-  return result;
-}
-
-}  // namespace mozilla::jni
-#endif
 
 namespace mozilla::dom {
 

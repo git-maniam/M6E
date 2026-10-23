@@ -8,17 +8,7 @@
 #include "gtest/gtest.h"
 
 #define StandardFonts
-#ifdef XP_WIN
-#  include "../thebes/StandardFonts-win10.inc"
-#elif defined(XP_MACOSX)
 #  include "../thebes/StandardFonts-macos.inc"
-#elif defined(XP_LINUX)
-#  if defined(ANDROID)
-#    include "../thebes/StandardFonts-android.inc"
-#  else
-#    include "../thebes/StandardFonts-linux.inc"
-#  endif
-#endif
 #undef StandardFonts
 
 // Helper to collect FONT_RULE font names
@@ -28,17 +18,7 @@ std::vector<std::string> GetFontRuleNames() {
 #define FONT_RULE(fontName, ...) fontRuleNames.push_back(fontName);
 #define FontInclusionByLocaleRules
 
-#ifdef XP_WIN
-#  include "../thebes/StandardFonts-win10.inc"
-#elif defined(XP_MACOSX)
 #  include "../thebes/StandardFonts-macos.inc"
-#elif defined(XP_LINUX)
-#  if defined(ANDROID)
-#    include "../thebes/StandardFonts-android.inc"
-#  else
-#    include "../thebes/StandardFonts-linux.inc"
-#  endif
-#endif
 
 #undef FontInclusionByLocaleRules
 #undef FONT_RULE

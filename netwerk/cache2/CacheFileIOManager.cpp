@@ -44,15 +44,7 @@
 #endif
 
 // include files for ftruncate (or equivalent)
-#if defined(XP_UNIX)
 #  include <unistd.h>
-#elif defined(XP_WIN)
-#  include <windows.h>
-#  undef CreateFile
-#  undef CREATE_NEW
-#else
-// XXX add necessary include file for ftruncate (or equivalent)
-#endif
 
 namespace mozilla::net {
 
@@ -61,11 +53,7 @@ namespace mozilla::net {
 #define kRemoveTrashStartDelay 60000    // in milliseconds
 #define kSmartSizeUpdateInterval 60000  // in milliseconds
 
-#ifdef ANDROID
-const uint32_t kMaxCacheSizeKB = 512 * 1024;  // 512 MB
-#else
 const uint32_t kMaxCacheSizeKB = 1024 * 1024;  // 1 GB
-#endif
 const uint32_t kMaxClearOnShutdownCacheSizeKB = 150 * 1024;  // 150 MB
 const auto kPurgeExtension = ".purge.bg_rm"_ns;
 
@@ -1357,36 +1345,6 @@ nsresult CacheFileIOManager::OnProfile() {
 
   CacheObserver::ParentDirOverride(getter_AddRefs(directory));
 
-#if defined(MOZ_WIDGET_ANDROID)
-  nsCOMPtr<nsIFile> profilelessDirectory;
-  char* cachePath = getenv("CACHE_DIRECTORY");
-  if (!directory && cachePath && *cachePath) {
-    rv = NS_NewNativeLocalFile(nsDependentCString(cachePath),
-                               getter_AddRefs(directory));
-    if (NS_SUCCEEDED(rv)) {
-      // Save this directory as the profileless path.
-      rv = directory->Clone(getter_AddRefs(profilelessDirectory));
-      NS_ENSURE_SUCCESS(rv, rv);
-
-      // Add profile leaf name to the directory name to distinguish
-      // multiple profiles Fennec supports.
-      nsCOMPtr<nsIFile> profD;
-      rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
-                                  getter_AddRefs(profD));
-
-      nsAutoCString leafName;
-      if (NS_SUCCEEDED(rv)) {
-        rv = profD->GetNativeLeafName(leafName);
-      }
-      if (NS_SUCCEEDED(rv)) {
-        rv = directory->AppendNative(leafName);
-      }
-      if (NS_FAILED(rv)) {
-        directory = nullptr;
-      }
-    }
-  }
-#endif
 
   if (!directory) {
     rv = NS_GetSpecialDirectory(NS_APP_CACHE_PARENT_DIR,
@@ -1406,14 +1364,6 @@ nsresult CacheFileIOManager::OnProfile() {
   // All functions return a clone.
   ioMan->mCacheDirectory.swap(directory);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (profilelessDirectory) {
-    rv = profilelessDirectory->Append(u"cache2"_ns);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
-  ioMan->mCacheProfilelessDirectory.swap(profilelessDirectory);
-#endif
 
   if (ioMan->mCacheDirectory) {
     CacheIndex::Init(ioMan->mCacheDirectory);
@@ -2210,24 +2160,10 @@ nsresult CacheFileIOManager::WriteWithoutCallback(CacheFileHandle* aHandle,
 }
 
 static nsresult TruncFile(PRFileDesc* aFD, int64_t aEOF) {
-#if defined(XP_UNIX)
   if (ftruncate(PR_FileDesc2NativeHandle(aFD), aEOF) != 0) {
     NS_ERROR("ftruncate failed");
     return NS_ERROR_FAILURE;
   }
-#elif defined(XP_WIN)
-  int64_t cnt = PR_Seek64(aFD, aEOF, PR_SEEK_SET);
-  if (cnt == -1) {
-    return NS_ERROR_FAILURE;
-  }
-  if (!SetEndOfFile((HANDLE)PR_FileDesc2NativeHandle(aFD))) {
-    NS_ERROR("SetEndOfFile failed");
-    return NS_ERROR_FAILURE;
-  }
-#else
-  MOZ_ASSERT(false, "Not implemented!");
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 
   return NS_OK;
 }
@@ -2711,21 +2647,6 @@ void CacheFileIOManager::GetCacheDirectory(nsIFile** result) {
   ioMan->mCacheDirectory->Clone(result);
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-
-// static
-void CacheFileIOManager::GetProfilelessCacheDirectory(nsIFile** result) {
-  *result = nullptr;
-
-  RefPtr<CacheFileIOManager> ioMan = gInstance;
-  if (!ioMan || !ioMan->mCacheProfilelessDirectory) {
-    return;
-  }
-
-  ioMan->mCacheProfilelessDirectory->Clone(result);
-}
-
-#endif
 
 // static
 nsresult CacheFileIOManager::GetEntryInfo(
@@ -4378,11 +4299,7 @@ nsresult CacheFileIOManager::DispatchPurgeTask(
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString path;
-#  if !defined(XP_WIN)
   rv = profileDir->GetNativePath(path);
-#  else
-  rv = profileDir->GetNativeTarget(path);
-#  endif
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIBackgroundTasksRunner> runner =
@@ -4510,17 +4427,8 @@ static uint32_t SmartCacheSize(const int64_t availKB) {
     avail10MBs = 50;
   }
 
-#ifdef ANDROID
-  // On Android, smaller/older devices may have very little storage and
-  // device owners may be sensitive to storage footprint: Use a smaller
-  // percentage of available space and a smaller minimum.
-
-  // 16% of space up to 500 MB (10 MB min)
-  sz10MBs += std::max<uint32_t>(1, static_cast<uint32_t>(avail10MBs * .16));
-#else
   // 30% of space up to 500 MB (50 MB min)
   sz10MBs += std::max<uint32_t>(5, static_cast<uint32_t>(avail10MBs * .3));
-#endif
 
   return std::min<uint32_t>(maxSize, sz10MBs * 10 * 1024);
 }

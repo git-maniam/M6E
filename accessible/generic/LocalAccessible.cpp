@@ -914,18 +914,6 @@ nsresult LocalAccessible::HandleAccEvent(AccEvent* aEvent) {
                       /*aAppendEventData*/ true);
           }
 
-#if defined(XP_WIN)
-          if (HasOwnContent() && mContent->IsMathMLElement()) {
-            // For any change in a MathML subtree, update the innerHTML cache on
-            // the root math element.
-            for (LocalAccessible* acc = this; acc; acc = acc->LocalParent()) {
-              if (acc->HasOwnContent() &&
-                  acc->mContent->IsMathMLElement(nsGkAtoms::math)) {
-                mDoc->QueueCacheUpdate(acc, CacheDomain::InnerHTML);
-              }
-            }
-          }
-#endif  // defined(XP_WIN)
 
           // reorder events on the application acc aren't necessary to tell the
           // parent about new top level documents.
@@ -1096,24 +1084,12 @@ nsresult LocalAccessible::HandleAccEvent(AccEvent* aEvent) {
       PlatformFocusEvent(target);
       break;
     }
-#if defined(ANDROID)
-    case nsIAccessibleEvent::EVENT_SCROLLING_END:
-    case nsIAccessibleEvent::EVENT_SCROLLING: {
-      AccScrollingEvent* scrollingEvent = downcast_accEvent(aEvent);
-      PlatformScrollingEvent(
-          target, aEvent->GetEventType(), scrollingEvent->ScrollX(),
-          scrollingEvent->ScrollY(), scrollingEvent->MaxScrollX(),
-          scrollingEvent->MaxScrollY());
-      break;
-    }
-#endif  // defined(ANDROID)
     case nsIAccessibleEvent::EVENT_ANNOUNCEMENT: {
       AccAnnouncementEvent* announcementEvent = downcast_accEvent(aEvent);
       PlatformAnnouncementEvent(target, announcementEvent->Announcement(),
                                 announcementEvent->Priority());
       break;
     }
-#if defined(MOZ_WIDGET_COCOA)
     case nsIAccessibleEvent::EVENT_TEXT_SELECTION_CHANGED: {
       AccTextSelChangeEvent* textSelChangeEvent = downcast_accEvent(aEvent);
       AutoTArray<TextRange, 1> ranges;
@@ -1121,7 +1097,6 @@ nsresult LocalAccessible::HandleAccEvent(AccEvent* aEvent) {
       PlatformTextSelectionChangeEvent(target, ranges);
       break;
     }
-#endif  // defined(MOZ_WIDGET_COCOA)
     default:
       PlatformEvent(target, aEvent->GetEventType());
   }
@@ -4455,14 +4430,6 @@ already_AddRefed<AccAttributes> LocalAccessible::BundleFieldsForCache(
     }
   }
 
-#if defined(XP_WIN)
-  if (aCacheDomain & CacheDomain::InnerHTML && HasOwnContent() &&
-      mContent->IsMathMLElement(nsGkAtoms::math)) {
-    nsString innerHTML;
-    mContent->AsElement()->GetInnerHTML(innerHTML, IgnoreErrors());
-    fields->SetAttribute(CacheKey::InnerHTML, std::move(innerHTML));
-  }
-#endif  // defined(XP_WIN)
 
   if (aUpdateType == CacheUpdateType::Initial) {
     // Add fields which never change and thus only need to be included in the

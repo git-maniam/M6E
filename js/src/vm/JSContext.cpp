@@ -15,12 +15,6 @@
 #include <string.h>
 
 #include "vm/JSContext-inl.h"
-#ifdef ANDROID
-#  include <android/log.h>
-#endif  // ANDROID
-#ifdef XP_WIN
-#  include <processthreadsapi.h>
-#endif  // XP_WIN
 
 #include "jsapi.h"  // JS_SetNativeStackQuota
 #include "jstypes.h"

@@ -31,14 +31,7 @@ struct AVCodecParserContext;
 struct PRLibrary;
 struct AVChannelLayout;
 struct AVCodecHWConfig;
-#ifdef MOZ_WIDGET_GTK
-struct AVVAAPIHWConfig;
-struct AVHWFramesConstraints;
-#endif
 struct AVBufferRef;
-#ifdef MOZ_WIDGET_ANDROID
-typedef struct MediaCodecBuffer AVMediaCodecBuffer;
-#endif
 
 namespace mozilla {
 
@@ -66,10 +59,6 @@ struct MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS FFmpegLibWrapper {
   // Reset the wrapper and unlink all attached libraries.
   void Unlink();
 
-#ifdef MOZ_WIDGET_GTK
-  // Check if libva and libva-drm are available and we can use HW decode.
-  bool IsVAAPIAvailable() const;
-#endif
 
   // Helpers for libavcodec/util logging to integrate with MOZ_LOG.
   static int ToLibLogLevel(LogLevel aLevel);
@@ -207,24 +196,7 @@ struct MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS FFmpegLibWrapper {
   AVBufferRef* (*av_buffer_ref)(AVBufferRef* buf);
   void (*av_buffer_unref)(AVBufferRef** buf);
 
-#ifdef MOZ_WIDGET_GTK
-  AVVAAPIHWConfig* (*av_hwdevice_hwconfig_alloc)(AVBufferRef* device_ctx);
-  AVHWFramesConstraints* (*av_hwdevice_get_hwframe_constraints)(
-      AVBufferRef* ref, const void* hwconfig);
-  void (*av_hwframe_constraints_free)(AVHWFramesConstraints** constraints);
-  int (*av_hwframe_transfer_get_formats)(AVBufferRef* hwframe_ctx, int dir,
-                                         int** formats, int flags);
-  int (*av_hwdevice_ctx_create_derived)(AVBufferRef** dst_ctx, int type,
-                                        AVBufferRef* src_ctx, int flags);
-  const char* (*av_hwdevice_get_type_name)(int type);
-  const char* (*avcodec_get_name)(int id);
-  char* (*av_get_pix_fmt_string)(char* buf, int buf_size, int pix_fmt);
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-  int (*av_mediacodec_release_buffer)(AVMediaCodecBuffer*, int);
-  int (*moz_avcodec_mediacodec_is_eos)(AVCodecContext*);
-#endif
 
   // Only ever used with ffvpx
   decltype(::av_tx_init)* av_tx_init;

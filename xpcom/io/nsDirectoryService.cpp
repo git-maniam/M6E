@@ -17,17 +17,11 @@
 #include "nsLocalFile.h"
 #include "nsThreadUtils.h"
 
-#if defined(XP_WIN)
-#  include <shlobj.h>
-#  include <stdlib.h>
-#  include <windows.h>
-#elif defined(XP_UNIX)
 #  include <stdlib.h>
 #  include <sys/param.h>
 #  include <unistd.h>
 
 #  include "prenv.h"
-#endif
 
 #include "BinaryPath.h"
 #include "SpecialSystemDirectory.h"
@@ -47,19 +41,6 @@ nsresult nsDirectoryService::GetCurrentProcessDirectory(nsIFile** aFile) {
   }
 
   if (!mXCurProcD) {
-#if defined(ANDROID)
-    // Some callers relying on this fallback make assumptions that don't
-    // hold on Android for BinaryPath::GetFile, so use GRE_HOME instead.
-    const char* greHome = getenv("GRE_HOME");
-    if (!greHome) {
-      return NS_ERROR_FAILURE;
-    }
-    nsresult rv = NS_NewNativeLocalFile(nsDependentCString(greHome),
-                                        getter_AddRefs(mXCurProcD));
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-#else
     nsCOMPtr<nsIFile> file;
     if (NS_SUCCEEDED(BinaryPath::GetFile(getter_AddRefs(file)))) {
       nsresult rv = file->GetParent(getter_AddRefs(mXCurProcD));
@@ -67,7 +48,6 @@ nsresult nsDirectoryService::GetCurrentProcessDirectory(nsIFile** aFile) {
         return rv;
       }
     }
-#endif
   }
   return mXCurProcD->Clone(aFile);
 }
@@ -342,7 +322,6 @@ nsDirectoryService::GetFile(const char* aProp, bool* aPersistent,
     rv = GetSpecialSystemDirectory(OS_CurrentWorkingDirectory,
                                    getter_AddRefs(localFile));
   }
-#if defined(MOZ_WIDGET_COCOA)
   else if (inAtom == nsGkAtoms::DirectoryService_SystemDirectory) {
     rv = GetSpecialSystemDirectory(Mac_SystemDirectory,
                                    getter_AddRefs(localFile));
@@ -374,60 +353,6 @@ nsDirectoryService::GetFile(const char* aProp, bool* aPersistent,
     rv = GetSpecialSystemDirectory(Mac_DefaultScreenshotDirectory,
                                    getter_AddRefs(localFile));
   }
-#elif defined(XP_WIN)
-  else if (inAtom == nsGkAtoms::DirectoryService_SystemDirectory) {
-    rv = GetSpecialSystemDirectory(Win_SystemDirectory,
-                                   getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_WindowsDirectory) {
-    rv = GetSpecialSystemDirectory(Win_WindowsDirectory,
-                                   getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_WindowsProgramFiles) {
-    rv = GetSpecialSystemDirectory(Win_ProgramFiles, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::Home) {
-    rv =
-        GetSpecialSystemDirectory(Win_HomeDirectory, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_Programs) {
-    rv = GetSpecialSystemDirectory(Win_Programs, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_Favorites) {
-    rv = GetSpecialSystemDirectory(Win_Favorites, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_OS_DesktopDirectory) {
-    rv = GetSpecialSystemDirectory(Win_Desktopdirectory,
-                                   getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_OS_DocumentsDirectory) {
-    rv = GetSpecialSystemDirectory(Win_Documents, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_Appdata) {
-    rv = GetSpecialSystemDirectory(Win_Appdata, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_LocalAppdata) {
-    rv = GetSpecialSystemDirectory(Win_LocalAppdata, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_WinCookiesDirectory) {
-    rv = GetSpecialSystemDirectory(Win_Cookies, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_DefaultDownloadDirectory) {
-    rv = GetSpecialSystemDirectory(Win_Downloads, getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_OneDrivePersonalDirectory) {
-    // OneDrives can be added, removed or even moved at any time.
-    *aPersistent = false;
-    rv = GetSpecialSystemDirectory(Win_OneDrivePersonal,
-                                   getter_AddRefs(localFile));
-  }
-#elif defined(XP_UNIX)
-  else if (inAtom == nsGkAtoms::Home) {
-    rv = GetSpecialSystemDirectory(Unix_HomeDirectory,
-                                   getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_OS_DesktopDirectory) {
-    rv = GetSpecialSystemDirectory(Unix_XDG_Desktop, getter_AddRefs(localFile));
-    *aPersistent = false;
-  } else if (inAtom == nsGkAtoms::DirectoryService_DefaultDownloadDirectory) {
-    rv =
-        GetSpecialSystemDirectory(Unix_XDG_Download, getter_AddRefs(localFile));
-    *aPersistent = false;
-  } else if (inAtom == nsGkAtoms::DirectoryService_OS_SystemConfigDir) {
-    rv = GetSpecialSystemDirectory(Unix_SystemConfigDirectory,
-                                   getter_AddRefs(localFile));
-  } else if (inAtom == nsGkAtoms::DirectoryService_OS_DocumentsDirectory) {
-    rv = GetSpecialSystemDirectory(Unix_XDG_Documents,
-                                   getter_AddRefs(localFile));
-  }
-#endif
 
   if (NS_FAILED(rv)) {
     return rv;
@@ -447,16 +372,5 @@ nsDirectoryService::GetFiles(const char* aProp, nsISimpleEnumerator** aResult) {
   NS_ENSURE_ARG(aResult);
   *aResult = nullptr;
 
-#ifdef XP_WIN
-  if (!strcmp(aProp, NS_WIN_ONEDRIVE_BUSINESS_DIR_LIST)) {
-    nsCOMArray<nsIFile> directories;
-    nsresult rv =
-        GetSpecialSystemDirectoryList(Win_OneDriveBusiness, directories);
-    NS_ENSURE_SUCCESS(rv, rv);
-    rv = NS_NewArrayEnumerator(aResult, directories, NS_GET_IID(nsIFile));
-    NS_ENSURE_SUCCESS(rv, rv);
-    return NS_SUCCESS_AGGREGATE_RESULT;
-  }
-#endif  // XP_WIN
   return NS_ERROR_FAILURE;
 }

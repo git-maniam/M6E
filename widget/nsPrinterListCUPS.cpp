@@ -46,13 +46,11 @@ static void GetDisplayNameForPrinter(const cups_dest_t& aDest,
 // macOS clients expect prettified printer names
 // while GTK clients expect non-prettified names.
 // If you change this, please change NamedPrinter accordingly.
-#ifdef XP_MACOSX
   const char* displayName = CupsShim().cupsGetOption(
       "printer-info", aDest.num_options, aDest.options);
   if (displayName) {
     CopyUTF8toUTF16(mozilla::MakeStringSpan(displayName), aName);
   }
-#endif
 }
 
 NS_IMETHODIMP
@@ -177,7 +175,6 @@ mozilla::Maybe<PrinterInfo> nsPrinterListCUPS::PrinterByName(
   // member of another array of printers.
   cups_dest_t* printer = nullptr;
 
-#ifdef XP_MACOSX
   // On OS X the printer name given to this function is the readable/display
   // name and not the CUPS name, so we iterate over all the printers for now.
   // See bug 1659807 for one approach to improve perf here.
@@ -198,15 +195,6 @@ mozilla::Maybe<PrinterInfo> nsPrinterListCUPS::PrinterByName(
     }
     CupsShim().cupsFreeDests(numPrinters, printers);
   }
-#else
-  // On GTK, we only ever show the CUPS name of printers, so we can use
-  // cupsGetNamedDest directly.
-  {
-    const auto printerName = NS_ConvertUTF16toUTF8(aPrinterName);
-    printer = CupsShim().cupsGetNamedDest(CUPS_HTTP_DEFAULT, printerName.get(),
-                                          nullptr);
-  }
-#endif
 
   if (printer) {
     // Since the printer name had to be passed by-value, we can move the

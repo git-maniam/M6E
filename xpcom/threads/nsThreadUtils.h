@@ -1600,9 +1600,7 @@ class MOZ_STACK_CLASS nsAutoLowPriorityIO {
 
  private:
   bool lowIOPrioritySet;
-#if defined(XP_MACOSX) || (defined(XP_LINUX) && !defined(ANDROID))
   int oldPriority;
-#endif
 };
 
 void NS_SetMainThread();

@@ -10,9 +10,6 @@
 #include "mozilla/dom/DOMTypes.h"
 #include "nsTArray.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 class nsIGlobalObject;
 

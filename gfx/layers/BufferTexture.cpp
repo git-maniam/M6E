@@ -17,9 +17,6 @@
 #include "mozilla/layers/TextureForwarder.h"
 #include "nsThreadUtils.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include "gfxPlatformGtk.h"
-#endif
 
 using mozilla::ipc::IShmemAllocator;
 

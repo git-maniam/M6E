@@ -11,9 +11,6 @@
 #include "nsIObserverService.h"
 #include "nsThreadUtils.h"  // for nsRunnable
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 using namespace mozilla;
 using services::GetObserverService;

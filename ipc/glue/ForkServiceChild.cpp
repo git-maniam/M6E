@@ -137,10 +137,6 @@ Result<Ok, LaunchError> ForkServiceChild::SendForkNewSubprocess(
     MOZ_TRY(CreateSocketPair(execParent, execChild));
 
     IPC::MessageWriter writer(msg);
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-    WriteParam(&writer, aOptions.fork_flags);
-    WriteParam(&writer, std::move(aOptions.sandbox_chroot_server));
-#endif
     WriteParam(&writer, std::move(execChild));
     if (!mTcver->Send(msg)) {
       MOZ_LOG(gForkServiceLog, LogLevel::Verbose,

@@ -32,9 +32,7 @@
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIURI.h"
 #include "mozilla/dom/Document.h"
-#if defined(XP_MACOSX)
 #  include "nsThreadUtils.h"
-#endif
 
 #include "mozilla/Preferences.h"
 #include "mozilla/Try.h"

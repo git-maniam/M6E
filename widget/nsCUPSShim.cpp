@@ -20,11 +20,7 @@ mozilla::LazyLogModule gCupsLinkLog("CupsLink");
 // version of CUPS, but in the future this may become a configure option.
 // We also cannot use NSPR's library suffix support, since that cannot handle
 // version number suffixes.
-#  ifdef XP_MACOSX
 static const char gCUPSLibraryName[] = "libcups.2.dylib";
-#  else
-static const char gCUPSLibraryName[] = "libcups.so.2";
-#  endif
 
 static bool LoadCupsFunc(PRLibrary* aLib, void** aDest, const char* const aName,
                          nsCUPSShim::Optional aOptional) {

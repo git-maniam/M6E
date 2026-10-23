@@ -22,28 +22,9 @@
 #include "mozilla/gtest/WaitFor.h"
 #include "mozilla/media/MediaUtils.h"  // For media::Await
 
-#ifdef MOZ_WIDGET_ANDROID
-// Create/init a H.264 encoder and check if it's SW.
-#  define SKIP_IF_ANDROID_SW()                                                \
-    do {                                                                      \
-      RefPtr<MediaDataEncoder> e = CreateH264Encoder(                         \
-          Usage::Record,                                                      \
-          EncoderConfig::SampleFormat(dom::ImageBitmapFormat::YUV420P),       \
-          kImageSize, ScalabilityMode::None, AsVariant(kH264SpecificAnnexB)); \
-      if (EnsureInit(e)) {                                                    \
-        nsCString dummy;                                                      \
-        bool isSW = !e->IsHardwareAccelerated(dummy);                         \
-        WaitForShutdown(e);                                                   \
-        if (isSW) {                                                           \
-          return;                                                             \
-        }                                                                     \
-      }                                                                       \
-    } while (0)
-#else
 #  define SKIP_IF_ANDROID_SW() \
     do {                       \
     } while (0)
-#endif
 
 #define RUN_IF_SUPPORTED(codecType, test)         \
   do {                                            \
@@ -488,11 +469,6 @@ static void H264EncodesTest(Usage aUsage,
         aUsage, EncoderConfig::SampleFormat(dom::ImageBitmapFormat::YUV420P),
         aFrameSource.GetSize(), ScalabilityMode::None, aSpecific);
     bool initOk = EnsureInit(e);
-#ifdef MOZ_WIDGET_ANDROID
-    if (!initOk && aToleratesInitFailureOnAndroid) {
-      return;
-    }
-#endif
     EXPECT_TRUE(initOk);
     MediaDataEncoder::EncodedData output =
         GET_OR_RETURN_ON_ERROR(Encode(e, 1UL, aFrameSource));
@@ -568,24 +544,14 @@ TEST_F(MediaDataEncoderTest, H264Encodes4KAVCCRealtime) {
 // opposed to the resolution alone) is what breaks encoder init. Compare
 // against H264EncodesLevel5CapMatchedLevelAnnexBRealtime below.
 TEST_F(MediaDataEncoderTest, H264EncodesLevel5CapAnnexBRealtime) {
-#ifdef XP_MACOSX
   GTEST_SKIP() << "Bug 2074146: VideoToolbox drops frames at this size";
-#else
-  H264EncodesTest(Usage::Realtime, AsVariant(kH264SpecificAnnexB),
-                  mDataLevel5Cap, /* aToleratesInitFailureOnAndroid */ true);
-#endif
 }
 
 // Same resolution as above, but with a level that actually matches it. Fails
 // the same way on Android, for the same reason: the declared level was never
 // the limiting factor, the platform's real macroblock budget is.
 TEST_F(MediaDataEncoderTest, H264EncodesLevel5CapMatchedLevelAnnexBRealtime) {
-#ifdef XP_MACOSX
   GTEST_SKIP() << "Bug 2074146: VideoToolbox drops frames at this size";
-#else
-  H264EncodesTest(Usage::Realtime, AsVariant(kH264SpecificLevel5AnnexB),
-                  mDataLevel5Cap, /* aToleratesInitFailureOnAndroid */ true);
-#endif
 }
 
 static void H264EncodeBatchTest(
@@ -655,7 +621,6 @@ TEST_F(MediaDataEncoderTest, H264EncodeBatch4KAVCCRealtime) {
   H264EncodeBatchTest(Usage::Realtime, AsVariant(kH264SpecificAVCC), mData4K);
 }
 
-#if !defined(ANDROID)
 static void H264EncodeAfterDrainTest(
     Usage aUsage, const EncoderConfig::CodecSpecific& aSpecific,
     MediaDataEncoderTest::FrameSource& aFrameSource) {
@@ -751,7 +716,6 @@ TEST_F(MediaDataEncoderTest, H264InterleavedEncodeAndDrainAVCCRealtime) {
   H264InterleavedEncodeAndDrainTest(Usage::Realtime,
                                     AsVariant(kH264SpecificAVCC), mData);
 }
-#endif
 
 TEST_F(MediaDataEncoderTest, H264Duration) {
   RUN_IF_SUPPORTED(CodecType::H264, [this]() {
@@ -789,7 +753,6 @@ TEST_F(MediaDataEncoderTest, H264InvalidSize) {
   });
 }
 
-#if !defined(ANDROID)
 TEST_F(MediaDataEncoderTest, H264AVCC) {
   RUN_IF_SUPPORTED(CodecType::H264, [this]() {
     // Encod frames in avcC format.
@@ -821,9 +784,7 @@ TEST_F(MediaDataEncoderTest, H264AVCC) {
     WaitForShutdown(e);
   });
 }
-#endif
 
-#ifdef XP_MACOSX
 static already_AddRefed<MediaData> CreateNV12Frame(const gfx::IntSize& aSize) {
   layers::PlanarYCbCrData data;
   data.mPictureRect = gfx::IntRect(0, 0, aSize.width, aSize.height);
@@ -882,24 +843,9 @@ TEST_F(MediaDataEncoderTest, H264EncodeNV12Input) {
   });
 }
 
-#endif
 
 // For Android HW encoder only.
-#ifdef MOZ_WIDGET_ANDROID
-TEST_F(MediaDataEncoderTest, AndroidNotSupportedSize) {
-  SKIP_IF_ANDROID_SW();
-  RUN_IF_SUPPORTED(CodecType::H264, []() {
-    RefPtr<MediaDataEncoder> e = CreateH264Encoder(
-        Usage::Realtime,
-        EncoderConfig::SampleFormat(dom::ImageBitmapFormat::YUV420P), {1, 1},
-        ScalabilityMode::None, AsVariant(kH264SpecificAnnexB));
-    EXPECT_NE(e, nullptr);
-    EXPECT_FALSE(EnsureInit(e));
-  });
-}
-#endif
 
-#if !(defined(MOZ_WIDGET_GTK) && defined(__i386__))
 static already_AddRefed<MediaDataEncoder> CreateVP8Encoder(
     Usage aUsage = Usage::Realtime,
     EncoderConfig::SampleFormat aFormat =
@@ -998,7 +944,6 @@ TEST_F(MediaDataEncoderTest, VP8Duration) {
   });
 }
 
-#  if !defined(ANDROID)
 TEST_F(MediaDataEncoderTest, VP8EncodeAfterDrain) {
   RUN_IF_SUPPORTED(CodecType::VP8, [this]() {
     RefPtr<MediaDataEncoder> e = CreateVP8Encoder();
@@ -1099,7 +1044,6 @@ TEST_F(MediaDataEncoderTest, VP8EncodeWithScalabilityModeL1T3) {
     WaitForShutdown(e);
   });
 }
-#  endif
 
 TEST_F(MediaDataEncoderTest, VP9Create) {
   RUN_IF_SUPPORTED(CodecType::VP9, []() {
@@ -1173,7 +1117,6 @@ TEST_F(MediaDataEncoderTest, VP9Duration) {
   });
 }
 
-#  if !defined(ANDROID)
 TEST_F(MediaDataEncoderTest, VP9EncodeAfterDrain) {
   RUN_IF_SUPPORTED(CodecType::VP9, [this]() {
     RefPtr<MediaDataEncoder> e = CreateVP9Encoder();
@@ -1282,8 +1225,6 @@ TEST_F(MediaDataEncoderTest, VP9EncodeWithScalabilityModeL1T3) {
     WaitForShutdown(e);
   });
 }
-#  endif
-#endif
 
 already_AddRefed<MediaDataEncoder> CreateAudioEncoder(
     CodecType aCodec, uint32_t aChannels, uint32_t aSampleRate,

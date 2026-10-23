@@ -15,12 +15,8 @@
  */
 
 #include <stdint.h>
-#ifdef XP_WIN
-#  include <windows.h>
-#else
 #  include <time.h>
 #  include <unistd.h>
-#endif
 
 #include "mozilla/Flow.h"
 
@@ -52,21 +48,13 @@ struct Hasher {
 };
 
 static uint64_t CurrentTime() {
-#ifdef XP_WIN
-  return GetTickCount64();
-#else
   timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-#endif
 }
 
 static uint64_t CurrentPID() {
-#ifdef XP_WIN
-  return GetCurrentProcessId();
-#else
   return getpid();
-#endif
 }
 
 // This is inspired by the perfetto code in TrackRegistry::ComputeProcessUuid

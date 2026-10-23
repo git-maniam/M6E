@@ -258,11 +258,6 @@ class WidgetKeyboardEvent final : public WidgetInputEvent {
     //       Therefore, we need to ignore MODIFIER_ALT flag here only on macOS.
     return mMessage == eKeyPress && mCharCode &&
            !(mModifiers & (
-#ifndef XP_MACOSX
-                              // So, ignore MODIFIER_ALT only on macOS since
-                              // option key is used as AltGraph key on macOS.
-                              MODIFIER_ALT |
-#endif  // #ifndef XP_MAXOSX
                               MODIFIER_CONTROL | MODIFIER_META));
   }
 

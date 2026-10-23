@@ -93,7 +93,6 @@ class APZCOverscrollTester : public APZCBasicTester {
   }
 };
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, FlingIntoOverscroll) {
   // Enable overscrolling.
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
@@ -121,17 +120,13 @@ TEST_F(APZCOverscrollTester, FlingIntoOverscroll) {
   EXPECT_TRUE(reachedOverscroll);
   EXPECT_TRUE(recoveredFromOverscroll);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, OverScrollPanning) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
   TestOverscroll();
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 // Tests that an overscroll animation doesn't trigger an assertion failure
 // in the case where a sample has a velocity of zero.
 TEST_F(APZCOverscrollTester, OverScroll_Bug1152051a) {
@@ -147,9 +142,7 @@ TEST_F(APZCOverscrollTester, OverScroll_Bug1152051a) {
 
   TestOverscroll();
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 // Tests that ending an overscroll animation doesn't leave around state that
 // confuses the next overscroll animation.
 TEST_F(APZCOverscrollTester, OverScroll_Bug1152051b) {
@@ -183,9 +176,7 @@ TEST_F(APZCOverscrollTester, OverScroll_Bug1152051b) {
   ParentLayerPoint expectedScrollOffset(0, GetScrollRange().YMost());
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 // Tests that the page doesn't get stuck in an
 // overscroll animation after a low-velocity pan.
 TEST_F(APZCOverscrollTester, OverScrollAfterLowVelocityPan_Bug1343775) {
@@ -202,9 +193,7 @@ TEST_F(APZCOverscrollTester, OverScrollAfterLowVelocityPan_Bug1343775) {
   // Check that we recovered from overscroll.
   EXPECT_FALSE(apzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, OverScrollAbort) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -229,9 +218,7 @@ TEST_F(APZCOverscrollTester, OverScrollAbort) {
   EXPECT_FALSE(apzc->IsOverscrolled());
   apzc->AssertStateIsReset();
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, OverScrollPanningAbort) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -249,9 +236,7 @@ TEST_F(APZCOverscrollTester, OverScrollPanningAbort) {
   EXPECT_FALSE(apzc->IsOverscrolled());
   apzc->AssertStateIsReset();
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Maybe fails on Android
 TEST_F(APZCOverscrollTester, OverscrollByVerticalPanGestures) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -276,9 +261,7 @@ TEST_F(APZCOverscrollTester, OverscrollByVerticalPanGestures) {
   ParentLayerPoint expectedScrollOffset(0, 0);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, StuckInOverscroll_Bug1767337) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -318,9 +301,7 @@ TEST_F(APZCOverscrollTester, StuckInOverscroll_Bug1767337) {
   ParentLayerPoint expectedScrollOffset(0, 0);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, OverscrollByVerticalAndHorizontalPanGestures) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -355,9 +336,7 @@ TEST_F(APZCOverscrollTester, OverscrollByVerticalAndHorizontalPanGestures) {
   ParentLayerPoint expectedScrollOffset(0, 0);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, OverscrollByPanMomentumGestures) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -406,9 +385,7 @@ TEST_F(APZCOverscrollTester, OverscrollByPanMomentumGestures) {
   ParentLayerPoint expectedScrollOffset(0, GetScrollRange().YMost());
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, IgnoreMomemtumDuringOverscroll) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -488,9 +465,7 @@ TEST_F(APZCOverscrollTester, IgnoreMomemtumDuringOverscroll) {
   ParentLayerPoint expectedScrollOffset(0, GetScrollRange().YMost());
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, VerticalOnlyOverscroll) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -571,9 +546,7 @@ TEST_F(APZCOverscrollTester, VerticalOnlyOverscroll) {
   ParentLayerPoint expectedScrollOffset(0, 0);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, VerticalOnlyOverscrollByPanMomentum) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -655,9 +628,7 @@ TEST_F(APZCOverscrollTester, VerticalOnlyOverscrollByPanMomentum) {
   ParentLayerPoint expectedScrollOffset(0, 0);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, DisallowOverscrollInSingleLineTextControl) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -715,9 +686,7 @@ TEST_F(APZCOverscrollTester, DisallowOverscrollInSingleLineTextControl) {
   // No overscrolling should happen either.
   EXPECT_TRUE(!apzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Maybe fails on Android
 // Tests that horizontal overscroll animation keeps running with vertical
 // pan momentum scrolling.
 TEST_F(APZCOverscrollTester,
@@ -900,9 +869,7 @@ TEST_F(APZCOverscrollTester,
   ParentLayerPoint expectedScrollOffset(0, scrollOffset.y);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Maybe fails on Android
 // Similar to above
 // HorizontalOverscrollAnimationWithVerticalPanMomentumScrolling,
 // but having OverscrollAnimation on both axes initially.
@@ -1100,9 +1067,7 @@ TEST_F(APZCOverscrollTester,
   ParentLayerPoint expectedScrollOffset(0, currentScrollOffset.y);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Maybe fails on Android
 // This is another variant of
 // HorizontalOverscrollAnimationWithVerticalPanMomentumScrolling. In this test,
 // after a horizontal overscroll animation started, upwards pan moments happen,
@@ -1309,9 +1274,7 @@ TEST_F(
   ParentLayerPoint expectedScrollOffset(0, 0);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTester, OverscrollByPanGesturesInterruptedByReflowZoom) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
   SCOPED_GFX_PREF_INT("mousewheel.with_control.action", 3);  // reflow zoom.
@@ -1355,9 +1318,7 @@ TEST_F(APZCOverscrollTester, OverscrollByPanGesturesInterruptedByReflowZoom) {
   // The overscrolling state should have been restored.
   EXPECT_TRUE(!apzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTester, SmoothTransitionFromPanToAnimation) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1413,9 +1374,7 @@ TEST_F(APZCOverscrollTester, SmoothTransitionFromPanToAnimation) {
   EXPECT_LT(apzc->GetVelocityVector().y, 0);
   EXPECT_GT(apzc->GetVelocityVector().y, -0.8);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTester, NoOverscrollForMousewheel) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1438,9 +1397,7 @@ TEST_F(APZCOverscrollTester, NoOverscrollForMousewheel) {
   // Check that we did not actually go into overscroll.
   EXPECT_FALSE(apzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTester, ClickWhileOverscrolled) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1481,9 +1438,7 @@ TEST_F(APZCOverscrollTester, ClickWhileOverscrolled) {
 
   SampleAnimationUntilRecoveredFromOverscroll(ParentLayerPoint(0, 0));
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTester, DynamicallyLoadingContent) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1544,9 +1499,7 @@ TEST_F(APZCOverscrollTester, DynamicallyLoadingContent) {
   EXPECT_EQ(overscrollAmount,
             apzc->GetOverscrollAmount());  // overscroll did not change at all
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTester, SmallAmountOfOverscroll) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1602,82 +1555,8 @@ TEST_F(APZCOverscrollTester, SmallAmountOfOverscroll) {
   ParentLayerPoint expectedScrollOffset(0, scrollOffset.y);
   SampleAnimationUntilRecoveredFromOverscroll(expectedScrollOffset);
 }
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-TEST_F(APZCOverscrollTester, StretchUpDown_Bug1892177) {
-  SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
-  ScrollMetadata metadata;
-  FrameMetrics& metrics = metadata.GetMetrics();
-  metrics.SetCompositionBounds(ParentLayerRect(0, 0, 100, 100));
-  // Composition bounds show all of the horizontal space of that scrollable rect
-  metrics.SetScrollableRect(CSSRect(0, 0, 100, 1000));
-  apzc->SetFrameMetrics(metrics);
-
-  MockFunction<void(std::string checkPointName)> checkScroll;
-  {
-    // Motion of the scrollable screen:
-    // - Up to the vertical y limit of the page.
-    // - Right
-    InSequence s;
-    EXPECT_CALL(checkScroll, Call("Touch Scroll Diagonally Upwards Start"));
-
-    // Even though the touch gesture includes horizontal movement,
-    // do not show a horizontal overscroll effect because the page
-    // is not scrollable horizontally.
-    EXPECT_CALL(*mcc, UpdateOverscrollOffset(_, 0, _, _)).Times(AtLeast(1));
-
-    EXPECT_CALL(checkScroll, Call("Touch Scroll Diagonally Upwards End"));
-  }
-
-  checkScroll.Call("Touch Scroll Diagonally Upwards Start");
-  // Scroll up
-  ScreenIntPoint startPoint(10, 50);
-  ScreenIntPoint endPoint(20, 100);
-  Pan(apzc, startPoint, endPoint, PanOptions::KeepFingerDown);
-
-  checkScroll.Call("Touch Scroll Diagonally Upwards End");
-
-  EXPECT_TRUE(apzc->IsOverscrolled());
-}
-#endif
-
-#ifdef MOZ_WIDGET_ANDROID  // Only applies to WidgetOverscrollEffect
-TEST_F(APZCOverscrollTester, StuckInOverscroll_Bug1786452) {
-  SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
-
-  ScrollMetadata metadata;
-  FrameMetrics& metrics = metadata.GetMetrics();
-  metrics.SetCompositionBounds(ParentLayerRect(0, 0, 100, 100));
-  metrics.SetScrollableRect(CSSRect(0, 0, 100, 1000));
-
-  // Over the course of the test, expect one or more calls to
-  // UpdateOverscrollOffset(), followed by a call to UpdateOverscrollVelocity().
-  // The latter ensures the widget has a chance to end its overscroll effect.
-  InSequence s;
-  EXPECT_CALL(*mcc, UpdateOverscrollOffset(_, _, _, _)).Times(AtLeast(1));
-  EXPECT_CALL(*mcc, UpdateOverscrollVelocity(_, _, _, _)).Times(1);
-
-  // Pan into overscroll, keeping the finger down
-  ScreenIntPoint startPoint(10, 500);
-  ScreenIntPoint endPoint(10, 10);
-  Pan(apzc, startPoint, endPoint, PanOptions::KeepFingerDown);
-  EXPECT_TRUE(apzc->IsOverscrolled());
-
-  // Linger a while to cause the velocity to drop to very low or zero
-  mcc->AdvanceByMillis(100);
-  TouchMove(apzc, endPoint, mcc->Time());
-  EXPECT_LT(apzc->GetVelocityVector().Length(),
-            StaticPrefs::apz_fling_min_velocity_threshold());
-  EXPECT_TRUE(apzc->IsOverscrolled());
-
-  // Lift the finger
-  mcc->AdvanceByMillis(20);
-  TouchUp(apzc, endPoint, mcc->Time());
-  EXPECT_FALSE(apzc->IsOverscrolled());
-}
-#endif
 
 class APZCOverscrollTesterMock : public APZCTreeManagerTester {
  public:
@@ -1687,7 +1566,6 @@ class APZCOverscrollTesterMock : public APZCTreeManagerTester {
   TestAsyncPanZoomController* rootApzc;
 };
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTesterMock, OverscrollHandoff) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1717,9 +1595,7 @@ TEST_F(APZCOverscrollTesterMock, OverscrollHandoff) {
              ScreenPoint(0, -2), mcc->Time());
   EXPECT_TRUE(rootApzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTesterMock, VerticalOverscrollHandoffToScrollableRoot) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1747,9 +1623,7 @@ TEST_F(APZCOverscrollTesterMock, VerticalOverscrollHandoffToScrollableRoot) {
   EXPECT_TRUE(rootApzc->IsOverscrolled());
   EXPECT_FALSE(ApzcOf(layers[1])->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTesterMock, NoOverscrollHandoffToNonScrollableRoot) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1778,9 +1652,7 @@ TEST_F(APZCOverscrollTesterMock, NoOverscrollHandoffToNonScrollableRoot) {
   EXPECT_FALSE(rootApzc->IsOverscrolled());
   EXPECT_TRUE(ApzcOf(layers[1])->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCOverscrollTesterMock, NoOverscrollHandoffOrthogonalPanGesture) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1809,9 +1681,7 @@ TEST_F(APZCOverscrollTesterMock, NoOverscrollHandoffOrthogonalPanGesture) {
   EXPECT_FALSE(rootApzc->IsOverscrolled());
   EXPECT_TRUE(ApzcOf(layers[1])->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTesterMock,
        RetriggerCancelledOverscrollAnimationByNewPanGesture) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
@@ -1890,9 +1760,7 @@ TEST_F(APZCOverscrollTesterMock,
   EXPECT_FALSE(rootApzc->IsOverscrolled());
   EXPECT_FALSE(ApzcOf(layers[1])->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTesterMock, RetriggeredOverscrollAnimationVelocity) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -1974,9 +1842,7 @@ TEST_F(APZCOverscrollTesterMock, RetriggeredOverscrollAnimationVelocity) {
     EXPECT_LE(rootApzc->GetOverscrollAmount().y, 0);
   }
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTesterMock, OverscrollIntoPreventDefault) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -2057,9 +1923,7 @@ TEST_F(APZCOverscrollTesterMock, OverscrollIntoPreventDefault) {
   EXPECT_EQ(rootApzc->GetFrameMetrics().GetVisualScrollOffset(),
             CSSPoint(0, 0));
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZCOverscrollTesterMock, StuckInOverscroll_Bug1810935) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -2143,9 +2007,7 @@ TEST_F(APZCOverscrollTesterMock, StuckInOverscroll_Bug1810935) {
   EXPECT_FALSE(rootApzc->IsOverscrolled());
   EXPECT_FALSE(subframeApzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Not valid on Android
 // Tests that the scroll offset is shifted with the overscroll amount when the
 // content scroll range got expaned.
 TEST_F(APZCOverscrollTester, FillOutGutterWhilePanning) {
@@ -2246,7 +2108,6 @@ TEST_F(APZCOverscrollTester, FillOutGutterWhileAnimating) {
             scrollOffset.y + overscrollY);
   EXPECT_FALSE(apzc->IsOverscrolled());
 }
-#endif
 
 // Test that a programmatic scroll animation does NOT trigger overscroll.
 TEST_F(APZCOverscrollTester, ProgrammaticScroll) {
@@ -2280,7 +2141,6 @@ TEST_F(APZCOverscrollTester, ProgrammaticScroll) {
 // that the page is not moving while the fingers are down on the touchpad),
 // but should not cancel it. The animation should continue if the finger is
 // lifted.
-#ifndef MOZ_WIDGET_ANDROID  // Requires GenericOverscrollEffect
 TEST_F(APZCOverscrollTester, HoldGestureDuringOverscroll) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -2326,139 +2186,7 @@ TEST_F(APZCOverscrollTester, HoldGestureDuringOverscroll) {
 
   SampleAnimationUntilRecoveredFromOverscroll(ParentLayerPoint(0, 0));
 }
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID  // Only testable with WidgetOverscrollEffect
-TEST_F(APZCOverscrollTester, NoResetTouchInputStateCalled) {
-  SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
-  MakeApzcWaitForMainThread();
 
-  InSequence s;
-  // The UpdateOverscrollVelocity should never be called since there's no
-  // overscrolling state.
-  EXPECT_CALL(*mcc, UpdateOverscrollVelocity(_, _, _, _)).Times(0);
 
-  ScreenIntPoint touchPoint(5, 5);
-  APZEventResult result = TouchDown(apzc, touchPoint, mcc->Time());
-  apzc->ContentReceivedInputBlock(result.mInputBlockId,
-                                  /*aPreventDefault=*/true);
-
-  for (int i = 0; i < 5; ++i) {
-    touchPoint.y -= 1;
-    mcc->AdvanceByMillis(10);
-    TouchMove(apzc, touchPoint, mcc->Time());
-  }
-
-  mcc->AdvanceByMillis(10);
-  TouchUp(apzc, touchPoint, mcc->Time());
-}
-#endif
-
-#ifdef MOZ_WIDGET_ANDROID  // Only testable with WidgetOverscrollEffect
-TEST_F(APZCOverscrollTester, ResetTouchInputStateJustOnce) {
-  SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
-  SCOPED_GFX_PREF_FLOAT("apz.touch_start_tolerance", 0.1f);
-  SCOPED_GFX_PREF_FLOAT("apz.touch_move_tolerance", 0.0f);
-  // To avoid falling into a fast fling state so that the second touch-start
-  // event can be preventDefault-ed.
-  SCOPED_GFX_PREF_FLOAT("apz.fling_stop_on_tap_threshold", 1000.0f);
-
-  InSequence s;
-  // The UpdateOverscrollVelocity should be called just once for the second
-  // touchdown event which will be preventDefault-ed.
-  EXPECT_CALL(*mcc, UpdateOverscrollVelocity(_, _, _, _)).Times(1);
-
-  // Overscroll once.
-  PanIntoOverscroll();
-
-  // Now the touch-start event will be preventDefault-ed.
-  MakeApzcWaitForMainThread();
-
-  ScreenIntPoint touchPoint(5, 5);
-  APZEventResult result = TouchDown(apzc, touchPoint, mcc->Time());
-  apzc->ContentReceivedInputBlock(result.mInputBlockId,
-                                  /*aPreventDefault=*/true);
-
-  for (int i = 0; i < 5; ++i) {
-    touchPoint.y -= 1;
-    mcc->AdvanceByMillis(10);
-    TouchMove(apzc, touchPoint, mcc->Time());
-  }
-
-  mcc->AdvanceByMillis(10);
-  TouchUp(apzc, touchPoint, mcc->Time());
-}
-#endif
-
-#ifdef MOZ_WIDGET_ANDROID  // Only testable with WidgetOverscrollEffect
-TEST_F(APZCOverscrollTester, NoResetPanGestureInputStateCalled) {
-  SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
-
-  MakeApzcWaitForMainThread();
-
-  InSequence s;
-  // The UpdateOverscrollVelocity should never be called since there's no
-  // overscrolling state.
-  EXPECT_CALL(*mcc, UpdateOverscrollVelocity(_, _, _, _)).Times(0);
-
-  ScreenIntPoint panPoint(5, 5);
-  APZEventResult result = PanGesture(PanGestureInput::PANGESTURE_START, apzc,
-                                     panPoint, ScreenPoint(0, 1), mcc->Time());
-  apzc->ContentReceivedInputBlock(result.mInputBlockId,
-                                  /*aPreventDefault=*/true);
-  for (int i = 0; i < 5; ++i) {
-    mcc->AdvanceByMillis(10);
-    PanGesture(PanGestureInput::PANGESTURE_PAN, apzc, panPoint,
-               ScreenPoint(0, 1), mcc->Time());
-  }
-
-  mcc->AdvanceByMillis(10);
-  PanGesture(PanGestureInput::PANGESTURE_END, apzc, panPoint, ScreenPoint(0, 0),
-             mcc->Time());
-}
-#endif
-
-#ifdef MOZ_WIDGET_ANDROID  // Only testable with WidgetOverscrollEffect
-TEST_F(APZCOverscrollTester, ResetPanGestureInputStateJustOnce) {
-  SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
-
-  InSequence s;
-  // The UpdateOverscrollVelocity should be called just once because
-  // the second pan-start event (wheel event) during overscrolling
-  // which will be preventDefault-ed.
-  EXPECT_CALL(*mcc, UpdateOverscrollVelocity(_, _, _, _)).Times(1);
-
-  // NOTE: PanIntoOverscroll uses touch events. We do overscroll with pan
-  // gestures.
-  ScreenIntPoint panPoint(5, 5);
-  PanGesture(PanGestureInput::PANGESTURE_START, apzc, panPoint,
-             ScreenPoint(0, -10), mcc->Time());
-  mcc->AdvanceByMillis(10);
-  PanGesture(PanGestureInput::PANGESTURE_PAN, apzc, panPoint,
-             ScreenPoint(0, -100), mcc->Time());
-  // Make sure it's overscrolling.
-  EXPECT_TRUE(apzc->IsOverscrolled());
-  // Finish the pan gesture.
-  mcc->AdvanceByMillis(10);
-  PanGesture(PanGestureInput::PANGESTURE_END, apzc, panPoint, ScreenPoint(0, 0),
-             mcc->Time());
-
-  // Now the next pan gesture event will be preventDefault-ed.
-  MakeApzcWaitForMainThread();
-
-  APZEventResult result = PanGesture(PanGestureInput::PANGESTURE_START, apzc,
-                                     panPoint, ScreenPoint(0, 10), mcc->Time());
-  apzc->ContentReceivedInputBlock(result.mInputBlockId,
-                                  /*aPreventDefault=*/true);
-  for (int i = 0; i < 5; ++i) {
-    mcc->AdvanceByMillis(10);
-    PanGesture(PanGestureInput::PANGESTURE_PAN, apzc, panPoint,
-               ScreenPoint(0, 10), mcc->Time());
-  }
-
-  mcc->AdvanceByMillis(10);
-  PanGesture(PanGestureInput::PANGESTURE_END, apzc, panPoint, ScreenPoint(0, 0),
-             mcc->Time());
-}
-#endif

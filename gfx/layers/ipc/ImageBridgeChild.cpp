@@ -38,9 +38,6 @@
 #include "nsThreadUtils.h"           // for NS_IsMainThread
 #include "transport/runnable_utils.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#endif
 
 namespace mozilla {
 namespace ipc {

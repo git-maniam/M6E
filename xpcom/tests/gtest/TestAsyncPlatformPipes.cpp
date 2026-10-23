@@ -13,12 +13,8 @@
 #include "nsStreamUtils.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#else
 #  include <fcntl.h>
 #  include <unistd.h>
-#endif
 
 using mozilla::PlatformPipeReader;
 using mozilla::SpinEventLoopUntil;
@@ -32,47 +28,16 @@ struct PipePair {
 };
 
 PipePair CreatePipePair(uint32_t aCapacity) {
-#ifdef XP_WIN
-  wchar_t name[128];
-  swprintf(name, std::size(name),
-           L"\\\\.\\pipe\\gecko-test-platform-pipe-%lu-%I64u",
-           ::GetCurrentProcessId(), mozilla::RandomUint64OrDie());
-
-  UniqueFileHandle readHandle(
-      CreateNamedPipeW(name,
-                       PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED |
-                           FILE_FLAG_FIRST_PIPE_INSTANCE,
-                       PIPE_TYPE_BYTE | PIPE_WAIT, 1, 4096, 4096, 0, nullptr));
-  MOZ_RELEASE_ASSERT(readHandle);
-
-  UniqueFileHandle writeHandle(
-      CreateFileW(name, GENERIC_WRITE, 0, nullptr, OPEN_EXISTING,
-                  SECURITY_SQOS_PRESENT | SECURITY_ANONYMOUS, nullptr));
-  MOZ_RELEASE_ASSERT(writeHandle);
-
-  MOZ_RELEASE_ASSERT(!ConnectNamedPipe(readHandle.get(), nullptr) &&
-                     GetLastError() == ERROR_PIPE_CONNECTED);
-
-  return {new PlatformPipeReader(std::move(readHandle), aCapacity),
-          std::move(writeHandle)};
-#else
   int fds[2];
   MOZ_RELEASE_ASSERT(pipe(fds) == 0);
   MOZ_RELEASE_ASSERT(
       fcntl(fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK) == 0);
   return {new PlatformPipeReader(UniqueFileHandle(fds[0]), aCapacity),
           UniqueFileHandle(fds[1])};
-#endif
 }
 
 void WriteAllRaw(UniqueFileHandle& aHandle, const char* aData,
                  uint32_t aCount) {
-#ifdef XP_WIN
-  DWORD written = 0;
-  BOOL ok = WriteFile(aHandle.get(), aData, aCount, &written, nullptr);
-  MOZ_RELEASE_ASSERT(ok);
-  MOZ_RELEASE_ASSERT(written == aCount);
-#else
   uint32_t total = 0;
   while (total < aCount) {
     ssize_t rv =
@@ -80,7 +45,6 @@ void WriteAllRaw(UniqueFileHandle& aHandle, const char* aData,
     MOZ_RELEASE_ASSERT(rv > 0);
     total += static_cast<uint32_t>(rv);
   }
-#endif
 }
 
 void ReadExactly(nsIInputStream* aStream, uint32_t aCount,

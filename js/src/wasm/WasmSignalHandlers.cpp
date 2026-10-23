@@ -26,16 +26,8 @@
 #include "wasm/WasmCode.h"
 #include "wasm/WasmInstance.h"
 
-#if defined(XP_WIN)
-#  include <winternl.h>  // must include before util/WindowsWrapper.h's `#undef`s
-
-#  include "util/WindowsWrapper.h"
-#elif defined(XP_DARWIN)
 #  include <mach/exc.h>
 #  include <mach/mach.h>
-#elif !defined(__wasi__)
-#  include <signal.h>
-#endif
 
 using namespace js;
 using namespace js::wasm;
@@ -53,157 +45,13 @@ using namespace js::wasm;
 #  endif
 
 #  if defined(__x86_64__)
-#    if defined(__DragonFly__)
-#      include <machine/npx.h>  // for union savefpu
-#    elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
+#    if   defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || \
         defined(__NetBSD__) || defined(__OpenBSD__)
 #      include <machine/fpu.h>  // for struct savefpu/fxsave64
 #    endif
 #  endif
 
-#  if defined(XP_WIN)
-#    define EIP_sig(p) ((p)->Eip)
-#    define EBP_sig(p) ((p)->Ebp)
-#    define ESP_sig(p) ((p)->Esp)
-#    define RIP_sig(p) ((p)->Rip)
-#    define RSP_sig(p) ((p)->Rsp)
-#    define RBP_sig(p) ((p)->Rbp)
-#    define R11_sig(p) ((p)->R11)
-#    define R13_sig(p) ((p)->R13)
-#    define R14_sig(p) ((p)->R14)
-#    define R15_sig(p) ((p)->R15)
-#    define EPC_sig(p) ((p)->Pc)
-#    define RFP_sig(p) ((p)->Fp)
-#    define R31_sig(p) ((p)->Sp)
-#    define RLR_sig(p) ((p)->Lr)
-#  elif defined(__OpenBSD__)
-#    define EIP_sig(p) ((p)->sc_eip)
-#    define EBP_sig(p) ((p)->sc_ebp)
-#    define ESP_sig(p) ((p)->sc_esp)
-#    define RIP_sig(p) ((p)->sc_rip)
-#    define RSP_sig(p) ((p)->sc_rsp)
-#    define RBP_sig(p) ((p)->sc_rbp)
-#    define R11_sig(p) ((p)->sc_r11)
-#    if defined(__arm__)
-#      define R13_sig(p) ((p)->sc_usr_sp)
-#      define R14_sig(p) ((p)->sc_usr_lr)
-#      define R15_sig(p) ((p)->sc_pc)
-#    else
-#      define R13_sig(p) ((p)->sc_r13)
-#      define R14_sig(p) ((p)->sc_r14)
-#      define R15_sig(p) ((p)->sc_r15)
-#    endif
-#    if defined(__aarch64__)
-#      define EPC_sig(p) ((p)->sc_elr)
-#      define RFP_sig(p) ((p)->sc_x[29])
-#      define RLR_sig(p) ((p)->sc_lr)
-#      define R31_sig(p) ((p)->sc_sp)
-#    endif
-#    if defined(__riscv)
-#      define RPC_sig(p) ((p)->sc_sepc)
-#      define RRA_sig(p) ((p)->sc_ra)
-#      define RFP_sig(p) ((p)->sc_s[0])
-#      define R02_sig(p) ((p)->sc_sp)
-#    endif
-#    if defined(__mips__)
-#      define EPC_sig(p) ((p)->sc_pc)
-#      define RFP_sig(p) ((p)->sc_regs[30])
-#    endif
-#    if defined(__ppc64__) || defined(__PPC64__) || defined(__ppc64le__) || \
-        defined(__PPC64LE__)
-#      define R01_sig(p) ((p)->sc_frame.fixreg[1])
-#      define R32_sig(p) ((p)->sc_frame.srr0)
-#    endif
-#  elif defined(__linux__) || defined(__sun)
-#    if defined(__linux__)
-#      define EIP_sig(p) ((p)->uc_mcontext.gregs[REG_EIP])
-#      define EBP_sig(p) ((p)->uc_mcontext.gregs[REG_EBP])
-#      define ESP_sig(p) ((p)->uc_mcontext.gregs[REG_ESP])
-#    else
-#      define EIP_sig(p) ((p)->uc_mcontext.gregs[REG_PC])
-#      define EBP_sig(p) ((p)->uc_mcontext.gregs[REG_EBP])
-#      define ESP_sig(p) ((p)->uc_mcontext.gregs[REG_ESP])
-#    endif
-#    define RIP_sig(p) ((p)->uc_mcontext.gregs[REG_RIP])
-#    define RSP_sig(p) ((p)->uc_mcontext.gregs[REG_RSP])
-#    define RBP_sig(p) ((p)->uc_mcontext.gregs[REG_RBP])
-#    if defined(__linux__) && defined(__arm__)
-#      define R11_sig(p) ((p)->uc_mcontext.arm_fp)
-#      define R13_sig(p) ((p)->uc_mcontext.arm_sp)
-#      define R14_sig(p) ((p)->uc_mcontext.arm_lr)
-#      define R15_sig(p) ((p)->uc_mcontext.arm_pc)
-#    else
-#      define R11_sig(p) ((p)->uc_mcontext.gregs[REG_R11])
-#      define R13_sig(p) ((p)->uc_mcontext.gregs[REG_R13])
-#      define R14_sig(p) ((p)->uc_mcontext.gregs[REG_R14])
-#      define R15_sig(p) ((p)->uc_mcontext.gregs[REG_R15])
-#    endif
-#    if defined(__linux__) && defined(__aarch64__)
-#      define EPC_sig(p) ((p)->uc_mcontext.pc)
-#      define RFP_sig(p) ((p)->uc_mcontext.regs[29])
-#      define RLR_sig(p) ((p)->uc_mcontext.regs[30])
-#      define R31_sig(p) ((p)->uc_mcontext.sp)
-#    endif
-#    if defined(__linux__) && defined(__mips__)
-#      define EPC_sig(p) ((p)->uc_mcontext.pc)
-#      define RFP_sig(p) ((p)->uc_mcontext.gregs[30])
-#      define RSP_sig(p) ((p)->uc_mcontext.gregs[29])
-#      define R31_sig(p) ((p)->uc_mcontext.gregs[31])
-#    endif
-#    if defined(__linux__) && (defined(__sparc__) && defined(__arch64__))
-#      define PC_sig(p) ((p)->uc_mcontext.mc_gregs[MC_PC])
-#      define FP_sig(p) ((p)->uc_mcontext.mc_fp)
-#      define SP_sig(p) ((p)->uc_mcontext.mc_i7)
-#    endif
-#    if defined(__linux__) && (defined(__ppc64__) || defined(__PPC64__) || \
-                               defined(__ppc64le__) || defined(__PPC64LE__))
-#      define R01_sig(p) ((p)->uc_mcontext.gp_regs[1])
-#      define R32_sig(p) ((p)->uc_mcontext.gp_regs[32])
-#    endif
-#    if defined(__linux__) && defined(__loongarch__)
-#      define EPC_sig(p) ((p)->uc_mcontext.__pc)
-#      define RRA_sig(p) ((p)->uc_mcontext.__gregs[1])
-#      define R03_sig(p) ((p)->uc_mcontext.__gregs[3])
-#      define RFP_sig(p) ((p)->uc_mcontext.__gregs[22])
-#    endif
-#    if defined(__linux__) && defined(__riscv)
-#      define RPC_sig(p) ((p)->uc_mcontext.__gregs[REG_PC])
-#      define RRA_sig(p) ((p)->uc_mcontext.__gregs[REG_RA])
-#      define RFP_sig(p) ((p)->uc_mcontext.__gregs[REG_S0])
-#      define R02_sig(p) ((p)->uc_mcontext.__gregs[REG_SP])
-#    endif
-#    if defined(__sun__) && defined(__sparc__)
-#      define PC_sig(p) ((p)->uc_mcontext.gregs[REG_PC])
-#      define FP_sig(p) ((p)->uc_mcontext.gregs[REG_FPRS])
-#      define SP_sig(p) ((p)->uc_mcontext.gregs[REG_SP])
-#    endif
-#  elif defined(__NetBSD__)
-#    define EIP_sig(p) ((p)->uc_mcontext.__gregs[_REG_EIP])
-#    define EBP_sig(p) ((p)->uc_mcontext.__gregs[_REG_EBP])
-#    define ESP_sig(p) ((p)->uc_mcontext.__gregs[_REG_ESP])
-#    define RIP_sig(p) ((p)->uc_mcontext.__gregs[_REG_RIP])
-#    define RSP_sig(p) ((p)->uc_mcontext.__gregs[_REG_RSP])
-#    define RBP_sig(p) ((p)->uc_mcontext.__gregs[_REG_RBP])
-#    define R11_sig(p) ((p)->uc_mcontext.__gregs[_REG_R11])
-#    define R13_sig(p) ((p)->uc_mcontext.__gregs[_REG_R13])
-#    define R14_sig(p) ((p)->uc_mcontext.__gregs[_REG_R14])
-#    define R15_sig(p) ((p)->uc_mcontext.__gregs[_REG_R15])
-#    if defined(__aarch64__)
-#      define EPC_sig(p) ((p)->uc_mcontext.__gregs[_REG_PC])
-#      define RFP_sig(p) ((p)->uc_mcontext.__gregs[_REG_X29])
-#      define RLR_sig(p) ((p)->uc_mcontext.__gregs[_REG_X30])
-#      define R31_sig(p) ((p)->uc_mcontext.__gregs[_REG_SP])
-#    endif
-#    if defined(__mips__)
-#      define EPC_sig(p) ((p)->uc_mcontext.__gregs[_REG_EPC])
-#      define RFP_sig(p) ((p)->uc_mcontext.__gregs[_REG_S8])
-#    endif
-#    if defined(__ppc64__) || defined(__PPC64__) || defined(__ppc64le__) || \
-        defined(__PPC64LE__)
-#      define R01_sig(p) ((p)->uc_mcontext.__gregs[_REG_R1])
-#      define R32_sig(p) ((p)->uc_mcontext.__gregs[_REG_PC])
-#    endif
-#  elif defined(__DragonFly__) || defined(__FreeBSD__) || \
+#  if   defined(__DragonFly__) || defined(__FreeBSD__) || \
       defined(__FreeBSD_kernel__)
 #    define EIP_sig(p) ((p)->uc_mcontext.mc_eip)
 #    define EBP_sig(p) ((p)->uc_mcontext.mc_ebp)
@@ -211,33 +59,16 @@ using namespace js::wasm;
 #    define RIP_sig(p) ((p)->uc_mcontext.mc_rip)
 #    define RSP_sig(p) ((p)->uc_mcontext.mc_rsp)
 #    define RBP_sig(p) ((p)->uc_mcontext.mc_rbp)
-#    if defined(__FreeBSD__) && defined(__arm__)
-#      define R11_sig(p) ((p)->uc_mcontext.__gregs[_REG_R11])
-#      define R13_sig(p) ((p)->uc_mcontext.__gregs[_REG_R13])
-#      define R14_sig(p) ((p)->uc_mcontext.__gregs[_REG_R14])
-#      define R15_sig(p) ((p)->uc_mcontext.__gregs[_REG_R15])
-#    else
 #      define R11_sig(p) ((p)->uc_mcontext.mc_r11)
 #      define R13_sig(p) ((p)->uc_mcontext.mc_r13)
 #      define R14_sig(p) ((p)->uc_mcontext.mc_r14)
 #      define R15_sig(p) ((p)->uc_mcontext.mc_r15)
-#    endif
-#    if defined(__FreeBSD__) && defined(__aarch64__)
-#      define EPC_sig(p) ((p)->uc_mcontext.mc_gpregs.gp_elr)
-#      define RFP_sig(p) ((p)->uc_mcontext.mc_gpregs.gp_x[29])
-#      define RLR_sig(p) ((p)->uc_mcontext.mc_gpregs.gp_lr)
-#      define R31_sig(p) ((p)->uc_mcontext.mc_gpregs.gp_sp)
-#    endif
-#    if defined(__FreeBSD__) && defined(__mips__)
-#      define EPC_sig(p) ((p)->uc_mcontext.mc_pc)
-#      define RFP_sig(p) ((p)->uc_mcontext.mc_regs[30])
-#    endif
 #    if defined(__FreeBSD__) && (defined(__ppc64__) || defined(__PPC64__) || \
                                  defined(__ppc64le__) || defined(__PPC64LE__))
 #      define R01_sig(p) ((p)->uc_mcontext.mc_gpr[1])
 #      define R32_sig(p) ((p)->uc_mcontext.mc_srr0)
 #    endif
-#  elif defined(XP_DARWIN)
+#  else
 #    define EIP_sig(p) ((p)->thread.uts.ts32.__eip)
 #    define EBP_sig(p) ((p)->thread.uts.ts32.__ebp)
 #    define ESP_sig(p) ((p)->thread.uts.ts32.__esp)
@@ -252,109 +83,9 @@ using namespace js::wasm;
 #    define RFP_sig(p) ((p)->thread.__fp)
 #    define R31_sig(p) ((p)->thread.__sp)
 #    define RLR_sig(p) ((p)->thread.__lr)
-#  else
-#    error \
-        "Don't know how to read/write to the thread state via the mcontext_t."
 #  endif
 
-#  if defined(ANDROID)
-// Not all versions of the Android NDK define ucontext_t or mcontext_t.
-// Detect this and provide custom but compatible definitions. Note that these
-// follow the GLibc naming convention to access register values from
-// mcontext_t.
-//
-// See: https://chromiumcodereview.appspot.com/10829122/
-// See: http://code.google.com/p/android/issues/detail?id=34784
-#    if !defined(__BIONIC_HAVE_UCONTEXT_T)
-#      if defined(__arm__)
 
-// GLibc on ARM defines mcontext_t has a typedef for 'struct sigcontext'.
-// Old versions of the C library <signal.h> didn't define the type.
-#        if !defined(__BIONIC_HAVE_STRUCT_SIGCONTEXT)
-#          include <asm/sigcontext.h>
-#        endif
-
-typedef struct sigcontext mcontext_t;
-
-typedef struct ucontext {
-  uint32_t uc_flags;
-  struct ucontext* uc_link;
-  stack_t uc_stack;
-  mcontext_t uc_mcontext;
-  // Other fields are not used so don't define them here.
-} ucontext_t;
-
-#      elif defined(__mips__)
-
-typedef struct {
-  uint32_t regmask;
-  uint32_t status;
-  uint64_t pc;
-  uint64_t gregs[32];
-  uint64_t fpregs[32];
-  uint32_t acx;
-  uint32_t fpc_csr;
-  uint32_t fpc_eir;
-  uint32_t used_math;
-  uint32_t dsp;
-  uint64_t mdhi;
-  uint64_t mdlo;
-  uint32_t hi1;
-  uint32_t lo1;
-  uint32_t hi2;
-  uint32_t lo2;
-  uint32_t hi3;
-  uint32_t lo3;
-} mcontext_t;
-
-typedef struct ucontext {
-  uint32_t uc_flags;
-  struct ucontext* uc_link;
-  stack_t uc_stack;
-  mcontext_t uc_mcontext;
-  // Other fields are not used so don't define them here.
-} ucontext_t;
-
-#      elif defined(__loongarch64)
-
-typedef struct {
-  uint64_t pc;
-  uint64_t gregs[32];
-  uint64_t fpregs[32];
-  uint32_t fpc_csr;
-} mcontext_t;
-
-typedef struct ucontext {
-  uint32_t uc_flags;
-  struct ucontext* uc_link;
-  stack_t uc_stack;
-  mcontext_t uc_mcontext;
-  // Other fields are not used so don't define them here.
-} ucontext_t;
-
-#      elif defined(__i386__)
-// x86 version for Android.
-typedef struct {
-  uint32_t gregs[19];
-  void* fpregs;
-  uint32_t oldmask;
-  uint32_t cr2;
-} mcontext_t;
-
-typedef uint32_t kernel_sigset_t[2];  // x86 kernel uses 64-bit signal masks
-typedef struct ucontext {
-  uint32_t uc_flags;
-  struct ucontext* uc_link;
-  stack_t uc_stack;
-  mcontext_t uc_mcontext;
-  // Other fields are not used by V8, don't define them here.
-} ucontext_t;
-enum { REG_EIP = 14 };
-#      endif  // defined(__i386__)
-#    endif    // !defined(__BIONIC_HAVE_UCONTEXT_T)
-#  endif      // defined(ANDROID)
-
-#  if defined(XP_DARWIN)
 #    if defined(__x86_64__)
 struct macos_x64_context {
   x86_thread_state64_t thread;
@@ -382,9 +113,6 @@ struct macos_aarch64_context {
 #    else
 #      error Unsupported architecture
 #    endif
-#  elif !defined(XP_WIN)
-#    define CONTEXT ucontext_t
-#  endif
 
 #  if defined(_M_X64) || defined(__x86_64__)
 #    define PC_sig(p) RIP_sig(p)
@@ -583,42 +311,6 @@ struct AutoHandlingTrap {
 // the shared HandleTrap() above.
 // =============================================================================
 
-#  if defined(XP_WIN)
-// Obtained empirically from thread_local codegen on x86/x64/arm64.
-// Compiled in all user binaries, so should be stable over time.
-static const unsigned sThreadLocalArrayPointerIndex = 11;
-
-static LONG WINAPI WasmTrapHandler(LPEXCEPTION_POINTERS exception) {
-  // Make sure TLS is initialized before reading sAlreadyHandlingTrap.
-  if (!NtCurrentTeb()->Reserved1[sThreadLocalArrayPointerIndex]) {
-    return EXCEPTION_CONTINUE_SEARCH;
-  }
-
-  if (sAlreadyHandlingTrap.get()) {
-    return EXCEPTION_CONTINUE_SEARCH;
-  }
-  AutoHandlingTrap aht;
-
-  EXCEPTION_RECORD* record = exception->ExceptionRecord;
-  if (record->ExceptionCode != EXCEPTION_ACCESS_VIOLATION &&
-      record->ExceptionCode != EXCEPTION_ILLEGAL_INSTRUCTION) {
-    return EXCEPTION_CONTINUE_SEARCH;
-  }
-
-  uint8_t* faultAddr = nullptr;
-  if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
-    faultAddr = (uint8_t*)record->ExceptionInformation[1];
-  }
-
-  JSContext* cx = TlsContext.get();  // Cold signal handling code
-  if (!HandleTrap(exception->ContextRecord, faultAddr, cx)) {
-    return EXCEPTION_CONTINUE_SEARCH;
-  }
-
-  return EXCEPTION_CONTINUE_EXECUTION;
-}
-
-#  elif defined(XP_DARWIN)
 // On OSX we are forced to use the lower-level Mach exception mechanism instead
 // of Unix signals because breakpad uses Mach exceptions and would otherwise
 // report a crash before wasm gets a chance to handle the exception.
@@ -772,85 +464,6 @@ static void MachExceptionHandlerThread() {
   }
 }
 
-#  else  // If not Windows or Mac, assume Unix
-
-#    if defined(__mips__) || defined(__loongarch__)
-static const uint32_t kWasmTrapSignal = SIGFPE;
-#    else
-static const uint32_t kWasmTrapSignal = SIGILL;
-#    endif
-
-static struct sigaction sPrevSEGVHandler;
-static struct sigaction sPrevSIGBUSHandler;
-static struct sigaction sPrevWasmTrapHandler;
-
-typedef void (*sa_sigaction_t)(int, siginfo_t*, void*);
-
-// See the uses below for more context. We need to cast the SIG_DFL/SIG_IGN
-// sentinel values to check to see if they're in the sa_sigaction field (which
-// may or may not be in a union with the sa_handler field).
-#    define SIG_ACTION_DFL ((sa_sigaction_t)SIG_DFL)
-#    define SIG_ACTION_IGN ((sa_sigaction_t)SIG_IGN)
-
-static void WasmTrapHandler(int signum, siginfo_t* info, void* context) {
-  if (!sAlreadyHandlingTrap.get()) {
-    AutoHandlingTrap aht;
-    MOZ_RELEASE_ASSERT(signum == SIGSEGV || signum == SIGBUS ||
-                       signum == kWasmTrapSignal);
-    uint8_t* faultAddr = nullptr;
-    if (signum == SIGSEGV || signum == SIGBUS) {
-      faultAddr = (uint8_t*)info->si_addr;
-    }
-    JSContext* cx = TlsContext.get();  // Cold signal handling code
-    if (HandleTrap((CONTEXT*)context, faultAddr, cx)) {
-      return;
-    }
-  }
-
-  struct sigaction* previousSignal = nullptr;
-  switch (signum) {
-    case SIGSEGV:
-      previousSignal = &sPrevSEGVHandler;
-      break;
-    case SIGBUS:
-      previousSignal = &sPrevSIGBUSHandler;
-      break;
-    case kWasmTrapSignal:
-      previousSignal = &sPrevWasmTrapHandler;
-      break;
-  }
-  MOZ_ASSERT(previousSignal);
-
-  // This signal is not for any wasm code we expect, so we need to forward
-  // the signal to the next handler. If there is no next handler (SIG_IGN or
-  // SIG_DFL), then it's time to crash. To do this, we set the signal back to
-  // its original disposition and return. This will cause the faulting op to
-  // be re-executed which will crash in the normal way. The advantage of
-  // doing this to calling _exit() is that we remove ourselves from the crash
-  // stack which improves crash reports. If there is a next handler, call it.
-  // It will either crash synchronously, fix up the instruction so that
-  // execution can continue and return, or trigger a crash by returning the
-  // signal to it's original disposition and returning.
-  //
-  // Note: the order of these tests matter.
-  //
-  // POSIX specifies that if SA_SIGINFO is set, then sa_sigaction should be
-  // called instead of sa_handler. However, it appears that the flag can be set
-  // even when sa_sigaction is not a valid function pointer but instead one of
-  // the SIG_DFL/SIG_IGN sentinel values. In this case, we should not call the
-  // function, but fallthrough.
-  if ((previousSignal->sa_flags & SA_SIGINFO) &&
-      previousSignal->sa_sigaction != SIG_ACTION_DFL &&
-      previousSignal->sa_sigaction != SIG_ACTION_IGN) {
-    previousSignal->sa_sigaction(signum, info, context);
-  } else if (previousSignal->sa_handler == SIG_DFL ||
-             previousSignal->sa_handler == SIG_IGN) {
-    sigaction(signum, previousSignal, nullptr);
-  } else {
-    previousSignal->sa_handler(signum);
-  }
-}
-#  endif  // XP_WIN || XP_DARWIN || assume unix
 
 struct InstallState {
   bool tried;
@@ -879,61 +492,7 @@ void wasm::EnsureEagerProcessSignalHandlers() {
   sAlreadyHandlingTrap.infallibleInit();
 
   // Install whatever exception/signal handler is appropriate for the OS.
-#  if defined(XP_WIN)
-
-#    if defined(MOZ_ASAN)
-  // Under ASan we need to let the ASan runtime's ShadowExceptionHandler stay
-  // in the first handler position.
-  const bool firstHandler = false;
-#    else
-  // Otherwise, WasmTrapHandler needs to go first, so that we can recover
-  // from wasm faults and continue execution without triggering handlers
-  // such as Breakpad that assume we are crashing.
-  const bool firstHandler = true;
-#    endif
-  if (!AddVectoredExceptionHandler(firstHandler, WasmTrapHandler)) {
-    // Windows has all sorts of random security knobs for disabling things
-    // so make this a dynamic failure that disables wasm, not a MOZ_CRASH().
-    return;
-  }
-
-#  elif defined(XP_DARWIN)
   // All the Mach setup in EnsureLazyProcessSignalHandlers.
-#  else
-  // SA_NODEFER allows us to reenter the signal handler if we crash while
-  // handling the signal, and fall through to the Breakpad handler by testing
-  // handlingSegFault.
-
-  // Allow handling OOB with signals on all architectures
-  struct sigaction faultHandler;
-  faultHandler.sa_flags = SA_SIGINFO | SA_NODEFER | SA_ONSTACK;
-  faultHandler.sa_sigaction = WasmTrapHandler;
-  sigemptyset(&faultHandler.sa_mask);
-  if (sigaction(SIGSEGV, &faultHandler, &sPrevSEGVHandler)) {
-    MOZ_CRASH("unable to install segv handler");
-  }
-
-#    if defined(JS_CODEGEN_ARM)
-  // On Arm Handle Unaligned Accesses
-  struct sigaction busHandler;
-  busHandler.sa_flags = SA_SIGINFO | SA_NODEFER | SA_ONSTACK;
-  busHandler.sa_sigaction = WasmTrapHandler;
-  sigemptyset(&busHandler.sa_mask);
-  if (sigaction(SIGBUS, &busHandler, &sPrevSIGBUSHandler)) {
-    MOZ_CRASH("unable to install sigbus handler");
-  }
-#    endif
-
-  // Install a handler to handle the instructions that are emitted to implement
-  // wasm traps.
-  struct sigaction wasmTrapHandler;
-  wasmTrapHandler.sa_flags = SA_SIGINFO | SA_NODEFER | SA_ONSTACK;
-  wasmTrapHandler.sa_sigaction = WasmTrapHandler;
-  sigemptyset(&wasmTrapHandler.sa_mask);
-  if (sigaction(kWasmTrapSignal, &wasmTrapHandler, &sPrevWasmTrapHandler)) {
-    MOZ_CRASH("unable to install wasm trap handler");
-  }
-#  endif
 
   eagerInstallState->success = true;
 #endif
@@ -952,7 +511,6 @@ static bool EnsureLazyProcessSignalHandlers() {
   lazyInstallState->tried = true;
   MOZ_RELEASE_ASSERT(lazyInstallState->success == false);
 
-#  ifdef XP_DARWIN
   // Create the port that all JSContext threads will redirect their traps to.
   kern_return_t kret;
   kret = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE,
@@ -974,7 +532,6 @@ static bool EnsureLazyProcessSignalHandlers() {
     return false;
   }
   handlerThread.detach();
-#  endif
 
   lazyInstallState->success = true;
   return true;
@@ -1004,7 +561,6 @@ bool wasm::EnsureFullSignalHandlers(JSContext* cx) {
     return false;
   }
 
-#  ifdef XP_DARWIN
   // In addition to the process-wide signal handler setup, OSX needs each
   // thread configured to send its exceptions to sMachDebugPort. While there
   // are also task-level (i.e. process-level) exception ports, those are
@@ -1022,7 +578,6 @@ bool wasm::EnsureFullSignalHandlers(JSContext* cx) {
   if (kret != KERN_SUCCESS) {
     return false;
   }
-#  endif
 
   cx->wasm().haveSignalHandlers = true;
   return true;

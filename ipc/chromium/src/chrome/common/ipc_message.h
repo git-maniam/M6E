@@ -307,10 +307,8 @@ class Message : public mojo::core::ports::UserMessage, public Pickle {
   // IPC::Message.
   void SetAttachedFileHandles(nsTArray<mozilla::UniqueFileHandle> handles);
 
-#if defined(XP_DARWIN)
   void set_fd_cookie(uint32_t cookie) { header()->cookie = cookie; }
   uint32_t fd_cookie() const { return header()->cookie; }
-#endif
 
   void WritePort(mozilla::ipc::ScopedPort port);
 
@@ -326,7 +324,6 @@ class Message : public mojo::core::ports::UserMessage, public Pickle {
   // IPC. Must only be called when there are no ports on this IPC::Message.
   void SetAttachedPorts(nsTArray<mozilla::ipc::ScopedPort> ports);
 
-#if defined(XP_DARWIN)
   bool WriteMachSendRight(mozilla::UniqueMachSendRight port);
 
   // WARNING: This method is marked as `const` so it can be called when
@@ -344,7 +341,6 @@ class Message : public mojo::core::ports::UserMessage, public Pickle {
                                mozilla::UniqueMachReceiveRight* port) const;
 
   uint32_t num_receive_rights() const;
-#endif
 
 #ifdef FUZZING_SNAPSHOT
   bool IsFuzzMsg() const { return isFuzzMsg; }
@@ -366,9 +362,6 @@ class Message : public mojo::core::ports::UserMessage, public Pickle {
   friend class SyncMessage;
   friend class mozilla::ipc::MiniTransceiver;
 
-#if !defined(XP_DARWIN) && !defined(FUZZING_SNAPSHOT)
- protected:
-#endif
 
   struct Header : Pickle::Header {
     // Pickle::Header contains a 32-bit payload_size field
@@ -381,11 +374,9 @@ class Message : public mojo::core::ports::UserMessage, public Pickle {
     seqno_t seqno;  // Sequence number
 
     uint32_t num_handles;  // the number of handles included with this message
-#if defined(XP_DARWIN)
     uint32_t cookie;  // cookie to ACK that the descriptors have been read.
     uint32_t num_send_rights;  // the number of mach send rights included with
                                // this message
-#endif
     uint32_t _padding;
   };
   static_assert(std::has_unique_object_representations_v<Header>,
@@ -406,7 +397,6 @@ class Message : public mojo::core::ports::UserMessage, public Pickle {
   // deserializing a message.
   mutable nsTArray<mozilla::ipc::ScopedPort> attached_ports_;
 
-#if defined(XP_DARWIN)
   // The set of mach send rights which are attached to this message.
   //
   // Mutable, as this array can be mutated during `ConsumeMachSendRight` when
@@ -423,7 +413,6 @@ class Message : public mojo::core::ports::UserMessage, public Pickle {
   // being processed, which may be used by the system to temporarily boost the
   // QoS for this process.
   mozilla::UniqueMachSendRight mach_voucher_;
-#endif
 
   // Total size of buffers which should have been sent in shared memory, but had
   // to fall back to being sent inline due to shmem allocation or mapping

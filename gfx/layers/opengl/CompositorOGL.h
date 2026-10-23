@@ -411,11 +411,6 @@ class CompositorOGL final : public Compositor {
   // with a non-null aNativeLayer.
   RefPtr<NativeLayer> mCurrentNativeLayer;
 
-#ifdef MOZ_WIDGET_GTK
-  // Hold TextureSources which own device data that have to be deleted before
-  // destroying this CompositorOGL.
-  std::unordered_set<TextureSource*> mRegisteredTextureSources;
-#endif
 
   // FileDescriptor of release fence.
   // Release fence is a fence that is used for waiting until usage/composite of

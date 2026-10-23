@@ -13,45 +13,13 @@
 #include "nsMemory.h"
 #include "nsThreadUtils.h"
 
-#ifdef ANDROID
-#  include <stdio.h>
-
-// Minimum memory threshold for a device to be considered
-// a low memory platform. This value has be in sync with
-// Java's equivalent threshold, defined in HardwareUtils.java
-#  define LOW_MEMORY_THRESHOLD_KB (384 * 1024)
-#endif
 
 static mozilla::Atomic<bool> sIsFlushing;
 static PRIntervalTime sLastFlushTime = 0;
 
 // static
 bool nsMemory::IsLowMemoryPlatform() {
-#ifdef ANDROID
-  static int sLowMemory =
-      -1;  // initialize to unknown, lazily evaluate to 0 or 1
-  if (sLowMemory == -1) {
-    sLowMemory = 0;  // assume "not low memory" in case file operations fail
-
-    // check if MemTotal from /proc/meminfo is less than LOW_MEMORY_THRESHOLD_KB
-    FILE* fd = fopen("/proc/meminfo", "r");
-    if (!fd) {
-      return false;
-    }
-    uint64_t mem = 0;
-    int rv = fscanf(fd, "MemTotal: %" PRIu64 " kB", &mem);
-    if (fclose(fd)) {
-      return false;
-    }
-    if (rv != 1) {
-      return false;
-    }
-    sLowMemory = (mem < LOW_MEMORY_THRESHOLD_KB) ? 1 : 0;
-  }
-  return (sLowMemory == 1);
-#else
   return false;
-#endif
 }
 
 static void RunFlushers(const char16_t* aReason) {

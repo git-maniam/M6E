@@ -14,14 +14,7 @@
 
 #include "jstypes.h"
 
-#ifdef XP_WIN
-#  include <crtdbg.h> /* for _CrtSetReportMode */
-#  include <stdlib.h> /* for _set_invalid_parameter_handler */
 
-#  include "util/WindowsWrapper.h"
-#endif
-
-#if defined(XP_UNIX)
 int64_t js::PRMJ_Now() {
   // `std::timespec_get(..., TIME_UTC)` is available since C++17, but it's
   // slightly slower than `clock_gettime(CLOCK_REALTIME, ...)`, so prefer the
@@ -34,52 +27,15 @@ int64_t js::PRMJ_Now() {
          int64_t(ts.tv_nsec / PRMJ_NSEC_PER_USEC);
 }
 
-#elif defined(XP_WIN)
-
-// Returns the number of microseconds since the Unix epoch.
-static int64_t FileTimeToUnixMicroseconds(const FILETIME& ft) {
-  // Get the time in 100ns intervals.
-  int64_t t = (int64_t(ft.dwHighDateTime) << 32) | int64_t(ft.dwLowDateTime);
-
-  // The Windows epoch is around 1600. The Unix epoch is around 1970.
-  // Subtract the difference.
-  static const int64_t TimeToEpochIn100ns = 0x19DB1DED53E8000;
-  t -= TimeToEpochIn100ns;
-
-  // Divide by 10 to convert to microseconds.
-  return t / 10;
-}
-
-int64_t js::PRMJ_Now() {
-  FILETIME ft;
-  GetSystemTimePreciseAsFileTime(&ft);
-  return FileTimeToUnixMicroseconds(ft);
-}
-#endif
 
 #if !JS_HAS_INTL_API
-#  ifdef XP_WIN
-static void PRMJ_InvalidParameterHandler(const wchar_t* expression,
-                                         const wchar_t* function,
-                                         const wchar_t* file, unsigned int line,
-                                         uintptr_t pReserved) {
-  /* empty */
-}
-#  endif
 
 /* Format a time value into a buffer. Same semantics as strftime() */
 size_t js::PRMJ_FormatTime(char* buf, size_t buflen, const char* fmt,
                            const PRMJTime* prtm, int timeZoneYear,
                            int offsetInSeconds) {
   size_t result = 0;
-#  if defined(XP_UNIX) || defined(XP_WIN)
   struct tm a;
-#    ifdef XP_WIN
-  _invalid_parameter_handler oldHandler;
-#      ifndef __MINGW32__
-  int oldReportMode;
-#      endif  // __MINGW32__
-#    endif    // XP_WIN
 
   memset(&a, 0, sizeof(struct tm));
 
@@ -158,25 +114,9 @@ size_t js::PRMJ_FormatTime(char* buf, size_t buflen, const char* fmt,
    * changeover time.)
    */
 
-#    ifdef XP_WIN
-  oldHandler = _set_invalid_parameter_handler(PRMJ_InvalidParameterHandler);
-#      ifndef __MINGW32__
-  /*
-   * MinGW doesn't have _CrtSetReportMode and defines it to be a no-op.
-   * We ifdef it off to avoid warnings about unused variables
-   */
-  oldReportMode = _CrtSetReportMode(_CRT_ASSERT, 0);
-#      endif  // __MINGW32__
-#    endif    // XP_WIN
 
   result = strftime(buf, buflen, fmt, &a);
 
-#    ifdef XP_WIN
-  _set_invalid_parameter_handler(oldHandler);
-#      ifndef __MINGW32__
-  _CrtSetReportMode(_CRT_ASSERT, oldReportMode);
-#      endif  // __MINGW32__
-#    endif    // XP_WIN
 
   if (fake_tm_year && result) {
     char real_year[16];
@@ -202,7 +142,6 @@ size_t js::PRMJ_FormatTime(char* buf, size_t buflen, const char* fmt,
       *(buf + result) = '\0';
     }
   }
-#  endif
   return result;
 }
 #endif /* !JS_HAS_INTL_API */

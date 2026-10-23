@@ -218,13 +218,7 @@ nsresult Omnijar::GetURIString(Type aType, nsACString& aResult) {
   return NS_OK;
 }
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
-#  define ANDROID_DIAGNOSTIC_CRASH_OR_EXIT(_msg) MOZ_CRASH(_msg)
-#elif defined(MOZ_WIDGET_ANDROID)
-#  define ANDROID_DIAGNOSTIC_CRASH_OR_EXIT(_msg) ipc::ProcessChild::QuickExit()
-#else
 #  define ANDROID_DIAGNOSTIC_CRASH_OR_EXIT(_msg)
-#endif
 
 void Omnijar::ChildProcessInit(int& aArgc, char** aArgv) {
   nsCOMPtr<nsIFile> greOmni, appOmni;

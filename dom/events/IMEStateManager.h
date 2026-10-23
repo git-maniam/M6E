@@ -89,11 +89,7 @@ class IMEStateManager {
    * as Android, it still notify it.
    */
   static bool CanSendNotificationToWidget() {
-#ifdef MOZ_WIDGET_ANDROID
-    return true;
-#else
     return !sCleaningUpForStoppingIMEStateManagement;
-#endif
   }
 
   /**

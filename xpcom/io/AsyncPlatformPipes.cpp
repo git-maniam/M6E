@@ -15,23 +15,17 @@
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
 
-#ifndef XP_WIN
 #  include <errno.h>
 #  include <fcntl.h>
 #  include <sys/stat.h>
 #  include <unistd.h>
-#endif
 
 namespace mozilla {
 
 namespace platform_pipe_detail {
 
 class PlatformPipeLink
-#ifdef XP_WIN
-    : public MessageLoopForIO::IOHandler
-#else
     : public MessageLoopForIO::Watcher
-#endif
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_DELETE_ON_EVENT_TARGET(
       PlatformPipeLink, mIOThread.GetEventTarget())
@@ -64,13 +58,8 @@ class PlatformPipeLink
 
   void AdvanceIOLocked() MOZ_REQUIRES(mMutex, mIOThread);
 
-#ifdef XP_WIN
-  void OnIOCompleted(MessageLoopForIO::IOContext* aContext,
-                     DWORD aBytesTransferred, DWORD aError) override;
-#else
   void OnFileCanReadWithoutBlocking(int fd) override;
   void OnFileCanWriteWithoutBlocking(int fd) override;
-#endif
 
   const EventTargetCapability<nsISerialEventTarget> mIOThread;
   Mutex mMutex{"PlatformPipeReader"};
@@ -102,11 +91,7 @@ class PlatformPipeLink
   // Used by Close() to wait for pending I/O to complete.
   CondVar mPendingCV{mMutex, "PlatformPipeReader::mPendingCV"};
 
-#ifdef XP_WIN
-  MessageLoopForIO::IOContext mIOContext MOZ_GUARDED_BY(mMutex) = {};
-#else
   MessageLoopForIO::FileDescriptorWatcher mWatcher MOZ_GUARDED_BY(mIOThread);
-#endif
 
  private:
   ~PlatformPipeLink() = default;
@@ -154,12 +139,6 @@ void PlatformPipeLink::Close(nsresult aStatus, bool aInternal) {
   mClosing = true;
 
   if (mPending) {
-#ifdef XP_WIN
-    // On Windows, if we still have pending IO, request that it is cancelled.
-    // We can do that from any thread using CancelIoEx. The notification will be
-    // delivered to the IO thread.
-    CancelIoEx(mHandle.get(), &mIOContext.overlapped);
-#else
     // On POSIX, request cancellation by dispatching a runnable to stop watching
     // our file descriptor, and clear mPending.
     MOZ_ALWAYS_SUCCEEDS(mIOThread.Dispatch(NS_NewRunnableFunction(
@@ -172,7 +151,6 @@ void PlatformPipeLink::Close(nsresult aStatus, bool aInternal) {
             pending = self->TakePending();
           }
         })));
-#endif
 
     // Wait on the condvar until all pending operations are completed.
     // NOTE: This unlocks mMutex while we wait.
@@ -244,31 +222,6 @@ void PlatformPipeLink::AdvanceIOLocked() {
     return;
   }
 
-#ifdef XP_WIN
-  // On Windows, we need to register the IO handler the first time we're on the
-  // I/O thread.
-  if (!mIOContext.handler) {
-    MessageLoopForIO::current()->RegisterIOHandler(mHandle.get(), this);
-    mIOContext.handler = this;
-  }
-  BOOL ok = ReadFile(mHandle.get(), mBuffer.get(), mBufferSize, nullptr,
-                     &mIOContext.overlapped);
-  if (!ok) {
-    DWORD error = GetLastError();
-    if (error == ERROR_IO_PENDING) {
-      mPending = this;
-      return;
-    }
-    if (error == ERROR_BROKEN_PIPE || error == ERROR_HANDLE_EOF) {
-      DispatchPipeError(NS_BASE_STREAM_CLOSED);
-    } else {
-      DispatchPipeError(NS_ERROR_FAILURE);
-    }
-    return;
-  }
-
-  mPending = this;
-#else
   ssize_t rv = HANDLE_EINTR(read(mHandle.get(), mBuffer.get(), mBufferSize));
   if (rv > 0) {
     mOffset = 0;
@@ -298,50 +251,8 @@ void PlatformPipeLink::AdvanceIOLocked() {
   }
 
   DispatchPipeError(NS_ERROR_FAILURE);
-#endif
 }
 
-#ifdef XP_WIN
-void PlatformPipeLink::OnIOCompleted(MessageLoopForIO::IOContext* aContext,
-                                     DWORD aBytesTransferred, DWORD aError) {
-  mIOThread.AssertOnCurrentThread();
-  RefPtr<PlatformPipeLink> pending;
-  MutexAutoLock lock(mMutex);
-  if (aContext != &mIOContext) {
-    return;
-  }
-
-  pending = TakePending();
-  if (!pending) {
-    return;
-  }
-
-  if (mClosing || NS_FAILED(mStatus)) {
-    return;
-  }
-
-  if (aError != ERROR_SUCCESS) {
-    if (aError == ERROR_BROKEN_PIPE || aError == ERROR_HANDLE_EOF ||
-        aError == ERROR_OPERATION_ABORTED) {
-      DispatchPipeError(NS_BASE_STREAM_CLOSED);
-    } else {
-      DispatchPipeError(NS_ERROR_FAILURE);
-    }
-    return;
-  }
-
-  if (aBytesTransferred == 0) {
-    DispatchPipeError(NS_BASE_STREAM_CLOSED);
-    return;
-  }
-
-  mOffset = 0;
-  mAvailable = aBytesTransferred;
-  if (!mCallbackClosureOnly) {
-    DispatchNotify();
-  }
-}
-#else
 void PlatformPipeLink::OnFileCanReadWithoutBlocking(int fd) {
   mIOThread.AssertOnCurrentThread();
   RefPtr<PlatformPipeLink> pending;
@@ -353,7 +264,6 @@ void PlatformPipeLink::OnFileCanReadWithoutBlocking(int fd) {
 void PlatformPipeLink::OnFileCanWriteWithoutBlocking(int fd) {
   MOZ_ASSERT_UNREACHABLE();
 }
-#endif
 
 }  // namespace platform_pipe_detail
 

@@ -4,14 +4,7 @@
 
 #include "nsExceptionHandler.h"
 
-#if defined(XP_WIN)
-#  include <processthreadsapi.h>  // for GetCurrentThreadId()
-#elif defined(XP_LINUX)
-#  include <sys/syscall.h>  // For SYS_gettid
-#  include <unistd.h>       // For syscall()
-#elif defined(XP_DARWIN)
 #  include <mach/mach.h>  // For mach_thread_self()
-#endif
 
 namespace CrashReporter {
 
@@ -148,23 +141,11 @@ nsresult SetRestartArgs(int argc, char** argv) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-#ifdef XP_WIN
-nsresult WriteMinidumpForException(EXCEPTION_POINTERS* aExceptionInfo) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-#endif
 
-#ifdef XP_LINUX
-bool WriteMinidumpForSigInfo(int signo, siginfo_t* info, void* uc) {
-  return false;
-}
-#endif
 
-#ifdef XP_MACOSX
 nsresult AppendObjCExceptionInfoToAppNotes(void* inException) {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
-#endif
 
 nsresult GetSubmitReports(bool* aSubmitReports) {
   return NS_ERROR_NOT_IMPLEMENTED;
@@ -210,27 +191,15 @@ bool WriteExtraFile(const nsAString& id, const AnnotationTable& annotations) {
   return false;
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void SetNotificationPipeForChild(FileHandle breakpadFd,
-                                 FileHandle crashHelperFd) {}
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 bool RegisterChildIPCChannel(mozilla::geckoargs::ChildProcessArgs& aArgs,
                              GeckoChildID aID) {
   return false;
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void SetCrashHelperPipes(FileHandle breakpadFd, FileHandle crashHelperFd) {}
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 bool GetLastRunCrashID(nsAString& id) { return false; }
 
-#if defined(XP_WIN)
-bool ChildProcessProxyRendezvous(GeckoChildID aID, DWORD aPid, HANDLE aHandle) {
-  return false;
-}
-#endif  // defined(XP_WIN)
 
 bool SetRemoteExceptionHandler(int& aArgc, char** aArgv) { return false; }
 
@@ -244,30 +213,9 @@ bool FinalizeOrphanedMinidump(GeckoChildID aChildId, GeckoProcessType aType,
   return false;
 }
 
-#if defined(XP_WIN)
-
-DWORD WINAPI WerNotifyProc(LPVOID aParameter) { return 0; }
-
-#endif  // defined(XP_WIN)
 
 ThreadId CurrentThreadId() {
-#if defined(XP_WIN)
-  return ::GetCurrentThreadId();
-#elif defined(XP_LINUX)
-  // This matches Breakpad behavior, it doesn't need to be this way once we
-  // drop Breakpad and switch minidump generation fully to minidump-writer.
-  auto tid = syscall(SYS_gettid);
-
-  if (tid != -1) {
-    return tid;
-  }
-
-  return getpid();
-#elif defined(XP_DARWIN)
   return mach_thread_self();
-#else
-  return -1;  // Just a dummy value on unsupported platforms.
-#endif
 }
 
 bool TakeMinidump(nsIFile** aResult, bool aMoveToPending) { return false; }
@@ -281,11 +229,5 @@ bool CreateMinidumpsAndPair(GeckoChildID aId, ThreadId aTargetBlamedThread,
 
 bool UnsetRemoteExceptionHandler(bool wasSet) { return false; }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void SetNotificationPipeForChild(FileHandle childCrashFd) {}
-
-void AddLibraryMapping(const char* library_name, uintptr_t start_address,
-                       size_t mapping_length, size_t file_offset) {}
-#endif
 
 }  // namespace CrashReporter

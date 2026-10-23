@@ -226,11 +226,7 @@ bool TouchEvent::PrefEnabled(nsIDocShell* aDocShell) {
     enabled = false;
   } else if (nsContentUtils::ShouldResistFingerprinting(
                  aDocShell, RFPTarget::PointerEvents)) {
-#ifdef MOZ_WIDGET_COCOA
     enabled = false;
-#else
-    enabled = true;
-#endif
   } else {
     const int32_t prefValue = StaticPrefs::dom_w3c_touch_events_enabled();
     if (prefValue == 2) {
@@ -245,17 +241,6 @@ bool TouchEvent::PrefEnabled(nsIDocShell* aDocShell) {
         firstTime = false;
       }
 
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-      if (enabled && aDocShell) {
-        // APZ might be disabled on this particular widget, in which case
-        // TouchEvent support will also be disabled. Try to detect that.
-        if (RefPtr<nsPresContext> pc = aDocShell->GetPresContext()) {
-          if (nsCOMPtr<nsIWidget> widget = pc->GetRootWidget()) {
-            enabled &= widget->AsyncPanZoomEnabled();
-          }
-        }
-      }
-#endif
     } else {
       enabled = !!prefValue;
     }

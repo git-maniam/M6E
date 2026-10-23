@@ -39,9 +39,6 @@ class nsRemoteService final : public nsIObserver, public nsIRemoteService {
   nsRemoteService();
   void SetProgram(const char* aProgram);
   void SetProfile(nsACString& aProfile);
-#ifdef MOZ_WIDGET_GTK
-  void SetStartupToken(nsACString& aStartupToken);
-#endif
 
   using StartupLockPromise =
       mozilla::MozPromise<RefPtr<nsStartupLock>, nsresult, false>;
@@ -91,9 +88,6 @@ class nsRemoteService final : public nsIObserver, public nsIRemoteService {
   mozilla::UniquePtr<nsRemoteServer> mRemoteServer;
   nsCString mProgram;
   nsCString mProfile;
-#ifdef MOZ_WIDGET_GTK
-  nsCString mStartupToken;
-#endif
 };
 
 #endif  // TOOLKIT_COMPONENTS_REMOTE_NSREMOTESERVER_H_

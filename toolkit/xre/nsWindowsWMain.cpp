@@ -9,36 +9,13 @@
 // similar bootstrap code. It converts wide-character windows wmain into UTF-8
 // narrow-character strings.
 
-#ifndef XP_WIN
 #  error This file only makes sense on Windows.
-#endif
 
 #include "mozilla/Char16.h"
 #include "nsUTF8Utils.h"
 
 #include <windows.h>
 
-#ifdef __MINGW32__
-
-/* MingW currently does not implement a wide version of the
-   startup routines.  Workaround is to implement something like
-   it ourselves.  See bug 411826 */
-
-#  include <shellapi.h>
-
-int wmain(int argc, WCHAR** argv);
-
-int main(int argc, char** argv) {
-  LPWSTR commandLine = GetCommandLineW();
-  int argcw = 0;
-  LPWSTR* argvw = CommandLineToArgvW(commandLine, &argcw);
-  if (!argvw) return 127;
-
-  int result = wmain(argcw, argvw);
-  LocalFree(argvw);
-  return result;
-}
-#endif /* __MINGW32__ */
 
 #define main NS_internal_main
 

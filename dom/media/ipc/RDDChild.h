@@ -11,9 +11,6 @@
 
 namespace mozilla {
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-class SandboxBroker;
-#endif
 
 namespace dom {
 class MemoryReportRequestHost;
@@ -42,11 +39,6 @@ class RDDChild final : public PRDDChild,
   void ActorDestroy(ActorDestroyReason aWhy) override;
 
   mozilla::ipc::IPCResult RecvAddMemoryReport(const MemoryReport& aReport);
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvGetModulesTrust(
-      ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-      GetModulesTrustResolver&& aResolver);
-#endif  // defined(XP_WIN)
   mozilla::ipc::IPCResult RecvUpdateMediaCodecsSupported(
       const media::MediaCodecsSupported& aSupported);
   mozilla::ipc::IPCResult RecvFOGData(ByteBuf&& aBuf);
@@ -76,9 +68,6 @@ class RDDChild final : public PRDDChild,
 
   RefPtr<RDDProcessHost> mHost;
   UniquePtr<MemoryReportRequestHost> mMemoryReportRequest;
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  RefPtr<SandboxBroker> mSandboxBroker;
-#endif
 };
 
 }  // namespace mozilla

@@ -63,12 +63,10 @@ class VRManager : nsIObserver {
                         const TimeDuration& aTimeout);
   void Shutdown();
   void ShutdownVRManagerParents();
-#if !defined(MOZ_WIDGET_ANDROID)
   bool RunPuppet(const nsTArray<uint64_t>& aBuffer,
                  VRManagerParent* aManagerParent);
   void ResetPuppet(VRManagerParent* aManagerParent);
   void NotifyPuppetComplete();
-#endif
   void AddLayer(VRLayerParent* aLayer);
   void RemoveLayer(VRLayerParent* aLayer);
   void SetGroupMask(uint32_t aGroupMask);
@@ -106,9 +104,7 @@ class VRManager : nsIObserver {
   void DispatchRuntimeCapabilitiesUpdate();
   void UpdateRequestedDevices();
   void CheckForInactiveTimeout();
-#if !defined(MOZ_WIDGET_ANDROID)
   void CheckForPuppetCompletion();
-#endif
   void CheckForShutdown();
   void CheckWatchDog();
   void ExpireNavigationTransition();
@@ -132,10 +128,8 @@ class VRManager : nsIObserver {
   Atomic<VRManagerState> mState;
   typedef nsTHashSet<RefPtr<VRManagerParent>> VRManagerParentSet;
   VRManagerParentSet mVRManagerParents;
-#if !defined(MOZ_WIDGET_ANDROID)
   VRManagerParentSet mManagerParentsWaitingForPuppetReset;
   RefPtr<VRManagerParent> mManagerParentRunningPuppet;
-#endif
   // Weak reference to mLayers entries are cleared in
   // VRLayerParent destructor
   nsTArray<VRLayerParent*> mLayers;
@@ -169,9 +163,7 @@ class VRManager : nsIObserver {
   VRShMem* mShmem;
   bool mVRProcessEnabled;
 
-#if !defined(MOZ_WIDGET_ANDROID)
   RefPtr<VRServiceHost> mServiceHost;
-#endif
 
   static Atomic<uint32_t> sDisplayBase;
   RefPtr<VRThread> mSubmitThread;

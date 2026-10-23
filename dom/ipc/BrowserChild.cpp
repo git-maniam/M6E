@@ -120,9 +120,6 @@
 #include "nsWebBrowser.h"
 #include "nsWindowWatcher.h"
 
-#ifdef MOZ_WAYLAND
-#  include "nsAppRunner.h"
-#endif
 
 #include "mozilla/layout/RemotePrintJobChild.h"
 #include "nsIPrintSettings.h"
@@ -1269,18 +1266,6 @@ mozilla::ipc::IPCResult BrowserChild::RecvDynamicToolbarOffsetChanged(
 
 mozilla::ipc::IPCResult BrowserChild::RecvKeyboardHeightChanged(
     const ScreenIntCoord& aHeight) {
-#if defined(MOZ_WIDGET_ANDROID)
-  mKeyboardHeight = aHeight;
-
-  RefPtr<Document> document = GetTopLevelDocument();
-  if (!document) {
-    return IPC_OK();
-  }
-
-  if (nsPresContext* presContext = document->GetPresContext()) {
-    presContext->UpdateKeyboardHeight(aHeight);
-  }
-#endif
   return IPC_OK();
 }
 
@@ -2732,19 +2717,6 @@ RefPtr<VsyncMainChild> BrowserChild::GetVsyncChild() {
   // Initializing VsyncMainChild here turns on per-BrowserChild Vsync for a
   // given platform. Note: this only makes sense if nsWindow returns a
   // window-specific VsyncSource.
-#if defined(MOZ_WAYLAND)
-  if (IsWaylandEnabled()) {
-    if (auto* actor = static_cast<VsyncMainChild*>(
-            LoneManagedOrNullAsserts(ManagedPVsyncChild()))) {
-      return actor;
-    }
-    auto actor = MakeRefPtr<VsyncMainChild>();
-    if (!SendPVsyncConstructor(actor)) {
-      return nullptr;
-    }
-    return actor;
-  }
-#endif
   return nullptr;
 }
 
@@ -4084,41 +4056,6 @@ void BrowserChild::UpdateSessionStore() {
   }
 }
 
-#ifdef XP_WIN
-RefPtr<PBrowserChild::IsWindowSupportingProtectedMediaPromise>
-BrowserChild::DoesWindowSupportProtectedMedia() {
-  MOZ_ASSERT(
-      NS_IsMainThread(),
-      "Protected media support check should be done on main thread only.");
-  if (mWindowSupportsProtectedMedia) {
-    // If we've already checked and have a cached result, resolve with that.
-    return IsWindowSupportingProtectedMediaPromise::CreateAndResolve(
-        mWindowSupportsProtectedMedia.value(), __func__);
-  }
-  RefPtr<BrowserChild> self = this;
-  // We chain off the promise rather than passing it directly so we can cache
-  // the result and use that for future calls.
-  return SendIsWindowSupportingProtectedMedia(ChromeOuterWindowID())
-      ->Then(
-          GetCurrentSerialEventTarget(), __func__,
-          [self](bool isSupported) {
-            // If a result was cached while this check was inflight, ensure the
-            // results match.
-            MOZ_ASSERT_IF(
-                self->mWindowSupportsProtectedMedia,
-                self->mWindowSupportsProtectedMedia.value() == isSupported);
-            // Cache the response as it will not change during the lifetime
-            // of this object.
-            self->mWindowSupportsProtectedMedia = Some(isSupported);
-            return IsWindowSupportingProtectedMediaPromise::CreateAndResolve(
-                self->mWindowSupportsProtectedMedia.value(), __func__);
-          },
-          [](ResponseRejectReason reason) {
-            return IsWindowSupportingProtectedMediaPromise::CreateAndReject(
-                reason, __func__);
-          });
-}
-#endif
 
 void BrowserChild::NotifyContentBlockingEvent(
     uint32_t aEvent, nsIChannel* aChannel, bool aBlocked,

@@ -48,27 +48,8 @@
 #include "js/PropertySpec.h"
 #include "js/SourceText.h"  // JS::SourceText
 
-#ifdef ANDROID
-#  include <android/log.h>
 
-#  include "XREShellData.h"
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoThreadWrappers.h"
-#endif
-
-#ifdef XP_WIN
-#  include "mozilla/mscom/ProcessRuntime.h"
-#  include "mozilla/ScopeExit.h"
-#  include "mozilla/WinDllServices.h"
-
-#  include <windows.h>
-#  if defined(MOZ_SANDBOX)
-#    include "sandboxBroker.h"
-#    include "XREShellData.h"
-#  endif
-#endif
 
 #ifdef MOZ_CODE_COVERAGE
 #  include "mozilla/CodeCoverageHandler.h"
@@ -151,27 +132,10 @@ static bool GetLocationProperty(JSContext* cx, unsigned argc, Value* vp) {
     JS_ReportErrorASCII(cx, "Unexpected this value for GetLocationProperty");
     return false;
   }
-#if !defined(XP_WIN) && !defined(XP_UNIX)
-  // XXX: your platform should really implement this
-  return false;
-#else
   JS::AutoFilename filename;
   if (JS::DescribeScriptedCaller(&filename, cx) && filename.get()) {
     NS_ConvertUTF8toUTF16 filenameString(filename.get());
 
-#  if defined(XP_WIN)
-    // replace forward slashes with backslashes,
-    // since nsLocalFileWin chokes on them
-    char16_t* start = filenameString.BeginWriting();
-    char16_t* end = filenameString.EndWriting();
-
-    while (start != end) {
-      if (*start == L'/') {
-        *start = L'\\';
-      }
-      start++;
-    }
-#  endif
 
     nsCOMPtr<nsIFile> location;
     (void)NS_NewLocalFile(filenameString, getter_AddRefs(location));
@@ -201,7 +165,6 @@ static bool GetLocationProperty(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   return true;
-#endif
 }
 
 static bool GetLine(JSContext* cx, char* bufp, size_t bufsize, FILE* file,
@@ -327,18 +290,6 @@ static bool Dump(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", utf8str.get());
-#endif
-#ifdef XP_WIN
-  if (IsDebuggerPresent()) {
-    nsAutoJSString wstr;
-    if (!wstr.init(cx, str)) {
-      return false;
-    }
-    OutputDebugStringW(wstr.get());
-  }
-#endif
   fputs(utf8str.get(), gOutFile);
   fflush(gOutFile);
   return true;
@@ -558,36 +509,6 @@ static bool SimulateNoScriptActivity(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-#ifdef ANDROID
-static bool ChangeTestShellDir(JSContext* cx, unsigned argc, Value* vp) {
-  // This method should only be used by testing/xpcshell/head.js to change to
-  // the correct directory on Android Remote XPCShell tests.
-  //
-  // TODO: Bug 1801725 - Find a more ergonomic way to do this than exposing
-  // identical methods in XPCShellEnvironment and XPCShellImpl to chdir on
-  // android for Remote XPCShell tests on Android.
-  CallArgs args = CallArgsFromVp(argc, vp);
-
-  if (args.length() != 1) {
-    JS_ReportErrorASCII(cx, "changeTestShellDir() takes one argument");
-    return false;
-  }
-
-  nsAutoJSCString path;
-  if (!path.init(cx, args[0])) {
-    JS_ReportErrorASCII(
-        cx, "changeTestShellDir(): could not convert argument 1 to string");
-    return false;
-  }
-
-  if (chdir(path.get())) {
-    JS_ReportErrorASCII(cx, "changeTestShellDir(): could not change directory");
-    return false;
-  }
-
-  return true;
-}
-#endif
 
 #ifdef ENABLE_TESTS
 static bool RegisterXPCTestComponents(JSContext* cx, unsigned argc, Value* vp) {
@@ -623,9 +544,6 @@ static const JSFunctionSpec glob_functions[] = {
     JS_FN("btoa",            xpc::Btoa,      1,0),
     JS_FN("setInterruptCallback", SetInterruptCallback, 1,0),
     JS_FN("simulateNoScriptActivity", SimulateNoScriptActivity, 1,0),
-#ifdef ANDROID
-    JS_FN("changeTestShellDir", ChangeTestShellDir, 1,0),
-#endif
 #ifdef ENABLE_TESTS
     JS_FN("registerXPCTestComponents", RegisterXPCTestComponents, 0, 0),
 #endif
@@ -958,18 +876,6 @@ static bool ProcessArgs(AutoJSAPI& jsapi, char** argv, int argc,
 /***************************************************************************/
 
 static bool GetCurrentWorkingDirectory(nsAString& workingDirectory) {
-#if !defined(XP_WIN) && !defined(XP_UNIX)
-  // XXX: your platform should really implement this
-  return false;
-#elif XP_WIN
-  DWORD requiredLength = GetCurrentDirectoryW(0, nullptr);
-  workingDirectory.SetLength(requiredLength);
-  GetCurrentDirectoryW(workingDirectory.Length(),
-                       (LPWSTR)workingDirectory.BeginWriting());
-  // we got a trailing null there
-  workingDirectory.SetLength(requiredLength);
-  workingDirectory.Replace(workingDirectory.Length() - 1, 1, L'\\');
-#elif defined(XP_UNIX)
   nsAutoCString cwd;
   // 1024 is just a guess at a sane starting value
   size_t bufsize = 1024;
@@ -989,7 +895,6 @@ static bool GetCurrentWorkingDirectory(nsAString& workingDirectory) {
   cwd.SetLength(strlen(result) + 1);
   cwd.Replace(cwd.Length() - 1, 1, '/');
   CopyUTF8toUTF16(cwd, workingDirectory);
-#endif
   return true;
 }
 
@@ -1003,13 +908,8 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
   int result = 0;
   nsresult rv;
 
-#ifdef ANDROID
-  gOutFile = aShellData->outFile;
-  gErrFile = aShellData->errFile;
-#else
   gOutFile = stdout;
   gErrFile = stderr;
-#endif
   gInFile = stdin;
 
   NS_LogInit();
@@ -1047,17 +947,6 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
         "*** You are running in chaos test mode. See ChaosMode.h. ***\n");
   }
 
-#ifdef XP_WIN
-  // Some COM settings are global to the process and must be set before any non-
-  // trivial COM is run in the application. Since these settings may affect
-  // stability, we should instantiate COM ASAP so that we can ensure that these
-  // global settings are configured before anything can interfere.
-  mscom::ProcessRuntime mscom;
-
-#  ifdef MOZ_SANDBOX
-  nsAutoString binDirPath;
-#  endif
-#endif
 
   // The provider needs to outlive the call to shutting down XPCOM.
   XPCShellDirProvider dirprovider;
@@ -1076,10 +965,6 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
       return 1;
     }
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-    // We need the binary directory to initialize the windows sandbox.
-    MOZ_ALWAYS_SUCCEEDS(appDir->GetPath(binDirPath));
-#endif
 
     dirprovider.SetAppFile(appFile);
 
@@ -1100,7 +985,6 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
       argc -= 2;
       argv += 2;
     } else {
-#ifdef XP_MACOSX
       // On OSX, the GreD needs to point to Contents/Resources in the .app
       // bundle. Libraries will be loaded at a relative path to GreD, i.e.
       // ../MacOS.
@@ -1115,18 +999,6 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
         greDir = tmpDir.forget();
       }
       dirprovider.SetGREDirs(greDir);
-#else
-      nsAutoString workingDir;
-      if (!GetCurrentWorkingDirectory(workingDir)) {
-        printf("GetCurrentWorkingDirectory failed.\n");
-        return 1;
-      }
-      rv = NS_NewLocalFile(workingDir, getter_AddRefs(greDir));
-      if (NS_FAILED(rv)) {
-        printf("NS_NewLocalFile failed.\n");
-        return 1;
-      }
-#endif
     }
 
     if (argc > 1 && !strcmp(argv[1], "-a")) {
@@ -1176,11 +1048,6 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
         return 1;
       }
 
-#if defined(MOZ_WIDGET_ANDROID)
-      CrashReporter::SetCrashHelperPipes(
-          aShellData->crashChildNotificationSocket,
-          aShellData->crashHelperSocket);
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
       rv = CrashReporter::OOPInit(greBinDir, /*force=*/true);
       if (NS_FAILED(rv)) {
@@ -1290,26 +1157,6 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
 
     // Initialize e10s check on the main thread, if not already done
     BrowserTabsRemoteAutostart();
-#if defined(XP_WIN)
-    // Ensure that DLL Services are running
-    RefPtr<DllServices> dllSvc(DllServices::Get());
-    dllSvc->StartUntrustedModulesProcessor(true);
-    auto dllServicesDisable =
-        MakeScopeExit([&dllSvc]() { dllSvc->DisableFull(); });
-
-#  if defined(MOZ_SANDBOX)
-    // Required for sandboxed child processes.
-    if (aShellData->sandboxBrokerServices) {
-      SandboxBroker::Initialize(aShellData->sandboxBrokerServices, binDirPath);
-      SandboxBroker::GeckoDependentInitialize();
-    } else {
-      NS_WARNING(
-          "Failed to initialize broker services, sandboxed "
-          "processes will fail to start.");
-    }
-#  endif  // defined(MOZ_SANDBOX)
-
-#endif  // defined(XP_WIN)
 
 #ifdef MOZ_CODE_COVERAGE
     CodeCoverageHandler::Init();
@@ -1383,11 +1230,6 @@ int XRE_XPCShellMain(int argc, char** argv, char** envp,
         obs->Observe(nullptr, "quit-application-forced", nullptr);
       }
 
-#ifdef MOZ_WIDGET_ANDROID
-      MOZ_ASSERT(jni::IsAvailable());
-      java::GeckoThread::CheckAndSetState(java::GeckoThread::State::RUNNING(),
-                                          java::GeckoThread::State::EXITING());
-#endif
 
       JS_DropPrincipals(cx, gJSPrincipals);
       JS_SetAllNonReservedSlotsToUndefined(glob);
@@ -1432,13 +1274,11 @@ void XPCShellDirProvider::SetGREDirs(nsIFile* greDir) {
   mGREDir = greDir;
   mGREDir->Clone(getter_AddRefs(mGREBinDir));
 
-#ifdef XP_MACOSX
   nsAutoCString leafName;
   mGREDir->GetNativeLeafName(leafName);
   if (leafName.EqualsLiteral("Resources")) {
     mGREBinDir->SetNativeLeafName("MacOS"_ns);
   }
-#endif
 }
 
 void XPCShellDirProvider::SetAppFile(nsIFile* appFile) { mAppFile = appFile; }

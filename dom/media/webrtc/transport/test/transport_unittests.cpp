@@ -9,11 +9,9 @@
 #include <iostream>
 #include <string>
 
-#ifdef XP_MACOSX
 // ensure that Apple Security kit enum goes before "sslproto.h"
 #  include <CoreFoundation/CFAvailability.h>
 #  include <Security/CipherSuite.h>
-#endif
 
 #include "dtlsidentity.h"
 #include "logging.h"

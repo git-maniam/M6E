@@ -18,9 +18,6 @@
 #include "mozilla/dom/PluginCrashedEvent.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "nsThreadUtils.h"
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxInfo.h"
-#endif
 #include "VideoUtils.h"
 #include "mozilla/Services.h"
 #include "mozilla/SyncRunnable.h"

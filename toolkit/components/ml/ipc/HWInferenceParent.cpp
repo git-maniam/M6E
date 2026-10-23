@@ -41,9 +41,6 @@
 #include "prio.h"
 #include "private/pprio.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 namespace mozilla::hwinference {
 

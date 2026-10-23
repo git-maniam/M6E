@@ -88,19 +88,12 @@ class Registers {
   static const SetType VolatileMask =
       (1 << r0) | (1 << r1) | (1 << Registers::r2) |
       (1 << Registers::r3)
-#if defined(XP_IOS)
-      // per
-      // https://developer.apple.com/library/ios/documentation/Xcode/Conceptual/iPhoneOSABIReference/Articles/ARMv6FunctionCallingConventions.html#//apple_ref/doc/uid/TP40009021-SW4
-      | (1 << Registers::r9)
-#endif
       ;
 
   static const SetType NonVolatileMask =
       (1 << Registers::r4) | (1 << Registers::r5) | (1 << Registers::r6) |
       (1 << Registers::r7) | (1 << Registers::r8) |
-#if !defined(XP_IOS)
       (1 << Registers::r9) |
-#endif
       (1 << Registers::r10) | (1 << Registers::r11) | (1 << Registers::r12) |
       (1 << Registers::r14);
 

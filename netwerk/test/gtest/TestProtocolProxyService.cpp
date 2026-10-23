@@ -161,7 +161,6 @@ TEST(TestProtocolProxyService, LoadHostFilters)
   CheckPortDomain(false);
 }
 
-#ifndef ANDROID
 TEST(TestProtocolProxyService, Proxy_Env_Vars)
 {
   nsCOMPtr<nsISystemProxySettings> systemProxy =
@@ -287,7 +286,6 @@ TEST(TestProtocolProxyService, Proxy_Env_Vars)
     PR_SetEnv("https_proxy=");
   }
 }
-#endif  // !ANDROID
 
 }  // namespace net
 }  // namespace mozilla

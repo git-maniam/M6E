@@ -2645,10 +2645,8 @@ void nsHttpConnection::HandshakeDoneInternal() {
                       (tlsVersion < nsITLSSocketControl::TLS_VERSION_1_3) &&
                       (tlsVersion != nsITLSSocketControl::SSL_VERSION_UNKNOWN))
                   .Finalize();
-#ifndef ANDROID
   mTlsHandshaker->EarlyDataTelemetry(tlsVersion, earlyDataAccepted,
                                      mContentBytesWritten0RTT);
-#endif
   mTlsHandshaker->EarlyDataDone();
 
   if (!earlyDataAccepted) {

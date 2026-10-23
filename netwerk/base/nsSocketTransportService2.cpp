@@ -32,9 +32,7 @@
 #include "nsThreadUtils.h"
 #include "prerror.h"
 #include "prnetdb.h"
-#ifdef XP_UNIX
 #  include "private/pprio.h"
-#endif
 
 namespace mozilla {
 namespace net {
@@ -443,7 +441,6 @@ nsSocketTransportService::AttachSocket(PRFileDesc* fd,
   SOCKET_LOG(
       ("nsSocketTransportService::AttachSocket [handler=%p]\n", handler));
 
-#ifdef XP_UNIX
   // On Darwin this is the FD_SETSIZE from config/external/nspr/pr/moz.build.
   static constexpr PROsfd kFDs = 65536;
   PROsfd osfd = PR_FileDesc2NativeHandle(fd);
@@ -451,7 +448,6 @@ nsSocketTransportService::AttachSocket(PRFileDesc* fd,
   // invalid (POLLNVAL) and networking degrades into hard-to-debug failures.
   // Crash early with a clear reason instead. See bug 1980171 for context.
   MOZ_RELEASE_ASSERT(osfd < kFDs);
-#endif
 
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
@@ -774,18 +770,7 @@ void nsSocketTransportService::UpdatePrefs(const char* aPref, void* aSelf) {
 }
 
 static uint32_t GetThreadStackSize() {
-#ifdef XP_WIN
-  if (!StaticPrefs::network_allow_large_stack_size_for_socket_thread()) {
-    return nsIThreadManager::DEFAULT_STACK_SIZE;
-  }
-
-  const uint32_t kWindowsThreadStackSize = 512 * 1024;
-  // We can remove this custom stack size when DEFAULT_STACK_SIZE is increased.
-  static_assert(kWindowsThreadStackSize > nsIThreadManager::DEFAULT_STACK_SIZE);
-  return kWindowsThreadStackSize;
-#else
   return nsIThreadManager::DEFAULT_STACK_SIZE;
-#endif
 }
 
 // called from main thread only
@@ -1034,7 +1019,6 @@ nsSocketTransportService::CreateRoutedTransport(
 NS_IMETHODIMP
 nsSocketTransportService::CreateUnixDomainTransport(
     nsIFile* aPath, nsISocketTransport** result) {
-#ifdef XP_UNIX
   nsresult rv;
 
   NS_ENSURE_TRUE(mInitialized, NS_ERROR_NOT_INITIALIZED);
@@ -1050,31 +1034,13 @@ nsSocketTransportService::CreateUnixDomainTransport(
 
   trans.forget(result);
   return NS_OK;
-#else
-  return NS_ERROR_SOCKET_ADDRESS_NOT_SUPPORTED;
-#endif
 }
 
 NS_IMETHODIMP
 nsSocketTransportService::CreateUnixDomainAbstractAddressTransport(
     const nsACString& aName, nsISocketTransport** result) {
   // Abstract socket address is supported on Linux only
-#ifdef XP_LINUX
-  RefPtr<nsSocketTransport> trans = new nsSocketTransport();
-  // First character of Abstract socket address is null
-  UniquePtr<char[]> name(new char[aName.Length() + 1]);
-  *(name.get()) = 0;
-  memcpy(name.get() + 1, aName.BeginReading(), aName.Length());
-  nsresult rv = trans->InitWithName(name.get(), aName.Length() + 1);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  trans.forget(result);
-  return NS_OK;
-#else
   return NS_ERROR_SOCKET_ADDRESS_NOT_SUPPORTED;
-#endif
 }
 
 NS_IMETHODIMP
@@ -1086,11 +1052,6 @@ nsSocketTransportService::OnDispatchedEvent() {
     SOCKET_LOG(("OnDispatchedEvent Same Thread Skip Signal\n"));
     return NS_OK;
   }
-#ifdef XP_WIN
-  if (gIOService->IsNetTearingDown()) {
-    StartPollWatchdog();
-  }
-#endif
 
   MutexAutoLock lock(mLock);
   if (mPollableEvent) {
@@ -1119,17 +1080,6 @@ NS_IMETHODIMP
 nsSocketTransportService::Run() {
   SOCKET_LOG(("STS thread init %d sockets\n", gMaxCount));
 
-#if defined(XP_WIN)
-  // see bug 1361495, gethostname() triggers winsock initialization.
-  // so do it here (on parent and child) to protect against it being done first
-  // accidentally on the main thread.. especially via PR_GetSystemInfo(). This
-  // will also improve latency of first real winsock operation
-  // ..
-  // If STS-thread is no longer needed this should still be run before exiting
-
-  char ignoredStackBuffer[255];
-  (void)gethostname(ignoredStackBuffer, 255);
-#endif
 
   psm::InitializeSSLServerCertVerificationThreads();
 
@@ -1436,13 +1386,7 @@ nsresult nsSocketTransportService::DoPollIteration() {
 
   if (!gIOService->IsNetTearingDown()) {
     // Let's not do polling during shutdown.
-#if defined(XP_WIN)
-    StartPolling();
-#endif
     n = Poll(now);
-#if defined(XP_WIN)
-    EndPolling();
-#endif
   }
 
   now = PR_IntervalNow();
@@ -1530,9 +1474,6 @@ void nsSocketTransportService::UpdateSendBufferPref() {
     return;
   }
 
-#if defined(XP_WIN)
-  mSendBufferSize = 131072 * 4;
-#endif
 }
 
 nsresult nsSocketTransportService::UpdatePrefs() {
@@ -1677,11 +1618,6 @@ nsSocketTransportService::Observe(nsISupports* subject, const char* topic,
       mSleepPhase = false;
     }
 
-#if defined(XP_WIN)
-    if (timer == mPollRepairTimer) {
-      DoPollRepair();
-    }
-#endif
 
   } else if (!strcmp(topic, NS_WIDGET_SLEEP_OBSERVER_TOPIC)) {
     mSleepPhase = true;
@@ -1726,9 +1662,7 @@ nsSocketTransportService::GetSendBufferSize(int32_t* value) {
 
 /// ugly OS specific includes are placed at the bottom of the src for clarity
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#elif defined(XP_UNIX) && !defined(AIX) && !defined(NEXTSTEP) && !defined(QNX)
+#if   defined(XP_UNIX) && !defined(AIX) && !defined(NEXTSTEP) && !defined(QNX)
 #  include <sys/resource.h>
 #endif
 
@@ -1768,11 +1702,6 @@ PRStatus nsSocketTransportService::DiscoverMaxCount() {
     gMaxCount = rlimitData.rlim_cur;
   }
 
-#elif defined(XP_WIN) && !defined(WIN_CE)
-  // >= XP is confirmed to have at least 1000
-  static_assert(SOCKET_LIMIT_TARGET <= 1000,
-                "SOCKET_LIMIT_TARGET max value is 1000");
-  gMaxCount = SOCKET_LIMIT_TARGET;
 #else
   // other platforms are harder to test - so leave at safe legacy value
 #endif
@@ -1864,50 +1793,6 @@ bool nsSocketTransportService::IsTelemetryEnabledAndNotSleepPhase() {
   return Telemetry::CanRecordPrereleaseData() && !mSleepPhase;
 }
 
-#if defined(XP_WIN)
-void nsSocketTransportService::StartPollWatchdog() {
-  // Start off the timer from a runnable off of the main thread in order to
-  // avoid a deadlock, see bug 1370448.
-  RefPtr<nsSocketTransportService> self(this);
-  NS_DispatchToMainThread(NS_NewRunnableFunction(
-      "nsSocketTransportService::StartPollWatchdog", [self] {
-        MutexAutoLock lock(self->mLock);
-
-        // Poll can hang sometimes. If we are in shutdown, we are going to start
-        // a watchdog. If we do not exit poll within REPAIR_POLLABLE_EVENT_TIME
-        // signal a pollable event again.
-        if (gIOService->IsNetTearingDown() && self->mPolling &&
-            !self->mPollRepairTimer) {
-          NS_NewTimerWithObserver(getter_AddRefs(self->mPollRepairTimer), self,
-                                  REPAIR_POLLABLE_EVENT_TIME,
-                                  nsITimer::TYPE_REPEATING_SLACK);
-        }
-      }));
-}
-
-void nsSocketTransportService::DoPollRepair() {
-  MutexAutoLock lock(mLock);
-  if (mPolling && mPollableEvent) {
-    mPollableEvent->Signal(/* aForce = */ true);
-  } else if (mPollRepairTimer) {
-    mPollRepairTimer->Cancel();
-  }
-}
-
-void nsSocketTransportService::StartPolling() {
-  MutexAutoLock lock(mLock);
-  mPolling = true;
-}
-
-void nsSocketTransportService::EndPolling() {
-  MutexAutoLock lock(mLock);
-  mPolling = false;
-  if (mPollRepairTimer) {
-    mPollRepairTimer->Cancel();
-  }
-}
-
-#endif
 
 void nsSocketTransportService::TryRepairPollableEvent() MOZ_REQUIRES(mLock) {
   mLock.AssertCurrentThreadOwns();

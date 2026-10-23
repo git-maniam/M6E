@@ -407,13 +407,6 @@ bool D3D11LayersCrashGuard::UpdateEnvironment() {
 
   bool changed = false;
   // Feature status.
-#if defined(XP_WIN)
-  bool d3d11Enabled = gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING);
-  changed |= CheckAndUpdateBoolPref("feature-d3d11", d3d11Enabled);
-  if (changed) {
-    RecordTelemetry(TelemetryState::EnvironmentChanged);
-  }
-#endif
 
   return changed;
 }
@@ -457,14 +450,7 @@ void GLContextCrashGuard::Initialize() {
     return;
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // Disable the WebGL crash guard on Android - it doesn't use E10S, and
-  // its drivers will essentially never change, so the crash guard could
-  // permanently disable WebGL.
-  return;
-#else
   DriverCrashGuard::Initialize();
-#endif
 }
 
 bool GLContextCrashGuard::UpdateEnvironment() {
@@ -479,20 +465,6 @@ bool GLContextCrashGuard::UpdateEnvironment() {
 
   bool changed = false;
 
-#if defined(XP_WIN)
-  changed |= CheckAndUpdateBoolPref("gfx.driver-init.webgl-angle-force-d3d11",
-                                    StaticPrefs::webgl_angle_force_d3d11());
-  changed |= CheckAndUpdateBoolPref("gfx.driver-init.webgl-angle-try-d3d11",
-                                    StaticPrefs::webgl_angle_try_d3d11());
-  changed |= CheckAndUpdateBoolPref("gfx.driver-init.webgl-angle-force-warp",
-                                    StaticPrefs::webgl_angle_force_warp());
-  changed |= CheckAndUpdateBoolPref(
-      "gfx.driver-init.webgl-angle",
-      FeatureEnabled(nsIGfxInfo::FEATURE_WEBGL_ANGLE, false));
-  changed |= CheckAndUpdateBoolPref(
-      "gfx.driver-init.direct3d11-angle",
-      FeatureEnabled(nsIGfxInfo::FEATURE_DIRECT3D_11_ANGLE, false));
-#endif
 
   return changed;
 }

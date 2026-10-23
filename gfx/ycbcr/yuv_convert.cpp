@@ -433,10 +433,6 @@ ScaleYCbCrToRGB32(const uint8_t* y_buf,
                   ScaleFilter filter) {
   bool use_deprecated =
       StaticPrefs::gfx_ycbcr_accurate_conversion() ||
-#if defined(XP_WIN) && defined(_M_X64) && !defined(__clang__)
-      // libyuv does not support SIMD scaling on MSVC 64bit. See Bug 1295927.
-      supports_sse3() ||
-#endif
 #if defined(MOZ_YCBCR_ROW_SSE)
       // Only worth taking the deprecated path where the SSE row functions
       // exist; otherwise it just falls back to LinearScaleYUVToRGB32Row_C and
@@ -618,35 +614,9 @@ ScaleYCbCrToRGB32_deprecated(const uint8_t* y_buf,
                                  dest_pixel, width, source_dx);
     } else {
 // Specialized scalers and rotation.
-#if defined(MOZILLA_MAY_SUPPORT_SSE) && defined(_MSC_VER) && defined(_M_IX86) && !defined(__clang__)
-      if(mozilla::supports_sse()) {
-        if (width == (source_width * 2)) {
-          DoubleYUVToRGB32Row_SSE(y_ptr, u_ptr, v_ptr,
-                                  dest_pixel, width);
-        } else if ((source_dx & kFractionMask) == 0) {
-          // Scaling by integer scale factor. ie half.
-          ConvertYUVToRGB32Row_SSE(y_ptr, u_ptr, v_ptr,
-                                   dest_pixel, width,
-                                   source_dx >> kFractionBits);
-        } else if (source_dx_uv == source_dx) {  // Not rotated.
-          ScaleYUVToRGB32Row(y_ptr, u_ptr, v_ptr,
-                             dest_pixel, width, source_dx);
-        } else {
-          RotateConvertYUVToRGB32Row_SSE(y_ptr, u_ptr, v_ptr,
-                                         dest_pixel, width,
-                                         source_dx >> kFractionBits,
-                                         source_dx_uv >> kFractionBits);
-        }
-      }
-      else {
-        ScaleYUVToRGB32Row_C(y_ptr, u_ptr, v_ptr,
-                             dest_pixel, width, source_dx);
-      }
-#else
       (void)source_dx_uv;
       ScaleYUVToRGB32Row(y_ptr, u_ptr, v_ptr,
                          dest_pixel, width, source_dx);
-#endif
     }
   }
   // MMX used for FastConvertYUVToRGB32Row and FilterRows requires emms.

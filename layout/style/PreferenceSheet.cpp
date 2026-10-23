@@ -177,15 +177,6 @@ void PreferenceSheet::Prefs::Load(bool aIsChrome) {
   // When forcing the pref colors, we need to forcibly use the light color-set,
   // as those are the colors exposed to the user in the colors dialog.
   mMustUseLightColorSet = mUsePrefColors && !mUseDocumentColors;
-#ifdef XP_WIN
-  if (mUseAccessibilityTheme && (mIsChrome || !mUseDocumentColors)) {
-    // Windows overrides the light colors with the HCM colors when HCM is
-    // active, so make sure to always use the light system colors in that case,
-    // and also make sure that we always use the light color set for the same
-    // reason.
-    mMustUseLightSystemColors = mMustUseLightColorSet = true;
-  }
-#endif
 
   mColorScheme = [&] {
     if (aIsChrome) {

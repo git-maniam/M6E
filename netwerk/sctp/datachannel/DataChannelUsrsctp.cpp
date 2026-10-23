@@ -13,19 +13,9 @@
 #define SCTP_DEBUG 1
 #define SCTP_STDINT_INCLUDE <stdint.h>
 
-#ifdef _MSC_VER
-// Disable "warning C4200: nonstandard extension used : zero-sized array in
-//          struct/union"
-// ...which the third-party file usrsctp.h runs afoul of.
-#  pragma warning(push)
-#  pragma warning(disable : 4200)
-#endif
 
 #include "usrsctp.h"
 
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
 #include "mozilla/media/MediaUtils.h"
 #ifdef MOZ_PEERCONNECTION
@@ -48,11 +38,7 @@ static void debug_printf(const char* format, ...) {
 
   if (MOZ_LOG_TEST(gSCTPLog, LogLevel::Debug)) {
     va_start(ap, format);
-#ifdef _WIN32
-    if (vsnprintf_s(buffer, sizeof(buffer), _TRUNCATE, format, ap) > 0) {
-#else
     if (VsprintfLiteral(buffer, format, ap) > 0) {
-#endif
       SCTP_LOG(("%s", buffer));
     }
     va_end(ap);
@@ -1218,11 +1204,7 @@ void DataChannelConnectionUsrsctp::HandleSendFailedEvent(
   if (ssfe->ssfe_flags & ~(SCTP_DATA_SENT | SCTP_DATA_UNSENT)) {
     DC_DEBUG(("(flags = %x) ", ssfe->ssfe_flags));
   }
-#ifdef XP_WIN
-#  define PRIPPID "lu"
-#else
 #  define PRIPPID "u"
-#endif
   DC_DEBUG(("message with PPID = %" PRIPPID
             ", SID = %d, flags: 0x%04x due to error = 0x%08x",
             ntohl(ssfe->ssfe_info.snd_ppid), ssfe->ssfe_info.snd_sid,

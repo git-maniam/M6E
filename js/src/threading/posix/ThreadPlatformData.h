@@ -7,17 +7,9 @@
 
 #include <pthread.h>
 
-#if defined(__APPLE__) && defined(__MACH__)
 #  include <dlfcn.h>
-#endif
 
-#if defined(__DragonFly__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-#  include <pthread_np.h>
-#endif
 
-#if defined(__linux__)
-#  include <sys/prctl.h>
-#endif
 
 #include "threading/Thread.h"
 

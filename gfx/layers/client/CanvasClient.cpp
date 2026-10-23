@@ -59,11 +59,7 @@ void CanvasClient::UseTexture(TextureClient* const aTexture) {
 }
 
 static constexpr bool kIsWindows =
-#ifdef XP_WIN
-    true;
-#else
     false;
-#endif
 
 RefPtr<TextureClient> CanvasClient::CreateTextureClientForCanvas(
     const gfx::SurfaceFormat aFormat, const gfx::IntSize aSize,

@@ -79,7 +79,6 @@ nsAppShellService::SetScreenId(uint32_t aScreenId) {
 
 NS_IMETHODIMP
 nsAppShellService::CreateHiddenWindow() {
-#if defined(XP_MACOSX)
   if (!XRE_IsParentProcess()) {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -128,7 +127,6 @@ nsAppShellService::CreateHiddenWindow() {
   }
 
   mHiddenWindow.swap(newWindow);
-#endif
 
   return NS_OK;
 }
@@ -506,11 +504,9 @@ nsresult nsAppShellService::JustCreateTopWindow(
     widgetInitData.mHasRemoteContent = true;
   }
 
-#if defined(MOZ_WIDGET_GTK) || defined(XP_WIN) || defined(XP_MACOSX)
   if (aChromeMask & nsIWebBrowserChrome::CHROME_MEDIA_PIP) {
     widgetInitData.mPiPType = mozilla::widget::PiPType::MediaPiP;
   }
-#endif
 
   if (widgetInitData.mWindowType == widget::WindowType::TopLevel &&
       (aChromeMask & nsIWebBrowserChrome::CHROME_DOCUMENT_PIP)) {
@@ -525,12 +521,6 @@ nsresult nsAppShellService::JustCreateTopWindow(
       !!(aChromeMask & nsIWebBrowserChrome::CHROME_ALERT) &&
       widgetInitData.mWindowType == widget::WindowType::Dialog;
 
-#if defined(XP_WIN)
-  if (widgetInitData.mWindowType == widget::WindowType::TopLevel ||
-      widgetInitData.mWindowType == widget::WindowType::Dialog) {
-    widgetInitData.mClipChildren = true;
-  }
-#endif
 
   // note default chrome overrides other OS chrome settings, but
   // not internal chrome

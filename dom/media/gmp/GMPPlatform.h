@@ -41,10 +41,6 @@ GMPErr SetTimerOnMainThread(GMPTask* aTask, int64_t aTimeoutMS);
 
 void SendFOGData(ipc::ByteBuf&& buf);
 
-#ifdef XP_WIN
-RefPtr<PGMPChild::GetModulesTrustPromise> SendGetModulesTrust(
-    ModuleIdentifiers&& aModules, bool aRunNormal);
-#endif
 
 }  // namespace gmp
 }  // namespace mozilla

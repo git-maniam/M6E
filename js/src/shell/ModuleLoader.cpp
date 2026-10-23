@@ -521,9 +521,6 @@ JSLinearString* ModuleLoader::resolve(JSContext* cx, HandleString specifier,
   // Treat |name| as a relative path if it starts with either "./" or "../".
   bool isRelative =
       StringStartsWith(name, u"./") || StringStartsWith(name, u"../")
-#ifdef XP_WIN
-      || StringStartsWith(name, u".\\") || StringStartsWith(name, u"..\\")
-#endif
       ;
 
   RootedString path(cx, loadPathStr);
@@ -545,9 +542,6 @@ JSLinearString* ModuleLoader::resolve(JSContext* cx, HandleString specifier,
     }
 
     int32_t sepIndex = LastIndexOf(refPath, u'/');
-#ifdef XP_WIN
-    sepIndex = std::max(sepIndex, LastIndexOf(refPath, u'\\'));
-#endif
     if (sepIndex >= 0) {
       path = SubString(cx, refPath, 0, sepIndex);
       if (!path) {
@@ -872,24 +866,6 @@ JSLinearString* ModuleLoader::normalizePath(JSContext* cx,
     return path;
   }
 
-#ifdef XP_WIN
-  // Replace all forward slashes with backward slashes.
-  path = ReplaceCharGlobally(cx, path, u'/', PathSeparator);
-  if (!path) {
-    return nullptr;
-  }
-
-  // Remove the drive letter, if present.
-  Rooted<JSLinearString*> drive(cx);
-  if (path->length() > 2 && mozilla::IsAsciiAlpha(CharAt(path, 0)) &&
-      CharAt(path, 1) == u':' && CharAt(path, 2) == u'\\') {
-    drive = SubString(cx, path, 0, 2);
-    path = SubString(cx, path, 2);
-    if (!drive || !path) {
-      return nullptr;
-    }
-  }
-#endif  // XP_WIN
 
   // Normalize the path by removing redundant path components.
   Rooted<GCVector<JSLinearString*>> components(cx, cx);
@@ -939,14 +915,6 @@ JSLinearString* ModuleLoader::normalizePath(JSContext* cx,
     return nullptr;
   }
 
-#ifdef XP_WIN
-  if (drive) {
-    normalized = JS_ConcatStrings(cx, drive, normalized);
-    if (!normalized) {
-      return nullptr;
-    }
-  }
-#endif
 
   return JS_EnsureLinearString(cx, normalized);
 }

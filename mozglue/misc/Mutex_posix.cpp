@@ -8,9 +8,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#if defined(XP_DARWIN)
 #  include <pthread_spis.h>
-#endif
 
 #include "mozilla/PlatformMutex.h"
 
@@ -37,9 +35,7 @@ mozilla::detail::MutexImpl::MutexImpl() {
 // Linux with glibc, FreeBSD and macOS 10.14+ support adaptive mutexes that
 // spin for a short number of tries before sleeping.  NSPR's locks did this,
 // too, and it seems like a reasonable thing to do.
-#elif (defined(__linux__) && defined(__GLIBC__)) || defined(__FreeBSD__)
-#  define MUTEX_KIND PTHREAD_MUTEX_ADAPTIVE_NP
-#elif defined(XP_DARWIN)
+#else
 #  if defined(PTHREAD_MUTEX_POLICY_FIRSTFIT_NP)
 #    define POLICY_KIND PTHREAD_MUTEX_POLICY_FIRSTFIT_NP
 #  else

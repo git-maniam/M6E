@@ -12,14 +12,6 @@
 #include <sys/types.h>
 
 #define EXPORT_CDECL(type) MOZ_EXPORT type
-#if defined(_WIN32)
-#  if defined(_WIN64)
-#    define NS_STDCALL
-#  else
-#    define NS_STDCALL __stdcall
-#  endif
-#  define EXPORT_STDCALL(type) MOZ_EXPORT type NS_STDCALL
-#endif
 
 MOZ_BEGIN_EXTERN_C
 
@@ -46,28 +38,6 @@ EXPORT_CDECL(void*) set_voidptr_t_cdecl(void*);
 CTYPES_FOR_EACH_TYPE(DECLARE_CDECL_FUNCTIONS)
 #undef DECLARE_CDECL_FUNCTIONS
 
-#if defined(_WIN32)
-EXPORT_STDCALL(void) test_void_t_stdcall();
-
-EXPORT_STDCALL(void*) get_voidptr_t_stdcall();
-EXPORT_STDCALL(void*) set_voidptr_t_stdcall(void*);
-
-#  define DECLARE_STDCALL_FUNCTIONS(name, type, ffiType)                      \
-    EXPORT_STDCALL(type) get_##name##_stdcall();                              \
-    EXPORT_STDCALL(type) set_##name##_stdcall(type);                          \
-    EXPORT_STDCALL(type) sum_##name##_stdcall(type, type);                    \
-    EXPORT_STDCALL(type)                                                      \
-    sum_alignb_##name##_stdcall(char, type, char, type, char);                \
-    EXPORT_STDCALL(type)                                                      \
-    sum_alignf_##name##_stdcall(float, type, float, type, float);             \
-    EXPORT_STDCALL(type)                                                      \
-    sum_many_##name##_stdcall(type, type, type, type, type, type, type, type, \
-                              type, type, type, type, type, type, type, type, \
-                              type, type);
-CTYPES_FOR_EACH_TYPE(DECLARE_STDCALL_FUNCTIONS)
-#  undef DECLARE_STDCALL_FUNCTIONS
-
-#endif /* defined(_WIN32) */
 
 MOZ_EXPORT int32_t test_ansi_len(const char*);
 MOZ_EXPORT int32_t test_wide_len(const char16_t*);
@@ -168,10 +138,6 @@ MOZ_EXPORT void* test_fnptr();
 
 typedef int32_t (*test_func_ptr)(int8_t);
 MOZ_EXPORT int32_t test_closure_cdecl(int8_t, test_func_ptr);
-#if defined(_WIN32)
-typedef int32_t(NS_STDCALL* test_func_ptr_stdcall)(int8_t);
-MOZ_EXPORT int32_t test_closure_stdcall(int8_t, test_func_ptr_stdcall);
-#endif /* defined(_WIN32) */
 
 MOZ_EXPORT int32_t test_callme(int8_t);
 MOZ_EXPORT void* test_getfn();

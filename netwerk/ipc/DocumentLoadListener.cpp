@@ -86,9 +86,6 @@
 #include "nsURILoader.h"
 #include "nsWebNavigationInfo.h"
 
-#ifdef ANDROID
-#  include "mozilla/widget/nsWindow.h"
-#endif /* ANDROID */
 
 mozilla::LazyLogModule gDocumentChannelLog("DocumentChannel");
 #define LOG(fmt) MOZ_LOG(gDocumentChannelLog, mozilla::LogLevel::Verbose, fmt)
@@ -1185,50 +1182,6 @@ auto DocumentLoadListener::Open(nsDocShellLoadState* aLoadState,
     }
   }
 
-#ifdef ANDROID
-  RefPtr<MozPromise<bool, bool, false>> promise;
-  if (documentContext && aLoadState->LoadType() != LOAD_ERROR_PAGE &&
-      !(aLoadState->HasInternalLoadFlags(
-          nsDocShell::INTERNAL_LOAD_FLAGS_BYPASS_LOAD_URI_DELEGATE)) &&
-      !(aLoadState->LoadType() & LOAD_HISTORY) &&
-      !nsExternalHelperAppService::ExternalProtocolIsBlockedBySandbox(
-          documentContext, aLoadState->HasValidUserGestureActivation())) {
-    nsCOMPtr<nsIWidget> widget =
-        documentContext->GetParentProcessWidgetContaining();
-    RefPtr<nsWindow> window = nsWindow::From(widget);
-
-    if (window) {
-      promise = window->OnLoadRequest(
-          aLoadState->URI(), nsIBrowserDOMWindow::OPEN_CURRENTWINDOW,
-          aLoadState->InternalLoadFlags(), aLoadState->TriggeringPrincipal(),
-          aLoadState->HasValidUserGestureActivation(),
-          documentContext->IsTopContent());
-    }
-  }
-
-  if (promise) {
-    RefPtr<DocumentLoadListener> self = this;
-    promise->Then(
-        GetCurrentSerialEventTarget(), __func__,
-        [=](const MozPromise<bool, bool, false>::ResolveOrRejectValue& aValue) {
-          if (aValue.IsResolve()) {
-            bool handled = aValue.ResolveValue();
-            if (handled) {
-              self->DisconnectListeners(NS_ERROR_ABORT, NS_ERROR_ABORT);
-              self->mParentChannelListener = nullptr;
-            } else if (prefetchPromise) {
-              self->AsyncOpenAfterPrefetchWait(prefetchPromise, openInfo);
-            } else {
-              nsresult rv = self->mChannel->AsyncOpen(openInfo);
-              if (NS_FAILED(rv)) {
-                self->DisconnectListeners(rv, rv);
-                self->mParentChannelListener = nullptr;
-              }
-            }
-          }
-        });
-  } else
-#endif /* ANDROID */
   {
     if (prefetchPromise) {
       AsyncOpenAfterPrefetchWait(prefetchPromise, openInfo);
@@ -3640,41 +3593,6 @@ DocumentLoadListener::AsyncOnChannelRedirect(
   // redirect, as it can't apply anymore.
   mRemoteTypeOverride.reset();
 
-#ifdef ANDROID
-  nsCOMPtr<nsIURI> uriBeingLoaded =
-      AntiTrackingUtils::MaybeGetDocumentURIBeingLoaded(mChannel);
-
-  RefPtr<MozPromise<bool, bool, false>> promise;
-  RefPtr<CanonicalBrowsingContext> bc =
-      mParentChannelListener->GetBrowsingContext();
-  nsCOMPtr<nsIWidget> widget =
-      bc ? bc->GetParentProcessWidgetContaining() : nullptr;
-  RefPtr<nsWindow> window = nsWindow::From(widget);
-
-  if (window && !nsExternalHelperAppService::ExternalProtocolIsBlockedBySandbox(
-                    bc, false)) {
-    promise = window->OnLoadRequest(uriBeingLoaded,
-                                    nsIBrowserDOMWindow::OPEN_CURRENTWINDOW,
-                                    nsIWebNavigation::LOAD_FLAGS_IS_REDIRECT,
-                                    nullptr, false, bc->IsTopContent());
-  }
-
-  if (promise) {
-    RefPtr<nsIAsyncVerifyRedirectCallback> cb = aCallback;
-    promise->Then(
-        GetCurrentSerialEventTarget(), __func__,
-        [=](const MozPromise<bool, bool, false>::ResolveOrRejectValue& aValue) {
-          if (aValue.IsResolve()) {
-            bool handled = aValue.ResolveValue();
-            if (handled) {
-              cb->OnRedirectVerifyCallback(NS_ERROR_ABORT);
-            } else {
-              cb->OnRedirectVerifyCallback(NS_OK);
-            }
-          }
-        });
-  } else
-#endif /* ANDROID */
   {
     aCallback->OnRedirectVerifyCallback(NS_OK);
   }

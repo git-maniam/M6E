@@ -5,10 +5,6 @@
 #include "libdis.h"
 #include <inttypes.h>
 
-#ifdef _MSC_VER
-        #define snprintf        _snprintf
-        #define inline          __inline
-#endif
 
 
 /*

@@ -42,9 +42,6 @@
 #include "secerr.h"
 #include "ssl.h"
 
-#ifdef XP_WIN
-#  include <winsock.h>  // for htonl
-#endif
 
 using namespace mozilla;
 using namespace mozilla::psm;

@@ -7,14 +7,8 @@
 #include "moz_external_vr.h"
 #include "mozilla/ipc/FileDescriptor.h"
 
-#if defined(XP_WIN)
-#  include <d3d11.h>
-#endif  // defined(XP_WIN)
 
 #if defined(MOZILLA_INTERNAL_API)
-#  if defined(XP_WIN)
-#    include "mozilla/gfx/Logging.h"
-#  endif
 #else
 #  define NS_WARNING(s)
 #endif
@@ -23,133 +17,18 @@ using namespace mozilla::gfx;
 
 VRSession::VRSession()
     : mShouldQuit(false)
-#ifdef XP_WIN
-      ,
-      mDevice(nullptr),
-      mContext(nullptr),
-      mDeviceContextState(nullptr)
-#endif
 {
 }
 
-#ifdef XP_WIN
-VRSession::~VRSession() {
-  if (mDevice != nullptr) {
-    mDevice->Release();
-    mDevice = nullptr;
-  }
 
-  if (mContext != nullptr) {
-    mContext->Release();
-    mContext = nullptr;
-  }
-
-  if (mDeviceContextState != nullptr) {
-    mDeviceContextState->Release();
-    mDeviceContextState = nullptr;
-  }
-}
-#endif
-
-#if defined(XP_WIN)
-bool VRSession::CreateD3DContext(ID3D11Device* aDevice) {
-  if (!mDevice) {
-    if (!aDevice) {
-      NS_WARNING("VRSession::CreateD3DObjects failed to get a D3D11Device");
-      return false;
-    }
-    if (FAILED(aDevice->QueryInterface(IID_PPV_ARGS(&mDevice)))) {
-      NS_WARNING("VRSession::CreateD3DObjects failed to get a D3D11Device1");
-      return false;
-    }
-  }
-  if (!mContext) {
-    mDevice->GetImmediateContext1(&mContext);
-    if (!mContext) {
-      NS_WARNING(
-          "VRSession::CreateD3DObjects failed to get an immediate context");
-      return false;
-    }
-  }
-  if (!mDeviceContextState) {
-    D3D_FEATURE_LEVEL featureLevels[]{D3D_FEATURE_LEVEL_11_1,
-                                      D3D_FEATURE_LEVEL_11_0};
-    mDevice->CreateDeviceContextState(0, featureLevels, 2, D3D11_SDK_VERSION,
-                                      __uuidof(ID3D11Device1), nullptr,
-                                      &mDeviceContextState);
-  }
-  if (!mDeviceContextState) {
-    NS_WARNING(
-        "VRSession::CreateD3DObjects failed to get a D3D11DeviceContextState");
-    return false;
-  }
-  return true;
-}
-
-ID3D11Device1* VRSession::GetD3DDevice() { return mDevice; }
-
-ID3D11DeviceContext1* VRSession::GetD3DDeviceContext() { return mContext; }
-
-ID3DDeviceContextState* VRSession::GetD3DDeviceContextState() {
-  return mDeviceContextState;
-}
-
-#endif  // defined(XP_WIN)
 
 bool VRSession::SubmitFrame(
     const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer) {
-#if defined(XP_WIN)
-  bool success = false;
-  if (aLayer.textureType ==
-      VRLayerTextureType::LayerTextureType_D3D10SurfaceDescriptor) {
-    ID3D11Texture2D* dxTexture = nullptr;
-    mozilla::ipc::FileDescriptor::UniquePlatformHandle handle(
-        aLayer.textureHandle);
-    HRESULT hr =
-        mDevice->OpenSharedResource1(handle.get(), IID_PPV_ARGS(&dxTexture));
-    if (SUCCEEDED(hr) && dxTexture != nullptr) {
-      // Similar to LockD3DTexture in TextureD3D11.cpp
-      IDXGIKeyedMutex* mutex = nullptr;
-      hr = dxTexture->QueryInterface(IID_PPV_ARGS(&mutex));
-      if (SUCCEEDED(hr)) {
-        hr = mutex->AcquireSync(0, 1000);
-#  ifdef MOZILLA_INTERNAL_API
-        if (hr == WAIT_TIMEOUT) {
-          gfxDevCrash(LogReason::D3DLockTimeout) << "D3D lock mutex timeout";
-        } else if (hr == WAIT_ABANDONED) {
-          gfxCriticalNote << "GFX: D3D11 lock mutex abandoned";
-        }
-#  endif
-        if (SUCCEEDED(hr)) {
-          success = SubmitFrame(aLayer, dxTexture);
-          hr = mutex->ReleaseSync(0);
-          if (FAILED(hr)) {
-            NS_WARNING("Failed to unlock the texture");
-          }
-        } else {
-          NS_WARNING("Failed to lock the texture");
-        }
-
-        mutex->Release();
-        mutex = nullptr;
-      }
-
-      dxTexture->Release();
-      dxTexture = nullptr;
-    } else {
-      NS_WARNING("Failed to open shared texture");
-    }
-
-    return SUCCEEDED(hr) && success;
-  }
-
-#elif defined(XP_MACOSX)
 
   if (aLayer.textureType == VRLayerTextureType::LayerTextureType_MacIOSurface) {
     return SubmitFrame(aLayer, aLayer.textureHandle);
   }
 
-#endif
 
   return false;
 }

@@ -14,9 +14,6 @@
 #include "nsPrintfCString.h"
 #include "nsString.h"
 
-#ifdef XP_WIN
-#  include "ws2tcpip.h"
-#endif
 
 namespace mozilla {
 namespace net {
@@ -35,12 +32,10 @@ void PRNetAddrToNetAddr(const PRNetAddr* prAddr, NetAddr* addr) {
     memcpy(&addr->inet6.ip, &prAddr->ipv6.ip, sizeof(addr->inet6.ip.u8));
     addr->inet6.scope_id = prAddr->ipv6.scope_id;
   }
-#if defined(XP_UNIX)
   else if (prAddr->raw.family == PR_AF_LOCAL) {
     addr->local.family = AF_LOCAL;
     memcpy(addr->local.path, prAddr->local.path, sizeof(addr->local.path));
   }
-#endif
 }
 
 extern "C" {
@@ -84,12 +79,10 @@ void NetAddrToPRNetAddr(const NetAddr* addr, PRNetAddr* prAddr) {
     memcpy(&prAddr->ipv6.ip, &addr->inet6.ip, sizeof(addr->inet6.ip.u8));
     prAddr->ipv6.scope_id = addr->inet6.scope_id;
   }
-#if defined(XP_UNIX) || defined(XP_WIN)
   else if (addr->raw.family == AF_LOCAL) {
     prAddr->local.family = PR_AF_LOCAL;
     memcpy(prAddr->local.path, addr->local.path, sizeof(addr->local.path));
   }
-#endif
 }
 
 bool NetAddr::ToStringBuffer(char* buf, uint32_t bufSize) const {
@@ -110,7 +103,6 @@ bool NetAddr::ToStringBuffer(char* buf, uint32_t bufSize) const {
     memcpy(&nativeAddr.s6_addr, &addr->inet6.ip, sizeof(addr->inet6.ip.u8));
     return !!inet_ntop(AF_INET6, &nativeAddr, buf, bufSize);
   }
-#if defined(XP_UNIX)
   if (addr->raw.family == AF_LOCAL) {
     // local.path is NOT guaranteed to be NUL-terminated: PR_Accept casts
     // PRNetAddr* to struct sockaddr* and Linux sun_path is 108 bytes vs
@@ -135,7 +127,6 @@ bool NetAddr::ToStringBuffer(char* buf, uint32_t bufSize) const {
     buf[sizeof(addr->local.path)] = '\0';
     return true;
   }
-#endif
   return false;
 }
 
@@ -146,12 +137,10 @@ bool NetAddr::ToString(nsACString& aOutput) const {
   } else if (raw.family == AF_INET6) {
     bufferSize = INET6_ADDRSTRLEN;
   }
-#if defined(XP_UNIX)
   else if (raw.family == AF_LOCAL) {
     // +1 for the NUL terminator that ToStringBuffer writes.
     bufferSize = sizeof(local.path) + 1;
   }
-#endif
 
   auto handleOrErr = aOutput.BulkWrite(bufferSize, /* aPrefixToPreserve */ 0,
                                        /* aAllowShrinking */ false);
@@ -406,12 +395,10 @@ bool NetAddr::operator==(const NetAddr& other) const {
            (memcmp(&this->inet6.ip, &other.inet6.ip, sizeof(this->inet6.ip)) ==
             0) &&
            (this->inet6.scope_id == other.inet6.scope_id);
-#if defined(XP_UNIX)
   }
   if (this->raw.family == AF_LOCAL) {
     return strncmp(this->local.path, other.local.path,
                    std::size(this->local.path));
-#endif
   }
   return false;
 }

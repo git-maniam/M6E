@@ -1361,11 +1361,6 @@ nsJARChannel::OnStopRequest(nsIRequest* req, nsresult status) {
   mCallbacks = nullptr;
   mProgressSink = nullptr;
 
-#if defined(XP_WIN) || defined(MOZ_WIDGET_COCOA)
-#else
-  // To deallocate file descriptor by RemoteOpenFileChild destructor.
-  mJarFile = nullptr;
-#endif
 
   return NS_OK;
 }

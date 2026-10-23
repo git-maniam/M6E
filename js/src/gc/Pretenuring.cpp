@@ -466,11 +466,7 @@ void AllocSite::printInfoHeader(GCRuntime* gc, JS::GCReason reason,
 }
 
 static const char* FindBaseName(const char* filename) {
-#ifdef XP_WIN
-  constexpr char PathSeparator = '\\';
-#else
   constexpr char PathSeparator = '/';
-#endif
 
   const char* lastSep = strrchr(filename, PathSeparator);
   if (!lastSep) {

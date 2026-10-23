@@ -216,9 +216,6 @@ class nsPtrHashKey;
 #define IDB_DEBUG_LOG(_args) \
   MOZ_LOG(IndexedDatabaseManager::GetLoggingModule(), LogLevel::Debug, _args)
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  define IDB_MOBILE
-#endif
 
 // Helper macros to reduce assertion verbosity
 // AUUF == ASSERT_UNREACHABLE_UNLESS_FUZZING

@@ -22,9 +22,6 @@
 #include "nsGlobalWindowInner.h"
 #include "nsISupports.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 namespace mozilla::dom {
 

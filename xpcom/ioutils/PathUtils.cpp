@@ -69,15 +69,7 @@ static void ThrowError(ErrorResult& aErr, const nsresult aResult,
 }
 
 static bool DoWindowsPathCheck() {
-#ifdef XP_WIN
-#  ifdef DEBUG
-  return true;
-#  else   // DEBUG
-  return xpc::IsInAutomation();
-#  endif  // DEBUG
-#else     // XP_WIN
   return false;
-#endif    // XP_WIN
 }
 
 /* static */
@@ -241,35 +233,8 @@ void PathUtils::JoinRelative(const GlobalObject&, const nsAString& aBasePath,
 void PathUtils::ToExtendedWindowsPath(const GlobalObject&,
                                       const nsAString& aPath, nsString& aResult,
                                       ErrorResult& aErr) {
-#ifndef XP_WIN
   aErr.ThrowNotAllowedError("Operation is windows specific"_ns);
   return;
-#else
-  if (aPath.IsEmpty()) {
-    aErr.ThrowNotAllowedError(ERROR_EMPTY_PATH);
-    return;
-  }
-
-  const nsAString& str1 = Substring(aPath, 1, 1);
-  const nsAString& str2 = Substring(aPath, 2, aPath.Length() - 2);
-
-  bool isUNC = aPath.Length() >= 2 &&
-               (aPath.First() == '\\' || aPath.First() == '/') &&
-               (str1.EqualsLiteral("\\") || str1.EqualsLiteral("/"));
-
-  constexpr auto pathPrefix = u"\\\\?\\"_ns;
-  const nsAString& uncPath = pathPrefix + u"UNC\\"_ns + str2;
-  const nsAString& normalPath = pathPrefix + aPath;
-
-  nsCOMPtr<nsIFile> path = new nsLocalFile();
-  if (nsresult rv = InitFileWithPath(path, isUNC ? uncPath : normalPath);
-      NS_FAILED(rv)) {
-    ThrowError(aErr, rv, ERROR_INITIALIZE_PATH);
-    return;
-  }
-
-  MOZ_ALWAYS_SUCCEEDS(path->GetPath(aResult));
-#endif
 }
 
 void PathUtils::Normalize(const GlobalObject&, const nsAString& aPath,
@@ -348,11 +313,7 @@ void PathUtils::SplitRelative(const GlobalObject& aGlobal,
     return;
   }
 
-#ifdef XP_WIN
-  constexpr auto SEPARATOR = u'\\';
-#else
   constexpr auto SEPARATOR = u'/';
-#endif
 
   constexpr auto PARENT = u".."_ns;
   constexpr auto CURRENT = u"."_ns;

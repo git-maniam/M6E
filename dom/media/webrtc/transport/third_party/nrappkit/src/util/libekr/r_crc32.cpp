@@ -67,9 +67,6 @@
 #include <r_types.h>
 #include <r_crc32.h>
 
-#ifdef WIN32
-#define u_int32_t  UINT4
-#endif
 
 #define CRC(crc, ch)	 (crc = (crc >> 8) ^ crctab[(crc ^ (ch)) & 0xff])
 

@@ -65,9 +65,6 @@ class GMPParent final : public PGMPParent,
 
   explicit GMPParent(nsISerialEventTarget* aGMPEventTarget);
 
-#ifdef MOZ_WIDGET_ANDROID
-  void InitForClearkey(GeckoMediaPluginServiceParent* aService);
-#endif
 
   RefPtr<GenericPromise> Init(GeckoMediaPluginServiceParent* aService,
                               nsIFile* aPluginDir);
@@ -173,11 +170,6 @@ class GMPParent final : public PGMPParent,
 
   mozilla::ipc::IPCResult RecvFOGData(ByteBuf&& aBuf);
 
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvGetModulesTrust(
-      ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-      GetModulesTrustResolver&& aResolver);
-#endif  // defined(XP_WIN)
 
   bool IsUsed() {
     return mGMPContentChildCount > 0 || !mGetContentParentPromises.IsEmpty();
@@ -198,10 +190,8 @@ class GMPParent final : public PGMPParent,
   void PreTranslateBinsWorker();
 #endif
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
   nsresult GetPluginFileArch(nsIFile* aPluginDir, const nsString& aBaseName,
                              uint32_t& aArchSet);
-#endif
 
   Atomic<GMPState> mState;
   nsCOMPtr<nsIFile> mDirectory;  // plugin directory on disk
@@ -209,9 +199,6 @@ class GMPParent final : public PGMPParent,
   nsCString mDisplayName;  // name of plugin displayed to users
   nsCString mDescription;  // description of plugin for display to users
   nsCString mVersion;
-#if defined(XP_WIN) || defined(XP_LINUX)
-  nsCString mLibs;
-#endif
   nsString mAdapter;
   const uint32_t mPluginId;
   GMPPluginType mPluginType = GMPPluginType::Unknown;

@@ -4,9 +4,6 @@
 
 #include <stdio.h>
 #include <errno.h>
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif  // defined(XP_WIN)
 
 #include "jsctypes-test-errno.h"
 
@@ -19,7 +16,3 @@
 void set_errno(int status) { errno = status; }
 int get_errno() { return errno; }
 
-#if defined(XP_WIN)
-void set_last_error(int status) { SetLastError((int)status); }
-int get_last_error() { return (int)GetLastError(); }
-#endif  // defined(XP_WIN)

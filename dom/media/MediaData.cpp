@@ -22,14 +22,8 @@
 #include "mozilla/layers/KnowsCompositor.h"
 #include "mozilla/layers/SharedRGBImage.h"
 
-#ifdef XP_WIN
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/layers/D3D11ShareHandleImage.h"
-#  include "mozilla/layers/D3D11YCbCrImage.h"
-#elif XP_MACOSX
 #  include "MacIOSurfaceImage.h"
 #  include "mozilla/gfx/gfxVars.h"
-#endif
 
 namespace mozilla {
 
@@ -386,7 +380,6 @@ Result<already_AddRefed<VideoData>, MediaResult> VideoData::CreateAndCopyData(
 
   // Currently our decoder only knows how to output to ImageFormat::PLANAR_YCBCR
   // format.
-#if XP_MACOSX
   if (aAllocator && aAllocator->GetWebRenderCompositorType() !=
                         layers::WebRenderCompositor::SOFTWARE) {
     RefPtr<layers::MacIOSurfaceImage> ioImage =
@@ -398,7 +391,6 @@ Result<already_AddRefed<VideoData>, MediaResult> VideoData::CreateAndCopyData(
       return v.forget();
     }
   }
-#endif
   if (!v->mImage) {
     v->mImage = aContainer->CreatePlanarYCbCrImage();
   }

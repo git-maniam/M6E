@@ -68,9 +68,7 @@ MOZ_COLD void LockContended(mozilla::SmallFutex& aFutex) {
 }  // namespace
 
 // Windows defines the constructor constexpr in PlatformMutex.h.
-#if !defined(XP_WIN)
 mozilla::detail::MutexImpl::MutexImpl() = default;
-#endif
 mozilla::detail::MutexImpl::~MutexImpl() = default;
 
 void mozilla::detail::MutexImpl::lock() {

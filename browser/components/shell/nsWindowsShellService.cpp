@@ -79,7 +79,6 @@ using namespace ABI::Windows::Foundation::Collections;
 using namespace Microsoft::WRL;
 using namespace Microsoft::WRL::Wrappers;
 
-#ifndef __MINGW32__
 #  include <windows.applicationmodel.h>
 #  include <windows.applicationmodel.activation.h>
 #  include <windows.applicationmodel.core.h>
@@ -87,7 +86,6 @@ using namespace Microsoft::WRL::Wrappers;
 using namespace ABI::Windows::ApplicationModel;
 using namespace ABI::Windows::ApplicationModel::Core;
 using namespace ABI::Windows::UI::StartScreen;
-#endif
 
 #define PRIVATE_BROWSING_BINARY L"private_browsing.exe"
 
@@ -1923,7 +1921,6 @@ nsWindowsShellService::IsCurrentAppPinnedToTaskbar(
   return NS_OK;
 }
 
-#ifndef __MINGW32__
 #  define RESOLVE_AND_RETURN(HOLDER, RESOLVE, RETURN)                \
     NS_DispatchToMainThread(NS_NewRunnableFunction(                  \
         __func__, [resolveVal = (RESOLVE), promiseHolder = HOLDER] { \
@@ -2480,40 +2477,6 @@ nsWindowsShellService::IsCurrentAppPinnedToStartMenu(JSContext* aCx,
   return NS_OK;
 }
 
-#else
-NS_IMETHODIMP
-nsWindowsShellService::EnableLaunchOnLoginMSIX(
-    const nsAString& aTaskId, JSContext* aCx,
-    /* out */ dom::Promise** aPromise) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-nsWindowsShellService::DisableLaunchOnLoginMSIX(
-    const nsAString& aTaskId, JSContext* aCx,
-    /* out */ dom::Promise** aPromise) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-nsWindowsShellService::GetLaunchOnLoginEnabledMSIX(
-    const nsAString& aTaskId, JSContext* aCx,
-    /* out */ dom::Promise** aPromise) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-nsWindowsShellService::PinCurrentAppToStartMenu(JSContext* aCx,
-                                                dom::Promise** aPromise) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-NS_IMETHODIMP
-nsWindowsShellService::IsCurrentAppPinnedToStartMenu(JSContext* aCx,
-                                                     dom::Promise** aPromise) {
-  return NS_ERROR_NOT_IMPLEMENTED;
-}
-#endif
 
 NS_IMETHODIMP
 nsWindowsShellService::ClassifyShortcut(const nsAString& aPath,

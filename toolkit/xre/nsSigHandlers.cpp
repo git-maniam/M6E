@@ -9,7 +9,6 @@
 
 #include "nsSigHandlers.h"
 
-#ifdef XP_UNIX
 
 #  include <signal.h>
 #  include <stdio.h>
@@ -27,9 +26,7 @@
 #    include <unistd.h>
 #    include <stdlib.h>  // atoi
 #    include <sys/prctl.h>
-#    ifndef ANDROID  // no Android impl
 #      include <ucontext.h>
-#    endif
 #  endif
 
 #  if defined(SOLARIS)
@@ -37,14 +34,7 @@
 #    include <ucontext.h>
 #  endif
 
-#  ifdef MOZ_WIDGET_GTK
-#    include <dlfcn.h>
-#    include "WidgetUtilsGtk.h"
-#  endif
 
-#  ifdef MOZ_WAYLAND
-#    include "wayland-proxy.h"
-#  endif
 
 // Note: some tests manipulate this value.
 unsigned int _gdb_sleep_duration = 300;
@@ -121,158 +111,7 @@ MOZ_NEVER_INLINE void child_ah_crap_handler(int signum) {
 
 #  endif  // CRAWL_STACK_ON_SIGSEGV
 
-#  ifdef MOZ_WIDGET_GTK
-// Need this include for version test below.
-#    include <glib.h>
-#  endif
 
-#  if defined(MOZ_WIDGET_GTK)
-
-#    if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 50
-// These types are only available in glib 2.50+
-typedef enum {
-  G_LOG_WRITER_HANDLED = 1,
-  G_LOG_WRITER_UNHANDLED = 0,
-} GLogWriterOutput;
-typedef struct _GLogField GLogField;
-struct _GLogField {
-  const gchar* key;
-  gconstpointer value;
-  gssize length;
-};
-typedef GLogWriterOutput (*GLogWriterFunc)(GLogLevelFlags log_level,
-                                           const GLogField* fields,
-                                           gsize n_fields, gpointer user_data);
-#    endif
-
-static GLogFunc orig_log_func = nullptr;
-
-extern "C" {
-static void glib_log_func(const gchar* log_domain, GLogLevelFlags log_level,
-                          const gchar* message, gpointer user_data);
-static GLogWriterOutput glib_log_writer_func(GLogLevelFlags, const GLogField*,
-                                             gsize, gpointer);
-}
-
-// GDK sometimes avoids calling exit handlers, but we still want to know when we
-// crash, see https://gitlab.gnome.org/GNOME/gtk/-/issues/4514 and bug 1743144.
-static bool IsCrashyGtkMessage(const nsACString& aMessage) {
-  if (aMessage.EqualsLiteral("Lost connection to Wayland compositor.")) {
-    // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/wayland/gdkeventsource.c#L210
-    return true;
-  }
-  if (StringBeginsWith(aMessage, "Error flushing display: "_ns)) {
-    // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/wayland/gdkeventsource.c#L68
-    return true;
-  }
-  if (StringBeginsWith(aMessage, "Error reading events from display: "_ns)) {
-    // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/wayland/gdkeventsource.c#L97
-    return true;
-  }
-  if (StringBeginsWith(aMessage, "Error "_ns) &&
-      StringEndsWith(aMessage, " dispatching to Wayland display."_ns)) {
-    // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/wayland/gdkeventsource.c#L205
-    return true;
-  }
-  if (aMessage.Contains("received an X Window System error"_ns)) {
-    // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gdk/x11/gdkdisplay-x11.c#L2746
-    return true;
-  }
-  return false;
-}
-
-// Reduce GDK's nine-line X error report to the two lines that identify the
-// failure: "The error was '...'" and the "(Details: ...)" line with the serial,
-// error, request and minor codes. Returns false for any other message, leaving
-// aSummary alone, so callers can report it verbatim.
-static bool SummarizeXErrorMessage(const nsACString& aMessage,
-                                   nsACString& aSummary) {
-  if (!aMessage.Contains("received an X Window System error"_ns)) {
-    return false;
-  }
-  nsAutoCString summary;
-  for (const auto& line : aMessage.Split('\n')) {
-    nsAutoCString candidate(line);
-    candidate.CompressWhitespace();
-    if (StringBeginsWith(candidate, "The error was "_ns) ||
-        StringBeginsWith(candidate, "(Details: "_ns)) {
-      if (!summary.IsEmpty()) {
-        summary.Append(' ');
-      }
-      summary.Append(candidate);
-    }
-  }
-  if (summary.IsEmpty()) {
-    return false;
-  }
-  aSummary.Assign(summary);
-  return true;
-}
-
-static void HandleGLibMessage(GLogLevelFlags aLogLevel,
-                              const nsCString& aMessage) {
-  if (MOZ_UNLIKELY(IsCrashyGtkMessage(aMessage))) {
-    nsAutoCString reason;
-    if (!SummarizeXErrorMessage(aMessage, reason)) {
-      reason.Assign(aMessage);
-    }
-#    ifdef MOZ_WAYLAND
-    MOZ_CRASH_UNSAFE_PRINTF(
-        "(%s) %s Proxy: %s",
-        mozilla::widget::GetDesktopEnvironmentIdentifier().get(), reason.get(),
-        WaylandProxy::GetState());
-#    else
-    MOZ_CRASH_UNSAFE_PRINTF(
-        "(%s) %s", mozilla::widget::GetDesktopEnvironmentIdentifier().get(),
-        reason.get());
-#    endif
-  }
-
-  if (aLogLevel &
-      (G_LOG_LEVEL_ERROR | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION)) {
-    NS_DebugBreak(NS_DEBUG_ASSERTION, aMessage.get(), "glib assertion",
-                  __FILE__, __LINE__);
-    // GLib aborts on G_LOG_LEVEL_ERROR right after the writer returns, and
-    // that abort leaves no crash reason. Crash here so the message is kept.
-    if (aLogLevel & G_LOG_LEVEL_ERROR) {
-      MOZ_CRASH_UNSAFE_PRINTF(
-          "(%s) %s", mozilla::widget::GetDesktopEnvironmentIdentifier().get(),
-          aMessage.get());
-    }
-  } else if (aLogLevel & (G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING)) {
-    NS_DebugBreak(NS_DEBUG_WARNING, aMessage.get(), "glib warning", __FILE__,
-                  __LINE__);
-  }
-}
-
-/* static */ void glib_log_func(const gchar* log_domain,
-                                GLogLevelFlags log_level, const gchar* message,
-                                gpointer user_data) {
-  HandleGLibMessage(log_level, nsDependentCString(message));
-  orig_log_func(log_domain, log_level, message, nullptr);
-}
-
-GLogWriterOutput glib_log_writer_func(GLogLevelFlags flags,
-                                      const GLogField* fields, gsize n_fields,
-                                      gpointer user_data) {
-  static const GLogWriterFunc sLogWriterDefault =
-      (GLogWriterFunc)dlsym(RTLD_DEFAULT, "g_log_writer_default");
-  for (gsize i = 0; i < n_fields; ++i) {
-    if (!strcmp(fields[i].key, "MESSAGE") && fields[i].value) {
-      const char* value = (const char*)fields[i].value;
-      // A negative length means the value is NUL-terminated.
-      if (fields[i].length < 0) {
-        HandleGLibMessage(flags, nsDependentCString(value));
-      } else {
-        HandleGLibMessage(flags, nsCString(value, fields[i].length));
-      }
-      break;
-    }
-  }
-  return sLogWriterDefault(flags, fields, n_fields, user_data);
-}
-
-#  endif
 
 #  ifdef SA_SIGINFO
 static void fpehandler(int signum, siginfo_t* si, void* context) {
@@ -283,7 +122,6 @@ static void fpehandler(int signum, siginfo_t* si, void* context) {
                   __LINE__);
   }
 
-#    ifdef XP_MACOSX
 #      if defined(__i386__) || defined(__amd64__)
   ucontext_t* uc = (ucontext_t*)context;
 
@@ -300,7 +138,6 @@ static void fpehandler(int signum, siginfo_t* si, void* context) {
   *mxcsr |= SSE_EXCEPTION_MASK; /* disable all SSE exceptions */
   *mxcsr &= ~SSE_STATUS_FLAGS;  /* clear all pending SSE exceptions */
 #      endif
-#    endif
 #    if defined(LINUX) && !defined(ANDROID)
 
 #      if defined(__i386__)
@@ -418,95 +255,5 @@ void InstallSignalHandlers(const char* aProgname) {
   }
 #  endif
 
-#  ifdef MOZ_WIDGET_GTK
-  // Override the default glib logging function to intercept some crashes that
-  // are uninterceptable otherwise. Also, when XPCOM_DEBUG_BREAK is set, we can
-  // also get stacks for them, so we get stacks for it too.
-  //
-  // If we can hook via g_log_set_writer_func, then we don't need to hook via
-  // g_log_set_default_handler, because the GTK default handler uses structured
-  // logging and thus will end up in our log writer function anyways.
-  static const auto sSetLogWriter =
-      (void (*)(GLogWriterFunc, gpointer, GDestroyNotify))dlsym(
-          RTLD_DEFAULT, "g_log_set_writer_func");
-  if (sSetLogWriter) {
-    sSetLogWriter(glib_log_writer_func, nullptr, nullptr);
-  } else {
-    orig_log_func = g_log_set_default_handler(glib_log_func, nullptr);
-  }
-#  endif
 }
 
-#elif XP_WIN
-
-#  include <windows.h>
-
-#  ifdef _M_IX86
-/*
- * WinNT.h prior to SDK7 does not expose the structure of the ExtendedRegisters
- * for ia86. We known that MxCsr is at offset 0x18 and is a DWORD.
- */
-#    define MXCSR(ctx) (*(DWORD*)(((BYTE*)(ctx)->ExtendedRegisters) + 0x18))
-#  endif
-
-#  ifdef _M_X64
-#    define MXCSR(ctx) (ctx)->MxCsr
-#  endif
-
-#  if defined(_M_IX86) || defined(_M_X64)
-
-#    ifdef _M_X64
-#      define X87CW(ctx) (ctx)->FltSave.ControlWord
-#      define X87SW(ctx) (ctx)->FltSave.StatusWord
-#    else
-#      define X87CW(ctx) (ctx)->FloatSave.ControlWord
-#      define X87SW(ctx) (ctx)->FloatSave.StatusWord
-#    endif
-
-static LPTOP_LEVEL_EXCEPTION_FILTER gFPEPreviousFilter;
-
-LONG __stdcall FpeHandler(PEXCEPTION_POINTERS pe) {
-  PEXCEPTION_RECORD e = (PEXCEPTION_RECORD)pe->ExceptionRecord;
-  CONTEXT* c = (CONTEXT*)pe->ContextRecord;
-
-  switch (e->ExceptionCode) {
-    case STATUS_FLOAT_DENORMAL_OPERAND:
-    case STATUS_FLOAT_DIVIDE_BY_ZERO:
-    case STATUS_FLOAT_INEXACT_RESULT:
-    case STATUS_FLOAT_INVALID_OPERATION:
-    case STATUS_FLOAT_OVERFLOW:
-    case STATUS_FLOAT_STACK_CHECK:
-    case STATUS_FLOAT_UNDERFLOW:
-    case STATUS_FLOAT_MULTIPLE_FAULTS:
-    case STATUS_FLOAT_MULTIPLE_TRAPS:
-      X87CW(c) |= FPU_EXCEPTION_MASK; /* disable all FPU exceptions */
-      X87SW(c) &= ~FPU_STATUS_FLAGS;  /* clear all pending FPU exceptions */
-#    ifdef _M_IX86
-      if (c->ContextFlags & CONTEXT_EXTENDED_REGISTERS) {
-#    endif
-        MXCSR(c) |= SSE_EXCEPTION_MASK; /* disable all SSE exceptions */
-        MXCSR(c) &= ~SSE_STATUS_FLAGS;  /* clear all pending SSE exceptions */
-#    ifdef _M_IX86
-      }
-#    endif
-      return EXCEPTION_CONTINUE_EXECUTION;
-  }
-  LONG action = EXCEPTION_CONTINUE_SEARCH;
-  if (gFPEPreviousFilter) action = gFPEPreviousFilter(pe);
-
-  return action;
-}
-
-void InstallSignalHandlers(const char* aProgname) {
-  gFPEPreviousFilter = SetUnhandledExceptionFilter(FpeHandler);
-}
-
-#  else
-
-void InstallSignalHandlers(const char* aProgname) {}
-
-#  endif
-
-#else
-#  error No signal handling implementation for this platform.
-#endif

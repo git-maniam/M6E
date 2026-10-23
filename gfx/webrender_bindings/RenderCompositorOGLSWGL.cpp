@@ -16,25 +16,7 @@
 #include "mozilla/layers/TextureHostOGL.h"
 #include "mozilla/widget/CompositorWidget.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include <android/native_window.h>
-#  include <android/native_window_jni.h>
 
-#  include "mozilla/java/GeckoSurfaceTextureWrappers.h"
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#  include "mozilla/webrender/RenderAndroidHardwareBufferTextureHost.h"
-#  include "mozilla/webrender/RenderAndroidSurfaceTextureHost.h"
-#  include "mozilla/widget/AndroidCompositorWidget.h"
-#endif
-
-#ifdef MOZ_WIDGET_GTK
-#  include <gdk/gdk.h>
-
-#  include "mozilla/widget/GtkCompositorWidget.h"
-#  ifdef MOZ_X11
-#    include <gdk/gdkx.h>
-#  endif
-#endif
 
 namespace mozilla {
 using namespace layers;
@@ -51,41 +33,6 @@ UniquePtr<RenderCompositor> RenderCompositorOGLSWGL::Create(
   }
 
   RefPtr<Compositor> compositor;
-#ifdef MOZ_WIDGET_ANDROID
-  RefPtr<gl::GLContext> context =
-      RenderThread::Get()->SingletonGLForCompositorOGL();
-  if (!context) {
-    gfxCriticalNote << "SingletonGL does not exist for SWGL";
-    return nullptr;
-  }
-  auto programs = RenderThread::Get()->GetProgramsForCompositorOGL();
-  if (!programs) {
-    gfxCriticalNote << "Failed to get Programs for CompositorOGL for SWGL";
-    return nullptr;
-  }
-
-  nsCString log;
-  RefPtr<CompositorOGL> compositorOGL;
-  compositorOGL = new CompositorOGL(aWidget, /* aSurfaceWidth */ -1,
-                                    /* aSurfaceHeight */ -1,
-                                    /* aUseExternalSurfaceSize */ true);
-  if (!compositorOGL->Initialize(context, programs, &log)) {
-    gfxCriticalNote << "Failed to initialize CompositorOGL for SWGL: "
-                    << log.get();
-    return nullptr;
-  }
-  compositor = compositorOGL;
-#elif defined(MOZ_WIDGET_GTK)
-  nsCString log;
-  RefPtr<CompositorOGL> compositorOGL;
-  compositorOGL = new CompositorOGL(aWidget);
-  if (!compositorOGL->Initialize(&log)) {
-    gfxCriticalNote << "Failed to initialize CompositorOGL for SWGL: "
-                    << log.get();
-    return nullptr;
-  }
-  compositor = compositorOGL;
-#endif
 
   if (!compositor) {
     return nullptr;
@@ -109,10 +56,6 @@ RenderCompositorOGLSWGL::RenderCompositorOGLSWGL(
 
 RenderCompositorOGLSWGL::~RenderCompositorOGLSWGL() {
   LOG("RRenderCompositorOGLSWGL::~RenderCompositorOGLSWGL()");
-#ifdef MOZ_WIDGET_ANDROID
-  java::GeckoSurfaceTexture::DestroyUnused((int64_t)GetGLContext());
-  DestroyEGLSurface();
-#endif
 }
 
 gl::GLContext* RenderCompositorOGLSWGL::GetGLContext() {
@@ -121,11 +64,6 @@ gl::GLContext* RenderCompositorOGLSWGL::GetGLContext() {
 
 bool RenderCompositorOGLSWGL::MakeCurrent() {
   GetGLContext()->MakeCurrent();
-#ifdef MOZ_WIDGET_ANDROID
-  if (GetGLContext()->GetContextType() == gl::GLContextType::EGL) {
-    gl::GLContextEGL::Cast(GetGLContext())->SetEGLSurfaceOverride(mEGLSurface);
-  }
-#endif
   RenderCompositorLayersSWGL::MakeCurrent();
   return true;
 }
@@ -169,11 +107,6 @@ bool RenderCompositorOGLSWGL::BeginFrame() {
   MOZ_ASSERT(!mInFrame);
   RenderCompositorLayersSWGL::BeginFrame();
 
-#ifdef MOZ_WIDGET_ANDROID
-  java::GeckoSurfaceTexture::DestroyUnused((int64_t)GetGLContext());
-  GetGLContext()
-      ->MakeCurrent();  // DestroyUnused can change the current context!
-#endif
 
   return true;
 }
@@ -219,67 +152,14 @@ void RenderCompositorOGLSWGL::GetCompositorCapabilities(
 bool RenderCompositorOGLSWGL::RequestFullRender() { return mFullRender; }
 
 void RenderCompositorOGLSWGL::Pause() {
-#ifdef MOZ_WIDGET_ANDROID
-  DestroyEGLSurface();
-#elif defined(MOZ_WIDGET_GTK)
-  mCompositor->Pause();
-#endif
 }
 
 bool RenderCompositorOGLSWGL::Resume() {
-#ifdef MOZ_WIDGET_ANDROID
-  // Destroy EGLSurface if it exists.
-  DestroyEGLSurface();
-
-  auto size = GetBufferSize();
-  GLint maxTextureSize = 0;
-  GetGLContext()->fGetIntegerv(LOCAL_GL_MAX_TEXTURE_SIZE,
-                               (GLint*)&maxTextureSize);
-
-  // When window size is too big, hardware buffer allocation could fail.
-  if (maxTextureSize < size.width || maxTextureSize < size.height) {
-    gfxCriticalNote << "Too big ANativeWindow size(" << size.width << ", "
-                    << size.height << ") MaxTextureSize " << maxTextureSize;
-    return false;
-  }
-
-  mEGLSurface = CreateEGLSurface();
-  if (mEGLSurface == EGL_NO_SURFACE) {
-    // Often when we fail to create an EGL surface it is because the
-    // Java Surface we have been provided is invalid. Therefore the on
-    // the first occurence we don't raise a WebRenderError and instead
-    // just return failure. This allows the widget a chance to request
-    // a new Java Surface. On subsequent failures, raising the
-    // WebRenderError will result in the compositor being recreated,
-    // falling back through webrender configurations, and eventually
-    // crashing if we still do not succeed.
-    if (!mHandlingNewSurfaceError) {
-      mHandlingNewSurfaceError = true;
-    } else {
-      RenderThread::Get()->HandleWebRenderError(WebRenderError::NEW_SURFACE);
-    }
-    return false;
-  }
-  mHandlingNewSurfaceError = false;
-
-  gl::GLContextEGL::Cast(GetGLContext())->SetEGLSurfaceOverride(mEGLSurface);
-  mCompositor->SetDestinationSurfaceSize(size.ToUnknownSize());
-#elif defined(MOZ_WIDGET_GTK)
-  bool resumed = mCompositor->Resume();
-  if (!resumed) {
-    RenderThread::Get()->HandleWebRenderError(WebRenderError::NEW_SURFACE);
-    return false;
-  }
-#endif
   return true;
 }
 
 bool RenderCompositorOGLSWGL::IsPaused() {
-#ifdef MOZ_WIDGET_ANDROID
-  return mEGLSurface == EGL_NO_SURFACE;
-#else
   return false;
-#endif
 }
 
 LayoutDeviceIntSize RenderCompositorOGLSWGL::GetBufferSize() {
@@ -297,13 +177,8 @@ RenderCompositorOGLSWGL::DoCreateTile(Surface* aSurface) {
 bool RenderCompositorOGLSWGL::MaybeReadback(
     const gfx::IntSize& aReadbackSize, const wr::ImageFormat& aReadbackFormat,
     const Range<uint8_t>& aReadbackBuffer, bool* aNeedsYFlip) {
-#ifdef MOZ_WIDGET_ANDROID
-  MOZ_ASSERT(aReadbackFormat == wr::ImageFormat::RGBA8);
-  const GLenum format = LOCAL_GL_RGBA;
-#else
   MOZ_ASSERT(aReadbackFormat == wr::ImageFormat::BGRA8);
   const GLenum format = LOCAL_GL_BGRA;
-#endif
 
   GetGLContext()->fReadPixels(0, 0, aReadbackSize.width, aReadbackSize.height,
                               format, LOCAL_GL_UNSIGNED_BYTE,
@@ -316,94 +191,6 @@ bool RenderCompositorOGLSWGL::MaybeReadback(
   return true;
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-bool RenderCompositorOGLSWGL::MaybeCaptureScreenPixels(
-    const gfx::IntRect& aSourceRect,
-    layers::AndroidHardwareBuffer* aHardwareBuffer) {
-  auto* const gl = GetGLContext();
-  gl::ScopedBindFramebuffer scopedBind(gl);
-
-  if (!gl->IsSupported(gl::GLFeature::framebuffer_blit)) {
-    // Fallback path for devices which do not support glBlitFramebuffer (i.e.
-    // GLES 2.0 without extensions). Use glReadPixels to read the source rect
-    // into a buffer, then draw into the CPU-mapped hardware buffer, flipping
-    // and scaling as required.
-    const int bpp = gfx::BytesPerPixel(aHardwareBuffer->mFormat);
-    const RefPtr<gfx::DataSourceSurface> surface =
-        gfx::Factory::CreateDataSourceSurfaceWithStride(
-            aSourceRect.Size(), gfx::SurfaceFormat::R8G8B8A8,
-            aSourceRect.width * bpp);
-    if (!surface) {
-      return true;
-    }
-    {
-      const gfx::DataSourceSurface::ScopedMap map(
-          surface, gfx::DataSourceSurface::WRITE);
-      if (!map.IsMapped()) {
-        return true;
-      }
-      gl->BindReadFB(0);
-      gl->fReadPixels(
-          aSourceRect.x,
-          GetBufferSize().height - aSourceRect.y - aSourceRect.height,
-          aSourceRect.width, aSourceRect.height, LOCAL_GL_RGBA,
-          LOCAL_GL_UNSIGNED_BYTE, map.GetData());
-    }
-
-    uint8_t* destBuf = nullptr;
-    if (aHardwareBuffer->Lock(AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN, nullptr,
-                              reinterpret_cast<void**>(&destBuf)) < 0) {
-      return true;
-    }
-    const auto hardwareBufferUnlock =
-        MakeScopeExit([&]() { aHardwareBuffer->Unlock(); });
-    const RefPtr<gfx::DrawTarget> dt = gfx::Factory::CreateDrawTargetForData(
-        gfx::BackendType::SKIA, destBuf, aHardwareBuffer->mSize,
-        aHardwareBuffer->mStride * bpp, aHardwareBuffer->mFormat);
-    if (!dt) {
-      return true;
-    }
-    dt->SetTransform(Matrix::Scaling(1.0, -1.0) *
-                     Matrix::Translation(0, aHardwareBuffer->mSize.height));
-    dt->DrawSurface(surface, gfx::Rect({}, gfx::Size(aHardwareBuffer->mSize)),
-                    gfx::Rect({}, gfx::Size(aSourceRect.Size())),
-                    gfx::DrawSurfaceOptions(gfx::SamplingFilter::LINEAR),
-                    gfx::DrawOptions(1.0f, gfx::CompositionOp::OP_SOURCE));
-    return true;
-  }
-
-  // Attach the hardware buffer to a framebuffer, then blit the source rect to
-  // it from the main framebuffer, flipping and scaling as required.
-  auto* const gle = gl::GLContextEGL::Cast(gl);
-  const auto& egl = gle->mEgl;
-  gl::ScopedEGLImageForAndroidHardwareBuffer eglImage(gle, aHardwareBuffer);
-  gl::ScopedRenderbuffer rb(gl);
-  gl->fBindRenderbuffer(LOCAL_GL_RENDERBUFFER, rb);
-  gl->fEGLImageTargetRenderbufferStorage(LOCAL_GL_RENDERBUFFER, eglImage);
-  gl::ScopedFramebufferForRenderbuffer fb(gl, rb);
-
-  const auto srcRect =
-      gfx::IntRect(aSourceRect.x, GetBufferSize().height - aSourceRect.y,
-                   aSourceRect.width, -aSourceRect.height);
-  const auto destRect = gfx::IntRect({}, aHardwareBuffer->mSize);
-  gl->BindReadFB(0);
-  gl->BindDrawFB(fb.FB());
-  gl->fBlitFramebuffer(srcRect.x, srcRect.y, srcRect.XMost(), srcRect.YMost(),
-                       destRect.x, destRect.y, destRect.XMost(),
-                       destRect.YMost(), LOCAL_GL_COLOR_BUFFER_BIT,
-                       LOCAL_GL_LINEAR);
-
-  if (EGLSync sync =
-          egl->fCreateSyncKHR(LOCAL_EGL_SYNC_NATIVE_FENCE_ANDROID, nullptr)) {
-    auto fence = UniqueFileHandle(egl->fDupNativeFenceFDANDROID(sync));
-    if (fence) {
-      aHardwareBuffer->SetAcquireFence(std::move(fence));
-    }
-    egl->fDestroySync(sync);
-  }
-  return true;
-}
-#endif
 
 // This is a DataSourceSurface that represents a 0-based PBO for GLTextureImage.
 class PBOUnpackSurface : public gfx::DataSourceSurface {

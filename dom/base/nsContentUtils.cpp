@@ -425,10 +425,6 @@
 #include "xpcprivate.h"
 #include "xpcpublic.h"
 
-#if defined(XP_WIN)
-// Undefine LoadImage to prevent naming conflict with Windows.
-#  undef LoadImage
-#endif
 
 extern "C" int MOZ_XMLTranslateEntity(const char* ptr, const char* end,
                                       const char** next, char16_t* result);
@@ -1265,18 +1261,6 @@ nsresult nsContentUtils::Init() {
   if (XRE_IsParentProcess()) {
     AsyncPrecreateStringBundles();
 
-#if defined(MOZ_WIDGET_ANDROID)
-    // On Android, at-shutdown ping submission isn't reliable
-    // (( because, on Android, we usually get killed, not shut down )).
-    // To have a chance at submitting the ping, aim for idle after startup.
-    nsresult rv = NS_DispatchToCurrentThreadQueue(
-        NS_NewRunnableFunction(
-            "AndroidUseCounterPingSubmitter",
-            []() { glean_pings::UseCounters.Submit("idle_startup"_ns); }),
-        EventQueuePriority::Idle);
-    // This is mostly best-effort, so if it goes awry, just log.
-    (void)NS_WARN_IF(NS_FAILED(rv));
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
     RunOnShutdown(
         [&] { glean_pings::UseCounters.Submit("app_shutdown_confirmed"_ns); },
@@ -3223,18 +3207,8 @@ void nsContentUtils::CalcRoundedWindowSizeForResistingFingerprinting(
 
   availContentWidth = std::min(StaticPrefs::privacy_window_maxInnerWidth(),
                                aScreenWidth - aChromeWidth);
-#ifdef MOZ_WIDGET_GTK
-  // In the GTK window, it will not report outside system decorations
-  // when we get available window size, see Bug 581863. So, we leave a
-  // 40 pixels space for them when calculating the available content
-  // height. It is not necessary for the width since the content width
-  // is usually pretty much the same as the chrome width.
-  availContentHeight = std::min(StaticPrefs::privacy_window_maxInnerHeight(),
-                                (-40 + aScreenHeight) - aChromeHeight);
-#else
   availContentHeight = std::min(StaticPrefs::privacy_window_maxInnerHeight(),
                                 aScreenHeight - aChromeHeight);
-#endif
 
   // Ideally, we'd like to round window size to 1000x1000, but the
   // screen space could be too small to accommodate this size in some
@@ -9792,9 +9766,6 @@ nsresult nsContentUtils::IPCTransferableDataToTransferable(
       if ((item.flavor().EqualsLiteral(kFilePromiseMime) ||
            item.flavor().EqualsLiteral(kFilePromiseURLMime) ||
            item.flavor().EqualsLiteral(kFilePromiseDestFilename))
-#ifdef XP_WIN
-          && !StaticPrefs::clipboard_imageAsFile_enabled()
-#endif
       ) {
         NS_WARNING(
             "Ignoring unknown flavor in "

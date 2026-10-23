@@ -2,13 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef XP_WIN
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <signal.h>
 #  include <unistd.h>
-#endif
 #include "js/experimental/CodeCoverage.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/dom/ScriptSettings.h"  // for AutoJSAPI
@@ -103,7 +98,6 @@ void CodeCoverageHandler::FlushCounters(const bool initialized) {
 void CodeCoverageHandler::FlushCountersSignalHandler(int) { FlushCounters(); }
 
 void CodeCoverageHandler::SetSignalHandlers() {
-#ifndef XP_WIN
   printf_stderr("[CodeCoverage] Setting handlers for process %d.\n", getpid());
 
   struct sigaction dump_sa;
@@ -112,7 +106,6 @@ void CodeCoverageHandler::SetSignalHandlers() {
   sigemptyset(&dump_sa.sa_mask);
   DebugOnly<int> r1 = sigaction(SIGUSR1, &dump_sa, nullptr);
   MOZ_ASSERT(r1 == 0, "Failed to install GCOV SIGUSR1 handler");
-#endif
 }
 
 CodeCoverageHandler::CodeCoverageHandler() : mGcovLock("GcovLock") {

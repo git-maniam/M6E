@@ -26,12 +26,6 @@
 #include "nsXPCOM.h"
 #include "nsXULAppAPI.h"
 
-#ifdef XP_WIN
-#  include "mozilla/Atomics.h"
-#  include "mozilla/StaticPrefs_dom.h"
-#  include "mozilla/ipc/BackgroundParent.h"
-#  include "nsILocalFileWin.h"
-#endif
 
 namespace mozilla {
 
@@ -61,9 +55,6 @@ constexpr auto kDesktopIniFileName = u"desktop.ini"_ns;
 constexpr auto kThumbsDbFileName = u"thumbs.db"_ns;
 #endif
 
-#ifdef XP_WIN
-Atomic<int32_t> gUseDOSDevicePathSyntax(-1);
-#endif
 
 LazyLogModule gLogger("QuotaManager");
 
@@ -118,18 +109,6 @@ void AnonymizeOriginString(nsACString& aOriginString) {
   AnonymizeCString(aOriginString, start);
 }
 
-#ifdef XP_WIN
-void CacheUseDOSDevicePathSyntaxPrefValue() {
-  MOZ_ASSERT(XRE_IsParentProcess());
-  ::mozilla::ipc::AssertIsOnBackgroundThread();
-
-  if (gUseDOSDevicePathSyntax == -1) {
-    bool useDOSDevicePathSyntax =
-        StaticPrefs::dom_quotaManager_useDOSDevicePathSyntax_DoNotUseDirectly();
-    gUseDOSDevicePathSyntax = useDOSDevicePathSyntax ? 1 : 0;
-  }
-}
-#endif
 
 Result<nsCOMPtr<nsIFile>, nsresult> QM_NewLocalFile(const nsAString& aPath) {
   QM_TRY_UNWRAP(
@@ -140,19 +119,6 @@ Result<nsCOMPtr<nsIFile>, nsresult> QM_NewLocalFile(const nsAString& aPath) {
                    NS_ConvertUTF16toUTF8(aPath).get());
       });
 
-#ifdef XP_WIN
-  MOZ_ASSERT(gUseDOSDevicePathSyntax != -1);
-
-  if (gUseDOSDevicePathSyntax) {
-    QM_TRY_INSPECT(
-        const auto& winFile,
-        MOZ_TO_RESULT_GET_TYPED(nsCOMPtr<nsILocalFileWin>,
-                                MOZ_SELECT_OVERLOAD(do_QueryInterface), file));
-
-    MOZ_ASSERT(winFile);
-    winFile->SetUseDOSDevicePathSyntax(true);
-  }
-#endif
 
   return file;
 }

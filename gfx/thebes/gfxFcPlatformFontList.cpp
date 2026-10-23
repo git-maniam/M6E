@@ -40,22 +40,8 @@
 
 #include "mozilla/intl/Locale.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include <gdk/gdk.h>
-#  include <gtk/gtk.h>
 
-#  include "gfxPlatformGtk.h"
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
-#ifdef MOZ_X11
-#  include "mozilla/X11Util.h"
-#endif
-
-#if defined(MOZ_SANDBOX) && defined(XP_LINUX)
-#  include "mozilla/SandboxBrokerPolicyFactory.h"
-#  include "mozilla/SandboxSettings.h"
-#endif
 
 #include FT_MULTIPLE_MASTERS_H
 
@@ -890,26 +876,6 @@ static void PrepareFontOptions(FcPattern* aPattern, int* aOutLoadFlags,
   *aOutSynthFlags = synthFlags;
 }
 
-#ifdef MOZ_X11
-static bool GetXftInt(Display* aDisplay, const char* aName, int* aResult) {
-  if (!aDisplay) {
-    return false;
-  }
-  char* value = XGetDefault(aDisplay, "Xft", aName);
-  if (!value) {
-    return false;
-  }
-  if (FcNameConstant(const_cast<FcChar8*>(ToFcChar8Ptr(value)), aResult)) {
-    return true;
-  }
-  char* end;
-  *aResult = strtol(value, &end, 0);
-  if (end != value) {
-    return true;
-  }
-  return false;
-}
-#endif
 
 static void PreparePattern(FcPattern* aPattern, bool aIsPrinterFont) {
   FcConfigSubstitute(nullptr, aPattern, FcMatchPattern);
@@ -933,11 +899,6 @@ static void PreparePattern(FcPattern* aPattern, bool aIsPrinterFont) {
     cairo_ft_font_options_substitute(options, aPattern);
     cairo_font_options_destroy(options);
     FcPatternAddBool(aPattern, PRINTING_FC_PROPERTY, FcTrue);
-#ifdef MOZ_WIDGET_GTK
-  } else {
-    gfxFcPlatformFontList::PlatformFontList()->SubstituteSystemFontOptions(
-        aPattern);
-#endif  // MOZ_WIDGET_GTK
   }
 
   FcDefaultSubstitute(aPattern);
@@ -1572,9 +1533,6 @@ gfxFcPlatformFontList::~gfxFcPlatformFontList() {
     mCheckFontUpdatesTimer->Cancel();
     mCheckFontUpdatesTimer = nullptr;
   }
-#ifdef MOZ_WIDGET_GTK
-  ClearSystemFontOptions();
-#endif
 }
 
 static bool IsTrueTypeOrOpenTypeFont(FcPattern* aPattern) {
@@ -1630,14 +1588,6 @@ void gfxFcPlatformFontList::AddFontSetFamilies(FcFontSet* aFontSet,
       continue;
     }
 
-#if defined(MOZ_SANDBOX) && defined(XP_LINUX)
-    // Skip any fonts that will be blocked by the content-process sandbox
-    // policy.
-    if (aPolicy && !(aPolicy->Lookup(reinterpret_cast<const char*>(path)) &
-                     SandboxBroker::Perms::MAY_READ)) {
-      continue;
-    }
-#endif
 
     if (ShouldSkipLegacyFont(pattern)) {
       continue;
@@ -1782,9 +1732,6 @@ nsresult gfxFcPlatformFontList::InitFontListForPlatform() {
     // or in an UpdateFontList message.
     auto& fontList = dom::ContentChild::GetSingleton()->SystemFontList();
 
-#ifdef MOZ_WIDGET_GTK
-    UpdateSystemFontOptionsFromIpc(fontList.options());
-#endif
 
     for (const FontPatternListEntry& fpe : fontList.entries()) {
       FcPattern* pattern = FcNameParse((const FcChar8*)fpe.pattern().get());
@@ -1806,16 +1753,6 @@ nsresult gfxFcPlatformFontList::InitFontListForPlatform() {
 
   UniquePtr<SandboxPolicy> policy;
 
-#if defined(MOZ_SANDBOX) && defined(XP_LINUX)
-  // If read sandboxing is enabled, create a temporary SandboxPolicy to
-  // check font paths; use a fake PID to avoid picking up any PID-specific
-  // rules by accident.
-  SandboxBrokerPolicyFactory policyFactory;
-  if (GetEffectiveContentSandboxLevel() > 2 &&
-      !PR_GetEnv("MOZ_DISABLE_CONTENT_SANDBOX")) {
-    policy = policyFactory.GetContentPolicy(-1, false);
-  }
-#endif
 
 #ifdef MOZ_BUNDLED_FONTS
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1745715:
@@ -1841,9 +1778,6 @@ void gfxFcPlatformFontList::ReadSystemFontList(dom::SystemFontList* retValue) {
   // Fontconfig versions below 2.9 drop the FC_FILE element in FcNameUnparse
   // (see https://bugs.freedesktop.org/show_bug.cgi?id=26718), so when using
   // an older version, we manually append it to the unparsed pattern.
-#ifdef MOZ_WIDGET_GTK
-  SystemFontOptionsToIpc(retValue->options());
-#endif
 
   if (FcGetVersion() < 20900) {
     for (const auto& entry : mFontFamilies) {
@@ -1919,19 +1853,12 @@ void gfxFcPlatformFontList::InitSharedFontListForPlatform() {
   mLastConfig = FcConfigGetCurrent();
 
   if (!XRE_IsParentProcess()) {
-#ifdef MOZ_WIDGET_GTK
-    auto& fontList = dom::ContentChild::GetSingleton()->SystemFontList();
-    UpdateSystemFontOptionsFromIpc(fontList.options());
-#endif
     // Content processes will access the shared-memory data created by the
     // parent, so they do not need to query fontconfig for the available
     // fonts themselves.
     return;
   }
 
-#ifdef MOZ_WIDGET_GTK
-  UpdateSystemFontOptions();
-#endif
 
 #ifdef MOZ_BUNDLED_FONTS
   if (StaticPrefs::gfx_bundled_fonts_activate_AtStartup() != 0) {
@@ -1944,16 +1871,6 @@ void gfxFcPlatformFontList::InitSharedFontListForPlatform() {
 
   UniquePtr<SandboxPolicy> policy;
 
-#if defined(MOZ_CONTENT_SANDBOX) && defined(XP_LINUX)
-  // If read sandboxing is enabled, create a temporary SandboxPolicy to
-  // check font paths; use a fake PID to avoid picking up any PID-specific
-  // rules by accident.
-  SandboxBrokerPolicyFactory policyFactory;
-  if (GetEffectiveContentSandboxLevel() > 2 &&
-      !PR_GetEnv("MOZ_DISABLE_CONTENT_SANDBOX")) {
-    policy = policyFactory.GetContentPolicy(-1, false);
-  }
-#endif
 
   nsTArray<fontlist::Family::InitData> families;
 
@@ -2104,14 +2021,6 @@ void gfxFcPlatformFontList::InitSharedFontListForPlatform() {
         continue;
       }
 
-#if defined(MOZ_CONTENT_SANDBOX) && defined(XP_LINUX)
-      // Skip any fonts that will be blocked by the content-process sandbox
-      // policy.
-      if (aPolicy && !(aPolicy->Lookup(reinterpret_cast<const char*>(path)) &
-                       SandboxBroker::Perms::MAY_READ)) {
-        continue;
-      }
-#endif
 
       if (ShouldSkipLegacyFont(pattern)) {
         continue;
@@ -3105,169 +3014,3 @@ void gfxFcPlatformFontList::ActivateBundledFonts() {
 }
 #endif
 
-#ifdef MOZ_WIDGET_GTK
-/***************************************************************************
- *
- * These functions must be last in the file because it uses the system cairo
- * library.  Above this point the cairo library used is the tree cairo.
- */
-
-// Tree cairo symbols have different names.  Disable their activation through
-// preprocessor macros.
-#  undef cairo_ft_font_options_substitute
-
-#  undef cairo_font_options_create
-#  undef cairo_font_options_destroy
-#  undef cairo_font_options_copy
-#  undef cairo_font_options_equal
-
-#  undef cairo_font_options_get_antialias
-#  undef cairo_font_options_set_antialias
-#  undef cairo_font_options_get_hint_style
-#  undef cairo_font_options_set_hint_style
-#  undef cairo_font_options_get_lcd_filter
-#  undef cairo_font_options_set_lcd_filter
-#  undef cairo_font_options_get_subpixel_order
-#  undef cairo_font_options_set_subpixel_order
-
-// The system cairo functions are not declared because the include paths cause
-// the gdk headers to pick up the tree cairo.h.
-extern "C" {
-NS_VISIBILITY_DEFAULT void cairo_ft_font_options_substitute(
-    const cairo_font_options_t* options, FcPattern* pattern);
-
-NS_VISIBILITY_DEFAULT cairo_font_options_t* cairo_font_options_copy(
-    const cairo_font_options_t*);
-NS_VISIBILITY_DEFAULT cairo_font_options_t* cairo_font_options_create();
-NS_VISIBILITY_DEFAULT void cairo_font_options_destroy(cairo_font_options_t*);
-NS_VISIBILITY_DEFAULT cairo_bool_t cairo_font_options_equal(
-    const cairo_font_options_t*, const cairo_font_options_t*);
-
-NS_VISIBILITY_DEFAULT cairo_antialias_t
-cairo_font_options_get_antialias(const cairo_font_options_t*);
-NS_VISIBILITY_DEFAULT void cairo_font_options_set_antialias(
-    cairo_font_options_t*, cairo_antialias_t);
-NS_VISIBILITY_DEFAULT cairo_hint_style_t
-cairo_font_options_get_hint_style(const cairo_font_options_t*);
-NS_VISIBILITY_DEFAULT void cairo_font_options_set_hint_style(
-    cairo_font_options_t*, cairo_hint_style_t);
-NS_VISIBILITY_DEFAULT cairo_subpixel_order_t
-cairo_font_options_get_subpixel_order(const cairo_font_options_t*);
-NS_VISIBILITY_DEFAULT void cairo_font_options_set_subpixel_order(
-    cairo_font_options_t*, cairo_subpixel_order_t);
-}
-
-void gfxFcPlatformFontList::ClearSystemFontOptions() {
-  if (mSystemFontOptions) {
-    cairo_font_options_destroy(mSystemFontOptions);
-    mSystemFontOptions = nullptr;
-  }
-  Factory::SetSubpixelOrder(SubpixelOrder::UNKNOWN);
-}
-
-static void SetSubpixelOrderFromCairo(const cairo_font_options_t* aOptions) {
-  SubpixelOrder subpixelOrder = SubpixelOrder::UNKNOWN;
-  switch (cairo_font_options_get_subpixel_order(aOptions)) {
-    case CAIRO_SUBPIXEL_ORDER_RGB:
-      subpixelOrder = SubpixelOrder::RGB;
-      break;
-    case CAIRO_SUBPIXEL_ORDER_BGR:
-      subpixelOrder = SubpixelOrder::BGR;
-      break;
-    case CAIRO_SUBPIXEL_ORDER_VRGB:
-      subpixelOrder = SubpixelOrder::VRGB;
-      break;
-    case CAIRO_SUBPIXEL_ORDER_VBGR:
-      subpixelOrder = SubpixelOrder::VBGR;
-      break;
-    default:
-      break;
-  }
-  Factory::SetSubpixelOrder(subpixelOrder);
-}
-
-bool gfxFcPlatformFontList::UpdateSystemFontOptions() {
-  MOZ_RELEASE_ASSERT(XRE_IsParentProcess());
-
-  if (gfxPlatform::IsHeadless()) {
-    return false;
-  }
-
-#  ifdef MOZ_X11
-  {
-    // This one shouldn't change during the X session.
-    int lcdfilter;
-    GdkDisplay* dpy = gdk_display_get_default();
-    if (mozilla::widget::GdkIsX11Display(dpy) &&
-        GetXftInt(GDK_DISPLAY_XDISPLAY(dpy), "lcdfilter", &lcdfilter)) {
-      mFreetypeLcdSetting = lcdfilter;
-    }
-  }
-#  endif  // MOZ_X11
-
-  const cairo_font_options_t* options =
-      gdk_screen_get_font_options(gdk_screen_get_default());
-  if (!options) {
-    bool changed = !!mSystemFontOptions;
-    ClearSystemFontOptions();
-    return changed;
-  }
-
-  cairo_font_options_t* newOptions = cairo_font_options_copy(options);
-
-  if (mSystemFontOptions &&
-      cairo_font_options_equal(mSystemFontOptions, options)) {
-    cairo_font_options_destroy(newOptions);
-    return false;
-  }
-
-  SetSubpixelOrderFromCairo(options);
-
-  ClearSystemFontOptions();
-  mSystemFontOptions = newOptions;
-  return true;
-}
-
-void gfxFcPlatformFontList::SystemFontOptionsToIpc(
-    dom::SystemFontOptions& aOptions) {
-  aOptions.antialias() =
-      mSystemFontOptions ? cairo_font_options_get_antialias(mSystemFontOptions)
-                         : CAIRO_ANTIALIAS_DEFAULT;
-  aOptions.subpixelOrder() =
-      mSystemFontOptions
-          ? cairo_font_options_get_subpixel_order(mSystemFontOptions)
-          : CAIRO_SUBPIXEL_ORDER_DEFAULT;
-  aOptions.hintStyle() =
-      mSystemFontOptions ? cairo_font_options_get_hint_style(mSystemFontOptions)
-                         : CAIRO_HINT_STYLE_DEFAULT;
-  aOptions.lcdFilter() = mFreetypeLcdSetting;
-}
-
-void gfxFcPlatformFontList::UpdateSystemFontOptionsFromIpc(
-    const dom::SystemFontOptions& aOptions) {
-  ClearSystemFontOptions();
-  mSystemFontOptions = cairo_font_options_create();
-  cairo_font_options_set_antialias(mSystemFontOptions,
-                                   cairo_antialias_t(aOptions.antialias()));
-  cairo_font_options_set_hint_style(mSystemFontOptions,
-                                    cairo_hint_style_t(aOptions.hintStyle()));
-  cairo_font_options_set_subpixel_order(
-      mSystemFontOptions, cairo_subpixel_order_t(aOptions.subpixelOrder()));
-  mFreetypeLcdSetting = aOptions.lcdFilter();
-  SetSubpixelOrderFromCairo(mSystemFontOptions);
-}
-
-void gfxFcPlatformFontList::SubstituteSystemFontOptions(FcPattern* aPattern) {
-  if (mSystemFontOptions) {
-    cairo_ft_font_options_substitute(mSystemFontOptions, aPattern);
-  }
-
-  if (mFreetypeLcdSetting != -1) {
-    FcValue value;
-    if (FcPatternGet(aPattern, FC_LCD_FILTER, 0, &value) == FcResultNoMatch) {
-      FcPatternAddInteger(aPattern, FC_LCD_FILTER, mFreetypeLcdSetting);
-    }
-  }
-}
-
-#endif  // MOZ_WIDGET_GTK

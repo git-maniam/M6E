@@ -48,7 +48,6 @@ extern "C" {
 
 //! @}
 // SAL2 Definitions
-#ifndef _MSC_VER
 #define _In_
 #define _In_z_
 #define _In_opt_
@@ -76,23 +75,7 @@ extern "C" {
 #define _Success_(X)
 #define _Outptr_result_buffer_maybenull_(X)
 #define ORT_ALL_ARGS_NONNULL __attribute__((nonnull))
-#else
-#include <specstrings.h>
-#define ORT_ALL_ARGS_NONNULL
-#endif
 
-#ifdef _WIN32
-// Define ORT_DLL_IMPORT if your program is dynamically linked to Ort.
-// dllexport is not used, we use a .def file.
-#ifdef ORT_DLL_IMPORT
-#define ORT_EXPORT __declspec(dllimport)
-#else
-#define ORT_EXPORT
-#endif
-#define ORT_API_CALL __stdcall
-#define ORT_MUST_USE_RESULT
-#define ORTCHAR_T wchar_t
-#else
 // Make symbols visible on non-Windows platforms. The visibility attribute is
 // needed when ORT is built as a shared library without a version script
 // (e.g. when compiled within another project's build system). On non-Apple
@@ -109,19 +92,12 @@ extern "C" {
 #define ORT_API_CALL
 #define ORT_MUST_USE_RESULT __attribute__((warn_unused_result))
 #define ORTCHAR_T char
-#endif
 
 /// ORTCHAR_T, ORT_TSTR are reserved specifically for path handling.
 /// All other strings are UTF-8 encoded, use char and std::string
 #ifndef ORT_TSTR
-#ifdef _WIN32
-#define ORT_TSTR(X) L##X
-// When X is a macro, L##X is not defined. In this case, we need to use ORT_TSTR_ON_MACRO.
-#define ORT_TSTR_ON_MACRO(X) L"" X
-#else
 #define ORT_TSTR(X) X
 #define ORT_TSTR_ON_MACRO(X) X
-#endif
 #endif
 
 // On Windows, ORT_FILE is a wchar_t version of the __FILE__ macro.
@@ -333,11 +309,7 @@ ORT_RUNTIME_CLASS(DeviceEpIncompatibilityDetails);
 ORT_RUNTIME_CLASS(EpAssignedSubgraph);
 ORT_RUNTIME_CLASS(EpAssignedNode);
 
-#ifdef _MSC_VER
-typedef _Return_type_success_(return == 0) OrtStatus* OrtStatusPtr;
-#else
 typedef OrtStatus* OrtStatusPtr;
-#endif
 
 /** \brief Generic function pointer type for experimental API lookup.
  *

@@ -13,9 +13,6 @@
 #include "mozilla/dom/RemoteType.h"
 #include "mozilla/gfx/GPUProcessManager.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#endif
 
 #define ABOUT_CONFIG_ENABLED_PREF "general.aboutConfig.enable"
 
@@ -50,11 +47,6 @@ class CrashChannel final : public nsBaseChannel {
       MOZ_CRASH("Crash via about:crashcontent");
     }
 
-#ifdef MOZ_WIDGET_ANDROID
-    if (spec.EqualsASCII("about:crashcontentjava") && XRE_IsContentProcess()) {
-      mozilla::java::GeckoAppShell::CrashByUncaughtException();
-    }
-#endif
 
     if (spec.EqualsASCII("about:crashextensions") && XRE_IsParentProcess()) {
       using ContentParent = mozilla::dom::ContentParent;
@@ -93,24 +85,16 @@ class CrashChannel final : public nsBaseChannel {
  */
 static const RedirEntry kRedirMap[] = {
     {"about", "chrome://global/content/aboutAbout.html", 0},
-#ifndef MOZ_WIDGET_ANDROID
     {"addons", "chrome://mozapps/content/extensions/aboutaddons.html",
      nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::IS_SECURE_CHROME_UI},
-#endif
     {"buildconfig", "chrome://global/content/buildconfig.html",
      nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::IS_SECURE_CHROME_UI},
     {"checkerboard", "chrome://global/content/aboutCheckerboard.html",
      nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::ALLOW_SCRIPT},
-#ifndef MOZ_WIDGET_ANDROID
     {"config", "chrome://global/content/aboutconfig/aboutconfig.html",
      nsIAboutModule::IS_SECURE_CHROME_UI},
-#else
-    {"config", "chrome://geckoview/content/config.xhtml",
-     nsIAboutModule::IS_SECURE_CHROME_UI |
-         nsIAboutModule::HIDE_FROM_ABOUTABOUT},
-#endif
 #ifdef MOZ_CRASHREPORTER
     {"crashes", "chrome://global/content/crashes.html",
      nsIAboutModule::IS_SECURE_CHROME_UI},
@@ -124,12 +108,6 @@ static const RedirEntry kRedirMap[] = {
          nsIAboutModule::HIDE_FROM_ABOUTABOUT | nsIAboutModule::ALLOW_SCRIPT |
          nsIAboutModule::URI_MUST_LOAD_IN_CHILD |
          nsIAboutModule::URI_CAN_LOAD_IN_PRIVILEGEDABOUT_PROCESS},
-#ifdef MOZ_WIDGET_ANDROID
-    {"home", "about:blank",
-     nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
-         nsIAboutModule::URI_CAN_LOAD_IN_PRIVILEGEDABOUT_PROCESS |
-         nsIAboutModule::URI_MUST_LOAD_IN_CHILD},
-#endif
     {"httpsonlyerror", "chrome://global/content/httpsonlyerror/errorpage.html",
      nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::URI_CAN_LOAD_IN_CHILD | nsIAboutModule::ALLOW_SCRIPT |
@@ -153,24 +131,20 @@ static const RedirEntry kRedirMap[] = {
          nsIAboutModule::URI_MUST_LOAD_IN_CHILD |
          nsIAboutModule::URI_CAN_LOAD_IN_PRIVILEGEDABOUT_PROCESS |
          nsIAboutModule::IS_SECURE_CHROME_UI},
-#if !defined(ANDROID) && !defined(XP_WIN)
     {"webauthn", "chrome://global/content/aboutWebauthn.html",
      nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::IS_SECURE_CHROME_UI},
-#endif
     {"neterror", "chrome://global/content/aboutNetError.html",
      nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::URI_CAN_LOAD_IN_CHILD | nsIAboutModule::ALLOW_SCRIPT |
          nsIAboutModule::HIDE_FROM_ABOUTABOUT},
     {"networking", "chrome://global/content/aboutNetworking.html",
      nsIAboutModule::ALLOW_SCRIPT},
-#ifndef MOZ_WIDGET_ANDROID
     {"pdf", "chrome://global/content/aboutPDF.html",
      nsIAboutModule::ALLOW_SCRIPT |
          nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::URI_MUST_LOAD_IN_CHILD |
          nsIAboutModule::URI_CAN_LOAD_IN_PRIVILEGEDABOUT_PROCESS |
          nsIAboutModule::IS_SECURE_CHROME_UI},
-#endif
     {"performance", "about:processes",
      nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::IS_SECURE_CHROME_UI |
          nsIAboutModule::HIDE_FROM_ABOUTABOUT},
@@ -191,10 +165,8 @@ static const RedirEntry kRedirMap[] = {
     // having to connect the device to a desktop machine and all that entails.
     {"serviceworkers", "chrome://global/content/aboutServiceWorkers.xhtml",
      nsIAboutModule::ALLOW_SCRIPT},
-#ifndef ANDROID
     {"profiles", "chrome://global/content/aboutProfiles.xhtml",
      nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::IS_SECURE_CHROME_UI},
-#endif
     // about:srcdoc is unresolvable by specification.  It is included here
     // because the security manager would disallow srcdoc iframes otherwise.
     {"srcdoc", "about:blank",
@@ -204,12 +176,6 @@ static const RedirEntry kRedirMap[] = {
          nsIAboutModule::MAKE_LINKABLE | nsIAboutModule::URI_CAN_LOAD_IN_CHILD},
     {"support", "chrome://global/content/aboutSupport.xhtml",
      nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::IS_SECURE_CHROME_UI},
-#ifdef XP_WIN
-    {"third-party", "chrome://global/content/aboutThirdParty.html",
-     nsIAboutModule::ALLOW_SCRIPT},
-    {"windows-messages", "chrome://global/content/aboutWindowsMessages.html",
-     nsIAboutModule::ALLOW_SCRIPT},
-#endif
 #ifndef MOZ_GLEAN_ANDROID
     {"glean", "chrome://global/content/aboutGlean.html",
 #  if !defined(NIGHTLY_BUILD) && defined(MOZILLA_OFFICIAL)
@@ -221,14 +187,12 @@ static const RedirEntry kRedirMap[] = {
      nsIAboutModule::ALLOW_SCRIPT},
     {"telemetry", "chrome://global/content/aboutTelemetry.xhtml",
      nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::IS_SECURE_CHROME_UI},
-#ifndef MOZ_WIDGET_ANDROID
     {"translations",
      "chrome://global/content/translations/about-translations.html",
      nsIAboutModule::ALLOW_SCRIPT |
          nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::URI_MUST_LOAD_IN_CHILD |
          nsIAboutModule::URI_CAN_LOAD_IN_PRIVILEGEDABOUT_PROCESS},
-#endif
     {"url-classifier", "chrome://global/content/aboutUrlClassifier.xhtml",
      nsIAboutModule::ALLOW_SCRIPT},
     {"webrtc", "chrome://global/content/aboutwebrtc/aboutWebrtc.html",
@@ -239,13 +203,6 @@ static const RedirEntry kRedirMap[] = {
          nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::URI_CAN_LOAD_IN_CHILD |
          nsIAboutModule::URI_MUST_LOAD_IN_CHILD},
-#ifdef MOZ_WIDGET_ANDROID
-    {"crashcontentjava", "about:blank",
-     nsIAboutModule::HIDE_FROM_ABOUTABOUT |
-         nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
-         nsIAboutModule::URI_CAN_LOAD_IN_CHILD |
-         nsIAboutModule::URI_MUST_LOAD_IN_CHILD},
-#endif
     {"crashgpu", "about:blank", nsIAboutModule::HIDE_FROM_ABOUTABOUT},
     {"crashextensions", "about:blank", nsIAboutModule::HIDE_FROM_ABOUTABOUT}};
 
@@ -265,9 +222,6 @@ nsAboutRedirector::NewChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo,
 
   if (path.EqualsASCII("crashparent") || path.EqualsASCII("crashcontent") ||
       path.EqualsASCII("crashgpu") || path.EqualsASCII("crashextensions")
-#ifdef MOZ_WIDGET_ANDROID
-      || path.EqualsASCII("crashcontentjava")
-#endif
   ) {
     bool isExternal;
     aLoadInfo->GetLoadTriggeredFromExternal(&isExternal);

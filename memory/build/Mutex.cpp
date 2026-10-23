@@ -11,18 +11,5 @@
 bool Mutex::TryLock() {
   MOZ_ASSERT(mInitialised);
 
-#if defined(XP_WIN)
-  return mozilla::detail::MutexImpl::tryLock();
-#elif defined(XP_DARWIN)
   return os_unfair_lock_trylock(&mMutex);
-#else
-  switch (pthread_mutex_trylock(&mMutex)) {
-    case 0:
-      return true;
-    case EBUSY:
-      return false;
-    default:
-      MOZ_CRASH("pthread_mutex_trylock error.");
-  }
-#endif
 }

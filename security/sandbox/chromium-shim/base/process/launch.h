@@ -16,9 +16,6 @@
 
 namespace base {
 
-#if defined(OS_WIN)
-typedef std::vector<HANDLE> HandlesToInheritVector;
-#endif
 
 }  // namespace base
 

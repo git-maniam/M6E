@@ -23,30 +23,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef XP_WIN
-#  include "mozilla/PolicyChecks.h"
-#  include <shlobj.h>
-#  include <windows.h>
-#endif
-#ifdef XP_UNIX
 #  include <unistd.h>
-#endif
 
 #include "CmdLineAndEnvUtils.h"
 #include "nsToolkitProfileService.h"
 #include "nsIFile.h"
 
-#ifdef XP_MACOSX
 #  ifdef NIGHTLY_BUILD
 #    include "AppGroupPath.h"
 #  endif
 #  include <CoreFoundation/CoreFoundation.h>
 #  include "nsILocalFileMac.h"
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceDefs.h"
@@ -496,10 +484,6 @@ nsToolkitProfile::SetShowProfileSelector(bool aShowProfileSelector) {
   NS_ENSURE_SUCCESS(rv, rv);
 
   mShowProfileSelector = aShowProfileSelector;
-#  ifdef XP_WIN
-  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
-  obs->NotifyObservers(nullptr, "profile-show-selector-changed", nullptr);
-#  endif
   return NS_OK;
 #else
   return NS_ERROR_FAILURE;
@@ -805,42 +789,6 @@ bool nsToolkitProfileService::IsProfileForCurrentInstall(
                                                getter_AddRefs(lastGreDir));
   NS_ENSURE_SUCCESS(rv, false);
 
-#ifdef XP_WIN
-#  if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
-  mozilla::PathString lastGreDirPath, currentGreDirPath;
-  lastGreDirPath = lastGreDir->NativePath();
-  currentGreDirPath = currentGreDir->NativePath();
-  if (lastGreDirPath.Equals(currentGreDirPath,
-                            nsCaseInsensitiveStringComparator)) {
-    return true;
-  }
-
-  // Convert a 64-bit install path to what would have been the 32-bit install
-  // path to allow users to migrate their profiles from one to the other.
-  PWSTR pathX86 = nullptr;
-  HRESULT hres =
-      SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, 0, nullptr, &pathX86);
-  if (SUCCEEDED(hres)) {
-    nsDependentString strPathX86(pathX86);
-    if (!StringBeginsWith(currentGreDirPath, strPathX86,
-                          nsCaseInsensitiveStringComparator)) {
-      PWSTR path = nullptr;
-      hres = SHGetKnownFolderPath(FOLDERID_ProgramFiles, 0, nullptr, &path);
-      if (SUCCEEDED(hres)) {
-        if (StringBeginsWith(currentGreDirPath, nsDependentString(path),
-                             nsCaseInsensitiveStringComparator)) {
-          currentGreDirPath.Replace(0, wcslen(path), strPathX86);
-        }
-      }
-      CoTaskMemFree(path);
-    }
-  }
-  CoTaskMemFree(pathX86);
-
-  return lastGreDirPath.Equals(currentGreDirPath,
-                               nsCaseInsensitiveStringComparator);
-#  endif
-#endif
 
   bool equal;
   rv = lastGreDir->Equals(currentGreDir, &equal);
@@ -2376,11 +2324,7 @@ nsresult nsToolkitProfileService::CreateProfile(nsIFile* aRootDir,
  * get essentially the same benefits as dedicated profiles provides.
  */
 bool nsToolkitProfileService::IsSnapEnvironment() {
-#ifdef MOZ_WIDGET_GTK
-  return widget::IsRunningUnderSnap();
-#else
   return false;
-#endif
 }
 
 /**
@@ -2394,9 +2338,6 @@ bool nsToolkitProfileService::IsSnapEnvironment() {
  */
 bool nsToolkitProfileService::UseLegacyProfiles() {
   bool legacyProfiles = !!PR_GetEnv("MOZ_LEGACY_PROFILES");
-#ifdef XP_WIN
-  legacyProfiles |= PolicyCheckBoolean(L"LegacyProfiles");
-#endif
   return legacyProfiles;
 }
 
@@ -3014,7 +2955,6 @@ already_AddRefed<nsToolkitProfileService> NS_GetToolkitProfileService() {
 }
 
 nsresult XRE_GetFileFromPath(const char* aPath, nsIFile** aResult) {
-#if defined(XP_MACOSX)
   int32_t pathLen = strlen(aPath);
   if (pathLen > MAXPATHLEN) return NS_ERROR_INVALID_ARG;
 
@@ -3027,20 +2967,4 @@ nsresult XRE_GetFileFromPath(const char* aPath, nsIFile** aResult) {
   lfMac.forget(aResult);
   CFRelease(fullPath);
   return rv;
-#elif defined(XP_UNIX)
-  char fullPath[MAXPATHLEN];
-
-  if (!realpath(aPath, fullPath)) return NS_ERROR_FAILURE;
-
-  return NS_NewNativeLocalFile(nsDependentCString(fullPath), aResult);
-#elif defined(XP_WIN)
-  WCHAR fullPath[MAXPATHLEN];
-
-  if (!_wfullpath(fullPath, NS_ConvertUTF8toUTF16(aPath).get(), MAXPATHLEN))
-    return NS_ERROR_FAILURE;
-
-  return NS_NewLocalFile(nsDependentString(fullPath), aResult);
-#else
-#  error Platform-specific logic needed here.
-#endif
 }

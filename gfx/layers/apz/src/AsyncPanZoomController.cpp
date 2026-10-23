@@ -89,9 +89,6 @@
 #include "nsThreadUtils.h"   // for NS_IsMainThread
 #include "nsViewportInfo.h"  // for ViewportMinScale(), ViewportMaxScale()
 #include "prsystem.h"        // for PR_GetPhysicalMemorySize
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "AndroidAPZ.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 static mozilla::LazyLogModule sApzCtlLog("apz.controller");
 #define APZC_LOG(...) MOZ_LOG(sApzCtlLog, LogLevel::Debug, (__VA_ARGS__))
@@ -128,14 +125,9 @@ typedef mozilla::gfx::Point Point;
 typedef mozilla::gfx::Matrix4x4 Matrix4x4;
 
 // Choose between platform-specific implementations.
-#ifdef MOZ_WIDGET_ANDROID
-typedef WidgetOverscrollEffect OverscrollEffect;
-typedef AndroidSpecificState PlatformSpecificState;
-#else
 typedef GenericOverscrollEffect OverscrollEffect;
 typedef PlatformSpecificStateBase
     PlatformSpecificState;  // no extra state, just use the base class
-#endif
 
 /**
  * \page APZCPrefs APZ preferences

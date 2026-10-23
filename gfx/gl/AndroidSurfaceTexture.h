@@ -9,23 +9,5 @@
 
 typedef uint64_t AndroidSurfaceTextureHandle;
 
-#ifdef MOZ_WIDGET_ANDROID
-
-#  include "SurfaceTexture.h"
-
-namespace mozilla {
-namespace gl {
-
-class AndroidSurfaceTexture {
- public:
-  static void GetTransformMatrix(
-      const java::sdk::SurfaceTexture::Ref& surfaceTexture,
-      mozilla::gfx::Matrix4x4* outMatrix);
-};
-
-}  // namespace gl
-}  // namespace mozilla
-
-#endif  // MOZ_WIDGET_ANDROID
 
 #endif  // AndroidSurfaceTexture_h_

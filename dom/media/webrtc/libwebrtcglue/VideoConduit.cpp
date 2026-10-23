@@ -99,16 +99,9 @@
 #include "transport/mediapacket.h"
 #include "video/config/video_encoder_config.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "VideoEngine.h"
-#endif
 
 // for ntohs
-#ifdef _MSC_VER
-#  include "Winsock2.h"
-#else
 #  include <netinet/in.h>
-#endif
 
 #define INVALID_RTP_PAYLOAD 255  // valid payload types are 0 to 127
 
@@ -1363,12 +1356,6 @@ MediaConduitErrorCode WebrtcVideoConduit::Init() {
 
   CSFLogDebug(LOGTAG, "%s this=%p", __FUNCTION__, this);
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (mozilla::camera::VideoEngine::SetAndroidObjects() != 0) {
-    CSFLogError(LOGTAG, "%s: could not set Android objects", __FUNCTION__);
-    return kMediaConduitSessionNotInited;
-  }
-#endif  // MOZ_WIDGET_ANDROID
 
   mSendPluginCreated = mEncoderFactory->CreatedGmpPluginEvent().Connect(
       GetMainThreadSerialEventTarget(),

@@ -7,18 +7,8 @@
 #include <errno.h>
 #include <sched.h>
 
-#if defined(XP_DARWIN)
 #  include <mach/mach.h>
-#elif defined(XP_NETBSD)
-#  include <lwp.h>
-#elif defined(XP_LINUX)
-#  include <sys/syscall.h>
-#  include <sys/prctl.h>
-#endif
 
-#if !defined(XP_DARWIN)
-#  include <unistd.h>
-#endif
 
 #if (defined(__DragonFly__) || defined(XP_FREEBSD) || defined(XP_OPENBSD)) && \
     !defined(__GLIBC__)
@@ -27,11 +17,9 @@
 
 #include "nsThreadUtils.h"
 
-#if defined(XP_DARWIN)
 namespace base {
 void InitThreading();
 }  // namespace base
-#endif
 
 static void* ThreadFunc(void* closure) {
   PlatformThread::Delegate* delegate =
@@ -44,21 +32,9 @@ static void* ThreadFunc(void* closure) {
 PlatformThreadId PlatformThread::CurrentId() {
   // Pthreads doesn't have the concept of a thread ID, so we have to reach down
   // into the kernel.
-#if defined(XP_DARWIN)
   mach_port_t port = mach_thread_self();
   mach_port_deallocate(mach_task_self(), port);
   return port;
-#elif defined(XP_LINUX)
-  return syscall(__NR_gettid);
-#elif defined(XP_OPENBSD) || defined(XP_SOLARIS) || defined(__GLIBC__)
-  return (intptr_t)(pthread_self());
-#elif defined(XP_NETBSD)
-  return _lwp_self();
-#elif defined(__DragonFly__)
-  return lwp_gettid();
-#elif defined(XP_FREEBSD)
-  return pthread_getthreadid_np();
-#endif
 }
 
 // static
@@ -79,32 +55,13 @@ void PlatformThread::Sleep(int duration_ms) {
     sleep_time = remaining;
 }
 
-#ifndef XP_DARWIN
-// Mac is implemented in platform_thread_mac.mm.
-
-// static
-void PlatformThread::SetName(const char* name) {
-  // On linux we can get the thread names to show up in the debugger by setting
-  // the process name for the LWP.  We don't want to do this for the main
-  // thread because that would rename the process, causing tools like killall
-  // to stop working.
-  if (PlatformThread::CurrentId() == getpid()) return;
-
-  // Using NS_SetCurrentThreadName, as opposed to using platform APIs directly,
-  // also sets the thread name on the PRThread wrapper, and allows us to
-  // retrieve it using PR_GetThreadName.
-  NS_SetCurrentThreadName(name);
-}
-#endif  // !XP_DARWIN
 
 namespace {
 
 bool CreateThread(size_t stack_size, bool joinable,
                   PlatformThread::Delegate* delegate,
                   PlatformThreadHandle* thread_handle) {
-#if defined(XP_DARWIN)
   base::InitThreading();
-#endif  // XP_DARWIN
 
   bool success = false;
   pthread_attr_t attributes;

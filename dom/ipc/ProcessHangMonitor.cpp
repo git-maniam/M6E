@@ -40,15 +40,9 @@
 #include "nsThreadUtils.h"
 #include "xpcprivate.h"
 
-#ifdef XP_WIN
-// For IsDebuggerPresent()
-#  include <windows.h>
-#endif
 
-#ifdef XP_MACOSX
 // for qos controls
 #  include <sys/qos.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -167,12 +161,10 @@ class HangMonitorChild : public PProcessHangMonitorChild,
 
   const RefPtr<ProcessHangMonitor> mHangMonitor;
 
-#ifdef XP_MACOSX
   // On macOS, the pthread_t is required to start a QoS class override. As we
   // can't recover this from a PRThread*, we need to record it when the
   // HangMonitorChild is initially created on the main thread.
   const pthread_t mMainPThread;
-#endif
 
   Monitor mMonitor;
 
@@ -309,9 +301,7 @@ class HangMonitorParent : public PProcessHangMonitorParent {
       TabId aTabId, nsIRemoteTab::NavigationType aNavigationType,
       int32_t aNavigationIndex, nsIURI* aNavigationURI, int32_t aEpoch);
 
-#ifdef XP_MACOSX
   void SetMainThreadQoSPriorityOnThread(nsIThread::QoSPriority aQoSPriority);
-#endif
 
   void ShutdownOnThread();
 
@@ -337,9 +327,7 @@ class HangMonitorParent : public PProcessHangMonitorParent {
 
 HangMonitorChild::HangMonitorChild(ProcessHangMonitor* aMonitor)
     : mHangMonitor(aMonitor),
-#ifdef XP_MACOSX
       mMainPThread(pthread_self()),
-#endif
       mMonitor("HangMonitorChild lock"),
       mSentReport(false),
       mTerminateScript(false),
@@ -667,7 +655,6 @@ mozilla::ipc::IPCResult HangMonitorChild::RecvSetMainThreadQoSPriority(
           ("Priority change %s recieved by content process.",
            DefineQoS(aQoSPriority)));
 
-#ifdef XP_MACOSX
   // If the new priority is the background (low) priority, we can tell the OS to
   // put the main thread on low-power cores. Alternately, if we are changing
   // from the background to a higher priority, we change the main thread back to
@@ -701,7 +688,6 @@ mozilla::ipc::IPCResult HangMonitorChild::RecvSetMainThreadQoSPriority(
     MOZ_LOG(gQoSLog, LogLevel::Debug,
             ("Override %s removed from main thread.", DefineQoS(aQoSPriority)));
   }
-#endif
 
   return IPC_OK();
 }
@@ -925,15 +911,12 @@ void HangMonitorParent::CancelContentJSExecutionIfRunningOnThread(
 void HangMonitorParent::SetMainThreadQoSPriority(
     nsIThread::QoSPriority aQoSPriority) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
-#ifdef XP_MACOSX  // Should not be using outside of MacOS.
 
   Dispatch(NewNonOwningRunnableMethod<nsIThread::QoSPriority>(
       "HangMonitorParent::SetMainThreadQoSPriorityOnThread", this,
       &HangMonitorParent::SetMainThreadQoSPriorityOnThread, aQoSPriority));
-#endif
 }
 
-#ifdef XP_MACOSX
 void HangMonitorParent::SetMainThreadQoSPriorityOnThread(
     nsIThread::QoSPriority aQoSPriority) {
   MOZ_RELEASE_ASSERT(IsOnThread());
@@ -941,7 +924,6 @@ void HangMonitorParent::SetMainThreadQoSPriorityOnThread(
     (void)SendSetMainThreadQoSPriority(aQoSPriority);
   }
 }
-#endif
 
 void HangMonitorParent::ActorDestroy(ActorDestroyReason aWhy) {
   MOZ_RELEASE_ASSERT(IsOnThread());
@@ -992,13 +974,6 @@ mozilla::ipc::IPCResult HangMonitorParent::RecvHangEvidence(
     return IPC_OK();
   }
 
-#ifdef XP_WIN
-  // Don't report hangs if we're debugging the process. You can comment this
-  // line out for testing purposes.
-  if (IsDebuggerPresent()) {
-    return IPC_OK();
-  }
-#endif
 
   // Before we wake up the browser main thread we want to take a
   // browser minidump.
@@ -1209,14 +1184,12 @@ ProcessHangMonitor::ProcessHangMonitor() : mReplyTimeout(false) {
   if (NS_FAILED(NS_NewNamedThread("ProcessHangMon", getter_AddRefs(mThread)))) {
     mThread = nullptr;
   }
-#ifdef XP_MACOSX
   // On MacOS, ensure the priority is high enough to handle dispatches at
   // high cpu load. USER_INITIATED class threads are prioritized just below
   // the main thread.
   mThread->Dispatch(NS_NewRunnableFunction(
       "ProcessHangMonitor::SetPriority",
       [] { pthread_set_qos_class_self_np(QOS_CLASS_USER_INITIATED, 0); }));
-#endif
 }
 
 ProcessHangMonitor::~ProcessHangMonitor() {

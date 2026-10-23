@@ -360,7 +360,6 @@ void TlsHandshaker::ReportSecureConnectionStart() {
   }
 }
 
-#ifndef ANDROID
 void TlsHandshaker::EarlyDataTelemetry(int16_t tlsVersion,
                                        bool earlyDataAccepted,
                                        int64_t aContentBytesWritten0RTT) {
@@ -404,6 +403,5 @@ void TlsHandshaker::EarlyDataTelemetry(int16_t tlsVersion,
     }
   }
 }
-#endif
 
 }  // namespace mozilla::net

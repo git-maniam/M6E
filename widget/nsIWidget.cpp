@@ -153,7 +153,6 @@ void WidgetShutdownObserver::Register() {
     mRegistered = true;
     nsContentUtils::RegisterShutdownObserver(this);
 
-#ifndef MOZ_WIDGET_ANDROID
     // The primary purpose of observing quit-application is
     // to avoid leaking a widget on Windows when nothing else
     // breaks the circular reference between the widget and
@@ -165,7 +164,6 @@ void WidgetShutdownObserver::Register() {
     if (observerService) {
       observerService->AddObserver(this, "quit-application", false);
     }
-#endif
   }
 }
 
@@ -173,13 +171,11 @@ void WidgetShutdownObserver::Unregister() {
   if (mRegistered) {
     mWidget = nullptr;
 
-#ifndef MOZ_WIDGET_ANDROID
     nsCOMPtr<nsIObserverService> observerService =
         mozilla::services::GetObserverService();
     if (observerService) {
       observerService->RemoveObserver(this, "quit-application");
     }
-#endif
 
     nsContentUtils::UnregisterShutdownObserver(this);
     mRegistered = false;
@@ -1485,35 +1481,8 @@ already_AddRefed<WebRenderLayerManager> nsIWidget::CreateCompositorSession(
     bool enableAPZ = UseAPZ();
     CompositorOptions options(enableAPZ, enableSWWR);
 
-#ifdef XP_WIN
-    if (supportsAcceleration) {
-      options.SetAllowSoftwareWebRenderD3D11(
-          gfx::gfxVars::AllowSoftwareWebRenderD3D11());
-    }
-    if (mNeedFastSnaphot) {
-      options.SetNeedFastSnaphot(true);
-    }
-#elif defined(MOZ_WIDGET_ANDROID)
-    MOZ_ASSERT(supportsAcceleration);
-    options.SetAllowSoftwareWebRenderOGL(
-        gfx::gfxVars::AllowSoftwareWebRenderOGL());
-#elif defined(MOZ_WIDGET_GTK)
-    if (supportsAcceleration) {
-      options.SetAllowSoftwareWebRenderOGL(
-          gfx::gfxVars::AllowSoftwareWebRenderOGL());
-    }
-    options.SetAllowNativeCompositor(WidgetTypeSupportsNativeCompositing());
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-    // Unconditionally set the compositor as initially paused, as we have not
-    // yet had a chance to send the compositor surface to the GPU process. We
-    // will do so shortly once we have returned to nsWindow::CreateLayerManager,
-    // where we will also resume the compositor if required.
-    options.SetInitiallyPaused(true);
-#else
     options.SetInitiallyPaused(CompositorInitiallyPaused());
-#endif
 
     uint64_t innerWindowId = 0;
     if (Document* doc = GetDocument()) {
@@ -1619,11 +1588,7 @@ void nsIWidget::CreateCompositor(int aWidth, int aHeight) {
 
   // Only track compositors for top-level windows, since other window types
   // may use the basic compositor.  Except on the OS X - see bug 1306383
-#if defined(XP_MACOSX)
   bool getCompositorFromThisWindow = true;
-#else
-  bool getCompositorFromThisWindow = mWindowType == WindowType::TopLevel;
-#endif
 
   if (getCompositorFromThisWindow) {
     gfxPlatform::GetPlatform()->NotifyCompositorCreated(
@@ -2187,13 +2152,6 @@ void nsIWidget::OnLongTapTimerCallback(nsITimer* aTimer, void* aClosure) {
 
   if ((self->mLongTapTouchPoint->mStamp + self->mLongTapTouchPoint->mDuration) >
       TimeStamp::Now()) {
-#ifdef XP_WIN
-    // Windows needs us to keep pumping feedback to the digitizer, so update
-    // the pointer id with the same position.
-    self->SynthesizeNativeTouchPoint(
-        self->mLongTapTouchPoint->mPointerId, TOUCH_CONTACT,
-        self->mLongTapTouchPoint->mPosition, 1.0, 90, nullptr);
-#endif
     return;
   }
 
@@ -2414,12 +2372,6 @@ already_AddRefed<nsIBidiKeyboard> nsIWidget::CreateBidiKeyboard() {
   return CreateBidiKeyboardInner();
 }
 
-#ifdef ANDROID
-already_AddRefed<nsIBidiKeyboard> nsIWidget::CreateBidiKeyboardInner() {
-  // no bidi keyboard implementation
-  return nullptr;
-}
-#endif
 
 namespace mozilla {
 

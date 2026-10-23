@@ -21,20 +21,11 @@ namespace mozilla {
 // @param aFlags takes PR_LD_* flags (see prlink.h)
 //
 inline PRLibrary*
-#  ifdef XP_WIN
-LoadLibraryWithFlags(char16ptr_t aPath, PRUint32 aFlags = 0)
-#  else
 LoadLibraryWithFlags(const char* aPath, PRUint32 aFlags = 0)
-#  endif
 {
   PRLibSpec libSpec;
-#  ifdef XP_WIN
-  libSpec.type = PR_LibSpec_PathnameU;
-  libSpec.value.pathname_u = aPath;
-#  else
   libSpec.type = PR_LibSpec_Pathname;
   libSpec.value.pathname = aPath;
-#  endif
   return PR_LoadLibraryWithFlags(libSpec, aFlags);
 }
 

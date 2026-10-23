@@ -7,9 +7,6 @@
 #include "mozilla/layers/Fence.h"
 #include "nsXULAppAPI.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/layers/FenceD3D11.h"
-#endif
 
 namespace mozilla {
 
@@ -96,15 +93,7 @@ void CompositeProcessFencesHolderMap::SetWriteFence(
     return;
   }
 
-#if defined(XP_WIN)
-  RefPtr<Fence> fence = aWriteFence->AsFenceD3D11()->CloneFromHandle();
-  if (!fence) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    return;
-  }
-#else
   RefPtr<Fence> fence = aWriteFence;
-#endif
 
   MOZ_ASSERT(!it->second->mWriteFence);
   MOZ_ASSERT(it->second->mReadFences.empty());
@@ -129,15 +118,7 @@ void CompositeProcessFencesHolderMap::SetReadFence(
     return;
   }
 
-#if defined(XP_WIN)
-  RefPtr<Fence> fence = aReadFence->AsFenceD3D11()->CloneFromHandle();
-  if (!fence) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    return;
-  }
-#else
   RefPtr<Fence> fence = aReadFence;
-#endif
 
   it->second->mReadFences.push_back(fence);
 }

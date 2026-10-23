@@ -45,9 +45,6 @@ struct PrintSettingsInitializer {
   // been changed on a background thread.
   nsMainThreadPtrHandle<nsPrintSettings> mPrintSettings;
 
-#ifdef XP_WIN
-  CopyableTArray<uint8_t> mDevmodeWStorage;
-#endif
 };
 
 }  // namespace mozilla

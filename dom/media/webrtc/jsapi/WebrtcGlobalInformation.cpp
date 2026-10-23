@@ -36,9 +36,6 @@
 #include "nsXULAppAPI.h"
 #include "transport/runnable_utils.h"
 
-#ifdef XP_WIN
-#  include <process.h>
-#endif
 
 namespace mozilla::dom {
 

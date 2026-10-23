@@ -474,10 +474,6 @@ class BrowserParent final : public PBrowserParent,
 
   void DynamicToolbarMaxHeightChanged(ScreenIntCoord aHeight);
   void DynamicToolbarOffsetChanged(ScreenIntCoord aOffset);
-#ifdef MOZ_WIDGET_ANDROID
-  void KeyboardHeightChanged(ScreenIntCoord aHeight);
-  void AndroidPipModeChanged(bool);
-#endif
 
   void Activate(uint64_t aActionId);
 

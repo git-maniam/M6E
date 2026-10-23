@@ -36,9 +36,6 @@
 #include "base/process_util.h"  // for CloseProcessHandle
 #include "prenv.h"              // for PR_GetEnv
 
-#if defined(ANDROID) && defined(DEBUG)
-#  include <android/log.h>
-#endif
 
 template <typename T>
 class nsPtrHashKey;

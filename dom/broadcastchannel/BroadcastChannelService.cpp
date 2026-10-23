@@ -11,9 +11,6 @@
 #include "mozilla/dom/SharedMessageBody.h"
 #include "mozilla/ipc/BackgroundParent.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 namespace mozilla {
 

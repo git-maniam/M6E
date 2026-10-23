@@ -15,12 +15,7 @@
 
 #if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
 
-#  ifdef __linux__
-#    include <linux/version.h>
-#    define LINUX_HAS_MEMBARRIER (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0))
-#  else
 #    define LINUX_HAS_MEMBARRIER 0
-#  endif
 
 #  if LINUX_HAS_MEMBARRIER || defined(__android__)
 #    include <string.h>

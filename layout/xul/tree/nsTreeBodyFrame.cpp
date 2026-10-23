@@ -2234,9 +2234,6 @@ nsresult nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
     // Save last values, we will need them.
     int32_t lastDropRow = mSlots->mDropRow;
     int16_t lastDropOrient = mSlots->mDropOrient;
-#ifndef XP_MACOSX
-    int16_t lastScrollLines = mSlots->mScrollLines;
-#endif
 
     // Find out the current drag action
     uint32_t lastDragAction = mSlots->mDragAction;
@@ -2255,22 +2252,7 @@ nsresult nsTreeBodyFrame::HandleEvent(nsPresContext* aPresContext,
         mSlots->mDropAllowed = false;
         InvalidateDropFeedback(lastDropRow, lastDropOrient);
       }
-#ifdef XP_MACOSX
       ScrollByLines(mSlots->mScrollLines);
-#else
-      if (!lastScrollLines) {
-        // Cancel any previously initialized timer.
-        if (mSlots->mTimer) {
-          mSlots->mTimer->Cancel();
-          mSlots->mTimer = nullptr;
-        }
-
-        // Set a timer to trigger the tree scrolling.
-        CreateTimer(LookAndFeel::IntID::TreeLazyScrollDelay, LazyScrollCallback,
-                    nsITimer::TYPE_ONE_SHOT, getter_AddRefs(mSlots->mTimer),
-                    "nsTreeBodyFrame::LazyScrollCallback"_ns);
-      }
-#endif
       // Bail out to prevent spring loaded timer and feedback line settings.
       return NS_OK;
     }

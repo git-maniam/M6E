@@ -42,26 +42,14 @@ extern "C" {
 #   ifdef __OMX_EXPORTS
 #       define OMX_API __declspec(dllexport)
 #   else
-#       ifdef _WIN32
-#           define OMX_API __declspec(dllexport)
-#       else
 #           define OMX_API __declspec(dllimport)
-#       endif
 #   endif
 #else
-#   ifdef _WIN32
-#      ifdef __OMX_EXPORTS
-#          define OMX_API __declspec(dllexport)
-#      else
-#          define OMX_API __declspec(dllimport)
-#      endif
-#   else
 #      ifdef __OMX_EXPORTS
 #          define OMX_API
 #      else
 #          define OMX_API extern
 #      endif
-#   endif
 #endif
 
 #ifndef OMX_APIENTRY
@@ -161,14 +149,6 @@ typedef unsigned long long OMX_U64;
 
 /** OMX_S64 is a 64 bit signed quantity that is 64 bit word aligned */
 typedef signed long long OMX_S64;
-
-#elif defined(WIN32)
-
-/** OMX_U64 is a 64 bit unsigned quantity that is 64 bit word aligned */
-typedef unsigned __int64  OMX_U64;
-
-/** OMX_S64 is a 64 bit signed quantity that is 64 bit word aligned */
-typedef signed   __int64  OMX_S64;
 
 #else /* WIN32 */
 

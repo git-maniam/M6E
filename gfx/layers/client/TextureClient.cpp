@@ -39,24 +39,8 @@
 #include "nsISupportsImpl.h"  // for MOZ_COUNT_CTOR, etc
 #include "nsPrintfCString.h"  // for nsPrintfCString
 
-#ifdef XP_WIN
-#  include "gfx2DGlue.h"
-#  include "gfxWindowsPlatform.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/layers/TextureD3D11.h"
-#endif
-#ifdef MOZ_WIDGET_GTK
-#  include <gtk/gtkx.h>
 
-#  include "gfxPlatformGtk.h"
-#endif
-#ifdef MOZ_WAYLAND
-#  include "mozilla/widget/nsWaylandDisplay.h"
-#endif
-
-#ifdef XP_MACOSX
 #  include "mozilla/layers/MacIOSurfaceTextureClientOGL.h"
-#endif
 
 #if 0
 #  define RECYCLE_LOG(...) printf_stderr(__VA_ARGS__)
@@ -259,12 +243,10 @@ static TextureType ChooseTextureType(gfx::SurfaceFormat aFormat,
       BackendTypeForBackendSelector(layersBackend, aSelector);
   (void)moz2DBackend;
 
-#ifdef XP_MACOSX
   if (StaticPrefs::gfx_use_iosurface_textures_AtStartup() &&
       !aKnowsCompositor->UsingSoftwareWebRender()) {
     return TextureType::MacIOSurface;
   }
-#endif
 
   return TextureType::Unknown;
 }
@@ -282,15 +264,9 @@ TextureData* TextureData::Create(TextureType aTextureType,
                                  TextureAllocationFlags aAllocFlags,
                                  gfx::BackendType aBackendType) {
   switch (aTextureType) {
-#ifdef XP_WIN
-    case TextureType::D3D11:
-      return D3D11TextureData::Create(aSize, aFormat, aAllocFlags);
-#endif
 
-#ifdef XP_MACOSX
     case TextureType::MacIOSurface:
       return MacIOSurfaceTextureData::Create(aSize, aFormat, aBackendType);
-#endif
     default:
       return nullptr;
   }
@@ -324,10 +300,8 @@ TextureData* TextureData::Create(TextureForwarder* aAllocator,
 
   gfx::BackendType moz2DBackend = gfx::BackendType::NONE;
 
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
   moz2DBackend = BackendTypeForBackendSelector(
       aKnowsCompositor->GetCompositorBackendType(), aSelector);
-#endif
 
   return TextureData::Create(textureType, aFormat, aSize, aAllocFlags,
                              moz2DBackend);

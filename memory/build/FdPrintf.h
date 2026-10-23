@@ -7,11 +7,7 @@
 
 #include <cstdarg>
 
-#ifdef _WIN32
-typedef void* platform_handle_t;
-#else
 typedef int platform_handle_t;
-#endif
 
 /*
  * We can't use libc's (f)printf because it would reenter in replace_malloc,

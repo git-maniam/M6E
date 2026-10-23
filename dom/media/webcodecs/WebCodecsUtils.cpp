@@ -370,27 +370,15 @@ Maybe<VideoPixelFormat> GuessVideoPixelFormat(layers::Image* aImage) {
 }
 
 bool IsOnAndroid() {
-#if defined(ANDROID)
-  return true;
-#else
   return false;
-#endif
 }
 
 bool IsOnMacOS() {
-#if defined(XP_MACOSX)
   return true;
-#else
-  return false;
-#endif
 }
 
 bool IsOnLinux() {
-#if defined(XP_LINUX)
-  return true;
-#else
   return false;
-#endif
 }
 
 template <typename T>

@@ -20,18 +20,9 @@
 #include "mozilla/webgpu/SharedTexture.h"
 #include "mozilla/webgpu/ffi/wgpu.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/webgpu/SharedTextureD3D11.h"
-#endif
 
-#if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/webgpu/SharedTextureDMABuf.h"
-#endif
 
-#if defined(XP_MACOSX)
 #  include "mozilla/webgpu/SharedTextureMacIOSurface.h"
-#endif
 
 namespace mozilla::webgpu {
 
@@ -77,98 +68,9 @@ extern void wgpu_server_ensure_shared_texture_for_readback(
       aSwapChainId, aDeviceId, aTextureId, aWidth, aHeight, aFormat, aUsage);
 }
 
-#ifdef XP_WIN
-extern void* wgpu_server_get_shared_texture_handle(WGPUWebGPUParentPtr aParent,
-                                                   WGPUTextureId aId) {
-  auto* parent = static_cast<WebGPUParent*>(aParent);
 
-  auto texture = parent->GetSharedTexture(aId);
-  if (!texture) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    return nullptr;
-  }
 
-  auto* textureD3D11 = texture->AsSharedTextureD3D11();
-  if (!textureD3D11) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    return nullptr;
-  }
-  void* sharedHandle = textureD3D11->GetSharedTextureHandle();
-  if (!sharedHandle) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    gfxCriticalNoteOnce << "Failed to get shared handle";
-    return nullptr;
-  }
 
-  return sharedHandle;
-}
-#endif
-
-#if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-extern int32_t wgpu_server_get_dma_buf_fd(WGPUWebGPUParentPtr aParent,
-                                          WGPUTextureId aId) {
-  auto* parent = static_cast<WebGPUParent*>(aParent);
-
-  auto texture = parent->GetSharedTexture(aId);
-  if (!texture) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    return -1;
-  }
-
-  auto* textureDMABuf = texture->AsSharedTextureDMABuf();
-  if (!textureDMABuf) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    return -1;
-  }
-  auto fd = textureDMABuf->CloneDmaBufFd();
-  // fd should be closed by the caller.
-  return fd.release();
-}
-
-extern "C" bool wgpu_server_get_linux_dmabuf_modifiers(
-    const uint64_t** aModifiers, uint32_t* aModifierCount) {
-  if (!aModifiers || !aModifierCount) {
-    return false;
-  }
-
-  *aModifiers = nullptr;
-  *aModifierCount = 0;
-
-  // Vulkan B8G8R8A8_UNORM maps to the exported ARGB dmabuf format on
-  // little-endian Linux.
-  const auto& modifiers = mozilla::gfx::gfxVars::DMABufModifiersARGB();
-  if (modifiers.IsEmpty()) {
-    return false;
-  }
-
-  *aModifiers = modifiers.Elements();
-  *aModifierCount = static_cast<uint32_t>(modifiers.Length());
-  return true;
-}
-#endif
-
-#if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-extern ffi::WGPUDMABufInfo wgpu_server_get_dma_buf_info(
-    WGPUWebGPUParentPtr aParent, WGPUTextureId aId) {
-  ffi::WGPUDMABufInfo info = {};
-
-  auto* parent = static_cast<WebGPUParent*>(aParent);
-
-  auto texture = parent->GetSharedTexture(aId);
-  if (!texture) {
-    MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-    return info;
-  }
-
-  auto* textureDMABuf = texture->AsSharedTextureDMABuf();
-  if (!textureDMABuf) {
-    return info;
-  }
-  return textureDMABuf->GetDMABufInfo();
-}
-#endif
-
-#if defined(XP_MACOSX)
 extern uint32_t wgpu_server_get_external_io_surface_id(
     WGPUWebGPUParentPtr aParent, WGPUTextureId aId) {
   auto* parent = static_cast<WebGPUParent*>(aParent);
@@ -186,7 +88,6 @@ extern uint32_t wgpu_server_get_external_io_surface_id(
   }
   return textureIOSurface->GetIOSurfaceId();
 }
-#endif
 
 extern void wgpu_server_remove_shared_texture(WGPUWebGPUParentPtr aParent,
                                               WGPUTextureId aId) {
@@ -315,18 +216,6 @@ extern void wgpu_parent_swap_chain_drop(
   parent->SwapChainDrop(owner, aTxnType, aTxnId);
 }
 
-#ifdef XP_WIN
-extern bool wgpu_parent_get_compositor_device_luid(
-    struct WGPUFfiLUID* aOutLuid) {
-  auto luid = WebGPUParent::GetCompositorDeviceLuid();
-  if (luid.isSome()) {
-    *aOutLuid = luid.extract();
-    return true;
-  } else {
-    return false;
-  }
-}
-#endif
 
 extern void wgpu_parent_post_request_device(WGPUWebGPUParentPtr aParent,
                                             WGPUDeviceId aDeviceId) {
@@ -457,15 +346,6 @@ void WebGPUParent::MaintainDevices() {
 }
 
 void WebGPUParent::PostAdapterRequestDevice(RawId aDeviceId) {
-#if defined(XP_WIN)
-  HANDLE handle =
-      wgpu_server_get_device_fence_handle(mContext.get(), aDeviceId);
-  if (handle) {
-    RefPtr<gfx::FileHandleWrapper> fenceHandle =
-        new gfx::FileHandleWrapper(UniqueFileHandle(handle));
-    mDeviceFenceHandles.emplace(aDeviceId, std::move(fenceHandle));
-  }
-#endif
 }
 
 void WebGPUParent::PreDeviceDrop(RawId aDeviceId) {
@@ -1557,31 +1437,5 @@ std::shared_ptr<SharedTexture> WebGPUParent::GetSharedTexture(
   return it->second;
 }
 
-#if defined(XP_WIN)
-/* static */
-Maybe<ffi::WGPUFfiLUID> WebGPUParent::GetCompositorDeviceLuid() {
-  const RefPtr<ID3D11Device> d3d11Device =
-      gfx::DeviceManagerDx::Get()->GetCompositorDevice();
-  if (!d3d11Device) {
-    gfxCriticalNoteOnce << "CompositorDevice does not exist";
-    return Nothing();
-  }
-
-  RefPtr<IDXGIDevice> dxgiDevice;
-  d3d11Device->QueryInterface((IDXGIDevice**)getter_AddRefs(dxgiDevice));
-
-  RefPtr<IDXGIAdapter> dxgiAdapter;
-  dxgiDevice->GetAdapter(getter_AddRefs(dxgiAdapter));
-
-  DXGI_ADAPTER_DESC desc;
-  if (FAILED(dxgiAdapter->GetDesc(&desc))) {
-    gfxCriticalNoteOnce << "Failed to get DXGI_ADAPTER_DESC";
-    return Nothing();
-  }
-
-  return Some(
-      ffi::WGPUFfiLUID{desc.AdapterLuid.LowPart, desc.AdapterLuid.HighPart});
-}
-#endif
 
 }  // namespace mozilla::webgpu

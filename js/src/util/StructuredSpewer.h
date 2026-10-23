@@ -17,12 +17,7 @@
 #  include "js/Printer.h"
 #  include "vm/JSONPrinter.h"
 
-#  ifdef XP_WIN
-#    include <process.h>
-#    define getpid _getpid
-#  else
 #    include <unistd.h>
-#  endif
 
 // [SMDOC] JSON Structured Spewer
 //

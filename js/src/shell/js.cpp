@@ -26,15 +26,8 @@
 
 #include <algorithm>
 #include <cctype>
-#ifdef XP_WIN
-#  include <direct.h>
-#  include <process.h>
-#endif
 #include <errno.h>
 #include <fcntl.h>
-#if defined(XP_WIN)
-#  include <io.h> /* for isatty() */
-#endif
 #include <locale.h>
 #if defined(MALLOC_H)
 #  include MALLOC_H /* for malloc_usable_size, malloc_size, _msize */
@@ -50,17 +43,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <utility>
-#ifdef XP_UNIX
 #  ifndef __wasi__
 #    include <sys/mman.h>
 #    include <sys/wait.h>
 #  endif
 #  include <sys/stat.h>
 #  include <unistd.h>
-#endif
-#ifdef XP_LINUX
-#  include <sys/prctl.h>
-#endif
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
@@ -523,7 +511,6 @@ void counters_reset(int) { /* Do nothing */ }
 #  endif
 
 static void InstallCoverageSignalHandlers() {
-#  ifndef XP_WIN
   fprintf(stderr, "[CodeCoverage] Setting handlers for process %d.\n",
           getpid());
 
@@ -540,7 +527,6 @@ static void InstallCoverageSignalHandlers() {
   sigemptyset(&reset_sa.sa_mask);
   mozilla::DebugOnly<int> r2 = sigaction(SIGUSR2, &reset_sa, nullptr);
   MOZ_ASSERT(r2 == 0, "Failed to install GCOV SIGUSR2 handler");
-#  endif
 }
 #endif
 
@@ -2258,11 +2244,7 @@ enum FileKind {
   return true;
 }
 
-#ifdef XP_WIN
-#  define GET_FD_FROM_FILE(a) int(_get_osfhandle(fileno(a)))
-#else
 #  define GET_FD_FROM_FILE(a) fileno(a)
-#endif
 
 static void freeExternalCallback(void* contents, void* userData) {
   MOZ_ASSERT(!userData);
@@ -7009,48 +6991,6 @@ class AutoCStringVector {
   }
 };
 
-#if defined(XP_WIN)
-static bool EscapeForShell(JSContext* cx, AutoCStringVector& argv) {
-  // Windows will break arguments in argv by various spaces, so we wrap each
-  // argument in quotes and escape quotes within. Even with quotes, \ will be
-  // treated like an escape character, so inflate each \ to \\.
-
-  for (size_t i = 0; i < argv.length(); i++) {
-    if (!argv[i]) {
-      continue;
-    }
-
-    size_t newLen = 3;  // quotes before and after and null-terminator
-    for (char* p = argv[i]; *p; p++) {
-      newLen++;
-      if (*p == '\"' || *p == '\\') {
-        newLen++;
-      }
-    }
-
-    auto escaped = cx->make_pod_array<char>(newLen);
-    if (!escaped) {
-      return false;
-    }
-
-    char* src = argv[i];
-    char* dst = escaped.get();
-    *dst++ = '\"';
-    while (*src) {
-      if (*src == '\"' || *src == '\\') {
-        *dst++ = '\\';
-      }
-      *dst++ = *src++;
-    }
-    *dst++ = '\"';
-    *dst++ = '\0';
-    MOZ_ASSERT(escaped.get() + newLen == dst);
-
-    argv.replace(i, std::move(escaped));
-  }
-  return true;
-}
-#endif
 
 #ifndef __wasi__
 static bool ReadAll(int fd, wasm::Bytes* bytes) {
@@ -7119,11 +7059,7 @@ class AutoPipe {
   }
 
   bool init() {
-#  ifdef XP_WIN
-    return !_pipe(fds_, 4096, O_BINARY);
-#  else
     return !pipe(fds_);
-#  endif
   }
 
   int reader() const {
@@ -7191,49 +7127,12 @@ static bool CompileAndSerializeInSeparateProcess(JSContext* cx,
     return false;
   }
 
-#  ifdef XP_WIN
-  // The spawned process will have all the stdIn/stdOut file handles open, but
-  // without the power of fork, we need some other way to communicate the
-  // integer fd values so we encode them in argv and WasmCompileAndSerialize()
-  // has a matching #ifdef XP_WIN to parse them out. Communicate both ends of
-  // both pipes so the child process can closed the unused ends.
-
-  arg = JS_smprintf("%d", stdIn.reader());
-  if (!arg || !argv.append(std::move(arg))) {
-    return false;
-  }
-
-  arg = JS_smprintf("%d", stdIn.writer());
-  if (!arg || !argv.append(std::move(arg))) {
-    return false;
-  }
-
-  arg = JS_smprintf("%d", stdOut.reader());
-  if (!arg || !argv.append(std::move(arg))) {
-    return false;
-  }
-
-  arg = JS_smprintf("%d", stdOut.writer());
-  if (!arg || !argv.append(std::move(arg))) {
-    return false;
-  }
-#  endif
 
   // Required by both _spawnv and exec.
   if (!argv.append(nullptr)) {
     return false;
   }
 
-#  ifdef XP_WIN
-  if (!EscapeForShell(cx, argv)) {
-    return false;
-  }
-
-  int childPid = _spawnv(P_NOWAIT, sArgv[0], argv.get());
-  if (childPid == -1) {
-    return false;
-  }
-#  else
   pid_t childPid = fork();
   switch (childPid) {
     case -1:
@@ -7256,7 +7155,6 @@ static bool CompileAndSerializeInSeparateProcess(JSContext* cx,
       execv(sArgv[0], argv.get());
       exit(-1);
   }
-#  endif
 
   // In the parent process. Closing stdOut.writer() is necessary for
   // stdOut.reader() below to hit EOF.
@@ -7276,11 +7174,6 @@ static bool CompileAndSerializeInSeparateProcess(JSContext* cx,
   stdOut.closeReader();
 
   int status;
-#  ifdef XP_WIN
-  if (_cwait(&status, childPid, WAIT_CHILD) == -1) {
-    return false;
-  }
-#  else
   while (true) {
     if (waitpid(childPid, &status, 0) >= 0) {
       break;
@@ -7289,7 +7182,6 @@ static bool CompileAndSerializeInSeparateProcess(JSContext* cx,
       return false;
     }
   }
-#  endif
 
   return status == 0;
 }
@@ -7297,34 +7189,8 @@ static bool CompileAndSerializeInSeparateProcess(JSContext* cx,
 static bool WasmCompileAndSerialize(JSContext* cx) {
   MOZ_ASSERT(wasm::CodeCachingAvailable(cx));
 
-#  ifdef XP_WIN
-  // See CompileAndSerializeInSeparateProcess for why we've had to smuggle
-  // these fd values through argv. Closing the writing ends is necessary for
-  // the reading ends to hit EOF.
-  int flagIndex = 0;
-  for (; flagIndex < sArgc; flagIndex++) {
-    if (!strcmp(sArgv[flagIndex], sWasmCompileAndSerializeFlag)) {
-      break;
-    }
-  }
-  MOZ_RELEASE_ASSERT(flagIndex < sArgc);
-
-  int fdsIndex = flagIndex + 1;
-  MOZ_RELEASE_ASSERT(fdsIndex + 4 == sArgc);
-
-  int stdInReader = atoi(sArgv[fdsIndex + 0]);
-  int stdInWriter = atoi(sArgv[fdsIndex + 1]);
-  int stdOutReader = atoi(sArgv[fdsIndex + 2]);
-  int stdOutWriter = atoi(sArgv[fdsIndex + 3]);
-
-  int stdIn = stdInReader;
-  close(stdInWriter);
-  close(stdOutReader);
-  int stdOut = stdOutWriter;
-#  else
   int stdIn = STDIN_FILENO;
   int stdOut = STDOUT_FILENO;
-#  endif
 
   wasm::MutableBytes bytecode = js_new<wasm::ShareableBytes>();
   if (!ReadAll(stdIn, &bytecode->vector)) {
@@ -12767,16 +12633,6 @@ static void SetOutputFile(const char* const envVar, RCFile* defaultOut,
 }
 
 static void PreInit() {
-#ifdef XP_WIN
-  const char* crash_option = getenv("XRE_NO_WINDOWS_CRASH_DIALOG");
-  if (crash_option && crash_option[0] == '1') {
-    // Disable the segfault dialog. We want to fail the tests immediately
-    // instead of hanging automation.
-    UINT newMode = SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX;
-    UINT prevMode = SetErrorMode(newMode);
-    SetErrorMode(prevMode | newMode);
-  }
-#endif
 }
 
 #ifndef JS_WITHOUT_NSPR
@@ -13930,11 +13786,6 @@ bool SetGlobalOptionsPreJSInit(const OptionParser& op) {
 bool SetGlobalOptionsPostJSInit(const OptionParser& op) {
   // Allow dumping on Linux with the fuzzing flag set, even when running with
   // the suid/sgid flag set on the shell.
-#ifdef XP_LINUX
-  if (op.getBoolOption("fuzzing-safe")) {
-    prctl(PR_SET_DUMPABLE, 1);
-  }
-#endif
 
 #ifdef DEBUG
   /*
@@ -14704,11 +14555,7 @@ bool SetContextGCOptions(JSContext* cx, const OptionParser& op) {
   bool incrementalGC = !op.getBoolOption("no-incremental-gc");
   JS_SetGCParameter(cx, JSGC_INCREMENTAL_GC_ENABLED, incrementalGC);
 
-#ifndef ANDROID
   bool parallelMarking = true;
-#else
-  bool parallelMarking = false;
-#endif
   if (op.getBoolOption("enable-parallel-marking")) {
     parallelMarking = true;
   }
@@ -14881,9 +14728,7 @@ bool ApplyBenchmarkMode(JSContext* cx, const OptionParser& op) {
 
   // See the default set for
   // javascript.options.content_process_write_protect_code
-#if !defined(XP_OPENBSD)
   jit::JitOptions.maybeSetWriteProtectCode(false);
-#endif
 
   JS::ContextOptionsRef(cx).setAsyncStack(false);
 

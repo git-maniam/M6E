@@ -465,9 +465,7 @@ void Http3Session::Shutdown() {
 
 Http3Session::~Http3Session() {
   LOG3(("Http3Session::~Http3Session %p", this));
-#ifndef ANDROID
   EchOutcomeTelemetry();
-#endif
   glean::http3::request_per_conn.AccumulateSingleSample(mTransactionCount);
   glean::http3::blocked_by_stream_limit_per_conn.AccumulateSingleSample(
       mBlockedByStreamLimitCount);
@@ -2405,13 +2403,11 @@ void Http3Session::CloseStreamInternal(Http3StreamBase* aStream,
       MOZ_ASSERT(mConnectionIdleStart);
       MOZ_ASSERT(mConnectionIdleEnd);
 
-#ifndef ANDROID
       if (mConnectionIdleStart) {
         mozilla::glean::netwerk::http3_time_to_reuse_idle_connection
             .Get(NS_SUCCEEDED(aResult) ? "succeeded"_ns : "failed"_ns)
             .AccumulateRawDuration(mConnectionIdleEnd - mConnectionIdleStart);
       }
-#endif
 
       mConnectionIdleStart = TimeStamp();
       mConnectionIdleEnd = TimeStamp();
@@ -3100,7 +3096,6 @@ void Http3Session::ReportHttp3Connection() {
   }
 }
 
-#ifndef ANDROID
 void Http3Session::EchOutcomeTelemetry() {
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
@@ -3120,7 +3115,6 @@ void Http3Session::EchOutcomeTelemetry() {
   glean::http3::ech_outcome.EnumGet(label).AccumulateSingleSample(
       mHandshakeSucceeded ? 0 : 1);
 }
-#endif
 
 void Http3Session::ZeroRttTelemetry(ZeroRttOutcome aOutcome) {
   nsAutoCString key;

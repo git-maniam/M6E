@@ -123,7 +123,6 @@ PreventDefaultResult APZEventState::FireContextmenuEvents(
     // If the contextmenu event was handled then we're showing a contextmenu,
     // and so we should remove any activation
     mElementStateManager->ClearActivation();
-#ifndef XP_WIN
   } else {
     // If the contextmenu wasn't consumed, fire the eMouseLongTap event.
     nsEventStatus status = APZCCallbackHelper::DispatchSynthesizedMouseEvent(
@@ -131,7 +130,6 @@ PreventDefaultResult APZEventState::FireContextmenuEvents(
         /*clickCount*/ 1, mPrecedingPointerDownState, aWidget,
         aSynthesizeForTests);
     APZES_LOG("eMouseLongTap event %s\n", ToString(status).c_str());
-#endif
   }
 
   return preventDefaultResult;
@@ -164,40 +162,16 @@ void APZEventState::ProcessLongTap(PresShell* aPresShell,
     mContentReceivedInputBlockCallback(mPendingTouchPreventedBlockId, false);
   }
 
-#ifdef XP_WIN
-  // On Windows, we fire the contextmenu events when the user lifts their
-  // finger, in keeping with the platform convention. This happens in the
-  // ProcessLongTapUp function. However, we still fire the eMouseLongTap event
-  // at this time, because things like text selection or dragging may want
-  // to know about it.
-  APZCCallbackHelper::DispatchSynthesizedMouseEvent(
-      eMouseLongTap, aPoint * aScale, mLastTouchIdentifier, aModifiers,
-      /*clickCount*/ 1, mPrecedingPointerDownState, widget,
-      mLastTouchSynthesizedForTests);
-#else
   PreventDefaultResult preventDefaultResult =
       FireContextmenuEvents(aPresShell, aPoint, aScale, mLastTouchIdentifier,
                             aModifiers, widget, mLastTouchSynthesizedForTests);
-#endif
 
   const bool contextmenuOpen =
-#ifdef XP_WIN
-      // On Windows context menu will never be opened by long tap events, the
-      // menu will open after the user lifts their finger.
-      false;
-#elif defined(MOZ_WIDGET_ANDROID)
-      // On Android, GeckoView calls preventDefault() in a JSActor
-      // (ContentDelegateChild.sys.mjs) when opening context menu so that we can
-      // tell whether contextmenu opens in response to the contextmenu event by
-      // checking where preventDefault() got called.
-      preventDefaultResult == PreventDefaultResult::ByChrome;
-#else
       // On desktop platforms (other than Windows) unlike Android, context menu
       // can be opened anywhere even if, for example, there's no link under the
       // touch point. So we can assume that "not preventDefault" means a context
       // menu is open.
       preventDefaultResult == PreventDefaultResult::No;
-#endif
   // Assuming that contextmenuOpen=true here means a context menu was opened, it
   // will be treated as "preventDefaulted" in APZ.
   mContentReceivedInputBlockCallback(aInputBlockId, contextmenuOpen);
@@ -223,13 +197,6 @@ void APZEventState::ProcessLongTapUp(PresShell* aPresShell,
                                      const CSSPoint& aPoint,
                                      const CSSToLayoutDeviceScale& aScale,
                                      Modifiers aModifiers) {
-#ifdef XP_WIN
-  nsCOMPtr<nsIWidget> widget = GetWidget();
-  if (widget) {
-    FireContextmenuEvents(aPresShell, aPoint, aScale, mLastTouchIdentifier,
-                          aModifiers, widget, mLastTouchSynthesizedForTests);
-  }
-#endif
 }
 
 void APZEventState::ProcessTouchEvent(

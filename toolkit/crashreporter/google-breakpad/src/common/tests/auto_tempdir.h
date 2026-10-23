@@ -40,12 +40,7 @@
 #include "breakpad_googletest_includes.h"
 #include "common/using_std_string.h"
 
-#if !defined(__ANDROID__)
 #define TEMPDIR "/tmp"
-#else
-#define TEMPDIR "/data/local/tmp"
-#include "common/android/testing/mkdtemp.h"
-#endif
 
 namespace google_breakpad {
 

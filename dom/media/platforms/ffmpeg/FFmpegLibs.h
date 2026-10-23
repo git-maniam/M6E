@@ -12,17 +12,6 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavutil/avutil.h"
 #include "libavutil/mem.h"
-#if defined(MOZ_USE_HWDECODE) && defined(MOZ_WIDGET_GTK)
-#  include "libavutil/hwcontext_drm.h"
-#  include "libavutil/hwcontext_vaapi.h"
-#  ifdef MOZ_USE_HWDECODE_VULKAN
-#    include <vulkan/vulkan_core.h>
-#    ifndef FF_API_VULKAN_FIXED_QUEUES
-#      define FF_API_VULKAN_FIXED_QUEUES (LIBAVUTIL_VERSION_MAJOR < 61)
-#    endif
-#    include "libavutil/hwcontext_vulkan.h"
-#  endif
-#endif
 #ifdef __GNUC__
 #  pragma GCC visibility pop
 #endif

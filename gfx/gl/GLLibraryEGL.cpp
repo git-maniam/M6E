@@ -20,13 +20,6 @@
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsPrintfCString.h"
-#ifdef XP_WIN
-#  include <d3d11.h>
-
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "nsWindowsHelpers.h"
-#  include "prerror.h"
-#endif
 #include "GLContext.h"
 #include "GLContextProvider.h"
 #include "GLLibraryLoader.h"
@@ -35,14 +28,6 @@
 #include "ScopedGLHelpers.h"
 #include "prenv.h"
 #include "prsystem.h"
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/WidgetUtilsGtk.h"
-#  include "mozilla/widget/DMABufDevice.h"
-#  ifdef MOZ_WAYLAND
-#    include "mozilla/widget/nsWaylandDisplay.h"
-#  endif  // MOZ_WIDGET_GTK
-#  include <gdk/gdk.h>
-#endif  // MOZ_WAYLAND
 
 #include <mutex>  // for call_once
 
@@ -105,13 +90,6 @@ static const char* sEGLExtensionNames[] = {
 PRLibrary* LoadApitraceLibrary() {
   const char* path = nullptr;
 
-#ifdef ANDROID
-  // We only need to explicitly dlopen egltrace
-  // on android as we can use LD_PRELOAD or other tricks
-  // on other platforms. We look for it in /data/local
-  // as that's writeable by all users.
-  path = "/data/local/tmp/egltrace.so";
-#endif
   if (!path) return nullptr;
 
   // Initialization of gfx prefs here is only needed during the unit tests...
@@ -133,7 +111,6 @@ PRLibrary* LoadApitraceLibrary() {
   nsAutoCString logPath;
   logPath.AppendPrintf("%s/%s", getenv("GRE_HOME"), logFile.get());
 
-#ifndef XP_WIN  // Windows is missing setenv and forbids PR_LoadLibrary.
   // apitrace uses the TRACE_FILE environment variable to determine where
   // to log trace output to
   printf_stderr("Logging GL tracing output to %s", logPath.get());
@@ -141,30 +118,10 @@ PRLibrary* LoadApitraceLibrary() {
 
   printf_stderr("Attempting load of %s\n", path);
   sApitraceLibrary = PR_LoadLibrary(path);
-#endif
 
   return sApitraceLibrary;
 }
 
-#ifdef XP_WIN
-// see the comment in GLLibraryEGL::EnsureInitialized() for the rationale here.
-static PRLibrary* LoadLibraryForEGLOnWindows(const nsAString& filename) {
-  nsAutoString path(gfx::gfxVars::GREDirectory());
-  path.Append(PR_GetDirectorySeparator());
-  path.Append(filename);
-
-  PRLibSpec lspec;
-  lspec.type = PR_LibSpec_PathnameU;
-  lspec.value.pathname_u = path.get();
-  PRLibrary* lib = PR_LoadLibraryWithFlags(lspec, PR_LD_LAZY | PR_LD_LOCAL);
-  if (!lib) {
-    gfxCriticalNote << "Failed to load " << path.get() << " " << PR_GetError()
-                    << " " << PR_GetOSError();
-  }
-  return lib;
-}
-
-#endif  // XP_WIN
 
 static std::shared_ptr<EglDisplay> GetAndInitDisplay(
     GLLibraryEGL& egl, void* displayType,
@@ -174,108 +131,9 @@ static std::shared_ptr<EglDisplay> GetAndInitDisplay(
   return EglDisplay::Create(egl, display, false, aProofOfLock);
 }
 
-#ifdef MOZ_WIDGET_GTK
-static std::shared_ptr<EglDisplay> GetAndInitDeviceDisplay(
-    GLLibraryEGL& egl, const StaticMutexAutoLock& aProofOfLock) {
-  nsAutoCString drmRenderDevice(gfx::gfxVars::DrmRenderDevice());
-  if (drmRenderDevice.IsEmpty() ||
-      !egl.IsExtensionSupported(EGLLibExtension::EXT_platform_device) ||
-      !egl.IsExtensionSupported(EGLLibExtension::EXT_device_enumeration)) {
-    return nullptr;
-  }
-
-  EGLint maxDevices;
-  if (!egl.fQueryDevicesEXT(0, nullptr, &maxDevices)) {
-    return nullptr;
-  }
-
-  std::vector<EGLDeviceEXT> devices(maxDevices);
-  EGLint numDevices;
-  if (!egl.fQueryDevicesEXT(devices.size(), devices.data(), &numDevices)) {
-    return nullptr;
-  }
-  devices.resize(numDevices);
-
-  EGLDisplay display = EGL_NO_DISPLAY;
-  for (const auto& device : devices) {
-    const char* renderNodeString =
-        egl.fQueryDeviceStringEXT(device, LOCAL_EGL_DRM_RENDER_NODE_FILE_EXT);
-    if (renderNodeString &&
-        strcmp(renderNodeString, drmRenderDevice.get()) == 0) {
-      const EGLAttrib attrib_list[] = {LOCAL_EGL_NONE};
-      display = egl.fGetPlatformDisplay(LOCAL_EGL_PLATFORM_DEVICE_EXT, device,
-                                        attrib_list);
-      break;
-    }
-  }
-  if (!display) {
-    return nullptr;
-  }
-
-  return EglDisplay::Create(egl, display, true, aProofOfLock);
-}
-
-static std::shared_ptr<EglDisplay> GetAndInitSoftwareDisplay(
-    GLLibraryEGL& egl, const StaticMutexAutoLock& aProofOfLock) {
-  if (!egl.IsExtensionSupported(EGLLibExtension::EXT_platform_device) ||
-      !egl.IsExtensionSupported(EGLLibExtension::EXT_device_enumeration)) {
-    return nullptr;
-  }
-
-  EGLint maxDevices;
-  if (!egl.fQueryDevicesEXT(0, nullptr, &maxDevices)) {
-    return nullptr;
-  }
-
-  std::vector<EGLDeviceEXT> devices(maxDevices);
-  EGLint numDevices;
-  if (!egl.fQueryDevicesEXT(devices.size(), devices.data(), &numDevices)) {
-    return nullptr;
-  }
-  devices.resize(numDevices);
-
-  EGLDisplay display = EGL_NO_DISPLAY;
-  for (const auto& device : devices) {
-    const char* renderNodeString =
-        egl.fQueryDeviceStringEXT(device, LOCAL_EGL_DRM_RENDER_NODE_FILE_EXT);
-    // We are looking for a device with no file
-    if (!renderNodeString || *renderNodeString == 0) {
-      const EGLAttrib attrib_list[] = {LOCAL_EGL_NONE};
-      display = egl.fGetPlatformDisplay(LOCAL_EGL_PLATFORM_DEVICE_EXT, device,
-                                        attrib_list);
-      break;
-    }
-  }
-  if (!display) {
-    return nullptr;
-  }
-
-  return EglDisplay::Create(egl, display, true, aProofOfLock);
-}
-
-static std::shared_ptr<EglDisplay> GetAndInitSurfacelessDisplay(
-    GLLibraryEGL& egl, const StaticMutexAutoLock& aProofOfLock) {
-  if (!egl.IsExtensionSupported(EGLLibExtension::MESA_platform_surfaceless)) {
-    return nullptr;
-  }
-
-  const EGLAttrib attrib_list[] = {LOCAL_EGL_NONE};
-  const EGLDisplay display = egl.fGetPlatformDisplay(
-      LOCAL_EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, attrib_list);
-  if (display == EGL_NO_DISPLAY) {
-    return nullptr;
-  }
-  return EglDisplay::Create(egl, display, true, aProofOfLock);
-}
-#endif
 
 static auto EglDebugLayersEnabled() {
   EGLAttrib ret = LOCAL_EGL_FALSE;
-#ifdef XP_WIN
-  if (StaticPrefs::gfx_direct3d11_enable_debug_layer_AtStartup()) {
-    ret = LOCAL_EGL_TRUE;
-  }
-#endif
   return ret;
 }
 
@@ -465,22 +323,8 @@ static std::shared_ptr<EglDisplay> GetAndInitDisplayForAccelANGLE(
 
 // -
 
-#if defined(XP_DARWIN)
 #  define EGL_LIB "libEGL.dylib"
 #  define GLES2_LIB "libGLESv2.dylib"
-#elif defined(XP_UNIX)
-#  define EGL_LIB "libEGL.so"
-#  define EGL_LIB2 "libEGL.so.1"
-#  define GLES2_LIB "libGLESv2.so"
-#  define GLES2_LIB2 "libGLESv2.so.2"
-#  define GL_LIB "libGL.so"
-#  define GL_LIB2 "libGL.so.1"
-#elif defined(XP_WIN)
-#  define EGL_LIB "libEGL.dll"
-#  define GLES2_LIB "libGLESv2.dll"
-#else
-#  error "Platform not recognized"
-#endif
 
 Maybe<SymbolLoader> GLLibraryEGL::GetSymbolLoader() const {
   auto ret = SymbolLoader(mSymbols.fGetProcAddress);
@@ -522,36 +366,10 @@ bool GLLibraryEGL::Init(nsACString* const out_failureId) {
 
   mozilla::ScopedGfxFeatureReporter reporter("EGL");
 
-#ifdef XP_WIN
-  if (!mEGLLibrary) {
-    // On Windows, the GLESv2, EGL and DXSDK libraries are shipped with libxul
-    // and we should look for them there. We have to load the libs in this
-    // order, because libEGL.dll depends on libGLESv2.dll which depends on the
-    // DXSDK libraries. This matters especially for WebRT apps which are in a
-    // different directory. See bug 760323 and bug 749459
-
-    // Also note that we intentionally leak the libs we load.
-
-    do {
-      // Windows 8.1+ has d3dcompiler_47.dll in the system directory.
-      if (LoadLibrarySystem32(L"d3dcompiler_47.dll")) break;
-
-      MOZ_ASSERT(false, "d3dcompiler DLL loading failed.");
-    } while (false);
-
-    mGLLibrary = LoadLibraryForEGLOnWindows(u"libGLESv2.dll"_ns);
-
-    mEGLLibrary = LoadLibraryForEGLOnWindows(u"libEGL.dll"_ns);
-  }
-
-#else  // !Windows
 
   // On non-Windows (Android) we use system copies of libEGL. We look for
   // the APITrace lib, libEGL.so, and libEGL.so.1 in that order.
 
-#  if defined(ANDROID)
-  if (!mEGLLibrary) mEGLLibrary = LoadApitraceLibrary();
-#  endif
 
   if (!mEGLLibrary) {
     mEGLLibrary = PR_LoadLibrary(EGL_LIB);
@@ -591,7 +409,6 @@ bool GLLibraryEGL::Init(nsACString* const out_failureId) {
   }
 #  endif
 
-#endif  // !Windows
 
   if (!mEGLLibrary || !mGLLibrary) {
     NS_WARNING("Couldn't load EGL LIB.");
@@ -692,9 +509,6 @@ bool GLLibraryEGL::Init(nsACString* const out_failureId) {
       return false;
     }
 
-#ifdef XP_WIN
-    MOZ_ASSERT(IsExtensionSupported(EGLLibExtension::ANGLE_platform_angle_d3d));
-#endif
 
     const SymLoadStruct createDeviceSymbols[] = {
         SYMBOL(CreateDeviceANGLE), SYMBOL(ReleaseDeviceANGLE), END_OF_SYMBOLS};
@@ -1015,32 +829,8 @@ std::shared_ptr<EglDisplay> GLLibraryEGL::CreateDisplayLocked(
     }
   } else {
     void* nativeDisplay = EGL_DEFAULT_DISPLAY;
-#ifdef MOZ_WIDGET_GTK
-    if (!ret && (!gfx::gfxVars::WebglUseHardware() || aFlags.mForceSoftware)) {
-      // Initialize a swrast egl device such as llvmpipe
-      ret = GetAndInitSoftwareDisplay(*this, aProofOfLock);
-    }
-    // Initialize the display the normal way
-    if (!ret && !gdk_display_get_default() && !aFlags.mForceSoftware) {
-      ret = GetAndInitDeviceDisplay(*this, aProofOfLock);
-      if (!ret) {
-        ret = GetAndInitSurfacelessDisplay(*this, aProofOfLock);
-      }
-    }
-#  ifdef MOZ_WAYLAND
-    else if (!ret && widget::GdkIsWaylandDisplay() && !aFlags.mForceSoftware) {
-      // Wayland does not support EGL_DEFAULT_DISPLAY
-      nativeDisplay = widget::WaylandDisplayGetWLDisplay();
-      if (!nativeDisplay) {
-        NS_WARNING("Failed to get wl_display.");
-        return nullptr;
-      }
-    }
-#  endif
-#elif defined(XP_MACOSX)
     MOZ_ASSERT(!aFlags.mForceSoftware,
                "Software rendering not supported by EGL on macOS");
-#endif
 
     // Initialize a display selecting a power preference, if supported.
     if (!ret && !aFlags.mForceSoftware &&
@@ -1083,13 +873,11 @@ void GLLibraryEGL::InitLibExtensions() {
 
   const char* rawExtString = nullptr;
 
-#ifndef ANDROID
   // Bug 1209612: Crashes on a number of android drivers.
   // Ideally we would only blocklist this there, but for now we don't need the
   // client extension list on ANDROID (we mostly need it on ANGLE), and we'd
   // rather not crash.
   rawExtString = fQueryString(nullptr, LOCAL_EGL_EXTENSIONS);
-#endif
 
   if (!rawExtString) {
     if (shouldDumpExts) {

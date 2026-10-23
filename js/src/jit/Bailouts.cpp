@@ -29,9 +29,6 @@ using namespace js::jit;
 
 using mozilla::IsInRange;
 
-#if defined(_WIN32)
-#  pragma pack(push, 1)
-#endif
 class js::jit::BailoutStack {
   RegisterDump::FPUArray fpregs_;
   RegisterDump::GPRArray regs_;
@@ -48,9 +45,6 @@ class js::jit::BailoutStack {
     return (uint8_t*)this + sizeof(BailoutStack);
   }
 };
-#if defined(_WIN32)
-#  pragma pack(pop)
-#endif
 
 #if !defined(JS_CODEGEN_NONE)
 // Make sure the compiler doesn't add extra padding on 32-bit platforms.

@@ -16,9 +16,6 @@
 #include "mozilla/layers/DoubleTapToZoom.h"
 #include "mozilla/layers/MatrixMessage.h"
 #include "nsThreadUtils.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/jni/Utils.h"
-#endif
 
 static mozilla::LazyLogModule sApzRemoteLog("apz.cc.remote");
 
@@ -129,27 +126,7 @@ void RemoteContentController::HandleTap(
                                        aInputBlockId, aDoubleTapToZoomMetrics);
   } else {
     // We must be on Android, running on the Java UI thread
-#ifndef MOZ_WIDGET_ANDROID
     MOZ_ASSERT(false);
-#else
-    // We don't want to get the BrowserParent or call
-    // BrowserParent::SendHandleTap() from a non-main thread, so we need to
-    // redispatch to the main thread. However, we should use the same
-    // mechanism that the Android widget uses when dispatching input events
-    // to Gecko, which is nsAppShell::PostEvent. Note in particular that
-    // using NS_DispatchToMainThread would post to a different message loop,
-    // and introduces the possibility of this tap event getting processed
-    // out of order with respect to the touch events that synthesized it.
-    mozilla::jni::DispatchToGeckoPriorityQueue(NewRunnableMethod<
-                                               TapType, LayoutDevicePoint,
-                                               Modifiers, ScrollableLayerGuid,
-                                               uint64_t,
-                                               Maybe<DoubleTapToZoomMetrics>>(
-        "layers::RemoteContentController::HandleTapOnParentProcessMainThread",
-        this, &RemoteContentController::HandleTapOnParentProcessMainThread,
-        aTapType, aPoint, aModifiers, aGuid, aInputBlockId,
-        aDoubleTapToZoomMetrics));
-#endif
   }
 }
 
@@ -244,17 +221,6 @@ void RemoteContentController::NotifyAPZStateChange(
 void RemoteContentController::UpdateOverscrollVelocity(
     const ScrollableLayerGuid& aGuid, float aX, float aY, bool aIsRootContent) {
   if (XRE_IsParentProcess()) {
-#ifdef MOZ_WIDGET_ANDROID
-    // We always want these to go to the parent process on Android
-    if (!NS_IsMainThread()) {
-      mozilla::jni::DispatchToGeckoPriorityQueue(
-          NewRunnableMethod<ScrollableLayerGuid, float, float, bool>(
-              "layers::RemoteContentController::UpdateOverscrollVelocity", this,
-              &RemoteContentController::UpdateOverscrollVelocity, aGuid, aX, aY,
-              aIsRootContent));
-      return;
-    }
-#endif
 
     MOZ_RELEASE_ASSERT(NS_IsMainThread());
     RefPtr<GeckoContentController> rootController =
@@ -286,17 +252,6 @@ void RemoteContentController::UpdateOverscrollVelocity(
 void RemoteContentController::UpdateOverscrollOffset(
     const ScrollableLayerGuid& aGuid, float aX, float aY, bool aIsRootContent) {
   if (XRE_IsParentProcess()) {
-#ifdef MOZ_WIDGET_ANDROID
-    // We always want these to go to the parent process on Android
-    if (!NS_IsMainThread()) {
-      mozilla::jni::DispatchToGeckoPriorityQueue(
-          NewRunnableMethod<ScrollableLayerGuid, float, float, bool>(
-              "layers::RemoteContentController::UpdateOverscrollOffset", this,
-              &RemoteContentController::UpdateOverscrollOffset, aGuid, aX, aY,
-              aIsRootContent));
-      return;
-    }
-#endif
 
     MOZ_RELEASE_ASSERT(NS_IsMainThread());
     RefPtr<GeckoContentController> rootController =
@@ -329,15 +284,6 @@ void RemoteContentController::HideDynamicToolbar(
     const ScrollableLayerGuid& aGuid) {
   // We always want these to go to the parent process
   if (XRE_IsParentProcess()) {
-#ifdef MOZ_WIDGET_ANDROID
-    if (!NS_IsMainThread()) {
-      mozilla::jni::DispatchToGeckoPriorityQueue(
-          NewRunnableMethod<ScrollableLayerGuid>(
-              "layers::RemoteContentController::HideDynamicToolbar", this,
-              &RemoteContentController::HideDynamicToolbar, aGuid));
-      return;
-    }
-#endif
 
     MOZ_RELEASE_ASSERT(NS_IsMainThread());
     RefPtr<GeckoContentController> rootController =

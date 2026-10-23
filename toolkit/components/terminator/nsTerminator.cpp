@@ -30,11 +30,7 @@
 #include "nsThreadUtils.h"
 #include "nsXULAppAPI.h"
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#else
 #  include <unistd.h>
-#endif
 
 #include "mozilla/AppShutdown.h"
 #include "mozilla/Atomics.h"
@@ -192,11 +188,7 @@ void MaybeSaveShutdownHangProfile(mozilla::ShutdownPhase aPhase) {
     return;
   }
 
-#if defined(XP_WIN)
-  uint32_t pid = GetCurrentProcessId();
-#else
   uint32_t pid = getpid();
-#endif
   nsAutoCString filename;
   filename.AppendPrintf("profile_shutdown_hang_%u.json", pid);
 
@@ -227,11 +219,7 @@ void RunWatchdog(void*) {
     // we have lost at most one second, which is much
     // more reasonable.
     //
-#if defined(XP_WIN)
-    Sleep(HEARTBEAT_INTERVAL_MS /* ms */);
-#else
     usleep(HEARTBEAT_INTERVAL_MS * 1000 /* usec */);
-#endif
 
     if (gHeartbeat++ < gCrashAfterTicks) {
       continue;

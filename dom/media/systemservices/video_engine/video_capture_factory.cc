@@ -15,9 +15,6 @@
 #  include "video_engine/placeholder_device_info.h"
 #endif
 
-#if defined(WEBRTC_USE_PIPEWIRE) && defined(MOZ_ENABLE_DBUS)
-#  include "mozilla/widget/AsyncDBus.h"
-#endif
 
 #include <memory>
 
@@ -168,43 +165,6 @@ auto VideoCaptureFactory::InitCameraBackend()
 
 auto VideoCaptureFactory::HasCameraDevice()
     -> RefPtr<VideoCaptureFactory::HasCameraDevicePromise> {
-#if defined(WEBRTC_USE_PIPEWIRE) && defined(MOZ_ENABLE_DBUS)
-  if (mVideoCaptureOptions && mVideoCaptureOptions->allow_pipewire()) {
-    return widget::CreateDBusProxyForBus(
-               G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE,
-               /* aInterfaceInfo = */ nullptr, "org.freedesktop.portal.Desktop",
-               "/org/freedesktop/portal/desktop",
-               "org.freedesktop.portal.Camera")
-        ->Then(
-            GetCurrentSerialEventTarget(), __func__,
-            [](RefPtr<GDBusProxy>&& aProxy) {
-              GVariant* variant =
-                  g_dbus_proxy_get_cached_property(aProxy, "IsCameraPresent");
-              if (!variant) {
-                return HasCameraDevicePromise::CreateAndReject(
-                    NS_ERROR_NO_INTERFACE,
-                    "VideoCaptureFactory::HasCameraDevice Reject");
-              }
-
-              if (!g_variant_is_of_type(variant, G_VARIANT_TYPE_BOOLEAN)) {
-                return HasCameraDevicePromise::CreateAndReject(
-                    NS_ERROR_UNEXPECTED,
-                    "VideoCaptureFactory::HasCameraDevice Reject");
-              }
-
-              const bool hasCamera = g_variant_get_boolean(variant);
-              g_variant_unref(variant);
-              return HasCameraDevicePromise::CreateAndResolve(
-                  hasCamera ? Available : NotAvailable,
-                  "VideoCaptureFactory::HasCameraDevice Resolve");
-            },
-            [](GUniquePtr<GError>&& aError) {
-              return HasCameraDevicePromise::CreateAndReject(
-                  NS_ERROR_NO_INTERFACE,
-                  "VideoCaptureFactory::HasCameraDevice Reject");
-            });
-  }
-#endif
   return HasCameraDevicePromise::CreateAndReject(
       NS_ERROR_NOT_IMPLEMENTED, "VideoCaptureFactory::HasCameraDevice Reject");
 }

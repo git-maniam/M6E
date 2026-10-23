@@ -13,9 +13,6 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/media/MediaUtils.h"
 #include "nsThreadUtils.h"
-#ifdef XP_WIN
-#  include "mozilla/mscom/EnsureMTA.h"
-#endif
 
 namespace mozilla {
 
@@ -53,12 +50,6 @@ CubebDeviceEnumerator::CubebDeviceEnumerator()
     : mMutex("CubebDeviceListMutex"),
       mManualInputInvalidation(false),
       mManualOutputInvalidation(false) {
-#ifdef XP_WIN
-  // Ensure the MTA thread exists and gets instantiated before the
-  // CubebDeviceEnumerator so that this instance will always gets destructed
-  // before the MTA thread gets shutdown.
-  mozilla::mscom::EnsureMTA([&]() -> void {
-#endif
     RefPtr<CubebHandle> handle = GetCubeb();
     if (handle) {
       int rv = cubeb_register_device_collection_changed(
@@ -80,9 +71,6 @@ CubebDeviceEnumerator::CubebDeviceEnumerator()
         mManualInputInvalidation = true;
       }
     }
-#ifdef XP_WIN
-  });
-#endif
 }
 
 /* static */
@@ -94,9 +82,6 @@ void CubebDeviceEnumerator::Shutdown() {
 }
 
 CubebDeviceEnumerator::~CubebDeviceEnumerator() {
-#ifdef XP_WIN
-  mozilla::mscom::EnsureMTA([&]() -> void {
-#endif
     RefPtr<CubebHandle> handle = GetCubeb();
     if (handle) {
       int rv = cubeb_register_device_collection_changed(
@@ -114,9 +99,6 @@ CubebDeviceEnumerator::~CubebDeviceEnumerator() {
             " device collection changed callback.");
       }
     }
-#ifdef XP_WIN
-  });
-#endif
 }
 
 RefPtr<const AudioDeviceSet>
@@ -129,7 +111,6 @@ CubebDeviceEnumerator::EnumerateAudioOutputDevices() {
   return EnumerateAudioDevices(Side::OUTPUT);
 }
 
-#ifndef ANDROID
 static uint16_t ConvertCubebType(cubeb_device_type aType) {
   uint16_t map[] = {
       nsIAudioDeviceInfo::TYPE_UNKNOWN,  // CUBEB_DEVICE_TYPE_UNKNOWN
@@ -215,9 +196,6 @@ static RefPtr<AudioDeviceSet> GetDeviceCollection(Side aSide) {
   RefPtr<CubebHandle> handle = GetCubeb();
   if (handle) {
     cubeb_device_collection collection = {nullptr, 0};
-#  ifdef XP_WIN
-    mozilla::mscom::EnsureMTA([&]() -> void {
-#  endif
       if (cubeb_enumerate_devices(handle->Context(),
                                   aSide == Input ? CUBEB_DEVICE_TYPE_INPUT
                                                  : CUBEB_DEVICE_TYPE_OUTPUT,
@@ -242,9 +220,6 @@ static RefPtr<AudioDeviceSet> GetDeviceCollection(Side aSide) {
         }
       }
       cubeb_device_collection_destroy(handle->Context(), &collection);
-#  ifdef XP_WIN
-    });
-#  endif
   }
 
   // On Windows, there is multiple kinds of default devices. This uses
@@ -258,7 +233,6 @@ static RefPtr<AudioDeviceSet> GetDeviceCollection(Side aSide) {
 
   return set;
 }
-#endif  // non ANDROID
 
 RefPtr<const AudioDeviceSet> CubebDeviceEnumerator::EnumerateAudioDevices(
     CubebDeviceEnumerator::Side aSide) {
@@ -286,35 +260,8 @@ RefPtr<const AudioDeviceSet> CubebDeviceEnumerator::EnumerateAudioDevices(
     }
   }
 
-#ifdef ANDROID
-  cubeb_device_type type = CUBEB_DEVICE_TYPE_UNKNOWN;
-  uint32_t channels = 0;
-  nsAutoString name;
-  if (aSide == Side::INPUT) {
-    type = CUBEB_DEVICE_TYPE_INPUT;
-    channels = 1;
-    name = u"Default audio input device"_ns;
-  } else {
-    MOZ_ASSERT(aSide == Side::OUTPUT);
-    type = CUBEB_DEVICE_TYPE_OUTPUT;
-    channels = 2;
-    name = u"Default audio output device"_ns;
-  }
-  RefPtr devices = MakeRefPtr<AudioDeviceSet>();
-  // Bug 1473346: enumerating devices is not supported on Android in cubeb,
-  // simply state that there is a single sink, that it is the default, and has
-  // a single channel. All the other values are made up and are not to be used.
-  // Bug 1660391: we can't use fluent here yet to get localized strings, so
-  // those are hard-coded en_US strings for now.
-  RefPtr info = MakeRefPtr<AudioDeviceInfo>(
-      nullptr, name, u""_ns, u""_ns, type, CUBEB_DEVICE_STATE_ENABLED,
-      CUBEB_DEVICE_PREF_ALL, CUBEB_DEVICE_FMT_ALL, CUBEB_DEVICE_FMT_S16NE,
-      channels, 44100, 44100, 44100, 441, 128);
-  devices->AppendElement(std::move(info));
-#else
   RefPtr devices = GetDeviceCollection(
       (aSide == Side::INPUT) ? CubebUtils::Input : CubebUtils::Output);
-#endif
   {
     MutexAutoLock lock(mMutex);
     *devicesCache = devices;

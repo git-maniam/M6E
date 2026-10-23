@@ -7,9 +7,6 @@
 
 #include <optional>
 
-#if defined(MOZ_MEMORY) && defined(XP_WIN)
-#  include "mozmemory_wrap.h"
-#endif
 
 // See
 // https://hacks.mozilla.org/2022/11/improving-firefox-stability-with-this-one-weird-trick/
@@ -66,12 +63,6 @@ struct StallSpecs {
   }
 };
 
-#if defined(MOZ_MEMORY) && defined(XP_WIN)
-MOZ_JEMALLOC_API StallSpecs GetAllocatorStallSpecs();
-MOZ_JEMALLOC_API_NODISCARD void* MozVirtualAlloc(void* lpAddress, size_t dwSize,
-                                                 uint32_t flAllocationType,
-                                                 uint32_t flProtect);
-#endif
 
 }  // namespace mozilla
 

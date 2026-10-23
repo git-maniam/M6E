@@ -20,18 +20,11 @@
 #include "mozilla/TaskQueue.h"
 #include "prsystem.h"
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(FFVPX_VERSION)
-#  include "mozilla/MediaDrmRemoteCDMParent.h"
-#endif
 
 namespace mozilla {
 
 StaticMutex FFmpegDataDecoder<LIBAV_VER>::sMutex;
 
-#ifdef MOZ_WIDGET_ANDROID
-static constexpr uint32_t kDrainIntervalMs = 20;
-static constexpr uint32_t kMaxDrainAttempts = 25;
-#endif
 
 FFmpegDataDecoder<LIBAV_VER>::FFmpegDataDecoder(const FFmpegLibWrapper* aLib,
                                                 AVCodecID aCodecID,
@@ -50,13 +43,7 @@ FFmpegDataDecoder<LIBAV_VER>::FFmpegDataDecoder(const FFmpegLibWrapper* aLib,
   MOZ_ASSERT(aLib);
   MOZ_COUNT_CTOR(FFmpegDataDecoder);
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(FFVPX_VERSION)
-  if (aCDM) {
-    if (PRemoteCDMParent* parentCDM = aCDM->AsPRemoteCDMParent()) {
-      mCDM = static_cast<MediaDrmRemoteCDMParent*>(parentCDM);
-    }
-  }
-#elif defined(DEBUG)
+#if   defined(DEBUG)
   MOZ_ASSERT(!aCDM);
 #else
   (void)aCDM;
@@ -116,13 +103,6 @@ MediaResult FFmpegDataDecoder<LIBAV_VER>::InitSWDecoder(
     AVDictionary** aOptions) {
   FFMPEG_LOG("Initialising FFmpeg decoder");
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-  if (mCDM) {
-    FFMPEG_LOG("  cannot use software decoder with CDM");
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("CDM requires HW decoder"));
-  }
-#endif
 
   AVCodec* codec = FindSoftwareAVCodec(mLib, mCodecID);
   if (!codec) {
@@ -135,90 +115,6 @@ MediaResult FFmpegDataDecoder<LIBAV_VER>::InitSWDecoder(
   return InitDecoder(codec, aOptions);
 }
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-/* static */
-void FFmpegDataDecoder<LIBAV_VER>::CryptoInfoAddRef(void* aCryptoInfo) {
-  reinterpret_cast<MediaDrmCryptoInfo*>(aCryptoInfo)->AddRef();
-}
-
-/* static */
-void FFmpegDataDecoder<LIBAV_VER>::CryptoInfoRelease(void* aCryptoInfo) {
-  reinterpret_cast<MediaDrmCryptoInfo*>(aCryptoInfo)->Release();
-}
-
-MediaResult FFmpegDataDecoder<LIBAV_VER>::MaybeAttachCryptoInfo(
-    MediaRawData* aSample, AVPacket* aPacket) {
-  if (!aSample->mCrypto.IsEncrypted()) {
-    return NS_OK;
-  }
-
-  if (NS_WARN_IF(!mCDM)) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("missing CDM for encrypted sample"));
-  }
-
-  RefPtr<MediaDrmCryptoInfo> cryptoInfo = mCDM->CreateCryptoInfo(aSample);
-  if (NS_WARN_IF(!cryptoInfo)) {
-    return MediaResult(
-        NS_ERROR_DOM_MEDIA_FATAL_ERR,
-        RESULT_DETAIL("missing MediaDrmCryptoInfo for encrypted sample"));
-  }
-
-  aPacket->moz_ndk_crypto_info = cryptoInfo->GetNdkCryptoInfo();
-  if (NS_WARN_IF(!aPacket->moz_ndk_crypto_info)) {
-    return MediaResult(
-        NS_ERROR_DOM_MEDIA_FATAL_ERR,
-        RESULT_DETAIL("missing AMediaCodecCryptoInfo for encrypted sample"));
-  }
-
-  aPacket->moz_crypto_info = cryptoInfo.forget().take();
-  aPacket->moz_crypto_info_addref = CryptoInfoAddRef;
-  aPacket->moz_crypto_info_release = CryptoInfoRelease;
-
-  FFMPEG_LOG("  encrypted packet, ndk_crypto_info={}",
-             fmt::ptr(aPacket->moz_ndk_crypto_info));
-  return NS_OK;
-}
-
-MediaResult FFmpegDataDecoder<LIBAV_VER>::MaybeAttachCDM() {
-  MOZ_ASSERT(mCodecContext);
-
-  if (!mCDM) {
-    return NS_OK;
-  }
-
-  if (!(mCodecContext->codec->capabilities & AV_CODEC_CAP_HARDWARE)) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("CDM requires MediaCodec decoder"));
-  }
-
-  mCrypto = mCDM->GetCrypto();
-  if (NS_WARN_IF(!mCrypto)) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("missing MediaDrmCrypto from CDM"));
-  }
-
-  mCodecContext->moz_ndk_crypto = mCrypto->GetNdkCrypto();
-  if (NS_WARN_IF(!mCodecContext->moz_ndk_crypto)) {
-    return MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR,
-                       RESULT_DETAIL("missing AMediaCrypto from CDM"));
-  }
-
-  FFMPEG_LOG("  attached CDM, ndk_crypto={}",
-             fmt::ptr(mCodecContext->moz_ndk_crypto));
-  return NS_OK;
-}
-
-void FFmpegDataDecoder<LIBAV_VER>::MaybeDetachCDM() {
-  if (mCodecContext) {
-    mCodecContext->moz_ndk_crypto = nullptr;
-  }
-
-  if (mCDM) {
-    mCDM = nullptr;
-  }
-}
-#endif
 
 MediaResult FFmpegDataDecoder<LIBAV_VER>::InitDecoder(AVCodec* aCodec,
                                                       AVDictionary** aOptions) {
@@ -266,13 +162,6 @@ MediaResult FFmpegDataDecoder<LIBAV_VER>::InitDecoder(AVCodec* aCodec,
   }
 #endif
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-  ret = MaybeAttachCDM();
-  if (NS_FAILED(ret)) {
-    ReleaseCodecContext();
-    return ret;
-  }
-#endif
 
   if (mLib->avcodec_open2(mCodecContext, aCodec, aOptions) < 0) {
     ReleaseCodecContext();
@@ -410,91 +299,20 @@ FFmpegDataDecoder<LIBAV_VER>::ProcessDrain() {
         }
         break;
       }
-#ifdef MOZ_WIDGET_ANDROID
-      CancelDrainTimer();
-#endif
       mDrainPromise.Reject(r, __func__);
       return p;
     }
   } while (gotFrame);
-#ifdef MOZ_WIDGET_ANDROID
-  CancelDrainTimer();
-#endif
   mDrainPromise.Resolve(std::move(results), __func__);
   return p;
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-bool FFmpegDataDecoder<LIBAV_VER>::MaybeDeferDrain(
-    const DecodedData& aResults) {
-  MOZ_ASSERT(mTaskQueue->IsOnCurrentThread());
-
-  if (!aResults.IsEmpty() || mDrainTimedOut) {
-    return false;
-  }
-
-  if (!mDrainTimer) {
-    nsresult rv = NS_NewTimerWithCallback(
-        getter_AddRefs(mDrainTimer),
-        [self = RefPtr{this}](nsITimer*) { self->OnDrainTimer(); },
-        kDrainIntervalMs, nsITimer::TYPE_ONE_SHOT,
-        "FFmpegDataDecoder::OnDrainTimer"_ns, mTaskQueue);
-    if (NS_FAILED(rv)) {
-      mDrainTimer = nullptr;
-      return false;
-    }
-    FFMPEG_LOGV("Polling drain in {} ms, attempt {} of {}", kDrainIntervalMs,
-                mDrainAttempts + 1, kMaxDrainAttempts);
-  }
-  return true;
-}
-
-void FFmpegDataDecoder<LIBAV_VER>::ResumeDrain() {
-  MOZ_ASSERT(mTaskQueue->IsOnCurrentThread());
-
-  if (mDrainPromise.IsEmpty()) {
-    FFMPEG_LOGV("Resume drain but promise already fulfilled");
-    return;
-  }
-
-  FFMPEG_LOGV("Resume drain");
-  ProcessDrain();
-}
-
-void FFmpegDataDecoder<LIBAV_VER>::OnDrainTimer() {
-  MOZ_ASSERT(mTaskQueue->IsOnCurrentThread());
-
-  mDrainTimer = nullptr;
-  if (++mDrainAttempts >= kMaxDrainAttempts) {
-    FFMPEG_LOG("Drain expired after {} attempts, completing with what we have",
-               mDrainAttempts);
-    mDrainTimedOut = true;
-  }
-
-  ResumeDrain();
-}
-
-void FFmpegDataDecoder<LIBAV_VER>::CancelDrainTimer() {
-  MOZ_ASSERT(mTaskQueue->IsOnCurrentThread());
-
-  mDrainAttempts = 0;
-  mDrainTimedOut = false;
-
-  if (mDrainTimer) {
-    mDrainTimer->Cancel();
-    mDrainTimer = nullptr;
-  }
-}
-#endif
 
 RefPtr<MediaDataDecoder::FlushPromise>
 FFmpegDataDecoder<LIBAV_VER>::ProcessFlush() {
   AUTO_PROFILER_LABEL("FFmpegDataDecoder::ProcessFlush", MEDIA_PLAYBACK);
   MOZ_ASSERT(mTaskQueue->IsOnCurrentThread());
   mDrainPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
-#ifdef MOZ_WIDGET_ANDROID
-  CancelDrainTimer();
-#endif
   if (mCodecContext) {
     FFMPEG_LOG("FFmpegDataDecoder: flushing buffers");
     ReleaseFrame();
@@ -512,9 +330,6 @@ void FFmpegDataDecoder<LIBAV_VER>::ProcessShutdown() {
   AUTO_PROFILER_LABEL("FFmpegDataDecoder::ProcessShutdown", MEDIA_PLAYBACK);
   MOZ_ASSERT(mTaskQueue->IsOnCurrentThread());
   mDrainPromise.RejectIfExists(NS_ERROR_DOM_MEDIA_CANCELED, __func__);
-#ifdef MOZ_WIDGET_ANDROID
-  CancelDrainTimer();
-#endif
   StaticMutexAutoLock mon(sMutex);
 
   if (mCodecContext) {

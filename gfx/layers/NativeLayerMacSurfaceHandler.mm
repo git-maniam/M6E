@@ -8,11 +8,7 @@
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/gfx/MacIOSurface.h"
 #include "mozilla/layers/SurfacePoolCA.h"
-#ifdef XP_MACOSX
 #  include "GLContextCGL.h"
-#else
-#  include "GLContextEAGL.h"
-#endif
 #include "nsRegion.h"
 
 namespace mozilla {
@@ -26,9 +22,7 @@ using gfx::IntSize;
 using gfx::Matrix4x4;
 using gfx::SurfaceFormat;
 using gl::GLContext;
-#ifdef XP_MACOSX
 using gl::GLContextCGL;
-#endif
 
 NativeLayerMacSurfaceHandler::NativeLayerMacSurfaceHandler(
     const gfx::IntSize& aSize, SurfacePoolHandleCA* aSurfacePoolHandle)

@@ -30,11 +30,6 @@ nsAuthSASL::Init(const nsACString& serviceName, uint32_t serviceFlags,
 
   // Find out whether we should be trying SSPI or not
   const char* authType = "kerb-gss";
-#ifdef XP_WIN
-  if (mozilla::StaticPrefs::network_auth_use_sspi()) {
-    authType = "kerb-sspi";
-  }
-#endif
 
   MOZ_ALWAYS_TRUE(mInnerModule = nsIAuthModule::CreateInstance(authType));
 

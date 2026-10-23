@@ -254,12 +254,6 @@ nsWindowMediator::GetMostRecentBrowserWindow(mozIDOMWindowProxy** outWindow) {
   nsresult rv = GetMostRecentWindow(u"navigator:browser", outWindow);
   NS_ENSURE_SUCCESS(rv, rv);
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (!*outWindow) {
-    rv = GetMostRecentWindow(u"navigator:geckoview", outWindow);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-#endif
 
 #ifdef MOZ_THUNDERBIRD
   if (!*outWindow) {

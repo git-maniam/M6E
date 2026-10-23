@@ -35,11 +35,6 @@
 #include "nsTHashMap.h"
 #include "nsThreadUtils.h"  // for NS_IsMainThread
 
-#ifdef XP_WIN
-struct ID3D10Texture2D;
-struct ID3D10Device;
-struct ID3D10ShaderResourceView;
-#endif
 
 typedef void* HANDLE;
 
@@ -62,13 +57,7 @@ class TextureClientRecycleAllocator;
 class KnowsCompositor;
 class NVImage;
 class MemoryOrShmem;
-#ifdef XP_WIN
-class D3D11RecycleAllocator;
-class D3D11YCbCrRecycleAllocator;
-#endif
-#ifdef XP_DARWIN
 class MacIOSurfaceRecycleAllocator;
-#endif
 class SurfaceDescriptorBuffer;
 enum class VideoBridgeSource : uint8_t;
 
@@ -82,14 +71,7 @@ struct ImageBackendData {
 /* Forward declarations for Image derivatives. */
 class GLImage;
 class SharedRGBImage;
-#ifdef MOZ_WIDGET_ANDROID
-class SurfaceTextureImage;
-class AndroidImageReaderImage;
-#elif defined(XP_DARWIN)
 class MacIOSurfaceImage;
-#elif MOZ_WIDGET_GTK
-class DMABUFSurfaceImage;
-#endif
 
 /**
  * A class representing a buffer of pixel data. The data can be in one
@@ -176,19 +158,8 @@ class Image {
   /* Access to derived classes. */
   virtual GLImage* AsGLImage() { return nullptr; }
   virtual GPUVideoImage* AsGPUVideoImage() { return nullptr; }
-#ifdef MOZ_WIDGET_ANDROID
-  virtual SurfaceTextureImage* AsSurfaceTextureImage() { return nullptr; }
-  virtual AndroidImageReaderImage* AsAndroidImageReaderImage() {
-    return nullptr;
-  }
-#endif
-#ifdef XP_DARWIN
   virtual MacIOSurfaceImage* AsMacIOSurfaceImage() { return nullptr; }
-#endif
   virtual PlanarYCbCrImage* AsPlanarYCbCrImage() { return nullptr; }
-#ifdef MOZ_WIDGET_GTK
-  virtual DMABUFSurfaceImage* AsDMABUFSurfaceImage() { return nullptr; }
-#endif
 
   virtual NVImage* AsNVImage() { return nullptr; }
 
@@ -607,17 +578,9 @@ class ImageContainer final : public SupportsThreadSafeWeakPtr<ImageContainer> {
 
   void EnsureRecycleAllocatorForRDD(KnowsCompositor* aKnowsCompositor);
 
-#ifdef XP_WIN
-  already_AddRefed<D3D11RecycleAllocator> GetD3D11RecycleAllocator(
-      KnowsCompositor* aKnowsCompositor, gfx::SurfaceFormat aPreferredFormat);
-  already_AddRefed<D3D11YCbCrRecycleAllocator> GetD3D11YCbCrRecycleAllocator(
-      KnowsCompositor* aKnowsCompositor);
-#endif
 
-#ifdef XP_DARWIN
   already_AddRefed<MacIOSurfaceRecycleAllocator>
   GetMacIOSurfaceRecycleAllocator();
-#endif
 
   /**
    * Returns the delay between the last composited image's presentation
@@ -698,17 +661,8 @@ class ImageContainer final : public SupportsThreadSafeWeakPtr<ImageContainer> {
   RefPtr<TextureClientRecycleAllocator> mRecycleAllocator
       MOZ_GUARDED_BY(mRecursiveMutex);
 
-#ifdef XP_WIN
-  RefPtr<D3D11RecycleAllocator> mD3D11RecycleAllocator
-      MOZ_GUARDED_BY(mRecursiveMutex);
-
-  RefPtr<D3D11YCbCrRecycleAllocator> mD3D11YCbCrRecycleAllocator
-      MOZ_GUARDED_BY(mRecursiveMutex);
-#endif
-#ifdef XP_DARWIN
   RefPtr<MacIOSurfaceRecycleAllocator> mMacIOSurfaceRecycleAllocator
       MOZ_GUARDED_BY(mRecursiveMutex);
-#endif
 
   nsTArray<OwningImage> mCurrentImages MOZ_GUARDED_BY(mRecursiveMutex);
 

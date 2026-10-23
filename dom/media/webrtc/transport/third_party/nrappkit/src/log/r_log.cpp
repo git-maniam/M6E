@@ -46,10 +46,8 @@
 
 #include <string.h>
 #include <errno.h>
-#ifndef _MSC_VER
 #include <strings.h>
 #include <syslog.h>
-#endif
 #include <registry.h>
 #include <time.h>
 
@@ -128,11 +126,7 @@ static log_destination log_destinations[LOG_NUM_DESTINATIONS]={
      },
      {
           "syslog",
-#ifndef WIN32
           1,
-#else
-          0,
-#endif
           LOGGING_DEFAULT_LEVEL,
           syslog_vlog,
      },
@@ -320,11 +314,7 @@ int r_dump(int facility,int level,const char *name,const char *data,int len)
 
 // Some platforms (notably WIN32) do not have this
 #ifndef va_copy
-  #ifdef WIN32
-    #define va_copy(dest, src) ( (dest) = (src) )
-  #else  // WIN32
     #error va_copy undefined, and semantics of assignment on va_list unknown
-  #endif //WIN32
 #endif //va_copy
 
 int r_vlog(int facility,int level,const char *format,va_list ap)
@@ -371,9 +361,7 @@ int stderr_vlog(int facility,int level,const char *format,va_list ap)
 
 int syslog_vlog(int facility,int level,const char *format,va_list ap)
   {
-#ifndef WIN32
     vsyslog(level|LOG_LOCAL0,format,ap);
-#endif
     return(0);
   }
 
@@ -537,18 +525,12 @@ int r_log_init()
 
 int _r_log_init(int use_reg)
   {
-#ifndef WIN32
     char *log = 0;
-#endif
 
     if(r_log_initted==0) {
-#ifdef WIN32
-      r_log_env_verbose=1;
-#else
       log=getenv("R_LOG_VERBOSE");
       if(log)
         r_log_env_verbose=atoi(log);
-#endif
 
     }
 

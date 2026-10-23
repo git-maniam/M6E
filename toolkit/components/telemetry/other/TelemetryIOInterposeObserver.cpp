@@ -56,11 +56,7 @@ void TelemetryIOInterposeObserver::Observe(Observation& aOb) {
     return;
   }
 
-#if defined(XP_WIN)
-  auto comparator = nsCaseInsensitiveStringComparator;
-#else
   auto comparator = nsTDefaultStringComparator<char16_t>;
-#endif
   nsAutoString processedName;
   uint32_t safeDirsLen = mSafeDirs.Length();
   for (uint32_t i = 0; i < safeDirsLen; ++i) {

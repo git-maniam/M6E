@@ -63,16 +63,7 @@
 #  include "mozilla/ipc/UtilityMediaServiceChild.h"
 #endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/java/SurfaceControlManagerWrappers.h"
-#  include "mozilla/layers/UiCompositorControllerChild.h"
-#  include "mozilla/widget/AndroidUiThread.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
-#if defined(XP_WIN)
-#  include "gfxWindowsPlatform.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#endif
 
 namespace mozilla {
 namespace gfx {
@@ -215,11 +206,6 @@ void GPUProcessManager::OnPreferenceChange(const char16_t* aData) {
 }
 
 void GPUProcessManager::ScreenInformationChanged() {
-#if defined(XP_WIN)
-  if (!!mGPUChild) {
-    mGPUChild->SendScreenInformationChanged();
-  }
-#endif
 }
 
 void GPUProcessManager::NotifyBatteryInfo(
@@ -558,38 +544,6 @@ bool GPUProcessManager::EnsureVRManager() {
   return true;
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-RefPtr<UiCompositorControllerChild>
-GPUProcessManager::CreateUiCompositorController(nsIWidget* aWidget,
-                                                const LayersId aId) {
-  MOZ_DIAGNOSTIC_ASSERT(IsGPUReady());
-
-  if (!mGPUChild) {
-    return UiCompositorControllerChild::CreateForSameProcess(aId, aWidget);
-  }
-
-  ipc::Endpoint<PUiCompositorControllerParent> parentPipe;
-  ipc::Endpoint<PUiCompositorControllerChild> childPipe;
-  nsresult rv = PUiCompositorController::CreateEndpoints(
-      mGPUChild->OtherEndpointProcInfo(), ipc::EndpointProcInfo::Current(),
-      &parentPipe, &childPipe);
-  if (NS_FAILED(rv)) {
-    DisableGPUProcess("Failed to create PUiCompositorController endpoints");
-    return nullptr;
-  }
-
-  mGPUChild->SendInitUiCompositorController(aId, std::move(parentPipe));
-  RefPtr<UiCompositorControllerChild> result =
-      UiCompositorControllerChild::CreateForGPUProcess(
-          mProcessToken, std::move(childPipe), aWidget);
-
-  if (result) {
-    result->SetCompositorSurfaceManager(
-        mProcess->GetCompositorSurfaceManager());
-  }
-  return result;
-}
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 void GPUProcessManager::OnProcessLaunchComplete(GPUProcessHost* aHost) {
   MOZ_ASSERT(mProcess && mProcess == aHost);
@@ -621,11 +575,6 @@ void GPUProcessManager::OnProcessLaunchComplete(GPUProcessHost* aHost) {
   mProcessToken = mProcess->GetProcessToken();
   GPUPROCESS_LOG("GPU process {} launched, pid {}", mProcessToken,
                  mGPUChild->OtherPid());
-#if defined(XP_WIN)
-  if (mAppInForeground) {
-    SetProcessIsForeground();
-  }
-#endif
 
   // Set a high priority for the newly-created gpu process.
   int pID = mProcess->GetChildProcessId();
@@ -795,26 +744,6 @@ void GPUProcessManager::DisableWebRender(wr::WebRenderError aError,
 
 void GPUProcessManager::NotifyWebRenderError(wr::WebRenderError aError) {
   gfxCriticalNote << "Handling webrender error " << (unsigned int)aError;
-#ifdef XP_WIN
-  if (aError == wr::WebRenderError::VIDEO_OVERLAY) {
-    gfxVarsCollectUpdates collect;
-    gfxVars::SetUseWebRenderDCompVideoHwOverlayWin(false);
-    gfxVars::SetUseWebRenderDCompVideoSwOverlayWin(false);
-    return;
-  }
-  if (aError == wr::WebRenderError::VIDEO_HW_OVERLAY) {
-    gfxVars::SetUseWebRenderDCompVideoHwOverlayWin(false);
-    return;
-  }
-  if (aError == wr::WebRenderError::VIDEO_SW_OVERLAY) {
-    gfxVars::SetUseWebRenderDCompVideoSwOverlayWin(false);
-    return;
-  }
-  if (aError == wr::WebRenderError::DCOMP_TEXTURE_OVERLAY) {
-    gfxVars::SetUseWebRenderDCompositionTextureOverlayWin(false);
-    return;
-  }
-#else
   if (aError == wr::WebRenderError::VIDEO_OVERLAY ||
       aError == wr::WebRenderError::VIDEO_HW_OVERLAY ||
       aError == wr::WebRenderError::VIDEO_SW_OVERLAY ||
@@ -822,7 +751,6 @@ void GPUProcessManager::NotifyWebRenderError(wr::WebRenderError aError) {
     MOZ_ASSERT_UNREACHABLE("unexpected to be called");
     return;
   }
-#endif
 
   // If we have a stable GPU process, this may just be due to an OOM or bad
   // driver state. In that case, we should consider restarting the GPU process
@@ -861,14 +789,7 @@ void GPUProcessManager::NotifyDeviceReset(DeviceResetReason aReason,
     return;
   }
 
-#ifdef XP_WIN
-  // Reset and reinitialize the compositor devices
-  if (auto* deviceManager = DeviceManagerDx::Get()) {
-    deviceManager->MaybeResetAndReacquireDevices();
-  }
-#else
   gfx::GPUProcessManager::RecordDeviceReset(aReason);
-#endif
 
   if (XRE_IsGPUProcess()) {
     if (auto* gpuParent = GPUParent::GetSingleton()) {
@@ -928,16 +849,7 @@ void GPUProcessManager::OnInProcessDeviceReset(DeviceResetReason aReason,
 
   if (OnDeviceReset(guilty)) {
     gfxCriticalNoteOnce << "In-process device reset threshold exceeded";
-#ifdef MOZ_WIDGET_GTK
-    // FIXME(aosmond): Should we disable WebRender on other platforms?
-    DisableWebRenderConfig(wr::WebRenderError::EXCESSIVE_RESETS, nsCString());
-#endif
   }
-#ifdef XP_WIN
-  // Ensure device reset handling before re-creating in process sessions.
-  // Normally nsWindow::OnPaint() already handled it.
-  gfxWindowsPlatform::GetPlatform()->HandleDeviceReset();
-#endif
   DestroyInProcessCompositorSessions();
   NotifyListenersOnCompositeDeviceReset();
 }
@@ -1113,9 +1025,6 @@ void GPUProcessManager::HandleProcessLost() {
 
   DestroyRemoteCompositorSessions();
 
-#ifdef MOZ_WIDGET_ANDROID
-  java::SurfaceControlManager::GetInstance()->OnGpuProcessLoss();
-#endif
 
   GPUPROCESS_LOG(
       "Handling GPU process loss, GPU process {}, app in "
@@ -1127,11 +1036,7 @@ void GPUProcessManager::HandleProcessLost() {
   // Except on Android if the app is in the background, where we want to wait
   // until the app is in the foreground again.
   if (gfxConfig::IsEnabled(Feature::GPU_PROCESS)) {
-#ifdef MOZ_WIDGET_ANDROID
-    if (mAppInForeground) {
-#else
     {
-#endif
       (void)LaunchGPUProcess();
     }
   } else {
@@ -1326,15 +1231,6 @@ already_AddRefed<CompositorSession> GPUProcessManager::CreateTopLevelCompositor(
   LAYERTREE_LOG("Created {} compositor for root layer tree {:x}",
                 mGPUChild ? "remote" : "in-process", layerTreeId);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (session) {
-    // Nothing to do if controller gets a nullptr
-    auto controller =
-        CreateUiCompositorController(aWidget, session->RootLayerTreeId());
-    MOZ_ASSERT(controller);
-    session->SetUiCompositorControllerChild(std::move(controller));
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   *aRetryOut = false;
   return session.forget();
@@ -1875,9 +1771,6 @@ void GPUProcessManager::SetAppInForeground(bool aInForeground) {
   }
 
   mAppInForeground = aInForeground;
-#if defined(XP_WIN)
-  SetProcessIsForeground();
-#endif
 
   // If we moved into the foreground, then we need to make sure the GPU process
   // completes its launch. Otherwise listeners may be left dangling from
@@ -1887,45 +1780,6 @@ void GPUProcessManager::SetAppInForeground(bool aInForeground) {
   }
 }
 
-#if defined(XP_WIN)
-void GPUProcessManager::SetProcessIsForeground() {
-  NTSTATUS WINAPI NtSetInformationProcess(
-      IN HANDLE process_handle, IN ULONG info_class,
-      IN PVOID process_information, IN ULONG information_length);
-  constexpr unsigned int NtProcessInformationForeground = 25;
-
-  static bool alreadyInitialized = false;
-  static decltype(NtSetInformationProcess)* setInformationProcess = nullptr;
-  if (!alreadyInitialized) {
-    alreadyInitialized = true;
-    nsModuleHandle module(LoadLibrary(L"ntdll.dll"));
-    if (module) {
-      setInformationProcess =
-          (decltype(NtSetInformationProcess)*)GetProcAddress(
-              module, "NtSetInformationProcess");
-    }
-  }
-  if (MOZ_UNLIKELY(!setInformationProcess)) {
-    return;
-  }
-
-  unsigned pid = GPUProcessPid();
-  if (pid <= 0) {
-    return;
-  }
-  // Using the handle from mProcess->GetChildProcessHandle() fails;
-  // the PROCESS_SET_INFORMATION permission is probably missing.
-  nsAutoHandle processHandle(
-      ::OpenProcess(PROCESS_SET_INFORMATION, FALSE, pid));
-  if (!processHandle) {
-    return;
-  }
-
-  BOOLEAN foreground = mAppInForeground;
-  setInformationProcess(processHandle, NtProcessInformationForeground,
-                        (PVOID)&foreground, sizeof(foreground));
-}
-#endif
 
 RefPtr<PGPUChild::TestTriggerMetricsPromise>
 GPUProcessManager::TestTriggerMetrics() {

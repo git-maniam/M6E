@@ -11,16 +11,8 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/ipc/ProcessUtils.h"
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-#  include "mozilla/sandboxTarget.h"
-#elif defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxSettings.h"
-#  include "prlink.h"
-#endif
 
-#ifdef XP_UNIX
 #  include <unistd.h>  // For sleep().
-#endif
 
 namespace mozilla {
 namespace net {
@@ -30,25 +22,11 @@ LazyLogModule gSocketProcessLog("socketprocess");
 SocketProcessImpl::~SocketProcessImpl() = default;
 
 bool SocketProcessImpl::Init(int aArgc, char* aArgv[]) {
-#ifdef XP_UNIX
   if (PR_GetEnv("MOZ_DEBUG_SOCKET_PROCESS")) {
     printf_stderr("\n\nSOCKETPROCESSnSOCKETPROCESS\n  debug me @ %d\n\n",
                   base::GetCurrentProcId());
     sleep(30);
   }
-#endif
-#if defined(MOZ_SANDBOX) && defined(XP_WIN)
-  LoadLibraryW(L"nss3.dll");
-  LoadLibraryW(L"softokn3.dll");
-  LoadLibraryW(L"freebl3.dll");
-  LoadLibraryW(L"winmm.dll");
-  mozilla::SandboxTarget::Instance()->StartSandbox();
-#elif defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-  PR_LoadLibrary("libnss3.so");
-  PR_LoadLibrary("libsoftokn3.so");
-  PR_LoadLibrary("libfreebl3.so");
-  StartOpenBSDSandbox(GeckoProcessType_Socket);
-#endif
 
   Maybe<const char*> parentBuildID =
       geckoargs::sParentBuildID.Get(aArgc, aArgv);

@@ -26,14 +26,9 @@
 #include "nsPrintfCString.h"
 #include "nsXULAppAPI.h"
 #include "prenv.h"
-#ifdef XP_WIN
-#  include <fcntl.h>
-#  include <process.h>
-#else
 #  include <sys/stat.h>  // for umask()
 #  include <sys/types.h>
 #  include <unistd.h>
-#endif
 
 // NB: Amount determined by performing a typical browsing session and finding
 //     the maximum number of modules instantiated, and padding up to the next
@@ -190,30 +185,6 @@ bool LimitFileToLessThanSize(const char* aFilename, uint32_t aSize,
 
     ScopedCloseFile temp;
 
-#if defined(XP_WIN)
-    // This approach was cribbed from
-    // https://searchfox.org/mozilla-central/rev/868935867c6241e1302e64cf9be8f56db0fd0d1c/xpcom/build/LateWriteChecks.cpp#158.
-    HANDLE hFile;
-    do {
-      // mkstemp isn't supported so keep trying until we get a file.
-      _mktemp_s(tempFilename, strlen(tempFilename) + 1);
-      hFile = CreateFileA(tempFilename, GENERIC_WRITE, 0, nullptr, CREATE_NEW,
-                          FILE_ATTRIBUTE_NORMAL, nullptr);
-    } while (GetLastError() == ERROR_FILE_EXISTS);
-
-    if (hFile == INVALID_HANDLE_VALUE) {
-      NS_WARNING("INVALID_HANDLE_VALUE");
-      return false;
-    }
-
-    int fd = _open_osfhandle((intptr_t)hFile, _O_APPEND);
-    if (fd == -1) {
-      NS_WARNING("_open_osfhandle failed!");
-      return false;
-    }
-
-    temp.reset(_fdopen(fd, "ab"));
-#elif defined(XP_UNIX)
 
     // Coverity would prefer us to set a secure umask before using `mkstemp`.
     // However, the umask is process-wide, so setting it may lead to difficult
@@ -227,9 +198,6 @@ bool LimitFileToLessThanSize(const char* aFilename, uint32_t aSize,
       return false;
     }
     temp.reset(fdopen(fd, "ab"));
-#else
-#  error Do not know how to open named temporary file
-#endif
 
     if (!temp) {
       NS_WARNING(nsPrintfCString("could not open named temporary file %s",
@@ -265,22 +233,12 @@ bool LimitFileToLessThanSize(const char* aFilename, uint32_t aSize,
     return false;
   }
 
-#if defined(XP_WIN)
-  if (!::ReplaceFileA(aFilename, tempFilename, nullptr, 0, 0, 0)) {
-    NS_WARNING(
-        nsPrintfCString("ReplaceFileA failed: %lu\n", GetLastError()).get());
-    return false;
-  }
-#elif defined(XP_UNIX)
   if (rename(tempFilename, aFilename)) {
     NS_WARNING(
         nsPrintfCString("rename failed: %s (%d)\n", strerror(errno), errno)
             .get());
     return false;
   }
-#else
-#  error Do not know how to atomically replace file
-#endif
 
   return true;
 }

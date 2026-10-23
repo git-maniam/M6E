@@ -4,7 +4,6 @@
 
 #include "AppleFastDatapathProbe.h"
 
-#if defined(XP_MACOSX) || defined(XP_IOS)
 
 #  include <dlfcn.h>
 #  include <netinet/in.h>
@@ -83,12 +82,3 @@ bool InitAppleFastDatapathProbe() {
 
 }  // namespace mozilla::net
 
-#else  // Not Apple
-
-namespace mozilla::net {
-
-bool InitAppleFastDatapathProbe() { return false; }
-
-}  // namespace mozilla::net
-
-#endif

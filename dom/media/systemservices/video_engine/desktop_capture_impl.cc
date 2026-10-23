@@ -34,9 +34,7 @@
 #include "rtc_base/time_utils.h"
 #include "tab_capturer.h"
 
-#ifdef XP_MACOSX
 #  include "modules/desktop_capture/mac/screen_capturer_sck.h"
-#endif
 
 using mozilla::NewRunnableMethod;
 using mozilla::TabCapturerWebrtc;
@@ -60,15 +58,7 @@ DesktopCaptureImpl* DesktopCaptureImpl::Create(int32_t aCaptureId,
 static DesktopCaptureOptions CreateDesktopCaptureOptions() {
   DesktopCaptureOptions options;
 // Help avoid an X11 deadlock, see bug 1456101.
-#ifdef MOZ_X11
-  MOZ_ALWAYS_SUCCEEDS(mozilla::SyncRunnable::DispatchToThread(
-      mozilla::GetMainThreadSerialEventTarget(),
-      NS_NewRunnableFunction(__func__, [&] {
-        options = DesktopCaptureOptions::CreateDefault();
-      })));
-#else
   options = DesktopCaptureOptions::CreateDefault();
-#endif
 
   // Leave desktop effects enabled during WebRTC captures.
   options.set_disable_effects(false);
@@ -117,13 +107,11 @@ std::shared_ptr<VideoCaptureModule::DeviceInfo>
 DesktopCaptureImpl::CreateDeviceInfo(const CaptureDeviceType aType) {
   if (aType == CaptureDeviceType::Screen) {
     auto options = CreateDesktopCaptureOptions();
-#ifdef XP_MACOSX
     if (!options.allow_sck_system_picker() &&
         !mozilla::StaticPrefs::
             media_getdisplaymedia_screencapturekit_enumeration_enabled_AtStartup()) {
       options.set_allow_sck_capturer(false);
     }
-#endif
     return CreateDesktopDeviceInfo(CreateScreenCaptureInfo(options));
   }
   if (aType == CaptureDeviceType::Window) {
@@ -163,11 +151,9 @@ static std::unique_ptr<DesktopCapturer> CreateDesktopCapturerAndThread(
     }
 
     nsIThreadManager::ThreadCreationOptions threadOptions;
-#if defined(XP_WIN) || defined(XP_MACOSX)
     // Windows desktop capture needs a UI thread.
     // Mac screen capture needs a thread with a CFRunLoop.
     threadOptions.isUiThread = true;
-#endif
     NS_NewNamedThread("DesktopCapture", aOutThread, nullptr, threadOptions);
     return *aOutThread;
   };
@@ -177,13 +163,11 @@ static std::unique_ptr<DesktopCapturer> CreateDesktopCapturerAndThread(
         aDeviceType == CaptureDeviceType::Window) {
       auto capturer = DesktopCapturer::CreateGenericCapturer(options);
       if (capturer) {
-#if defined(XP_MACOSX)
         // See comment for same conditional below.
         if (options.prefer_cursor_embedded() && options.allow_sck_capturer() &&
             ScreenCapturerSckAvailable()) {
           return capturer;
         }
-#endif
         return std::make_unique<DesktopAndCursorComposer>(std::move(capturer),
                                                           options);
       }
@@ -197,7 +181,6 @@ static std::unique_ptr<DesktopCapturer> CreateDesktopCapturerAndThread(
 
       capturer->SelectSource(aSourceId);
 
-#if defined(XP_MACOSX)
       // The MouseCursorMonitor on macOS is rather expensive, as for every
       // pulled frame it compares all pixels of the cursors used for the current
       // and last frames. Getting to the pixels may also incur a conversion.
@@ -211,7 +194,6 @@ static std::unique_ptr<DesktopCapturer> CreateDesktopCapturerAndThread(
           ScreenCapturerSckAvailable()) {
         return capturer;
       }
-#endif
 
       return std::make_unique<DesktopAndCursorComposer>(std::move(capturer),
                                                         options);

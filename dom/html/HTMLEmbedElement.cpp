@@ -13,10 +13,8 @@
 #include "nsIWidget.h"
 #include "nsObjectLoadingContent.h"
 #include "nsThreadUtils.h"
-#ifdef XP_MACOSX
 #  include "mozilla/EventDispatcher.h"
 #  include "mozilla/dom/Event.h"
-#endif
 
 NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(Embed)
 

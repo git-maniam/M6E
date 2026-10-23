@@ -843,9 +843,6 @@ struct alignas(kAutomationPageSize) ReadOnlyPage final {
 #ifdef MOZ_TSAN
   // TSan is confused by write access to read-only section.
   static ReadOnlyPage sInstance;
-#elif defined(XP_OPENBSD)
-  static const volatile ReadOnlyPage sInstance
-      __attribute__((section(".openbsd.mutable")));
 #else
   static const volatile ReadOnlyPage sInstance;
 #endif

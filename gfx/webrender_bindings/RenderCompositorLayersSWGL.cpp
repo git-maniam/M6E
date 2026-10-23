@@ -14,11 +14,7 @@
 #include "mozilla/layers/TextureHostOGL.h"
 #include "mozilla/widget/CompositorWidget.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/webrender/RenderCompositorD3D11SWGL.h"
-#else
 #  include "mozilla/webrender/RenderCompositorOGLSWGL.h"
-#endif
 
 namespace mozilla {
 using namespace layers;
@@ -28,11 +24,7 @@ namespace wr {
 
 UniquePtr<RenderCompositor> RenderCompositorLayersSWGL::Create(
     const RefPtr<widget::CompositorWidget>& aWidget, nsACString& aError) {
-#ifdef XP_WIN
-  return RenderCompositorD3D11SWGL::Create(aWidget, aError);
-#else
   return RenderCompositorOGLSWGL::Create(aWidget, aError);
-#endif
 }
 
 RenderCompositorLayersSWGL::RenderCompositorLayersSWGL(
@@ -286,15 +278,6 @@ void RenderCompositorLayersSWGL::AttachExternalImage(
         << AsUint64(aExternalImage);
     return;
   }
-#if defined(XP_WIN)
-  MOZ_RELEASE_ASSERT(image->AsRenderDXGITextureHost() ||
-                     image->AsRenderDXGIYCbCrTextureHost());
-#elif defined(ANDROID)
-  MOZ_RELEASE_ASSERT(image->AsRenderAndroidHardwareBufferTextureHost() ||
-                     image->AsRenderAndroidSurfaceTextureHost() ||
-                     image->AsRenderEGLImageTextureHost() ||
-                     image->AsRenderAndroidImageReaderImageTextureHost());
-#endif
 
   auto surfaceCursor = mSurfaces.find(aId);
   MOZ_RELEASE_ASSERT(surfaceCursor != mSurfaces.end());

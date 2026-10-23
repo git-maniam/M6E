@@ -32,9 +32,6 @@
 #include "nsSimpleEnumerator.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
 using namespace mozilla::widget;
 using namespace mozilla::dom;
@@ -421,22 +418,8 @@ bool nsBaseFilePicker::IsPotentiallyReadableDirectory(nsIFile& aDirectory) {
     return true;
   }
 
-#ifdef XP_MACOSX
   // On macOS, the file picker can read directories that our own process can't.
   return true;
-#else
-#  ifdef MOZ_WIDGET_GTK
-  if (mozilla::widget::IsRunningUnderFlatpakOrSnap()) {
-    // On Flatpak / snap, the file picker can read directories that our own
-    // process can't.
-    return true;
-  }
-#  endif
-  bool isDirectory = false;
-  bool isReadable = false;
-  return NS_SUCCEEDED(aDirectory.IsDirectory(&isDirectory)) && isDirectory &&
-         NS_SUCCEEDED(aDirectory.IsReadable(&isReadable)) && isReadable;
-#endif
 }
 
 bool nsBaseFilePicker::IsContentInitiated() const {

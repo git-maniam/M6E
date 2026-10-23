@@ -19,9 +19,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsThreadManager.h"
 #include "nsThreadUtils.h"
-#if defined(XP_UNIX) || defined(MOZ_DMD)
 #  include "nsMemoryInfoDumper.h"
-#endif
 #include "VRProcessManager.h"
 #include "mozilla/MemoryReportingProcess.h"
 #include "mozilla/Preferences.h"
@@ -41,139 +39,14 @@
 #  include "PHC.h"
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#  include "mozilla/jni/Utils.h"
-#endif
 
-#ifdef XP_WIN
-#  include <process.h>
-
-#  include "mozilla/MemoryInfo.h"
-#  ifndef getpid
-#    define getpid _getpid
-#  endif
-#else
 #  include <unistd.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::ipc;
 using namespace dom;
 
-#if defined(XP_LINUX)
-
-#  include <malloc.h>
-#  include <stdlib.h>
-#  include <string.h>
-
-#  include "mozilla/MemoryMapping.h"
-
-[[nodiscard]] static nsresult GetProcSelfStatmField(int aField, int64_t* aN) {
-  // There are more than two fields, but we're only interested in the first
-  // two.
-  static const int MAX_FIELD = 2;
-  size_t fields[MAX_FIELD];
-  MOZ_ASSERT(aField < MAX_FIELD, "bad field number");
-  FILE* f = fopen("/proc/self/statm", "r");
-  if (f) {
-    int nread = fscanf(f, "%zu %zu", &fields[0], &fields[1]);
-    fclose(f);
-    if (nread == MAX_FIELD) {
-      *aN = fields[aField] * getpagesize();
-      return NS_OK;
-    }
-  }
-  return NS_ERROR_FAILURE;
-}
-
-[[nodiscard]] static nsresult GetProcSelfSmapsPrivate(int64_t* aN, pid_t aPid) {
-  // You might be tempted to calculate USS by subtracting the "shared" value
-  // from the "resident" value in /proc/<pid>/statm. But at least on Linux,
-  // statm's "shared" value actually counts pages backed by files, which has
-  // little to do with whether the pages are actually shared. /proc/self/smaps
-  // on the other hand appears to give us the correct information.
-
-  nsTArray<MemoryMapping> mappings(1024);
-  MOZ_TRY(GetMemoryMappings(mappings, aPid));
-
-  int64_t amount = 0;
-  for (auto& mapping : mappings) {
-    amount += mapping.Private_Clean();
-    amount += mapping.Private_Dirty();
-  }
-  *aN = amount;
-  return NS_OK;
-}
-
-#  define HAVE_VSIZE_AND_RESIDENT_REPORTERS 1
-[[nodiscard]] static nsresult VsizeDistinguishedAmount(int64_t* aN) {
-  return GetProcSelfStatmField(0, aN);
-}
-
-[[nodiscard]] static nsresult ResidentDistinguishedAmount(int64_t* aN) {
-  return GetProcSelfStatmField(1, aN);
-}
-
-[[nodiscard]] static nsresult ResidentFastDistinguishedAmount(int64_t* aN) {
-  return ResidentDistinguishedAmount(aN);
-}
-
-#  define HAVE_RESIDENT_UNIQUE_REPORTER 1
-[[nodiscard]] static nsresult ResidentUniqueDistinguishedAmount(
-    int64_t* aN, pid_t aPid = 0) {
-  FILE* f =
-      aPid == 0
-          ? fopen("/proc/self/smaps_rollup", "r")
-          : fopen(nsPrintfCString("/proc/%d/smaps_rollup", aPid).get(), "r");
-  if (!f) {
-    // smaps_rollup is only available since Linux 4.14.
-    return GetProcSelfSmapsPrivate(aN, aPid);
-  }
-
-  size_t privateClean = 0;
-  size_t privateDirty = 0;
-  bool havePrivateClean = false;
-  bool havePrivateDirty = false;
-  char line[256];
-  while (fgets(line, sizeof(line), f)) {
-    if (sscanf(line, "Private_Clean: %zu kB", &privateClean) == 1) {
-      havePrivateClean = true;
-    } else if (sscanf(line, "Private_Dirty: %zu kB", &privateDirty) == 1) {
-      havePrivateDirty = true;
-    }
-  }
-  bool readFailed = ferror(f);
-  fclose(f);
-
-  if (readFailed || !havePrivateClean || !havePrivateDirty) {
-    return NS_ERROR_FAILURE;
-  }
-  *aN = int64_t(privateClean + privateDirty) * 1024;
-  return NS_OK;
-}
-
-#  ifdef HAVE_MALLINFO
-#    define HAVE_SYSTEM_HEAP_REPORTER 1
-[[nodiscard]] static nsresult SystemHeapSize(int64_t* aSizeOut) {
-  struct mallinfo info = mallinfo();
-
-  // The documentation in the glibc man page makes it sound like |uordblks|
-  // would suffice, but that only gets the small allocations that are put in
-  // the brk heap. We need |hblkhd| as well to get the larger allocations
-  // that are mmapped.
-  //
-  // The fields in |struct mallinfo| are all |int|, <sigh>, so it is
-  // unreliable if memory usage gets high. However, the system heap size on
-  // Linux should usually be zero (so long as jemalloc is enabled) so that
-  // shouldn't be a problem. Nonetheless, cast the |int|s to |size_t| before
-  // adding them to provide a small amount of extra overflow protection.
-  *aSizeOut = size_t(info.hblkhd) + size_t(info.uordblks);
-  return NS_OK;
-}
-#  endif
-
-#elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
+#if   defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
     defined(__OpenBSD__) || defined(__FreeBSD_kernel__)
 
 #  include <sys/param.h>
@@ -185,46 +58,20 @@ using namespace dom;
 
 #  include <unistd.h>
 
-#  if defined(__NetBSD__)
-#    undef KERN_PROC
-#    define KERN_PROC KERN_PROC2
-#    define KINFO_PROC struct kinfo_proc2
-#  else
 #    define KINFO_PROC struct kinfo_proc
-#  endif
 
-#  if defined(__DragonFly__)
-#    define KP_SIZE(kp) (kp.kp_vm_map_size)
-#    define KP_RSS(kp) (kp.kp_vm_rssize * getpagesize())
-#  elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#  if   defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #    define KP_SIZE(kp) (kp.ki_size)
 #    define KP_RSS(kp) (kp.ki_rssize * getpagesize())
-#  elif defined(__NetBSD__)
-#    define KP_SIZE(kp) (kp.p_vm_msize * getpagesize())
-#    define KP_RSS(kp) (kp.p_vm_rssize * getpagesize())
-#  elif defined(__OpenBSD__)
-#    define KP_SIZE(kp) \
-      ((kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize) * getpagesize())
-#    define KP_RSS(kp) (kp.p_vm_rssize * getpagesize())
 #  endif
 
 [[nodiscard]] static nsresult GetKinfoProcSelf(KINFO_PROC* aProc) {
-#  if defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-  static LazyLogModule sPledgeLog("SandboxPledge");
-  MOZ_LOG(sPledgeLog, LogLevel::Debug,
-          ("%s called when pledged, returning NS_ERROR_FAILURE\n", __func__));
-  return NS_ERROR_FAILURE;
-#  endif
   int mib[] = {
       // clang-format off
     CTL_KERN,
     KERN_PROC,
     KERN_PROC_PID,
     getpid(),
-#  if defined(__NetBSD__) || defined(__OpenBSD__)
-    sizeof(KINFO_PROC),
-    1,
-#  endif
       // clang-format on
   };
   u_int miblen = sizeof(mib) / sizeof(mib[0]);
@@ -258,60 +105,6 @@ using namespace dom;
   return ResidentDistinguishedAmount(aN);
 }
 
-#  ifdef __FreeBSD__
-#    include <libutil.h>
-
-#    include <algorithm>
-
-[[nodiscard]] static nsresult GetKinfoVmentrySelf(int64_t* aPrss,
-                                                  uint64_t* aMaxreg) {
-  int cnt;
-  struct kinfo_vmentry* vmmap;
-  struct kinfo_vmentry* kve;
-  if (!(vmmap = kinfo_getvmmap(getpid(), &cnt))) {
-    return NS_ERROR_FAILURE;
-  }
-  if (aPrss) {
-    *aPrss = 0;
-  }
-  if (aMaxreg) {
-    *aMaxreg = 0;
-  }
-
-  for (int i = 0; i < cnt; i++) {
-    kve = &vmmap[i];
-    if (aPrss) {
-      *aPrss += kve->kve_private_resident;
-    }
-    if (aMaxreg) {
-      *aMaxreg = std::max(*aMaxreg, kve->kve_end - kve->kve_start);
-    }
-  }
-
-  free(vmmap);
-  return NS_OK;
-}
-
-#    define HAVE_PRIVATE_REPORTER 1
-[[nodiscard]] static nsresult PrivateDistinguishedAmount(int64_t* aN) {
-  int64_t priv;
-  nsresult rv = GetKinfoVmentrySelf(&priv, nullptr);
-  NS_ENSURE_SUCCESS(rv, rv);
-  *aN = priv * getpagesize();
-  return NS_OK;
-}
-
-#    define HAVE_VSIZE_MAX_CONTIGUOUS_REPORTER 1
-[[nodiscard]] static nsresult VsizeMaxContiguousDistinguishedAmount(
-    int64_t* aN) {
-  uint64_t biggestRegion;
-  nsresult rv = GetKinfoVmentrySelf(nullptr, &biggestRegion);
-  if (NS_SUCCEEDED(rv)) {
-    *aN = biggestRegion;
-  }
-  return NS_OK;
-}
-#  endif  // FreeBSD
 
 #elif defined(SOLARIS)
 
@@ -401,7 +194,7 @@ static void XMappingIter(int64_t& aVsize, int64_t& aResident,
   return NS_OK;
 }
 
-#elif defined(XP_MACOSX)
+#else
 
 #  include <mach/mach_init.h>
 #  include <mach/mach_vm.h>
@@ -601,353 +394,7 @@ static bool InSharedRegion(mach_vm_address_t aAddr, cpu_type_t aType) {
   return NS_OK;
 }
 
-#elif defined(XP_WIN)
-
-#  include <psapi.h>
-#  include <windows.h>
-
-#  include <algorithm>
-
-#  include "nsTHashMap.h"
-
-#  define HAVE_VSIZE_AND_RESIDENT_REPORTERS 1
-[[nodiscard]] static nsresult VsizeDistinguishedAmount(int64_t* aN) {
-  MEMORYSTATUSEX s;
-  s.dwLength = sizeof(s);
-
-  if (!GlobalMemoryStatusEx(&s)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  *aN = s.ullTotalVirtual - s.ullAvailVirtual;
-  return NS_OK;
-}
-
-[[nodiscard]] static nsresult ResidentDistinguishedAmount(int64_t* aN) {
-  PROCESS_MEMORY_COUNTERS pmc;
-  pmc.cb = sizeof(PROCESS_MEMORY_COUNTERS);
-
-  if (!GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc))) {
-    return NS_ERROR_FAILURE;
-  }
-
-  *aN = pmc.WorkingSetSize;
-  return NS_OK;
-}
-
-[[nodiscard]] static nsresult ResidentFastDistinguishedAmount(int64_t* aN) {
-  return ResidentDistinguishedAmount(aN);
-}
-
-#  define HAVE_RESIDENT_UNIQUE_REPORTER 1
-
-[[nodiscard]] static nsresult ResidentUniqueDistinguishedAmount(
-    int64_t* aN, HANDLE aProcess = nullptr) {
-  // Determine how many entries we need.
-  PSAPI_WORKING_SET_INFORMATION tmp;
-  DWORD tmpSize = sizeof(tmp);
-  memset(&tmp, 0, tmpSize);
-
-  HANDLE proc = aProcess ? aProcess : GetCurrentProcess();
-  QueryWorkingSet(proc, &tmp, tmpSize);
-
-  // Fudge the size in case new entries are added between calls.
-  size_t entries = tmp.NumberOfEntries * 2;
-
-  if (!entries) {
-    return NS_ERROR_FAILURE;
-  }
-
-  DWORD infoArraySize = tmpSize + (entries * sizeof(PSAPI_WORKING_SET_BLOCK));
-  UniqueFreePtr<PSAPI_WORKING_SET_INFORMATION> infoArray(
-      static_cast<PSAPI_WORKING_SET_INFORMATION*>(malloc(infoArraySize)));
-
-  if (!infoArray) {
-    return NS_ERROR_FAILURE;
-  }
-
-  if (!QueryWorkingSet(proc, infoArray.get(), infoArraySize)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  entries = static_cast<size_t>(infoArray->NumberOfEntries);
-  size_t privatePages = 0;
-  for (size_t i = 0; i < entries; i++) {
-    // Count shared pages that only one process is using as private.
-    if (!infoArray->WorkingSetInfo[i].Shared ||
-        infoArray->WorkingSetInfo[i].ShareCount <= 1) {
-      privatePages++;
-    }
-  }
-
-  SYSTEM_INFO si;
-  GetSystemInfo(&si);
-
-  *aN = privatePages * si.dwPageSize;
-  return NS_OK;
-}
-
-#  define HAVE_VSIZE_MAX_CONTIGUOUS_REPORTER 1
-[[nodiscard]] static nsresult VsizeMaxContiguousDistinguishedAmount(
-    int64_t* aN) {
-  SIZE_T biggestRegion = 0;
-  MEMORY_BASIC_INFORMATION vmemInfo = {0};
-  for (size_t currentAddress = 0;;) {
-    if (!VirtualQuery((LPCVOID)currentAddress, &vmemInfo, sizeof(vmemInfo))) {
-      // Something went wrong, just return whatever we've got already.
-      break;
-    }
-
-    if (vmemInfo.State == MEM_FREE) {
-      biggestRegion = std::max(biggestRegion, vmemInfo.RegionSize);
-    }
-
-    SIZE_T lastAddress = currentAddress;
-    currentAddress += vmemInfo.RegionSize;
-
-    // If we overflow, we've examined all of the address space.
-    if (currentAddress < lastAddress) {
-      break;
-    }
-  }
-
-  *aN = biggestRegion;
-  return NS_OK;
-}
-
-#  define HAVE_PRIVATE_REPORTER 1
-[[nodiscard]] static nsresult PrivateDistinguishedAmount(int64_t* aN) {
-  PROCESS_MEMORY_COUNTERS_EX pmcex;
-  pmcex.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX);
-
-  if (!GetProcessMemoryInfo(GetCurrentProcess(),
-                            (PPROCESS_MEMORY_COUNTERS)&pmcex, sizeof(pmcex))) {
-    return NS_ERROR_FAILURE;
-  }
-
-  *aN = pmcex.PrivateUsage;
-  return NS_OK;
-}
-
-#  define HAVE_SYSTEM_HEAP_REPORTER 1
-// Windows can have multiple separate heaps, but we should not touch non-default
-// heaps because they may be destroyed at anytime while we hold a handle.  So we
-// count only the default heap.
-[[nodiscard]] static nsresult SystemHeapSize(int64_t* aSizeOut) {
-  HANDLE heap = GetProcessHeap();
-
-  NS_ENSURE_TRUE(HeapLock(heap), NS_ERROR_FAILURE);
-
-  int64_t heapSize = 0;
-  PROCESS_HEAP_ENTRY entry;
-  entry.lpData = nullptr;
-  while (HeapWalk(heap, &entry)) {
-    // We don't count entry.cbOverhead, because we just want to measure the
-    // space available to the program.
-    if (entry.wFlags & PROCESS_HEAP_ENTRY_BUSY) {
-      heapSize += entry.cbData;
-    }
-  }
-
-  // Check this result only after unlocking the heap, so that we don't leave
-  // the heap locked if there was an error.
-  DWORD lastError = GetLastError();
-
-  // I have no idea how things would proceed if unlocking this heap failed...
-  NS_ENSURE_TRUE(HeapUnlock(heap), NS_ERROR_FAILURE);
-
-  NS_ENSURE_TRUE(lastError == ERROR_NO_MORE_ITEMS, NS_ERROR_FAILURE);
-
-  *aSizeOut = heapSize;
-  return NS_OK;
-}
-
-struct SegmentKind {
-  DWORD mState;
-  DWORD mType;
-  DWORD mProtect;
-  int mIsStack;
-
-  PLDHashNumber Hash() const {
-    return mozilla::HashGeneric(mState, mType, mProtect, mIsStack);
-  }
-
-  bool operator==(const SegmentKind& aOther) const = default;
-};
-
-struct SegmentStats {
-  uint32_t mCount = 0;
-  size_t mSize = 0;
-};
-
-class WindowsAddressSpaceReporter final : public nsIMemoryReporter {
-  ~WindowsAddressSpaceReporter() = default;
-
- public:
-  NS_DECL_ISUPPORTS
-
-  NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize) override {
-    // First iterate over all the segments and record how many of each kind
-    // there were and their aggregate sizes. We use a hash table for this
-    // because there are a couple of dozen different kinds possible.
-
-    nsTHashMap<nsGenericHashKey<SegmentKind>, SegmentStats> table;
-    MEMORY_BASIC_INFORMATION info = {0};
-    bool isPrevSegStackGuard = false;
-    for (size_t currentAddress = 0;;) {
-      if (!VirtualQuery((LPCVOID)currentAddress, &info, sizeof(info))) {
-        // Something went wrong, just return whatever we've got already.
-        break;
-      }
-
-      size_t size = info.RegionSize;
-
-      // Note that |type| and |protect| are ignored in some cases.
-      DWORD state = info.State;
-      DWORD type =
-          (state == MEM_RESERVE || state == MEM_COMMIT) ? info.Type : 0;
-      DWORD protect = (state == MEM_COMMIT) ? info.Protect : 0;
-      bool isStack = isPrevSegStackGuard && state == MEM_COMMIT &&
-                     type == MEM_PRIVATE && protect == PAGE_READWRITE;
-
-      SegmentKind kind = {state, type, protect, isStack ? 1 : 0};
-      SegmentStats& stats = table.LookupOrInsert(kind);
-      stats.mCount += 1;
-      stats.mSize += size;
-
-      isPrevSegStackGuard = info.State == MEM_COMMIT &&
-                            info.Type == MEM_PRIVATE &&
-                            info.Protect == (PAGE_READWRITE | PAGE_GUARD);
-
-      size_t lastAddress = currentAddress;
-      currentAddress += size;
-
-      // If we overflow, we've examined all of the address space.
-      if (currentAddress < lastAddress) {
-        break;
-      }
-    }
-
-    // Then iterate over the hash table and report the details for each segment
-    // kind.
-
-    for (auto& entry : table) {
-      // For each range of pages, we consider one or more of its State, Type
-      // and Protect values. These are documented at
-      // https://msdn.microsoft.com/en-us/library/windows/desktop/aa366775%28v=vs.85%29.aspx
-      // (for State and Type) and
-      // https://msdn.microsoft.com/en-us/library/windows/desktop/aa366786%28v=vs.85%29.aspx
-      // (for Protect).
-      //
-      // Not all State values have accompanying Type and Protection values.
-      bool doType = false;
-      bool doProtect = false;
-
-      nsCString path("address-space");
-
-      switch (entry.GetKey().mState) {
-        case MEM_FREE:
-          path.AppendLiteral("/free");
-          break;
-
-        case MEM_RESERVE:
-          path.AppendLiteral("/reserved");
-          doType = true;
-          break;
-
-        case MEM_COMMIT:
-          path.AppendLiteral("/commit");
-          doType = true;
-          doProtect = true;
-          break;
-
-        default:
-          // Should be impossible, but handle it just in case.
-          path.AppendLiteral("/???");
-          break;
-      }
-
-      if (doType) {
-        switch (entry.GetKey().mType) {
-          case MEM_IMAGE:
-            path.AppendLiteral("/image");
-            break;
-
-          case MEM_MAPPED:
-            path.AppendLiteral("/mapped");
-            break;
-
-          case MEM_PRIVATE:
-            path.AppendLiteral("/private");
-            break;
-
-          default:
-            // Should be impossible, but handle it just in case.
-            path.AppendLiteral("/???");
-            break;
-        }
-      }
-
-      if (doProtect) {
-        DWORD protect = entry.GetKey().mProtect;
-        // Basic attributes. Exactly one of these should be set.
-        if (protect & PAGE_EXECUTE) {
-          path.AppendLiteral("/execute");
-        }
-        if (protect & PAGE_EXECUTE_READ) {
-          path.AppendLiteral("/execute-read");
-        }
-        if (protect & PAGE_EXECUTE_READWRITE) {
-          path.AppendLiteral("/execute-readwrite");
-        }
-        if (protect & PAGE_EXECUTE_WRITECOPY) {
-          path.AppendLiteral("/execute-writecopy");
-        }
-        if (protect & PAGE_NOACCESS) {
-          path.AppendLiteral("/noaccess");
-        }
-        if (protect & PAGE_READONLY) {
-          path.AppendLiteral("/readonly");
-        }
-        if (protect & PAGE_READWRITE) {
-          path.AppendLiteral("/readwrite");
-        }
-        if (protect & PAGE_WRITECOPY) {
-          path.AppendLiteral("/writecopy");
-        }
-
-        // Modifiers. At most one of these should be set.
-        if (protect & PAGE_GUARD) {
-          path.AppendLiteral("+guard");
-        }
-        if (protect & PAGE_NOCACHE) {
-          path.AppendLiteral("+nocache");
-        }
-        if (protect & PAGE_WRITECOMBINE) {
-          path.AppendLiteral("+writecombine");
-        }
-
-        // Annotate likely stack segments, too.
-        if (entry.GetKey().mIsStack) {
-          path.AppendLiteral("+stack");
-        }
-      }
-
-      // Append the segment count.
-      path.AppendPrintf("(segments=%" PRIu32 ")", entry.GetData().mCount);
-
-      aHandleReport->Callback(""_ns, path, KIND_OTHER, UNITS_BYTES,
-                              entry.GetData().mSize,
-                              "From MEMORY_BASIC_INFORMATION."_ns, aData);
-    }
-
-    return NS_OK;
-  }
-};
-NS_IMPL_ISUPPORTS(WindowsAddressSpaceReporter, nsIMemoryReporter)
-
-#endif  // XP_<PLATFORM>
+#endif
 
 #ifdef HAVE_VSIZE_MAX_CONTIGUOUS_REPORTER
 class VsizeMaxContiguousReporter final : public nsIMemoryReporter {
@@ -1070,14 +517,12 @@ class ResidentUniqueReporter final : public nsIMemoryReporter {
 "set size (USS).  This is the amount of RAM we'd expect to be freed if we "
 "closed this process.");
     }
-#ifdef XP_MACOSX
     if (NS_SUCCEEDED(PhysicalFootprintAmount(&amount))) {
       MOZ_COLLECT_REPORT(
         "resident-phys-footprint", KIND_OTHER, UNITS_BYTES, amount,
 "Memory footprint reported by MacOS's task_info API's phys_footprint field. "
 "This matches the memory column in Activity Monitor.");
     }
-#endif
     // clang-format on
     return NS_OK;
   }
@@ -1113,7 +558,6 @@ class SystemHeapReporter final : public nsIMemoryReporter {
 NS_IMPL_ISUPPORTS(SystemHeapReporter, nsIMemoryReporter)
 #endif  // HAVE_SYSTEM_HEAP_REPORTER
 
-#ifdef XP_UNIX
 
 #  include <sys/resource.h>
 
@@ -1129,13 +573,7 @@ NS_IMPL_ISUPPORTS(SystemHeapReporter, nsIMemoryReporter)
     // - Solaris: pages? But some sources it actually always returns 0, so
     //   check for that
     // - Linux, {Net/Open/Free}BSD, DragonFly: KiB
-#  ifdef XP_MACOSX
     *aN = usage.ru_maxrss;
-#  elif defined(SOLARIS)
-    *aN = usage.ru_maxrss * getpagesize();
-#  else
-    *aN = usage.ru_maxrss * 1024;
-#  endif
     if (*aN > 0) {
       return NS_OK;
     }
@@ -1236,7 +674,6 @@ class PageFaultsHardReporter final : public nsIMemoryReporter {
 };
 NS_IMPL_ISUPPORTS(PageFaultsHardReporter, nsIMemoryReporter)
 
-#endif  // XP_UNIX
 
 /**
  ** memory reporter implementation for jemalloc and OSX malloc,
@@ -1334,11 +771,7 @@ class JemallocHeapReporter final : public nsIMemoryReporter {
 
 // On MacOS madvised memory is still counted in the resident set until the OS
 // actually decommits it.
-#ifdef XP_MACOSX
 #define MADVISED_GROUP "committed"
-#else
-#define MADVISED_GROUP "decommitted"
-#endif
     MOZ_COLLECT_REPORT(
       "heap/" MADVISED_GROUP "/unused-pages/madvised", KIND_OTHER, UNITS_BYTES,
       stats.pages_madvised,
@@ -1433,10 +866,6 @@ class ThreadsReporter final : public nsIMemoryReporter {
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
                             nsISupports* aData, bool aAnonymize) override {
-#ifdef XP_LINUX
-    nsTArray<MemoryMapping> mappings(1024);
-    MOZ_TRY(GetMemoryMappings(mappings));
-#endif
 
     // Enumerating over active threads requires holding a lock, so we collect
     // info on all threads, and then call our reporter callbacks after releasing
@@ -1464,61 +893,10 @@ class ThreadsReporter final : public nsIMemoryReporter {
           continue;
         }
 
-#if defined(XP_LINUX)
-        int idx = mappings.BinaryIndexOf(thread->StackBase());
-        if (idx < 0) {
-          continue;
-        }
-        // Referenced() is the combined size of all pages in the region which
-        // have ever been touched, and are therefore consuming memory. For stack
-        // regions, these pages are guaranteed to be un-shared unless we fork
-        // after creating threads (which we don't).
-        size_t privateSize = mappings[idx].Referenced();
-
-        // On Linux, we have to be very careful matching memory regions to
-        // thread stacks.
-        //
-        // To begin with, the kernel only reports VM stats for regions of all
-        // adjacent pages with the same flags, protection, and backing file.
-        // There's no way to get finer-grained usage information for a subset of
-        // those pages.
-        //
-        // Stack segments always have a guard page at the bottom of the stack
-        // (assuming we only support stacks that grow down), so there's no
-        // danger of them being merged with other stack regions. At the top,
-        // there's no protection page, and no way to allocate one without using
-        // pthreads directly and allocating our own stacks. So we get around the
-        // problem by adding an extra VM flag (NOHUGEPAGES) to our stack region,
-        // which we don't expect to be set on any heap regions. But this is not
-        // fool-proof.
-        //
-        // A second kink is that different C libraries (and different versions
-        // thereof) report stack base locations and sizes differently with
-        // regard to the guard page. For the libraries that include the guard
-        // page in the stack size base pointer, we need to adjust those values
-        // to compensate. But it's possible that our logic will get out of sync
-        // with library changes, or someone will compile with an unexpected
-        // library.
-        //
-        //
-        // The upshot of all of this is that there may be configurations that
-        // our special cases don't cover. And if there are, we want to know
-        // about it. So assert that total size of the memory region we're
-        // reporting actually matches the allocated size of the thread stack.
-#  ifndef ANDROID
-        MOZ_ASSERT(mappings[idx].Size() == thread->StackSize(),
-                   "Mapping region size doesn't match stack allocation size");
-#  endif
-#elif defined(XP_WIN)
-        auto memInfo =
-            MemoryInfo::Get(thread->StackBase(), thread->StackSize());
-        size_t privateSize = memInfo.Committed();
-#else
         size_t privateSize = thread->StackSize();
         MOZ_ASSERT_UNREACHABLE(
             "Shouldn't have stack base pointer on this "
             "platform");
-#endif
 
         nsCString threadName;
         thread->GetThreadName(threadName);
@@ -1554,31 +932,10 @@ class ThreadsReporter final : public nsIMemoryReporter {
                        UNITS_BYTES, wrapperSizes,
                        "The sizes of nsThread/PRThread wrappers.");
 
-#if defined(XP_WIN)
-    // Each thread on Windows has a fixed kernel overhead. For 32 bit Windows,
-    // that's 12K. For 64 bit, it's 24K.
-    //
-    // See
-    // https://blogs.technet.microsoft.com/markrussinovich/2009/07/05/pushing-the-limits-of-windows-processes-and-threads/
-    constexpr size_t kKernelSize = (sizeof(void*) == 8 ? 24 : 12) * 1024;
-#elif defined(XP_LINUX)
-    // On Linux, kernel stacks are usually 8K. However, on x86, they are
-    // allocated virtually, and start out at 4K. They may grow to 8K, but we
-    // have no way of knowing which ones do, so all we can do is guess.
-#  if defined(__x86_64__) || defined(__i386__)
-    constexpr size_t kKernelSize = 4 * 1024;
-#  else
-    constexpr size_t kKernelSize = 8 * 1024;
-#  endif
-#elif defined(XP_MACOSX)
     // On Darwin, kernel stacks are 16K:
     //
     // https://books.google.com/books?id=K8vUkpOXhN4C&lpg=PA513&dq=mach%20kernel%20thread%20stack%20size&pg=PA513#v=onepage&q=mach%20kernel%20thread%20stack%20size&f=false
     constexpr size_t kKernelSize = 16 * 1024;
-#else
-    // Elsewhere, just assume that kernel stacks require at least 8K.
-    constexpr size_t kKernelSize = 8 * 1024;
-#endif
 
     MOZ_COLLECT_REPORT("explicit/threads/overhead/kernel", KIND_NONHEAP,
                        UNITS_BYTES, threadCount * kKernelSize,
@@ -1668,34 +1025,6 @@ NS_IMPL_ISUPPORTS(DMDReporter, nsIMemoryReporter)
 
 #endif  // MOZ_DMD
 
-#ifdef MOZ_WIDGET_ANDROID
-class AndroidMemoryReporter final : public nsIMemoryReporter {
- public:
-  NS_DECL_ISUPPORTS
-
-  AndroidMemoryReporter() = default;
-
-  NS_IMETHOD
-  CollectReports(nsIHandleReportCallback* aHandleReport, nsISupports* aData,
-                 bool aAnonymize) override {
-    if (!jni::IsAvailable()) {
-      return NS_OK;
-    }
-
-    int32_t heap = java::GeckoAppShell::GetMemoryUsage("summary.java-heap"_ns);
-    if (heap > 0) {
-      MOZ_COLLECT_REPORT("java-heap", KIND_OTHER, UNITS_BYTES, heap * 1024,
-                         "The private Java Heap usage");
-    }
-    return NS_OK;
-  }
-
- private:
-  ~AndroidMemoryReporter() = default;
-};
-
-NS_IMPL_ISUPPORTS(AndroidMemoryReporter, nsIMemoryReporter)
-#endif
 
 /**
  ** nsMemoryReporterManager implementation
@@ -1792,18 +1121,10 @@ nsMemoryReporterManager::Init() {
     mStrongEternalReporters->AppendElement(new mozilla::dmd::DMDReporter());
 #endif
 
-#ifdef XP_WIN
-    mStrongEternalReporters->AppendElement(new WindowsAddressSpaceReporter());
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-    mStrongEternalReporters->AppendElement(new AndroidMemoryReporter());
-#endif
   }  // autoLock(mMutex);
 
-#ifdef XP_UNIX
   nsMemoryInfoDumper::Initialize();
-#endif
 
   return NS_OK;
 }
@@ -2576,7 +1897,6 @@ nsMemoryReporterManager::GetResidentUnique(int64_t* aAmount) {
 #endif
 }
 
-#ifdef XP_MACOSX
 /*static*/
 int64_t nsMemoryReporterManager::PhysicalFootprint(mach_port_t aPort) {
   int64_t amount = 0;
@@ -2584,21 +1904,11 @@ int64_t nsMemoryReporterManager::PhysicalFootprint(mach_port_t aPort) {
   NS_ENSURE_SUCCESS(rv, 0);
   return amount;
 }
-#endif
 
 typedef
-#ifdef XP_WIN
-    HANDLE
-#elif XP_MACOSX
     mach_port_t
-#elif XP_LINUX
-    pid_t
-#else
-    int /*dummy type */
-#endif
         ResidentUniqueArg;
 
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_LINUX)
 
 /*static*/
 int64_t nsMemoryReporterManager::ResidentUnique(ResidentUniqueArg aProcess) {
@@ -2608,21 +1918,6 @@ int64_t nsMemoryReporterManager::ResidentUnique(ResidentUniqueArg aProcess) {
   return amount;
 }
 
-#else
-
-/*static*/
-int64_t nsMemoryReporterManager::ResidentUnique(ResidentUniqueArg) {
-#  ifdef HAVE_RESIDENT_UNIQUE_REPORTER
-  int64_t amount = 0;
-  nsresult rv = ResidentUniqueDistinguishedAmount(&amount);
-  NS_ENSURE_SUCCESS(rv, 0);
-  return amount;
-#  else
-  return 0;
-#  endif
-}
-
-#endif  // XP_{WIN, MACOSX, LINUX, *}
 
 #ifdef HAVE_JEMALLOC_STATS
 // static

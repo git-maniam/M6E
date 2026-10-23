@@ -4,14 +4,7 @@
 
 #include "frontend/FrontendContext.h"
 
-#ifdef _WIN32
-// clang-format off
-#  include "util/WindowsWrapper.h"
-#  include <process.h>  // GetCurrentThreadId
-// clang-format on
-#else
 #  include <pthread.h>  // pthread_self
-#endif
 
 #include "gc/GC.h"
 #include "js/AllocPolicy.h"  // js::ReportOutOfMemory
@@ -262,9 +255,7 @@ JS_PUBLIC_API bool JS::ConvertFrontendErrorsToRuntimeErrors(
 
 #ifdef DEBUG
 static size_t GetTid() {
-#  if defined(_WIN32)
-  return size_t(GetCurrentThreadId());
-#  elif defined(__wasm__)
+#  if   defined(__wasm__)
   return 1;
 #  else
   return size_t(pthread_self());

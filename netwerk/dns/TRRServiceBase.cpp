@@ -19,9 +19,6 @@
 // Put DNSLogging.h at the end to avoid LOG being overwritten by other headers.
 #include "DNSLogging.h"
 
-#if defined(XP_WIN)
-#  include <shlobj.h>  // for SHGetSpecialFolderPathA
-#endif                 // XP_WIN
 
 namespace mozilla {
 namespace net {

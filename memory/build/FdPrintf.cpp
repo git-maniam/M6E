@@ -4,11 +4,7 @@
 
 #include <cstdarg>
 
-#ifdef _WIN32
-#  include <windows.h>
-#else
 #  include <unistd.h>
-#endif
 #include <cmath>
 #include <cstring>
 #include <cstdint>
@@ -226,11 +222,5 @@ void FdPuts(platform_handle_t aFd, const char* aBuf, size_t aSize) {
     return;
   }
 
-#ifdef _WIN32
-  // See comment in FdPrintf.h as to why WriteFile is used.
-  DWORD written;
-  WriteFile(aFd, aBuf, aSize, &written, nullptr);
-#else
   [[maybe_unused]] ssize_t _ = write(aFd, aBuf, aSize);
-#endif
 }

@@ -21,14 +21,6 @@
 #include "mozilla/dom/VideoFrameProvider.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-// mmsystem isn't part of WIN32_LEAN_AND_MEAN, so we have
-// to manually include it
-#  include <mmsystem.h>
-
-#  include "WinUtils.h"
-#endif
 
 #include "GeckoProfiler.h"
 #include "VsyncSource.h"
@@ -95,9 +87,6 @@
 #include "nsTextFrame.h"
 #include "nsTransitionManager.h"
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "VRManagerChild.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 #include "nsXULPopupManager.h"
 
@@ -763,7 +752,6 @@ class VsyncRefreshDriverTimer : public RefreshDriverTimer {
 
   void RecordTelemetryProbes(TimeStamp aVsyncTimestamp) {
     MOZ_ASSERT(NS_IsMainThread());
-#ifndef ANDROID /* bug 1142079 */
     if (XRE_IsParentProcess()) {
       TimeDuration vsyncLatency = TimeStamp::Now() - aVsyncTimestamp;
       glean::layout::refresh_driver_chrome_frame_delay.AccumulateRawDuration(
@@ -784,7 +772,6 @@ class VsyncRefreshDriverTimer : public RefreshDriverTimer {
       // vsync notification.
       mVsyncRate = mVsyncChild->GetVsyncRate();
     }
-#endif
   }
 
   void OnTimerStart() {
@@ -847,11 +834,7 @@ class VsyncRefreshDriverTimer : public RefreshDriverTimer {
     // results; see bug 1306896.
     // On Wayland, vsync timestamp might not precisely match system time; see
     // bug 1958043.
-#  if defined(_WIN32) || defined(MOZ_WAYLAND)
-    (void)NS_WARN_IF(aVsyncTimestamp > tickStart);
-#  else
     MOZ_ASSERT(aVsyncTimestamp <= tickStart);
-#  endif
 #endif
 
     bool shouldGiveNonVSyncTasksMoreTime = ShouldGiveNonVsyncTasksMoreTime();
@@ -1174,11 +1157,7 @@ static StaticAutoPtr<nsTArray<RefreshDriverTimer*>> sRegularRateTimerList;
 static StaticRefPtr<InactiveRefreshDriverTimer> sThrottledRateTimer;
 
 static bool IsPresentingInVR() {
-#ifdef MOZ_WIDGET_ANDROID
-  return gfx::VRManagerChild::IsPresenting();
-#else
   return false;
-#endif
 }
 
 void nsRefreshDriver::CreateVsyncRefreshTimer() {
@@ -2603,10 +2582,8 @@ void nsRefreshDriver::Tick(VsyncId aId, TimeStamp aNowTime,
   // being stored in nsSubDocumentFrame.
   UpdateRemoteFrameEffects();
 
-#ifndef ANDROID /* bug 1142079 */
   mozilla::glean::layout::refresh_driver_tick.AccumulateRawDuration(
       TimeStamp::Now() - mTickStart);
-#endif
 
   for (nsAPostRefreshObserver* observer :
        mPostRefreshObservers.ForwardRange()) {

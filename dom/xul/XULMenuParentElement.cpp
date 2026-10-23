@@ -153,22 +153,6 @@ void XULMenuParentElement::SetActiveMenuChild(XULButtonElement* aChild,
   if (IsInMenuList()) {
     if (nsMenuPopupFrame* f = do_QueryFrame(GetPrimaryFrame())) {
       f->EnsureActiveMenuListItemIsVisible();
-#ifdef XP_WIN
-      // On Windows, a menulist should update its value whenever navigation was
-      // done by the keyboard.
-      //
-      // NOTE(emilio): This is a rather odd per-platform behavior difference,
-      // but other browsers also do this.
-      if (aByKey == ByKey::Yes && f->IsOpen()) {
-        // Fire a command event as the new item, but we don't want to close the
-        // menu, blink it, or update any other state of the menuitem. The
-        // command event will cause the item to be selected.
-        RefPtr<mozilla::PresShell> presShell = OwnerDoc()->GetPresShell();
-        nsContentUtils::DispatchXULCommand(aChild, /* aTrusted = */ true,
-                                           nullptr, presShell, false, false,
-                                           false, false);
-      }
-#endif
     }
   }
 }

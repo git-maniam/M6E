@@ -19,11 +19,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef _WIN32
-#  include <libloaderapi.h>
-#else
 #  include <dlfcn.h>
-#endif
 
 #include "ProfilerNativeStack.h"
 
@@ -153,24 +149,12 @@ static bool feature_active_noop(int32_t feature) { /* no-op */ return false; }
 
 #pragma GCC diagnostic pop
 
-#if defined(_WIN32)
-#  define UPROFILER_OPENLIB() GetModuleHandle(NULL)
-#else
 #  define UPROFILER_OPENLIB() dlopen(NULL, RTLD_NOW)
-#endif
 
-#if defined(_WIN32)
-#  define UPROFILER_GET_SYM(handle, sym) GetProcAddress(handle, sym)
-#else
 #  define UPROFILER_GET_SYM(handle, sym) (typeof(sym)*)(dlsym(handle, #sym))
-#endif
 
-#if defined(_WIN32)
-#  define UPROFILER_PRINT_ERROR(func) fprintf(stderr, "%s error\n", #func);
-#else
 #  define UPROFILER_PRINT_ERROR(func) \
     fprintf(stderr, "%s error: %s\n", #func, dlerror());
-#endif
 
 #define FETCH(func)                                             \
   uprofiler.func = UPROFILER_GET_SYM(handle, uprofiler_##func); \

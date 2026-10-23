@@ -34,12 +34,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsTextFormatter.h"
 #include "nsXPCOMCIDInternal.h"
-#ifdef XP_WIN
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>  // for getpid()
-#endif
 #include "AccessCheck.h"
 #include "CCGCScheduler.h"
 #include "WrapperFactory.h"

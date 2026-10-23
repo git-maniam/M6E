@@ -41,9 +41,6 @@ class VideoEngine : public webrtc::VideoInputFeedBack {
   static already_AddRefed<VideoEngine> Create(
       const CaptureDeviceType& aCaptureDeviceType,
       RefPtr<VideoCaptureFactory> aVideoCaptureFactory);
-#if defined(ANDROID)
-  static int SetAndroidObjects();
-#endif
   int32_t GenerateId();
   // Thin layer on top of mVideoCaptureFactory.
   VideoCaptureFactory::CreateVideoCaptureResult CreateVideoCapture(

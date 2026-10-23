@@ -75,13 +75,7 @@ CachedTableAccessible* CachedTableAccessible::GetFrom(Accessible* aAcc) {
     if (NS_IsMainThread()) {
       ClearOnShutdown(&sCachedTables);
     } else {
-#ifdef ANDROID
-      NS_DispatchToMainThread(
-          NS_NewRunnableFunction("CachedTableAccessible::GetFrom",
-                                 [] { ClearOnShutdown(&sCachedTables); }));
-#else
       MOZ_ASSERT_UNREACHABLE("Querying a table on the wrong thread!");
-#endif
     }
   }
   return &sCachedTables->LookupOrInsertWith(

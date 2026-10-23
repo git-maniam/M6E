@@ -19,9 +19,6 @@
 #include "nsThreadManager.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 namespace mozilla::net {
 
@@ -34,19 +31,11 @@ namespace detail {
  * Mainly designed for using Win32 CancelSynchronousIo function.
  */
 class NativeThreadHandle {
-#ifdef XP_WIN
-  // The native handle to the thread
-  HANDLE mThread = NULL;
-#endif
 
  public:
   // Created and destroyed on the main thread only
   NativeThreadHandle() = default;
-#ifdef XP_WIN
-  ~NativeThreadHandle();
-#else
   ~NativeThreadHandle() = default;
-#endif
 
   // Called on the IO thread to grab the platform specific
   // reference to it.
@@ -56,50 +45,12 @@ class NativeThreadHandle {
   void CancelBlockingIO(Monitor& aMonitor);
 };
 
-#ifdef XP_WIN
-
-NativeThreadHandle::~NativeThreadHandle() {
-  if (mThread) {
-    CloseHandle(mThread);
-  }
-}
-
-void NativeThreadHandle::InitThread() {
-  // GetCurrentThread() only returns a pseudo handle, hence DuplicateHandle
-  ::DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
-                    GetCurrentProcess(), &mThread, 0, FALSE,
-                    DUPLICATE_SAME_ACCESS);
-}
-
-void NativeThreadHandle::CancelBlockingIO(Monitor& aMonitor) {
-  HANDLE thread;
-  {
-    MonitorAutoLock lock(aMonitor);
-    thread = mThread;
-
-    if (!thread) {
-      return;
-    }
-  }
-
-  LOG(("CacheIOThread: Attempting to cancel a long blocking IO operation"));
-  BOOL result = ::CancelSynchronousIo(thread);
-  if (result) {
-    LOG(("  cancelation signal succeeded"));
-  } else {
-    DWORD error = GetLastError();
-    LOG(("  cancelation signal failed with GetLastError=%lu", error));
-  }
-}
-
-#else  // WIN
 
 // Stub code only (we don't implement IO cancelation for this platform)
 
 void NativeThreadHandle::InitThread() {}
 void NativeThreadHandle::CancelBlockingIO(Monitor&) {}
 
-#endif
 
 }  // namespace detail
 

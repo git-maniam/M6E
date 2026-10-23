@@ -17,13 +17,8 @@
 #include "threading/ThreadId.h"
 #include "vm/MutexIDs.h"
 
-#ifdef XP_WIN
-#  define THREAD_RETURN_TYPE unsigned int
-#  define THREAD_CALL_API __stdcall
-#else
 #  define THREAD_RETURN_TYPE void*
 #  define THREAD_CALL_API
-#endif
 
 namespace js {
 namespace detail {

@@ -26,18 +26,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef XP_WIN
-#  include <windows.h>
-#  include <process.h>
-#else
 #  include <pthread.h>
 #  include <sys/types.h>
 #  include <unistd.h>
-#endif
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
 // The gBernoulli value starts out as a nullptr, and only gets initialized once.
 // It then lives for the entire lifetime of the process. It cannot be deleted
@@ -303,12 +295,8 @@ static void EnsureAllocationTrackerIsInstalled() {
 // This is a little different from the TLS storage used with mozjemalloc which
 // uses native TLS on Linux possibly because it is not only initialised but
 // **used** early.
-#if !defined(XP_DARWIN) && !defined(XP_LINUX)
-#  define PROFILER_THREAD_LOCAL(T) MOZ_THREAD_LOCAL(T)
-#else
 #  define PROFILER_THREAD_LOCAL(T) \
     ::mozilla::detail::ThreadLocal<T, ::mozilla::detail::ThreadLocalKeyStorage>
-#endif
 
 // This class is used to determine if allocations on this thread should be
 // intercepted or not.

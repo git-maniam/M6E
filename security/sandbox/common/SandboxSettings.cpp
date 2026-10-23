@@ -14,10 +14,6 @@
 #include "nsServiceManagerUtils.h"
 #include "prenv.h"
 
-#ifdef XP_WIN
-#  include "PDMFactory.h"
-#  include "nsExceptionHandler.h"
-#endif  // XP_WIN
 
 using namespace mozilla;
 
@@ -90,26 +86,9 @@ bool GetContentWin32kLockdownEnabled() {
 }
 
 nsIXULRuntime::ContentWin32kLockdownState GetContentWin32kLockdownState() {
-#ifdef XP_WIN
-
-  static auto getLockdownState = [] {
-    auto state = GetWin32kLockdownState();
-
-    CrashReporter::RecordAnnotationCString(
-        CrashReporter::Annotation::ContentSandboxWin32kState,
-        ContentWin32kLockdownStateToString(state));
-
-    return state;
-  };
-
-  static nsIXULRuntime::ContentWin32kLockdownState result = getLockdownState();
-  return result;
-
-#else  // XP_WIN
 
   return nsIXULRuntime::ContentWin32kLockdownState::OperatingSystemNotSupported;
 
-#endif  // XP_WIN
 }
 
 int GetEffectiveContentSandboxLevel() {
@@ -120,52 +99,12 @@ int GetEffectiveContentSandboxLevel() {
 #if !defined(NIGHTLY_BUILD) && defined(XP_MACOSX)
   // On non-Nightly macOS, enforce a minimum sandbox level of 1.
   static const int minimumLevel = 1;
-#elif defined(XP_WIN)
-  // On Windows, enforce a minimum sandbox level of 6.
-  static const int minimumLevel = 6;
 #else
   static const int minimumLevel = 0;
 #endif
   if (level < minimumLevel) {
     level = minimumLevel;
   }
-#ifdef XP_LINUX
-  // Level 1 was a configuration with default-deny seccomp-bpf but
-  // which allowed direct filesystem access; that required additional
-  // code for the syscall filter which was untested and tended to
-  // bit-rot.  It was trivially escapable and was no longer being used
-  // even for debugging, so it has been removed.
-  //
-  // If the content sandbox is enabled, enforce a minimum level of 2.
-  static constexpr int kMinSupportedLevel = 2;
-
-  if (level > 0 && level <= kMinSupportedLevel) {
-    level = kMinSupportedLevel;
-  }
-  // Level 4 and up will break direct access to audio.
-  if (level > 3 && !StaticPrefs::media_cubeb_sandbox()) {
-    level = 3;
-  }
-  // Turn off ioctl lockdown in safe mode, until it's gotten more testing.
-  if (level > 5 && gSafeMode) {
-    level = 5;
-  }
-#endif
-#if defined(XP_WIN)
-  // Sandbox level 8, which uses a USER_RESTRICTED access token level, breaks if
-  // prefs moving processing out of the content process are not the default.
-  if (level >= 8 &&
-      (!PDMFactory::AllDecodersAreRemote()
-#  if defined(MOZ_WEBRTC) && !defined(MOZ_THUNDERBIRD)
-       // These are only relevant if webrtc is present. Thunderbird currently
-       // compiles with webrtc, but doesn't use it.
-       || !StaticPrefs::network_process_enabled() ||
-       !Preferences::GetBool("media.peerconnection.mtransport_process")
-#  endif
-           )) {
-    level = 7;
-  }
-#endif
 
   return level;
 }
@@ -182,12 +121,6 @@ int GetEffectiveSocketProcessSandboxLevel() {
   int level =
       StaticPrefs::security_sandbox_socket_process_level_DoNotUseDirectly();
 
-#ifdef XP_LINUX
-  // Turn off ioctl lockdown in safe mode, until it's gotten more testing.
-  if (level > 1 && gSafeMode) {
-    level = 1;
-  }
-#endif
 
   return level;
 }
@@ -203,21 +136,6 @@ int GetEffectiveGpuSandboxLevel() {
 #if defined(MOZ_PROFILE_GENERATE)
 // It should only be allowed on instrumented builds, never on production
 // builds.
-#  if defined(XP_WIN)
-bool GetLlvmProfileDir(std::wstring& parentPath) {
-  bool rv = false;
-  if (const wchar_t* llvmProfileFileEnv = _wgetenv(L"LLVM_PROFILE_FILE")) {
-    std::wstring llvmProfileDir(llvmProfileFileEnv);
-    const size_t found = llvmProfileDir.find_last_of(L"/\\");
-    if (found != std::string::npos) {
-      parentPath = llvmProfileDir.substr(0, found);
-      parentPath.append(L"\\*");
-      rv = true;
-    }
-  }
-  return rv;
-}
-#  else   // defined(XP_WIN)
 bool GetLlvmProfileDir(std::string& parentPath) {
   bool rv = false;
   if (const char* llvmProfileFileEnv = getenv("LLVM_PROFILE_FILE")) {
@@ -230,10 +148,8 @@ bool GetLlvmProfileDir(std::string& parentPath) {
   }
   return rv;
 }
-#  endif  // defined(XP_WIN)
 #endif    // defined(MOZ_PROFILE_GENERATE
 
-#if defined(XP_MACOSX)
 int ClampFlashSandboxLevel(const int aLevel) {
   const int minLevel = 0;
   const int maxLevel = 3;
@@ -247,7 +163,6 @@ int ClampFlashSandboxLevel(const int aLevel) {
   }
   return aLevel;
 }
-#endif
 
 class SandboxSettings final : public mozISandboxSettings {
  public:

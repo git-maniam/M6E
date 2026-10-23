@@ -33,10 +33,6 @@
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/VideoBridgeParent.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/layers/TextureD3D11.h"
-#endif
 
 namespace mozilla {
 namespace layers {
@@ -1651,51 +1647,6 @@ CanvasTranslator::MaybeRecycleDataSurfaceForSurfaceDescriptor(
   return do_AddRef(usedWrapper);
 }
 
-#ifdef MOZ_WIDGET_GTK
-already_AddRefed<gfx::SourceSurface>
-CanvasTranslator::GetZeroCopySurfaceFromDMABuf(gfx::DrawTarget* aDT,
-                                               TextureHost* aTextureHost) {
-  if (!aTextureHost) {
-    return nullptr;
-  }
-  // The wrapping texture hosts forward GetTextureHostType(), so it does not
-  // identify the concrete host. Use the descriptor type instead, and only go
-  // through TextureHost virtuals below.
-  const SurfaceDescriptor hostSd = aTextureHost->GetSurfaceDescriptor();
-  if (hostSd.type() != SurfaceDescriptor::TSurfaceDescriptorDMABuf) {
-    return nullptr;
-  }
-  const gfx::IntSize size = aTextureHost->GetSize();
-  if (size.IsEmpty()) {
-    return nullptr;
-  }
-  // The blit emits BGRA-ordered bytes for BGRA destinations (see
-  // GLBlitHelper), matching the rest of the canvas pipeline, so tag the
-  // surface BGRA whatever the source layout was.
-  gfx::SurfaceFormat format;
-  switch (aTextureHost->GetFormat()) {
-    case gfx::SurfaceFormat::B8G8R8A8:
-    case gfx::SurfaceFormat::R8G8B8A8:
-      format = gfx::SurfaceFormat::B8G8R8A8;
-      break;
-    case gfx::SurfaceFormat::B8G8R8X8:
-    case gfx::SurfaceFormat::R8G8B8X8:
-    case gfx::SurfaceFormat::NV12:
-    case gfx::SurfaceFormat::YUV420:
-    case gfx::SurfaceFormat::P010:
-    case gfx::SurfaceFormat::P016:
-      format = gfx::SurfaceFormat::B8G8R8X8;
-      break;
-    default:
-      return nullptr;
-  }
-  if (aDT->GetBackendType() == gfx::BackendType::WEBGL) {
-    return static_cast<gfx::DrawTargetWebgl*>(aDT)->ImportSurfaceDescriptor(
-        hostSd, size, format);
-  }
-  return nullptr;
-}
-#endif
 
 already_AddRefed<gfx::SourceSurface>
 CanvasTranslator::LookupSourceSurfaceFromSurfaceDescriptor(
@@ -1721,34 +1672,6 @@ CanvasTranslator::LookupSourceSurfaceFromSurfaceDescriptor(
     return nullptr;
   }
 
-#if defined(XP_WIN)
-  if (sdrd.videoType() == RemoteDecoderVideoType::D3D10) {
-    auto* textureHostD3D11 = texture->AsDXGITextureHostD3D11();
-    if (!textureHostD3D11) {
-      MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-      return nullptr;
-    }
-    auto& usedSurf = mUsedDataSurfaceForSurfaceDescriptor;
-    auto& usedDescriptor = mUsedSurfaceDescriptorForSurfaceDescriptor;
-
-    // TODO reuse DataSourceSurface if no update.
-
-    if (RefPtr<ID3D11Device> device =
-            gfx::DeviceManagerDx::Get()->GetCanvasDevice()) {
-      usedSurf = textureHostD3D11->GetAsSurfaceWithDevice(device);
-    } else {
-      usedSurf = nullptr;
-    }
-    if (!usedSurf) {
-      MOZ_ASSERT_UNREACHABLE("unexpected to be called");
-      usedDescriptor = Nothing();
-      return nullptr;
-    }
-    usedDescriptor = Some(sdrd);
-
-    return do_AddRef(usedSurf);
-  }
-#endif
 
   if (sdrd.videoType() == RemoteDecoderVideoType::MacIOSurface) {
     MOZ_ASSERT(texture->AsMacIOSurfaceTextureHost());
@@ -1764,19 +1687,6 @@ CanvasTranslator::LookupSourceSurfaceFromSurfaceDescriptor(
     return surf.forget();
   }
 
-#ifdef MOZ_WIDGET_GTK
-  if (sdrd.videoType() == RemoteDecoderVideoType::DMABuf) {
-    if (RefPtr<gfx::SourceSurface> surf =
-            GetZeroCopySurfaceFromDMABuf(aDT, texture)) {
-      return surf.forget();
-    }
-    // The zero-copy import can fail for an unsupported layout or a lost shared
-    // context, in which case read the frame back rather than dropping the draw.
-    RefPtr<gfx::DataSourceSurface> surf =
-        MaybeRecycleDataSurfaceForSurfaceDescriptor(texture, sdrd);
-    return surf.forget();
-  }
-#endif
 
   MOZ_ASSERT_UNREACHABLE("unexpected to be called");
   return nullptr;

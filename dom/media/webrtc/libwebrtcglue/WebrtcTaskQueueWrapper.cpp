@@ -47,13 +47,7 @@ class InvocableRunnable final : public nsIRunnable, public nsINamed {
     Maybe<nsDependentCSubstring> fileName;
     if (mLocation.mFile) {
       nsDependentCString f(mLocation.mFile);
-#  ifdef XP_WIN
-      // On Windows, path separators are inconsistent per
-      // https://github.com/llvm/llvm-project/issues/45076.
-      int32_t i = f.RFindCharInSet("/\\");
-#  else
       int32_t i = f.RFindChar('/');
-#  endif
       if (i == kNotFound) {
         fileName.emplace(f);
       } else {

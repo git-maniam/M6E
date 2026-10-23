@@ -16,13 +16,7 @@
 #include "nsPrintfCString.h"
 #include "nsThreadManager.h"
 
-#if defined(XP_WIN)
-#  include <process.h>
-
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#else
 #  include <unistd.h>
-#endif
 
 namespace mozilla {
 namespace gfx {
@@ -52,11 +46,6 @@ IPCResult VRParent::RecvInit(nsTArray<GfxVarUpdate>&& vars,
                      devicePrefs.d3d11Compositing());
   gfxConfig::Inherit(Feature::OPENGL_COMPOSITING, devicePrefs.oglCompositing());
 
-#if defined(XP_WIN)
-  if (gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING)) {
-    DeviceManagerDx::Get()->CreateCompositorDevices();
-  }
-#endif
   return IPC_OK();
 }
 
@@ -112,9 +101,6 @@ void VRParent::ActorDestroy(ActorDestroyReason aWhy) {
   ipc::ProcessChild::QuickExit();
 #endif
 
-#if defined(XP_WIN)
-  DeviceManagerDx::Shutdown();
-#endif
   gfxVars::Shutdown();
   gfxConfig::Shutdown();
   ipc::CrashReporterClient::DestroySingleton();
@@ -154,9 +140,6 @@ bool VRParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
 
   gfxConfig::Init();
   gfxVars::Initialize();
-#if defined(XP_WIN)
-  DeviceManagerDx::Init();
-#endif
   if (NS_FAILED(NS_InitMinimalXPCOM())) {
     return false;
   }

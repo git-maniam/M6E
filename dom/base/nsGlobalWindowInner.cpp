@@ -329,18 +329,8 @@
 #  include "mozilla/dom/SpeechSynthesis.h"
 #endif
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
-#ifdef XP_WIN
-#  include <process.h>
-
-#  include "mozilla/Debug.h"
-#  define getpid _getpid
-#else
 #  include <unistd.h>  // for getpid()
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -1279,9 +1269,6 @@ void nsGlobalWindowInner::FreeInnerObjects() {
 
   DisconnectGlobalTeardownObservers();
 
-#ifdef MOZ_WIDGET_ANDROID
-  DisableOrientationChangeListener();
-#endif
 
   if (mObserver) {
     if (nsCOMPtr<nsIObserverService> os = services::GetObserverService()) {
@@ -1901,16 +1888,6 @@ void nsGlobalWindowInner::InitDocumentDependentState(JSContext* aCx) {
     permDelegateHandler->PopulateAllDelegatedPermissions();
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // When we insert the new document to the window in the top-level browsing
-  // context, we should reset the status of the request which is used for the
-  // previous document.
-  if (mWindowGlobalChild && GetBrowsingContext() &&
-      !GetBrowsingContext()->GetParent()) {
-    // Return value of setting synced field should be checked. See bug 1656492.
-    (void)GetBrowsingContext()->ResetGVAutoplayRequestStatus();
-  }
-#endif
 
 #ifdef DEBUG
   mLastOpenedURI = mDoc->GetDocumentURI();
@@ -3980,24 +3957,16 @@ void nsGlobalWindowInner::Dump(const nsAString& aStr) {
 
   char* cstr = ToNewUTF8String(aStr);
 
-#if defined(XP_MACOSX)
   // have to convert \r to \n so that printing to the console works
   char *c = cstr, *cEnd = cstr + strlen(cstr);
   while (c < cEnd) {
     if (*c == '\r') *c = '\n';
     c++;
   }
-#endif
 
   if (cstr) {
     MOZ_LOG(nsContentUtils::DOMDumpLog(), LogLevel::Debug,
             ("[Window.Dump] %s", cstr));
-#ifdef XP_WIN
-    PrintToDebugger(cstr);
-#endif
-#ifdef ANDROID
-    __android_log_write(ANDROID_LOG_INFO, "GeckoDump", cstr);
-#endif
     FILE* fp = gDumpFile ? gDumpFile : stdout;
     fputs(cstr, fp);
     fflush(fp);
@@ -6720,18 +6689,6 @@ void nsGlobalWindowInner::DisableDeviceSensor(uint32_t aType) {
   }
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void nsGlobalWindowInner::EnableOrientationChangeListener() {
-  if (!ShouldResistFingerprinting(RFPTarget::ScreenOrientation)) {
-    mHasOrientationChangeListeners = true;
-    mOrientationAngle = Orientation(CallerType::System);
-  }
-}
-
-void nsGlobalWindowInner::DisableOrientationChangeListener() {
-  mHasOrientationChangeListeners = false;
-}
-#endif
 
 void nsGlobalWindowInner::SetHasGamepadEventListener(
     bool aHasGamepad /* = true*/) {

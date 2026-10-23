@@ -6,13 +6,7 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <cstdlib>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#  include <sys/videoio.h>
-#elif defined(__sun)
-#  include <sys/videodev2.h>
-#else
 #  include <linux/videodev2.h>
-#endif
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <string.h>

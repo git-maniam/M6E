@@ -14,9 +14,6 @@
 #include "mozilla/gfx/Point.h"   // for IntSize
 #include "nsCOMPtr.h"            // for already_AddRefed
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidSurfaceTexture.h"
-#endif
 
 namespace mozilla {
 namespace layers {
@@ -39,75 +36,6 @@ class GLImage : public Image {
                           gfx::SurfaceFormat aFormat);
 };
 
-#ifdef MOZ_WIDGET_ANDROID
-
-class SurfaceTextureImage final : public GLImage {
- public:
-  class SetCurrentCallback {
-   public:
-    virtual bool operator()(bool aRender) = 0;
-    virtual ~SetCurrentCallback() {}
-  };
-
-  SurfaceTextureImage(AndroidSurfaceTextureHandle aHandle,
-                      const gfx::IntSize& aSize, bool aContinuous,
-                      gl::OriginPos aOriginPos, bool aHasAlpha,
-                      bool aForceBT709ColorSpace,
-                      Maybe<gfx::Matrix4x4> aTransformOverride);
-
-  gfx::IntSize GetSize() const override { return mSize; }
-  AndroidSurfaceTextureHandle GetHandle() const { return mHandle; }
-  bool GetContinuous() const { return mContinuous; }
-  gl::OriginPos GetOriginPos() const { return mOriginPos; }
-  bool GetHasAlpha() const { return mHasAlpha; }
-  bool GetForceBT709ColorSpace() const { return mForceBT709ColorSpace; }
-  const Maybe<gfx::Matrix4x4>& GetTransformOverride() const {
-    return mTransformOverride;
-  }
-
-  already_AddRefed<gfx::SourceSurface> GetAsSourceSurface() override {
-    // We can implement this, but currently don't want to because it will cause
-    // the SurfaceTexture to be permanently bound to the snapshot readback
-    // context.
-    return nullptr;
-  }
-
-  nsresult BuildSurfaceDescriptorBuffer(
-      SurfaceDescriptorBuffer& aSdBuffer, BuildSdbFlags aFlags,
-      const std::function<MemoryOrShmem(uint32_t)>& aAllocate) override {
-    // We can implement this, but currently don't want to because it will cause
-    // the SurfaceTexture to be permanently bound to the snapshot readback
-    // context.
-    return NS_ERROR_NOT_IMPLEMENTED;
-  }
-
-  SurfaceTextureImage* AsSurfaceTextureImage() override { return this; }
-
-  Maybe<SurfaceDescriptor> GetDesc() override;
-
-  void RegisterSetCurrentCallback(UniquePtr<SetCurrentCallback> aCallback) {
-    mSetCurrentCallback = std::move(aCallback);
-  }
-
-  void OnSetCurrent() override {
-    if (mSetCurrentCallback) {
-      (*mSetCurrentCallback)(/* aRender */ true);
-      mSetCurrentCallback.reset();
-    }
-  }
-
- private:
-  AndroidSurfaceTextureHandle mHandle;
-  gfx::IntSize mSize;
-  bool mContinuous;
-  gl::OriginPos mOriginPos;
-  const bool mHasAlpha;
-  const bool mForceBT709ColorSpace;
-  const Maybe<gfx::Matrix4x4> mTransformOverride;
-  UniquePtr<SetCurrentCallback> mSetCurrentCallback;
-};
-
-#endif  // MOZ_WIDGET_ANDROID
 
 }  // namespace layers
 }  // namespace mozilla

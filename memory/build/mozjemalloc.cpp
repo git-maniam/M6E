@@ -120,18 +120,11 @@
 #include <cstring>
 #include <cerrno>
 #include <chrono>
-#ifdef XP_WIN
-#  include <io.h>
-#  include <windows.h>
-#else
 #  include <sys/mman.h>
 #  include <unistd.h>
-#endif
-#ifdef XP_DARWIN
 #  include <libkern/OSAtomic.h>
 #  include <mach/mach_init.h>
 #  include <mach/vm_map.h>
-#endif
 
 #include "mozilla/Atomics.h"
 #include "mozilla/Assertions.h"
@@ -162,9 +155,6 @@
 #include "Utils.h"
 #include "Zero.h"
 
-#if defined(XP_WIN)
-#  include "mozmemory_stall.h"
-#endif
 
 using namespace mozilla;
 
@@ -183,22 +173,11 @@ constinit static RefPtr<MallocProfilerCallbacks> sCallbacks;
 #endif
 
 // Set to true once the allocator has been initialized.
-#if defined(_MSC_VER) && !defined(__clang__)
-// MSVC may create a static initializer for an Atomic<bool>, which may actually
-// run after `malloc_init` has been called once, which triggers multiple
-// initializations.
-// We work around the problem by not using an Atomic<bool> at all. There is a
-// theoretical problem with using `malloc_initialized` non-atomically, but
-// practically, this is only true if `malloc_init` is never called before
-// threads are created.
-static bool malloc_initialized;
-#else
 // We can rely on Relaxed here because this variable is only ever set when
 // holding gInitLock. A thread that still sees it false while another sets it
 // true will enter the same lock, synchronize with the former and check the
 // flag again under the lock.
 static Atomic<bool, MemoryOrdering::Relaxed> malloc_initialized;
-#endif
 
 // This lock must be held while bootstrapping us.
 constinit StaticMutex gInitLock MOZ_UNANNOTATED;
@@ -586,12 +565,8 @@ static uint64_t huge_operations MOZ_GUARDED_BY(huge_mtx);
 // calling malloc to allocate storage on first access on each thread, which
 // leads to an infinite loop, but pthread-based TLS somehow doesn't have this
 // problem.
-#if !defined(XP_DARWIN)
-static MOZ_THREAD_LOCAL(arena_t*) thread_arena;
-#else
 static detail::ThreadLocal<arena_t*, detail::ThreadLocalKeyStorage>
     thread_arena;
-#endif
 
 // ***************************************************************************
 // Begin forward declarations.
@@ -599,19 +574,11 @@ static detail::ThreadLocal<arena_t*, detail::ThreadLocalKeyStorage>
 static void huge_dalloc(void* aPtr, arena_t* aArena);
 static bool malloc_init_hard();
 
-#ifndef XP_WIN
-#  ifdef XP_DARWIN
 #    define FORK_HOOK extern "C"
-#  else
-#    define FORK_HOOK static
-#  endif
 FORK_HOOK void _malloc_prefork(void);
 FORK_HOOK void _malloc_postfork_parent(void);
 FORK_HOOK void _malloc_postfork_child(void);
-#  ifdef XP_DARWIN
 FORK_HOOK void _malloc_postfork(void);
-#  endif
-#endif
 
 // End forward declarations.
 // ***************************************************************************
@@ -627,11 +594,6 @@ static inline bool malloc_init() {
   return true;
 }
 
-#ifdef ANDROID
-// Android's pthread.h does not declare pthread_atfork() until SDK 21.
-extern "C" MOZ_EXPORT int pthread_atfork(void (*)(void), void (*)(void),
-                                         void (*)(void));
-#endif
 
 // ***************************************************************************
 // Begin Utility functions/macros.
@@ -1477,11 +1439,7 @@ ArenaPurgeResult arena_t::PurgeDirtyPages(arena_chunk_t* aChunk,
 #ifdef MALLOC_DECOMMIT
     pages_decommit(purge_info.DirtyPtr(), purge_info.DirtyLenBytes());
 #else
-#  ifdef XP_SOLARIS
-    posix_madvise(purge_info.DirtyPtr(), purge_info.DirtyLenBytes(), MADV_FREE);
-#  else
     madvise(purge_info.DirtyPtr(), purge_info.DirtyLenBytes(), MADV_FREE);
-#  endif
 #endif
 
     // Check budget outside any lock, after the madvise/decommit which is the
@@ -2874,7 +2832,6 @@ bool arena_t::RallocGrowLarge(arena_chunk_t* aChunk, void* aPtr, size_t aSize,
   return true;
 }
 
-#ifdef XP_DARWIN
 #  define VM_COPY_MIN kChunkSize
 static inline void pages_copy(void* dest, const void* src, size_t n) {
   MOZ_ASSERT((void*)((uintptr_t)dest & ~gPageSizeMask) == dest);
@@ -2887,7 +2844,6 @@ static inline void pages_copy(void* dest, const void* src, size_t n) {
     MOZ_CRASH("vm_copy() failed");
   }
 }
-#endif
 
 void* arena_t::RallocSmallOrLarge(void* aPtr, size_t aSize, size_t aOldSize) {
   void* ret;
@@ -3467,9 +3423,7 @@ static bool malloc_init_hard() {
   DefineGlobals();
 #endif
 
-#ifndef XP_WIN
   gCache.Init();
-#endif
 
   huge_init();
   sBaseAlloc.Init();
@@ -3491,11 +3445,6 @@ static bool malloc_init_hard() {
   // Dummy call so that the function is not removed by dead-code elimination
   Debug::jemalloc_ptr_info(nullptr);
 
-#if !defined(XP_WIN) && !defined(XP_DARWIN)
-  // Prevent potential deadlock on malloc locks after fork.
-  pthread_atfork(_malloc_prefork, _malloc_postfork_parent,
-                 _malloc_postfork_child);
-#endif
 
 #ifdef MOZ_PHC
   // PHC must be initialised after mozjemalloc.
@@ -4173,7 +4122,6 @@ void ArenaCollection::MayPurgeAll(PurgeCondition aCond, const char* aCaller) {
 
 // End non-standard functions.
 // ***************************************************************************
-#ifndef XP_WIN
 // Begin library-private functions, used by threading libraries for protection
 // of malloc during fork().  These functions are only called if the program is
 // running in threaded mode, so there is no need to check whether the program
@@ -4187,19 +4135,15 @@ void ArenaCollection::MayPurgeAll(PurgeCondition aCond, const char* aCaller) {
 // This is only accessed in the fork handlers while gArenas.mLock is held.
 static pthread_t gForkingThread;
 
-#  ifdef XP_DARWIN
 // This is only accessed in the fork handlers while gArenas.mLock is held.
 static pid_t gForkingProcess;
-#  endif
 
 FORK_HOOK
 void _malloc_prefork(void) MOZ_NO_THREAD_SAFETY_ANALYSIS {
   // Acquire all mutexes in a safe order.
   gArenas.mLock.Lock();
   gForkingThread = pthread_self();
-#  ifdef XP_DARWIN
   gForkingProcess = getpid();
-#  endif
 
   for (auto arena : gArenas.iter()) {
     if (arena->mLock.LockIsEnabled()) {
@@ -4253,7 +4197,6 @@ void _malloc_postfork_child(void) {
   gArenas.mLock.Init();
 }
 
-#  ifdef XP_DARWIN
 FORK_HOOK
 void _malloc_postfork(void) {
   // On MacOS we need to check if this is running in the parent or child
@@ -4266,8 +4209,6 @@ void _malloc_postfork(void) {
     _malloc_postfork_child();
   }
 }
-#  endif  // XP_DARWIN
-#endif    // ! XP_WIN
 
 // End library-private functions.
 // ***************************************************************************
@@ -4280,14 +4221,7 @@ void _malloc_postfork(void) {
 // the Android linker doesn't handle weak linking with non LD_PRELOADed
 // libraries, but LD_PRELOADing is not very convenient on Android, with
 // the zygote.
-#  ifdef XP_DARWIN
 #    define MOZ_REPLACE_WEAK __attribute__((weak_import))
-#  elif defined(XP_WIN) || defined(ANDROID)
-#    define MOZ_DYNAMIC_REPLACE_INIT
-#    define replace_init replace_init_decl
-#  elif defined(__GNUC__)
-#    define MOZ_REPLACE_WEAK __attribute__((weak))
-#  endif
 
 #  include "replace_malloc.h"
 
@@ -4324,38 +4258,6 @@ typedef decltype(replace_init_decl) replace_init_impl_t;
 static replace_init_impl_t* replace_init = nullptr;
 #  endif
 
-#  ifdef XP_WIN
-typedef HMODULE replace_malloc_handle_t;
-
-static replace_malloc_handle_t replace_malloc_handle() {
-  wchar_t replace_malloc_lib[1024];
-  if (GetEnvironmentVariableW(L"MOZ_REPLACE_MALLOC_LIB", replace_malloc_lib,
-                              std::size(replace_malloc_lib)) > 0) {
-    return LoadLibraryW(replace_malloc_lib);
-  }
-  return nullptr;
-}
-
-#    define REPLACE_MALLOC_GET_INIT_FUNC(handle) \
-      (replace_init_impl_t*)GetProcAddress(handle, "replace_init")
-
-#  elif defined(ANDROID)
-#    include <dlfcn.h>
-
-typedef void* replace_malloc_handle_t;
-
-static replace_malloc_handle_t replace_malloc_handle() {
-  const char* replace_malloc_lib = getenv("MOZ_REPLACE_MALLOC_LIB");
-  if (replace_malloc_lib && *replace_malloc_lib) {
-    return dlopen(replace_malloc_lib, RTLD_LAZY);
-  }
-  return nullptr;
-}
-
-#    define REPLACE_MALLOC_GET_INIT_FUNC(handle) \
-      (replace_init_impl_t*)dlsym(handle, "replace_init")
-
-#  endif
 
 static void replace_malloc_init_funcs(malloc_table_t*);
 
@@ -4533,16 +4435,9 @@ static void replace_malloc_init_funcs(malloc_table_t* table) {
     return DefaultMalloc::name(ARGS_HELPER(ARGS, ##__VA_ARGS__));            \
   }
 
-#ifndef __MINGW32__
 #  define GENERIC_MALLOC_DECL(attributes, name, return_type, ...)    \
     GENERIC_MALLOC_DECL2(attributes, name, name##_impl, return_type, \
                          ##__VA_ARGS__)
-#else
-#  define GENERIC_MALLOC_DECL(attributes, name, return_type, ...)    \
-    GENERIC_MALLOC_DECL2(attributes, name, name##_impl, return_type, \
-                         ##__VA_ARGS__)                              \
-    GENERIC_MALLOC_DECL2_MINGW(name, name##_impl, return_type, ##__VA_ARGS__)
-#endif
 
 #define NOTHROW_MALLOC_DECL(...) \
   MOZ_MEMORY_API MACRO_CALL(GENERIC_MALLOC_DECL, (noexcept(true), __VA_ARGS__))
@@ -4565,23 +4460,7 @@ static void replace_malloc_init_funcs(malloc_table_t* table) {
 #  include <dlfcn.h>
 #endif
 
-#if defined(__GLIBC__) && !defined(__UCLIBC__)
-// glibc provides the RTLD_DEEPBIND flag for dlopen which can make it possible
-// to inconsistently reference libc's malloc(3)-compatible functions
-// (bug 493541).
-//
-// These definitions interpose hooks in glibc.  The functions are actually
-// passed an extra argument for the caller return address, which will be
-// ignored.
-
-extern "C" {
-MOZ_EXPORT void (*__free_hook)(void*) = free_impl;
-MOZ_EXPORT void* (*__malloc_hook)(size_t) = malloc_impl;
-MOZ_EXPORT void* (*__realloc_hook)(void*, size_t) = realloc_impl;
-MOZ_EXPORT void* (*__memalign_hook)(size_t, size_t) = memalign_impl;
-}
-
-#elif defined(RTLD_DEEPBIND)
+#if   defined(RTLD_DEEPBIND)
 // XXX On systems that support RTLD_GROUP or DF_1_GROUP, do their
 // implementations permit similar inconsistencies?  Should STV_SINGLETON
 // visibility be used for interposition where available?
@@ -4589,44 +4468,6 @@ MOZ_EXPORT void* (*__memalign_hook)(size_t, size_t) = memalign_impl;
       "Interposing malloc is unsafe on this system without libc malloc hooks."
 #endif
 
-#ifdef XP_WIN
-MOZ_EXPORT void* _recalloc(void* aPtr, size_t aCount, size_t aSize) {
-  size_t oldsize = aPtr ? AllocInfo::Get(aPtr).Size() : 0;
-  CheckedInt<size_t> checkedSize = CheckedInt<size_t>(aCount) * aSize;
-
-  if (!checkedSize.isValid()) {
-    return nullptr;
-  }
-
-  size_t newsize = checkedSize.value();
-
-  // In order for all trailing bytes to be zeroed, the caller needs to
-  // use calloc(), followed by recalloc().  However, the current calloc()
-  // implementation only zeros the bytes requested, so if recalloc() is
-  // to work 100% correctly, calloc() will need to change to zero
-  // trailing bytes.
-  aPtr = DefaultMalloc::realloc(aPtr, newsize);
-  if (aPtr && oldsize < newsize) {
-    memset((void*)((uintptr_t)aPtr + oldsize), 0, newsize - oldsize);
-  }
-
-  return aPtr;
-}
-
-// This impl of _expand doesn't ever actually expand or shrink blocks: it
-// simply replies that you may continue using a shrunk block.
-MOZ_EXPORT void* _expand(void* aPtr, size_t newsize) {
-  if (AllocInfo::Get(aPtr).Size() >= newsize) {
-    return aPtr;
-  }
-
-  return nullptr;
-}
-
-MOZ_EXPORT size_t _msize(void* aPtr) {
-  return DefaultMalloc::malloc_usable_size(aPtr);
-}
-#endif
 
 #ifdef MOZ_PHC
 // Compile PHC and mozjemalloc together so that PHC can inline mozjemalloc.

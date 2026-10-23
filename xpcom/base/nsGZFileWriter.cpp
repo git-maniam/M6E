@@ -9,12 +9,7 @@
 #include "nsString.h"
 #include "zlib.h"
 
-#ifdef XP_WIN
-#  include <io.h>
-#  define _dup dup
-#else
 #  include <unistd.h>
-#endif
 
 nsGZFileWriter::nsGZFileWriter()
     : mInitialized(false), mFinished(false), mGZFile(nullptr) {

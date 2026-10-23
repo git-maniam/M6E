@@ -10,25 +10,6 @@
 #include "mozilla/ProfilerUtils.h"
 
 // --------------------------------------------- Windows process & thread ids
-#if defined(XP_WIN)
-
-#  include <process.h>
-#  include <processthreadsapi.h>
-
-ProfilerProcessId profiler_current_process_id() {
-  return ProfilerProcessId::FromNativeId(_getpid());
-}
-
-ProfilerThreadId profiler_current_thread_id() {
-  static_assert(std::is_same_v<ProfilerThreadId::NativeType,
-                               decltype(GetCurrentThreadId())>,
-                "ProfilerThreadId::NativeType must be exactly the type "
-                "returned by GetCurrentThreadId()");
-  return ProfilerThreadId::FromNativeId(GetCurrentThreadId());
-}
-
-// --------------------------------------------- Non-Windows process id
-#else
 // All non-Windows platforms are assumed to be POSIX, which has getpid().
 
 #  include <unistd.h>
@@ -39,7 +20,6 @@ ProfilerProcessId profiler_current_process_id() {
 
 // --------------------------------------------- Non-Windows thread id
 // ------------------------------------------------------- macOS
-#  if defined(XP_MACOSX)
 
 #    include <pthread.h>
 
@@ -53,48 +33,6 @@ ProfilerThreadId profiler_current_thread_id() {
 
 // ------------------------------------------------------- Android
 // Test Android before Linux, because Linux includes Android.
-#  elif defined(__ANDROID__) || defined(ANDROID)
-
-ProfilerThreadId profiler_current_thread_id() {
-  return ProfilerThreadId::FromNativeId(gettid());
-}
-
-// ------------------------------------------------------- Linux
-#  elif defined(XP_LINUX)
-
-#    include <sys/syscall.h>
-
-ProfilerThreadId profiler_current_thread_id() {
-  static thread_local pid_t tid;
-  if (!tid) {
-    // glibc doesn't provide a wrapper for gettid() until 2.30
-    tid = static_cast<pid_t>(syscall(SYS_gettid));
-  }
-  return ProfilerThreadId::FromNativeId(tid);
-}
-
-// ------------------------------------------------------- FreeBSD
-#  elif defined(XP_FREEBSD)
-
-#    include <sys/thr.h>
-
-ProfilerThreadId profiler_current_thread_id() {
-  long id;
-  if (thr_self(&id) != 0) {
-    return ProfilerThreadId{};
-  }
-  return ProfilerThreadId::FromNativeId(id);
-}
-
-// ------------------------------------------------------- Others
-#  else
-
-ProfilerThreadId profiler_current_thread_id() {
-  return ProfilerThreadId::FromNativeId(std::this_thread::get_id());
-}
-
-#  endif
-#endif  // End of non-XP_WIN.
 
 // --------------------------------------------- Platform-agnostic definitions
 

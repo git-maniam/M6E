@@ -16,14 +16,12 @@
 #include "mozilla/Utf8.h"
 
 #include <bit>
-#ifndef XP_LINUX
 // We still support libstd++ versions without codecvt support on Linux.
 //
 // When the minimum supported libstd++ version is bumped to 3.4.21, we can
 // enable the codecvt code path for Linux, too. This should happen in 2024 when
 // support for CentOS 7 is removed.
 #  include <codecvt>
-#endif
 #include <cwchar>
 #include <limits>
 #include <locale>
@@ -716,7 +714,6 @@ JS_PUBLIC_API JS::UniqueChars JS::EncodeWideToUtf8(JSContext* cx,
                                                    const wchar_t* chars) {
   using CheckedSizeT = mozilla::CheckedInt<size_t>;
 
-#ifndef XP_LINUX
   // Use the standard codecvt facet to convert a wide string to UTF-8.
   std::codecvt_utf8<wchar_t> cv;
 
@@ -763,40 +760,6 @@ JS_PUBLIC_API JS::UniqueChars JS::EncodeWideToUtf8(JSContext* cx,
   }
 
   return utf8;
-#else
-  // Alternative code path for Linux, because we still support libstd++ versions
-  // without codecvt support. See also the top comment where <codecvt> is
-  // included.
-
-  static_assert(sizeof(wchar_t) == 4,
-                "Assume wchar_t is UTF-32 on Linux systems");
-
-  constexpr size_t MaxUtf8CharLength = 4;
-
-  size_t len = std::wcslen(chars);
-  CheckedSizeT utf8MaxLen = CheckedSizeT(len) * MaxUtf8CharLength;
-  CheckedSizeT utf8BufLen = utf8MaxLen + 1;
-  if (!utf8BufLen.isValid()) {
-    JS_ReportAllocationOverflow(cx);
-    return nullptr;
-  }
-  auto utf8 = cx->make_pod_array<char>(utf8BufLen.value());
-  if (!utf8) {
-    return nullptr;
-  }
-
-  char* dst = utf8.get();
-  for (size_t i = 0; i < len; i++) {
-    uint8_t utf8buf[MaxUtf8CharLength];
-    uint32_t utf8Len = OneUcs4ToUtf8Char(utf8buf, chars[i]);
-    for (size_t j = 0; j < utf8Len; j++) {
-      *dst++ = char(utf8buf[j]);
-    }
-  }
-  *dst = '\0';
-
-  return utf8;
-#endif
 }
 
 JS_PUBLIC_API JS::UniqueChars JS::EncodeUtf8ToNarrow(JSContext* cx,
@@ -841,7 +804,6 @@ JS_PUBLIC_API JS::UniqueWideChars JS::EncodeUtf8ToWide(JSContext* cx,
   // Only valid UTF-8 strings should be passed to this function.
   MOZ_ASSERT(mozilla::IsUtf8(mozilla::Span(chars, strlen(chars))));
 
-#ifndef XP_LINUX
   // Use the standard codecvt facet to convert from UTF-8 to a wide string.
   std::codecvt_utf8<wchar_t> cv;
 
@@ -872,42 +834,6 @@ JS_PUBLIC_API JS::UniqueWideChars JS::EncodeUtf8ToWide(JSContext* cx,
   *toNext = '\0';  // Explicit null-termination required.
 
   return wideChars;
-#else
-  // Alternative code path for Linux, because we still support libstd++ versions
-  // without codecvt support. See also the top comment where <codecvt> is
-  // included.
-
-  static_assert(sizeof(wchar_t) == 4,
-                "Assume wchar_t is UTF-32 on Linux systems");
-
-  size_t len = strlen(chars);
-  auto wideChars = cx->make_pod_array<wchar_t>(len + 1);
-  if (!wideChars) {
-    return nullptr;
-  }
-
-  const auto* s = reinterpret_cast<const unsigned char*>(chars);
-  const auto* const limit = s + len;
-
-  wchar_t* dst = wideChars.get();
-  while (s < limit) {
-    unsigned char c = *s++;
-
-    if (mozilla::IsAscii(c)) {
-      *dst++ = wchar_t(c);
-      continue;
-    }
-
-    mozilla::Utf8Unit utf8(c);
-    mozilla::Maybe<char32_t> codePoint =
-        mozilla::DecodeOneUtf8CodePoint(utf8, &s, limit);
-    MOZ_ASSERT(codePoint.isSome());
-    *dst++ = wchar_t(*codePoint);
-  }
-  *dst++ = '\0';
-
-  return wideChars;
-#endif
 }
 
 bool StringBuilder::append(const Utf8Unit* units, size_t len) {

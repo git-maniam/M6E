@@ -62,11 +62,6 @@ class nsResProtocolHandler final
 
   nsCString mAppURI;
   nsCString mGREURI;
-#ifdef ANDROID
-  // Used for resource://android URIs
-  nsCString mApkURI;
-  nsresult GetApkURI(nsACString& aResult);
-#endif
 };
 
 #endif /* nsResProtocolHandler_h_ */

@@ -107,14 +107,6 @@ static MOZ_ALWAYS_INLINE void PodCopy(T* aDst, const T* aSrc, size_t aNElem) {
 // platforms. So we use a loop for small sizes there only.
 //
 // See Bug 1967062 for details.
-#if defined(XP_LINUX)
-  if (aNElem < 128) {
-    for (const T* srcend = aSrc + aNElem; aSrc < srcend; aSrc++, aDst++) {
-      *aDst = *aSrc;
-    }
-    return;
-  }
-#endif
 
   // GCC false-positive: value range propagation cannot prove mLength is bounded
   // when Vector::convertToHeapStorage inlines through here (Bug 661957).

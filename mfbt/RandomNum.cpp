@@ -4,15 +4,9 @@
 
 #include "mozilla/RandomNum.h"
 
-#ifdef XP_UNIX
 #  include <fcntl.h>
 #  include <unistd.h>
-#endif
 
-#if defined(XP_WIN)
-#  include "minwindef.h"
-#  include "mozilla/DynamicallyLinkedFunctionPtr.h"
-#endif
 
 #if defined(ANDROID) || defined(XP_DARWIN) || defined(__DragonFly__) ||    \
     defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
@@ -20,55 +14,6 @@
 #  define USE_ARC4RANDOM
 #endif
 
-#if defined(__linux__)
-#  include <linux/random.h>  // For GRND_NONBLOCK.
-#  include <sys/syscall.h>   // For SYS_getrandom.
-
-// Older glibc versions don't define SYS_getrandom, so we define it here if
-// it's not available. See bug 995069.
-#  if defined(__x86_64__)
-#    define GETRANDOM_NR 318
-#  elif defined(__i386__)
-#    define GETRANDOM_NR 355
-#  elif defined(__aarch64__)
-#    define GETRANDOM_NR 278
-#  elif defined(__arm__)
-#    define GETRANDOM_NR 384
-#  elif defined(__powerpc__)
-#    define GETRANDOM_NR 359
-#  elif defined(__s390__)
-#    define GETRANDOM_NR 349
-#  elif defined(__mips__)
-#    include <sgidefs.h>
-#    if _MIPS_SIM == _MIPS_SIM_ABI32
-#      define GETRANDOM_NR 4353
-#    elif _MIPS_SIM == _MIPS_SIM_ABI64
-#      define GETRANDOM_NR 5313
-#    elif _MIPS_SIM == _MIPS_SIM_NABI32
-#      define GETRANDOM_NR 6317
-#    endif
-#  endif
-
-#  if defined(SYS_getrandom)
-// We have SYS_getrandom. Use it to check GETRANDOM_NR. Only do this if we set
-// GETRANDOM_NR so tier 3 platforms with recent glibc are not forced to define
-// it for no good reason.
-#    if defined(GETRANDOM_NR)
-static_assert(GETRANDOM_NR == SYS_getrandom,
-              "GETRANDOM_NR should match the actual SYS_getrandom value");
-#    endif
-#  else
-#    define SYS_getrandom GETRANDOM_NR
-#  endif
-
-#  if defined(GRND_NONBLOCK)
-static_assert(GRND_NONBLOCK == 1,
-              "If GRND_NONBLOCK is not 1 the #define below is wrong");
-#  else
-#    define GRND_NONBLOCK 1
-#  endif
-
-#endif  // defined(__linux__)
 
 namespace mozilla {
 
@@ -76,32 +21,13 @@ MFBT_API bool GenerateRandomBytesFromOS(void* aBuffer, size_t aLength) {
   MOZ_ASSERT(aBuffer);
   MOZ_ASSERT(aLength > 0);
 
-#if defined(XP_WIN)
-  // See third_party/rust/getrandom/src/backends/windows.rs for an explanation
-  // of why we use ProcessPrng.
-  static const mozilla::StaticDynamicallyLinkedFunctionPtr<BOOL(WINAPI*)(
-      PBYTE, SIZE_T)>
-      pProcessPrng(L"bcryptprimitives.dll", "ProcessPrng");
-  return pProcessPrng && !!pProcessPrng(static_cast<PBYTE>(aBuffer), aLength);
-
-#elif defined(USE_ARC4RANDOM)  // defined(XP_WIN)
+#if   defined(USE_ARC4RANDOM)  // defined(XP_WIN)
 
   arc4random_buf(aBuffer, aLength);
   return true;
 
-#elif defined(XP_UNIX)  // defined(USE_ARC4RANDOM)
+#else
 
-#  if defined(__linux__)
-
-  long bytesGenerated = syscall(SYS_getrandom, aBuffer, aLength, GRND_NONBLOCK);
-
-  if (static_cast<unsigned long>(bytesGenerated) == aLength) {
-    return true;
-  }
-
-  // Fall-through to UNIX behavior if failed
-
-#  endif  // defined(__linux__)
 
   int fd = open("/dev/urandom", O_RDONLY);
   if (fd < 0) {
@@ -114,8 +40,6 @@ MFBT_API bool GenerateRandomBytesFromOS(void* aBuffer, size_t aLength) {
 
   return (static_cast<size_t>(bytesRead) == aLength);
 
-#else  // defined(XP_UNIX)
-#  error "Platform needs to implement GenerateRandomBytesFromOS()"
 #endif
 }
 

@@ -73,25 +73,15 @@
 // enabled and disabled independently, to aid testing.  These #defines are
 // here so that the same setting can be used in both the implementation and
 // in the unit test.
-#if defined(XP_WIN)
-#  define FILE_PATH_USES_DRIVE_LETTERS
-#  define FILE_PATH_USES_WIN_SEPARATORS
-#endif  // XP_WIN
 
 // An abstraction to isolate users from the differences between native
 // pathnames on different platforms.
 class FilePath {
  public:
-#if defined(XP_UNIX)
   // On most platforms, native pathnames are char arrays, and the encoding
   // may or may not be specified.  On Mac OS X, native pathnames are encoded
   // in UTF-8.
   typedef std::string StringType;
-#else
-  // On Windows, for Unicode-aware applications, native pathnames are wchar_t
-  // arrays encoded in UTF-16.
-  typedef std::wstring StringType;
-#endif
 
   typedef StringType::value_type CharType;
 
@@ -114,9 +104,6 @@ class FilePath {
   FilePath(const FilePath& that) = default;
   explicit FilePath(const StringType& path) : path_(path) {}
 
-#if defined(XP_WIN)
-  explicit FilePath(const wchar_t* path) : path_(path) {}
-#endif
 
   FilePath& operator=(const FilePath& that) = default;
 
@@ -233,10 +220,6 @@ class FilePath {
 };
 
 // Macros for string literal initialization of FilePath::CharType[].
-#if defined(XP_UNIX)
 #  define FILE_PATH_LITERAL(x) x
-#else
-#  define FILE_PATH_LITERAL(x) L##x
-#endif
 
 #endif  // BASE_FILE_PATH_H_

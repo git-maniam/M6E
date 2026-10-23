@@ -10,19 +10,12 @@
 #include "nsWifiAccessPoint.h"
 #include "nsWifiMonitor.h"
 
-#if defined(XP_WIN) && defined(_M_IX86)
-#  include <objbase.h>  // STDMETHODCALLTYPE
-#endif
 
 // Test that removing wifi scan listeners in a wifi scan listener does
 // not crash.
 
 // Windows x86 calling convention
-#if defined(XP_WIN) && defined(_M_IX86)
-#  define MOCKCALLTYPE STDMETHODCALLTYPE
-#else
 #  define MOCKCALLTYPE
-#endif
 
 static mozilla::LazyLogModule gLog("TestWifiMonitorListenerRemoval");
 #define LOGI(x) MOZ_LOG(gLog, mozilla::LogLevel::Info, x)

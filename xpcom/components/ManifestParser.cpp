@@ -8,20 +8,10 @@
 
 #include "mozilla/Printf.h"
 #include "prio.h"
-#if defined(XP_WIN)
-#  include <windows.h>
-#elif defined(MOZ_WIDGET_COCOA)
 #  include <CoreServices/CoreServices.h>
 
 #  include "nsCocoaFeatures.h"
-#elif defined(MOZ_WIDGET_GTK)
-#  include <gtk/gtk.h>
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidBuild.h"
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#endif
 
 #ifdef MOZ_BACKGROUNDTASKS
 #  include "mozilla/BackgroundTasks.h"
@@ -255,11 +245,6 @@ static bool CheckStringFlag(const nsAString& aFlag, const nsAString& aData,
 static bool CheckOsFlag(const nsAString& aFlag, const nsAString& aData,
                         const nsAString& aValue, TriState& aResult) {
   bool result = CheckStringFlag(aFlag, aData, aValue, aResult);
-#if defined(XP_UNIX) && !defined(XP_DARWIN) && !defined(ANDROID)
-  if (result && aResult == eBad) {
-    result = CheckStringFlag(aFlag, aData, u"likeunix"_ns, aResult);
-  }
-#endif
   return result;
 }
 
@@ -384,9 +369,6 @@ void ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
   constexpr auto kOsVersion = u"osversion"_ns;
   constexpr auto kABI = u"abi"_ns;
   constexpr auto kProcess = u"process"_ns;
-#if defined(MOZ_WIDGET_ANDROID)
-  constexpr auto kTablet = u"tablet"_ns;
-#endif
   // You might expect this to be guarded by MOZ_BACKGROUNDTASKS, but it's not
   // possible to have conditional manifest contents, so we need to recognize and
   // discard these tokens even when MOZ_BACKGROUNDTASKS is not set.
@@ -442,30 +424,9 @@ void ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
   }
 
   nsAutoString osVersion;
-#if defined(XP_WIN)
-#  pragma warning(push)
-#  pragma warning(disable : 4996)  // VC12+ deprecates GetVersionEx
-  OSVERSIONINFO info = {sizeof(OSVERSIONINFO)};
-  if (GetVersionEx(&info)) {
-    nsTextFormatter::ssprintf(osVersion, u"%ld.%ld", info.dwMajorVersion,
-                              info.dwMinorVersion);
-  }
-#  pragma warning(pop)
-#elif defined(MOZ_WIDGET_COCOA)
   SInt32 majorVersion = nsCocoaFeatures::macOSVersionMajor();
   SInt32 minorVersion = nsCocoaFeatures::macOSVersionMinor();
   nsTextFormatter::ssprintf(osVersion, u"%ld.%ld", majorVersion, minorVersion);
-#elif defined(MOZ_WIDGET_GTK)
-  nsTextFormatter::ssprintf(osVersion, u"%ld.%ld", gtk_major_version,
-                            gtk_minor_version);
-#elif defined(MOZ_WIDGET_ANDROID)
-  bool isTablet = false;
-  if (jni::IsAvailable()) {
-    jni::String::LocalRef release = java::sdk::Build::VERSION::RELEASE();
-    osVersion.Assign(release->ToString());
-    isTablet = java::GeckoAppShell::IsTablet();
-  }
-#endif
 
   if (XRE_IsContentProcess()) {
     process = kContent;
@@ -546,9 +507,6 @@ void ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
     TriState stOs = eUnspecified;
     TriState stABI = eUnspecified;
     TriState stProcess = eUnspecified;
-#if defined(MOZ_WIDGET_ANDROID)
-    TriState stTablet = eUnspecified;
-#endif
 #ifdef MOZ_BACKGROUNDTASKS
     // When in background task mode, default to not registering
     // category directivies unless backgroundtask=1 is specified.
@@ -575,13 +533,6 @@ void ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
         continue;
       }
 
-#if defined(MOZ_WIDGET_ANDROID)
-      bool tablet = false;
-      if (CheckFlag(kTablet, wtoken, tablet)) {
-        stTablet = (tablet == isTablet) ? eOK : eBad;
-        continue;
-      }
-#endif
 
       // You might expect this to be guarded by MOZ_BACKGROUNDTASKS, it's not
       // possible to have conditional manifest contents.
@@ -618,9 +569,6 @@ void ParseManifest(NSLocationType aType, FileLocation& aFile, char* aBuf,
 
     if (!ok || stApp == eBad || stAppVersion == eBad ||
         stGeckoVersion == eBad || stOs == eBad || stOsVersion == eBad ||
-#ifdef MOZ_WIDGET_ANDROID
-        stTablet == eBad ||
-#endif
 #ifdef MOZ_BACKGROUNDTASKS
         stBackgroundTask == eBad ||
 #endif

@@ -571,35 +571,6 @@ HTMLInputElement::nsFilePickerShownCallback::Done(
 
   if (StaticPrefs::dom_webkitBlink_dirPicker_enabled() &&
       mInput->HasAttr(nsGkAtoms::webkitdirectory)) {
-#ifdef MOZ_WIDGET_ANDROID
-    // Android 13 or later cannot enumerate files into user directory due to
-    // no permission. So we store file list into file picker.
-    FallibleTArray<RefPtr<BlobImpl>> filesInWebKitDirectory;
-
-    nsCOMPtr<nsISimpleEnumerator> iter;
-    if (NS_SUCCEEDED(
-            mFilePicker->GetDomFilesInWebKitDirectory(getter_AddRefs(iter))) &&
-        iter) {
-      nsCOMPtr<nsISupports> supports;
-
-      bool loop = true;
-      while (NS_SUCCEEDED(iter->HasMoreElements(&loop)) && loop) {
-        iter->GetNext(getter_AddRefs(supports));
-        if (supports) {
-          RefPtr<BlobImpl> file = static_cast<File*>(supports.get())->Impl();
-          MOZ_ASSERT(file);
-          if (!filesInWebKitDirectory.AppendElement(file, fallible)) {
-            return nsresult::NS_ERROR_OUT_OF_MEMORY;
-          }
-        }
-      }
-    }
-
-    if (!filesInWebKitDirectory.IsEmpty()) {
-      dispatchChangeEventCallback->Callback(NS_OK, filesInWebKitDirectory);
-      return NS_OK;
-    }
-#endif
 
     ErrorResult error;
     GetFilesHelper* helper = mInput->GetOrCreateGetFilesHelper(true, error);
@@ -874,12 +845,10 @@ nsresult HTMLInputElement::InitColorPicker() {
   // NOTE(krosylight): Android doesn't support HTML widgets. We can modify
   // GeckoView to handle MozOpenColorPicker and let it keep using its current
   // picker, but for now this is ok.
-#ifndef ANDROID
   if (StaticPrefs::dom_forms_html_color_picker_enabled()) {
     OpenColorPicker();
     return NS_OK;
   }
-#endif
 
   // Get Loc title
   nsAutoString title;
@@ -3235,15 +3204,6 @@ void HTMLInputElement::SetCheckedInternal(bool aChecked, bool aNotify,
   }
 }
 
-#if !defined(ANDROID) && !defined(XP_MACOSX)
-bool HTMLInputElement::IsNodeApzAwareInternal() const {
-  // Tell APZC we may handle mouse wheel event and do preventDefault when input
-  // type is number.
-  return mType == FormControlType::InputNumber ||
-         mType == FormControlType::InputRange ||
-         nsINode::IsNodeApzAwareInternal();
-}
-#endif
 
 bool HTMLInputElement::IsInteractiveHTMLContent() const {
   return mType != FormControlType::InputHidden ||
@@ -3786,13 +3746,6 @@ static bool IgnoreInputEventWithModifier(const WidgetInputEvent& aEvent,
                                          bool ignoreControl) {
   return (ignoreControl && aEvent.IsControl()) ||
          aEvent.IsAltGraph()
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-         // Meta key is the Windows Logo key on Windows and Linux which may
-         // assign some special meaning for the events while it's pressed.
-         // On the other hand, it's a normal modifier in macOS and Android.
-         // Therefore, We should ignore it only in Win/Linux.
-         || aEvent.IsMeta()
-#endif
          || aEvent.IsFn();
 }
 
@@ -6115,12 +6068,6 @@ void HTMLInputElement::ShowPicker(ErrorResult& aRv) {
 }
 
 void HTMLInputElement::UpdateApzAwareFlag() {
-#if !defined(ANDROID) && !defined(XP_MACOSX)
-  if (mType == FormControlType::InputNumber ||
-      mType == FormControlType::InputRange) {
-    SetMayBeApzAware();
-  }
-#endif
 }
 
 nsresult HTMLInputElement::SetDefaultValueAsValue() {

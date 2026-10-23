@@ -31,9 +31,6 @@
 #include "nsGlobalWindowInner.h"
 #include "nsPIDOMWindow.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;

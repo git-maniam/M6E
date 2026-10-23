@@ -23,11 +23,9 @@ namespace mozilla {
 
 class MemoryReportingProcess;
 
-#ifndef ANDROID
 namespace hwinference {
 class HWInferenceParent;
 }  // namespace hwinference
-#endif  // !ANDROID
 
 namespace dom {
 class JSOracleParent;
@@ -60,10 +58,6 @@ class UtilityProcessManager final : public UtilityProcessHost::Listener {
       LaunchPromise<Endpoint<PRemoteMediaManagerChild>>;
   using JSOraclePromise = GenericNonExclusivePromise;
 
-#ifdef XP_WIN
-  using WindowsUtilsPromise = LaunchPromise<RefPtr<dom::WindowsUtilsParent>>;
-  using WinFileDialogPromise = LaunchPromise<widget::filedialog::ProcessProxy>;
-#endif
 
 #if defined(NIGHTLY_BUILD) && !defined(MOZ_NO_SMART_CARDS)
   using PKCS11ModulePromise = LaunchPromise<RefPtr<psm::PKCS11ModuleParent>>;
@@ -93,28 +87,14 @@ class UtilityProcessManager final : public UtilityProcessHost::Listener {
 
   RefPtr<JSOraclePromise> StartJSOracle(mozilla::dom::JSOracleParent* aParent);
 
-#ifdef XP_WIN
-  // Get the (possibly already resolved) promise for the Windows utility
-  // process actor.  Creates the process if it is not running.
-  RefPtr<WindowsUtilsPromise> GetWindowsUtilsPromise();
-  // Releases the WindowsUtils actor so that it can be destroyed.
-  // Subsequent attempts to use WindowsUtils will create a new process.
-  void ReleaseWindowsUtils();
-
-  // Get a new Windows file-dialog utility-process actor. These are never
-  // reused; this will always return a fresh actor.
-  RefPtr<WinFileDialogPromise> CreateWinFileDialogActor();
-#endif
 
 #if defined(NIGHTLY_BUILD) && !defined(MOZ_NO_SMART_CARDS)
   RefPtr<PKCS11ModulePromise> StartPKCS11Module();
 #endif  // NIGHTLY_BUILD && !MOZ_NO_SMART_CARDS
 
-#ifndef ANDROID
   // Launches an independent HWInference process and binds aActor to it.
   already_AddRefed<UtilityProcessKeepAlive> LaunchIndependentHWInferenceProcess(
       RefPtr<hwinference::HWInferenceParent> aActor);
-#endif  // !ANDROID
 
   void OnProcessUnexpectedShutdown(UtilityProcessHost* aHost);
 
@@ -277,9 +257,6 @@ class UtilityProcessManager final : public UtilityProcessHost::Listener {
       RefPtr<Actor> aActor, ProcessFields* aProcess,
       SharedLaunchPromise<Ok>* aLaunchPromise);
 
-#ifdef XP_WIN
-  RefPtr<dom::WindowsUtilsParent> mWindowsUtils;
-#endif  // XP_WIN
 };
 
 // Holds the utility process it was acquired on, and shuts that process down

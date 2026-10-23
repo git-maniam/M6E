@@ -40,11 +40,7 @@ void VRLayerChild::SetXRFramebuffer(WebGLFramebufferJS* fb) {
 }
 
 static constexpr bool kIsAndroid =
-#if defined(MOZ_WIDGET_ANDROID)
-    true;
-#else
     false;
-#endif
 
 void VRLayerChild::SubmitFrame(const VRDisplayInfo& aDisplayInfo) {
   uint64_t frameId = aDisplayInfo.GetFrameId();

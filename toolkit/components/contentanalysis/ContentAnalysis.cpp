@@ -3001,11 +3001,7 @@ ContentAnalysis::CheckUploadsInBatchMode(
   });
 
   for (auto* file : aFiles) {
-#ifdef XP_WIN
-    nsString pathString(file->NativePath());
-#else
     nsString pathString = NS_ConvertUTF8toUTF16(file->NativePath());
-#endif
     RefPtr<nsIContentAnalysisRequest> request =
         new mozilla::contentanalysis::ContentAnalysisRequest(
             nsIContentAnalysisRequest::AnalysisType::eFileAttached, aReason,
@@ -3169,11 +3165,7 @@ ContentAnalysis::AnalyzeBatchContentRequest(nsIContentAnalysisRequest* aRequest,
         rv = result.StealNSResult();
         return rv;
       }
-#ifdef XP_WIN
-      const nsString& nativePathString = filePath;
-#else
       nsCString nativePathString(NS_ConvertUTF16toUTF8(std::move(filePath)));
-#endif
       nsCOMPtr<nsIFile> nsFile;
       rv = NS_NewPathStringLocalFile(nativePathString, getter_AddRefs(nsFile));
       NS_ENSURE_SUCCESS(rv, rv);

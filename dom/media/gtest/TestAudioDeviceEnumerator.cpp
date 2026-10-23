@@ -89,7 +89,6 @@ void TestEnumeration(MockCubeb* aMock, uint32_t aExpectedDeviceCount,
   }
 }
 
-#ifndef ANDROID
 TEST(CubebDeviceEnumerator, EnumerateSimple)
 {
   // It looks like we're leaking this object, but in fact it will be owned by
@@ -190,36 +189,6 @@ TEST(CubebDeviceEnumerator, ZeroChannelDevices)
   EXPECT_EQ(outputDevices->ElementAt(0)->MaxChannels(), dev3.max_channels);
 }
 
-#else  // building for Android, which has no device enumeration support
-TEST(CubebDeviceEnumerator, EnumerateAndroid)
-{
-  MockCubeb* mock = new MockCubeb();
-  mozilla::CubebUtils::ForceSetCubebContext(mock->AsCubebContext());
-
-  RefPtr<CubebDeviceEnumerator> enumerator =
-      CubebDeviceEnumerator::GetInstance();
-
-  RefPtr<const AudioDeviceSet> inputDevices =
-      enumerator->EnumerateAudioInputDevices();
-  EXPECT_EQ(inputDevices->Length(), 1u)
-      << "Android always exposes a single input device.";
-  EXPECT_EQ((*inputDevices)[0]->MaxChannels(), 1u) << "With a single channel.";
-  EXPECT_EQ((*inputDevices)[0]->DeviceID(), nullptr)
-      << "It's always the default input device.";
-  EXPECT_TRUE((*inputDevices)[0]->Preferred())
-      << "it's always the prefered input device.";
-
-  RefPtr<const AudioDeviceSet> outputDevices =
-      enumerator->EnumerateAudioOutputDevices();
-  EXPECT_EQ(outputDevices->Length(), 1u)
-      << "Android always exposes a single output device.";
-  EXPECT_EQ((*outputDevices)[0]->MaxChannels(), 2u) << "With stereo channels.";
-  EXPECT_EQ((*outputDevices)[0]->DeviceID(), nullptr)
-      << "It's always the default output device.";
-  EXPECT_TRUE((*outputDevices)[0]->Preferred())
-      << "it's always the prefered output device.";
-}
-#endif
 
 TEST(CubebDeviceEnumerator, ForceNullCubebContext)
 {

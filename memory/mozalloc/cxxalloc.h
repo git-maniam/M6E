@@ -78,18 +78,5 @@ MOZALLOC_EXPORT_NEW void operator delete[](
   return free_impl(ptr);
 }
 
-#if defined(XP_WIN)
-// We provide the global sized delete overloads unconditionally because the
-// MSVC runtime headers do, despite compiling with /Zc:sizedDealloc-
-MOZALLOC_EXPORT_NEW void operator delete(void* ptr,
-                                         size_t /*size*/) noexcept(true) {
-  return free_impl(ptr);
-}
-
-MOZALLOC_EXPORT_NEW void operator delete[](void* ptr,
-                                           size_t /*size*/) noexcept(true) {
-  return free_impl(ptr);
-}
-#endif
 
 #endif /* mozilla_cxxalloc_h */

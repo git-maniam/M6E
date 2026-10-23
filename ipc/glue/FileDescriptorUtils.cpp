@@ -14,11 +14,7 @@
 #include "private/pprio.h"
 
 #include <errno.h>
-#ifdef XP_WIN
-#  include <io.h>
-#else
 #  include <unistd.h>
-#endif
 
 using mozilla::ipc::CloseFileRunnable;
 
@@ -69,15 +65,7 @@ FILE* FileDescriptorToFILE(const FileDescriptor& aDesc, const char* aOpenMode) {
     return nullptr;
   }
   auto handle = aDesc.ClonePlatformHandle();
-#ifdef XP_WIN
-  int fd = _open_osfhandle(static_cast<intptr_t>(handle.get()), 0);
-  if (fd == -1) {
-    return nullptr;
-  }
-  (void)handle.release();
-#else
   int fd = handle.release();
-#endif
   FILE* file = fdopen(fd, aOpenMode);
   if (!file) {
     int saved_errno = errno;
@@ -92,15 +80,7 @@ FileDescriptor FILEToFileDescriptor(FILE* aStream) {
     errno = EBADF;
     return FileDescriptor();
   }
-#ifdef XP_WIN
-  int fd = _fileno(aStream);
-  if (fd == -1) {
-    return FileDescriptor();
-  }
-  return FileDescriptor(reinterpret_cast<HANDLE>(_get_osfhandle(fd)));
-#else
   return FileDescriptor(fileno(aStream));
-#endif
 }
 
 }  // namespace ipc

@@ -106,11 +106,7 @@ class RenderCompositor {
   // True if AttachExternalImage supports being used with an external
   // image that maps to a RenderBufferTextureHost
   virtual bool SupportsExternalBufferTextures() const {
-#ifdef MOZ_WAYLAND
-    return true;
-#else
     return false;
-#endif
   }
 
   virtual LayoutDeviceIntSize GetBufferSize() = 0;
@@ -237,13 +233,6 @@ class RenderCompositor {
     return false;
   }
   virtual bool MaybeProcessScreenshotQueue() { return false; }
-#ifdef MOZ_WIDGET_ANDROID
-  virtual bool MaybeCaptureScreenPixels(
-      const gfx::IntRect& aSourceRect,
-      layers::AndroidHardwareBuffer* aHardwareBuffer) {
-    return false;
-  }
-#endif
 
   virtual RefPtr<layers::Fence> GetAndResetReadFence() { return nullptr; }
 

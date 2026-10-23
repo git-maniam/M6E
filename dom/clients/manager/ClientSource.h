@@ -11,9 +11,6 @@
 #include "mozilla/dom/ClientThing.h"
 #include "mozilla/dom/ServiceWorkerDescriptor.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 class nsIContentSecurityPolicy;
 class nsIPolicyContainer;

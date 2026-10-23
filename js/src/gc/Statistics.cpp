@@ -188,14 +188,7 @@ JS_PUBLIC_API const char* JS::GetGCPhaseName(uint32_t val) {
 static double t(TimeDuration duration) { return duration.ToMilliseconds(); }
 
 static TimeDuration TimeBetween(TimeStamp start, TimeStamp end) {
-#ifndef XP_WIN
   MOZ_ASSERT(end >= start);
-#else
-  // Sadly this happens sometimes.
-  if (end < start) {
-    return TimeDuration::Zero();
-  }
-#endif
   return end - start;
 }
 
@@ -941,9 +934,7 @@ static PhaseKind LongestPhaseSelfTimeInMajorGC(
       // This happens very occasionally in release builds and frequently
       // in Windows debug builds. Skip collecting longest phase telemetry
       // if it does.
-#ifndef XP_WIN
       MOZ_ASSERT(ok, "Inconsistent time data; see bug 1400153");
-#endif
       if (!ok) {
         return PhaseKind::NONE;
       }

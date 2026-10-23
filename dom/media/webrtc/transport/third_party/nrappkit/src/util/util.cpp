@@ -36,11 +36,9 @@
    ekr@rtfm.com  Wed Dec 26 17:19:36 2001
  */
 
-#ifndef WIN32
 #include <sys/uio.h>
 #include <pwd.h>
 #include <dirent.h>
-#endif
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
@@ -71,27 +69,3 @@ int nr_bin2hex(UCHAR *in,int len,UCHAR *out)
   }
 
 
-#ifdef WIN32
-#include <time.h>
-/* this is only millisecond-accurate, but that should be OK */
-
-int gettimeofday(struct timeval *tv, void *tz)
-  {
-    SYSTEMTIME st;
-    FILETIME ft;
-    ULARGE_INTEGER u;
-
-    GetLocalTime (&st);
-
-    /* strangely, the FILETIME is the number of 100 nanosecond (0.1 us) intervals
-     * since the Epoch */
-    SystemTimeToFileTime(&st, &ft);
-    u.HighPart = ft.dwHighDateTime;
-    u.LowPart = ft.dwLowDateTime;
-
-    tv->tv_sec = (long) (u.QuadPart / 10000000L);
-    tv->tv_usec = (long) (st.wMilliseconds * 1000);;
-
-    return 0;
-  }
-#endif

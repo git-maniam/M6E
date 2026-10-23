@@ -10,11 +10,9 @@
 #include "js/Id.h"
 #include "js/Wrapper.h"
 
-#ifdef XP_MACOSX
 // AssertMacros.h defines 'check' which conflicts with the method declarations
 // in this file.
 #  undef check
-#endif
 
 namespace xpc {
 

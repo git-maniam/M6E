@@ -9,10 +9,8 @@
 
 #include "gc/BufferAllocator-inl.h"
 
-#ifdef XP_DARWIN
 #  include <mach/mach_init.h>
 #  include <mach/vm_map.h>
-#endif
 
 #include "gc/BufferAllocatorInternals.h"
 #include "gc/GCInternals.h"
@@ -750,7 +748,6 @@ inline Zone* LargeBuffer::zoneFromAnyThread() {
   return BufferChunk::from(this)->zone;
 }
 
-#ifdef XP_DARWIN
 static inline void VirtualCopyPages(void* dst, const void* src, size_t bytes) {
   MOZ_ASSERT((uintptr_t(dst) & PageMask) == 0);
   MOZ_ASSERT((uintptr_t(src) & PageMask) == 0);
@@ -762,7 +759,6 @@ static inline void VirtualCopyPages(void* dst, const void* src, size_t bytes) {
     MOZ_CRASH("vm_copy() failed");
   }
 }
-#endif
 
 void* BufferAllocator::realloc(void* alloc, size_t bytes, bool nurseryOwned) {
   // Reallocate a buffer. This has the same semantics as standard libarary
@@ -828,14 +824,12 @@ void* BufferAllocator::realloc(void* alloc, size_t bytes, bool nurseryOwned) {
 
   size_t bytesToCopy = std::min(bytes, currentBytes);
 
-#ifdef XP_DARWIN
   if (bytesToCopy >= ChunkSize) {
     MOZ_ASSERT(IsLargeAlloc(alloc));
     MOZ_ASSERT(IsLargeAlloc(newAlloc));
     VirtualCopyPages(newAlloc, alloc, bytesToCopy);
     return newAlloc;
   }
-#endif
 
   memcpy(newAlloc, alloc, bytesToCopy);
   return newAlloc;
@@ -3680,14 +3674,6 @@ void BufferAllocator::freeLarge(void* alloc) {
 
 bool BufferAllocator::shrinkLarge(LargeBuffer* buffer, size_t newBytes) {
   MOZ_ASSERT(IsLargeAllocSize(newBytes));
-#ifdef XP_WIN
-  // Can't unmap part of a region mapped with VirtualAlloc on Windows.
-  //
-  // It is possible to decommit the physical pages so we could do that and
-  // track virtual size as well as committed size. This would also allow us to
-  // grow the allocation again if necessary.
-  return false;
-#else
   MOZ_ASSERT(buffer->zone() == zone);
 
   // Don't free data that may be accessed by concurrent marking.
@@ -3715,7 +3701,6 @@ bool BufferAllocator::shrinkLarge(LargeBuffer* buffer, size_t newBytes) {
   UnmapPages(endPtr, shrinkBytes);
 
   return true;
-#endif
 }
 
 void BufferAllocator::unmapLarge(LargeBuffer* buffer, bool isSweeping,

@@ -15,15 +15,10 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/fallible.h"
 
-#ifdef XP_WIN
-#  include <cstdint>
-#endif
-#if defined(XP_DARWIN)
 #  include <mach/mach.h>
 
 #  include "mozilla/Assertions.h"
 #  include "mozilla/DebugOnly.h"
-#endif
 #if defined(XP_UNIX) && (defined(DEBUG) || defined(FUZZING))
 #  include "mozilla/Assertions.h"
 #endif
@@ -97,15 +92,7 @@ struct FreePolicy {
   void operator()(const void* ptr) { free(const_cast<void*>(ptr)); }
 };
 
-#if defined(XP_WIN)
-// Can't include <windows.h> to get the actual definition of HANDLE
-// because of namespace pollution.
-typedef void* FileHandleType;
-#elif defined(XP_UNIX)
 typedef int FileHandleType;
-#else
-#  error "Unsupported OS?"
-#endif
 
 struct FileHandleHelper {
   MOZ_IMPLICIT FileHandleHelper(FileHandleType aHandle) : mHandle(aHandle) {
@@ -120,16 +107,6 @@ struct FileHandleHelper {
       : FileHandleHelper() {}
 
   static bool IsValid(FileHandleType aHandle) {
-#ifdef XP_WIN
-    // Windows uses both nullptr and INVALID_HANDLE_VALUE (-1 cast to
-    // HANDLE) in different situations, but nullptr is more reliably
-    // null while -1 is also valid input to some calls that take
-    // handles.  So class considers both to be null (since neither
-    // should be closed) but default-constructs as nullptr.
-    if (aHandle == (void*)-1) {
-      return false;
-    }
-#endif
     return aHandle != kInvalidHandle;
   }
 
@@ -137,14 +114,6 @@ struct FileHandleHelper {
 
   operator FileHandleType() const { return mHandle; }
 
-#ifdef XP_WIN
-  // NSPR uses an integer type for PROsfd, so this conversion is
-  // provided for working with it without needing reinterpret casts
-  // everywhere.
-  operator std::intptr_t() const {
-    return reinterpret_cast<std::intptr_t>(mHandle);
-  }
-#endif
 
   // When there's only one user-defined conversion operator, the
   // compiler will use that to derive equality, but that doesn't work
@@ -154,13 +123,7 @@ struct FileHandleHelper {
  private:
   FileHandleType mHandle{kInvalidHandle};
 
-#ifdef XP_WIN
-  // See above for why this is nullptr.  (Also, INVALID_HANDLE_VALUE
-  // can't be expressed as a constexpr.)
-  static constexpr FileHandleType kInvalidHandle = nullptr;
-#else
   static constexpr FileHandleType kInvalidHandle = -1;
-#endif
 };
 
 struct FileHandleDeleter {
@@ -169,7 +132,6 @@ struct FileHandleDeleter {
   MFBT_API void operator()(FileHandleHelper aHelper);
 };
 
-#if defined(XP_DARWIN)
 struct MachPortHelper {
   MOZ_IMPLICIT MachPortHelper(mach_port_t aPort) : mPort(aPort) {}
 
@@ -215,7 +177,6 @@ struct MachPortSetDeleter {
     MOZ_ASSERT(kr == KERN_SUCCESS, "failed to release mach port set");
   }
 };
-#endif
 
 }  // namespace detail
 
@@ -236,13 +197,11 @@ inline UniqueFileHandle DuplicateFileHandle(const UniqueFileHandle& aFile) {
 }
 #endif  // not wasm
 
-#ifdef XP_UNIX
 // For systems that don't have the full set of POSIX atomic cloexec APIs.
 MFBT_API void SetCloseOnExec(detail::FileHandleType aFile);
 inline void SetCloseOnExec(const UniqueFileHandle& aFile) {
   SetCloseOnExec(aFile.get());
 }
-#endif
 
 inline bool FileHandleIsValid(detail::FileHandleType aFile) {
   return detail::FileHandleHelper::IsValid(aFile);
@@ -251,7 +210,6 @@ inline bool FileHandleIsValid(const UniqueFileHandle& aFile) {
   return aFile != nullptr;
 }
 
-#if defined(XP_DARWIN)
 // A RAII class for a Mach port that names a send right.
 using UniqueMachSendRight =
     UniquePtr<mach_port_t, detail::MachSendRightDeleter>;
@@ -271,7 +229,6 @@ inline UniqueMachSendRight RetainMachSendRight(mach_port_t aPort) {
   }
   return nullptr;
 }
-#endif
 
 namespace detail {
 

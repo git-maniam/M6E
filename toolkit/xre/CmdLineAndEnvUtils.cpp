@@ -7,9 +7,6 @@
 #include "nsDependentString.h"
 #include "prenv.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 namespace mozilla {
 
@@ -18,17 +15,6 @@ already_AddRefed<nsIFile> GetFileFromEnv(const char* name) {
   nsresult rv;
   nsCOMPtr<nsIFile> file;
 
-#ifdef XP_WIN
-  WCHAR path[_MAX_PATH];
-  if (!GetEnvironmentVariableW(NS_ConvertASCIItoUTF16(name).get(), path,
-                               _MAX_PATH))
-    return nullptr;
-
-  rv = NS_NewLocalFile(nsDependentString(path), getter_AddRefs(file));
-  if (NS_FAILED(rv)) return nullptr;
-
-  return file.forget();
-#else
   const char* arg = PR_GetEnv(name);
   if (!arg || !*arg) {
     return nullptr;
@@ -40,7 +26,6 @@ already_AddRefed<nsIFile> GetFileFromEnv(const char* name) {
   }
 
   return file.forget();
-#endif
 }
 
 }  // namespace mozilla

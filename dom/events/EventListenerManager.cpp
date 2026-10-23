@@ -406,9 +406,6 @@ void EventListenerManager::AddEventListenerInternal(
       case eUserProximity:
       case eDeviceLight:
       case eDeviceMotion:
-#if defined(MOZ_WIDGET_ANDROID)
-      case eOrientationChange:
-#endif  // #if defined(MOZ_WIDGET_ANDROID)
         EnableDevice(aTypeAtom);
         break;
       case eTouchStart:
@@ -528,12 +525,6 @@ void EventListenerManager::AddEventListenerInternal(
                      nsPrintfCString("resolvedEventMessage=%s",
                                      ToChar(resolvedEventMessage))
                          .get());
-#if defined(MOZ_WIDGET_ANDROID)
-        NS_ASSERTION(aTypeAtom != nsGkAtoms::onorientationchange,
-                     nsPrintfCString("resolvedEventMessage=%s",
-                                     ToChar(resolvedEventMessage))
-                         .get());
-#endif  // #if defined(MOZ_WIDGET_ANDROID)
         NS_ASSERTION(aTypeAtom != nsGkAtoms::ontouchstart,
                      nsPrintfCString("resolvedEventMessage=%s",
                                      ToChar(resolvedEventMessage))
@@ -696,9 +687,6 @@ bool EventListenerManager::IsDeviceType(nsAtom* aTypeAtom) {
          aTypeAtom == nsGkAtoms::ondeviceorientationabsolute ||
          aTypeAtom == nsGkAtoms::ondevicemotion ||
          aTypeAtom == nsGkAtoms::ondevicelight
-#if defined(MOZ_WIDGET_ANDROID)
-         || aTypeAtom == nsGkAtoms::onorientationchange
-#endif
          || aTypeAtom == nsGkAtoms::onuserproximity;
 }
 
@@ -709,21 +697,12 @@ void EventListenerManager::EnableDevice(nsAtom* aTypeAtom) {
   }
 
   if (aTypeAtom == nsGkAtoms::ondeviceorientation) {
-#ifdef MOZ_WIDGET_ANDROID
-    window->EnableDeviceSensor(SENSOR_GAME_ROTATION_VECTOR);
-#else
     window->EnableDeviceSensor(SENSOR_ORIENTATION);
-#endif
     return;
   }
 
   if (aTypeAtom == nsGkAtoms::ondeviceorientationabsolute) {
-#ifdef MOZ_WIDGET_ANDROID
-    // Falls back to SENSOR_ORIENTATION if unavailable on device.
-    window->EnableDeviceSensor(SENSOR_ROTATION_VECTOR);
-#else
     window->EnableDeviceSensor(SENSOR_ORIENTATION);
-#endif
     return;
   }
 
@@ -744,12 +723,6 @@ void EventListenerManager::EnableDevice(nsAtom* aTypeAtom) {
     return;
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (aTypeAtom == nsGkAtoms::onorientationchange) {
-    window->EnableOrientationChangeListener();
-    return;
-  }
-#endif
 
   NS_WARNING("Enabling an unknown device sensor.");
 }
@@ -761,18 +734,11 @@ void EventListenerManager::DisableDevice(nsAtom* aTypeAtom) {
   }
 
   if (aTypeAtom == nsGkAtoms::ondeviceorientation) {
-#ifdef MOZ_WIDGET_ANDROID
-    // Disable all potential fallback sensors.
-    window->DisableDeviceSensor(SENSOR_GAME_ROTATION_VECTOR);
-#endif
     window->DisableDeviceSensor(SENSOR_ORIENTATION);
     return;
   }
 
   if (aTypeAtom == nsGkAtoms::ondeviceorientationabsolute) {
-#ifdef MOZ_WIDGET_ANDROID
-    window->DisableDeviceSensor(SENSOR_ROTATION_VECTOR);
-#endif
     window->DisableDeviceSensor(SENSOR_ORIENTATION);
     return;
   }
@@ -794,12 +760,6 @@ void EventListenerManager::DisableDevice(nsAtom* aTypeAtom) {
     return;
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (aTypeAtom == nsGkAtoms::onorientationchange) {
-    window->DisableOrientationChangeListener();
-    return;
-  }
-#endif
 
   NS_WARNING("Disabling an unknown device sensor.");
 }

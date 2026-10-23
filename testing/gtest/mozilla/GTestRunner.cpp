@@ -12,12 +12,6 @@
 #include "testing/TestHarness.h"
 #include "prenv.h"
 #include "prtime.h"
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
-#ifdef XP_WIN
-#  include "mozilla/ipc/WindowsMessageLoop.h"
-#endif
 
 using ::testing::EmptyTestEventListener;
 using ::testing::InitGoogleTest;
@@ -29,12 +23,7 @@ using ::testing::UnitTest;
 
 namespace mozilla {
 
-#ifdef ANDROID
-#  define MOZ_STDOUT_PRINT(...) \
-    __android_log_print(ANDROID_LOG_INFO, "gtest", __VA_ARGS__);
-#else
 #  define MOZ_STDOUT_PRINT(...) printf(__VA_ARGS__);
-#endif
 
 #define MOZ_PRINT(...)              \
   MOZ_STDOUT_PRINT(__VA_ARGS__);    \
@@ -202,20 +191,6 @@ int RunGTestFunc(int* argc, char** argv) {
 
   ScopedXPCOM xpcom("GTest");
 
-#ifdef XP_WIN
-  mozilla::ipc::windows::InitUIThread();
-#endif
-#ifdef ANDROID
-  // On Android, gtest is running in an application, which uses a
-  // current working directory of '/' by default. Desktop tests
-  // sometimes assume that support files are in the current
-  // working directory. For compatibility with desktop, the Android
-  // harness pushes test support files to the device at the location
-  // specified by MOZ_GTEST_CWD and gtest changes the cwd to that
-  // location.
-  char* path = PR_GetEnv("MOZ_GTEST_CWD");
-  chdir(path);
-#endif
   nsCOMPtr<nsICrashReporter> crashreporter;
   char* crashreporterStr = PR_GetEnv("MOZ_CRASHREPORTER");
   if (crashreporterStr && !strcmp(crashreporterStr, "1")) {

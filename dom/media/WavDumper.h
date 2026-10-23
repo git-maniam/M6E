@@ -39,14 +39,8 @@ class WavDumper {
 
     bool isDir = false;
     if (dumpAudio[0] != '\0') {
-#  ifdef XP_WIN
-      nsAutoString widePath = NS_ConvertUTF8toUTF16(dumpAudio);
-      struct _stat64 st = {};
-      isDir = (_wstat64(widePath.get(), &st) == 0) && (st.st_mode & _S_IFDIR);
-#  else
       struct stat st = {};
       isDir = (stat(dumpAudio, &st) == 0) && S_ISDIR(st.st_mode);
-#  endif
     }
 
     static mozilla::Atomic<int> sDumpedAudioCount(0);
@@ -62,12 +56,7 @@ class WavDumper {
   }
 
   void OpenExplicit(const char* aPath, uint32_t aChannels, uint32_t aRate) {
-#  ifdef XP_WIN
-    nsAutoString widePath = NS_ConvertUTF8toUTF16(aPath);
-    mFile = _wfopen(widePath.get(), L"wb");
-#  else
     mFile = fopen(aPath, "wb");
-#  endif
     if (!mFile) {
       NS_WARNING("Could not open file to DUMP a wav. Is sandboxing disabled?");
       return;

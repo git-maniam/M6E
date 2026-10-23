@@ -47,14 +47,8 @@
 #include "nsURLHelper.h"
 #include "prio.h"
 
-#if defined(XP_WIN)
-#  include "WinUtils.h"
-#  include "nsILocalFileWin.h"
-#endif
 
-#if defined(XP_MACOSX)
 #  include "nsMacUtilsImpl.h"
-#endif
 
 #define EXTENSION_SCHEME "moz-extension"
 using mozilla::dom::Promise;
@@ -181,18 +175,8 @@ class ExtensionJARFileOpener final : public nsISupports {
     MOZ_ASSERT(!NS_IsMainThread());
     AutoFDClose prFileDesc;
 
-#if defined(XP_WIN)
-    nsresult rv;
-    nsCOMPtr<nsILocalFileWin> winFile = do_QueryInterface(mFile, &rv);
-    MOZ_ASSERT(winFile);
-    if (NS_SUCCEEDED(rv)) {
-      rv = winFile->OpenNSPRFileDescShareDelete(PR_RDONLY, 0,
-                                                getter_Transfers(prFileDesc));
-    }
-#else
     nsresult rv =
         mFile->OpenNSPRFileDesc(PR_RDONLY, 0, getter_Transfers(prFileDesc));
-#endif /* XP_WIN */
 
     if (NS_SUCCEEDED(rv)) {
       mFD = FileDescriptor(FileDescriptor::PlatformHandleType(
@@ -606,11 +590,6 @@ Result<bool, nsresult> ExtensionProtocolHandler::AllowExternalResource(
     nsIFile* aExtensionDir, nsIFile* aRequestedFile) {
   MOZ_ASSERT(!IsNeckoChild());
 
-#if defined(XP_WIN)
-  // On Windows, non-package builds don't use symlinks so we never need to
-  // allow a resource from outside of the extension dir.
-  return false;
-#else
   if (mozilla::IsPackagedBuild()) {
     return false;
   }
@@ -625,18 +604,12 @@ Result<bool, nsresult> ExtensionProtocolHandler::AllowExternalResource(
     return false;
   }
 
-#  if defined(XP_MACOSX)
   // Additionally, on Mac dev builds, we make sure that the requested
   // resource is within the repo dir. We don't perform this check on Linux
   // because we don't have a reliable path to the repo dir on Linux.
   return DevRepoContains(aRequestedFile);
-#  else /* XP_MACOSX */
-  return true;
-#  endif
-#endif /* defined(XP_WIN) */
 }
 
-#if defined(XP_MACOSX)
 // The |aRequestedFile| argument must already be Normalize()'d
 Result<bool, nsresult> ExtensionProtocolHandler::DevRepoContains(
     nsIFile* aRequestedFile) {
@@ -672,9 +645,7 @@ Result<bool, nsresult> ExtensionProtocolHandler::DevRepoContains(
   }
   return result;
 }
-#endif /* XP_MACOSX */
 
-#if !defined(XP_WIN)
 Result<bool, nsresult> ExtensionProtocolHandler::AppDirContains(
     nsIFile* aExtensionDir) {
   MOZ_ASSERT(!mozilla::IsPackagedBuild());
@@ -701,7 +672,6 @@ Result<bool, nsresult> ExtensionProtocolHandler::AppDirContains(
   }
   return result;
 }
-#endif /* !defined(XP_WIN) */
 
 static void LogExternalResourceError(nsIFile* aExtensionDir,
                                      nsIFile* aRequestedFile) {
@@ -806,12 +776,6 @@ Result<nsCOMPtr<nsIInputStream>, nsresult> ExtensionProtocolHandler::NewStream(
   // it for reliable subpath checks.
   MOZ_TRY(extensionDir->Normalize());
   MOZ_TRY(requestedFile->Normalize());
-#if defined(XP_WIN)
-  if (!widget::WinUtils::ResolveJunctionPointsAndSymLinks(extensionDir) ||
-      !widget::WinUtils::ResolveJunctionPointsAndSymLinks(requestedFile)) {
-    return Err(NS_ERROR_FILE_ACCESS_DENIED);
-  }
-#endif
 
   bool isResourceFromExtensionDir = false;
   MOZ_TRY(extensionDir->Contains(requestedFile, &isResourceFromExtensionDir));

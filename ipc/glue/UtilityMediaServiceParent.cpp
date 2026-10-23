@@ -12,14 +12,6 @@
 
 #include "mozilla/gfx/gfxVars.h"
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-#  include "WMF.h"
-#  include "WMFDecoderModule.h"
-#  include "WMFUtils.h"
-
-#  include "mozilla/sandboxTarget.h"
-#  include "mozilla/ipc/UtilityProcessImpl.h"
-#endif  // defined(XP_WIN) && defined(MOZ_SANDBOX)
 
 #include "mozilla/ipc/UtilityProcessChild.h"
 #include "mozilla/RemoteDecodeUtils.h"
@@ -81,31 +73,10 @@ UtilityMediaServiceParent::~UtilityMediaServiceParent() {
 
 /* static */
 void UtilityMediaServiceParent::GenericPreloadForSandbox() {
-#if defined(MOZ_SANDBOX) && defined(XP_WIN)
-  // Preload AV dlls so we can enable Binary Signature Policy
-  // to restrict further dll loads.
-  UtilityProcessImpl::LoadLibraryOrCrash(L"mozavcodec.dll");
-  UtilityProcessImpl::LoadLibraryOrCrash(L"mozavutil.dll");
-#endif  // defined(MOZ_SANDBOX) && defined(XP_WIN)
 }
 
 /* static */
 void UtilityMediaServiceParent::WMFPreloadForSandbox() {
-#if defined(MOZ_SANDBOX) && defined(XP_WIN)
-  // mfplat.dll and mf.dll will be preloaded by
-  // wmf::MediaFoundationInitializer::HasInitialized()
-
-#  if defined(NS_FREE_PERMANENT_DATA)
-  // WMF Shutdown requires this or it will badly crash
-  UtilityProcessImpl::LoadLibraryOrCrash(L"user32.dll");
-#  endif  // defined(NS_FREE_PERMANENT_DATA)
-
-  auto rv = wmf::MediaFoundationInitializer::HasInitialized();
-  if (!rv) {
-    NS_WARNING("Failed to init Media Foundation in the Utility process");
-    return;
-  }
-#endif  // defined(MOZ_SANDBOX) && defined(XP_WIN)
 }
 
 void UtilityMediaServiceParent::Start(

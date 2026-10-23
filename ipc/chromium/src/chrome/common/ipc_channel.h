@@ -17,8 +17,6 @@
 
 #include "nsISerialEventTarget.h"
 
-#ifdef XP_WIN
-#endif
 
 namespace IPC {
 
@@ -37,10 +35,8 @@ class Channel {
   // endpoints may be passed around directly using IPC messages.
   using ChannelHandle =
       std::variant<std::monostate, mozilla::UniqueFileHandle
-#if defined(XP_DARWIN)
                    ,
                    mozilla::UniqueMachSendRight, mozilla::UniqueMachReceiveRight
-#endif
                    >;
 
   // Implemented by consumers of a Channel to receive messages.
@@ -148,10 +144,8 @@ class Channel {
   virtual void SetOtherPid(base::ProcessId other_pid)
       MOZ_EXCLUDES(SendMutex()) = 0;
 
-#if defined(XP_DARWIN)
   // Configure the mach task_t for the peer task.
   virtual void SetOtherMachTask(task_t task) MOZ_EXCLUDES(SendMutex()) = 0;
-#endif
 
   // Get the static ChannelKind vtable for this Channel's implementation.
   virtual const ChannelKind* GetKind() const = 0;
@@ -181,7 +175,6 @@ class Channel {
       chan_cap_;
 
   enum {
-#if defined(XP_DARWIN)
     // If the channel receives a message that contains file descriptors, then
     // it will reply back with this message, indicating that the message has
     // been received. The sending channel can then close any descriptors that
@@ -189,7 +182,6 @@ class Channel {
     // where the kernel can eagerly close file descriptors that are in message
     // queues but not yet delivered.
     RECEIVED_FDS_MESSAGE_TYPE = kuint16max - 1,
-#endif
 
     // The Hello message is internal to the Channel class.  It is sent
     // by the peer when the channel is connected.  The message contains

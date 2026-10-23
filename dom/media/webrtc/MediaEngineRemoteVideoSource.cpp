@@ -52,30 +52,6 @@ camera::CaptureEngine MediaEngineRemoteVideoSource::CaptureEngine(
 
 static Maybe<VideoFacingModeEnum> GetFacingMode(const nsString& aDeviceName) {
   // Set facing mode based on device name.
-#if defined(ANDROID)
-  // Names are generated. Example: "Camera 0, Facing back, Orientation 90"
-  //
-  // See media/webrtc/trunk/webrtc/modules/video_capture/android/java/src/org/
-  // webrtc/videoengine/VideoCaptureDeviceInfoAndroid.java
-
-  if (aDeviceName.Find(u"Facing back"_ns) != kNotFound) {
-    return Some(VideoFacingModeEnum::Environment);
-  }
-  if (aDeviceName.Find(u"Facing front"_ns) != kNotFound) {
-    return Some(VideoFacingModeEnum::User);
-  }
-#endif  // ANDROID
-#ifdef XP_WIN
-  // The cameras' name of Surface book are "Microsoft Camera Front" and
-  // "Microsoft Camera Rear" respectively.
-
-  if (aDeviceName.Find(u"Front"_ns) != kNotFound) {
-    return Some(VideoFacingModeEnum::User);
-  }
-  if (aDeviceName.Find(u"Rear"_ns) != kNotFound) {
-    return Some(VideoFacingModeEnum::Environment);
-  }
-#endif  // WINDOWS
 
   return Nothing();
 }

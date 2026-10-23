@@ -46,20 +46,6 @@ class UnscaledFontFreeType : public UnscaledFont {
 
   RefPtr<SharedFTFace> InitFace();
 
-#ifdef MOZ_WIDGET_ANDROID
-  static already_AddRefed<UnscaledFont> CreateFromFontDescriptor(
-      const uint8_t* aData, uint32_t aDataLength, uint32_t aIndex);
-
-  already_AddRefed<ScaledFont> CreateScaledFont(
-      Float aGlyphSize, const uint8_t* aInstanceData,
-      uint32_t aInstanceDataLength, const wr::FontVariation* aVariations,
-      uint32_t aNumVariations) override;
-
-  already_AddRefed<ScaledFont> CreateScaledFontFromWRFont(
-      Float aGlyphSize, const wr::FontInstanceOptions* aOptions,
-      const wr::FontInstancePlatformOptions* aPlatformOptions,
-      const wr::FontVariation* aVariations, uint32_t aNumVariations) override;
-#endif
 
  protected:
   RefPtr<SharedFTFace> mFace;
@@ -76,38 +62,6 @@ class UnscaledFontFreeType : public UnscaledFont {
                                     uint32_t aNumVariations, FT_Face aFace);
 };
 
-#ifdef MOZ_WIDGET_GTK
-class UnscaledFontFontconfig : public UnscaledFontFreeType {
- public:
-  MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(UnscaledFontFontconfig, override)
-  explicit UnscaledFontFontconfig(const RefPtr<SharedFTFace>& aFace)
-      : UnscaledFontFreeType(aFace) {}
-  explicit UnscaledFontFontconfig(const char* aFile, uint32_t aIndex = 0,
-                                  RefPtr<SharedFTFace> aFace = nullptr)
-      : UnscaledFontFreeType(aFile, aIndex, std::move(aFace)) {}
-  explicit UnscaledFontFontconfig(std::string&& aFile, uint32_t aIndex = 0,
-                                  RefPtr<SharedFTFace> aFace = nullptr)
-      : UnscaledFontFreeType(std::move(aFile), aIndex, std::move(aFace)) {}
-
-  FontType GetType() const override { return FontType::FONTCONFIG; }
-
-  static already_AddRefed<UnscaledFont> CreateFromFontDescriptor(
-      const uint8_t* aData, uint32_t aDataLength, uint32_t aIndex);
-
-  already_AddRefed<ScaledFont> CreateScaledFont(
-      Float aGlyphSize, const uint8_t* aInstanceData,
-      uint32_t aInstanceDataLength, const wr::FontVariation* aVariations,
-      uint32_t aNumVariations) override;
-
-  already_AddRefed<ScaledFont> CreateScaledFontFromWRFont(
-      Float aGlyphSize, const wr::FontInstanceOptions* aOptions,
-      const wr::FontInstancePlatformOptions* aPlatformOptions,
-      const wr::FontVariation* aVariations, uint32_t aNumVariations) override;
-};
-
-extern bool FcPatternAllowsBitmaps(FcPattern* aPattern, bool aAntialias,
-                                   bool aHinting);
-#endif
 
 }  // namespace gfx
 }  // namespace mozilla

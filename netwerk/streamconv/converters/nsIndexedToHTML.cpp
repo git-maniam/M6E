@@ -194,17 +194,7 @@ nsresult nsIndexedToHTML::DoOnStartRequest(nsIRequest* request,
         parentStr.Assign(url);
       }
     } else {
-#ifndef XP_WIN
       return rv;
-#else
-      // On Windows, file:/// has no backing nsIFile (virtual drives root).
-      // baseUri was already set from uri->GetAsciiSpec() above; keep it.
-      // parentStr stays empty so no "Go up" link is rendered.
-      nsAutoCString path;
-      if (NS_FAILED(uri->GetFilePath(path)) || !path.EqualsLiteral("/")) {
-        return rv;
-      }
-#endif
     }
 
     // Directory index will be always encoded in UTF-8 if this is file url

@@ -41,14 +41,7 @@
 #  define ELFDATA ELFDATA2MSB
 #endif
 
-#ifdef __linux__
-#  define ELFOSABI ELFOSABI_LINUX
-#  ifdef EI_ABIVERSION
-#    define ELFABIVERSION 0
-#  endif
-#else
 #  error Unknown ELF OSABI
-#endif
 
 #if defined(__i386__)
 #  define ELFMACHINE EM_386

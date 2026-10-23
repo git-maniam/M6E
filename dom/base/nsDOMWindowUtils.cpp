@@ -76,14 +76,6 @@
 #include "nsRefreshDriver.h"
 #include "nsStyleUtil.h"
 
-#if defined(MOZ_WIDGET_GTK)
-#  include <gdk/gdk.h>
-#  if defined(MOZ_X11)
-#    include <gdk/gdkx.h>
-
-#    include "X11UndefineNone.h"
-#  endif
-#endif
 
 #include "mozilla/dom/AudioDeviceInfo.h"
 #include "mozilla/dom/BrowserChild.h"
@@ -136,15 +128,8 @@
 #include "nsNetUtil.h"
 #include "nsROCSSPrimitiveValue.h"
 
-#ifdef XP_WIN
-#  include <direct.h>
-#else
 #  include <sys/stat.h>
-#endif
 
-#ifdef XP_WIN
-#  undef GetClassName
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -4417,11 +4402,7 @@ static bool WriteRecordingToDisk(const FrameRecording& aRecording,
   recordingDirectory << gfxVars::LayersWindowRecordingPath()
                      << "windowrecording-" << int64_t(aUnixStartMS);
 
-#ifdef XP_WIN
-  _mkdir(recordingDirectory.str().c_str());
-#else
   mkdir(recordingDirectory.str().c_str(), 0777);
-#endif
 
   auto byteSpan = aRecording.bytes().AsSpan();
 

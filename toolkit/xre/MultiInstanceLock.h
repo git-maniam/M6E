@@ -5,9 +5,6 @@
 #ifndef MULTIINSTANCELOCK_H
 #define MULTIINSTANCELOCK_H
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 #include "nsIFile.h"
 
 // These functions manage "multi-instance locks", which are a type of lock
@@ -46,13 +43,8 @@
 
 namespace mozilla {
 
-#ifdef XP_WIN
-using MultiInstLockHandle = HANDLE;
-#  define MULTI_INSTANCE_LOCK_HANDLE_ERROR INVALID_HANDLE_VALUE
-#else
 using MultiInstLockHandle = int;
 #  define MULTI_INSTANCE_LOCK_HANDLE_ERROR -1
-#endif
 
 /*
  * nameToken should be a string very briefly naming the lock you are creating

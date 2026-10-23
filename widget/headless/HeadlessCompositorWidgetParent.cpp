@@ -39,29 +39,5 @@ HeadlessCompositorWidgetParent::RecvNotifyClientSizeChanged(
   return IPC_OK();
 }
 
-#ifdef XP_WIN
-mozilla::ipc::IPCResult HeadlessCompositorWidgetParent::RecvInitialize(
-    const RemoteBackbufferHandles&) {
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult HeadlessCompositorWidgetParent::RecvEnterPresentLock() {
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult HeadlessCompositorWidgetParent::RecvLeavePresentLock() {
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-HeadlessCompositorWidgetParent::RecvNotifyVisibilityUpdated(const bool&) {
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult HeadlessCompositorWidgetParent::RecvUpdateTransparency(
-    const TransparencyMode&) {
-  return IPC_OK();
-}
-#endif
 
 }  // namespace mozilla::widget

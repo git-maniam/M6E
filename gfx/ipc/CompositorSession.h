@@ -8,9 +8,6 @@
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "nsISupportsImpl.h"
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/layers/UiCompositorControllerChild.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 class nsIWidget;
 
@@ -67,18 +64,6 @@ class CompositorSession {
   // Return the id of the root layer tree.
   LayersId RootLayerTreeId() const { return mRootLayerTreeId; }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // Set the UiCompositorControllerChild after Session creation so the Session
-  // constructor doesn't get mucked up for other platforms.
-  void SetUiCompositorControllerChild(
-      RefPtr<UiCompositorControllerChild>&& aUiController) {
-    mUiCompositorControllerChild = std::move(aUiController);
-  }
-
-  RefPtr<UiCompositorControllerChild> GetUiCompositorControllerChild() {
-    return mUiCompositorControllerChild;
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
  protected:
   CompositorSession(nsIWidget* aWidget, CompositorWidgetDelegate* aDelegate,
                     CompositorBridgeChild* aChild,
@@ -90,9 +75,6 @@ class CompositorSession {
   CompositorWidgetDelegate* mCompositorWidgetDelegate;
   RefPtr<CompositorBridgeChild> mCompositorBridgeChild;
   LayersId mRootLayerTreeId;
-#if defined(MOZ_WIDGET_ANDROID)
-  RefPtr<UiCompositorControllerChild> mUiCompositorControllerChild;
-#endif  // defined(MOZ_WIDGET_ANDROID)
  private:
   DISALLOW_COPY_AND_ASSIGN(CompositorSession);
 };

@@ -209,9 +209,6 @@
 #include "prenv.h"
 #include "prinrval.h"
 
-#ifdef XP_WIN
-#  include "winuser.h"
-#endif
 
 #ifdef MOZ_REFLOW_PERF
 #  include "nsFontMetrics.h"
@@ -1022,19 +1019,6 @@ bool PresShell::InRDMPane() {
   return false;
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void PresShell::MaybeNotifyShowDynamicToolbar() {
-  const DynamicToolbarState dynToolbarState = GetDynamicToolbarState();
-  if ((dynToolbarState == DynamicToolbarState::Collapsed ||
-       dynToolbarState == DynamicToolbarState::InTransition)) {
-    MOZ_ASSERT(mPresContext &&
-               mPresContext->IsRootContentDocumentCrossProcess());
-    if (BrowserChild* browserChild = BrowserChild::GetFrom(this)) {
-      browserChild->SendShowDynamicToolbar();
-    }
-  }
-}
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 void PresShell::Destroy() {
   // Do not add code before this line please!
@@ -1491,13 +1475,11 @@ void PresShell::FrameSelectionWillTakeFocus(
     }
   }
   if (mFocusedFrameSelection == &aFrameSelection) {
-#ifdef XP_MACOSX
     // FIXME: Mac needs to update the global selection cache, even if the
     // document's focused selection doesn't change, and this is currently done
     // from RepaintSelection. Maybe we should move part of the global selection
     // handling here, or something of that sort, unclear.
     RepaintNormalSelectionWhenSafe(aFrameSelection);
-#endif
     return;
   }
 
@@ -6713,13 +6695,11 @@ void PresShell::PaintInternal(nsIFrame* aFrame, WindowRenderer* aRenderer,
   // On Android, Flash can call into content JS during painting, so we can't
   // assert there. However, we don't rely on this assertion on Android because
   // we don't paint while JS is running.
-#if !defined(MOZ_WIDGET_ANDROID)
   if (!(aFlags & PaintInternalFlags::PaintComposite)) {
     // We need to allow content JS when the flag is set since we may trigger
     // MozAfterPaint events in content in those cases.
     nojs.emplace(dom::danger::GetJSContext());
   }
-#endif
 
   NS_ASSERTION(!mIsDestroying, "painting a destroyed PresShell");
   NS_ASSERTION(aRenderer, "null renderer");
@@ -8074,11 +8054,7 @@ bool PresShell::EventHandler::MaybeFlushPendingNotifications(
 // because we don't need to be able to target scrollbars on mobile
 // (scrollbar dragging isn't supported).
 static ViewportType ViewportTypeForInputEventsRelativeToRoot() {
-#ifdef MOZ_WIDGET_ANDROID
-  return ViewportType::Layout;
-#else
   return ViewportType::Visual;
-#endif
 }
 
 nsIFrame* PresShell::EventHandler::GetFrameToHandleNonTouchEvent(
@@ -8576,15 +8552,6 @@ bool PresShell::EventHandler::GetRetargetEventDocument(
     return true;
   }
 
-#ifdef ANDROID
-  if (aGUIEvent->mClass == eTouchEventClass ||
-      aGUIEvent->IsMouseEventClassOrHasClickRelatedPointerEvent() ||
-      aGUIEvent->mClass == eWheelEventClass) {
-    RefPtr<Document> retargetEventDoc = mPresShell->GetPrimaryContentDocument();
-    retargetEventDoc.forget(aRetargetEventDocument);
-    return true;
-  }
-#endif  // #ifdef ANDROID
 
   // When we don't find another document to handle the event, we need to keep
   // handling the event by ourselves.
@@ -12081,13 +12048,6 @@ void PresShell::SetIsActive(bool aIsActive) {
   UpdateImageLockingState();
 
   if (activityChanged) {
-#if defined(MOZ_WIDGET_ANDROID)
-    if (!aIsActive && presContext &&
-        presContext->IsRootContentDocumentCrossProcess()) {
-      // Reset the dynamic toolbar offset state.
-      presContext->UpdateDynamicToolbarOffset(0);
-    }
-#endif
   }
 
   if (aIsActive) {

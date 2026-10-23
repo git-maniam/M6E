@@ -31,12 +31,6 @@
 
 #include "base/basictypes.h"
 
-#if defined(XP_WIN)
-
-typedef wchar_t char16;
-typedef std::wstring string16;
-
-#else
 
 typedef uint16_t char16;
 
@@ -154,6 +148,5 @@ typedef std::basic_string<char16, base::string16_char_traits> string16;
 
 extern std::ostream& operator<<(std::ostream& out, const string16& str);
 
-#endif
 
 #endif  // BASE_STRING16_H_

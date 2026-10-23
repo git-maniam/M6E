@@ -8,15 +8,11 @@
 #include <fcntl.h>
 #include <limits.h>
 #include "mozilla/Mutex.h"
-#if defined(XP_DARWIN)
 #  include <mach/message.h>
 #  include <mach/port.h>
 #  include "mozilla/UniquePtrExtensions.h"
 #  include "chrome/common/mach_ipc_mac.h"
-#endif
-#if defined(XP_DARWIN) || defined(XP_NETBSD)
 #  include <sched.h>
-#endif
 #include <stddef.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -44,8 +40,6 @@
 // Use OS specific iovec array limit where it's possible.
 #if defined(IOV_MAX)
 static const size_t kMaxIOVecSize = IOV_MAX;
-#elif defined(ANDROID)
-static const size_t kMaxIOVecSize = 256;
 #else
 static const size_t kMaxIOVecSize = 16;
 #endif
@@ -157,10 +151,8 @@ void ChannelPosix::Init(Mode mode) {
   input_cmsg_buf_ = mozilla::MakeUnique<char[]>(kControlBufferSize);
   SetPipe(-1);
   waiting_connect_ = true;
-#if defined(XP_DARWIN)
   last_pending_fd_id_ = 0;
   other_task_ = nullptr;
-#endif
 }
 
 bool ChannelPosix::EnqueueHelloMessage() {
@@ -193,14 +185,12 @@ bool ChannelPosix::ContinueConnect() {
   chan_cap_.NoteExclusiveAccess();
   MOZ_ASSERT(pipe_ != -1);
 
-#if defined(XP_DARWIN)
   // If we're still waiting for our peer task to be provided, don't start
   // listening yet. We'll start receiving messages once the task_t is set.
   if (mode_ == MODE_BROKER_SERVER && !other_task_) {
     MOZ_ASSERT(waiting_connect_);
     return true;
   }
-#endif
 
   MessageLoopForIO::current()->WatchFileDescriptor(
       pipe_, true, MessageLoopForIO::WATCH_READ, &read_watcher_, this);
@@ -418,7 +408,6 @@ bool ChannelPosix::ProcessIncomingMessages() {
           return false;
         }
 
-#if defined(XP_DARWIN)
         // Send a message to the other side, indicating that we are now
         // responsible for closing the descriptor.
         auto fdAck = mozilla::MakeUnique<Message>(MSG_ROUTING_NONE,
@@ -429,7 +418,6 @@ bool ChannelPosix::ProcessIncomingMessages() {
           mozilla::MutexAutoLock lock(SendMutex());
           OutputQueuePush(std::move(fdAck));
         }
-#endif
 
         nsTArray<mozilla::UniqueFileHandle> msg_handles(msg_num_handles);
         for (size_t i = 0; i < msg_num_handles; ++i, ++fds_i) {
@@ -455,19 +443,15 @@ bool ChannelPosix::ProcessIncomingMessages() {
         int32_t other_pid = MessageIterator(m).NextInt();
         SetOtherPid(other_pid);
         listener_->OnChannelConnected(other_pid);
-#if defined(XP_DARWIN)
       } else if (m.routing_id() == MSG_ROUTING_NONE &&
                  m.type() == RECEIVED_FDS_MESSAGE_TYPE) {
         DCHECK(m.fd_cookie() != 0);
         CloseDescriptors(m.fd_cookie());
-#endif
       } else {
         mozilla::LogIPCMessage::Run run(&m);
-#if defined(XP_DARWIN)
         if (!AcceptMachPorts(m)) {
           return false;
         }
-#endif
         listener_->OnMessageReceived(std::move(incoming_message_));
       }
 
@@ -511,11 +495,9 @@ bool ChannelPosix::ProcessOutgoingMessages() {
     char cmsgBuf[kControlBufferSize];
 
     if (partial_write_.isNothing()) {
-#if defined(XP_DARWIN)
       if (!TransferMachPorts(*msg)) {
         return false;
       }
-#endif
 
       size_t maxHandles = std::min<size_t>(
           msg->size(), IPC::Message::MAX_DESCRIPTORS_PER_MESSAGE);
@@ -527,11 +509,9 @@ bool ChannelPosix::ProcessOutgoingMessages() {
       }
 
       msg->header()->num_handles = msg->attached_handles_.Length();
-#if defined(XP_DARWIN)
       if (!msg->attached_handles_.IsEmpty()) {
         msg->set_fd_cookie(++last_pending_fd_id_);
       }
-#endif
 
       Pickle::BufferList::IterImpl iter(msg->Buffers());
       MOZ_DIAGNOSTIC_ASSERT(!iter.Done(), "empty message");
@@ -614,7 +594,6 @@ bool ChannelPosix::ProcessOutgoingMessages() {
           // Not an error; the sendmsg would have blocked, so return to the
           // event loop and try again later.
           break;
-#if defined(XP_DARWIN) || defined(XP_NETBSD)
           // (Note: this comment is copied from https://crrev.com/86c3d9ef4fdf6;
           // see also bug 1142693 comment #73.)
           //
@@ -640,7 +619,6 @@ bool ChannelPosix::ProcessOutgoingMessages() {
             sched_yield();
           }
           break;
-#endif
         default:
           if (!ErrorIsBrokenPipe(errno)) {
             CHROMIUM_LOG(ERROR) << "pipe error: " << strerror(errno);
@@ -686,16 +664,10 @@ bool ChannelPosix::ProcessOutgoingMessages() {
                  "not all handles were sent");
       partial_write_.reset();
 
-#if defined(XP_DARWIN)
       if (!msg->attached_handles_.IsEmpty()) {
         pending_fds_.push_back(PendingDescriptors{
             msg->fd_cookie(), std::move(msg->attached_handles_)});
       }
-#else
-      if (bytes_written > 0) {
-        msg->attached_handles_.Clear();
-      }
-#endif
 
       // Message sent OK!
 
@@ -763,7 +735,6 @@ void ChannelPosix::OnFileCanReadWithoutBlocking(int fd) {
   }
 }
 
-#if defined(XP_DARWIN)
 void ChannelPosix::CloseDescriptors(uint32_t pending_fd_id) {
   mozilla::MutexAutoLock lock(SendMutex());
   chan_cap_.NoteExclusiveAccess();
@@ -778,7 +749,6 @@ void ChannelPosix::CloseDescriptors(uint32_t pending_fd_id) {
   }
   DCHECK(false) << "pending_fd_id not in our list!";
 }
-#endif
 
 void ChannelPosix::OutputQueuePush(mozilla::UniquePtr<Message> msg) {
   chan_cap_.NoteLockHeld();
@@ -837,14 +807,11 @@ void ChannelPosix::CloseLocked() {
   // Close any outstanding, received file descriptors
   input_overflow_fds_.Clear();
 
-#if defined(XP_DARWIN)
   pending_fds_.clear();
 
   other_task_ = nullptr;
-#endif
 }
 
-#if defined(XP_DARWIN)
 void ChannelPosix::SetOtherMachTask(task_t task) {
   IOThread().AssertOnCurrentThread();
   mozilla::MutexAutoLock lock(SendMutex());
@@ -1112,7 +1079,6 @@ bool ChannelPosix::TransferMachPorts(Message& msg) {
              "Unexpected number of bytes written for send rights footer?");
   return true;
 }
-#endif
 
 // static
 bool ChannelPosix::CreateRawPipe(ChannelHandle* server, ChannelHandle* client) {
@@ -1177,11 +1143,7 @@ bool ChannelPosix::CreateRawPipe(ChannelHandle* server, ChannelHandle* client) {
 
 // static
 uint32_t ChannelPosix::NumRelayedAttachments(const Message& message) {
-#ifdef XP_DARWIN
   return message.num_send_rights();
-#else
-  return 0;
-#endif
 }
 
 // static

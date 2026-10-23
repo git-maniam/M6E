@@ -20,9 +20,6 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/ThreadLocal.h"
-#if defined(XP_WIN)
-#  include "mozilla/WindowsStackWalkInitialization.h"
-#endif  // XP_WIN
 #include "mozilla/dom/RemoteType.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsIObserver.h"
@@ -35,9 +32,6 @@
 
 #include <algorithm>
 
-#if defined(XP_WIN)
-#  include "mozilla/NativeNt.h"
-#endif
 
 // Activate BHR only for one every BHR_BETA_MOD users.
 // We're doing experimentation with collecting a lot more data from BHR, and
@@ -103,12 +97,6 @@ class BackgroundHangManager : public nsIObserver {
 
   void InitMonitorThread() {
     mHangMonitorProfilerThreadId = profiler_current_thread_id();
-#if defined(XP_WIN) && defined(_M_X64)
-    // Pre-commit 5 more pages of stack to guarantee enough commited stack
-    // space on this thread upon hang detection, when we will need to run
-    // profiler_suspend_and_sample_thread (bug 1840164).
-    mozilla::nt::CheckStack(5 * 0x1000);
-#endif
   }
 
   // Used for recording a permahang in case we don't ever make it back to
@@ -591,11 +579,6 @@ void BackgroundHangMonitor::Startup() {
     return;
   }
 
-#  if defined(XP_WIN)
-#    if defined(_M_AMD64) || defined(_M_ARM64)
-  mozilla::WindowsStackWalkInitialization();
-#    endif  // _M_AMD64 || _M_ARM64
-#  endif    // XP_WIN
 
   nsCOMPtr<nsIObserverService> observerService =
       mozilla::services::GetObserverService();

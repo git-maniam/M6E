@@ -1000,18 +1000,6 @@ class CDMStorageTest {
                     "retrieve pbdata"_ns);
   }
 
-#if defined(XP_WIN)
-  void TestOutputProtection() {
-    Shutdown();
-
-    Expect("OP tests completed"_ns,
-           NewRunnableMethod("CDMStorageTest::SetFinished", this,
-                             &CDMStorageTest::SetFinished));
-
-    CreateDecryptor(u"http://example15.com"_ns, u"http://example16.com"_ns,
-                    false, "test-op-apis"_ns);
-  }
-#endif
 
   void TestLongRecordNames() {
     constexpr auto longRecordName =
@@ -1339,10 +1327,3 @@ TEST(GeckoMediaPlugins, CDMStorageLongRecordNames)
   runner->DoTest(&CDMStorageTest::TestLongRecordNames);
 }
 
-#if defined(XP_WIN)
-TEST(GeckoMediaPlugins, GMPOutputProtection)
-{
-  RefPtr<CDMStorageTest> runner = new CDMStorageTest();
-  runner->DoTest(&CDMStorageTest::TestOutputProtection);
-}
-#endif  // defined(XP_WIN)

@@ -6,9 +6,6 @@
 
 #include "GMPUtils.h"
 #include "nsIRunnable.h"
-#ifdef XP_WIN
-#  include "WinUtils.h"
-#endif
 #include <string>
 
 #include "GMPLog.h"
@@ -18,9 +15,6 @@
 #include "mozilla/StaticPrefs_media.h"
 #include "mozilla/ipc/ProcessChild.h"
 #include "mozilla/ipc/ProcessUtils.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoProcessManagerWrappers.h"
-#endif
 #include "nsFmtString.h"
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
@@ -161,22 +155,16 @@ bool GMPProcessParent::Launch(int32_t aTimeoutMs) {
 
 #ifdef ALLOW_GECKO_CHILD_PROCESS_ARCH
   GMP_LOG_DEBUG("GMPProcessParent::Launch() mLaunchArch: {}", mLaunchArch);
-#  if defined(XP_MACOSX)
   mLaunchOptions->arch = mLaunchArch;
   if (mLaunchArch == base::PROCESS_ARCH_X86_64) {
     mLaunchOptions->env_map["MOZ_SHMEM_PAGESIZE_16K"] = 1;
   }
-#  endif
 #endif
 
   // Resolve symlinks in the plugin path. The sandbox prevents
   // resolving symlinks in the child process if access to link
   // source file is denied.
-#ifdef XP_WIN
-  nsAutoString normalizedPath;
-#else
   nsAutoCString normalizedPath;
-#endif
   rv = NormalizePath(mGMPPath.c_str(), normalizedPath);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     GMP_LOG_DEBUG(
@@ -185,56 +173,12 @@ bool GMPProcessParent::Launch(int32_t aTimeoutMs) {
         mGMPPath.c_str());
   }
 
-#ifdef XP_WIN
-  std::wstring wGMPPath;
-  if (NS_SUCCEEDED(rv)) {
-    wGMPPath = normalizedPath.get();
-  } else {
-    wGMPPath = UTF8ToWide(mGMPPath.c_str());
-  }
-
-  // The sandbox doesn't allow file system rules where the paths contain
-  // symbolic links or junction points. Sometimes the Users folder has been
-  // moved to another drive using a junction point, so allow for this specific
-  // case. See bug 1236680 for details.
-  if (NS_WARN_IF(
-          !widget::WinUtils::ResolveJunctionPointsAndSymLinks(wGMPPath))) {
-    GMP_LOG_DEBUG("ResolveJunctionPointsAndSymLinks failed for GMP path={}",
-                  NS_ConvertUTF16toUTF8(wGMPPath.c_str()).get());
-    return false;
-  }
-  GMP_LOG_DEBUG("GMPProcessParent::Launch() resolved path to {}",
-                NS_ConvertUTF16toUTF8(wGMPPath.c_str()).get());
-
-#  ifdef MOZ_SANDBOX
-  // If the GMP path is a network path that is not mapped to a drive letter,
-  // then we need to fix the path format for the sandbox rule.
-  wchar_t volPath[MAX_PATH];
-  if (::GetVolumePathNameW(wGMPPath.c_str(), volPath, MAX_PATH) &&
-      ::GetDriveTypeW(volPath) == DRIVE_REMOTE &&
-      wGMPPath.compare(0, 2, L"\\\\") == 0) {
-    std::wstring sandboxGMPPath(wGMPPath);
-    sandboxGMPPath.insert(1, L"??\\UNC");
-    mAllowedFilesRead.push_back(sandboxGMPPath + L"\\*");
-  } else {
-    mAllowedFilesRead.push_back(wGMPPath + L"\\*");
-  }
-#  endif
-
-  std::string gmpPath = WideToUTF8(wGMPPath);
-  geckoargs::sPluginPath.Put(gmpPath.c_str(), args);
-#else
   if (NS_SUCCEEDED(rv)) {
     geckoargs::sPluginPath.Put(normalizedPath.get(), args);
   } else {
     geckoargs::sPluginPath.Put(mGMPPath.c_str(), args);
   }
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-  java::GeckoProcessManager::SetIsolatedGmpEnabled(
-      StaticPrefs::media_gmp_android_isolated_process());
-#endif
 
   // We need to wait until OnChannelConnected to clear the pref serializer, but
   // SyncLaunch will block until that is called, so we don't actually need to do
@@ -351,9 +295,6 @@ nsresult GMPProcessParent::NormalizePath(const char* aPath,
   rv = fileOrDir->Normalize();
   NS_ENSURE_SUCCESS(rv, rv);
 
-#ifdef XP_WIN
-  return fileOrDir->GetTarget(aNormalizedPath);
-#else
   bool isLink = false;
   rv = fileOrDir->IsSymlink(&isLink);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -361,7 +302,6 @@ nsresult GMPProcessParent::NormalizePath(const char* aPath,
     return fileOrDir->GetNativeTarget(aNormalizedPath);
   }
   return fileOrDir->GetNativePath(aNormalizedPath);
-#endif
 }
 
 }  // namespace mozilla::gmp

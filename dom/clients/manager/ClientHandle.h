@@ -9,9 +9,6 @@
 #include "mozilla/dom/ClientOpPromise.h"
 #include "mozilla/dom/ClientThing.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 namespace mozilla::dom {
 

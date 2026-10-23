@@ -29,15 +29,6 @@
 #include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
 
-#if defined(ANDROID)
-#  include <android/log.h>
-
-#  include "mozilla/StaticPrefs_consoleservice.h"
-#  include "mozilla/dom/ContentChild.h"
-#endif
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 using namespace mozilla;
 
@@ -51,9 +42,6 @@ NS_IMPL_CI_INTERFACE_GETTER(nsConsoleService, nsIConsoleService, nsIObserver)
 
 static const bool gLoggingEnabled = true;
 static const bool gLoggingBuffered = true;
-#ifdef XP_WIN
-static bool gLoggingToDebugger = true;
-#endif  // XP_WIN
 
 static mozilla::LazyLogModule gPageMessagesLog("PageMessages");
 
@@ -67,19 +55,6 @@ nsConsoleService::nsConsoleService()
       mMaximumSize(250),
       mDeliveringMessage(false),
       mLock("nsConsoleService.mLock") {
-#ifdef XP_WIN
-  // This environment variable controls whether the console service
-  // should be prevented from putting output to the attached debugger.
-  // It only affects the Windows platform.
-  //
-  // To disable OutputDebugString, set:
-  //   MOZ_CONSOLESERVICE_DISABLE_DEBUGGER_OUTPUT=1
-  //
-  const char* disableDebugLoggingVar =
-      getenv("MOZ_CONSOLESERVICE_DISABLE_DEBUGGER_OUTPUT");
-  gLoggingToDebugger =
-      !disableDebugLoggingVar || (disableDebugLoggingVar[0] == '0');
-#endif  // XP_WIN
 }
 
 void nsConsoleService::ClearMessagesForWindowID(const uint64_t innerID) {
@@ -312,51 +287,6 @@ nsresult nsConsoleService::LogMessageWithMode(
   {
     MutexAutoLock lock(mLock);
 
-#if defined(ANDROID)
-    if (StaticPrefs::consoleservice_logcat() && aOutputMode == OutputToLog) {
-      nsCString msg;
-      aMessage->ToString(msg);
-
-      /** Attempt to use the process name as the log tag. */
-      mozilla::dom::ContentChild* child =
-          mozilla::dom::ContentChild::GetSingleton();
-      nsCString appName;
-      if (child) {
-        child->GetProcessName(appName);
-      } else {
-        appName = "GeckoConsole";
-      }
-
-      uint32_t logLevel = 0;
-      aMessage->GetLogLevel(&logLevel);
-
-      android_LogPriority logPriority = ANDROID_LOG_INFO;
-      switch (logLevel) {
-        case nsIConsoleMessage::debug:
-          logPriority = ANDROID_LOG_DEBUG;
-          break;
-        case nsIConsoleMessage::info:
-          logPriority = ANDROID_LOG_INFO;
-          break;
-        case nsIConsoleMessage::warn:
-          logPriority = ANDROID_LOG_WARN;
-          break;
-        case nsIConsoleMessage::error:
-          logPriority = ANDROID_LOG_ERROR;
-          break;
-      }
-
-      __android_log_print(logPriority, appName.get(), "%s", msg.get());
-    }
-#endif
-#ifdef XP_WIN
-    if (gLoggingToDebugger && IsDebuggerPresent()) {
-      nsString msg;
-      aMessage->GetMessageMoz(msg);
-      msg.Append('\n');
-      OutputDebugStringW(msg.get());
-    }
-#endif
 
     if (gLoggingBuffered) {
       MessageElement* e = new MessageElement(aMessage);

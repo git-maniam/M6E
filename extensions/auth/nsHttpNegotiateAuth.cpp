@@ -44,10 +44,6 @@
 #include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/StaticPrefs_network.h"
 
-#ifdef XP_WIN
-#  include "nsITransportSecurityInfo.h"
-#  include "nsIX509Cert.h"
-#endif
 
 using mozilla::Base64Decode;
 
@@ -173,39 +169,6 @@ static bool TestNotInPBMode(nsIHttpAuthenticableChannel* authChannel,
   return false;
 }
 
-#ifdef XP_WIN
-// Retrieves the DER encoded server certificate, from which the SSPI module
-// builds the tls-server-end-point channel binding token that servers with
-// Extended Protection enabled require. Must run on the main thread.
-//
-// Not having a security info object is a valid case rather than an error: it
-// happens for plain http, and for an https site reached through a proxy before
-// the tunnel has been created.
-static void GetServerCertDER(nsIHttpAuthenticableChannel* authChannel,
-                             nsTArray<uint8_t>& certDER) {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsCOMPtr<nsIChannel> channel = do_QueryInterface(authChannel);
-  if (!channel) {
-    return;
-  }
-
-  nsCOMPtr<nsITransportSecurityInfo> securityInfo;
-  if (NS_FAILED(channel->GetSecurityInfo(getter_AddRefs(securityInfo))) ||
-      !securityInfo) {
-    return;
-  }
-
-  nsCOMPtr<nsIX509Cert> cert;
-  if (NS_FAILED(securityInfo->GetServerCert(getter_AddRefs(cert))) || !cert) {
-    return;
-  }
-
-  if (NS_FAILED(cert->GetRawDER(certDER))) {
-    certDER.Clear();
-  }
-}
-#endif
 
 already_AddRefed<nsIHttpAuthenticator> nsHttpNegotiateAuth::GetOrCreate() {
   nsCOMPtr<nsIHttpAuthenticator> authenticator;
@@ -311,11 +274,6 @@ nsHttpNegotiateAuth::ChallengeReceived(nsIHttpAuthenticableChannel* authChannel,
   service.InsertLiteral("HTTP@", 0);
 
   const char* authType = "negotiate-gss";
-#ifdef XP_WIN
-  if (mozilla::StaticPrefs::network_auth_use_sspi()) {
-    authType = "negotiate-sspi";
-  }
-#endif
   LOG(("  using %s\n", authType));
 
   MOZ_ALWAYS_TRUE(module = nsIAuthModule::CreateInstance(authType));
@@ -561,18 +519,6 @@ nsHttpNegotiateAuth::GenerateCredentialsAsync(
   NS_ENSURE_ARG_POINTER(aCancelable);
 
   nsTArray<uint8_t> certDER;
-#ifdef XP_WIN
-  // The certificate has to be collected here because GenerateCredentials runs
-  // on a background thread. Only a challenge with no token of its own starts a
-  // sequence, and that is the only call nsAuthSSPI accepts a certificate on.
-  // Proxy auth is excluded because the channel's security info describes the
-  // origin server rather than the proxy.
-  if (!isProxyAuth && challenge.Length() <= kNegotiateLen &&
-      mozilla::StaticPrefs::network_auth_negotiate_channel_binding() &&
-      mozilla::StaticPrefs::network_auth_use_sspi()) {
-    GetServerCertDER(authChannel, certDER);
-  }
-#endif
 
   nsMainThreadPtrHandle<nsIHttpAuthenticableChannel> handle(
       new nsMainThreadPtrHolder<nsIHttpAuthenticableChannel>(

@@ -1000,18 +1000,6 @@ nsresult nsFormFillController::KeyDown(Event* aEvent) {
       break;
     }
     case KeyboardEvent_Binding::DOM_VK_DELETE:
-#ifndef XP_MACOSX
-    {
-      nsCOMPtr<nsIAutoCompleteController> controller = mController;
-      controller->HandleDelete(&cancel);
-      break;
-    }
-    case KeyboardEvent_Binding::DOM_VK_BACK_SPACE: {
-      nsCOMPtr<nsIAutoCompleteController> controller = mController;
-      controller->HandleText(&unused);
-      break;
-    }
-#else
     case KeyboardEvent_Binding::DOM_VK_BACK_SPACE: {
       if (keyEvent->ShiftKey()) {
         nsCOMPtr<nsIAutoCompleteController> controller = mController;
@@ -1022,7 +1010,6 @@ nsresult nsFormFillController::KeyDown(Event* aEvent) {
       }
       break;
     }
-#endif
     case KeyboardEvent_Binding::DOM_VK_PAGE_UP:
     case KeyboardEvent_Binding::DOM_VK_PAGE_DOWN: {
       if (keyEvent->CtrlKey() || keyEvent->AltKey() || keyEvent->MetaKey()) {

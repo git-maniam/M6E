@@ -86,12 +86,6 @@ void InProcessCompositorSession::Shutdown() {
   // at which point CBP will defer a Release on the compositor thread. We
   // can safely release our reference now, and let the destructor run on either
   // thread.
-#if defined(MOZ_WIDGET_ANDROID)
-  if (mUiCompositorControllerChild) {
-    mUiCompositorControllerChild->Destroy();
-    mUiCompositorControllerChild = nullptr;
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
   if (mCompositorBridgeChild) {
     mCompositorBridgeChild->Destroy();
     mCompositorBridgeChild = nullptr;

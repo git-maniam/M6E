@@ -6,15 +6,7 @@
 
 #include "ipc/IPCMessageUtils.h"
 
-#if defined(XP_UNIX)
 #  include <unistd.h>
-#elif defined(XP_WIN)
-#  include <windows.h>
-
-#  include "nsILocalFileWin.h"
-#else
-// XXX add necessary include file for ftruncate (or equivalent)
-#endif
 
 #include "mozilla/FileUtils.h"
 #include "mozilla/UniquePtr.h"
@@ -86,26 +78,15 @@ nsFileStreamBase::SetEOF() {
   nsresult rv = DoPendingOpen();
   NS_ENSURE_SUCCESS(rv, rv);
 
-#if defined(XP_UNIX)
   // Some system calls require an EOF offset.
   int64_t offset;
   rv = Tell(&offset);
   if (NS_FAILED(rv)) return rv;
-#endif
 
-#if defined(XP_UNIX)
   if (ftruncate(PR_FileDesc2NativeHandle(mFD), offset) != 0) {
     NS_ERROR("ftruncate failed");
     return NS_ERROR_FAILURE;
   }
-#elif defined(XP_WIN)
-  if (!SetEndOfFile((HANDLE)PR_FileDesc2NativeHandle(mFD))) {
-    NS_ERROR("SetEndOfFile failed");
-    return NS_ERROR_FAILURE;
-  }
-#else
-  // XXX not implemented
-#endif
 
   return NS_OK;
 }
@@ -343,15 +324,6 @@ nsresult nsFileStreamBase::DoOpen() {
     }
   }
 
-#ifdef XP_WIN
-  if (mBehaviorFlags & nsIFileInputStream::SHARE_DELETE) {
-    nsCOMPtr<nsILocalFileWin> file = do_QueryInterface(mOpenParams.localFile);
-    MOZ_ASSERT(file);
-
-    rv = file->OpenNSPRFileDescShareDelete(mOpenParams.ioFlags,
-                                           mOpenParams.perm, &fd);
-  } else
-#endif  // XP_WIN
   {
     rv = mOpenParams.localFile->OpenNSPRFileDesc(mOpenParams.ioFlags,
                                                  mOpenParams.perm, &fd);

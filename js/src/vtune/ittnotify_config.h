@@ -76,15 +76,7 @@
 #endif /* ITT_OS_FREEBSD */
 
 #ifndef ITT_OS
-#  if defined WIN32 || defined _WIN32
-#    define ITT_OS ITT_OS_WIN
-#  elif defined( __APPLE__ ) && defined( __MACH__ )
 #    define ITT_OS ITT_OS_MAC
-#  elif defined( __FreeBSD__ )
-#    define ITT_OS ITT_OS_FREEBSD
-#  else
-#    define ITT_OS ITT_OS_LINUX
-#  endif
 #endif /* ITT_OS */
 
 #ifndef ITT_PLATFORM_WIN

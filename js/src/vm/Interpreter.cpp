@@ -432,9 +432,6 @@ static void AssertExceptionResult(JSContext* cx) {
 // MSVC with PGO inlines a lot of functions in RunScript, resulting in large
 // stack frames and stack overflow issues, see bug 1167883. Turn off PGO to
 // avoid this.
-#ifdef _MSC_VER
-#  pragma optimize("g", off)
-#endif
 bool js::RunScript(JSContext* cx, RunState& state) {
   AutoCheckRecursionLimit recursion(cx);
   if (!recursion.check(cx)) {
@@ -504,9 +501,6 @@ bool js::RunScript(JSContext* cx, RunState& state) {
   }
   return ok;
 }
-#ifdef _MSC_VER
-#  pragma optimize("", on)
-#endif
 
 STATIC_PRECONDITION_ASSUME(ubound(args.argv_) >= argc)
 MOZ_ALWAYS_INLINE bool CallJSNative(JSContext* cx, Native native,

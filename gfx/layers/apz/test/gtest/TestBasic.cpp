@@ -210,7 +210,6 @@ TEST_F(APZCBasicTester, Fling) {
   }
 }
 
-#ifndef MOZ_WIDGET_ANDROID  // Maybe fails on Android
 static ScrollGenerationCounter sGenerationCounter;
 
 TEST_F(APZCBasicTester, ResumeInterruptedTouchDrag_Bug1592435) {
@@ -284,7 +283,6 @@ TEST_F(APZCBasicTester, ResumeInterruptedTouchDrag_Bug1592435) {
   mcc->AdvanceByMillis(1);
   TouchUp(apzc, touchPos, mcc->Time());
 }
-#endif
 
 TEST_F(APZCBasicTester, RelativeScrollOffset) {
   // Set up initial conditions: zoomed in, layout offset at (100, 100),

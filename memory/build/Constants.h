@@ -33,24 +33,14 @@
 // jemalloc_purge_freed_pages(), which will force the OS to release those
 // MADV_FREE'd pages, making the process's RSS reflect its true memory usage.
 
-#ifdef XP_DARWIN
 #  define MALLOC_DOUBLE_PURGE
-#endif
 
-#ifdef XP_WIN
-#  define MALLOC_DECOMMIT
-#endif
 
-#ifndef XP_WIN
 // Newer Linux systems support MADV_FREE, but we're not supporting
 // that properly. bug #1406304.
-#  if defined(XP_LINUX) && defined(MADV_FREE)
-#    undef MADV_FREE
-#  endif
 #  ifndef MADV_FREE
 #    define MADV_FREE MADV_DONTNEED
 #  endif
-#endif
 
 // Our size classes are inclusive ranges of memory sizes.  By describing the
 // minimums and how memory is allocated in each range the maximums can be

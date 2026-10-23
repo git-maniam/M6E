@@ -7,11 +7,7 @@
  * __________________________________________________________________________*/
 #ifndef LIBDISASM_QWORD_H       /* do not interfere with qword.h */
         #define LIBDISASM_QWORD_H
-        #ifdef _MSC_VER
-                typedef __int64         qword_t;
-        #else
                 typedef int64_t         qword_t;
-        #endif
 #endif
 
 #include <sys/types.h>

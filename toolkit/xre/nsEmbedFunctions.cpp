@@ -7,25 +7,12 @@
 #include "nsXULAppAPI.h"
 
 #include <stdlib.h>
-#if defined(MOZ_WIDGET_GTK)
-#  include <glib.h>
-#endif
 
 #include "prenv.h"
 
 #include "nsIAppShell.h"
 #include "nsIToolkitProfile.h"
 
-#ifdef XP_WIN
-#  include <process.h>
-#  include <shobjidl.h>
-#  include "mozilla/ipc/WindowsMessageLoop.h"
-#  ifdef MOZ_SANDBOX
-#  endif
-#  include "mozilla/ScopeExit.h"
-#  include "mozilla/WinDllServices.h"
-#  include "WinUtils.h"
-#endif
 
 #include "nsAppRunner.h"
 #include "nsExceptionHandler.h"
@@ -40,23 +27,16 @@
 #endif
 
 #include "mozilla/Omnijar.h"
-#if defined(XP_MACOSX)
 #  include <mach/mach.h>
 #  include <servers/bootstrap.h>
 #  include "nsVersionComparator.h"
 #  include "chrome/common/mach_ipc_mac.h"
 #  include "gfxPlatformMac.h"
-#endif
 #include "nsX11ErrorHandler.h"
 #include "nsGDKErrorHandler.h"
 #include "base/at_exit.h"
 #include "base/message_loop.h"
 #include "base/process_util.h"
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "chrome/common/ipc_channel.h"
-#  include "mozilla/jni/Utils.h"
-#  include "mozilla/ipc/ProcessUtils.h"
-#endif  //  defined(MOZ_WIDGET_ANDROID)
 
 #include "mozilla/AbstractThread.h"
 #include "mozilla/FilePreferences.h"
@@ -74,10 +54,6 @@
 #include "mozilla/dom/ContentParent.h"
 
 #include "mozilla/ipc/TestShellParent.h"
-#if defined(XP_WIN)
-#  include "mozilla/WindowsConsole.h"
-#  include "mozilla/WindowsDllBlocklist.h"
-#endif
 
 #include "GMPProcessChild.h"
 #include "mozilla/gfx/GPUProcessImpl.h"
@@ -85,41 +61,19 @@
 
 #include "ProfilerControl.h"
 
-#if defined(MOZ_SANDBOX) && defined(XP_WIN)
-#  include "mozilla/sandboxTarget.h"
-#  include "mozilla/sandboxing/TargetGeckoServicesImpl.h"
-#endif
 
 #if defined(MOZ_SANDBOX)
 #  include "XREChildData.h"
 #  include "mozilla/SandboxSettings.h"
 #endif
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/Sandbox.h"
-#endif
 
-#if defined(XP_LINUX)
-#  include <sys/prctl.h>
-#  ifndef PR_SET_PTRACER
-#    define PR_SET_PTRACER 0x59616d61
-#  endif
-#  ifndef PR_SET_PTRACER_ANY
-#    define PR_SET_PTRACER_ANY ((unsigned long)-1)
-#  endif
-#endif
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-#  include "mozilla/sandboxing/SandboxInitialization.h"
-#endif
 
 #if defined(MOZ_ENABLE_FORKSERVER)
 #  include "mozilla/ipc/ForkServer.h"
 #endif
 
-#if defined(MOZ_X11)
-#  include <X11/Xlib.h>
-#endif
 
 #include "VRProcessChild.h"
 #include "nsTraceRefcnt.h"
@@ -174,26 +128,7 @@ const char* XRE_ChildProcessTypeToAnnotation(GeckoProcessType aProcessType) {
   }
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-void XRE_SetAndroidChildFds(JNIEnv* env, jintArray jfds) {
-  mozilla::jni::SetGeckoThreadEnv(env);
 
-  // Copy passed file handles from the JNI environment into geckoargs.
-  jsize size = env->GetArrayLength(jfds);
-  jint* fds = env->GetIntArrayElements(jfds, nullptr);
-  geckoargs::SetPassedFileHandles(Span(fds, size));
-  env->ReleaseIntArrayElements(jfds, fds, JNI_ABORT);
-}
-#endif  // defined(MOZ_WIDGET_ANDROID)
-
-#if defined(XP_WIN)
-void SetTaskbarGroupId(const nsString& aId) {
-  if (FAILED(SetCurrentProcessExplicitAppUserModelID(aId.get()))) {
-    NS_WARNING(
-        "SetCurrentProcessExplicitAppUserModelID failed for child process.");
-  }
-}
-#endif
 
 #if defined(MOZ_SANDBOX)
 void AddContentSandboxLevelAnnotation() {
@@ -216,19 +151,10 @@ int GetDebugChildPauseTime() {
   if (pauseStr && *pauseStr) {
     int pause = atoi(pauseStr);
     if (pause != 1) {  // must be !=1 since =1 enables the default pause time
-#if defined(XP_WIN)
-      pause *= 1000;  // convert to ms
-#endif
       return pause;
     }
   }
-#ifdef XP_UNIX
   return 30;  // seconds
-#elif defined(XP_WIN)
-  return 10000;  // milliseconds
-#else
-  return 0;
-#endif
 }
 
 }  // namespace
@@ -265,24 +191,7 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   }
 #endif
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  // This has to happen before glib thread pools are started.
-  mozilla::SandboxEarlyInit(geckoargs::sSandboxReporter.Get(aArgc, aArgv),
-                            geckoargs::sChrootClient.Get(aArgc, aArgv));
-  // This just needs to happen before sandboxing, to initialize the
-  // cached value, but libmozsandbox can't see this symbol.
-  mozilla::GetNumberOfProcessors();
-#endif
 
-#if defined(XP_WIN)
-  // From the --attach-console support in nsNativeAppSupportWin.cpp, but
-  // here we are a content child process, so we always attempt to attach
-  // to the parent's (ie, the browser's) console.
-  // Try to attach console to the parent process.
-  // It will succeed when the parent process is a command line,
-  // so that stdio will be displayed in it.
-  UseParentConsole();
-#endif
 
   // NB: This must be called before profiler_init
   ScopedLogging logger;
@@ -295,18 +204,8 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   AUTO_PROFILER_INIT;
   AUTO_PROFILER_LABEL("XRE_InitChildProcess", OTHER);
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  mozilla::sandboxing::InitTargetGeckoServices(
-      aChildData->setTargetGeckoServices);
-  if (aChildData->sandboxTargetServices) {
-    SandboxTarget::Instance()->SetTargetServices(
-        aChildData->sandboxTargetServices);
-  }
-#endif
 
-#ifdef XP_MACOSX
   auto _supplementalFontThread = gfxPlatformMac::RegisterSupplementalFonts();
-#endif
 
   // Ensure AbstractThread is minimally setup, so async IPC messages
   // work properly.
@@ -314,7 +213,6 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 
   // Complete 'task_t' exchange for Mac OS X. This structure has the same size
   // regardless of architecture so we don't have any cross-arch issues here.
-#ifdef XP_MACOSX
   if (aArgc < 1) return NS_ERROR_FAILURE;
 
 #  if defined(MOZ_SANDBOX)
@@ -347,7 +245,6 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
   }
 #  endif /* MOZ_SANDBOX */
 
-#endif /* XP_MACOSX */
 
   SetupErrorHandling(aArgv[0]);
 
@@ -370,66 +267,16 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
     }
   }
 
-#ifdef MOZ_X11
-  XInitThreads();
-#endif
-#ifdef MOZ_WIDGET_GTK
-  // Setting the name here avoids the need to pass this through to gtk_init().
-  g_set_prgname(aArgv[0]);
-#endif
 
-#ifdef XP_UNIX
   if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS") ||
       PR_GetEnv("MOZ_DEBUG_CHILD_PAUSE")) {
-#  if defined(XP_LINUX) && defined(DEBUG)
-    if (prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0) != 0) {
-      printf_stderr("Could not allow ptrace from any process.\n");
-    }
-#  endif
     printf_stderr(
         "\n\nCHILDCHILDCHILDCHILD (process type %s)\n  debug me @ %d\n\n",
         XRE_GetProcessTypeString(), base::GetCurrentProcId());
     sleep(GetDebugChildPauseTime());
   }
-#elif defined(XP_WIN)
-  if (PR_GetEnv("MOZ_DEBUG_CHILD_PROCESS")) {
-    NS_DebugBreak(NS_DEBUG_BREAK,
-                  "Invoking NS_DebugBreak() to debug child process", nullptr,
-                  __FILE__, __LINE__);
-  } else if (PR_GetEnv("MOZ_DEBUG_CHILD_PAUSE")) {
-    printf_stderr(
-        "\n\nCHILDCHILDCHILDCHILD (process type %s)\n  debug me @ %lu\n\n",
-        XRE_GetProcessTypeString(), base::GetCurrentProcId());
-    ::Sleep(GetDebugChildPauseTime());
-  }
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-  // The parent process already did this, but Gecko child processes on
-  // Android aren't descendants of the parent process, so they don't
-  // inherit its rlimits.
-  mozilla::startup::IncreaseDescriptorLimits();
-#endif
 
-#if defined(XP_WIN)
-  // On Win7+, when not running as an MSIX package, register the application
-  // user model id passed in by parent. This ensures windows created by the
-  // container properly group with the parent app on the Win7 taskbar.
-  // MSIX packages explicitly do not support setting the appid from within
-  // the app, as it is set in the package manifest instead.
-  const char* const appModelUserId = aArgv[--aArgc];
-  if (appModelUserId && !mozilla::widget::WinUtils::HasPackageIdentity()) {
-    // '-' implies no support
-    if (*appModelUserId != '-') {
-      nsString appId;
-      CopyASCIItoUTF16(nsDependentCString(appModelUserId), appId);
-      // The version string is encased in quotes
-      appId.Trim("\"");
-      // Set the id
-      SetTaskbarGroupId(appId);
-    }
-  }
-#endif
 
   Maybe<base::ProcessId> parentPID = geckoargs::sParentPid.Get(aArgc, aArgv);
   Maybe<const char*> initialChannelIdString =
@@ -440,12 +287,10 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
 
   Maybe<IPC::Channel::ChannelHandle> clientChannel =
       geckoargs::sIPCHandle.Get(aArgc, aArgv);
-#ifdef XP_DARWIN
   MOZ_ASSERT_IF(clientChannel, !geckoargs::sIPCPort.IsPresent(aArgc, aArgv));
   if (!clientChannel) {
     clientChannel = geckoargs::sIPCPort.Get(aArgc, aArgv);
   }
-#endif
   if (NS_WARN_IF(!clientChannel)) {
     return NS_ERROR_FAILURE;
   }
@@ -560,16 +405,6 @@ nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
         return NS_ERROR_FAILURE;
       }
 
-#if defined(XP_WIN)
-      // Set child processes up such that they will get killed after the
-      // chrome process is killed in cases where the user shuts the system
-      // down or logs off.
-      ::SetProcessShutdownParameters(0x280 - 1, SHUTDOWN_NORETRY);
-
-      RefPtr<DllServices> dllSvc(DllServices::Get());
-      auto dllSvcDisable =
-          MakeScopeExit([&dllSvc]() { dllSvc->DisableFull(); });
-#endif
 
       mozilla::FilePreferences::InitDirectoriesAllowlist();
       mozilla::FilePreferences::InitPrefs();
@@ -600,7 +435,6 @@ nsISerialEventTarget* XRE_GetAsyncIOEventTarget() {
 nsresult XRE_RunAppShell() {
   nsCOMPtr<nsIAppShell> appShell(do_GetService(kAppShellCID));
   NS_ENSURE_TRUE(appShell, NS_ERROR_FAILURE);
-#if defined(XP_MACOSX)
   if (XRE_UseNativeEventProcessing()) {
     // In content processes that want XPCOM (and hence want
     // AppShell), we usually run our hybrid event loop through
@@ -640,7 +474,6 @@ nsresult XRE_RunAppShell() {
 
     loop->SetNestableTasksAllowed(couldNest);
   }
-#endif  // XP_MACOSX
   return appShell->Run();
 }
 
@@ -659,7 +492,6 @@ void XRE_ShutdownChildProcess() {
   //  (5) exit()
   MessageLoop::current()->Quit();
 
-#if defined(XP_MACOSX)
   nsCOMPtr<nsIAppShell> appShell(do_GetService(kAppShellCID));
   if (appShell) {
     // On Mac, we might be only above nsAppShell::Run(), not
@@ -668,7 +500,6 @@ void XRE_ShutdownChildProcess() {
     // above MessagePump::Run(), this Exit() is just superfluous.
     appShell->Exit();
   }
-#endif  // XP_MACOSX
 }
 
 namespace {
@@ -736,23 +567,6 @@ bool XRE_ShutdownTestShell() {
   return ret;
 }
 
-#ifdef MOZ_X11
-void XRE_InstallX11ErrorHandler() {
-#  ifdef MOZ_WIDGET_GTK
-  InstallGdkErrorHandler();
-#  endif
-
-  // Ensure our X11 error handler overrides the default GDK error handler such
-  // that errors are ignored by default. GDK will install its own error handler
-  // temporarily when pushing error traps internally as needed. This avoids us
-  // otherwise having to frequently override the error handler merely to trap
-  // errors in multiple places that would otherwise contend with GDK or other
-  // libraries that might also override the handler.
-  InstallX11ErrorHandler();
-}
-
-void XRE_CleanupX11ErrorHandler() { CleanupX11ErrorHandler(); }
-#endif
 
 #ifdef MOZ_ENABLE_FORKSERVER
 int XRE_ForkServer(int* aArgc, char*** aArgv) {

@@ -1526,9 +1526,6 @@ inline LauncherResult<HMODULE> GetProcessExeModule(HANDLE aProcess) {
   return static_cast<HMODULE>(baseAddress);
 }
 
-#if defined(_MSC_VER)
-extern "C" IMAGE_DOS_HEADER __ImageBase;
-#endif
 
 // This class manages data transfer from the local process's executable
 // to another process's executable via WriteProcessMemory.
@@ -1544,11 +1541,7 @@ class CrossExecTransferManager final {
   uint8_t* mRemoteImagebase;
 
   static HMODULE GetLocalExecModule() {
-#if defined(_MSC_VER)
-    return reinterpret_cast<HMODULE>(&__ImageBase);
-#else
     return ::GetModuleHandleW(nullptr);
-#endif
   }
 
   LauncherVoidResult EnsureRemoteImagebase() {
@@ -1886,11 +1879,7 @@ class AutoMappedView final {
 MOZ_NEVER_INLINE MOZ_NAKED inline void CheckStack(uint32_t size) {
   asm volatile(
       "mov %ecx, %eax;"
-#  if defined(__MINGW32__)
-      "jmp ___chkstk_ms;"
-#  else
       "jmp __chkstk;"
-#  endif  // __MINGW32__
   );
 }
 #endif  // _M_X64

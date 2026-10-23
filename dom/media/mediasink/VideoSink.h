@@ -155,14 +155,6 @@ class VideoSink : public MediaSink {
   // Based on the value obtained in MDSM.
   uint32_t mVideoQueueSendToCompositorSize;
 
-#ifdef XP_WIN
-  // Whether we've called timeBeginPeriod(1) to request high resolution
-  // timers. We request high resolution timers when playback starts, and
-  // turn them off when playback is paused. Enabling high resolution
-  // timers can cause higher CPU usage and battery drain on Windows 7,
-  // but reduces our frame drop rate.
-  bool mHiResTimersRequested;
-#endif
 
   RefPtr<layers::Image> mBlankImage;
   bool InitializeBlankImage();

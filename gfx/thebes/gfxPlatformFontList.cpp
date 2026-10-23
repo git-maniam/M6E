@@ -43,9 +43,7 @@
 #include "nsUnicodeProperties.h"
 #include "nsXULAppAPI.h"
 
-#ifdef XP_MACOSX
 #  include "mozilla/MacAutoreleasePool.h"
-#endif
 
 #include <numeric>
 
@@ -270,12 +268,10 @@ static void InitFontListCallback(void* aFontList) {
   AUTO_PROFILER_REGISTER_THREAD("InitFontList");
   PR_SetCurrentThreadName("InitFontList");
 
-#ifdef XP_MACOSX
   // InitFontList calls Apple font code that autoreleases many Objective-C
   // objects. There needs to be an autorelease pool in place for these objects
   // otherwise we'll leak them.
   mozilla::MacAutoreleasePool pool;
-#endif
 
   if (!static_cast<gfxPlatformFontList*>(aFontList)->InitFontList()) {
     gfxPlatformFontList::Shutdown();
@@ -2230,13 +2226,8 @@ static void GetSystemUIFontFamilies(
           : nsContentUtils::ShouldResistFingerprinting(
                 "aFontVisibilityProvider not available",
                 RFPTarget::FontVisibilityRestrictGenerics)) {
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_UIKIT)
     *aFamilies.AppendElement() = "-apple-system"_ns;
     return;
-#elif !defined(MOZ_WIDGET_ANDROID)
-    *aFamilies.AppendElement() = "sans-serif"_ns;
-    return;
-#endif
   }
   if (!LookAndFeel::GetFont(StyleSystemFont::Menu, systemFontName, fontStyle)) {
     return;

@@ -18,10 +18,6 @@
 //
 // Another advantage of having our own is that we can use MOZ_CRASH
 // instead of the system's abort.
-#ifdef _MSC_VER
-int __cdecl _purecall() { MOZ_CRASH("pure virtual call"); }
-#else
 __attribute__((visibility("hidden"))) void __cxa_pure_virtual() {
   MOZ_CRASH("pure virtual call");
 }
-#endif

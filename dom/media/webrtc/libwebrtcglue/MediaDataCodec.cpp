@@ -75,15 +75,6 @@ static media::DecodeSupportSet AdjustWebrtcDecodeSupportH264(
   return aSupport;
 }
 
-#ifdef MOZ_WIDGET_GTK
-static media::DecodeSupportSet AdjustWebrtcDecodeSupportVP8(
-    media::DecodeSupportSet aSupport) {
-  if (!StaticPrefs::media_navigator_mediadatadecoder_vp8_hardware_enabled()) {
-    aSupport -= media::DecodeSupport::HardwareDecode;
-  }
-  return aSupport;
-}
-#endif
 
 // Return a codec-specific function to apply WebRTC-specific pref gating to the
 // platform decoder support set.
@@ -92,10 +83,6 @@ AdjustDecodeSupportSetFunction AdjustWebrtcDecodeSupportFunctionForCodec(
   switch (aCodec) {
     case CodecType::H264:
       return &AdjustWebrtcDecodeSupportH264;
-#ifdef MOZ_WIDGET_GTK
-    case CodecType::VP8:
-      return &AdjustWebrtcDecodeSupportVP8;
-#endif
     default:
       return &AdjustWebrtcDecodeSupportIdentity;
   }

@@ -442,10 +442,6 @@ class MOZ_NON_PARAM MOZ_GSL_OWNER Vector final : private AllocPolicy {
 
 // Silence warnings about this struct possibly being padded dued to the
 // alignas() in it -- there's nothing we can do to avoid it.
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable : 4324)
-#endif  // _MSC_VER
 
   template <size_t Capacity, size_t Dummy>
   struct CRAndStorage : CapacityAndReserved {
@@ -480,9 +476,6 @@ class MOZ_NON_PARAM MOZ_GSL_OWNER Vector final : private AllocPolicy {
 
   CRAndStorage<kInlineCapacity, 0> mTail;
 
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif  // _MSC_VER
 
 #ifdef DEBUG
   friend class ReentrancyGuard;

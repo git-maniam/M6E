@@ -7,17 +7,11 @@
 
 #include "2D.h"
 
-#ifdef MOZ_X11
-#  include <X11/Xlib.h>
-
-#  include "X11UndefineNone.h"
-#endif
 
 namespace mozilla {
 
 namespace gfx {
 
-#ifdef XP_DARWIN
 /* This is a helper class that let's you borrow a CGContextRef from a
  * DrawTargetCG. This is used for drawing themed widgets.
  *
@@ -65,7 +59,6 @@ class BorrowedCGContext {
   static void ReturnCGContextToDrawTarget(DrawTarget* aDT, CGContextRef cg);
   DrawTarget* mDT;
 };
-#endif
 
 }  // namespace gfx
 }  // namespace mozilla

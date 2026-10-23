@@ -15,10 +15,6 @@
 #include "nsPrintfCString.h"
 #include "nsXULAppAPI.h"
 
-#ifdef XP_WIN
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/gfx/DisplayConfigWindows.h"
-#endif
 
 namespace mozilla {
 namespace gfx {
@@ -46,24 +42,11 @@ void gfxConfigManager::Init() {
       gfx_webrender_scissored_cache_clears_force_enabled_AtStartup();
   EmplaceUserPref(StaticPrefs::GetPrefName_gfx_webrender_enable_angle(),
                   mWrAngleEnabled);
-#ifdef XP_WIN
-  mWrRequireAngle = StaticPrefs::gfx_webrender_require_angle_AtStartup();
-  mWrDCompWinEnabled = StaticPrefs::gfx_webrender_dcomp_win_enabled_AtStartup();
-#endif
 
   mWrEnvForceEnabled = gfxPlatform::WebRenderEnvvarEnabled();
 
-#ifdef XP_WIN
-  DeviceManagerDx::Get()->CheckHardwareStretchingSupport(mHwStretchingSupport);
-  mScaledResolution = HasScaledResolution();
-  mWrCompositorDCompRequired = true;
-#else
   ++mHwStretchingSupport.mBoth;
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-  mDisableHwCompositingNoWr = true;
-#endif
 
 #ifdef NIGHTLY_BUILD
   mIsNightly = true;
@@ -88,17 +71,8 @@ void gfxConfigManager::Init() {
       &gfxConfig::GetFeature(Feature::WEBRENDER_SCISSORED_CACHE_CLEARS);
 
   mFeatureHwCompositing = &gfxConfig::GetFeature(Feature::HW_COMPOSITING);
-#ifdef XP_WIN
-  mFeatureD3D11HwAngle = &gfxConfig::GetFeature(Feature::D3D11_HW_ANGLE);
-  mFeatureWrAngleBackend = mFeatureD3D11HwAngle;
-  mFeatureD3D11Compositing = &gfxConfig::GetFeature(Feature::D3D11_COMPOSITING);
-#elif defined(XP_MACOSX)
   mFeatureMetalAngle = &gfxConfig::GetFeature(Feature::WEBRENDER_ANGLE_METAL);
   mFeatureWrAngleBackend = mFeatureMetalAngle;
-#elif defined(MOZ_WIDGET_ANDROID)
-  mFeatureGlAngle = &gfxConfig::GetFeature(Feature::WEBRENDER_ANGLE_GL);
-  mFeatureWrAngleBackend = mFeatureGlAngle;
-#endif
   mFeatureGPUProcess = &gfxConfig::GetFeature(Feature::GPU_PROCESS);
   mFeatureGLNorm16Textures =
       &gfxConfig::GetFeature(Feature::GL_NORM16_TEXTURES);

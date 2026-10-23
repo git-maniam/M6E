@@ -7,15 +7,11 @@
 
 #ifndef HAVE_MEMALIGN
 MOZ_MEMORY_API void* memalign(size_t aAlignment, size_t aSize) {
-#  ifdef XP_WIN
-  return _aligned_malloc(aSize, aAlignment);
-#  else
   void* ret;
   if (posix_memalign(&ret, aAlignment, aSize) != 0) {
     return nullptr;
   }
   return ret;
-#  endif
 }
 #endif
 

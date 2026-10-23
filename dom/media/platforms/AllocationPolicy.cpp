@@ -9,9 +9,6 @@
 #include "PDMFactory.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/SchedulerGroup.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/jni/Utils.h"
-#endif
 
 namespace mozilla {
 

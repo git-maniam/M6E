@@ -31,10 +31,6 @@ class CacheDomain {
   static constexpr uint64_t Viewport = ((uint64_t)0x1) << 14;
   static constexpr uint64_t ARIA = ((uint64_t)0x1) << 15;
   static constexpr uint64_t Relations = ((uint64_t)0x1) << 16;
-#ifdef XP_WIN
-  // Used for MathML.
-  static constexpr uint64_t InnerHTML = ((uint64_t)0x1) << 17;
-#endif
   static constexpr uint64_t TextBounds = ((uint64_t)0x1) << 18;
   static constexpr uint64_t APZ = ((uint64_t)0x1) << 19;
   static constexpr uint64_t All = ~((uint64_t)0x0);
@@ -205,10 +201,6 @@ class CacheKey {
   static constexpr nsStaticAtom* HTMLPlaceholder = nsGkAtoms::placeholder;
   // int32_t, CacheDomain::GroupInfo
   static constexpr nsStaticAtom* HeadingLevel = nsGkAtoms::level;
-#ifdef XP_WIN
-  // nsString, CacheDomain::InnerHTML
-  static constexpr nsStaticAtom* InnerHTML = nsGkAtoms::html;
-#endif
   // nsAtom, CacheUpdateType::Initial
   // The type of an <input> element; tel, email, etc.
   static constexpr nsStaticAtom* InputType = nsGkAtoms::textInputType;

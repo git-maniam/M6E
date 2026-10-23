@@ -554,13 +554,6 @@ nsresult nsXULTooltipListener::FindTooltip(nsIContent* aTarget,
   }
 
   // On Windows, the OS shows the tooltip, so we don't want Gecko to do it
-#ifdef XP_WIN
-  if (nsIFrame* f = aTarget->GetPrimaryFrame()) {
-    if (f->StyleDisplay()->GetWindowButtonType()) {
-      return NS_OK;
-    }
-  }
-#endif
 
   nsAutoString tooltipText;
   aTarget->AsElement()->GetAttr(nsGkAtoms::tooltiptext, tooltipText);

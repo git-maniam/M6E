@@ -18,10 +18,6 @@
 #include "mozilla/ProfilerLabels.h"
 #include "mozilla/gfx/PathHelpers.h"
 
-#if XP_WIN
-#  include "gfxWindowsPlatform.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::gfx;

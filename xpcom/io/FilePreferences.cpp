@@ -31,13 +31,7 @@ static WinPaths& PathAllowlist() MOZ_REQUIRES(sMutex) {
   return sPaths;
 }
 
-#ifdef XP_WIN
-const auto kDevicePathSpecifier = u"\\\\?\\"_ns;
-
-typedef char16_t char_path_t;
-#else
 typedef char char_path_t;
-#endif
 
 // Initially false to make concurrent consumers acquire the lock and sync.
 // The plain bool is synchronized with sMutex, the atomic one is for a quick
@@ -88,11 +82,7 @@ void InitPrefs() {
       Preferences::GetBool("network.file.disable_unc_paths", false);
 
   nsTAutoString<char_path_t> forbidden;
-#ifdef XP_WIN
-  Preferences::GetString("network.file.path_blacklist", forbidden);
-#else
   Preferences::GetCString("network.file.path_blacklist", forbidden);
-#endif
 
   StaticMutexAutoLock lock(sMutex);
 
@@ -145,11 +135,6 @@ class TNormalizer : public TTokenizer<TChar> {
     // Linux paths begin with just one separator (/)
     // If we want to use the normalizer for regular windows paths this code
     // will need to be updated.
-#ifdef XP_WIN
-    if (base::Check(mSeparator)) {
-      aNormalizedFilePath.Append(mSeparator.AsChar());
-    }
-#endif
 
     if (base::Check(mSeparator)) {
       aNormalizedFilePath.Append(mSeparator.AsChar());
@@ -225,27 +210,6 @@ class TNormalizer : public TTokenizer<TChar> {
   nsTArray<nsTDependentSubstring<TChar>> mStack;
 };
 
-#ifdef XP_WIN
-bool IsDOSDevicePathWithDrive(const nsAString& aFilePath) {
-  if (!StringBeginsWith(aFilePath, kDevicePathSpecifier)) {
-    return false;
-  }
-
-  const auto pathNoPrefix =
-      nsDependentSubstring(aFilePath, kDevicePathSpecifier.Length());
-
-  // After the device path specifier, the rest of file path can be:
-  // - starts with the volume or drive. e.g. \\?\C:\...
-  // - UNCs. e.g. \\?\UNC\Server\Share\Test\Foo.txt
-  // - device UNCs. e.g. \\?\server1\e:\utilities\\filecomparer\...
-  // The first case should not be blocked by IsBlockedUNCPath.
-  if (!StartsWithDiskDesignatorAndBackslash(pathNoPrefix)) {
-    return false;
-  }
-
-  return true;
-}
-#endif
 
 }  // namespace
 
@@ -259,14 +223,6 @@ bool IsBlockedUNCPath(const nsAString& aFilePath) {
     return false;
   }
 
-#ifdef XP_WIN
-  // ToDo: We don't need to check this once we can check if there is a valid
-  // server or host name that is prefaced by "\\".
-  // https://docs.microsoft.com/en-us/dotnet/standard/io/file-path-formats
-  if (IsDOSDevicePathWithDrive(aFilePath)) {
-    return false;
-  }
-#endif
 
   nsAutoString normalized;
   if (!Normalizer(aFilePath, Normalizer::Token::Char('\\')).Get(normalized)) {
@@ -296,11 +252,7 @@ bool IsBlockedUNCPath(const nsAString& aFilePath) {
   return true;
 }
 
-#ifdef XP_WIN
-const char kPathSeparator = '\\';
-#else
 const char kPathSeparator = '/';
-#endif
 
 bool IsAllowedPath(const nsTSubstring<char_path_t>& aFilePath) {
   typedef TNormalizer<char_path_t> Normalizer;
@@ -342,17 +294,6 @@ bool IsAllowedPath(const nsTSubstring<char_path_t>& aFilePath) {
   return true;
 }
 
-#ifdef XP_WIN
-bool StartsWithDiskDesignatorAndBackslash(const nsAString& aAbsolutePath) {
-  // aAbsolutePath can only be (in regular expression):
-  // UNC path: ^\\\\.*
-  // A single backslash: ^\\.*
-  // A disk designator with a backslash: ^[A-Za-z]:\\.*
-  return aAbsolutePath.Length() >= 3 && IsAsciiAlpha(aAbsolutePath.CharAt(0)) &&
-         aAbsolutePath.CharAt(1) == L':' &&
-         aAbsolutePath.CharAt(2) == kPathSeparator;
-}
-#endif
 
 void testing::SetBlockUNCPaths(bool aBlock) { sBlockUNCPaths = aBlock; }
 

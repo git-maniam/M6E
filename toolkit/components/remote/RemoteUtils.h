@@ -9,11 +9,7 @@
 
 #include "nsHashKeys.h"
 #include "nsString.h"
-#if defined XP_WIN
-#  include "WinUtils.h"
-#endif
 
-#if defined XP_WIN || defined XP_MACOSX
 static void BuildClassName(const char* aProgram, const char* aProfile,
                            nsString& aClassName) {
   // On Windows, the class name is used as the window class.
@@ -28,19 +24,9 @@ static void BuildClassName(const char* aProgram, const char* aProfile,
   //
   // https://github.com/opensource-apple/CF/blob/3cc41a76b1491f50813e28a4ec09954ffa359e6f/CFMessagePort.c#L53
 
-#  if defined XP_WIN
-  constexpr size_t ClassNameMaxLength = 256;
-#  else
   constexpr size_t ClassNameMaxLength = 128;
-#  endif
 
   aClassName.AppendPrintf("Mozilla_%s", aProgram);
-#  if defined XP_WIN
-  nsString pfn = mozilla::widget::WinUtils::GetPackageFamilyName();
-  if (!pfn.IsEmpty()) {
-    aClassName.AppendPrintf("_%S", pfn.getW());
-  }
-#  endif
   aClassName.AppendPrintf("_%s_RemoteWindow", aProfile);
 
   if (aClassName.Length() > ClassNameMaxLength) {
@@ -49,7 +35,6 @@ static void BuildClassName(const char* aProgram, const char* aProfile,
     aClassName.AppendPrintf("Mozilla_%08x_RemoteWindow", hash);
   }
 }
-#endif
 
 mozilla::UniquePtr<char[]> ConstructCommandLine(int32_t argc, const char** argv,
                                                 const char* aStartupToken,

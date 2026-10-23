@@ -307,24 +307,6 @@ MOZ_GTEST_BENCH(TestStandardURL, DISABLED_NormalizePerf, [] {
 });
 
 // Bug 1394785 - ignore unstable test on OSX
-#ifndef XP_MACOSX
-// Note the five calls in the loop, so divide by 100k
-MOZ_GTEST_BENCH(TestStandardURL, DISABLED_NormalizePerfFails, [] {
-  nsAutoCString result;
-  for (int i = 0; i < 20000; i++) {
-    nsAutoCString encHost("123.292.12.32");
-    ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost, result));
-    nsAutoCString encHost2("83.62.12.0x13292");
-    ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost2, result));
-    nsAutoCString encHost3("8.7.6.0xhello");
-    ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost3, result));
-    nsAutoCString encHost4("111.159.notonmywatch.220");
-    ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost4, result));
-    nsAutoCString encHost5("1.160.204.20f");
-    ASSERT_EQ(NS_ERROR_FAILURE, Test_NormalizeIPv4(encHost5, result));
-  }
-});
-#endif
 
 TEST(TestStandardURL, Mutator)
 {

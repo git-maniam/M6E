@@ -115,11 +115,9 @@ class NodeChannel final : public IPC::Channel::Listener {
   // THREAD.
   void SetOtherPid(base::ProcessId aNewPid);
 
-#ifdef XP_DARWIN
   // Called by the GeckoChildProcessHost to provide the task_t for the peer
   // process. MUST BE CALLED FROM THE IO THREAD.
   void SetMachTaskPort(task_t aTask);
-#endif
 
  private:
   ~NodeChannel();

@@ -154,11 +154,6 @@ class SocketProcessChild final : public PSocketProcessChild {
   mozilla::ipc::IPCResult RecvTestTriggerMetrics(
       TestTriggerMetricsResolver&& aResolve);
 
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvGetUntrustedModulesData(
-      GetUntrustedModulesDataResolver&& aResolver);
-  mozilla::ipc::IPCResult RecvUnblockUntrustedModulesThread();
-#endif  // defined(XP_WIN)
 
   already_AddRefed<psm::IPCClientCertsChild> GetIPCClientCertsActor();
   void CloseIPCClientCertsActor();

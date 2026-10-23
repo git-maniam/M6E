@@ -25,10 +25,8 @@ static int32_t ctorCount;
 int32_t nsLineBox::GetCtorCount() { return ctorCount; }
 #endif
 
-#ifndef _MSC_VER
 // static nsLineBox constant; initialized in the header file.
 const uint32_t nsLineBox::kMinChildCountForHashtable;
-#endif
 
 using namespace mozilla;
 

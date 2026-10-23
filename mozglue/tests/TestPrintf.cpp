@@ -72,9 +72,7 @@ static void TestPrintfTargetPrint() {
 // As of clang 14, __attribute__((printf)) doesn't allow %n on Android targets,
 // which is used in this test.
 static bool
-#ifndef __ANDROID__
 MOZ_FORMAT_PRINTF(5, 6)
-#endif
     check_print(const char* file, int line,
                 bool (*cmp)(const char* a, const char* b), const char* expect,
                 const char* fmt, ...) {
@@ -243,11 +241,7 @@ static void TestGlibcPrintf(T (&test_cases)[N], const char* file,
   MOZ_RELEASE_ASSERT(ok);
 }
 
-#if defined(XP_WIN)
-int wmain()
-#else
 int main()
-#endif  // defined(XP_WIN)
 {
   TestPrintfFormats();
   TestPrintfTargetPrint();

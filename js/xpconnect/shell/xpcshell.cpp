@@ -10,26 +10,8 @@
 
 #include "XREShellData.h"
 
-#ifdef XP_MACOSX
 #  include "xpcshellMacUtils.h"
-#endif
-#ifdef XP_WIN
-#  include "mozilla/WindowsDllBlocklist.h"
 
-#  include <shlobj.h>
-#  include <windows.h>
-
-// we want a wmain entry point
-#  define XRE_WANT_ENVIRON
-#  include "nsWindowsWMain.cpp"
-#  ifdef MOZ_SANDBOX
-#    include "mozilla/sandboxing/SandboxInitialization.h"
-#  endif
-#endif
-
-#ifdef MOZ_WIDGET_GTK
-#  include <gtk/gtk.h>
-#endif
 
 #include "mozilla/BaseProfiler.h"
 
@@ -38,16 +20,8 @@
 #endif
 
 int main(int argc, char** argv, char** envp) {
-#ifdef MOZ_WIDGET_GTK
-  // A default display may or may not be required for xpcshell tests, and so
-  // is not created here. Instead we set the command line args, which is a
-  // fairly cheap operation.
-  gtk_parse_args(&argc, &argv);
-#endif
 
-#ifdef XP_MACOSX
   InitAutoreleasePool();
-#endif
 
   // unbuffer stdout so that output is in the correct order; note that stderr
   // is unbuffered by default
@@ -61,10 +35,6 @@ int main(int argc, char** argv, char** envp) {
   mozilla::baseprofiler::profiler_init(&aLocal);
 
   XREShellData shellData;
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  shellData.sandboxBrokerServices =
-      mozilla::sandboxing::GetInitializedBrokerServices();
-#endif
 
   auto bootstrapResult = mozilla::GetBootstrap();
   if (bootstrapResult.isErr()) {
@@ -88,9 +58,7 @@ int main(int argc, char** argv, char** envp) {
   DllBlocklist_Shutdown();
 #endif
 
-#ifdef XP_MACOSX
   FinishAutoreleasePool();
-#endif
 
   return result;
 }

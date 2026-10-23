@@ -165,7 +165,6 @@ class ExtensionProtocolHandler final : public nsISubstitutingProtocolHandler,
   static void NewSimpleChannel(nsIURI* aURI, nsILoadInfo* aLoadinfo,
                                nsIChannel* aChannel, nsIChannel** aRetVal);
 
-#if defined(XP_MACOSX)
   /**
    * Sets the aResult outparam to true if we are a developer build with the
    * repo dir environment variable set and the requested file resides in the
@@ -188,9 +187,7 @@ class ExtensionProtocolHandler final : public nsISubstitutingProtocolHandler,
   // Set to true once we've already tried to load the dev repo path,
   // allowing for lazy initialization of |mDevRepo| and |mDevObjDir|.
   bool mAlreadyCheckedDevRepo{false};
-#endif /* XP_MACOSX */
 
-#if !defined(XP_WIN)
   /**
    * Sets the aResult outparam to true if we are a developer build and the
    * provided directory is within the NS_GRE_DIR directory. Developer builds
@@ -213,7 +210,6 @@ class ExtensionProtocolHandler final : public nsISubstitutingProtocolHandler,
   // Set to true once we've already read the AppDir, allowing for lazy
   // initialization of |mAppDir|.
   bool mAlreadyCheckedAppDir{false};
-#endif /* !defined(XP_WIN) */
 
   // Used for opening JAR files off the main thread when we just need to
   // obtain a file descriptor to send back to the child.

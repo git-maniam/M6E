@@ -14,11 +14,7 @@
 #include "nsIDOMWakeLockListener.h"
 
 // For _exit().
-#ifdef XP_WIN
-#  include <process.h>
-#else
 #  include <unistd.h>
-#endif
 
 namespace mozilla::dom::power {
 

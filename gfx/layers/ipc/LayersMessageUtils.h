@@ -43,9 +43,6 @@
 #include "mozilla/GfxMessageUtils.h"
 #include "mozilla/ipc/ByteBufUtils.h"
 
-#ifdef _MSC_VER
-#  pragma warning(disable : 4800)
-#endif
 
 namespace IPC {
 

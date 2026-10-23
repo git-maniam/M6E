@@ -8,20 +8,11 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/StackWalk.h"
-#ifdef XP_WIN
-#  include "mozilla/StackWalkThread.h"
-#  include <io.h>
-#else
 #  include <unistd.h>
-#endif
 #include "mozilla/Sprintf.h"
 
 #include <string.h>
 
-#if defined(ANDROID) && defined(MOZ_LINKER)
-#  include "Linker.h"
-#  include <android/log.h>
-#endif
 
 using namespace mozilla;
 
@@ -31,9 +22,7 @@ using namespace mozilla;
 #  define _GNU_SOURCE
 #endif
 
-#if defined(HAVE_DLFCN_H) || defined(XP_DARWIN)
 #  include <dlfcn.h>
-#endif
 
 #if (defined(XP_DARWIN) && \
      (defined(__i386) || defined(__ppc__) || defined(HAVE__UNWIND_BACKTRACE)))
@@ -42,11 +31,7 @@ using namespace mozilla;
 #  define MOZ_STACKWALK_SUPPORTS_MACOSX 0
 #endif
 
-#if __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1)
-#  define HAVE___LIBC_STACK_END 1
-#else
 #  define HAVE___LIBC_STACK_END 0
-#endif
 
 #if (defined(linux) &&                                            \
      ((defined(__GNUC__) && (defined(__i386) || defined(PPC))) || \
@@ -64,11 +49,6 @@ static Atomic<uintptr_t> ldso_base;
 #  endif
 #endif
 
-#ifdef ANDROID
-#  include <algorithm>
-#  include <unistd.h>
-#  include <pthread.h>
-#endif
 
 class FrameSkipper {
  public:
@@ -99,785 +79,7 @@ class FrameSkipper {
   uintptr_t mSkipUntilAddr;
 };
 
-#ifdef XP_WIN
-
-#  include <windows.h>
-#  include <process.h>
-#  include <stdio.h>
-#  include <malloc.h>
-#  include "mozilla/Atomics.h"
-#  include "mozilla/StackWalk_windows.h"
-
-#  include <imagehlp.h>
-// We need a way to know if we are building for WXP (or later), as if we are, we
-// need to use the newer 64-bit APIs. API_VERSION_NUMBER seems to fit the bill.
-// A value of 9 indicates we want to use the new APIs.
-#  if API_VERSION_NUMBER < 9
-#    error Too old imagehlp.h
-#  endif
-
-#  if defined(_M_AMD64) || defined(_M_ARM64)
-// We must use RtlLookupFunctionEntry to do stack walking on x86-64 and arm64,
-// but internally this function does a blocking shared acquire of SRW locks
-// that live in ntdll and are not exported. This is problematic when we want to
-// suspend a thread and walk its stack, like we do in the profiler and the
-// background hang reporter. If the suspended thread happens to hold one of the
-// locks exclusively while suspended, then the stack walking thread will
-// deadlock if it calls RtlLookupFunctionEntry.
-//
-// Note that we only care about deadlocks between the stack walking thread and
-// the suspended thread. Any other deadlock scenario is considered out of
-// scope, because they are unlikely to be our fault -- these other scenarios
-// imply that some thread that we did not suspend is stuck holding one of the
-// locks exclusively, and exclusive acquisition of these locks only happens for
-// a brief time during Microsoft API calls (e.g. LdrLoadDll, LdrUnloadDll).
-//
-// We use two strategies together to reduce the risk of deadlock, gracefully
-// failing to capture a stack when either identifies a risk:
-//    (1) collect pointers to the ntdll internal locks at stack walk
-//        initialization, then try to acquire them non-blockingly before
-//        initiating any stack walk;
-//    (2) mark all code paths that can potentially end up doing an exclusive
-//        acquisition of the locks as stack walk suppression paths, then check
-//        if any thread is currently on a stack walk suppression path before
-//        initiating any stack walk.
-//
-// Strategy (2) alone can only avoid all deadlocks under the easily wronged
-// assumption that we have correctly identified all existing paths that should
-// be stack suppression paths. Hence why we combine it with strategy (1) as
-// defense in depth.
-//
-// Relying on strategy (2) means we cannot collect stacks e.g. during the whole
-// duration of a DLL load happening on any thread, which can affect profiling
-// results significantly but protects us against advanced deadlock scenarios
-// that strategy (1) fails to catch in isolation (bug 2069874).
-
-// Strategy (1): Ntdll Internal Locks
-//
-// The external stack walk initialization code feeds us pointers to the ntdll
-// internal locks so they can complement the suppression check.
-static Atomic<bool> sStackWalkLocksInitialized;
-static Array<SRWLOCK*, 2> sStackWalkLocks;
-
-MFBT_API
-void InitializeStackWalkLocks(const Array<void*, 2>& aStackWalkLocks) {
-  sStackWalkLocks[0] = reinterpret_cast<SRWLOCK*>(aStackWalkLocks[0]);
-  sStackWalkLocks[1] = reinterpret_cast<SRWLOCK*>(aStackWalkLocks[1]);
-  sStackWalkLocksInitialized = true;
-}
-
-// Strategy (2): Stack Walk Suppressions
-//
-// We're using an atomic counter rather than a critical section because we
-// don't require mutual exclusion with the stack walker. The target is already
-// suspended when the global counter is checked, so it cannot begin a new
-// suppression. Another thread can race with the check, but that thread can
-// continue running and release any lock it acquires.
-//
-// NOTE: Moving to a per-thread counter here instead of a global one would
-// reintroduce deadlock scenarios like the one in bug 2069874. In that scenario
-// it is a helper thread started from the DLL-loading thread that holds
-// problematic locks. It is the stack walk suppression from the DLL-loading
-// thread that correctly prevents us from walking the stack of the helper
-// thread, and this would not happen with per-thread counters.
-static Atomic<size_t> sStackWalkSuppressions;
-
-void SuppressStackWalking() { ++sStackWalkSuppressions; }
-
-void DesuppressStackWalking() {
-  auto previousValue = sStackWalkSuppressions--;
-  // We should never desuppress from 0. See bug 1687510 comment 10 for an
-  // example in which this occured.
-  MOZ_RELEASE_ASSERT(previousValue);
-}
-
-MFBT_API
-AutoSuppressStackWalking::AutoSuppressStackWalking() { SuppressStackWalking(); }
-
-MFBT_API
-AutoSuppressStackWalking::~AutoSuppressStackWalking() {
-  DesuppressStackWalking();
-}
-
-bool IsStackWalkingSafe() {
-  // Check suppression before touching the ntdll locks.
-  if (sStackWalkSuppressions != 0) {
-    return false;
-  }
-
-  if (sStackWalkLocksInitialized) {
-    bool isSafe = false;
-    if (::TryAcquireSRWLockShared(sStackWalkLocks[0])) {
-      if (::TryAcquireSRWLockShared(sStackWalkLocks[1])) {
-        isSafe = true;
-        ::ReleaseSRWLockShared(sStackWalkLocks[1]);
-      }
-      ::ReleaseSRWLockShared(sStackWalkLocks[0]);
-    }
-    return isSafe;
-  }
-
-  return true;
-}
-
-static uint8_t* sJitCodeRegionStart;
-static size_t sJitCodeRegionSize;
-uint8_t* sMsMpegJitCodeRegionStart;
-size_t sMsMpegJitCodeRegionSize;
-
-MFBT_API void RegisterJitCodeRegion(uint8_t* aStart, size_t aSize) {
-  // Currently we can only handle one JIT code region at a time
-  MOZ_RELEASE_ASSERT(!sJitCodeRegionStart);
-
-  sJitCodeRegionStart = aStart;
-  sJitCodeRegionSize = aSize;
-}
-
-MFBT_API void UnregisterJitCodeRegion(uint8_t* aStart, size_t aSize) {
-  // Currently we can only handle one JIT code region at a time
-  MOZ_RELEASE_ASSERT(sJitCodeRegionStart && sJitCodeRegionStart == aStart &&
-                     sJitCodeRegionSize == aSize);
-
-  sJitCodeRegionStart = nullptr;
-  sJitCodeRegionSize = 0;
-}
-
-#  endif  // _M_AMD64 || _M_ARM64
-
-// Routine to print an error message to standard error.
-static void PrintError(const char* aPrefix) {
-  LPSTR lpMsgBuf;
-  DWORD lastErr = GetLastError();
-  FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                     FORMAT_MESSAGE_IGNORE_INSERTS,
-                 nullptr, lastErr,
-                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),  // Default language
-                 (LPSTR)&lpMsgBuf, 0, nullptr);
-  fprintf(stderr, "### ERROR: %s: %s", aPrefix,
-          lpMsgBuf ? lpMsgBuf : "(null)\n");
-  fflush(stderr);
-  LocalFree(lpMsgBuf);
-}
-
-class MOZ_RAII AutoCriticalSection {
- public:
-  explicit inline AutoCriticalSection(LPCRITICAL_SECTION aCriticalSection)
-      : mCriticalSection{aCriticalSection} {
-    ::EnterCriticalSection(mCriticalSection);
-  }
-  inline ~AutoCriticalSection() { ::LeaveCriticalSection(mCriticalSection); }
-
-  AutoCriticalSection(AutoCriticalSection&& other) = delete;
-  AutoCriticalSection operator=(AutoCriticalSection&& other) = delete;
-  AutoCriticalSection(const AutoCriticalSection&) = delete;
-  AutoCriticalSection operator=(const AutoCriticalSection&) = delete;
-
- private:
-  LPCRITICAL_SECTION mCriticalSection;
-};
-
-// A thread-safe safe object interface for Microsoft's DbgHelp.dll. DbgHelp
-// APIs are not thread-safe and they require the use of a unique HANDLE value
-// as an identifier for the current session. All this is handled internally by
-// DbgHelpWrapper.
-class DbgHelpWrapper {
- public:
-  explicit inline DbgHelpWrapper() : DbgHelpWrapper(InitFlag::BasicInit) {}
-  DbgHelpWrapper(DbgHelpWrapper&& other) = delete;
-  DbgHelpWrapper operator=(DbgHelpWrapper&& other) = delete;
-  DbgHelpWrapper(const DbgHelpWrapper&) = delete;
-  DbgHelpWrapper operator=(const DbgHelpWrapper&) = delete;
-
-  inline bool ReadyToUse() { return mInitSuccess; }
-
-  inline BOOL StackWalk64(
-      DWORD aMachineType, HANDLE aThread, LPSTACKFRAME64 aStackFrame,
-      PVOID aContextRecord, PREAD_PROCESS_MEMORY_ROUTINE64 aReadMemoryRoutine,
-      PFUNCTION_TABLE_ACCESS_ROUTINE64 aFunctionTableAccessRoutine,
-      PGET_MODULE_BASE_ROUTINE64 aGetModuleBaseRoutine,
-      PTRANSLATE_ADDRESS_ROUTINE64 aTranslateAddress) {
-    if (!ReadyToUse()) {
-      return FALSE;
-    }
-
-    AutoCriticalSection guard(&sCriticalSection);
-    return ::StackWalk64(aMachineType, sSessionId, aThread, aStackFrame,
-                         aContextRecord, aReadMemoryRoutine,
-                         aFunctionTableAccessRoutine, aGetModuleBaseRoutine,
-                         aTranslateAddress);
-  }
-
- protected:
-  enum class InitFlag : bool {
-    BasicInit,
-    WithSymbolSupport,
-  };
-
-  explicit inline DbgHelpWrapper(InitFlag initFlag) {
-    mInitSuccess = Initialize(initFlag);
-  }
-
-  // DbgHelp functions are not thread-safe and should therefore be protected
-  // by using this critical section through a AutoCriticalSection.
-  static CRITICAL_SECTION sCriticalSection;
-
-  // DbgHelp functions require a unique HANDLE hProcess that should be the same
-  // throughout the current session. We refer to this handle as a session id.
-  // Ideally the session id should be a valid HANDLE to the target process,
-  // which in our case is the current process.
-  //
-  // However, in order to avoid conflicts with other sessions, the session id
-  // should be unique and therefore not just GetCurrentProcess(), which other
-  // pieces of code tend to already use (see bug 1699328).
-  //
-  // We therefore define sSessionId as a duplicate of the current process
-  // handle, a solution that meets all the requirements listed above.
-  static HANDLE sSessionId;
-
- private:
-  bool mInitSuccess;
-
-  // This function initializes sCriticalSection, sSessionId and loads DbgHelp.
-  // It also calls SymInitialize if called with aInitFlag::WithSymbolSupport.
-  // It is thread-safe and reentrancy-safe.
-  [[nodiscard]] static bool Initialize(InitFlag aInitFlag);
-
-  // In debug and fuzzing builds, MOZ_ASSERT and MOZ_CRASH walk the stack to
-  // print it before actually crashing. This code path uses a DbgHelpWrapper
-  // object, hence *any* MOZ_ASSERT or MOZ_CRASH failure reached from
-  // Initialize() leads to rentrancy (see bug 1869997 for an example). Such
-  // failures can occur indirectly when we load dbghelp.dll, because we
-  // override various Microsoft-internal functions that are called upon DLL
-  // loading. We protect against reentrancy by keeping track of the ID of the
-  // thread that runs the initialization code.
-  static Atomic<DWORD> sInitializationThreadId;
-};
-
-CRITICAL_SECTION DbgHelpWrapper::sCriticalSection{};
-Atomic<DWORD> DbgHelpWrapper::sInitializationThreadId{0};
-HANDLE DbgHelpWrapper::sSessionId{nullptr};
-
-// Thread-safety here is ensured by the C++ standard: scoped static
-// initialization is thread-safe. sInitializationThreadId is used to protect
-// against reentrancy -- and only for that purpose.
-[[nodiscard]] /* static */ bool DbgHelpWrapper::Initialize(
-    DbgHelpWrapper::InitFlag aInitFlag) {
-  // In the code below, it is only safe to reach MOZ_ASSERT or MOZ_CRASH while
-  // sInitializationThreadId is set to the current thread id.
-  static Atomic<DWORD> sInitializationThreadId{0};
-  DWORD currentThreadId = ::GetCurrentThreadId();
-
-  // This code relies on Windows never giving us a current thread ID of zero.
-  // We make this assumption explicit, by failing if that should ever occur.
-  if (!currentThreadId) {
-    return false;
-  }
-
-  if (sInitializationThreadId == currentThreadId) {
-    // This is a reentrant call and we must abort here.
-    return false;
-  }
-
-  static const bool sHasInitializedDbgHelp = [currentThreadId]() {
-    // Per the C++ standard, only one thread evers reaches this path.
-    sInitializationThreadId = currentThreadId;
-
-    ::InitializeCriticalSection(&sCriticalSection);
-
-    if (!::DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(),
-                           GetCurrentProcess(), &sSessionId, 0, FALSE,
-                           DUPLICATE_SAME_ACCESS)) {
-      return false;
-    }
-
-    bool dbgHelpLoaded = static_cast<bool>(::LoadLibraryW(L"dbghelp.dll"));
-
-    MOZ_ASSERT(dbgHelpLoaded);
-    sInitializationThreadId = 0;
-    return dbgHelpLoaded;
-  }();
-
-  // If we don't need symbol initialization, we are done. If we need it, we
-  // can only proceed if DbgHelp initialization was successful.
-  if (aInitFlag == InitFlag::BasicInit || !sHasInitializedDbgHelp) {
-    return sHasInitializedDbgHelp;
-  }
-
-  static const bool sHasInitializedSymbols = [currentThreadId]() {
-    // Per the C++ standard, only one thread evers reaches this path.
-    sInitializationThreadId = currentThreadId;
-
-    bool symbolsInitialized = false;
-
-    {
-      AutoCriticalSection guard(&sCriticalSection);
-      ::SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
-      symbolsInitialized =
-          static_cast<bool>(::SymInitializeW(sSessionId, nullptr, TRUE));
-      /* XXX At some point we need to arrange to call SymCleanup */
-    }
-
-    if (!symbolsInitialized) {
-      PrintError("SymInitialize");
-    }
-
-    MOZ_ASSERT(symbolsInitialized);
-    sInitializationThreadId = 0;
-    return symbolsInitialized;
-  }();
-
-  return sHasInitializedSymbols;
-}
-
-// Some APIs such as SymFromAddr also require that the session id has gone
-// through SymInitialize. This is handled by child class DbgHelpWrapperSym.
-class DbgHelpWrapperSym : public DbgHelpWrapper {
- public:
-  explicit DbgHelpWrapperSym() : DbgHelpWrapper(InitFlag::WithSymbolSupport) {}
-
-  inline BOOL SymFromAddr(DWORD64 aAddress, PDWORD64 aDisplacement,
-                          PSYMBOL_INFO aSymbol) {
-    if (!ReadyToUse()) {
-      return FALSE;
-    }
-
-    AutoCriticalSection guard(&sCriticalSection);
-    return ::SymFromAddr(sSessionId, aAddress, aDisplacement, aSymbol);
-  }
-
-  BOOL SymGetModuleInfoEspecial64(DWORD64 aAddr, PIMAGEHLP_MODULE64 aModuleInfo,
-                                  PIMAGEHLP_LINE64 aLineInfo);
-
- private:
-  // Helpers for SymGetModuleInfoEspecial64
-  struct CallbackEspecial64UserContext {
-    HANDLE mSessionId;
-    DWORD64 mAddr;
-  };
-
-  static BOOL CALLBACK CallbackEspecial64(PCSTR aModuleName,
-                                          DWORD64 aModuleBase,
-                                          ULONG aModuleSize,
-                                          PVOID aUserContext);
-};
-
-// Wrapper around a reference to a CONTEXT, to simplify access to main
-// platform-specific execution registers.
-// It also avoids using CONTEXT* nullable pointers.
-class CONTEXTGenericAccessors {
- public:
-  explicit CONTEXTGenericAccessors(CONTEXT& aCONTEXT) : mCONTEXT(aCONTEXT) {}
-
-  CONTEXT* CONTEXTPtr() { return &mCONTEXT; }
-
-  inline auto& PC() {
-#  if defined(_M_AMD64)
-    return mCONTEXT.Rip;
-#  elif defined(_M_ARM64)
-    return mCONTEXT.Pc;
-#  elif defined(_M_IX86)
-    return mCONTEXT.Eip;
-#  else
-#    error "unknown platform"
-#  endif
-  }
-
-  inline auto& SP() {
-#  if defined(_M_AMD64)
-    return mCONTEXT.Rsp;
-#  elif defined(_M_ARM64)
-    return mCONTEXT.Sp;
-#  elif defined(_M_IX86)
-    return mCONTEXT.Esp;
-#  else
-#    error "unknown platform"
-#  endif
-  }
-
-  inline auto& BP() {
-#  if defined(_M_AMD64)
-    return mCONTEXT.Rbp;
-#  elif defined(_M_ARM64)
-    return mCONTEXT.Fp;
-#  elif defined(_M_IX86)
-    return mCONTEXT.Ebp;
-#  else
-#    error "unknown platform"
-#  endif
-  }
-
- private:
-  CONTEXT& mCONTEXT;
-};
-
-/**
- * Walk the stack, translating PC's found into strings and recording the
- * chain in aBuffer. For this to work properly, the DLLs must be rebased
- * so that the address in the file agrees with the address in memory.
- * Otherwise StackWalk will return FALSE when it hits a frame in a DLL
- * whose in memory address doesn't match its in-file address.
- */
-
-static void DoMozStackWalkThread(MozWalkStackCallback aCallback,
-                                 const void* aFirstFramePC, uint32_t aMaxFrames,
-                                 void* aClosure, HANDLE aThread,
-                                 CONTEXT* aContext) {
-#  if defined(_M_IX86)
-  DbgHelpWrapper dbgHelp;
-  if (!dbgHelp.ReadyToUse()) {
-    return;
-  }
-#  endif
-
-  HANDLE targetThread = aThread;
-  bool walkCallingThread;
-  if (!targetThread) {
-    targetThread = ::GetCurrentThread();
-    walkCallingThread = true;
-  } else {
-    DWORD targetThreadId = ::GetThreadId(targetThread);
-    DWORD currentThreadId = ::GetCurrentThreadId();
-    walkCallingThread = (targetThreadId == currentThreadId);
-  }
-
-  // If not already provided, get a context for the specified thread.
-  CONTEXT context_buf;
-  if (!aContext) {
-    memset(&context_buf, 0, sizeof(CONTEXT));
-    context_buf.ContextFlags = CONTEXT_FULL;
-    if (walkCallingThread) {
-      ::RtlCaptureContext(&context_buf);
-    } else if (!GetThreadContext(targetThread, &context_buf)) {
-      return;
-    }
-  }
-  CONTEXTGenericAccessors context{aContext ? *aContext : context_buf};
-
-#  if defined(_M_IX86)
-  // Setup initial stack frame to walk from.
-  STACKFRAME64 frame64;
-  memset(&frame64, 0, sizeof(frame64));
-  frame64.AddrPC.Offset = context.PC();
-  frame64.AddrStack.Offset = context.SP();
-  frame64.AddrFrame.Offset = context.BP();
-  frame64.AddrPC.Mode = AddrModeFlat;
-  frame64.AddrStack.Mode = AddrModeFlat;
-  frame64.AddrFrame.Mode = AddrModeFlat;
-  frame64.AddrReturn.Mode = AddrModeFlat;
-#  endif
-
-#  if defined(_M_AMD64) || defined(_M_ARM64)
-  // If any thread is on a suppression path, the suspended target may be
-  // holding a lock such that RtlLookupFunctionEntry or RtlVirtualUnwind
-  // would deadlock.
-  //
-  // A zero suppression count and successful non-blocking lock probes reduce
-  // that risk. This check is best-effort, not a guarantee of deadlock freedom.
-  if (!IsStackWalkingSafe()) {
-    return;
-  }
-
-  bool firstFrame = true;
-#  endif
-
-  FrameSkipper skipper(aFirstFramePC);
-
-  uint32_t frames = 0;
-
-  // Now walk the stack.
-  while (true) {
-    DWORD64 addr;
-    DWORD64 spaddr;
-
-#  if defined(_M_IX86)
-    // 32-bit frame unwinding.
-    BOOL ok = dbgHelp.StackWalk64(
-        IMAGE_FILE_MACHINE_I386, targetThread, &frame64, context.CONTEXTPtr(),
-        nullptr,
-        ::SymFunctionTableAccess64,  // function table access routine
-        ::SymGetModuleBase64,        // module base routine
-        0);
-
-    if (ok) {
-      addr = frame64.AddrPC.Offset;
-      spaddr = frame64.AddrStack.Offset;
-    } else {
-      addr = 0;
-      spaddr = 0;
-      if (walkCallingThread) {
-        PrintError("WalkStack64");
-      }
-    }
-
-    if (!ok) {
-      break;
-    }
-
-#  elif defined(_M_AMD64) || defined(_M_ARM64)
-
-    auto currentInstr = context.PC();
-
-    // If we reach a frame in JIT code, we don't have enough information to
-    // unwind, so we have to give up.
-    if (sJitCodeRegionStart && (uint8_t*)currentInstr >= sJitCodeRegionStart &&
-        (uint8_t*)currentInstr < sJitCodeRegionStart + sJitCodeRegionSize) {
-      break;
-    }
-
-    // We must also avoid msmpeg2vdec.dll's JIT region: they don't generate
-    // unwind data, so their JIT unwind callback just throws up its hands and
-    // terminates the process.
-    if (sMsMpegJitCodeRegionStart &&
-        (uint8_t*)currentInstr >= sMsMpegJitCodeRegionStart &&
-        (uint8_t*)currentInstr <
-            sMsMpegJitCodeRegionStart + sMsMpegJitCodeRegionSize) {
-      break;
-    }
-
-    // 64-bit frame unwinding.
-    // Try to look up unwind metadata for the current function.
-    ULONG64 imageBase;
-    PRUNTIME_FUNCTION runtimeFunction =
-        RtlLookupFunctionEntry(currentInstr, &imageBase, NULL);
-
-    if (runtimeFunction) {
-      PVOID dummyHandlerData;
-      ULONG64 dummyEstablisherFrame;
-      RtlVirtualUnwind(UNW_FLAG_NHANDLER, imageBase, currentInstr,
-                       runtimeFunction, context.CONTEXTPtr(), &dummyHandlerData,
-                       &dummyEstablisherFrame, nullptr);
-    } else if (firstFrame) {
-      // Leaf functions can be unwound by hand.
-      context.PC() = *reinterpret_cast<DWORD64*>(context.SP());
-      context.SP() += sizeof(void*);
-    } else {
-      // Something went wrong.
-      break;
-    }
-
-    addr = context.PC();
-    spaddr = context.SP();
-    firstFrame = false;
-#  else
-#    error "unknown platform"
-#  endif
-
-    if (addr == 0) {
-      break;
-    }
-
-    if (skipper.ShouldSkipPC((void*)addr)) {
-      continue;
-    }
-
-    aCallback(++frames, (void*)addr, (void*)spaddr, aClosure);
-
-    if (aMaxFrames != 0 && frames == aMaxFrames) {
-      break;
-    }
-
-#  if defined(_M_IX86)
-    if (frame64.AddrReturn.Offset == 0) {
-      break;
-    }
-#  endif
-  }
-}
-
-MFBT_API void MozStackWalkThread(MozWalkStackCallback aCallback,
-                                 uint32_t aMaxFrames, void* aClosure,
-                                 HANDLE aThread, CONTEXT* aContext) {
-  // We don't pass a aFirstFramePC because we walk the stack for another
-  // thread.
-  DoMozStackWalkThread(aCallback, nullptr, aMaxFrames, aClosure, aThread,
-                       aContext);
-}
-
-MFBT_API void MozStackWalk(MozWalkStackCallback aCallback,
-                           const void* aFirstFramePC, uint32_t aMaxFrames,
-                           void* aClosure) {
-  DoMozStackWalkThread(aCallback, aFirstFramePC ? aFirstFramePC : CallerPC(),
-                       aMaxFrames, aClosure, nullptr, nullptr);
-}
-
-/* static */ BOOL CALLBACK
-DbgHelpWrapperSym::CallbackEspecial64(PCSTR aModuleName, DWORD64 aModuleBase,
-                                      ULONG aModuleSize, PVOID aUserContext) {
-  BOOL retval = TRUE;
-  auto context = reinterpret_cast<CallbackEspecial64UserContext*>(aUserContext);
-  DWORD64 addr = context->mAddr;
-
-  /*
-   * You'll want to control this if we are running on an
-   *  architecture where the addresses go the other direction.
-   * Not sure this is even a realistic consideration.
-   */
-  const BOOL addressIncreases = TRUE;
-
-  /*
-   * If it falls in side the known range, load the symbols.
-   */
-  if (addressIncreases
-          ? (addr >= aModuleBase && addr <= (aModuleBase + aModuleSize))
-          : (addr <= aModuleBase && addr >= (aModuleBase - aModuleSize))) {
-    retval = !!::SymLoadModule64(context->mSessionId, nullptr, aModuleName,
-                                 nullptr, aModuleBase, aModuleSize);
-    if (!retval) {
-      PrintError("SymLoadModule64");
-    }
-  }
-
-  return retval;
-}
-
-/*
- * SymGetModuleInfoEspecial
- *
- * Attempt to determine the module information.
- * Bug 112196 says this DLL may not have been loaded at the time
- *  SymInitialize was called, and thus the module information
- *  and symbol information is not available.
- * This code rectifies that problem.
- */
-
-// New members were added to IMAGEHLP_MODULE64 (that show up in the
-// Platform SDK that ships with VC8, but not the Platform SDK that ships
-// with VC7.1, i.e., between DbgHelp 6.0 and 6.1), but we don't need to
-// use them, and it's useful to be able to function correctly with the
-// older library.  (Stock Windows XP SP2 seems to ship with dbghelp.dll
-// version 5.1.)  Since Platform SDK version need not correspond to
-// compiler version, and the version number in debughlp.h was NOT bumped
-// when these changes were made, ifdef based on a constant that was
-// added between these versions.
-#  ifdef SSRVOPT_SETCONTEXT
-#    define NS_IMAGEHLP_MODULE64_SIZE                                        \
-      (((offsetof(IMAGEHLP_MODULE64, LoadedPdbName) + sizeof(DWORD64) - 1) / \
-        sizeof(DWORD64)) *                                                   \
-       sizeof(DWORD64))
-#  else
-#    define NS_IMAGEHLP_MODULE64_SIZE sizeof(IMAGEHLP_MODULE64)
-#  endif
-
-BOOL DbgHelpWrapperSym::SymGetModuleInfoEspecial64(
-    DWORD64 aAddr, PIMAGEHLP_MODULE64 aModuleInfo, PIMAGEHLP_LINE64 aLineInfo) {
-  if (!ReadyToUse()) {
-    return FALSE;
-  }
-
-  AutoCriticalSection guard(&sCriticalSection);
-  BOOL retval = FALSE;
-
-  /*
-   * Init the vars if we have em.
-   */
-  aModuleInfo->SizeOfStruct = NS_IMAGEHLP_MODULE64_SIZE;
-  if (aLineInfo) {
-    aLineInfo->SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-  }
-
-  /*
-   * Give it a go.
-   * It may already be loaded.
-   */
-  retval = ::SymGetModuleInfo64(sSessionId, aAddr, aModuleInfo);
-  if (retval == FALSE) {
-    /*
-     * Not loaded, here's the magic.
-     * Go through all the modules.
-     */
-    CallbackEspecial64UserContext context{
-        .mSessionId = sSessionId,
-        .mAddr = aAddr,
-    };
-    BOOL enumRes = ::EnumerateLoadedModules64(
-        sSessionId, CallbackEspecial64, reinterpret_cast<PVOID>(&context));
-    if (enumRes != FALSE) {
-      /*
-       * One final go.
-       * If it fails, then well, we have other problems.
-       */
-      retval = ::SymGetModuleInfo64(sSessionId, aAddr, aModuleInfo);
-    }
-  }
-
-  /*
-   * If we got module info, we may attempt line info as well.
-   * We will not report failure if this does not work.
-   */
-  if (retval != FALSE && aLineInfo) {
-    DWORD displacement = 0;
-    BOOL lineRes = FALSE;
-    lineRes =
-        ::SymGetLineFromAddr64(sSessionId, aAddr, &displacement, aLineInfo);
-    if (!lineRes) {
-      // Clear out aLineInfo to indicate that it's not valid
-      memset(aLineInfo, 0, sizeof(*aLineInfo));
-    }
-  }
-
-  return retval;
-}
-
-MFBT_API bool MozDescribeCodeAddress(void* aPC,
-                                     MozCodeAddressDetails* aDetails) {
-  aDetails->library[0] = '\0';
-  aDetails->loffset = 0;
-  aDetails->filename[0] = '\0';
-  aDetails->lineno = 0;
-  aDetails->function[0] = '\0';
-  aDetails->foffset = 0;
-
-  DbgHelpWrapperSym dbgHelp;
-  if (!dbgHelp.ReadyToUse()) {
-    return false;
-  }
-
-  // Attempt to load module info before we attempt to resolve the symbol.
-  // This just makes sure we get good info if available.
-  DWORD64 addr = (DWORD64)aPC;
-  IMAGEHLP_MODULE64 modInfo;
-  IMAGEHLP_LINE64 lineInfo;
-  BOOL modInfoRes;
-  modInfoRes = dbgHelp.SymGetModuleInfoEspecial64(addr, &modInfo, &lineInfo);
-
-  if (modInfoRes) {
-    strncpy(aDetails->library, modInfo.LoadedImageName,
-            sizeof(aDetails->library));
-    aDetails->library[std::size(aDetails->library) - 1] = '\0';
-    aDetails->loffset = (char*)aPC - (char*)modInfo.BaseOfImage;
-
-    if (lineInfo.FileName) {
-      strncpy(aDetails->filename, lineInfo.FileName,
-              sizeof(aDetails->filename));
-      aDetails->filename[std::size(aDetails->filename) - 1] = '\0';
-      aDetails->lineno = lineInfo.LineNumber;
-    }
-  }
-
-  ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) +
-                  sizeof(ULONG64) - 1) /
-                 sizeof(ULONG64)];
-  PSYMBOL_INFO pSymbol = (PSYMBOL_INFO)buffer;
-  pSymbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-  pSymbol->MaxNameLen = MAX_SYM_NAME;
-
-  DWORD64 displacement;
-  BOOL ok = dbgHelp.SymFromAddr(addr, &displacement, pSymbol);
-
-  if (ok) {
-    strncpy(aDetails->function, pSymbol->Name, sizeof(aDetails->function));
-    aDetails->function[std::size(aDetails->function) - 1] = '\0';
-    aDetails->foffset = static_cast<ptrdiff_t>(displacement);
-  }
-
-  return true;
-}
-
-// i386 or PPC Linux stackwalking code
-//
-// Changes to to OS/Architecture support here should be reflected in
-// build/moz.configure/memory.configure
-#elif HAVE_DLADDR &&                                           \
+#if   HAVE_DLADDR &&                                           \
     (HAVE__UNWIND_BACKTRACE || MOZ_STACKWALK_SUPPORTS_LINUX || \
      MOZ_STACKWALK_SUPPORTS_MACOSX)
 
@@ -938,36 +140,8 @@ MFBT_API void MozStackWalk(MozWalkStackCallback aCallback,
   void* stackEnd;
 #    if HAVE___LIBC_STACK_END
   stackEnd = __libc_stack_end;
-#    elif defined(XP_DARWIN)
-  stackEnd = pthread_get_stackaddr_np(pthread_self());
-#    elif defined(ANDROID)
-  pthread_attr_t sattr;
-  pthread_attr_init(&sattr);
-  int rc = pthread_getattr_np(pthread_self(), &sattr);
-  MOZ_RELEASE_ASSERT(rc == 0, "pthread_getattr_np failed");
-  void* stackBase = stackEnd = nullptr;
-  size_t stackSize = 0;
-  if (gettid() != getpid()) {
-    // bionic's pthread_attr_getstack doesn't tell the truth for the main
-    // thread (see bug 846670). So don't use it for the main thread.
-    if (!pthread_attr_getstack(&sattr, &stackBase, &stackSize)) {
-      stackEnd = static_cast<char*>(stackBase) + stackSize;
-    } else {
-      stackEnd = nullptr;
-    }
-  }
-  if (!stackEnd) {
-    // So consider the current frame pointer + an arbitrary size of 8MB
-    // (modulo overflow ; not really arbitrary as it's the default stack
-    // size for the main thread) if pthread_attr_getstack failed for
-    // some reason (or was skipped).
-    static const uintptr_t kMaxStackSize = 8 * 1024 * 1024;
-    uintptr_t maxStackStart = uintptr_t(-1) - kMaxStackSize;
-    uintptr_t stackStart = std::max(maxStackStart, uintptr_t(bp));
-    stackEnd = reinterpret_cast<void*>(stackStart + kMaxStackSize);
-  }
 #    else
-#      error Unsupported configuration
+  stackEnd = pthread_get_stackaddr_np(pthread_self());
 #    endif
   DoFramePointerStackWalk(aCallback, aFirstFramePC, aMaxFrames, aClosure, bp,
                           stackEnd);
@@ -1067,11 +241,7 @@ bool MFBT_API MozDescribeCodeAddress(void* aPC,
 
   Dl_info info;
 
-#  if defined(ANDROID) && defined(MOZ_LINKER)
-  int ok = __wrap_dladdr(aPC, &info);
-#  else
   int ok = dladdr(aPC, &info);
-#  endif
 
   if (!ok) {
     return true;
@@ -1081,7 +251,6 @@ bool MFBT_API MozDescribeCodeAddress(void* aPC,
   aDetails->library[std::size(aDetails->library) - 1] = '\0';
   aDetails->loffset = (char*)aPC - (char*)info.dli_fbase;
 
-#  if !defined(XP_FREEBSD)
   // On FreeBSD, dli_sname is unusably bad, it often returns things like
   // 'gtk_xtbin_new' or 'XRE_GetBootstrap' instead of long C++ symbols. Just let
   // GetFunction do the lookup directly in the ELF image.
@@ -1100,7 +269,6 @@ bool MFBT_API MozDescribeCodeAddress(void* aPC,
   }
 
   aDetails->foffset = (char*)aPC - (char*)info.dli_saddr;
-#  endif
 
   return true;
 }
@@ -1124,7 +292,6 @@ MFBT_API bool MozDescribeCodeAddress(void* aPC,
 
 #endif
 
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_LINUX)
 
 #  if defined(XP_MACOSX) && defined(__aarch64__)
 // On macOS arm64, system libraries are arm64e binaries, and arm64e can do
@@ -1219,15 +386,6 @@ MFBT_API void FramePointerStackWalk(MozWalkStackCallback aCallback,
 
 }  // namespace mozilla
 
-#else
-
-namespace mozilla {
-MFBT_API void FramePointerStackWalk(MozWalkStackCallback aCallback,
-                                    uint32_t aMaxFrames, void* aClosure,
-                                    void** aBp, void* aStackEnd) {}
-}  // namespace mozilla
-
-#endif
 
 MFBT_API int MozFormatCodeAddressDetails(
     char* aBuffer, uint32_t aBufferSize, uint32_t aFrameNumber, void* aPC,
@@ -1266,17 +424,9 @@ MFBT_API int MozFormatCodeAddress(char* aBuffer, uint32_t aBufferSize,
 }
 
 static void EnsureWrite(FILE* aStream, const char* aBuf, size_t aLen) {
-#ifdef XP_WIN
-  int fd = _fileno(aStream);
-#else
   int fd = fileno(aStream);
-#endif
   while (aLen > 0) {
-#ifdef XP_WIN
-    auto written = _write(fd, aBuf, aLen);
-#else
     auto written = write(fd, aBuf, aLen);
-#endif
     if (written <= 0 || size_t(written) > aLen) {
       break;
     }

@@ -10,17 +10,5 @@
  * various function names throughout the codebase.
  */
 
-#ifdef XP_WIN
-#  include <windows.h>
-#  undef assert
-#  undef GetProp
-#  undef MemoryBarrier
-#  undef SetProp
-#  undef CONST
-#  undef STRICT
-#  undef LEGACY
-#  undef THIS
-#  undef PASSTHROUGH
-#endif
 
 #endif /* util_WindowsWrapper_h */

@@ -6,9 +6,7 @@
 
 #include "UnscaledFontMac.h"
 #include "mozilla/webrender/WebRenderTypes.h"
-#ifdef MOZ_WIDGET_COCOA
 #  include "nsCocoaFeatures.h"
-#endif
 #include <dlfcn.h>
 
 #include <vector>
@@ -19,19 +17,14 @@
 #include "skia/include/core/SkPaint.h"
 #include "skia/include/core/SkPath.h"
 #include "skia/include/ports/SkTypeface_mac.h"
-#ifdef MOZ_WIDGET_UIKIT
-#  include <CoreFoundation/CoreFoundation.h>
-#endif
 #include "mozilla/gfx/Logging.h"
 
-#ifdef MOZ_WIDGET_COCOA
 // prototype for private API
 extern "C" {
 CGPathRef CGFontGetGlyphPath(CGFontRef fontRef,
                              CGAffineTransform* textTransform, int unknown,
                              CGGlyph glyph);
 };
-#endif
 
 #include "cairo-quartz.h"
 
@@ -78,7 +71,6 @@ class AutoRelease final {
 CTFontRef CreateCTFontFromCGFontWithVariations(CGFontRef aCGFont, CGFloat aSize,
                                                bool aInstalledFont,
                                                CTFontDescriptorRef aFontDesc) {
-#ifdef MOZ_WIDGET_COCOA
   // New implementation (see bug 1856035) for macOS 13+.
   if (nsCocoaFeatures::OnVenturaOrLater()) {
     // Create CTFont, applying any descriptor that was passed (used by
@@ -102,7 +94,6 @@ CTFontRef CreateCTFontFromCGFontWithVariations(CGFontRef aCGFont, CGFloat aSize,
     // No variations to set, just return the default CTFont.
     return ctFont.forget();
   }
-#endif
 
   // Older implementation used up to macOS 12.
   CTFontRef ctFont;

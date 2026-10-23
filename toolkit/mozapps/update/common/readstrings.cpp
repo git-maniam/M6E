@@ -9,17 +9,10 @@
 #include "readstrings.h"
 #include "updatererrors.h"
 
-#ifdef XP_WIN
-#  define NS_tfopen _wfopen
-#  define OPEN_MODE L"rb"
-#  define NS_tstrlen wcslen
-#  define NS_tstrcpy wcscpy
-#else
 #  define NS_tfopen fopen
 #  define OPEN_MODE "r"
 #  define NS_tstrlen strlen
 #  define NS_tstrcpy strcpy
-#endif
 
 // stack based FILE wrapper to ensure that fclose is called.
 class AutoFILE {
@@ -315,33 +308,6 @@ void IniReader::AddKey(const char* key, mozilla::UniquePtr<char[]>* outputPtr) {
   mNarrowOutputs.back().outputPtr = outputPtr;
 }
 
-#ifdef XP_WIN
-void IniReader::AddKey(const char* key,
-                       mozilla::UniquePtr<wchar_t[]>* outputPtr) {
-  size_t insertionIndex;
-  if (!MaybeAddKey(key, insertionIndex)) {
-    return;
-  }
-
-  if (!outputPtr) {
-    return;
-  }
-
-  mWideOutputs.emplace_back();
-  mWideOutputs.back().keyIndex = insertionIndex;
-  mWideOutputs.back().outputPtr = outputPtr;
-}
-
-// Returns true on success, false on failure.
-static bool ConvertToWide(const char* toConvert,
-                          mozilla::UniquePtr<wchar_t[]>* result) {
-  int bufferSize = MultiByteToWideChar(CP_UTF8, 0, toConvert, -1, nullptr, 0);
-  *result = mozilla::MakeUnique<wchar_t[]>(bufferSize);
-  int charsWritten =
-      MultiByteToWideChar(CP_UTF8, 0, toConvert, -1, result->get(), bufferSize);
-  return charsWritten > 0;
-}
-#endif
 
 int IniReader::Read() {
   if (mMaybeStatusCode.isSome()) {
@@ -393,16 +359,6 @@ int IniReader::Read() {
     }
   }
 
-#ifdef XP_WIN
-  for (const auto output : mWideOutputs) {
-    char* valueBuffer = results[output.keyIndex].get();
-    if (valueBuffer) {
-      if (!ConvertToWide(valueBuffer, output.outputPtr)) {
-        statusCode = STRING_CONVERSION_ERROR;
-      }
-    }
-  }
-#endif
 
   return statusCode;
 }

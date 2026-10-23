@@ -198,10 +198,6 @@ class NonBlockingTextureReadLock : public TextureReadLock {
   NonBlockingTextureReadLock* AsNonBlockingLock() override { return this; }
 };
 
-#ifdef XP_WIN
-class D3D11TextureData;
-class DXGIYCbCrTextureData;
-#endif
 
 class TextureData {
  public:
@@ -300,10 +296,6 @@ class TextureData {
     return TextureFlags::NO_FLAGS;
   }
 
-#ifdef XP_WIN
-  virtual D3D11TextureData* AsD3D11TextureData() { return nullptr; }
-  virtual DXGIYCbCrTextureData* AsDXGIYCbCrTextureData() { return nullptr; }
-#endif
 
   virtual BufferTextureData* AsBufferTextureData() { return nullptr; }
 

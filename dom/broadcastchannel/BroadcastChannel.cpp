@@ -26,9 +26,6 @@
 #include "nsGlobalWindowInner.h"
 #include "nsICookieJarSettings.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 namespace mozilla {
 

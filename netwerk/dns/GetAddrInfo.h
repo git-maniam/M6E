@@ -18,11 +18,7 @@
 #include "nscore.h"
 #include "prio.h"
 
-#if defined(XP_WIN)
-#  define DNSQUERY_AVAILABLE 1
-#else
 #  undef DNSQUERY_AVAILABLE
-#endif
 
 namespace mozilla {
 namespace net {

@@ -6,10 +6,6 @@
 
 #include <sstream>
 
-#if defined(XP_LINUX)
-#  include <fcntl.h>
-#  include <sys/mman.h>
-#endif
 
 #include "ETWTools.h"
 #include "GeckoProfiler.h"
@@ -593,11 +589,7 @@ static std::string GetMarkerFilename() {
   if (char* markerDir = getenv("MOZ_PERFORMANCE_MARKER_DIR")) {
     s << markerDir << "/";
   }
-#ifdef XP_WIN
-  s << "marker-" << GetCurrentProcessId() << ".txt";
-#else
   s << "marker-" << getpid() << ".txt";
-#endif
   return s.str();
 }
 
@@ -653,39 +645,6 @@ static bool MaybeOpenMarkerFile() {
     return true;
   }
 
-#ifdef XP_LINUX
-  // We treat marker files similar to Jitdump files (see PerfSpewer.cpp) and
-  // mmap them if needed.
-  int fd = open(GetMarkerFilename().c_str(), O_CREAT | O_TRUNC | O_RDWR, 0666);
-  sMarkerFile = fdopen(fd, "w+");
-  if (!sMarkerFile) {
-    return false;
-  }
-
-  // On Linux and Android, we need to mmap the file so that the path makes it
-  // into the perf.data file or into samply.
-  // On non-Android, make the mapping executable, otherwise the MMAP event may
-  // not be recorded by perf (see perf_event_open mmap_data).
-  // But on Android, don't make the mapping executable, because doing so can
-  // make the mmap call fail on some Android devices. It's also not required on
-  // Android because simpleperf sets mmap_data = 1 for unrelated reasons (it
-  // wants to know about vdex files for Java JIT profiling, see
-  // SetRecordNotExecutableMaps).
-  int protection = PROT_READ;
-#  ifndef ANDROID
-  protection |= PROT_EXEC;
-#  endif
-
-  // Mmap just the first page - that's enough to ensure the path makes it into
-  // the recording.
-  long page_size = sysconf(_SC_PAGESIZE);
-  void* mmap_address = mmap(nullptr, page_size, protection, MAP_PRIVATE, fd, 0);
-  if (mmap_address == MAP_FAILED) {
-    fclose(sMarkerFile);
-    sMarkerFile = nullptr;
-    return false;
-  }
-#else
   // On macOS, we just need to `open` or `fopen` the marker file, and samply
   // will know its path because it hooks those functions - no mmap needed.
   // On Windows, there's no need to use MOZ_USE_PERFORMANCE_MARKER_FILE because
@@ -696,7 +655,6 @@ static bool MaybeOpenMarkerFile() {
   if (!sMarkerFile) {
     return false;
   }
-#endif
   return true;
 }
 
@@ -709,29 +667,15 @@ void Performance::MaybeEmitExternalProfilerMarker(
     return;
   }
 
-#if defined(XP_LINUX) || defined(XP_WIN) || defined(XP_MACOSX)
   Maybe<std::pair<TimeStamp, TimeStamp>> tsPair =
       GetTimeStampsForMarker(aStartMark, aEndMark, aOptions);
   if (tsPair.isNothing()) {
     return;
   }
   auto [startTimeStamp, endTimeStamp] = tsPair.value();
-#endif
 
-#ifdef XP_LINUX
-  uint64_t rawStart = startTimeStamp.RawClockMonotonicNanosecondsSinceBoot();
-  uint64_t rawEnd = endTimeStamp.RawClockMonotonicNanosecondsSinceBoot();
-#elif XP_WIN
-  uint64_t rawStart = startTimeStamp.RawQueryPerformanceCounterValue();
-  uint64_t rawEnd = endTimeStamp.RawQueryPerformanceCounterValue();
-#elif XP_MACOSX
   uint64_t rawStart = startTimeStamp.RawMachAbsoluteTimeNanoseconds();
   uint64_t rawEnd = endTimeStamp.RawMachAbsoluteTimeNanoseconds();
-#else
-  uint64_t rawStart = 0;
-  uint64_t rawEnd = 0;
-  MOZ_CRASH("no timestamp");
-#endif
   // Write a line for this measure to the marker file. The marker file uses a
   // text-based format where every line is one marker, and each line has the
   // format:

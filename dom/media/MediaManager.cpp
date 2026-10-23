@@ -72,9 +72,6 @@
 #  include "modules/audio_processing/include/audio_processing.h"
 #endif
 
-#if defined(XP_WIN)
-#  include <objbase.h>
-#endif
 
 // A specialization of nsMainThreadPtrHolder for
 // mozilla::dom::CallbackObjectHolder.  See documentation for
@@ -2938,13 +2935,6 @@ static void ReduceConstraint(
     (void)aConstraint.SetAsMediaTrackConstraints();
   }
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_UIKIT)
-  if (facingMode) {
-    aConstraint.SetAsMediaTrackConstraints().mFacingMode.Construct(*facingMode);
-  } else {
-    (void)aConstraint.SetAsMediaTrackConstraints();
-  }
-#endif
 }
 
 /**

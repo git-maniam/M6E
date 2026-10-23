@@ -60,11 +60,7 @@ struct SIB_byte {
    unsigned int base  : 3;
 };
 
-#ifdef WIN32
-static void byte_decode(unsigned char b, struct modRM_byte *modrm) {
-#else
 static inline void byte_decode(unsigned char b, struct modRM_byte *modrm) {
-#endif
 	/* generic bitfield-packing routine */
 
 	modrm->mod = b >> 6;	/* top 2 bits */

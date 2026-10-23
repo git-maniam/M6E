@@ -13,17 +13,9 @@
 #include "nsIThread.h"
 #include "nsString.h"
 
-#if defined(XP_WIN)
-#  include <d3d11.h>
-
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#elif defined(XP_MACOSX)
 #  include "mozilla/gfx/MacIOSurface.h"
-#endif
 
-#if !defined(XP_WIN)
 #  include <sys/stat.h>  // for umask()
-#endif
 
 #include "OpenVRCosmosMapper.h"
 #include "OpenVRDefaultMapper.h"
@@ -34,10 +26,6 @@
 #include "binding/OpenVRViveBinding.h"
 #include "mozilla/dom/GamepadBinding.h"
 #include "mozilla/dom/GamepadEventTypes.h"
-#if defined(XP_WIN)  // Windows Mixed Reality is only available in Windows.
-#  include "OpenVRWMRMapper.h"
-#  include "binding/OpenVRWMRBinding.h"
-#endif
 
 #include "VRParent.h"
 #include "VRProcessChild.h"
@@ -100,9 +88,6 @@ class ControllerManifestFile {
 StaticRefPtr<ControllerManifestFile> sCosmosBindingFile;
 StaticRefPtr<ControllerManifestFile> sKnucklesBindingFile;
 StaticRefPtr<ControllerManifestFile> sViveBindingFile;
-#if defined(XP_WIN)
-StaticRefPtr<ControllerManifestFile> sWMRBindingFile;
-#endif
 StaticRefPtr<ControllerManifestFile> sControllerActionFile;
 
 dom::GamepadHand GetControllerHandFromControllerRole(OpenVRHand aRole) {
@@ -135,32 +120,6 @@ bool FileIsExisting(const nsCString& aPath) {
 
 };  // anonymous namespace
 
-#if defined(XP_WIN)
-bool GenerateTempFileName(nsCString& aPath) {
-  TCHAR tempPathBuffer[MAX_PATH];
-  TCHAR tempFileName[MAX_PATH];
-
-  // Gets the temp path env string (no guarantee it's a valid path).
-  DWORD dwRetVal = GetTempPath(MAX_PATH, tempPathBuffer);
-  if (dwRetVal > MAX_PATH || (dwRetVal == 0)) {
-    NS_WARNING("OpenVR - Creating temp path failed.");
-    return false;
-  }
-
-  // Generates a temporary file name.
-  UINT uRetVal = GetTempFileName(tempPathBuffer,  // directory for tmp files
-                                 TEXT("mozvr"),   // temp file name prefix
-                                 0,               // create unique name
-                                 tempFileName);   // buffer for name
-  if (uRetVal == 0) {
-    NS_WARNING("OpenVR - Creating temp file failed.");
-    return false;
-  }
-
-  aPath.Assign(NS_ConvertUTF16toUTF8(tempFileName));
-  return true;
-}
-#else
 bool GenerateTempFileName(nsCString& aPath) {
   const char tmp[] = "/tmp/mozvrXXXXXX";
   char fileName[PATH_MAX];
@@ -180,7 +139,6 @@ bool GenerateTempFileName(nsCString& aPath) {
   aPath.Assign(fileName);
   return true;
 }
-#endif  // defined(XP_WIN)
 
 OpenVRSession::OpenVRSession()
     : mVRSystem(nullptr),
@@ -250,13 +208,6 @@ bool OpenVRSession::Initialize(mozilla::gfx::VRSystemState& aSystemState,
     return false;
   }
 
-#if defined(XP_WIN)
-  if (!CreateD3DObjects()) {
-    Shutdown();
-    return false;
-  }
-
-#endif
 
   // Configure coordinate system
   mVRCompositor->SetTrackingSpace(::vr::TrackingUniverseSeated);
@@ -319,23 +270,6 @@ bool OpenVRSession::SetupContollerActions() {
       }
     }
 
-#if defined(XP_WIN)
-    if (vrParent->GetOpenVRControllerManifestPath(VRControllerType::MSMR,
-                                                  &output)) {
-      WMRManifest = output;
-    }
-    if (!WMRManifest.Length() || !FileIsExisting(WMRManifest)) {
-      if (!GenerateTempFileName(WMRManifest)) {
-        return false;
-      }
-      OpenVRWMRBinding WMRBinding;
-      std::ofstream WMRBindingFile(WMRManifest.get());
-      if (WMRBindingFile.is_open()) {
-        WMRBindingFile << WMRBinding.binding;
-        WMRBindingFile.close();
-      }
-    }
-#endif
     if (vrParent->GetOpenVRControllerManifestPath(VRControllerType::ValveIndex,
                                                   &output)) {
       knucklesManifest = output;
@@ -438,28 +372,6 @@ bool OpenVRSession::SetupContollerActions() {
       }
     }
     cosmosManifest = sCosmosBindingFile->GetFileName();
-#if defined(XP_WIN)
-    if (!sWMRBindingFile) {
-      sWMRBindingFile = ControllerManifestFile::CreateManifest();
-      NS_DispatchToMainThread(
-          NS_NewRunnableFunction("ClearOnShutdown ControllerManifestFile",
-                                 []() { ClearOnShutdown(&sWMRBindingFile); }));
-    }
-    if (!sWMRBindingFile->IsExisting()) {
-      nsCString WMRBindingPath;
-      if (!GenerateTempFileName(WMRBindingPath)) {
-        return false;
-      }
-      sWMRBindingFile->SetFileName(WMRBindingPath.get());
-      OpenVRWMRBinding WMRBinding;
-      std::ofstream WMRBindingFile(sWMRBindingFile->GetFileName());
-      if (WMRBindingFile.is_open()) {
-        WMRBindingFile << WMRBinding.binding;
-        WMRBindingFile.close();
-      }
-    }
-    WMRManifest = sWMRBindingFile->GetFileName();
-#endif
   }
   // End of Getting / Generating manifest file paths.
 
@@ -588,9 +500,6 @@ bool OpenVRSession::SetupContollerActions() {
     SetupActionWriterByControllerType("vive_controller", viveManifest);
     SetupActionWriterByControllerType("knuckles", knucklesManifest);
     SetupActionWriterByControllerType("vive_cosmos_controller", cosmosManifest);
-#if defined(XP_WIN)
-    SetupActionWriterByControllerType("holographic_controller", WMRManifest);
-#endif
     actionWriter.EndArray();  // End "default_bindings": []
 
     actionWriter.StartArrayProperty("actions");
@@ -674,18 +583,6 @@ bool OpenVRSession::SetupContollerActions() {
   return true;
 }
 
-#if defined(XP_WIN)
-bool OpenVRSession::CreateD3DObjects() {
-  RefPtr<ID3D11Device> device = gfx::DeviceManagerDx::Get()->GetVRDevice();
-  if (!device) {
-    return false;
-  }
-  if (!CreateD3DContext(device)) {
-    return false;
-  }
-  return true;
-}
-#endif
 
 void OpenVRSession::Shutdown() {
   StopHapticTimer();
@@ -1024,11 +921,6 @@ void OpenVRSession::EnumerateControllers(VRSystemState& aState) {
       case VRControllerType::HTCViveCosmos:
         mControllerMapper = MakeUnique<OpenVRCosmosMapper>();
         break;
-#if defined(XP_WIN)
-      case VRControllerType::MSMR:
-        mControllerMapper = MakeUnique<OpenVRWMRMapper>();
-        break;
-#endif
       case VRControllerType::ValveIndex:
         mControllerMapper = MakeUnique<OpenVRKnucklesMapper>();
         break;
@@ -1265,28 +1157,18 @@ void OpenVRSession::ProcessEvents(mozilla::gfx::VRSystemState& aSystemState) {
   }
 }
 
-#if defined(XP_WIN)
-bool OpenVRSession::SubmitFrame(
-    const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
-    ID3D11Texture2D* aTexture) {
-  return SubmitFrame((void*)aTexture, ::vr::ETextureType::TextureType_DirectX,
-                     aLayer.leftEyeRect, aLayer.rightEyeRect);
-}
-#elif defined(XP_MACOSX)
 bool OpenVRSession::SubmitFrame(
     const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
     const VRLayerTextureHandle& aTexture) {
   return SubmitFrame(aTexture, ::vr::ETextureType::TextureType_IOSurface,
                      aLayer.leftEyeRect, aLayer.rightEyeRect);
 }
-#endif
 
 bool OpenVRSession::SubmitFrame(const VRLayerTextureHandle& aTextureHandle,
                                 ::vr::ETextureType aTextureType,
                                 const VRLayerEyeRect& aLeftEyeRect,
                                 const VRLayerEyeRect& aRightEyeRect) {
   ::vr::Texture_t tex;
-#if defined(XP_MACOSX)
   // We get aTextureHandle from get_SurfaceDescriptorMacIOSurface() at
   // VRDisplayExternal. scaleFactor and opaque are skipped because they always
   // are 1.0 and false.
@@ -1300,9 +1182,6 @@ bool OpenVRSession::SubmitFrame(const VRLayerTextureHandle& aTextureHandle,
 
   CFTypeRefPtr<IOSurfaceRef> ioSurface = surf->GetIOSurfaceRef();
   tex.handle = (void*)ioSurface.get();
-#else
-  tex.handle = aTextureHandle;
-#endif
   tex.eType = aTextureType;
   tex.eColorSpace = ::vr::EColorSpace::ColorSpace_Auto;
 

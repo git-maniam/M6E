@@ -5,9 +5,7 @@
 #include "XMLHttpRequestMainThread.h"
 
 #include <algorithm>
-#ifndef XP_WIN
 #  include <unistd.h>
-#endif
 #include "GeckoProfiler.h"
 #include "MultipartBlobImpl.h"
 #include "XMLHttpRequestUpload.h"

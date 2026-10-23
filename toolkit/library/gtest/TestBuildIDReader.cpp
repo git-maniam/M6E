@@ -23,31 +23,16 @@ using namespace mozilla;
 #define WAIT_FOR_EVENTS \
   SpinEventLoopUntil("BuildIDReader::emptyUtil"_ns, [&]() { return done; });
 
-#if defined(XP_WIN)
-#  define BROKEN_XUL_DLL u"xul_broken_buildid.dll"_ns
-#  define CORRECT_XUL_DLL u"xul_correct_buildid.dll"_ns
-#  define MISSING_XUL_DLL u"xul_missing_buildid.dll"_ns
-#elif defined(XP_MACOSX)
 #  define BROKEN_XUL_DLL u"libxul_broken_buildid.dylib"_ns
 #  define CORRECT_XUL_DLL u"libxul_correct_buildid.dylib"_ns
 #  define MISSING_XUL_DLL u"libxul_missing_buildid.dylib"_ns
-#else
-#  define BROKEN_XUL_DLL u"libxul_broken_buildid.so"_ns
-#  define CORRECT_XUL_DLL u"libxul_correct_buildid.so"_ns
-#  define MISSING_XUL_DLL u"libxul_missing_buildid.so"_ns
-#endif
 
 class BuildIDReader : public ::testing::Test {
  public:
   nsresult getLib(const nsString& lib, nsAutoString& val) {
     nsresult rv;
     nsCOMPtr<nsIFile> file;
-#if defined(ANDROID)
-    rv =
-        NS_NewLocalFile(u"/data/local/tmp/test_root/"_ns, getter_AddRefs(file));
-#else
     rv = NS_GetSpecialDirectory(NS_GRE_BIN_DIR, getter_AddRefs(file));
-#endif
     if (!NS_SUCCEEDED(rv)) {
       return rv;
     }

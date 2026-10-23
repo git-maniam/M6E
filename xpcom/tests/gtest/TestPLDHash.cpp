@@ -9,11 +9,9 @@
 // This test mostly focuses on edge cases. But more coverage of normal
 // operations wouldn't be a bad thing.
 
-#ifdef XP_UNIX
 #  include <sys/types.h>
 #  include <sys/wait.h>
 #  include <unistd.h>
-#endif
 
 // We can test that certain operations cause expected aborts by forking
 // and then checking that the child aborted in the expected way (i.e. via

@@ -13,15 +13,7 @@
 
 #include "mozilla/Mutex.h"
 
-#if defined(XP_WIN)
-// We need this to declare base::MessagePumpWin::Dispatcher, which we should
-// really just eliminate.
-#  include "base/message_pump_win.h"
-#elif defined(XP_DARWIN)
 #  include "base/message_pump_kqueue.h"
-#else
-#  include "base/message_pump_libevent.h"
-#endif
 
 #include "nsCOMPtr.h"
 #include "nsIRunnable.h"
@@ -244,11 +236,6 @@ class MessageLoop : public base::MessagePump::Delegate {
     exception_restoration_ = restore;
   }
 
-#if defined(XP_WIN)
-  void set_os_modal_loop(bool os_modal_loop) { os_modal_loop_ = os_modal_loop; }
-
-  bool& os_modal_loop() { return os_modal_loop_; }
-#endif  // XP_WIN
 
   // Set the timeouts for background hang monitoring.
   // A value of 0 indicates there is no timeout.
@@ -270,9 +257,6 @@ class MessageLoop : public base::MessagePump::Delegate {
     // once it becomes idle.
     bool quit_received;
 
-#if defined(XP_WIN)
-    base::MessagePumpWin::Dispatcher* dispatcher;
-#endif
   };
 
   class AutoRunState : RunState {
@@ -318,19 +302,9 @@ class MessageLoop : public base::MessagePump::Delegate {
   typedef std::queue<PendingTask> TaskQueue;
   typedef std::priority_queue<PendingTask> DelayedTaskQueue;
 
-#if defined(XP_WIN)
-  base::MessagePumpWin* pump_win() {
-    return static_cast<base::MessagePumpWin*>(pump_.get());
-  }
-#elif defined(XP_DARWIN)
   base::MessagePumpKqueue* pump_kqueue() {
     return static_cast<base::MessagePumpKqueue*>(pump_.get());
   }
-#else
-  base::MessagePumpLibevent* pump_libevent() {
-    return static_cast<base::MessagePumpLibevent*>(pump_.get());
-  }
-#endif
 
   // A function to encapsulate all the exception handling capability in the
   // stacks around the running of a main message loop.  It will run the message
@@ -425,11 +399,6 @@ class MessageLoop : public base::MessagePump::Delegate {
   int run_depth_base_;
   bool shutting_down_;
 
-#if defined(XP_WIN)
-  // Should be set to true before calling Windows APIs like TrackPopupMenu, etc
-  // which enter a modal message loop.
-  bool os_modal_loop_;
-#endif
 
   // Timeout values for hang monitoring
   uint32_t transient_hang_timeout_;
@@ -466,24 +435,6 @@ class MessageLoopForUI : public MessageLoop {
     return static_cast<MessageLoopForUI*>(loop);
   }
 
-#if defined(XP_WIN)
-  typedef base::MessagePumpWin::Dispatcher Dispatcher;
-  typedef base::MessagePumpWin::Observer Observer;
-
-  // Please see MessagePumpWin for definitions of these methods.
-  void Run(Dispatcher* dispatcher);
-  void AddObserver(Observer* observer);
-  void RemoveObserver(Observer* observer);
-  void WillProcessMessage(const MSG& message);
-  void DidProcessMessage(const MSG& message);
-  void PumpOutPendingPaintMessages();
-
- protected:
-  // TODO(rvargas): Make this platform independent.
-  base::MessagePumpForUI* pump_ui() {
-    return static_cast<base::MessagePumpForUI*>(pump_.get());
-  }
-#endif  // defined(XP_WIN)
 };
 
 // Do not add any member variables to MessageLoopForUI!  This is important b/c
@@ -510,21 +461,6 @@ class MessageLoopForIO : public MessageLoop {
     return static_cast<MessageLoopForIO*>(loop);
   }
 
-#if defined(XP_WIN)
-  typedef base::MessagePumpForIO::IOHandler IOHandler;
-  typedef base::MessagePumpForIO::IOContext IOContext;
-
-  // Please see MessagePumpWin for definitions of these methods.
-  void RegisterIOHandler(HANDLE file_handle, IOHandler* handler);
-  bool WaitForIOCompletion(DWORD timeout, IOHandler* filter);
-
- protected:
-  // TODO(rvargas): Make this platform independent.
-  base::MessagePumpForIO* pump_io() {
-    return static_cast<base::MessagePumpForIO*>(pump_.get());
-  }
-
-#elif defined(XP_DARWIN)
 
   typedef base::MessagePumpKqueue::Watcher Watcher;
   typedef base::MessagePumpKqueue::FileDescriptorWatcher FileDescriptorWatcher;
@@ -546,22 +482,6 @@ class MessageLoopForIO : public MessageLoop {
                             MachPortWatchController* controller,
                             MachPortWatcher* delegate);
 
-#else
-  typedef base::MessagePumpLibevent::Watcher Watcher;
-  typedef base::MessagePumpLibevent::FileDescriptorWatcher
-      FileDescriptorWatcher;
-
-  enum Mode {
-    WATCH_READ = base::MessagePumpLibevent::WATCH_READ,
-    WATCH_WRITE = base::MessagePumpLibevent::WATCH_WRITE,
-    WATCH_READ_WRITE = base::MessagePumpLibevent::WATCH_READ_WRITE
-  };
-
-  // Please see MessagePumpLibevent for definition.
-  bool WatchFileDescriptor(int fd, bool persistent, Mode mode,
-                           FileDescriptorWatcher* controller,
-                           Watcher* delegate);
-#endif
 };
 
 // Do not add any member variables to MessageLoopForIO!  This is important b/c

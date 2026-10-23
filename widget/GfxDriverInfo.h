@@ -479,20 +479,6 @@ inline uint64_t DriverVersion(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
 }
 
 inline uint64_t V(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
-#ifdef XP_WIN
-  // We make sure every driver number is padded by 0s, this will allow us the
-  // easiest 'compare as if decimals' approach. See ParseDriverVersion for a
-  // more extensive explanation of this approach.
-  while (b > 0 && b < 1000) {
-    b *= 10;
-  }
-  while (c > 0 && c < 1000) {
-    c *= 10;
-  }
-  while (d > 0 && d < 1000) {
-    d *= 10;
-  }
-#endif
   return DriverVersion(a, b, c, d);
 }
 
@@ -569,7 +555,6 @@ inline bool ParseDriverVersion(const nsAString& aVersion,
                                uint64_t* aNumericVersion) {
   *aNumericVersion = 0;
 
-#ifndef ANDROID
   int a, b, c, d;
   char aStr[8], bStr[8], cStr[8], dStr[8];
   /* honestly, why do I even bother */
@@ -577,11 +562,6 @@ inline bool ParseDriverVersion(const nsAString& aVersion,
                           bStr, cStr, dStr))
     return false;
 
-#  ifdef XP_WIN
-  PadDriverDecimal(bStr);
-  PadDriverDecimal(cStr);
-  PadDriverDecimal(dStr);
-#  endif
 
   a = atoi(aStr);
   b = atoi(bStr);
@@ -594,11 +574,6 @@ inline bool ParseDriverVersion(const nsAString& aVersion,
   if (d < 0 || d > 0xffff) return false;
 
   *aNumericVersion = DriverVersion(a, b, c, d);
-#else
-  // Can't use aVersion.ToInteger() because that's not compiled into our code
-  // unless we have XPCOM_GLUE_AVOID_NSPR disabled.
-  *aNumericVersion = atoi(NS_LossyConvertUTF16toASCII(aVersion).get());
-#endif
   MOZ_ASSERT(*aNumericVersion != GfxDriverInfo::allDriverVersions);
   return true;
 }

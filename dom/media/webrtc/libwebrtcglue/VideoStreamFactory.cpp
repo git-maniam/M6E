@@ -240,13 +240,9 @@ std::vector<webrtc::VideoStream> VideoStreamFactory::CreateEncoderStreams(
     if (streamCount > 1) {
       video_stream.num_temporal_layers = 2;
       if (mCodecConfig.mName == "H264") {
-#ifdef ANDROID
-        video_stream.num_temporal_layers = 1;
-#else
         if (!HaveGMPFor("encode-video"_ns, {"moz-h264-temporal-svc"_ns})) {
           video_stream.num_temporal_layers = 1;
         }
-#endif
       }
       // XXX Bug 1390215 investigate using more of
       // simulcast.cc:GetSimulcastConfig() or our own algorithm to replace it

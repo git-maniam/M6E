@@ -120,13 +120,7 @@
 #include "nscore.h"
 #include "xpcpublic.h"
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 using mozilla::dom::cache::CacheStorage;
 using mozilla::dom::workerinternals::NamedWorkerGlobalScopeMixin;
@@ -811,9 +805,6 @@ void WorkerGlobalScope::Dump(const Optional<nsAString>& aString) const {
 
   MOZ_LOG(nsContentUtils::DOMDumpLog(), LogLevel::Debug,
           ("[Worker.Dump] %s", str.get()));
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", str.get());
-#endif
   fputs(str.get(), stdout);
   fflush(stdout);
 }

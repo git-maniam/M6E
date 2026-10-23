@@ -69,7 +69,6 @@ TEST(RustXpcom, DynamicCastVoid)
   nsCOMPtr<nsISupports> observerSupports = do_QueryInterface(observer);
   EXPECT_EQ(runnableSupports.get(), observerSupports.get());
 
-#ifndef XP_WIN
   // They should have the same address when dynamic_cast to void*
   // dynamic_cast<void*> is not supported without rtti on windows.
   EXPECT_EQ(dynamic_cast<void*>(runnable.get()),
@@ -79,5 +78,4 @@ TEST(RustXpcom, DynamicCastVoid)
   // `dynamic_cast<void*>`
   EXPECT_EQ(dynamic_cast<void*>(observer.get()),
             static_cast<void*>(observerSupports.get()));
-#endif
 }

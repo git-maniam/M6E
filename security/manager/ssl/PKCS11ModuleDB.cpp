@@ -26,10 +26,8 @@
 #include "pk11pub.h"
 #include "xpcpublic.h"
 
-#if defined(XP_MACOSX)
 #  include "nsIFile.h"
 #  include "nsMacUtilsImpl.h"
-#endif  // defined(XP_MACOSX)
 
 using mozilla::ErrorResult;
 using mozilla::dom::Promise;
@@ -238,7 +236,6 @@ PKCS11ModuleDB::DeleteModule(const nsAString& aModuleName, JSContext* aCx,
   return DispatchToNSSTaskQueue(runnable.forget());
 }
 
-#if defined(XP_MACOSX)
 // Given a path to a module, return the filename in `aFilename`.
 nsresult ModulePathToFilename(const nsCString& aModulePath,
                               nsCString& aFilename) {
@@ -286,7 +283,6 @@ void CollectThirdPartyModuleFilename(const nsCString& aModulePath) {
   NS_ENSURE_SUCCESS_VOID(rv);
   third_party_module_profile_entries.Add(filename);
 }
-#endif  // defined(XP_MACOSX)
 
 nsresult PKCS11ModuleDB::DoAddModule(const nsCString& moduleName,
                                      const nsCString& libraryPath,
@@ -306,9 +302,7 @@ nsresult PKCS11ModuleDB::DoAddModule(const nsCString& moduleName,
     return NS_ERROR_FAILURE;
   }
 
-#if defined(XP_MACOSX)
   CollectThirdPartyModuleSignatureType(libraryPath);
-#endif  // defined(XP_MACOSX)
 
   CollectThirdPartyPKCS11ModuleTelemetry();
 
@@ -703,7 +697,6 @@ void CollectThirdPartyPKCS11ModuleTelemetry(bool aIsInitialization) {
     }
     if (isThirdParty) {
       thirdPartyModulesLoaded++;
-#if defined(XP_MACOSX)
       // Collect third party module filenames once per launch.
       // We collect signature type when adding a module. It would be wasteful
       // and duplicative to collect signature information on each launch given
@@ -722,7 +715,6 @@ void CollectThirdPartyPKCS11ModuleTelemetry(bool aIsInitialization) {
                                    }),
             EventQueuePriority::Idle);
       }
-#endif  // defined(XP_MACOSX)
     }
   }
   mozilla::glean::pkcs11::third_party_modules_loaded.Set(

@@ -11,11 +11,6 @@
 #endif
 #include "PlatformDecoderModule.h"
 #include "prlink.h"
-#ifdef MOZ_WIDGET_GTK
-#  include "VALibWrapper.h"
-#  include "mozilla/gfx/gfxVars.h"
-#  include "mozilla/widget/DMABufDevice.h"
-#endif
 
 #define AV_LOG_QUIET -8
 #define AV_LOG_PANIC 0
@@ -345,47 +340,10 @@ FFmpegLibWrapper::LinkResult FFmpegLibWrapper::Link() {
                         AV_FUNC_58 | AV_FUNC_59 | AV_FUNC_60 | AV_FUNC_61 |
                             AV_FUNC_62 | AV_FUNC_63)
 
-#ifdef MOZ_WIDGET_GTK
-  AV_FUNC_OPTION_SILENT(av_hwdevice_hwconfig_alloc,
-                        AV_FUNC_AVUTIL_58 | AV_FUNC_AVUTIL_59 |
-                            AV_FUNC_AVUTIL_60 | AV_FUNC_AVUTIL_61 |
-                            AV_FUNC_AVUTIL_62 | AV_FUNC_AVUTIL_63)
-  AV_FUNC_OPTION_SILENT(av_hwdevice_get_hwframe_constraints,
-                        AV_FUNC_AVUTIL_58 | AV_FUNC_AVUTIL_59 |
-                            AV_FUNC_AVUTIL_60 | AV_FUNC_AVUTIL_61 |
-                            AV_FUNC_AVUTIL_62 | AV_FUNC_AVUTIL_63)
-  AV_FUNC_OPTION_SILENT(av_hwframe_constraints_free,
-                        AV_FUNC_AVUTIL_58 | AV_FUNC_AVUTIL_59 |
-                            AV_FUNC_AVUTIL_60 | AV_FUNC_AVUTIL_61 |
-                            AV_FUNC_AVUTIL_62 | AV_FUNC_AVUTIL_63)
-  AV_FUNC_OPTION_SILENT(av_hwframe_transfer_get_formats,
-                        AV_FUNC_AVUTIL_58 | AV_FUNC_AVUTIL_59 |
-                            AV_FUNC_AVUTIL_60 | AV_FUNC_AVUTIL_61 |
-                            AV_FUNC_AVUTIL_62 | AV_FUNC_AVUTIL_63)
-  AV_FUNC_OPTION_SILENT(av_hwdevice_ctx_create_derived,
-                        AV_FUNC_AVUTIL_58 | AV_FUNC_AVUTIL_59 |
-                            AV_FUNC_AVUTIL_60 | AV_FUNC_AVUTIL_61 |
-                            AV_FUNC_AVUTIL_62 | AV_FUNC_AVUTIL_63)
-  AV_FUNC_OPTION_SILENT(av_hwdevice_get_type_name,
-                        AV_FUNC_AVUTIL_58 | AV_FUNC_AVUTIL_59 |
-                            AV_FUNC_AVUTIL_60 | AV_FUNC_AVUTIL_61 |
-                            AV_FUNC_AVUTIL_62 | AV_FUNC_AVUTIL_63)
-  AV_FUNC_OPTION_SILENT(avcodec_get_name, AV_FUNC_57 | AV_FUNC_58 | AV_FUNC_59 |
-                                              AV_FUNC_60 | AV_FUNC_61 |
-                                              AV_FUNC_62 | AV_FUNC_63)
-  AV_FUNC_OPTION_SILENT(av_get_pix_fmt_string,
-                        AV_FUNC_AVUTIL_58 | AV_FUNC_AVUTIL_59 |
-                            AV_FUNC_AVUTIL_60 | AV_FUNC_AVUTIL_61 |
-                            AV_FUNC_AVUTIL_62 | AV_FUNC_AVUTIL_63)
-#endif
 
   AV_FUNC_OPTION(av_tx_init, AV_FUNC_AVUTIL_ALL)
   AV_FUNC_OPTION(av_tx_uninit, AV_FUNC_AVUTIL_ALL)
 
-#ifdef MOZ_WIDGET_ANDROID
-  AV_FUNC(av_mediacodec_release_buffer, AV_FUNC_AVCODEC_ALL);
-  AV_FUNC(moz_avcodec_mediacodec_is_eos, AV_FUNC_AVCODEC_ALL);
-#endif
 
 #undef AV_FUNC
 #undef AV_FUNC_OPTION
@@ -491,23 +449,5 @@ void FFmpegLibWrapper::UpdateLogLevel() {
   }
 }
 
-#ifdef MOZ_WIDGET_GTK
-bool FFmpegLibWrapper::IsVAAPIAvailable() const {
-#  define VA_FUNC_LOADED(func) ((func) != nullptr)
-  return VA_FUNC_LOADED(avcodec_get_hw_config) &&
-         VA_FUNC_LOADED(av_hwdevice_ctx_alloc) &&
-         VA_FUNC_LOADED(av_hwdevice_ctx_init) &&
-         VA_FUNC_LOADED(av_hwdevice_hwconfig_alloc) &&
-         VA_FUNC_LOADED(av_hwdevice_get_hwframe_constraints) &&
-         VA_FUNC_LOADED(av_hwframe_constraints_free) &&
-         VA_FUNC_LOADED(av_buffer_ref) && VA_FUNC_LOADED(av_buffer_unref) &&
-         VA_FUNC_LOADED(av_hwframe_transfer_get_formats) &&
-         VA_FUNC_LOADED(av_hwdevice_ctx_create_derived) &&
-         VA_FUNC_LOADED(av_hwframe_ctx_alloc) && VA_FUNC_LOADED(av_dict_set) &&
-         VA_FUNC_LOADED(av_dict_free) && VA_FUNC_LOADED(avcodec_get_name) &&
-         VA_FUNC_LOADED(av_get_pix_fmt_string) &&
-         VALibWrapper::IsVAAPIAvailable();
-}
-#endif
 
 }  // namespace mozilla

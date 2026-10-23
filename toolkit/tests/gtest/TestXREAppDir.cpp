@@ -18,18 +18,11 @@
 #include "SpecialSystemDirectory.h"
 #include "nsPrintfCString.h"
 
-#if defined(XP_UNIX)
 #  include <unistd.h>
 #  include <sys/stat.h>
-#endif  // XP_UNIX
 
 using namespace mozilla;
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#  include <shlobj.h>
-#  include <knownfolders.h>  // FOLDERID_Documents
-#endif
 
 #include "mozilla/XREAppData.h"
 
@@ -54,27 +47,13 @@ class BaseXREAppDir : public ::testing::Test {
 
 // There is no need to mock on macOS because nsXREDirProvider relies on macOS
 // level APIs, see below
-#if defined(XP_UNIX) && !defined(XP_MACOSX)
-    mMockedHomeDir = GetNewHome();
-#endif
 
     mFakeAppData = XREAppData();
     mFakeAppData.profile = "fooprofile";
-#if defined(ANDROID)
-    mFakeAppData.name = "Fennec";
-#else
     mFakeAppData.name = EXPECTED_APP_NAME_CASED;
-#endif
     mFakeAppData.vendor = "Mozilla";
 
-#if defined(XP_WIN)
-    rv = GetShellFolderPath(FOLDERID_RoamingAppData, mRoamingHome);
-    EXPECT_NS_SUCCEEDED(rv);
-    rv = GetShellFolderPath(FOLDERID_LocalAppData, mLocalHome);
-    EXPECT_NS_SUCCEEDED(rv);
-#endif
 
-#if defined(XP_MACOSX)
     rv = FindFolder(kApplicationSupportFolderType, mAppSupport);
     EXPECT_NS_SUCCEEDED(rv);
     rv = FindFolder(kCachedDataFolderType, mAppCache);
@@ -83,26 +62,9 @@ class BaseXREAppDir : public ::testing::Test {
     EXPECT_NS_SUCCEEDED(rv);
     rv = FindFolder(kCurrentUserFolderType, mHomeRoot);
     EXPECT_NS_SUCCEEDED(rv);
-#endif
   }
 
-#if defined(XP_WIN)
-  nsresult GetShellFolderPath(KNOWNFOLDERID folder, nsACString& _retval) {
-    DWORD flags =
-        KF_FLAG_SIMPLE_IDLIST | KF_FLAG_DONT_VERIFY | KF_FLAG_NO_ALIAS;
-    PWSTR path = nullptr;
 
-    if (!SUCCEEDED(SHGetKnownFolderPath(folder, flags, NULL, &path))) {
-      return NS_ERROR_NOT_AVAILABLE;
-    }
-
-    CopyUTF16toUTF8(MakeStringSpan(reinterpret_cast<char16_t*>(path)), _retval);
-    CoTaskMemFree(path);
-    return NS_OK;
-  }
-#endif
-
-#if defined(XP_MACOSX)
   nsresult FindFolder(OSType folderType, nsACString& retval) {
     FSRef fsRef;
     nsCOMPtr<nsILocalFileMac> dirFileMac;
@@ -118,48 +80,28 @@ class BaseXREAppDir : public ::testing::Test {
 
     return NS_OK;
   }
-#endif
 
   void TearDown() override {
     nsresult rv = nsXREDirProvider::RestoreUserDataProfileDirectoryFromGTest(
         mDataDirProfileLocal, mDataDirProfile);
     EXPECT_NS_SUCCEEDED(rv);
 
-#if defined(XP_UNIX) && !defined(XP_MACOSX)
-    for (auto& entry : mRestoreEnv) {
-      PR_SetEnv(ToNewCString(entry.GetKey() + "="_ns + entry.GetData()));
-    }
-
-    rv = mMockedHome->Remove(true);
-#endif
 
     if (mOriginalAppData) {
       SwitchFakeAppDataOff();
     }
 
 #if defined(MOZ_THUNDERBIRD)
-#  if defined(XP_WIN)
-    EXPECT_STREQ(gAppData->profile, EXPECTED_APP_NAME_CASED);
-#  else
     EXPECT_STREQ(gAppData->profile, EXPECTED_APP_NAME_NONCASED);
-#  endif
 #else
     EXPECT_STREQ(gAppData->profile, nullptr);
 #endif
-#if defined(ANDROID)
-    EXPECT_STREQ(gAppData->name, "Fennec");
-#else
     EXPECT_STREQ(gAppData->name, EXPECTED_APP_NAME_CASED);
-#endif
     EXPECT_STREQ(gAppData->vendor, "Mozilla");
   }
 
   nsCString GetPath(nsCOMPtr<nsIFile> aFile) {
-#if defined(XP_WIN)
-    return NS_ConvertUTF16toUTF8(aFile->NativePath());
-#else
     return aFile->NativePath();
-#endif
   }
 
   void SwitchFakeAppDataOn() {
@@ -175,11 +117,7 @@ class BaseXREAppDir : public ::testing::Test {
     mOriginalAppData = nullptr;
 #if defined(MOZ_THUNDERBIRD)
     // Thunderbird always sets MOZ_APP_PROFILE=thunderbird
-#  if defined(XP_WIN)
-    EXPECT_STREQ(gAppData->profile, EXPECTED_APP_NAME_CASED);
-#  else
     EXPECT_STREQ(gAppData->profile, EXPECTED_APP_NAME_NONCASED);
-#  endif
 #else
     EXPECT_STREQ(gAppData->profile, nullptr);
 #endif
@@ -244,26 +182,7 @@ class BaseXREAppDir : public ::testing::Test {
 
   // Create a temp dir and set HOME to it.  Upon successful completion, return
   // the string with the path of the homedir.
-#if defined(XP_UNIX) && !defined(XP_MACOSX)
-  nsCString GetNewHome() {
-    nsresult rv = GetSpecialSystemDirectory(
-        SystemDirectories::OS_TemporaryDirectory, getter_AddRefs(mMockedHome));
-    EXPECT_NS_SUCCEEDED(rv);
 
-    rv = mMockedHome->AppendNative(
-        nsPrintfCString("xreappdir-gtest-%d", getpid()));
-    EXPECT_NS_SUCCEEDED(rv);
-
-    rv = mMockedHome->CreateUnique(nsIFile::DIRECTORY_TYPE, 0700);
-    EXPECT_NS_SUCCEEDED(rv);
-
-    nsCString homedir = mMockedHome->NativePath();
-    SetEnv("HOME", homedir.get());
-    return homedir;
-  }
-#endif
-
-#if defined(XP_UNIX)
   nsTHashMap<nsCString, nsCString> mRestoreEnv;
 
   static const char* GetEnv(const char* aName) { return PR_GetEnv(aName); }
@@ -283,35 +202,16 @@ class BaseXREAppDir : public ::testing::Test {
   }
 
   void UnsetEnv(const char* aName) { SetEnv(aName, ""); }
-#endif
 
   void MkHomeSubdir(const char* aSubdir, nsCString& subdir) {
-#if defined(XP_UNIX) && !defined(XP_MACOSX)
-    subdir = mMockedHomeDir;
-    if (aSubdir[0] != '/') {
-      subdir += "/";
-    }
-    subdir += aSubdir;
-    ASSERT_EQ(0, mkdir(subdir.get(), S_IRWXU));
-#endif
   }
 
-#if defined(XP_UNIX) && !defined(XP_MACOSX)
-  nsCOMPtr<nsIFile> mMockedHome;
-  nsCString mMockedHomeDir;
-#endif
 
-#if defined(XP_MACOSX)
   nsCString mAppSupport;
   nsCString mAppCache;
   nsCString mLibrary;
   nsCString mHomeRoot;
-#endif
 
-#if defined(XP_WIN)
-  nsCString mLocalHome;
-  nsCString mRoamingHome;
-#endif
 
   const XREAppData* mOriginalAppData = nullptr;
   nsCOMPtr<nsIFile> mDataDirProfileLocal;
@@ -405,9 +305,7 @@ class ExistentLegacyXREAppDir_BadEnv : public ExistentLegacyXREAppDir_Generic {
  protected:
   void SetUp() override {
     ExistentLegacyXREAppDir_Generic::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "0");
-#endif
   }
 };
 
@@ -416,9 +314,7 @@ class ExistentLegacyXREAppDir_BadEnv_AppDataProfile
  protected:
   void SetUp() override {
     ExistentLegacyXREAppDir_Generic_AppDataProfile::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "0");
-#endif
   }
 };
 
@@ -427,9 +323,7 @@ class NonExistentLegacyXREAppDir_BadEnv
  protected:
   void SetUp() override {
     NonExistentLegacyXREAppDir_Generic::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "0");
-#endif
   }
 };
 
@@ -438,9 +332,7 @@ class NonExistentLegacyXREAppDir_BadEnv_AppDataProfile
  protected:
   void SetUp() override {
     NonExistentLegacyXREAppDir_Generic_AppDataProfile::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "0");
-#endif
   }
 };
 
@@ -458,9 +350,7 @@ class ExistentLegacyXREAppDir_GoodEnv : public ExistentLegacyXREAppDir_Generic {
  protected:
   void SetUp() override {
     ExistentLegacyXREAppDir_Generic::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "1");
-#endif
   }
 };
 
@@ -469,9 +359,7 @@ class ExistentLegacyXREAppDir_GoodEnv_AppDataProfile
  protected:
   void SetUp() override {
     ExistentLegacyXREAppDir_Generic_AppDataProfile::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "1");
-#endif
   }
 };
 
@@ -480,9 +368,7 @@ class NonExistentLegacyXREAppDir_GoodEnv
  protected:
   void SetUp() override {
     NonExistentLegacyXREAppDir_Generic::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "1");
-#endif
   }
 };
 
@@ -491,9 +377,7 @@ class NonExistentLegacyXREAppDir_GoodEnv_AppDataProfile
  protected:
   void SetUp() override {
     NonExistentLegacyXREAppDir_Generic_AppDataProfile::SetUp();
-#if defined(XP_UNIX)
     SetEnv("MOZ_LEGACY_HOME", "1");
-#endif
   }
 };
 
@@ -525,10 +409,8 @@ class XDGXREAppDir_NoEnv : public XDGXREAppDir_Generic {
  protected:
   void SetUp() override {
     XDGXREAppDir_Generic::SetUp();
-#if defined(XP_UNIX)
     UnsetEnv("MOZ_LEGACY_HOME");
     UnsetEnv("XDG_CONFIG_HOME");
-#endif
   }
 };
 
@@ -537,10 +419,8 @@ class XDGXREAppDir_NoEnv_AppDataProfile
  protected:
   void SetUp() override {
     XDGXREAppDir_Generic_AppDataProfile::SetUp();
-#if defined(XP_UNIX)
     UnsetEnv("MOZ_LEGACY_HOME");
     UnsetEnv("XDG_CONFIG_HOME");
-#endif
   }
 };
 
@@ -562,9 +442,7 @@ class XDGXREAppDir_Env : public XDGXREAppDir_Generic {
     XDGXREAppDir_Generic::SetUp();
     // mXdgDir will be cleaned when we clean the temp home we created
     MkHomeSubdir(".xdgConfigDir", mXdgDir);
-#if defined(XP_UNIX)
     SetEnv("XDG_CONFIG_HOME", mXdgDir.get());
-#endif
   }
 
   nsCString mXdgDir;
@@ -577,9 +455,7 @@ class XDGXREAppDir_Env_AppDataProfile
     XDGXREAppDir_Generic_AppDataProfile::SetUp();
     // mXdgDir will be cleaned when we clean the temp home we created
     MkHomeSubdir(".xdgConfigDir", mXdgDir);
-#if defined(XP_UNIX)
     SetEnv("XDG_CONFIG_HOME", mXdgDir.get());
-#endif
   }
 
   nsCString mXdgDir;
@@ -593,9 +469,7 @@ class XDGXREAppDir_Env_TBirdAppDataProfile
     XDGXREAppDir_Generic_TBirdAppDataProfile::SetUp();
     // mXdgDir will be cleaned when we clean the temp home we created
     MkHomeSubdir(".xdgConfigDir", mXdgDir);
-#  if defined(XP_UNIX)
     SetEnv("XDG_CONFIG_HOME", mXdgDir.get());
-#  endif
   }
   nsCString mXdgDir;
 };
@@ -611,9 +485,7 @@ class XDGXREAppDir_InvalidEnv : public XDGXREAppDir_Generic {
   void SetUp() override {
     XDGXREAppDir_Generic::SetUp();
     mXdgDir += "$HOME/invalid-xdg-dir/";
-#if defined(XP_UNIX)
     SetEnv("XDG_CONFIG_HOME", mXdgDir.get());
-#endif
   }
 
   nsCString mXdgDir;
@@ -625,9 +497,7 @@ class XDGXREAppDir_InvalidEnv_AppDataProfile
   void SetUp() override {
     XDGXREAppDir_Generic_AppDataProfile::SetUp();
     mXdgDir += "$HOME/invalid-xdg-dir/";
-#if defined(XP_UNIX)
     SetEnv("XDG_CONFIG_HOME", mXdgDir.get());
-#endif
   }
 
   nsCString mXdgDir;
@@ -644,9 +514,7 @@ class CacheXREAppDir_Env : public BaseXREAppDir {
     BaseXREAppDir::SetUp();
     // mXdgCache will be cleaned when we clean the temp home we created
     MkHomeSubdir(".xdgCacheDir", mXdgCache);
-#if defined(XP_UNIX)
     SetEnv("XDG_CACHE_HOME", mXdgCache.get());
-#endif
   }
 
   nsCString mXdgCache;
@@ -656,9 +524,7 @@ class CacheXREAppDir_NoEnv : public BaseXREAppDir {
  protected:
   void SetUp() override {
     BaseXREAppDir::SetUp();
-#if defined(XP_UNIX)
     UnsetEnv("XDG_CACHE_HOME");
-#endif
   }
 };
 
@@ -667,19 +533,7 @@ class CacheXREAppDir_NoEnv : public BaseXREAppDir {
 // Check if '$HOME/.mozilla' is used when it exists.
 TEST_F(ExistentLegacyXREAppDir_NoEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/."_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -687,58 +541,21 @@ TEST_F(ExistentLegacyXREAppDir_NoEnv, GetUserAppDataDirectory) {
 // Check if '$HOME/.mozilla' is used when it exists and MOZ_LEGACY_HOME != 1
 TEST_F(ExistentLegacyXREAppDir_BadEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/."_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
 
 TEST_F(ExistentLegacyXREAppDir_GoodEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/."_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
 
 TEST_F(NonExistentLegacyXREAppDir_NoEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.config/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -747,20 +564,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv, GetUserAppDataDirectory) {
 // is set to 0.
 TEST_F(NonExistentLegacyXREAppDir_BadEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.config/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -769,19 +573,7 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv, GetUserAppDataDirectory) {
 // = 1
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/."_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -790,20 +582,7 @@ TEST_F(NonExistentLegacyXREAppDir_GoodEnv, GetUserAppDataDirectory) {
 // and the env variable XDG_CONFIG_HOME is not set.
 TEST_F(XDGXREAppDir_NoEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.config/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -812,347 +591,167 @@ TEST_F(XDGXREAppDir_NoEnv, GetUserAppDataDirectory) {
 // and the env variable XDG_CONFIG_HOME is invalid.
 TEST_F(XDGXREAppDir_InvalidEnv, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.config/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
 
 TEST_F(XDGXREAppDir_Env, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.xdgConfigDir/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserAppDataDirectory());
 }
 
 // XREUserNativeManifests
 
-#if defined(XP_UNIX)
 TEST_F(ExistentLegacyXREAppDir_NoEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(ExistentLegacyXREAppDir_BadEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(ExistentLegacyXREAppDir_GoodEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_NoEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_BadEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(XDGXREAppDir_NoEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(XDGXREAppDir_InvalidEnv, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(XDGXREAppDir_Env, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
-#endif  // defined(XP_UNIX)
 
 // XREUserSysExtensionDir
 
-#if defined(XP_UNIX)
 TEST_F(ExistentLegacyXREAppDir_NoEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(ExistentLegacyXREAppDir_BadEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(ExistentLegacyXREAppDir_GoodEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_NoEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_BadEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(XDGXREAppDir_NoEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(XDGXREAppDir_InvalidEnv, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(XDGXREAppDir_Env, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
-#endif  // defined(XP_UNIX)
 
 // GetUserProfilesRootDir
 
 TEST_F(XDGXREAppDir_NoEnv, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.config/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED
-                               "\\Profiles"_ns)
-#  endif
-#endif
           ,
       GetUserProfilesRootDir());
 }
 
 TEST_F(XDGXREAppDir_InvalidEnv, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.config/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED
-                               "\\Profiles"_ns)
-#  endif
-#endif
           ,
       GetUserProfilesRootDir());
 }
 
 TEST_F(XDGXREAppDir_Env, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.xdgConfigDir/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  else
-      nsCString(mRoamingHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED
-                               "\\Profiles"_ns)
-#  endif
-#endif
           ,
       GetUserProfilesRootDir());
 }
@@ -1162,15 +761,7 @@ TEST_F(XDGXREAppDir_Env, GetUserProfilesRootDir) {
 // Check if '$HOME/.mozilla' is used when it exists.
 TEST_F(ExistentLegacyXREAppDir_NoEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -1178,45 +769,21 @@ TEST_F(ExistentLegacyXREAppDir_NoEnv, GetDefaultUserProfileRoot) {
 // Check if '$HOME/.mozilla' is used when it exists and MOZ_LEGACY_HOME != 1
 TEST_F(ExistentLegacyXREAppDir_BadEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
 
 TEST_F(ExistentLegacyXREAppDir_GoodEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_NoEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -1225,15 +792,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv, GetDefaultUserProfileRoot) {
 // is set to 0.
 TEST_F(NonExistentLegacyXREAppDir_BadEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -1242,15 +801,7 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv, GetDefaultUserProfileRoot) {
 // = 1
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -1259,15 +810,7 @@ TEST_F(NonExistentLegacyXREAppDir_GoodEnv, GetDefaultUserProfileRoot) {
 // and the env variable XDG_CONFIG_HOME is not set.
 TEST_F(XDGXREAppDir_NoEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -1276,30 +819,14 @@ TEST_F(XDGXREAppDir_NoEnv, GetDefaultUserProfileRoot) {
 // and the env variable XDG_CONFIG_HOME is invalid.
 TEST_F(XDGXREAppDir_InvalidEnv, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
 
 TEST_F(XDGXREAppDir_Env, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.xdgConfigDir/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -1309,15 +836,7 @@ TEST_F(XDGXREAppDir_Env, GetDefaultUserProfileRoot) {
 // Check if '$HOME/.mozilla' is used when it exists.
 TEST_F(ExistentLegacyXREAppDir_NoEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -1325,45 +844,21 @@ TEST_F(ExistentLegacyXREAppDir_NoEnv, GetTempDefaultUserProfileRoot) {
 // Check if '$HOME/.mozilla' is used when it exists and MOZ_LEGACY_HOME != 1
 TEST_F(ExistentLegacyXREAppDir_BadEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
 
 TEST_F(ExistentLegacyXREAppDir_GoodEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
 
 TEST_F(NonExistentLegacyXREAppDir_NoEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -1372,15 +867,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv, GetTempDefaultUserProfileRoot) {
 // is set to 0.
 TEST_F(NonExistentLegacyXREAppDir_BadEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -1389,15 +876,7 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv, GetTempDefaultUserProfileRoot) {
 // = 1
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -1406,15 +885,7 @@ TEST_F(NonExistentLegacyXREAppDir_GoodEnv, GetTempDefaultUserProfileRoot) {
 // and the env variable XDG_CONFIG_HOME is not set.
 TEST_F(XDGXREAppDir_NoEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -1423,30 +894,14 @@ TEST_F(XDGXREAppDir_NoEnv, GetTempDefaultUserProfileRoot) {
 // and the env variable XDG_CONFIG_HOME is invalid.
 TEST_F(XDGXREAppDir_InvalidEnv, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
 
 TEST_F(XDGXREAppDir_Env, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.xdgConfigDir/mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -1455,30 +910,14 @@ TEST_F(XDGXREAppDir_Env, GetTempDefaultUserProfileRoot) {
 
 TEST_F(ExistentLegacyXREAppDir_NoEnv_AppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
 
 TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1486,15 +925,7 @@ TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile, GetUserAppDataDirectory) {
 TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1502,15 +933,7 @@ TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
        GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1519,15 +942,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_TBirdAppDataProfile,
        GetUserAppDataDirectory) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/"_ns EXPECTED_APP_NAME_NONCASED)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1536,15 +951,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_TBirdAppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
        GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1552,30 +959,14 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
 
 TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1583,15 +974,7 @@ TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetUserAppDataDirectory) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/"_ns EXPECTED_APP_NAME_NONCASED)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1599,15 +982,7 @@ TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetUserAppDataDirectory) {
 
 TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1615,15 +990,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetUserAppDataDirectory) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/"_ns EXPECTED_APP_NAME_NONCASED)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1631,15 +998,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile, GetUserAppDataDirectory) {
 
 TEST_F(XDGXREAppDir_Env_AppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile"_ns)
-#endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1647,16 +1006,7 @@ TEST_F(XDGXREAppDir_Env_AppDataProfile, GetUserAppDataDirectory) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetUserAppDataDirectory) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.xdgConfigDir/"_ns EXPECTED_APP_NAME_NONCASED)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
           ,
       GetUserAppDataDirectory());
 }
@@ -1664,42 +1014,23 @@ TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetUserAppDataDirectory) {
 
 // XREUserNativeManifests
 
-#if defined(XP_UNIX)
 TEST_F(ExistentLegacyXREAppDir_NoEnv_AppDataProfile, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
@@ -1707,13 +1038,7 @@ TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile, XREUserNativeManifests) {
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
        XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
@@ -1721,13 +1046,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
        XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
@@ -1735,95 +1054,51 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
 
 TEST_F(XDGXREAppDir_Env_AppDataProfile, XREUserNativeManifests) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_NATIVE_MANIFESTS));
 }
-#endif  // defined(XP_UNIX)
 
 // XREUserSysExtensionDir
 
-#if defined(XP_UNIX)
 TEST_F(ExistentLegacyXREAppDir_NoEnv_AppDataProfile, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
@@ -1831,13 +1106,7 @@ TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile, XREUserSysExtensionDir) {
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
        XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
@@ -1845,13 +1114,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
        XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
@@ -1859,70 +1122,37 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
 
 TEST_F(XDGXREAppDir_Env_AppDataProfile, XREUserSysExtensionDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/Mozilla/Extensions"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla/extensions"_ns)
-#  endif
           ,
       GetFromXREDirProvider(XRE_USER_SYS_EXTENSION_DIR));
 }
-#endif  // defined(XP_UNIX)
 
 // GetUserProfilesRootDir
 
 TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile\\Profiles"_ns)
-#endif
           ,
       GetUserProfilesRootDir());
 }
@@ -1930,15 +1160,7 @@ TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetUserProfilesRootDir) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/"_ns EXPECTED_APP_NAME_NONCASED)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  endif
           ,
       GetUserProfilesRootDir());
 }
@@ -1946,15 +1168,7 @@ TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetUserProfilesRootDir) {
 
 TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile\\Profiles"_ns)
-#endif
           ,
       GetUserProfilesRootDir());
 }
@@ -1962,15 +1176,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetUserProfilesRootDir) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/"_ns EXPECTED_APP_NAME_NONCASED)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  endif
           ,
       GetUserProfilesRootDir());
 }
@@ -1978,15 +1184,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile, GetUserProfilesRootDir) {
 
 TEST_F(XDGXREAppDir_Env_AppDataProfile, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/fooprofile/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.fooprofile"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\fooprofile\\Profiles"_ns)
-#endif
           ,
       GetUserProfilesRootDir());
 }
@@ -1994,16 +1192,7 @@ TEST_F(XDGXREAppDir_Env_AppDataProfile, GetUserProfilesRootDir) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetUserProfilesRootDir) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppSupport + "/"_ns EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.xdgConfigDir/"_ns EXPECTED_APP_NAME_NONCASED)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  endif
           ,
       GetUserProfilesRootDir());
 }
@@ -2014,15 +1203,7 @@ TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetUserProfilesRootDir) {
 TEST_F(ExistentLegacyXREAppDir_NoEnv_AppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2030,15 +1211,7 @@ TEST_F(ExistentLegacyXREAppDir_NoEnv_AppDataProfile,
 TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2046,15 +1219,7 @@ TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile,
 TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2062,15 +1227,7 @@ TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2079,15 +1236,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_TBirdAppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2096,15 +1245,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_TBirdAppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2113,15 +1254,7 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_BadEnv_TBirdAppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2130,30 +1263,14 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv_TBirdAppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
 
 TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2161,15 +1278,7 @@ TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetDefaultUserProfileRoot) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2177,15 +1286,7 @@ TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetDefaultUserProfileRoot) {
 
 TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2193,15 +1294,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetDefaultUserProfileRoot) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2209,15 +1302,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile, GetDefaultUserProfileRoot) {
 
 TEST_F(XDGXREAppDir_Env_AppDataProfile, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2225,15 +1310,7 @@ TEST_F(XDGXREAppDir_Env_AppDataProfile, GetDefaultUserProfileRoot) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mLibrary + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.xdgConfigDir/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mRoamingHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_ROOT_DIR));
 }
@@ -2244,15 +1321,7 @@ TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetDefaultUserProfileRoot) {
 TEST_F(ExistentLegacyXREAppDir_NoEnv_AppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2260,15 +1329,7 @@ TEST_F(ExistentLegacyXREAppDir_NoEnv_AppDataProfile,
 TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2276,15 +1337,7 @@ TEST_F(ExistentLegacyXREAppDir_BadEnv_AppDataProfile,
 TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2292,15 +1345,7 @@ TEST_F(ExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2309,15 +1354,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_NoEnv_TBirdAppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2326,15 +1363,7 @@ TEST_F(NonExistentLegacyXREAppDir_NoEnv_TBirdAppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2343,15 +1372,7 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv_AppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_BadEnv_TBirdAppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2360,30 +1381,14 @@ TEST_F(NonExistentLegacyXREAppDir_BadEnv_TBirdAppDataProfile,
 TEST_F(NonExistentLegacyXREAppDir_GoodEnv_AppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
 
 TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2391,15 +1396,7 @@ TEST_F(XDGXREAppDir_NoEnv_AppDataProfile, GetTempDefaultUserProfileRoot) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2407,15 +1404,7 @@ TEST_F(XDGXREAppDir_NoEnv_TBirdAppDataProfile, GetTempDefaultUserProfileRoot) {
 
 TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2424,15 +1413,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_AppDataProfile, GetTempDefaultUserProfileRoot) {
 TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile,
        GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.config/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2440,15 +1421,7 @@ TEST_F(XDGXREAppDir_InvalidEnv_TBirdAppDataProfile,
 
 TEST_F(XDGXREAppDir_Env_AppDataProfile, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2456,15 +1429,7 @@ TEST_F(XDGXREAppDir_Env_AppDataProfile, GetTempDefaultUserProfileRoot) {
 #if defined(MOZ_THUNDERBIRD)
 TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetTempDefaultUserProfileRoot) {
   ASSERT_EQ(
-#  if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/.mozilla"_ns)
-#  elif defined(XP_MACOSX)
       nsCString(mAppCache + "/Mozilla/Profiles"_ns)
-#  elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir + "/.xdgConfigDir/mozilla"_ns)
-#  elif defined(XP_WIN)
-      nsCString(mLocalHome + "\\Mozilla\\Profiles"_ns)
-#  endif
           ,
       GetFromDirectoryService(NS_APP_USER_PROFILES_LOCAL_ROOT_DIR));
 }
@@ -2479,20 +1444,7 @@ TEST_F(XDGXREAppDir_Env_TBirdAppDataProfile, GetTempDefaultUserProfileRoot) {
 // Check if '$HOME/.cache/mozilla' is used when '$XDG_CACHE_HOME' is not set.
 TEST_F(CacheXREAppDir_NoEnv, GetUserLocalDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.cache/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mLocalHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mLocalHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserLocalDataDirectory());
 }
@@ -2500,20 +1452,7 @@ TEST_F(CacheXREAppDir_NoEnv, GetUserLocalDataDirectory) {
 // Check if '$XDG_CACHE_HOME/mozilla' is used when '$XDG_CACHE_HOME' is set.
 TEST_F(CacheXREAppDir_Env, GetUserLocalDataDirectory) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/"_ns EXPECTED_APP_NAME_CASED)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.xdgCacheDir/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mLocalHome + "\\"_ns EXPECTED_APP_NAME_CASED)
-#  else
-      nsCString(mLocalHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED)
-#  endif
-#endif
           ,
       GetUserLocalDataDirectory());
 }
@@ -2522,42 +1461,14 @@ TEST_F(CacheXREAppDir_Env, GetUserLocalDataDirectory) {
 
 TEST_F(CacheXREAppDir_NoEnv, GetUserProfilesLocalDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/" EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.cache/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mLocalHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  else
-      nsCString(mLocalHome + "\\Mozilla\\" EXPECTED_APP_NAME_CASED
-                             "\\Profiles"_ns)
-#  endif
-#endif
           ,
       GetUserProfilesLocalDir());
 }
 
 TEST_F(CacheXREAppDir_Env, GetUserProfilesLocalDir) {
   ASSERT_EQ(
-#if defined(ANDROID)
-      nsCString(mMockedHomeDir + "/mozilla"_ns)
-#elif defined(XP_MACOSX)
       nsCString(mAppCache + "/" EXPECTED_APP_NAME_CASED "/Profiles"_ns)
-#elif defined(XP_UNIX)
-      nsCString(mMockedHomeDir +
-                "/.xdgCacheDir/"_ns EXPECTED_VENDOR_APP_NAME_NONCASED)
-#elif defined(XP_WIN)
-#  if defined(MOZ_THUNDERBIRD)
-      nsCString(mLocalHome + "\\"_ns EXPECTED_APP_NAME_CASED "\\Profiles"_ns)
-#  else
-      nsCString(mLocalHome + "\\Mozilla\\"_ns EXPECTED_APP_NAME_CASED
-                             "\\Profiles"_ns)
-#  endif
-#endif
           ,
       GetUserProfilesLocalDir());
 }

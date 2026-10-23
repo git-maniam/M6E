@@ -300,19 +300,10 @@ media::DecodeSupportSet RemoteMediaManagerChild::Supports(
         if (!StaticPrefs::media_hevc_enabled()) {
           return {};
         }
-#if defined(XP_WIN)
-        if (aLocation == RemoteMediaIn::UtilityProcess_MFMediaEngineCDM ||
-            aLocation == RemoteMediaIn::GpuProcess) {
-          // No software support in most cases for HEVC so guess hardware.
-          return {media::DecodeSupport::HardwareDecode};
-        }
-        return {};
-#else
         return trackSupport.contains(TrackSupport::DecodeVideo)
                    ? media::
                          DecodeSupportSet{media::DecodeSupport::SoftwareDecode}
                    : media::DecodeSupportSet{};
-#endif
       }
       return trackSupport.contains(TrackSupport::DecodeVideo)
                  ? media::DecodeSupportSet{media::DecodeSupport::SoftwareDecode}
@@ -612,9 +603,6 @@ EncodeSupportSet RemoteMediaManagerChild::Supports(RemoteMediaIn aLocation,
         if (!StaticPrefs::media_hevc_enabled()) {
           return EncodeSupportSet{};
         }
-#if defined(XP_WIN)
-        supported = aLocation == RemoteMediaIn::GpuProcess;
-#endif
       }
       return supported ? EncodeSupportSet{EncodeSupport::SoftwareEncode}
                        : EncodeSupportSet{};
@@ -923,13 +911,11 @@ TrackSupportSet RemoteMediaManagerChild::GetTrackSupport(
           StaticPrefs::media_use_remote_encoder_video_platform()) {
         s += TrackSupport::EncodeVideo;
       }
-#ifndef ANDROID
       // Only use RDD for audio coding if we don't have the utility process. If
       // we have a CDM (which we can't determine here) on Android, then we want
       // to perform both the video and audio decoding in the RDD so that they
       // can share the CDM instance.
       if (!StaticPrefs::media_utility_process_enabled())
-#endif
       {
         s += TrackSupport::DecodeAudio;
         if (StaticPrefs::media_use_remote_encoder_audio_software()) {

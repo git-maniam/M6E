@@ -49,13 +49,7 @@
 // Put DNSLogging.h at the end to avoid LOG being overwritten by other headers.
 #include "DNSLogging.h"
 
-#ifdef XP_WIN
-#  include "mozilla/WindowsVersion.h"
-#endif  // XP_WIN
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/jni/Utils.h"
-#endif
 
 #define IS_ADDR_TYPE(_type) ((_type) == nsIDNSService::RESOLVE_TYPE_DEFAULT)
 #define IS_OTHER_TYPE(_type) ((_type) != nsIDNSService::RESOLVE_TYPE_DEFAULT)
@@ -168,17 +162,7 @@ nsresult nsHostResolver::Init() MOZ_NO_THREAD_SAFETY_ANALYSIS {
         std::clamp<uint32_t>(poolTimeoutSecs * 1000, 0, 3600 * 1000);
   }
 
-#if defined(XP_WIN)
-  // For some reason, the DNSQuery_A API doesn't work on Windows 10.
-  // It returns a success code, but no records. We only allow
-  // native HTTPS records on Win 11 for now.
-  sNativeHTTPSSupported = mozilla::IsWin11OrLater();
-#elif defined(MOZ_WIDGET_ANDROID)
-  // android_res_nquery only got added in API level 29
-  sNativeHTTPSSupported = jni::GetAPIVersion() >= 29;
-#elif defined(XP_LINUX) || defined(XP_MACOSX) || defined(XP_FREEBSD)
   sNativeHTTPSSupported = true;
-#endif
   LOG(("Native HTTPS records supported=%d", bool(sNativeHTTPSSupported)));
 
   nsCOMPtr<nsIThreadPool> threadPool = new nsThreadPool();
@@ -432,13 +416,6 @@ bool nsHostResolver::IsNativeHTTPSEnabled() {
   if (!StaticPrefs::network_dns_native_https_query()) {
     return false;
   }
-#ifdef XP_WIN
-  if (StaticPrefs::network_dns_native_https_query_win10()) {
-    // If this pref is true, we allow resolving HTTPS records.
-    // It might not work, or we might use the HTTPS override records.
-    return true;
-  }
-#endif
   return sNativeHTTPSSupported;
 }
 

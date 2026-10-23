@@ -538,9 +538,6 @@ const char* const ApplicationReputationService::kBinaryFileExtensions[] = {
     //".xxe",
     ".xz",     // Linux archive (xz)
     ".z",      // InstallShield
-#ifdef XP_WIN  // disable on Mac/Linux, see 1167493
-    ".zip",    // Generic archive
-#endif
     ".zipx",  // WinZip
               //".zpaq",
 };

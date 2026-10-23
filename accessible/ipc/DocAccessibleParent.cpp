@@ -28,19 +28,10 @@
 #include "xpcAccEvents.h"
 #include "xpcAccessibleDocument.h"
 
-#if defined(XP_WIN)
-#  include "Compatibility.h"
-#  include "nsWinUtils.h"
-#endif
 
-#if defined(ANDROID)
-#  define ACQUIRE_ANDROID_LOCK \
-    MonitorAutoLock mal(nsAccessibilityService::GetAndroidMonitor());
-#else
 #  define ACQUIRE_ANDROID_LOCK \
     do {                       \
     } while (0);
-#endif
 
 namespace mozilla {
 
@@ -49,12 +40,7 @@ uint64_t DocAccessibleParent::sMaxDocID = 0;
 
 DocAccessibleParent::DocAccessibleParent()
     : RemoteAccessible(this),
-#if defined(XP_WIN)
-      mEmulatedWindowHandle(nullptr),
-#endif  // defined(XP_WIN)
-#ifdef MOZ_WIDGET_COCOA
       mFocusedAccBounds(Nothing()),
-#endif
       mTopLevel(false),
       mTopLevelInContentProcess(false),
       mShutdown(false),
@@ -103,18 +89,7 @@ bool DocAccessibleParent::RequestDomainsIfInactive(
   }
   aRequiredCacheDomains = GetCacheDomainSuperset(aRequiredCacheDomains);
   const uint64_t cacheDomains = aRequiredCacheDomains | activeCacheDomains;
-#if defined(ANDROID)
-  // We might not be on the main Android thread, but we must be in order to
-  // send IPDL messages. Dispatch to the main thread to set cache domains.
-  NS_DispatchToMainThread(
-      NS_NewRunnableFunction("a11y::SetCacheDomains", [cacheDomains]() {
-        if (nsAccessibilityService* accService = GetAccService()) {
-          accService->SetCacheDomains(cacheDomains);
-        }
-      }));
-#else
   accService->SetCacheDomains(cacheDomains);
-#endif
   return true;
 }
 
@@ -540,9 +515,6 @@ mozilla::ipc::IPCResult DocAccessibleParent::RecvEvent(
 
 void DocAccessibleParent::FireEvent(RemoteAccessible* aAcc,
                                     const uint32_t& aEventType) {
-#if defined(ANDROID)
-  nsAccessibilityService::GetAndroidMonitor().AssertCurrentThreadOwns();
-#endif
   if (aEventType == nsIAccessibleEvent::EVENT_REORDER ||
       aEventType == nsIAccessibleEvent::EVENT_INNER_REORDER) {
     uint32_t count = aAcc->ChildCount();
@@ -822,12 +794,7 @@ mozilla::ipc::IPCResult DocAccessibleParent::RecvScrollingEvent(
     return IPC_OK();
   }
 
-#if defined(ANDROID)
-  PlatformScrollingEvent(target, aType, aScrollX, aScrollY, aMaxScrollX,
-                         aMaxScrollY);
-#else
   PlatformEvent(target, aType);
-#endif
 
   if (!nsCoreUtils::AccEventObserversExist()) {
     return IPC_OK();
@@ -967,13 +934,9 @@ mozilla::ipc::IPCResult DocAccessibleParent::RecvTextSelectionChangeEvent(
   mTextSelections.ClearAndRetainStorage();
   mTextSelections.AppendElements(aSelection);
 
-#ifdef MOZ_WIDGET_COCOA
   AutoTArray<TextRange, 1> ranges;
   SelectionRanges(&ranges);
   PlatformTextSelectionChangeEvent(target, ranges);
-#else
-  PlatformEvent(target, nsIAccessibleEvent::EVENT_TEXT_SELECTION_CHANGED);
-#endif
 
   if (!nsCoreUtils::AccEventObserversExist()) {
     return IPC_OK();
@@ -1007,9 +970,7 @@ mozilla::ipc::IPCResult DocAccessibleParent::RecvRoleChangedEvent(
   }
   mRoleMapEntryIndex = aRoleMapEntryIndex;
 
-#ifdef MOZ_WIDGET_COCOA
   PlatformRoleChangedEvent(this, Role(), aRoleMapEntryIndex);
-#endif
 
   return IPC_OK();
 }
@@ -1098,11 +1059,6 @@ ipc::IPCResult DocAccessibleParent::AddChildDoc(DocAccessibleParent* aChildDoc,
   if (aChildDoc->IsTopLevelInContentProcess()) {
     // aChildDoc is an embedded document in a different content process to
     // this document.
-#if defined(XP_WIN)
-    if (nsWinUtils::IsWindowEmulationStarted()) {
-      aChildDoc->SetEmulatedWindowHandle(mEmulatedWindowHandle);
-    }
-#endif  // defined(XP_WIN)
   }
   // We need to fire a reorder event on the embedder. We do this here rather
   // than in the content process for two reasons:
@@ -1165,11 +1121,6 @@ void DocAccessibleParent::Destroy() {
 
   mShutdown = true;
 
-#ifdef ANDROID
-  if (FocusMgr() && FocusMgr()->IsFocusedRemoteDoc(this)) {
-    FocusMgr()->SetFocusedRemoteDoc(nullptr);
-  }
-#endif
 
   MOZ_DIAGNOSTIC_ASSERT(LiveDocs().Contains(mActorID));
   uint32_t childDocCount = mChildDocs.Length();
@@ -1297,57 +1248,6 @@ xpcAccessibleGeneric* DocAccessibleParent::GetXPCAccessible(
   return doc->GetAccessible(aProxy);
 }
 
-#if defined(XP_WIN)
-void DocAccessibleParent::MaybeInitWindowEmulation() {
-  if (!nsWinUtils::IsWindowEmulationStarted()) {
-    return;
-  }
-
-  // XXX get the bounds from the browserParent instead of poking at accessibles
-  // which might not exist yet.
-  LocalAccessible* outerDoc = OuterDocOfRemoteBrowser();
-  if (!outerDoc) {
-    return;
-  }
-
-  RootAccessible* rootDocument = outerDoc->RootAccessible();
-  MOZ_ASSERT(rootDocument);
-
-  bool isActive = true;
-  LayoutDeviceIntRect rect(CW_USEDEFAULT, CW_USEDEFAULT, 0, 0);
-  if (Compatibility::IsDolphin()) {
-    rect = Bounds();
-    LayoutDeviceIntRect rootRect = rootDocument->Bounds();
-    rect.MoveToX(rootRect.X() - rect.X());
-    rect.MoveToY(rect.Y() - rootRect.Y());
-
-    isActive = GetBrowsingContext()->IsActive();
-  }
-
-  RefPtr<DocAccessibleParent> thisRef = this;
-  nsWinUtils::NativeWindowCreateProc onCreate(
-      [thisRef](HWND aHwnd) mutable -> void {
-        thisRef->SetEmulatedWindowHandle(aHwnd);
-        HANDLE val;
-        thisRef.forget(&val);  // Release in SetEmulatedWindowHandle.
-        ::SetPropW(aHwnd, kPropNameDocAccParent, val);
-      });
-
-  HWND parentWnd = reinterpret_cast<HWND>(rootDocument->GetNativeWindow());
-  DebugOnly<HWND> hWnd = nsWinUtils::CreateNativeWindow(
-      kClassNameTabContent, parentWnd, rect.X(), rect.Y(), rect.Width(),
-      rect.Height(), isActive, &onCreate);
-  MOZ_ASSERT(hWnd);
-}
-
-void DocAccessibleParent::SetEmulatedWindowHandle(HWND aWindowHandle) {
-  if (!aWindowHandle && mEmulatedWindowHandle && IsTopLevel()) {
-    ::DestroyWindow(mEmulatedWindowHandle);
-    Release();  // AddRef in MaybeInitWindowEmulation.
-  }
-  mEmulatedWindowHandle = aWindowHandle;
-}
-#endif  // defined(XP_WIN)
 
 mozilla::ipc::IPCResult DocAccessibleParent::RecvFocusEvent(
     const uint64_t& aID, const LayoutDeviceIntRect& aCaretRect) {
@@ -1362,19 +1262,12 @@ mozilla::ipc::IPCResult DocAccessibleParent::RecvFocusEvent(
     return IPC_OK();
   }
 
-#ifdef ANDROID
-  if (FocusMgr()) {
-    FocusMgr()->SetFocusedRemoteDoc(this);
-  }
-#endif
 
   mFocus = aID;
   mCaretRect = aCaretRect;
-#ifdef MOZ_WIDGET_COCOA
   if (PlatformShouldTrackFocusedAccLocation()) {
     mFocusedAccBounds = Some(proxy->Bounds());
   }
-#endif
   PlatformFocusEvent(proxy);
 
   if (!nsCoreUtils::AccEventObserversExist()) {

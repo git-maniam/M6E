@@ -4,9 +4,6 @@
 
 #include "mozilla/ClipboardWriteRequestChild.h"
 
-#if defined(ACCESSIBILITY) && defined(XP_WIN)
-#  include "mozilla/a11y/Compatibility.h"
-#endif
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/net/CookieJarSettings.h"
 #include "nsITransferable.h"
@@ -26,9 +23,6 @@ ClipboardWriteRequestChild::SetData(nsITransferable* aTransferable,
     return NS_ERROR_FAILURE;
   }
 
-#if defined(ACCESSIBILITY) && defined(XP_WIN)
-  a11y::Compatibility::SuppressA11yForClipboardCopy();
-#endif
 
   mIsValid = false;
   IPCTransferable ipcTransferable;

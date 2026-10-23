@@ -10,14 +10,7 @@
 #include "js/AllocationRecording.h"
 #include "js/ProfilingStack.h"
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#elif defined(XP_DARWIN)
 #  include <pthread.h>
-#elif defined(XP_LINUX) && !defined(ANDROID)
-#  include "mozilla/ScopeExit.h"
-#  include <pthread.h>
-#endif
 
 #ifdef NIGHTLY_BUILD
 namespace geckoprofiler::markers {
@@ -67,47 +60,15 @@ struct ThreadCpuUseMarker : public BaseMarkerType<ThreadCpuUseMarker> {
 
 namespace mozilla::profiler {
 
-#if defined(XP_LINUX) && !defined(ANDROID)
-static const void* pthread_get_stacktop_linux(const void* aStackTop) {
-  pthread_attr_t attr;
-  if (pthread_getattr_np(pthread_self(), &attr) != 0) {
-    return aStackTop;
-  }
-  auto attrGuard = MakeScopeExit([&]() { pthread_attr_destroy(&attr); });
-  void* stackBase = nullptr;
-  size_t stackSize = 0;
-  if (pthread_attr_getstack(&attr, &stackBase, &stackSize) != 0 ||
-      !(stackBase && stackSize > 0)) {
-    return aStackTop;
-  }
-  // > The base (lowest addressable byte) of the storage shall be
-  // > stackaddr, and the size of the storage shall be stacksize
-  // > bytes.
-  // <https://www.man7.org/linux/man-pages/man3/pthread_attr_getstack.3p.html>
-  return static_cast<const char*>(stackBase) + stackSize;
-}
-#endif
 
 ThreadRegistrationData::ThreadRegistrationData(const char* aName,
                                                const void* aStackTop)
     : mInfo(aName),
       mPlatformData(mInfo.ThreadId()),
       mStackTop(
-#if defined(XP_WIN)
-          // We don't have to guess on Windows.
-          reinterpret_cast<const void*>(
-              reinterpret_cast<PNT_TIB>(NtCurrentTeb())->StackBase)
-#elif defined(XP_DARWIN)
           // We don't have to guess on Mac/Darwin.
           reinterpret_cast<const void*>(
               pthread_get_stackaddr_np(pthread_self()))
-#elif defined(XP_LINUX) && !defined(ANDROID)
-          // We don't have to guess on non-Android Linux.
-          pthread_get_stacktop_linux(aStackTop)
-#else
-          // Otherwise use the given guess.
-          aStackTop
-#endif
       ) {
 }
 

@@ -7,14 +7,12 @@
 
 #include "chrome/common/ipc_message_utils.h"
 
-#ifdef XP_DARWIN
 #  include "mozilla/UniquePtrExtensions.h"
 
 template <typename T>
 class CFTypeRefPtr;
 struct __IOSurface;
 typedef __IOSurface* IOSurfaceRef;
-#endif
 
 // This header file defines an IOSurface struct.
 //
@@ -30,14 +28,12 @@ namespace mozilla::layers {
 // As long as the port is alive, the IOSurface is automatically marked as "in
 // use", including while the port is in IPC transit.
 struct IOSurfacePort {
-#ifdef XP_DARWIN
   UniqueMachSendRight mPort;
 
   CFTypeRefPtr<IOSurfaceRef> GetSurface() const;
   static IOSurfacePort FromSurface(const CFTypeRefPtr<IOSurfaceRef>& aSurface);
 
   bool operator==(const IOSurfacePort& aOther) const;
-#endif
 };
 
 }  // namespace mozilla::layers
@@ -49,16 +45,10 @@ struct ParamTraits<mozilla::layers::IOSurfacePort> {
   using paramType = mozilla::layers::IOSurfacePort;
 
   static void Write(MessageWriter* writer, paramType&& param) {
-#ifdef XP_DARWIN
     WriteParam(writer, std::move(param.mPort));
-#endif
   }
   static bool Read(MessageReader* reader, paramType* result) {
-#ifdef XP_DARWIN
     return ReadParam(reader, &result->mPort);
-#else
-    return true;
-#endif
   }
 };
 

@@ -238,16 +238,8 @@
 #  include "mozilla/dom/SpeechSynthesis.h"
 #endif
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
-#ifdef XP_WIN
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>  // for getpid()
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -3788,7 +3780,6 @@ void nsGlobalWindowOuter::CheckSecurityLeftAndTop(int32_t* aLeft, int32_t* aTop,
       int32_t screenLeft = screen->AvailLeft();
       int32_t screenWidth = screen->AvailWidth();
       int32_t screenHeight = screen->AvailHeight();
-#if defined(XP_MACOSX)
       /* The mac's coordinate system is different from the assumed Windows'
          system. It offsets by the height of the menubar so that a window
          placed at (0,0) will be entirely visible. Unfortunately that
@@ -3797,9 +3788,6 @@ void nsGlobalWindowOuter::CheckSecurityLeftAndTop(int32_t* aLeft, int32_t* aTop,
          to be placed at (0,0) because it does make sense to do so.
       */
       int32_t screenTop = screen->Top();
-#else
-      int32_t screenTop = screen->AvailTop();
-#endif
 
       if (aLeft) {
         if (screenLeft + screenWidth < *aLeft + winRect.width)
@@ -4242,12 +4230,6 @@ nsresult nsGlobalWindowOuter::ProcessWidgetFullscreenRequest(
     }
   }
 
-#if defined(NIGHTLY_BUILD) && defined(XP_WIN)
-  if (FxRWindowManager::GetInstance()->IsFxRWindow(mWindowID)) {
-    mozilla::gfx::VRShMem shmem(nullptr, true /*aRequiresMutex*/);
-    shmem.SendFullscreenState(mWindowID, aFullscreen);
-  }
-#endif  // NIGHTLY_BUILD && XP_WIN
   FinishFullscreenChange(aFullscreen);
   return NS_OK;
 }
@@ -4467,9 +4449,6 @@ void nsGlobalWindowOuter::FinishFullscreenChange(bool aIsFullscreen) {
     if (!aIsFullscreen) {
       mFullscreen.reset();
     } else {
-#ifndef XP_MACOSX
-      MOZ_ASSERT_UNREACHABLE("Failed to exit fullscreen?");
-#endif
       // Restore fullscreen state with FullscreenReason::ForFullscreenAPI reason
       // in order to make subsequent DOM fullscreen exit request can exit
       // browser fullscreen mode.

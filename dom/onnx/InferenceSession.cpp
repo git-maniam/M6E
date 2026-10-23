@@ -137,12 +137,7 @@ OrtSessionOptions* ToOrtSessionOption(
   CALL_API(SetSessionLogSeverityLevel, aOptions.mLogSeverityLevel);
   CALL_API(SetSessionLogVerbosityLevel, aOptions.mLogVerbosityLevel);
   PathString path;
-#ifdef XP_WIN
-  path = NS_ConvertUTF8toUTF16(aOptions.mOptimizedModelFilePath.get());
-
-#else
   path = aOptions.mOptimizedModelFilePath.get();
-#endif
   CALL_API(SetOptimizedModelFilePath, path.get());
   GraphOptimizationLevel level = ORT_ENABLE_BASIC;
   LOGD("Graph optimization level: {}", aOptions.mGraphOptimizationLevel);
@@ -174,11 +169,7 @@ OrtApi* GetOrtAPI() {
     return sAPI;
   }
 
-#ifdef XP_WIN
-  PathString path = GetLibraryFilePathname(LXUL_DLL, (PRFuncPtr)&GetOrtAPI);
-#else
   PathString path = GetLibraryFilePathname(XUL_DLL, (PRFuncPtr)&GetOrtAPI);
-#endif
   if (path.IsEmpty()) {
     LOGE("Could not locate XUL library when loading onnxruntime");
     return nullptr;
@@ -196,18 +187,9 @@ OrtApi* GetOrtAPI() {
   }
   PRLibSpec lspec;
   PathString nativePath = libFile->NativePath();
-#ifdef XP_WIN
-  lspec.type = PR_LibSpec_PathnameU;
-  lspec.value.pathname_u = nativePath.get();
-#else
   lspec.type = PR_LibSpec_Pathname;
   lspec.value.pathname = nativePath.get();
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-  PRLibrary* handle = PR_LoadLibraryWithFlags(lspec, PR_LD_NOW | PR_LD_GLOBAL);
-#else
   PRLibrary* handle = PR_LoadLibraryWithFlags(lspec, PR_LD_NOW | PR_LD_LOCAL);
-#endif
   if (!handle) {
     PRErrorCode code = PR_GetError();
     const char* msg = PR_ErrorToString(code, PR_LANGUAGE_I_DEFAULT);

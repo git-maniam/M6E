@@ -1470,13 +1470,8 @@ nsresult Connection::initializeInternal() {
 
   // Set the default synchronous value. Each consumer can switch this
   // accordingly to their needs.
-#if defined(ANDROID)
-  // Android prefers synchronous = OFF for performance reasons.
-  (void)ExecuteSimpleSQL("PRAGMA synchronous = OFF;"_ns);
-#else
   // Normal is the suggested value for WAL journals.
   (void)ExecuteSimpleSQL("PRAGMA synchronous = NORMAL;"_ns);
-#endif
 
   // Initialization succeeded, we can stop guarding for failures.
   guard.release();

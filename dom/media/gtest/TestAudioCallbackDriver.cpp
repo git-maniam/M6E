@@ -304,14 +304,10 @@ MOZ_CAN_RUN_SCRIPT_BOUNDARY {
   // fallback driver.
   EXPECT_NEAR(
       wallClockDuration.ToSeconds(), graphClockDuration.ToSeconds(),
-#ifdef XP_MACOSX
       // SystemClockDriver on macOS in CI is underrunning, i.e. the driver
       // thread when waiting for the next iteration waits too long. Therefore
       // the graph clock is unable to keep up with wall clock.
       wallClockDuration.ToSeconds() * 0.8
-#else
-      0.1
-#endif
   );
   // Check that each fallback driver was of reasonable cadence. It's a thread
   // that tries to run a task every 10ms. Check that the average callback

@@ -17,16 +17,7 @@
 #include "nsXPCOM.h"
 #include "pk11pub.h"
 
-#if defined(XP_MACOSX)
 #  include "KeychainSecret.h"
-#elif defined(XP_WIN)
-#  include "CredentialManagerSecret.h"
-#elif defined(MOZ_WIDGET_GTK)
-#  include "LibSecret.h"
-#  include "NSSKeyStore.h"
-#else
-#  include "NSSKeyStore.h"
-#endif
 
 NS_IMPL_ISUPPORTS(OSKeyStore, nsIOSKeyStore)
 
@@ -61,19 +52,7 @@ OSKeyStore::OSKeyStore() : mKs(nullptr) {
     return;
   }
 
-#if defined(XP_MACOSX)
   mKs.reset(new KeychainSecret());
-#elif defined(XP_WIN)
-  mKs.reset(new CredentialManagerSecret());
-#elif defined(MOZ_WIDGET_GTK)
-  if (NS_SUCCEEDED(MaybeLoadLibSecret())) {
-    mKs = std::make_unique<LibSecret>();
-  } else {
-    mKs = std::make_unique<NSSKeyStore>();
-  }
-#else
-  mKs.reset(new NSSKeyStore());
-#endif
 
   (void)NS_CreateBackgroundTaskQueue(
       "OSKeyStore", getter_AddRefs(mBackgroundSerialEventTarget));

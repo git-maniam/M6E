@@ -444,40 +444,6 @@ void nsNoAuthURLParser::ParseAfterScheme(const char* spec, int32_t specLen,
   SET_RESULT(path, pos, specLen - pos);
 }
 
-#if defined(XP_WIN)
-NS_IMETHODIMP
-nsNoAuthURLParser::ParseFilePath(const char* filepath, int32_t filepathLen,
-                                 uint32_t* directoryPos, int32_t* directoryLen,
-                                 uint32_t* basenamePos, int32_t* basenameLen,
-                                 uint32_t* extensionPos,
-                                 int32_t* extensionLen) {
-  if (NS_WARN_IF(!filepath)) {
-    return NS_ERROR_INVALID_POINTER;
-  }
-
-  if (filepathLen < 0) filepathLen = strlen(filepath);
-
-  // look for a filepath consisting of only a drive number, which may or
-  // may not have a leading slash.
-  if (filepathLen > 1 && filepathLen < 4) {
-    const char* end = filepath + filepathLen;
-    const char* p = filepath;
-    if (*p == '/') p++;
-    if ((end - p == 2) && (p[1] == ':' || p[1] == '|') && IsAsciiAlpha(*p)) {
-      // filepath = <drive-number>:
-      SET_RESULT(directory, 0, filepathLen);
-      SET_RESULT(basename, 0, -1);
-      SET_RESULT(extension, 0, -1);
-      return NS_OK;
-    }
-  }
-
-  // otherwise fallback on common implementation
-  return nsBaseURLParser::ParseFilePath(filepath, filepathLen, directoryPos,
-                                        directoryLen, basenamePos, basenameLen,
-                                        extensionPos, extensionLen);
-}
-#endif
 
 //----------------------------------------------------------------------------
 // nsAuthURLParser implementation

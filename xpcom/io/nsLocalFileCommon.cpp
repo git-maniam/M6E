@@ -16,11 +16,7 @@
 #include "nsString.h"
 #include "nsUTF8Utils.h"
 
-#ifdef XP_WIN
-#  include <string.h>
-#else
 #  include <limits.h>
-#endif
 
 // Extensions that should be considered 'executable', ie will not allow users
 // to open immediately without first saving to disk, and potentially provoke
@@ -176,7 +172,6 @@ nsresult NS_NewLocalFileWithPersistentDescriptor(
   return NS_OK;
 }
 
-#if !defined(XP_WIN)
 NS_IMETHODIMP
 nsLocalFile::InitWithFile(nsIFile* aFile) {
   if (NS_WARN_IF(!aFile)) {
@@ -190,15 +185,10 @@ nsLocalFile::InitWithFile(nsIFile* aFile) {
   }
   return InitWithNativePath(path);
 }
-#endif
 
 // Maximum path and filename lengths, leaving space for a terminating null
 // character, a dash, and a four-digit sequence, e.g. "-9999\0"
-#ifdef XP_WIN
-static constexpr int32_t kMaxUniquePathLength = MAX_PATH - 6;
-#else
 static constexpr int32_t kMaxUniquePathLength = PATH_MAX - 6;
-#endif
 
 // 255 - "-NNNN"
 static constexpr int32_t kMaxUniqueFilenameLength = 250;
@@ -215,32 +205,18 @@ nsLocalFile::CreateUnique(uint32_t aType, uint32_t aAttributes) {
     return aRv == NS_ERROR_FILE_ALREADY_EXISTS;
   };
 
-#ifdef XP_WIN
-  nsAutoString path, leafName, rootName, suffix;
-  rv = GetPath(path);
-#else
   nsAutoCString path, leafName, rootName, suffix;
   rv = GetNativePath(path);
-#endif
   if (NS_FAILED(rv)) {
     return rv;
   }
 
-#ifdef XP_WIN
-  rv = GetLeafName(leafName);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  const int32_t lastDot = leafName.RFindChar(char16_t('.'));
-#else
   rv = GetNativeLeafName(leafName);
   if (NS_FAILED(rv)) {
     return rv;
   }
 
   const int32_t lastDot = leafName.RFindChar('.');
-#endif
 
   int32_t pathHeadroom =
       kMaxUniquePathLength - static_cast<int32_t>(path.Length());
@@ -279,13 +255,6 @@ nsLocalFile::CreateUnique(uint32_t aType, uint32_t aAttributes) {
       return NS_ERROR_FILE_UNRECOGNIZED_PATH;
     }
 
-#ifdef XP_WIN
-    // ensure that we don't cut the name in mid-UTF16-character
-    rootName.SetLength(mozilla::IsLowSurrogate(rootName[maxRootLength])
-                           ? maxRootLength - 1
-                           : maxRootLength);
-    SetLeafName(rootName + suffix);
-#else
     if (NS_IsNativeUTF8()) {
       // ensure that we don't cut the name in mid-UTF8-character
       // (assume the name is valid UTF8 to begin with)
@@ -301,7 +270,6 @@ nsLocalFile::CreateUnique(uint32_t aType, uint32_t aAttributes) {
 
     rootName.SetLength(maxRootLength);
     SetNativeLeafName(rootName + suffix);
-#endif
     nsresult rvCreate = Create(aType, aAttributes);
     if (!FailedBecauseExists(rvCreate)) {
       return rvCreate;
@@ -310,12 +278,7 @@ nsLocalFile::CreateUnique(uint32_t aType, uint32_t aAttributes) {
 
   for (int indx = 1; indx < 10000; ++indx) {
     // start with "Picture-1.jpg" after "Picture.jpg" exists
-#ifdef XP_WIN
-    SetLeafName(rootName +
-                NS_ConvertASCIItoUTF16(nsPrintfCString("-%d", indx)) + suffix);
-#else
     SetNativeLeafName(rootName + nsPrintfCString("-%d", indx) + suffix);
-#endif
     rv = Create(aType, aAttributes);
     if (NS_SUCCEEDED(rv) || !FailedBecauseExists(rv)) {
       return rv;
@@ -326,13 +289,7 @@ nsLocalFile::CreateUnique(uint32_t aType, uint32_t aAttributes) {
   return NS_ERROR_FILE_TOO_BIG;
 }
 
-#if defined(XP_WIN)
-static const char16_t kPathSeparatorChar = '\\';
-#elif defined(XP_UNIX)
 static const char16_t kPathSeparatorChar = '/';
-#else
-#  error Need to define file path separator for your platform
-#endif
 
 static void SplitPath(char16_t* aPath, nsTArray<char16_t*>& aNodeArray) {
   if (*aPath == 0) {
@@ -381,17 +338,6 @@ nsLocalFile::GetRelativeDescriptor(nsIFile* aFromFile, nsACString& aResult) {
     return rv;
   }
 
-#ifdef XP_WIN
-  // Ignore string parsing disable prefix on Windows
-  // https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file#short-vs-long-names
-  static constexpr nsLiteralString kPrefix = u"\\\\?\\"_ns;
-  if (StringBeginsWith(thisPath, kPrefix)) {
-    thisPath.Cut(0, kPrefix.Length());
-  }
-  if (StringBeginsWith(fromPath, kPrefix)) {
-    fromPath.Cut(0, kPrefix.Length());
-  }
-#endif
 
   // get raw pointer to mutable string buffer
   char16_t* thisPathPtr = thisPath.BeginWriting();
@@ -404,16 +350,9 @@ nsLocalFile::GetRelativeDescriptor(nsIFile* aFromFile, nsACString& aResult) {
   for (nodeIndex = 0;
        nodeIndex < thisNodes.Length() && nodeIndex < fromNodes.Length();
        ++nodeIndex) {
-#ifdef XP_WIN
-    if (_wcsicmp(char16ptr_t(thisNodes[nodeIndex]),
-                 char16ptr_t(fromNodes[nodeIndex]))) {
-      break;
-    }
-#else
     if (nsCRT::strcmp(thisNodes[nodeIndex], fromNodes[nodeIndex])) {
       break;
     }
-#endif
   }
 
   size_t branchIndex = nodeIndex;

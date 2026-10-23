@@ -6,13 +6,7 @@
 
 #include "nsString.h"
 
-#ifdef XP_LINUX
-
-#  include "base/set_process_title_linux.h"
-#  define HAVE_SETPROCTITLE
-#  define HAVE_SETPROCTITLE_INIT
-
-#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
+#if   defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
     defined(__DragonFly__)
 
 #  include <sys/types.h>

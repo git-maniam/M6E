@@ -576,12 +576,10 @@ nsresult nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
           // On Linux the destination point is determined by the initial click
           // on the scrollbar track and doesn't change until the mouse button
           // is released.
-#ifndef MOZ_WIDGET_GTK
           // On the other platforms we need to update the destination point now.
           mDestinationPoint = eventPoint;
           StopRepeat();
           StartRepeat();
-#endif
           break;
         }
 
@@ -674,20 +672,6 @@ nsresult nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
 
     SetupDrag(aEvent, thumbFrame, pos, isHorizontal);
   }
-#ifdef MOZ_WIDGET_GTK
-  else if (ShouldScrollForEvent(aEvent) && aEvent->mClass == eMouseEventClass &&
-           aEvent->AsMouseEvent()->mButton == MouseButton::eSecondary) {
-    // HandlePress and HandleRelease are usually called via
-    // nsIFrame::HandleEvent, but only for the left mouse button.
-    if (aEvent->mMessage == eMouseDown) {
-      HandlePress(aPresContext, aEvent, aEventStatus);
-    } else if (aEvent->mMessage == eMouseUp) {
-      HandleRelease(aPresContext, aEvent, aEventStatus);
-    }
-
-    return NS_OK;
-  }
-#endif
 
   // XXX hack until handle release is actually called in nsframe.
   //  if (aEvent->mMessage == eMouseOut ||
@@ -1056,15 +1040,8 @@ bool nsSliderFrame::ShouldScrollForEvent(WidgetGUIEvent* aEvent) {
     case eMouseDown:
     case eMouseUp: {
       uint16_t button = aEvent->AsMouseEvent()->mButton;
-#ifdef MOZ_WIDGET_GTK
-      return (button == MouseButton::ePrimary) ||
-             (button == MouseButton::eSecondary && GetScrollToClick()) ||
-             (button == MouseButton::eMiddle && gMiddlePref &&
-              !GetScrollToClick());
-#else
       return (button == MouseButton::ePrimary) ||
              (button == MouseButton::eMiddle && gMiddlePref);
-#endif
     }
     default:
       return false;
@@ -1080,13 +1057,11 @@ bool nsSliderFrame::ShouldScrollToClickForEvent(WidgetGUIEvent* aEvent) {
     return false;
   }
 
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
   // On Mac and Linux, clicking the scrollbar thumb should never scroll to
   // click.
   if (IsEventOverThumb(aEvent)) {
     return false;
   }
-#endif
 
   if (aEvent->mMessage == eTouchStart) {
     return GetScrollToClick();
@@ -1094,19 +1069,10 @@ bool nsSliderFrame::ShouldScrollToClickForEvent(WidgetGUIEvent* aEvent) {
 
   WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
   if (mouseEvent->mButton == MouseButton::ePrimary) {
-#ifdef XP_MACOSX
     bool invertPref = mouseEvent->IsAlt();
-#else
-    bool invertPref = mouseEvent->IsShift();
-#endif
     return GetScrollToClick() != invertPref;
   }
 
-#ifdef MOZ_WIDGET_GTK
-  if (mouseEvent->mButton == MouseButton::eSecondary) {
-    return !GetScrollToClick();
-  }
-#endif
 
   return true;
 }

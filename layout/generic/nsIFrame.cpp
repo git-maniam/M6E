@@ -3108,9 +3108,6 @@ static bool HitTestsCapturedElementsAtLivePosition(nsPresContext* aPc) {
 // that function's stack frame, which is on a deeply recursive path that is
 // already up against the stack limit. Only masked frames reach this code, so
 // never inlining it on Win32 costs us nothing.
-#if defined(XP_WIN) && !defined(_WIN64)
-MOZ_NEVER_INLINE
-#endif
 static Maybe<nsRect> ComputeClipForMaskItem(
     nsDisplayListBuilder* aBuilder, nsIFrame* aMaskedFrame,
     const SVGUtils::MaskUsage& aMaskUsage) {
@@ -4378,9 +4375,6 @@ static bool ShouldSkipFrame(nsDisplayListBuilder* aBuilder,
 // increased stack size caused by the additional variables here. Work around
 // this by having this code in its own function and ensuring it is never inlined
 // on Win32.
-#  if defined(XP_WIN) && !defined(_WIN64)
-MOZ_NEVER_INLINE
-#  endif
 static void MaybeAddAccId(nsIFrame* aChildOrOutOfFlow,
                           nsDisplayListBuilder* aBuilder,
                           const nsDisplayListSet& aLists) {
@@ -4909,13 +4903,8 @@ nsresult nsIFrame::GetDataForTableSelection(
     // In Browser, special 'table selection' key must be pressed for table
     // selection or when just Shift is pressed and we're already in table/cell
     // selection mode
-#ifdef XP_MACOSX
     doTableSelection = aMouseEvent->IsMeta() ||
                        (aMouseEvent->IsShift() && selectingTableCells);
-#else
-    doTableSelection = aMouseEvent->IsControl() ||
-                       (aMouseEvent->IsShift() && selectingTableCells);
-#endif
   }
   if (!doTableSelection) {
     return NS_OK;
@@ -5231,16 +5220,12 @@ nsresult nsIFrame::MoveCaretToEventPoint(nsPresContext* aPresContext,
     return NS_OK;  // nothing to do we cannot affect selection from here
   }
 
-#ifdef XP_MACOSX
   // If Control key is pressed on macOS, it should be treated as right click.
   // So, don't change selection.
   if (aMouseEvent->IsControl()) {
     return NS_OK;
   }
   const bool control = aMouseEvent->IsMeta();
-#else
-  const bool control = aMouseEvent->IsControl();
-#endif
 
   RefPtr<nsFrameSelection> fc = const_cast<nsFrameSelection*>(frameselection);
   if (isPrimaryButtonDown && aMouseEvent->mClickCount > 1) {

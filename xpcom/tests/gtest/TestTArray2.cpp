@@ -1282,7 +1282,6 @@ TEST(TArray, test_swap)
 }
 
 // Bug 1171296: Disabled on andoid due to crashes.
-#if !defined(ANDROID)
 TEST(TArray, test_fallible)
 {
   // Test that FallibleTArray works properly; that is, it never OOMs, but
@@ -1312,15 +1311,7 @@ TEST(TArray, test_fallible)
     if (!success) {
       // We got our OOM.  Check that it didn't come too early.
       oomed = true;
-#  ifdef XP_WIN
-      // 32-bit Windows sometimes OOMs on the 6th, 7th, or 8th.  To keep the
-      // test green, choose the lower of those: the important thing here is
-      // that some allocations fail and some succeed.  We're not too
-      // concerned about how many iterations it takes.
-      const size_t kOOMIterations = 6;
-#  else
       const size_t kOOMIterations = 8;
-#  endif
       ASSERT_GE(i, kOOMIterations)
           << "Got OOM on iteration " << i << ". Too early!";
     }
@@ -1330,7 +1321,6 @@ TEST(TArray, test_fallible)
   << "Didn't OOM or crash?  nsTArray::SetCapacity"
      "must be lying.";
 }
-#endif
 
 TEST(TArray, test_conversion_operator)
 {

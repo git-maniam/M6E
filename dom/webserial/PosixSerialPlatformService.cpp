@@ -25,7 +25,6 @@
 #include "nsString.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_MACOSX
 #  include <CoreFoundation/CFNumber.h>
 #  include <IOKit/IOKitLib.h>
 #  include <IOKit/serial/IOSerialKeys.h>
@@ -36,7 +35,6 @@
 #  ifndef kIOMainPortDefault
 #    define kIOMainPortDefault kIOMasterPortDefault
 #  endif
-#endif
 
 #ifdef TCGETS2
 // Support non-standard baud rates through TCGETS2/TCSETS2
@@ -49,9 +47,6 @@
 #  include <termios.h>
 #endif
 
-#ifdef XP_LINUX
-#  include <linux/serial.h>
-#endif
 
 namespace mozilla::dom {
 
@@ -60,9 +55,7 @@ constexpr int kPollTimeoutMs = 100;
 // Prevents indefinite blocking when a serial port's buffer is full (e.g.
 // due to flow control), which would block all other serial ports.
 constexpr int kWriteTimeoutMs = 5000;
-#ifdef XP_MACOSX
 constexpr size_t kDeviceNameBufferSize = 256;
-#endif
 
 // Returns Ok if aDevpath refers to a real serial device by attempting
 // to open it and issuing a TIOCMGET ioctl, and errno otherwise.
@@ -94,7 +87,6 @@ static Result<Ok, int> IsRealSerialPort(const char* aDevpath) {
   return Err(ioctlErrno);
 }
 
-#ifdef XP_MACOSX
 // macOS exposes built-in serial ports used for WiFi debugging and kernel
 // debugging via IOKit. They are not useful targets for WebSerial, so
 // hide them from enumeration. Bluetooth ports are intentionally not filtered.
@@ -110,17 +102,11 @@ static bool IsMacOSSystemSerialPort(const char* aDevicePath) {
   }
   return false;
 }
-#endif
 
 PosixSerialPlatformService::PosixSerialPlatformService()
-#ifdef XP_LINUX
-    : mMonitor(nullptr),
-      mMonitorSourceID(0)
-#elif defined(XP_MACOSX)
     : mNotificationPort(nullptr),
       mAddedIterator(0),
       mRemovedIterator(0)
-#endif
 {
   MOZ_LOG(gWebSerialLog, LogLevel::Debug,
           ("PosixSerialPlatformService[%p] created", this));
@@ -143,12 +129,6 @@ void PosixSerialPlatformService::Shutdown() {
 
   SerialPlatformService::Shutdown();
 
-#ifdef XP_LINUX
-  if (mMonitorSourceID) {
-    g_source_remove(mMonitorSourceID);
-    mMonitorSourceID = 0;
-  }
-#elif defined(XP_MACOSX)
   if (mAddedIterator) {
     IOObjectRelease(mAddedIterator);
     mAddedIterator = 0;
@@ -173,20 +153,12 @@ void PosixSerialPlatformService::Shutdown() {
     IONotificationPortDestroy(mNotificationPort);
     mNotificationPort = nullptr;
   }
-#endif
 
   RefPtr<PosixSerialPlatformService> self = this;
   SyncRunnable::DispatchToThread(
       IOThread(), NS_NewRunnableFunction(
                       "PosixSerialPlatformService::Shutdown:IOCleanup", [self] {
                         self->mOpenPorts.Clear();
-#ifdef XP_LINUX
-                        if (self->mMonitor && self->mUdevLib) {
-                          self->mUdevLib->udev_monitor_unref(self->mMonitor);
-                          self->mMonitor = nullptr;
-                        }
-                        self->mUdevLib = nullptr;
-#endif
                       }));
 
   MOZ_LOG(gWebSerialLog, LogLevel::Info,
@@ -202,7 +174,6 @@ nsresult PosixSerialPlatformService::EnumeratePortsImpl(
       ("PosixSerialPlatformService[%p]::EnumeratePorts starting enumeration",
        this));
 
-#ifdef XP_MACOSX
   io_iterator_t serialPortIterator;
   CFMutableDictionaryRef classesToMatch =
       IOServiceMatching(kIOSerialBSDServiceValue);
@@ -249,221 +220,6 @@ nsresult PosixSerialPlatformService::EnumeratePortsImpl(
 
   IOObjectRelease(serialPortIterator);
 
-#elif defined(XP_LINUX)
-  // Tracks whether every device we failed to access during udev enumeration
-  // failed with EACCES. Combined with an empty port list below, this signals
-  // the user likely lacks permission to access serial ports (e.g. is not in
-  // the 'dialout' group, or a Snap/Flatpak sandbox blocks access).
-  enum ErrorKind : uint8_t {
-    eNone = 0,
-    eAccessDenied = 1 << 0,
-    eOther = 1 << 1
-  };
-  ErrorKind errors = ErrorKind::eNone;
-
-  // Use an IIFE to avoid excessive nesting
-  [&]() {
-    if (!mUdevLib) {
-      MOZ_LOG(gWebSerialLog, LogLevel::Warning,
-              ("PosixSerialPlatformService[%p]::EnumeratePorts udev not "
-               "available, falling back to /dev scan",
-               this));
-      return;
-    }
-
-    udev_enumerate* enumerate = mUdevLib->udev_enumerate_new(mUdevLib->udev);
-    if (!enumerate) {
-      MOZ_LOG(gWebSerialLog, LogLevel::Error,
-              ("PosixSerialPlatformService[%p]::EnumeratePorts "
-               "udev_enumerate_new failed",
-               this));
-      return;
-    }
-    auto cleanupEnum =
-        MakeScopeExit([&]() { mUdevLib->udev_enumerate_unref(enumerate); });
-
-    if (mUdevLib->udev_enumerate_add_match_subsystem(enumerate, "tty") < 0 ||
-        mUdevLib->udev_enumerate_scan_devices(enumerate) < 0) {
-      MOZ_LOG(gWebSerialLog, LogLevel::Error,
-              ("PosixSerialPlatformService[%p]::EnumeratePorts "
-               "udev enumerate setup failed",
-               this));
-      return;
-    }
-
-    for (udev_list_entry* entry =
-             mUdevLib->udev_enumerate_get_list_entry(enumerate);
-         entry; entry = mUdevLib->udev_list_entry_get_next(entry)) {
-      const char* syspath = mUdevLib->udev_list_entry_get_name(entry);
-      if (!syspath) {
-        MOZ_LOG(gWebSerialLog, LogLevel::Warning,
-                ("PosixSerialPlatformService[%p]::EnumeratePorts "
-                 "udev_list_entry_get_name returned null",
-                 this));
-        continue;
-      }
-
-      MOZ_LOG(gWebSerialLog, LogLevel::Debug,
-              ("PosixSerialPlatformService[%p]::EnumeratePorts examining "
-               "syspath=%s",
-               this, syspath));
-
-      udev_device* dev =
-          mUdevLib->udev_device_new_from_syspath(mUdevLib->udev, syspath);
-      if (!dev) {
-        MOZ_LOG(gWebSerialLog, LogLevel::Warning,
-                ("PosixSerialPlatformService[%p]::EnumeratePorts "
-                 "udev_device_new_from_syspath failed for %s",
-                 this, syspath));
-        continue;
-      }
-      auto cleanupDev =
-          MakeScopeExit([&]() { mUdevLib->udev_device_unref(dev); });
-
-      const char* devnode = mUdevLib->udev_device_get_devnode(dev);
-      if (!devnode) {
-        MOZ_LOG(gWebSerialLog, LogLevel::Debug,
-                ("PosixSerialPlatformService[%p]::EnumeratePorts "
-                 "no devnode for syspath=%s",
-                 this, syspath));
-        continue;
-      }
-
-      auto isReal = IsRealSerialPort(devnode);
-      if (isReal.isErr()) {
-        int err = isReal.unwrapErr();
-        // ENOTTY means this device is a kind of tty device
-        // that doesn't support serial operations at all
-        // (like /dev/ptmx), so skip over it for this calculation.
-        if (err != ENOTTY) {
-          errors = static_cast<ErrorKind>(
-              errors |
-              ((err == EACCES) ? ErrorKind::eAccessDenied : ErrorKind::eOther));
-        }
-        MOZ_LOG(gWebSerialLog, LogLevel::Verbose,
-                ("PosixSerialPlatformService[%p]::EnumeratePorts "
-                 "rejecting device devnode=%s, errors=%d",
-                 this, devnode, static_cast<int>(errors)));
-        MOZ_LOG(gWebSerialLog, LogLevel::Debug,
-                ("PosixSerialPlatformService[%p]::EnumeratePorts "
-                 "rejecting device devnode=%s (not a real serial port)",
-                 this, devnode));
-        continue;
-      }
-
-      IPCSerialPortInfo info;
-      PopulatePortInfoFromUdev(dev, devnode, info);
-
-      MOZ_LOG(
-          gWebSerialLog, LogLevel::Debug,
-          ("PosixSerialPlatformService[%p]::EnumeratePorts found port: "
-           "path=%s, friendlyName=%s, VID=0x%04x, PID=0x%04x, BT:%s",
-           this, NS_ConvertUTF16toUTF8(info.path()).get(),
-           NS_ConvertUTF16toUTF8(info.friendlyName()).get(),
-           info.usbVendorId().valueOr(0), info.usbProductId().valueOr(0),
-           info.bluetoothServiceClassId().isSome()
-               ? NS_ConvertUTF16toUTF8(info.bluetoothServiceClassId().value())
-                     .get()
-               : "none"));
-
-      aPorts.AppendElement(std::move(info));
-    }
-  }();
-
-  // Also scan /dev/ directly for onboard serial ports that may not appear
-  // in the udev enumeration (e.g. on minimal or embedded Linux systems).
-  DIR* devDir = opendir("/dev");
-  if (devDir) {
-    auto cleanupDir = MakeScopeExit([&]() { closedir(devDir); });
-
-    while (struct dirent* ent = readdir(devDir)) {
-      nsAutoCString devpath("/dev/");
-      devpath.Append(ent->d_name);
-
-      // Skip if already found by udev enumeration.
-      NS_ConvertUTF8toUTF16 devpathUtf16(devpath);
-      bool alreadyFound = false;
-      for (const auto& existing : aPorts) {
-        if (existing.path() == devpathUtf16) {
-          alreadyFound = true;
-          break;
-        }
-      }
-      if (alreadyFound) {
-        continue;
-      }
-
-      if (IsRealSerialPort(devpath.get()).isErr()) {
-        continue;
-      }
-
-      MOZ_LOG(gWebSerialLog, LogLevel::Debug,
-              ("PosixSerialPlatformService[%p]::EnumeratePorts found onboard "
-               "port from /dev scan: %s",
-               this, devpath.get()));
-
-      IPCSerialPortInfo info;
-      bool haveSetInfo = false;
-      // Try udev lookup for richer metadata (product name, vendor/product IDs).
-      nsAutoCString syspath("/sys/class/tty/");
-      syspath.Append(ent->d_name);
-      udev_device* dev = mUdevLib ? mUdevLib->udev_device_new_from_syspath(
-                                        mUdevLib->udev, syspath.get())
-                                  : nullptr;
-      if (dev) {
-        PopulatePortInfoFromUdev(dev, devpath.get(), info);
-        mUdevLib->udev_device_unref(dev);
-        haveSetInfo = true;
-      }
-      if (!haveSetInfo) {
-        info.id() = devpathUtf16;
-        info.path() = devpathUtf16;
-        info.friendlyName() =
-            NS_ConvertUTF8toUTF16(nsDependentCString(ent->d_name));
-        if (strncmp(devpath.get(), "/dev/rfcomm", strlen("/dev/rfcomm")) == 0) {
-          // See PopulatePortInfoFromUdev for why we assume SPP here.
-          info.bluetoothServiceClassId() =
-              Some(nsString(kBluetoothSerialPortProfileUUID));
-        }
-      }
-      aPorts.AppendElement(std::move(info));
-    }
-  }
-
-  // Only flag a likely permission problem when we found no ports at all and
-  // every udev access failure was EACCES. If any port enumerated, the user
-  // clearly has access, so unrelated EACCES errors (e.g. on /dev/tty0) are
-  // ignored.
-  if (aLikelyAccessDenied) {
-    *aLikelyAccessDenied =
-        aPorts.IsEmpty() && (errors == ErrorKind::eAccessDenied);
-  }
-#elif defined(XP_FREEBSD)
-  DIR* devDir = opendir("/dev");
-  if (devDir) {
-    auto cleanupDir = MakeScopeExit([&]() { closedir(devDir); });
-    while (struct dirent* ent = readdir(devDir)) {
-      const char* name = ent->d_name;
-      bool isTtyU = strncmp(name, "ttyU", 4) == 0;
-      bool isTtyu = strncmp(name, "ttyu", 4) == 0;
-      if ((!isTtyU && !isTtyu) || name[4] < '0' || name[4] > '9') {
-        continue;
-      }
-      nsAutoCString devpath("/dev/");
-      devpath.Append(name);
-      auto isReal = IsRealSerialPort(devpath.get());
-      if (isReal.isErr()) {
-        continue;
-      }
-      NS_ConvertUTF8toUTF16 path(devpath);
-      IPCSerialPortInfo info;
-      info.id() = path;
-      info.path() = path;
-      info.friendlyName() = NS_ConvertUTF8toUTF16(nsDependentCString(name));
-      aPorts.AppendElement(info);
-    }
-  }
-#endif
 
   MOZ_LOG(gWebSerialLog, LogLevel::Debug,
           ("PosixSerialPlatformService[%p]::EnumeratePorts found %zu ports",
@@ -625,15 +381,9 @@ nsresult PosixSerialPlatformService::ConfigurePort(
   tty.c_cc[VTIME] = 0;
 
   speed_t speed;
-#if defined(XP_MACOSX)
   // The IOSSIOSPEED ioctl() is only available on Mac.
   bool need_speedioctl = false;
-#endif
   if (ConvertBaudRate(aOptions.baudRate(), speed)) {
-#ifdef XP_LINUX
-    tty.c_cflag &= ~CBAUD;
-    tty.c_cflag |= speed;
-#else
     if (cfsetispeed(&tty, speed) != 0) {
       MOZ_LOG(
           gWebSerialLog, LogLevel::Error,
@@ -650,7 +400,6 @@ nsresult PosixSerialPlatformService::ConfigurePort(
            this, errno));
       return NS_ERROR_FAILURE;
     }
-#endif
   } else {
     // Attempt to use a custom baud rate
     MOZ_LOG(gWebSerialLog, LogLevel::Verbose,
@@ -662,19 +411,11 @@ nsresult PosixSerialPlatformService::ConfigurePort(
     tty.c_cflag |= CBAUDEX;
     tty.c_ispeed = aOptions.baudRate();
     tty.c_ospeed = aOptions.baudRate();
-#elif defined(XP_MACOSX)
+#else
     // cfsetispeed() and cfsetospeed() sometimes work for custom baud rates
     // on Mac, but the ioctl is more reliable. But we have to set it after
     // setting everything else or it will get overwritten.
     need_speedioctl = true;
-#else
-  // User requested a custom baud rate but we don't have TCSETS2 or
-  // IOSSIOSPEED ioctl's, so there's nothing we can do.
-  MOZ_LOG(gWebSerialLog, LogLevel::Error,
-          ("PosixSerialPlatformService[%p]::ConfigurePort could not set "
-           "custom baudRate: %u",
-           this, aOptions.baudRate()));
-  return NS_ERROR_FAILURE;
 #endif
   }
 #ifdef LINUX_NSTD_BAUD
@@ -690,7 +431,6 @@ nsresult PosixSerialPlatformService::ConfigurePort(
     return NS_ERROR_FAILURE;
   }
 
-#if defined(XP_MACOSX)
   if (need_speedioctl) {
     speed = aOptions.baudRate();
     if (ioctl(aFd, IOSSIOSPEED, &speed) == -1) {
@@ -702,7 +442,6 @@ nsresult PosixSerialPlatformService::ConfigurePort(
       return NS_ERROR_FAILURE;
     }
   }
-#endif
 
   MOZ_LOG(
       gWebSerialLog, LogLevel::Debug,
@@ -1150,16 +889,9 @@ nsresult PosixSerialPlatformService::GetReadStreamImpl(
 }
 
 nsresult PosixSerialPlatformService::StartMonitoring() {
-#ifdef XP_LINUX
-  return InitializeUdev();
-#elif defined(XP_MACOSX)
   return InitializeMacOS();
-#else
-  return NS_OK;
-#endif
 }
 
-#ifdef XP_MACOSX
 nsresult PosixSerialPlatformService::InitializeMacOS() {
   MOZ_LOG(gWebSerialLog, LogLevel::Debug,
           ("PosixSerialPlatformService[%p]::InitializeMacOS setting up IOKit "
@@ -1248,211 +980,8 @@ nsresult PosixSerialPlatformService::InitializeMacOS() {
            this));
   return NS_OK;
 }
-#endif
 
-#ifdef XP_LINUX
-nsresult PosixSerialPlatformService::InitializeUdev() {
-  mUdevLib = MakeUnique<udev_lib>();
-  if (!*mUdevLib) {
-    MOZ_LOG(gWebSerialLog, LogLevel::Error,
-            ("PosixSerialPlatformService[%p]::InitializeUdev udev_lib "
-             "initialization failed",
-             this));
-    mUdevLib = nullptr;
-    return NS_ERROR_FAILURE;
-  }
 
-  mMonitor = mUdevLib->udev_monitor_new_from_netlink(mUdevLib->udev, "udev");
-  if (!mMonitor) {
-    MOZ_LOG(gWebSerialLog, LogLevel::Error,
-            ("PosixSerialPlatformService[%p]::InitializeUdev "
-             "udev_monitor_new_from_netlink failed",
-             this));
-    mUdevLib = nullptr;
-    return NS_ERROR_FAILURE;
-  }
-
-  auto cleanupUdevAndMonitor = MakeScopeExit([&]() {
-    mUdevLib->udev_monitor_unref(mMonitor);
-    mMonitor = nullptr;
-    mUdevLib = nullptr;
-  });
-
-  if (mUdevLib->udev_monitor_filter_add_match_subsystem_devtype(mMonitor, "tty",
-                                                                nullptr) < 0) {
-    MOZ_LOG(gWebSerialLog, LogLevel::Error,
-            ("PosixSerialPlatformService[%p]::InitializeUdev filter add failed",
-             this));
-    return NS_ERROR_FAILURE;
-  }
-
-  if (mUdevLib->udev_monitor_enable_receiving(mMonitor) < 0) {
-    MOZ_LOG(gWebSerialLog, LogLevel::Error,
-            ("PosixSerialPlatformService[%p]::InitializeUdev enable receiving "
-             "failed",
-             this));
-    return NS_ERROR_FAILURE;
-  }
-
-  int fd = mUdevLib->udev_monitor_get_fd(mMonitor);
-  if (fd < 0) {
-    MOZ_LOG(
-        gWebSerialLog, LogLevel::Error,
-        ("PosixSerialPlatformService[%p]::InitializeUdev get fd failed", this));
-    return NS_ERROR_FAILURE;
-  }
-
-  GIOChannel* channel = g_io_channel_unix_new(fd);
-  if (!channel) {
-    MOZ_LOG(
-        gWebSerialLog, LogLevel::Error,
-        ("PosixSerialPlatformService[%p]::InitializeUdev g_io_channel_unix_new "
-         "failed",
-         this));
-    return NS_ERROR_FAILURE;
-  }
-
-  // udev operations did not error, so don't clean it up here
-  cleanupUdevAndMonitor.release();
-
-  mMonitorSourceID =
-      g_io_add_watch(channel, GIOCondition(G_IO_IN | G_IO_ERR | G_IO_HUP),
-                     OnUdevMonitor, this);
-  g_io_channel_unref(channel);
-
-  MOZ_LOG(gWebSerialLog, LogLevel::Info,
-          ("PosixSerialPlatformService[%p]::InitializeUdev udev monitoring "
-           "initialized",
-           this));
-  return NS_OK;
-}
-
-gboolean PosixSerialPlatformService::OnUdevMonitor(GIOChannel* source,
-                                                   GIOCondition condition,
-                                                   gpointer data) {
-  PosixSerialPlatformService* service =
-      static_cast<PosixSerialPlatformService*>(data);
-
-  if (condition & (G_IO_ERR | G_IO_HUP)) {
-    MOZ_LOG(
-        gWebSerialLog, LogLevel::Error,
-        ("PosixSerialPlatformService[%p]::OnUdevMonitor error condition: %d",
-         service, condition));
-    return FALSE;
-  }
-
-  if (condition & G_IO_IN) {
-    service->ReadUdevChange();
-  }
-
-  return TRUE;
-}
-
-void PosixSerialPlatformService::PopulatePortInfoFromUdev(
-    udev_device* aDev, const char* aDevnode, IPCSerialPortInfo& aPortInfo) {
-  MOZ_ASSERT(mUdevLib);
-
-  NS_ConvertUTF8toUTF16 path(aDevnode);
-  aPortInfo.id() = path;
-  aPortInfo.path() = path;
-
-  const char* productName =
-      mUdevLib->udev_device_get_property_value(aDev, "ID_MODEL_FROM_DATABASE");
-  if (!productName) {
-    productName = mUdevLib->udev_device_get_property_value(aDev, "ID_MODEL");
-  }
-  if (productName) {
-    aPortInfo.friendlyName() = NS_ConvertUTF8toUTF16(productName);
-  } else {
-    const char* basename = strrchr(aDevnode, '/');
-    aPortInfo.friendlyName() =
-        NS_ConvertUTF8toUTF16(basename ? basename + 1 : aDevnode);
-  }
-
-  const char* bus = mUdevLib->udev_device_get_property_value(aDev, "ID_BUS");
-  const bool isBluetooth =
-      (bus && strcmp(bus, "bluetooth") == 0) ||
-      strncmp(aDevnode, "/dev/rfcomm", strlen("/dev/rfcomm")) == 0;
-
-  if (isBluetooth) {
-    // The actual service class UUID is not surfaced through udev, sysfs, or
-    // any kernel ioctl: the kernel rfcomm driver only tracks {BD_ADDR,
-    // channel}. The UUID lives in BlueZ's user-space SDP cache. Resolving
-    // it would require talking to BlueZ over D-Bus (org.bluez.Device1.UUIDs
-    // plus per-record channel correlation) which Firefox does not currently
-    // do from this process. Fall back to the SPP UUID; this is correct for
-    // the overwhelmingly common case of /dev/rfcomm* being bound to an
-    // SPP service.
-    aPortInfo.bluetoothServiceClassId() =
-        Some(nsString(kBluetoothSerialPortProfileUUID));
-  } else {
-    const char* vendorIdStr =
-        mUdevLib->udev_device_get_property_value(aDev, "ID_VENDOR_ID");
-    const char* productIdStr =
-        mUdevLib->udev_device_get_property_value(aDev, "ID_MODEL_ID");
-    if (vendorIdStr && productIdStr) {
-      unsigned int vendorId, productId;
-      if (sscanf(vendorIdStr, "%x", &vendorId) == 1 &&
-          sscanf(productIdStr, "%x", &productId) == 1) {
-        aPortInfo.usbVendorId() = Some(static_cast<uint16_t>(vendorId));
-        aPortInfo.usbProductId() = Some(static_cast<uint16_t>(productId));
-      }
-    }
-  }
-}
-
-void PosixSerialPlatformService::ReadUdevChange() {
-  if (IsShutdown() || !mUdevLib) {
-    return;
-  }
-
-  udev_device* dev = mUdevLib->udev_monitor_receive_device(mMonitor);
-  if (!dev) {
-    return;
-  }
-  auto cleanupDev = MakeScopeExit([&]() { mUdevLib->udev_device_unref(dev); });
-
-  const char* action = mUdevLib->udev_device_get_action(dev);
-  const char* devnode = mUdevLib->udev_device_get_devnode(dev);
-
-  if (!action || !devnode) {
-    return;
-  }
-
-  MOZ_LOG(
-      gWebSerialLog, LogLevel::Debug,
-      ("PosixSerialPlatformService[%p]::ReadUdevChange action=%s, devnode=%s",
-       this, action, devnode));
-
-  if (strcmp(action, "add") == 0) {
-    IPCSerialPortInfo portInfo;
-    PopulatePortInfoFromUdev(dev, devnode, portInfo);
-
-    MOZ_LOG(
-        gWebSerialLog, LogLevel::Info,
-        ("PosixSerialPlatformService[%p]::ReadUdevChange device connected: "
-         "path=%s, friendlyName=%s, VID=0x%04x, PID=0x%04x, BT:%s",
-         this, devnode, NS_ConvertUTF16toUTF8(portInfo.friendlyName()).get(),
-         portInfo.usbVendorId().valueOr(0), portInfo.usbProductId().valueOr(0),
-         portInfo.bluetoothServiceClassId().isSome()
-             ? NS_ConvertUTF16toUTF8(portInfo.bluetoothServiceClassId().value())
-                   .get()
-             : "none"));
-
-    NotifyPortConnected(portInfo);
-  } else if (strcmp(action, "remove") == 0) {
-    MOZ_LOG(
-        gWebSerialLog, LogLevel::Info,
-        ("PosixSerialPlatformService[%p]::ReadUdevChange device disconnected: "
-         "path=%s",
-         this, devnode));
-
-    NotifyPortDisconnected(NS_ConvertUTF8toUTF16(devnode));
-  }
-}
-#endif
-
-#ifdef XP_MACOSX
 bool PosixSerialPlatformService::ExtractDeviceInfo(
     io_service_t device, IPCSerialPortInfo& portInfo) {
   if (!device) {
@@ -1694,7 +1223,6 @@ void PosixSerialPlatformService::OnDeviceRemoved(io_iterator_t iterator,
            "devices (skipNotify=%d)",
            this, deviceCount, aSkipNotify));
 }
-#endif
 
 already_AddRefed<SerialPlatformService>
 SerialPlatformService::GetInstanceImpl() {

@@ -5,14 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 #include "archivereader.h"
 #include "updatererrors.h"
-#ifdef XP_WIN
-#  include "updatehelper.h"
-#endif
 #define XZ_USE_CRC64
 #include "xz.h"
 
@@ -34,9 +28,6 @@
 #include "nsVersionComparator.cpp"
 #undef UPDATER_NO_STRING_GLUE_STL
 
-#if defined(XP_WIN)
-#  include <io.h>
-#endif
 
 /**
  * Performs a verification on the opened MAR file with the passed in
@@ -200,11 +191,7 @@ int ArchiveReader::Open(const NS_tchar* path) {
   }
 
   MarReadResult result =
-#ifdef XP_WIN
-      mar_wopen(path, &mArchive);
-#else
       mar_open(path, &mArchive);
-#endif
   if (result == MAR_MEM_ERROR) {
     return ARCHIVE_READER_MEM_ERROR;
   }
@@ -241,16 +228,12 @@ int ArchiveReader::ExtractFile(const char* name, const NS_tchar* dest) {
     return READ_ERROR;
   }
 
-#ifdef XP_WIN
-  FILE* fp = _wfopen(dest, L"wb+");
-#else
   int fd = creat(dest, item->flags);
   if (fd == -1) {
     return WRITE_ERROR;
   }
 
   FILE* fp = fdopen(fd, "wb");
-#endif
   if (!fp) {
     return WRITE_ERROR;
   }

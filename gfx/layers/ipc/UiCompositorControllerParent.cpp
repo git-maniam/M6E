@@ -3,11 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "UiCompositorControllerParent.h"
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "apz/src/APZCTreeManager.h"
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#  include "mozilla/widget/AndroidCompositorWidget.h"
-#endif
 #include <utility>
 
 #include "FrameMetrics.h"
@@ -90,10 +85,6 @@ mozilla::ipc::IPCResult UiCompositorControllerParent::RecvResumeAndResize(
   if (parent) {
     // Front-end expects a first paint callback upon resume/resize.
     parent->ForceIsFirstPaint();
-#if defined(MOZ_WIDGET_ANDROID)
-    parent->GetWidget()->AsAndroid()->NotifyClientSizeChanged(
-        LayoutDeviceIntSize(aWidth, aHeight));
-#endif
     *aOutResumed = parent->ResumeCompositionAndResize(aX, aY, aWidth, aHeight);
   }
   LAYERTREE_LOG(
@@ -115,14 +106,6 @@ UiCompositorControllerParent::RecvInvalidateAndRender() {
 
 mozilla::ipc::IPCResult UiCompositorControllerParent::RecvFixedBottomOffset(
     const int32_t& aOffset) {
-#if defined(MOZ_WIDGET_ANDROID)
-  CompositorBridgeParent* parent =
-      CompositorBridgeParent::GetCompositorBridgeParentFromLayersId(
-          mRootLayerTreeId);
-  if (parent) {
-    parent->SetFixedLayerMargins(0, aOffset);
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   return IPC_OK();
 }
@@ -142,39 +125,6 @@ mozilla::ipc::IPCResult UiCompositorControllerParent::RecvDefaultClearColor(
 mozilla::ipc::IPCResult UiCompositorControllerParent::RecvRequestScreenPixels(
     uint64_t aRequestId, gfx::IntRect aSourceRect,
     ipc::FileDescriptor&& aHardwareBuffer) {
-#if defined(MOZ_WIDGET_ANDROID)
-  RefPtr<AndroidHardwareBuffer> hardwareBuffer =
-      AndroidHardwareBuffer::DeserializeFromFileDescriptor(
-          aHardwareBuffer.TakePlatformHandle());
-  if (!hardwareBuffer) {
-    (void)SendScreenPixels(aRequestId, false, Nothing());
-    return IPC_OK();
-  }
-
-  LayerTreeState* state =
-      CompositorBridgeParent::GetLayerTreeState(mRootLayerTreeId);
-
-  if (state && state->mWrBridge) {
-    state->mWrBridge->RequestScreenPixels(aSourceRect, hardwareBuffer)
-        ->Then(
-            GetCurrentSerialEventTarget(), __func__,
-            [target = RefPtr{this}, aRequestId,
-             hardwareBuffer = std::move(hardwareBuffer)](Ok) {
-              UniqueFileHandle fenceFd =
-                  hardwareBuffer->GetAndResetAcquireFence();
-              (void)target->SendScreenPixels(
-                  aRequestId, true,
-                  fenceFd ? Some(ipc::FileDescriptor(std::move(fenceFd)))
-                          : Nothing());
-            },
-            [target = RefPtr{this}, aRequestId](nsresult aError) {
-              (void)target->SendScreenPixels(aRequestId, false, Nothing());
-            });
-    state->mWrBridge->ScheduleForcedGenerateFrame(wr::RenderReasons::OTHER);
-  } else {
-    (void)SendScreenPixels(aRequestId, false, Nothing());
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   return IPC_OK();
 }
@@ -182,10 +132,6 @@ mozilla::ipc::IPCResult UiCompositorControllerParent::RecvRequestScreenPixels(
 mozilla::ipc::IPCResult
 UiCompositorControllerParent::RecvEnableLayerUpdateNotifications(
     const bool& aEnable) {
-#if defined(MOZ_WIDGET_ANDROID)
-  // Layers updates are need by Robocop test which enables them
-  mCompositorLayersUpdateEnabled = aEnable;
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   return IPC_OK();
 }
@@ -212,11 +158,6 @@ void UiCompositorControllerParent::ToolbarAnimatorMessageFromCompositor(
 }
 
 void UiCompositorControllerParent::NotifyLayersUpdated() {
-#ifdef MOZ_WIDGET_ANDROID
-  if (mCompositorLayersUpdateEnabled) {
-    ToolbarAnimatorMessageFromCompositor(LAYERS_UPDATED);
-  }
-#endif
 }
 
 void UiCompositorControllerParent::NotifyFirstPaint() {
@@ -236,10 +177,6 @@ void UiCompositorControllerParent::NotifyCompositorScrollUpdates(
 UiCompositorControllerParent::UiCompositorControllerParent(
     const LayersId& aRootLayerTreeId)
     : mRootLayerTreeId(aRootLayerTreeId)
-#ifdef MOZ_WIDGET_ANDROID
-      ,
-      mCompositorLayersUpdateEnabled(false)
-#endif
 {
   MOZ_COUNT_CTOR(UiCompositorControllerParent);
 }

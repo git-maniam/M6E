@@ -14,9 +14,7 @@
 #include "mozilla/TaskController.h"
 #include "nsXULAppAPI.h"
 
-#ifndef ANDROID
 #  include "nsTerminator.h"
-#endif
 
 #include <locale.h>
 
@@ -81,9 +79,7 @@
 #include "mozilla/ServoStyleConsts.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "ogg/ogg.h"
-#ifdef XP_MACOSX
 #  include "mozilla/MacAutoreleasePool.h"
-#endif
 
 using base::AtExitManager;
 using mozilla::ipc::IOThreadParent;
@@ -101,9 +97,6 @@ static mozilla::BackgroundHangMonitor* sMainHangMonitor;
 
 } /* anonymous namespace */
 
-#ifdef XP_WIN
-extern nsresult CreateAnonTempFileRemover();
-#endif
 
 nsresult nsThreadManagerGetSingleton(const nsIID& aIID, void** aInstancePtr) {
   NS_ASSERTION(aInstancePtr, "null outptr");
@@ -199,12 +192,10 @@ EXPORT_XPCOM_API(nsresult)
 NS_InitXPCOM(nsIServiceManager** aResult, nsIFile* aBinDirectory,
              nsIDirectoryServiceProvider* aAppFileLocationProvider,
              bool aInitJSContext) {
-#ifdef XP_MACOSX
   // Some of the work done here calls into macOS APIs that need an Obj-C
   // autorelease pool in place. For example, nsComponentManagerImpl::Init
   // will call a lot of macOS APIs as part of initializing nsLookAndFeel.
   mozilla::MacAutoreleasePool pool;
-#endif
 
   static bool sInitialized = false;
   if (sInitialized) {
@@ -229,7 +220,6 @@ NS_InitXPCOM(nsIServiceManager** aResult, nsIFile* aBinDirectory,
   // We are not shutting down
   gXPCOMShuttingDown = false;
 
-#ifdef XP_UNIX
   // Discover the current value of the umask, and save it where
   // nsSystemInfo::Init can retrieve it when necessary.  There is no way
   // to read the umask without changing it, and the setting is process-
@@ -238,7 +228,6 @@ NS_InitXPCOM(nsIServiceManager** aResult, nsIFile* aBinDirectory,
   // of chrome JS wants it.  The system call is specified as unable to fail.
   nsSystemInfo::gUserUmask = ::umask(0777);
   ::umask(nsSystemInfo::gUserUmask);
-#endif
 
   // Set up chromium libs
   NS_ASSERTION(!sExitManager && !sMessageLoop, "Bad logic!");
@@ -274,13 +263,11 @@ NS_InitXPCOM(nsIServiceManager** aResult, nsIFile* aBinDirectory,
     XPCOM_INIT_FATAL("nsTimerImpl::Startup()", rv)
   }
 
-#ifndef ANDROID
   // If the locale hasn't already been setup by our embedder,
   // get us out of the "C" locale and into the system
   if (strcmp(setlocale(LC_ALL, nullptr), "C") == 0) {
     setlocale(LC_ALL, "");
   }
-#endif
 
   nsDirectoryService::RealInit();
 
@@ -332,9 +319,6 @@ NS_InitXPCOM(nsIServiceManager** aResult, nsIFile* aBinDirectory,
   }
 
   if ((sCommandLineWasInitialized = !CommandLine::IsInitialized())) {
-#ifdef XP_WIN
-    CommandLine::Init(0, nullptr);
-#else
     nsCOMPtr<nsIFile> binaryFile;
     nsDirectoryService::gService->Get(NS_XPCOM_CURRENT_PROCESS_DIR,
                                       NS_GET_IID(nsIFile),
@@ -356,7 +340,6 @@ NS_InitXPCOM(nsIServiceManager** aResult, nsIFile* aBinDirectory,
 
     static char const* const argv = {strdup(binaryPath.get())};
     CommandLine::Init(1, &argv);
-#endif
   }
 
   NS_ASSERTION(nsComponentManagerImpl::gComponentManager == nullptr,
@@ -422,9 +405,6 @@ NS_InitXPCOM(nsIServiceManager** aResult, nsIFile* aBinDirectory,
   // Notify observers of xpcom autoregistration start
   NS_CreateServicesFromCategory(NS_XPCOM_STARTUP_CATEGORY, nullptr,
                                 NS_XPCOM_STARTUP_OBSERVER_ID);
-#ifdef XP_WIN
-  CreateAnonTempFileRemover();
-#endif
 
   // The memory reporter manager is up and running -- register our reporters.
   RegisterStrongMemoryReporter(mozilla::MakeAndAddRef<ICUReporter>());

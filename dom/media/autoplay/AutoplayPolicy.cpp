@@ -102,7 +102,6 @@ static bool IsWindowAllowedToPlayByTraits(nsPIDOMWindowInner* aWindow) {
     return false;
   }
 
-#ifndef MOZ_WIDGET_ANDROID
   // On Android, we'd like to prevent top level video document from autoplaying.
   bool isTopLevelContent = !aWindow->GetBrowsingContext()->GetParent();
   if (currentDoc->MediaDocumentKind() == Document::MediaDocumentKind::Video &&
@@ -110,7 +109,6 @@ static bool IsWindowAllowedToPlayByTraits(nsPIDOMWindowInner* aWindow) {
     AUTOPLAY_LOG("Allow top-level video document to autoplay.");
     return true;
   }
-#endif
 
   if (StaticPrefs::media_autoplay_allow_extension_background_pages() &&
       currentDoc->IsExtensionPage()) {
@@ -192,38 +190,6 @@ static bool IsAllowedToPlayByBlockingModel(const HTMLMediaElement& aElement) {
 // would check the GV request status to know if the site can be allowed to play.
 // But on other platforms, we would store the site's permission in permission
 // manager.
-#if defined(MOZ_WIDGET_ANDROID)
-using RType = GVAutoplayRequestType;
-
-static bool IsGVAutoplayRequestAllowed(nsPIDOMWindowInner* aWindow,
-                                       RType aType) {
-  if (!aWindow) {
-    return false;
-  }
-
-  RefPtr<BrowsingContext> context = aWindow->GetBrowsingContext()->Top();
-  GVAutoplayRequestStatus status =
-      aType == RType::eAUDIBLE ? context->GetGVAudibleAutoplayRequestStatus()
-                               : context->GetGVInaudibleAutoplayRequestStatus();
-  return status == GVAutoplayRequestStatus::eALLOWED;
-}
-
-static bool IsGVAutoplayRequestAllowed(const HTMLMediaElement& aElement,
-                                       RType aType) {
-  // On GV, blocking model is the first thing we would check inside Gecko, and
-  // if the media is not allowed by that, then we would check the response from
-  // the embedding app to decide the final result.
-  if (IsAllowedToPlayByBlockingModel(aElement)) {
-    return true;
-  }
-
-  RefPtr<nsPIDOMWindowInner> window = aElement.OwnerDoc()->GetInnerWindow();
-  if (!window) {
-    return false;
-  }
-  return IsGVAutoplayRequestAllowed(window, aType);
-}
-#endif
 
 /* static */
 bool AutoplayPolicy::IsAudioInterruptedByPlatform(nsPIDOMWindowInner* aWindow) {
@@ -251,13 +217,6 @@ static bool IsAllowedToPlayInternal(const HTMLMediaElement& aElement) {
                  fmt::ptr(&aElement));
     return false;
   }
-#if defined(MOZ_WIDGET_ANDROID)
-  if (StaticPrefs::media_geckoview_autoplay_request()) {
-    return IsGVAutoplayRequestAllowed(
-        aElement, IsMediaElementInaudible(aElement) ? RType::eINAUDIBLE
-                                                    : RType::eAUDIBLE);
-  }
-#endif
   bool isInaudible = IsMediaElementInaudible(aElement);
   bool isUsingAutoplayModel = IsAllowedToPlayByBlockingModel(aElement);
 
@@ -366,22 +325,6 @@ DocumentAutoplayPolicy IsDocAllowedToPlay(const Document& aDocument) {
   // IsAllowedToPlay gate. The web-observable reflection is a follow-up.
   RefPtr<nsPIDOMWindowInner> window = aDocument.GetInnerWindow();
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (StaticPrefs::media_geckoview_autoplay_request()) {
-    const bool isWindowAllowedToPlay = IsWindowAllowedToPlayOverall(window);
-    if (IsGVAutoplayRequestAllowed(window, RType::eAUDIBLE)) {
-      return DocumentAutoplayPolicy::Allowed;
-    }
-
-    if (IsGVAutoplayRequestAllowed(window, RType::eINAUDIBLE)) {
-      return isWindowAllowedToPlay ? DocumentAutoplayPolicy::Allowed
-                                   : DocumentAutoplayPolicy::Allowed_muted;
-    }
-
-    return isWindowAllowedToPlay ? DocumentAutoplayPolicy::Allowed
-                                 : DocumentAutoplayPolicy::Disallowed;
-  }
-#endif
   const uint32_t sitePermission = SiteAutoplayPerm(window);
   const uint32_t globalPermission = DefaultAutoplayBehaviour();
   const uint32_t policy = StaticPrefs::media_autoplay_blocking_policy();
@@ -457,20 +400,6 @@ dom::AutoplayPolicy AutoplayPolicy::GetAutoplayPolicy(
       "isAllowedToPlayByBlockingModel={}",
       sitePermission, globalPermission, isAllowedToPlayByBlockingModel);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (StaticPrefs::media_geckoview_autoplay_request()) {
-    if (IsGVAutoplayRequestAllowed(aElement, RType::eAUDIBLE)) {
-      return dom::AutoplayPolicy::Allowed;
-    } else if (IsGVAutoplayRequestAllowed(aElement, RType::eINAUDIBLE)) {
-      return isAllowedToPlayByBlockingModel
-                 ? dom::AutoplayPolicy::Allowed
-                 : dom::AutoplayPolicy::Allowed_muted;
-    } else {
-      return isAllowedToPlayByBlockingModel ? dom::AutoplayPolicy::Allowed
-                                            : dom::AutoplayPolicy::Disallowed;
-    }
-  }
-#endif
 
   // These are situations when an element is allowed to autoplay
   // 1. The site permission is explicitly allowed

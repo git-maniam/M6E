@@ -175,56 +175,11 @@ void MediaKeySystemAccessManager::CheckDoesWindowSupportProtectedMedia(
   // In Windows OS, some Firefox windows that host content cannot support
   // protected content, so check the status of support for this window.
   // On other platforms windows should always support protected media.
-#ifdef XP_WIN
-  RefPtr<BrowserChild> browser(BrowserChild::GetFrom(mWindow));
-  if (!browser) {
-    if (!XRE_IsParentProcess() || XRE_IsE10sParentProcess()) {
-      // In this case, there is no browser because the Navigator object has
-      // been disconnected from its window. Thus, reject the promise.
-      aRequest->RejectPromiseWithTypeError(
-          "Browsing context is no longer available"_ns);
-    } else {
-      // In this case, there is no browser because e10s is off. Proceed with
-      // the request with support since this scenario is always supported.
-      MKSAM_LOG_DEBUG("Allowing protected media on Windows with e10s off.");
-
-      OnDoesWindowSupportProtectedMedia(true, std::move(aRequest));
-    }
-
-    return;
-  }
-
-  RefPtr<MediaKeySystemAccessManager> self(this);
-
-  MKSAM_LOG_DEBUG(
-      "Checking with browser if this window supports protected media.");
-  browser->DoesWindowSupportProtectedMedia()->Then(
-      GetCurrentSerialEventTarget(), __func__,
-      [self, request = std::move(aRequest)](
-          const BrowserChild::IsWindowSupportingProtectedMediaPromise::
-              ResolveOrRejectValue& value) mutable {
-        if (value.IsResolve()) {
-          self->OnDoesWindowSupportProtectedMedia(value.ResolveValue(),
-                                                  std::move(request));
-        } else {
-          EME_LOG(
-              "MediaKeySystemAccessManager::DoesWindowSupportProtectedMedia-"
-              "ResolveOrRejectLambda Failed to make IPC call to "
-              "IsWindowSupportingProtectedMedia: "
-              "reason={}",
-              static_cast<int>(value.RejectValue()));
-          // Treat as failure.
-          self->OnDoesWindowSupportProtectedMedia(false, std::move(request));
-        }
-      });
-
-#else
   // Non-Windows OS windows always support protected media.
   MKSAM_LOG_DEBUG(
       "Allowing protected media because all non-Windows OS windows support "
       "protected media.");
   OnDoesWindowSupportProtectedMedia(true, std::move(aRequest));
-#endif
 }
 
 void MediaKeySystemAccessManager::OnDoesWindowSupportProtectedMedia(

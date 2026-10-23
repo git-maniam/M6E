@@ -23,24 +23,10 @@
 #include "mozilla/layers/TextureHost.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include "SharedSurfaceANGLE.h"
-#  include "SharedSurfaceD3D11Interop.h"
-#endif
 
-#ifdef XP_MACOSX
 #  include "SharedSurfaceIO.h"
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-#  include "SharedSurfaceDMABUF.h"
-#  include "gfxPlatformGtk.h"
-#  include "mozilla/widget/DMABufDevice.h"
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "SharedSurfaceAndroidHardwareBuffer.h"
-#endif
 
 namespace mozilla {
 namespace gl {
@@ -98,51 +84,18 @@ UniquePtr<SurfaceFactory> SurfaceFactory::Create(
 
   switch (consumerType) {
     case layers::TextureType::D3D11:
-#ifdef XP_WIN
-      if (gl.IsANGLE()) {
-        return SurfaceFactory_ANGLEShareHandle::Create(gl);
-      }
-      if (StaticPrefs::webgl_dxgl_enabled()) {
-        return SurfaceFactory_D3D11Interop::Create(gl);
-      }
-#endif
       break;
 
     case layers::TextureType::MacIOSurface:
-#ifdef XP_MACOSX
       return MakeUnique<SurfaceFactory_IOSurface>(gl);
-#else
-      break;
-#endif
 
     case layers::TextureType::DMABUF:
-#ifdef MOZ_WIDGET_GTK
-      if (gl.GetContextType() == GLContextType::EGL &&
-          widget::DMABufDevice::IsDMABufWebGLEnabled()) {
-        return SurfaceFactory_DMABUF::Create(gl);
-      }
-#endif
       break;
 
     case layers::TextureType::AndroidHardwareBuffer:
-#ifdef MOZ_WIDGET_ANDROID
-      if (XRE_IsGPUProcess()) {
-        // Enable SharedSurface of AndroidHardwareBuffer only in GPU process.
-        return SurfaceFactory_AndroidHardwareBuffer::Create(gl);
-      }
-#endif
       break;
 
     case layers::TextureType::EGLImage:
-#ifdef MOZ_WIDGET_ANDROID
-      // EGLImages cannot be shared cross-process, so only create them if we are
-      // in the process that will consume them.
-      if ((XRE_IsParentProcess() && !gfx::gfxVars::GPUProcessEnabled()) ||
-          XRE_IsGPUProcess()) {
-        MOZ_ASSERT(!gfx::gfxVars::UseWebRenderANGLE());
-        return SurfaceFactory_EGLImage::Create(gl);
-      }
-#endif
       break;
 
     case layers::TextureType::Unknown:

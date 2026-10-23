@@ -15,20 +15,11 @@
 #include "PerformanceRecorder.h"
 #include "SimpleMap.h"
 #include "nsTHashMap.h"
-#if defined(MOZ_USE_HWDECODE) && defined(MOZ_WIDGET_GTK)
-#  include "FFmpegVideoFramePool.h"
-#  ifdef MOZ_USE_HWDECODE_VULKAN
-#    include "VulkanDeviceHolder.h"
-#  endif
-#endif
 #include "libavutil/pixfmt.h"
 #if LIBAVCODEC_VERSION_MAJOR < 54
 #  define AVPixelFormat PixelFormat
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoSurfaceWrappers.h"
-#endif
 
 #if LIBAVCODEC_VERSION_MAJOR >= 57 && LIBAVUTIL_VERSION_MAJOR >= 56
 #  define CUSTOMIZED_BUFFER_ALLOCATION 1
@@ -110,11 +101,6 @@ class FFmpegVideoDecoder<LIBAV_VER>
   }
   nsCString GetCodecName() const override;
   ConversionRequired NeedsConversion() const override {
-#ifdef MOZ_WIDGET_ANDROID
-    return mCodecID == AV_CODEC_ID_H264 || mCodecID == AV_CODEC_ID_HEVC
-               ? ConversionRequired::kNeedAnnexB
-               : ConversionRequired::kNeedNone;
-#else
 #  if LIBAVCODEC_VERSION_MAJOR >= 55
     if (mCodecID == AV_CODEC_ID_HEVC) {
       return ConversionRequired::kNeedHVCC;
@@ -122,22 +108,11 @@ class FFmpegVideoDecoder<LIBAV_VER>
 #  endif
     return mCodecID == AV_CODEC_ID_H264 ? ConversionRequired::kNeedAVCC
                                         : ConversionRequired::kNeedNone;
-#endif
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  Maybe<MediaDataDecoder::PropertyValue> GetDecodeProperty(
-      MediaDataDecoder::PropertyName aName) const override;
-#endif
 
   static AVCodecID GetCodecId(const nsACString& aMimeType);
 
-#ifdef MOZ_WIDGET_ANDROID
-  // Returns true if MediaCodec can decode aCodec with aColorDepth.
-  static bool MediaCodecSupportsColorDepth(AVCodecID aCodec,
-                                           const nsACString& aMimeType,
-                                           gfx::ColorDepth aColorDepth);
-#endif
 
 #ifdef CUSTOMIZED_BUFFER_ALLOCATION
   int GetVideoBuffer(struct AVCodecContext* aCodecContext, AVFrame* aFrame,
@@ -234,81 +209,7 @@ class FFmpegVideoDecoder<LIBAV_VER>
   std::atomic<uint8_t> mNumOfHWTexturesInUse{0};
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  ifdef USING_MOZFFVPX
-  MediaResult AllocateExtraData();
-  MediaResult AllocateH264ExtraData();
-  MediaResult AllocateHEVCExtraData();
-#  endif
-  MediaResult InitMediaCodecDecoder();
-  MediaResult CreateImageMediaCodec(int64_t aOffset, int64_t aPts,
-                                    int64_t aTimecode, int64_t aDuration,
-                                    MediaDataDecoder::DecodedData& aResults);
-  bool ReleaseFrameMediaCodec(void* aKey, bool aRender);
-  void ReleaseFramesMediaCodec();
-  void ReleaseSurfaceMediaCodec();
-  int32_t mTextureAlignment;
-  AVBufferRef* mMediaCodecDeviceContext = nullptr;
-  // Only used for the SurfaceTexture case
-  java::GeckoSurface::GlobalRef mSurfaceTextureSurface;
-  // Only used for the ImageReader case
-  java::sdk::Surface::GlobalRef mImageReaderSurface;
-  AndroidSurfaceTextureHandle mSurfaceHandle{};
-  SimpleMap<void*, AVFrame*, ThreadSafePolicy> mFrameMap;
-  RefPtr<layers::AndroidImageReader> mAndroidImageReader;
-#endif
 
-#if defined(MOZ_USE_HWDECODE) && defined(MOZ_WIDGET_GTK)
-  bool IsLinuxHDR() const;
-  MediaResult InitVAAPIDecoder();
-  MediaResult InitV4L2Decoder();
-#  ifdef MOZ_USE_HWDECODE_VULKAN
-#    include "FFmpegVulkanVideoDecoder.h"
-  MediaResult InitVulkanDecoder();
-  bool VulkanDirectDecodeExportEnabled();
-  bool CreateVulkanDeviceContext(const StaticMutexAutoLock& aProofOfLock);
-  void PrepareVulkanDrmModifiersForSwFormat(int aSwFormat,
-                                            VkImageUsageFlags aImageUsages);
-#  endif
-  bool CreateVAAPIDeviceContext();
-  bool GetVAAPISurfaceDescriptor(VADRMPRIMESurfaceDescriptor* aVaDesc);
-  void AddAcceleratedFormats(nsTArray<AVCodecID>& aCodecList,
-                             AVCodecID aCodecID, AVVAAPIHWConfig* hwconfig);
-  nsTArray<AVCodecID> GetAcceleratedFormats();
-  bool IsFormatAccelerated(AVCodecID aCodecID) const;
-
-  MediaResult CreateImageVAAPI(int64_t aOffset, int64_t aPts, int64_t aDuration,
-                               MediaDataDecoder::DecodedData& aResults);
-  MediaResult CreateImageV4L2(int64_t aOffset, int64_t aPts, int64_t aDuration,
-                              MediaDataDecoder::DecodedData& aResults);
-#  ifdef MOZ_USE_HWDECODE_VULKAN
- public:
-  int ChooseVulkanPixelFormatFromContext(struct AVCodecContext* aCodecContext,
-                                         const int* aFormats);
-
- private:
-  MediaResult CreateImageVulkan(int64_t aOffset, int64_t aPts,
-                                int64_t aDuration,
-                                MediaDataDecoder::DecodedData& aResults);
-#  endif
-  void AdjustHWDecodeLogging();
-
-  AVBufferRef* mVAAPIDeviceContext = nullptr;
-  AVBufferRef* mVulkanDeviceContext = nullptr;
-#  ifdef MOZ_USE_HWDECODE_VULKAN
-  RefPtr<VulkanDeviceHolder> mVulkanDeviceHolder;
-  FFmpegVulkanVideoDecoder mVulkanDecoder;
-  VkImageDrmFormatModifierListCreateInfoEXT mVulkanDrmModifierList = {};
-  VkImageFormatListCreateInfo mVulkanImageFormatList = {};
-  VkMemoryDedicatedAllocateInfo mVulkanAllocPnextDedicated[2] = {};
-  bool mVulkanDecodeUsesDrmModifier = false;
-  bool mVulkanTilingSettled = false;
-#  endif
-  bool mUsingV4L2 = false;
-  VADisplay mDisplay = nullptr;
-  UniquePtr<VideoFramePool<LIBAV_VER>> mVideoFramePool;
-  static nsTArray<AVCodecID> mAcceleratedFormats;
-#endif
 
 #if LIBAVCODEC_VERSION_MAJOR >= 58
   using DecodeStats = FFmpegDecodeStats;
@@ -341,35 +242,20 @@ class FFmpegVideoDecoder<LIBAV_VER>
   struct InputInfo {
     explicit InputInfo(const MediaRawData* aSample)
         : mDuration(aSample->mDuration.ToMicroseconds())
-#  ifdef MOZ_WIDGET_ANDROID
-          ,
-          mTimecode(aSample->mTimecode.ToMicroseconds())
-#  endif
     {
     }
 
     int64_t mDuration;
-#  ifdef MOZ_WIDGET_ANDROID
-    int64_t mTimecode;
-#  endif
   };
 
   SimpleMap<int64_t, InputInfo, ThreadSafePolicy> mInputInfo;
 
   static int64_t GetSampleInputKey(const MediaRawData* aSample) {
-#  ifdef MOZ_WIDGET_ANDROID
-    return aSample->mTime.ToMicroseconds();
-#  else
     return aSample->mTimecode.ToMicroseconds();
-#  endif
   }
 
   static int64_t GetFrameInputKey(const AVFrame* aFrame) {
-#  ifdef MOZ_WIDGET_ANDROID
-    return aFrame->pts;
-#  else
     return aFrame->pkt_dts;
-#  endif
   }
 
   void InsertInputInfo(const MediaRawData* aSample) {
@@ -406,12 +292,6 @@ class FFmpegVideoDecoder<LIBAV_VER>
   PerformanceRecorderMulti<DecodeStage> mPerformanceRecorder;
 
   bool MaybeQueueDrain(const MediaDataDecoder::DecodedData& aData);
-#ifdef MOZ_WIDGET_ANDROID
-  void QueueResumeDrain();
-  void ResumeDrain() override;
-
-  Atomic<bool> mShouldResumeDrain{false};
-#endif
 
   // True if we're allocating shmem for ffmpeg decode buffer.
   Maybe<Atomic<bool>> mIsUsingShmemBufferForDecode;

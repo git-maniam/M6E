@@ -17,9 +17,6 @@
 #include "nsSplittableFrame.h"
 
 // Undo the windows.h damage
-#if defined(XP_WIN) && defined(DrawText)
-#  undef DrawText
-#endif
 
 struct SelectionDetails;
 class nsBlockFrame;

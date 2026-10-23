@@ -358,11 +358,9 @@ void HTMLSelectElement::ShowPicker(ErrorResult& aRv) {
   // Step 5. Otherwise, the user agent should show any relevant user interface
   // for selecting a value for element, in the way it normally would when the
   // user interacts with the control.
-#if !defined(ANDROID)
   if (!IsCombobox()) {
     return;
   }
-#endif
 
   if (!IsInActiveTab(OwnerDoc())) {
     return;
@@ -2403,11 +2401,7 @@ nsresult HTMLSelectElement::HandleMouseDown(EventChainPostVisitor& aVisitor) {
   mButtonDown = true;
   CaptureMouseEvents(true);
   bool isControlOrMeta;
-#ifdef XP_MACOSX
   isControlOrMeta = mouseEvent->IsMeta();
-#else
-  isControlOrMeta = mouseEvent->IsControl();
-#endif
   // PerformSelection might destroy the frame, but we only need to record the
   // result onto ourselves, which keeps us alive during event dispatch.
   mListBoxSelectionChangedSinceDragStart = PerformListBoxSelection(
@@ -2486,11 +2480,7 @@ nsresult HTMLSelectElement::HandleMouseMove(EventChainPostVisitor& aVisitor) {
     return NS_OK;
   }
   bool isControlOrMeta;
-#ifdef XP_MACOSX
   isControlOrMeta = mouseEvent->IsMeta();
-#else
-  isControlOrMeta = mouseEvent->IsControl();
-#endif
   // Turn SHIFT on when you are dragging, unless control is on.
   const bool wasChanged = PerformListBoxSelection(
       option->Index(), !isControlOrMeta, isControlOrMeta);
@@ -2526,9 +2516,7 @@ nsresult HTMLSelectElement::HandleKeyPress(EventChainPostVisitor& aVisitor) {
 
   const bool isCombobox = IsCombobox();
   const bool isControlOrMeta = keyEvent->IsControl()
-#if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
                                || keyEvent->IsMeta()
-#endif
       ;
   if (isControlOrMeta && keyEvent->mCharCode != ' ') {
     AutoShortcutKeyCandidateArray candidates;
@@ -2665,14 +2653,9 @@ nsresult HTMLSelectElement::HandleKeyDown(EventChainPostVisitor& aVisitor) {
   const bool isCombobox = IsCombobox();
   bool dropDownMenuOnUpDown;
   bool dropDownMenuOnSpace;
-#ifdef XP_MACOSX
   dropDownMenuOnUpDown = isCombobox && !OpenInParentProcess();
   dropDownMenuOnSpace = isCombobox && !keyEvent->IsAlt() &&
                         !keyEvent->IsControl() && !keyEvent->IsMeta();
-#else
-  dropDownMenuOnUpDown = isCombobox && keyEvent->IsAlt();
-  dropDownMenuOnSpace = isCombobox && !OpenInParentProcess();
-#endif
   bool withinIncrementalSearchTime =
       (keyEvent->mTimeStamp - gLastKeyTime).ToMilliseconds() <=
       StaticPrefs::ui_menu_incremental_search_timeout();
@@ -2698,9 +2681,7 @@ nsresult HTMLSelectElement::HandleKeyDown(EventChainPostVisitor& aVisitor) {
   int32_t newIndex = kNothingSelected;
 
   bool isControlOrMeta = keyEvent->IsControl()
-#if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
                          || keyEvent->IsMeta()
-#endif
       ;
   if (isControlOrMeta && !Multiple() &&
       (keyEvent->mKeyCode == NS_VK_PAGE_UP ||

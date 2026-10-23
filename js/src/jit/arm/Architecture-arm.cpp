@@ -4,27 +4,18 @@
 
 #include "jit/arm/Architecture-arm.h"
 
-#if !defined(JS_SIMULATOR_ARM) && !defined(__APPLE__)
-#  include <elf.h>
-#endif
 
 #include <bit>
 #include <fcntl.h>
 #include <string_view>
-#ifdef XP_UNIX
 #  include <unistd.h>
-#endif
 
-#if defined(XP_IOS)
-#  include <libkern/OSCacheControl.h>
-#endif
 
 #include "jit/arm/Assembler-arm.h"
 #include "jit/FlushICache.h"  // js::jit::FlushICache
 #include "jit/RegisterSets.h"
 #include "jit/Simulator.h"
 
-#if !defined(__linux__) || defined(ANDROID) || defined(JS_SIMULATOR_ARM)
 // The Android NDK and B2G do not include the hwcap.h kernel header, and it is
 // not defined when building the simulator, so inline the header defines we
 // need.
@@ -38,18 +29,6 @@
 #  define HWCAP_VFPD32 (1 << 19) /* set if VFP has 32 regs (not 16) */
 #  define HWCAP_FPHP (1 << 22)
 #  define AT_HWCAP 16
-#else
-#  include <asm/hwcap.h>
-#  if !defined(HWCAP_IDIVA)
-#    define HWCAP_IDIVA (1 << 17)
-#  endif
-#  if !defined(HWCAP_VFPD32)
-#    define HWCAP_VFPD32 (1 << 19) /* set if VFP has 32 regs (not 16) */
-#  endif
-#  if !defined(HWCAP_FPHP)
-#    define HWCAP_FPHP (1 << 22)
-#  endif
-#endif
 
 namespace js {
 namespace jit {
@@ -178,9 +157,6 @@ static auto CanonicalizeARMHwCapabilities(ARMCapabilities capabilities) {
   return capabilities;
 }
 
-#if !defined(JS_SIMULATOR_ARM) && (defined(__linux__) || defined(ANDROID))
-static bool forceDoubleCacheFlush = false;
-#endif
 
 bool CPUFlagsHaveBeenComputed() { return ARMFlags::IsInitialized(); }
 
@@ -224,38 +200,6 @@ static auto ParseARMHwCapFlags(const char* armHwCap) {
 }
 
 #ifndef JS_SIMULATOR_ARM
-#  if defined(__linux__) || defined(ANDROID)
-static auto FlagsToARMCapabilities(uint32_t flags) {
-  ARMCapabilities capabilities{};
-
-  if (flags & HWCAP_VFP) {
-    capabilities += ARMCapability::VFP;
-  }
-  if (flags & HWCAP_VFPD32) {
-    capabilities += ARMCapability::VFPD32;
-  }
-  if (flags & HWCAP_VFPv3) {
-    capabilities += ARMCapability::VFPv3;
-  }
-  if (flags & HWCAP_VFPv3D16) {
-    capabilities += ARMCapability::VFPv3D16;
-  }
-  if (flags & HWCAP_VFPv4) {
-    capabilities += ARMCapability::VFPv4;
-  }
-  if (flags & HWCAP_NEON) {
-    capabilities += ARMCapability::Neon;
-  }
-  if (flags & HWCAP_IDIVA) {
-    capabilities += ARMCapability::IDivA;
-  }
-  if (flags & HWCAP_FPHP) {
-    capabilities += ARMCapability::FPHP;
-  }
-
-  return capabilities;
-}
-#  endif
 #endif
 
 static auto ReadARMHwCapFlags() {
@@ -273,56 +217,6 @@ static auto ReadARMHwCapFlags() {
   };
 #else
 
-#  if defined(__linux__) || defined(ANDROID)
-  // This includes Android and B2G.
-  bool readAuxv = false;
-  int fd = open("/proc/self/auxv", O_RDONLY);
-  if (fd > 0) {
-    struct {
-      uint32_t a_type;
-      uint32_t a_val;
-    } aux;
-    while (read(fd, &aux, sizeof(aux))) {
-      if (aux.a_type == AT_HWCAP) {
-        uint32_t flags = aux.a_val;
-        capabilities += FlagsToARMCapabilities(flags);
-        readAuxv = true;
-        break;
-      }
-    }
-    close(fd);
-  }
-
-  FILE* fp = fopen("/proc/cpuinfo", "r");
-  if (fp) {
-    char buf[1024] = {};
-    size_t len = fread(buf, sizeof(char), sizeof(buf) - 1, fp);
-    fclose(fp);
-    buf[len] = '\0';
-
-    // Read the cpuinfo Features if the auxv is not available.
-    if (!readAuxv) {
-      char* featureList = strstr(buf, "Features");
-      if (featureList) {
-        if (char* featuresEnd = strstr(featureList, "\n")) {
-          *featuresEnd = '\0';
-        }
-        capabilities += ParseARMCpuFeatures(featureList + 8);
-      }
-      if (strstr(buf, "ARMv7")) {
-        capabilities += ARMCapability::ARMv7;
-      }
-    }
-
-    // The exynos7420 cpu (EU galaxy S6 (Note)) has a bug where sometimes
-    // flushing doesn't invalidate the instruction cache. As a result we force
-    // it by calling the cacheFlush twice on different start addresses.
-    char* exynos7420 = strstr(buf, "Exynos7420");
-    if (exynos7420) {
-      forceDoubleCacheFlush = true;
-    }
-  }
-#  endif
 
   // If compiled to use specialized features then these features can be
   // assumed to be present otherwise the compiler would fail to run.
@@ -337,14 +231,12 @@ static auto ReadARMHwCapFlags() {
   capabilities += ARMCapability::ARMv7;
 #  endif
 
-#  if defined(__APPLE__)
 #    if defined(__ARM_NEON__)
   capabilities += ARMCapability::Neon;
 #    endif
 #    if defined(__ARMVFPV3__)
   capabilities += {ARMCapability::VFPv3, ARMCapability::VFPD32};
 #    endif
-#  endif
 
 #endif  // JS_SIMULATOR_ARM
 
@@ -465,43 +357,6 @@ uint32_t FloatRegisters::ActualTotalPhys() {
 void FlushICache(void* code, size_t size) {
 #if defined(JS_SIMULATOR_ARM)
   js::jit::SimulatorProcess::FlushICache(code, size);
-
-#elif (defined(__linux__) || defined(ANDROID)) && defined(__GNUC__)
-  void* end = (void*)(reinterpret_cast<char*>(code) + size);
-  asm volatile(
-      "push    {r7}\n"
-      "mov     r0, %0\n"
-      "mov     r1, %1\n"
-      "mov     r7, #0xf0000\n"
-      "add     r7, r7, #0x2\n"
-      "mov     r2, #0x0\n"
-      "svc     0x0\n"
-      "pop     {r7}\n"
-      :
-      : "r"(code), "r"(end)
-      : "r0", "r1", "r2");
-
-  if (forceDoubleCacheFlush) {
-    void* start = (void*)((uintptr_t)code + 1);
-    asm volatile(
-        "push    {r7}\n"
-        "mov     r0, %0\n"
-        "mov     r1, %1\n"
-        "mov     r7, #0xf0000\n"
-        "add     r7, r7, #0x2\n"
-        "mov     r2, #0x0\n"
-        "svc     0x0\n"
-        "pop     {r7}\n"
-        :
-        : "r"(start), "r"(end)
-        : "r0", "r1", "r2");
-  }
-
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-  __clear_cache(code, reinterpret_cast<char*>(code) + size);
-
-#elif defined(XP_IOS)
-  sys_icache_invalidate(code, size);
 
 #else
 #  error "Unexpected platform"

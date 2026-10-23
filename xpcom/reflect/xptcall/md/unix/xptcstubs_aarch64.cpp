@@ -10,11 +10,7 @@
 
 template<typename T> void
 get_value_and_advance(T* aOutValue, void*& aStack) {
-#ifdef __APPLE__
     const size_t aligned_size = sizeof(T);
-#else
-    const size_t aligned_size = 8;
-#endif
     // Ensure the pointer is aligned for the type
     uintptr_t addr = (reinterpret_cast<uintptr_t>(aStack) + aligned_size - 1) & ~(aligned_size - 1);
     memcpy(aOutValue, reinterpret_cast<void*>(addr), sizeof(T));
@@ -192,13 +188,8 @@ PrepareAndDispatch(nsXPTCStubBase* self, uint32_t methodIndex, void* args,
     return result;
 }
 
-#ifdef __APPLE__
 #define GNU(str)
 #define UNDERSCORE "__"
-#else
-#define GNU(str) str
-#define UNDERSCORE "_"
-#endif
 
 #if defined(__ARM_FEATURE_BTI_DEFAULT) && __ARM_FEATURE_BTI_DEFAULT == 1
 #define VALID_CALL_TARGET "bti    c\n\t"

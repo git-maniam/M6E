@@ -11,9 +11,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#if defined(XP_WIN) && !defined(UPDATER_NO_STRING_GLUE_STL)
-#  include "nsString.h"
-#endif
 
 /**
  * In order to compare version numbers in Mozilla, you need to use the
@@ -46,12 +43,6 @@ namespace mozilla {
  */
 int32_t CompareVersions(const char* aStrA, const char* aStrB);
 
-#ifdef XP_WIN
-/**
- * As above but for wide character strings.
- */
-int32_t CompareVersions(const char16_t* aStrA, const char16_t* aStrB);
-#endif
 
 struct Version {
   explicit Version(const char* aVersionString) {

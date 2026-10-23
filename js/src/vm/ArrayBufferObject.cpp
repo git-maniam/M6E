@@ -119,17 +119,7 @@ static const uint64_t WasmMemAsanOverhead = 1;
 // WasmReservedStartSyncFullGC in order to provide enough time for incremental
 // GC to do its job.
 
-#if defined(JS_CODEGEN_ARM64) && defined(ANDROID)
-
-static const uint64_t WasmReservedBytesMax =
-    75 * wasm::HugeMappedSize / WasmMemAsanOverhead;
-static const uint64_t WasmReservedBytesStartTriggering =
-    15 * wasm::HugeMappedSize;
-static const uint64_t WasmReservedBytesStartSyncFullGC =
-    WasmReservedBytesMax - 15 * wasm::HugeMappedSize;
-static const uint64_t WasmReservedBytesPerTrigger = 15 * wasm::HugeMappedSize;
-
-#elif defined(WASM_SUPPORTS_HUGE_MEMORY)
+#if   defined(WASM_SUPPORTS_HUGE_MEMORY)
 
 static const uint64_t WasmReservedBytesMax =
     1000 * wasm::HugeMappedSize / WasmMemAsanOverhead;
@@ -192,19 +182,7 @@ void* js::MapBufferMemory(wasm::AddressType t, wasm::PageSize pageSize,
     }
   }
 
-#ifdef XP_WIN
-  void* data = VirtualAlloc(nullptr, mappedSize, MEM_RESERVE, PAGE_NOACCESS);
-  if (!data) {
-    return nullptr;
-  }
-
-  if (!VirtualAlloc(data, initialCommittedSize, MEM_COMMIT, PAGE_READWRITE)) {
-    VirtualFree(data, 0, MEM_RELEASE);
-    return nullptr;
-  }
-
-  gc::RecordMemoryAlloc(initialCommittedSize);
-#elif defined(__wasi__)
+#if   defined(__wasi__)
   void* data = nullptr;
   if (int err = posix_memalign(&data, gc::SystemPageSize(), mappedSize)) {
     MOZ_ASSERT(err == ENOMEM);
@@ -245,11 +223,7 @@ bool js::CommitBufferMemory(void* dataEnd, size_t delta) {
   MOZ_ASSERT(delta);
   MOZ_ASSERT(delta % gc::SystemPageSize() == 0);
 
-#ifdef XP_WIN
-  if (!VirtualAlloc(dataEnd, delta, MEM_COMMIT, PAGE_READWRITE)) {
-    return false;
-  }
-#elif defined(__wasi__)
+#if   defined(__wasi__)
   // posix_memalign'd memory is already committed
   return true;
 #else
@@ -273,10 +247,7 @@ void js::UnmapBufferMemory(wasm::AddressType t, void* base, size_t mappedSize,
   MOZ_ASSERT(mappedSize % gc::SystemPageSize() == 0);
   MOZ_ASSERT(committedSize % gc::SystemPageSize() == 0);
 
-#ifdef XP_WIN
-  VirtualFree(base, 0, MEM_RELEASE);
-  gc::RecordMemoryFree(committedSize);
-#elif defined(__wasi__)
+#if   defined(__wasi__)
   free(base);
   (void)committedSize;
 #else
@@ -1587,14 +1558,7 @@ void WasmArrayRawBuffer::discard(size_t byteOffset, size_t byteLen) {
   // the memory must be explicitly decommitted first. This is not the same as an
   // munmap; the address space is still reserved.
 
-#ifdef XP_WIN
-  if (!VirtualFree(addr, byteLen, MEM_DECOMMIT)) {
-    MOZ_CRASH("wasm discard: failed to decommit memory");
-  }
-  if (!VirtualAlloc(addr, byteLen, MEM_COMMIT, PAGE_READWRITE)) {
-    MOZ_CRASH("wasm discard: decommitted memory but failed to recommit");
-  };
-#elif defined(__wasi__)
+#if   defined(__wasi__)
   memset(addr, 0, byteLen);
 #else  // !XP_WIN
   void* data = MozTaggedAnonymousMmap(addr, byteLen, PROT_READ | PROT_WRITE,

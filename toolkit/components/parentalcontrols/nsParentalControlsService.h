@@ -9,10 +9,6 @@
 #include "nsCOMPtr.h"
 #include "nsIURI.h"
 
-#if defined(XP_WIN)
-#  include <wpcapi.h>
-#  include <wpcevent.h>
-#endif
 
 class nsParentalControlsService : public nsIParentalControlsService {
  public:
@@ -26,11 +22,6 @@ class nsParentalControlsService : public nsIParentalControlsService {
 
  private:
   bool mEnabled;
-#if defined(XP_WIN)
-  REGHANDLE mProvider;
-  IWindowsParentalControls* mPC;
-  void LogFileDownload(bool blocked, nsIURI* aSource, nsIFile* aTarget);
-#endif
 };
 
 #endif /* nsParentalControlsService_h_ */

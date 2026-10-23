@@ -35,12 +35,6 @@
  *  be written to stdout.
  */
 #include <gdk/gdk.h>
-#ifdef MOZ_WAYLAND
-#  include <gdk/gdkwayland.h>
-#  include "mozilla/GUniquePtr.h"
-#  include "mozilla/UniquePtrExtensions.h"
-#  include "mozilla/ScopeExit.h"
-#endif
 
 #include <errno.h>
 #include <stdio.h>
@@ -58,58 +52,12 @@ gboolean save_to_stdout(const gchar* buf, gsize count, GError** error,
   return TRUE;
 }
 
-#if defined(MOZ_WAYLAND)
-static GdkPixbuf* get_screenshot_gnome(char* aAppName) {
-  char* path =
-      g_build_filename(g_get_user_cache_dir(), "mozilla-screenshot", nullptr);
-  g_mkdir_with_parents(path, 0700);
-  char* tmpname = g_strdup_printf("mozilla-screen-%d.png", g_random_int());
-  char* filename = g_build_filename(path, tmpname, nullptr);
-
-  auto autoFree = mozilla::MakeScopeExit([&] {
-    unlink(filename);
-    g_free(path);
-    g_free(tmpname);
-    g_free(filename);
-  });
-
-  mozilla::GUniquePtr<GError> error;
-  char* argv[] = {g_strdup("/usr/bin/gnome-screenshot"), g_strdup("-f"),
-                  filename, nullptr};
-  gboolean ret = g_spawn_sync(
-      nullptr, argv, nullptr, GSpawnFlags(G_SPAWN_LEAVE_DESCRIPTORS_OPEN),
-      nullptr, nullptr, nullptr, nullptr, nullptr, getter_Transfers(error));
-  if (!ret || error) {
-    fprintf(stderr, "%s: g_spawn_sync() of gnome-screenshot failed: %s\n",
-            aAppName, error ? error->message : "");
-    return nullptr;
-  }
-
-  GdkPixbuf* screenshot = gdk_pixbuf_new_from_file(filename, nullptr);
-  if (!screenshot) {
-    fprintf(stderr, "%s: gdk_pixbuf_new_from_file %s failed\n", aAppName,
-            filename);
-  }
-  return screenshot;
-}
-#endif
 
 int main(int argc, char** argv) {
   gdk_init(&argc, &argv);
 
   GdkPixbuf* screenshot = nullptr;
 
-#if defined(MOZ_WAYLAND)
-  GdkDisplay* display = gdk_display_get_default();
-  if (display && GDK_IS_WAYLAND_DISPLAY(display)) {
-    screenshot = get_screenshot_gnome(argv[0]);
-    if (!screenshot) {
-      fprintf(stderr, "%s: failed to create screenshot Wayland/GdkPixbuf\n",
-              argv[0]);
-      return 1;
-    }
-  } else
-#endif
   {
     GdkWindow* window = gdk_get_default_root_window();
     screenshot =

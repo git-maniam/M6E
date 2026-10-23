@@ -75,15 +75,6 @@ class GMPChild : public PGMPChild {
 
   mozilla::ipc::IPCResult RecvShutdown(ShutdownResolver&& aResolver);
 
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvInitDllServices(
-      const bool& aCanRecordReleaseTelemetry,
-      const bool& aIsReadyForBackgroundProcessing);
-
-  mozilla::ipc::IPCResult RecvGetUntrustedModulesData(
-      GetUntrustedModulesDataResolver&& aResolver);
-  mozilla::ipc::IPCResult RecvUnblockUntrustedModulesThread();
-#endif  // defined(XP_WIN)
 
   void ActorDestroy(ActorDestroyReason aWhy) override;
   void ProcessingError(Result aCode, const char* aReason) override;
@@ -105,9 +96,6 @@ class GMPChild : public PGMPChild {
   nsString mPluginPath;
   nsCString mStorageId;
   UniquePtr<GMPLoader> mGMPLoader;
-#ifdef XP_LINUX
-  nsTArray<void*> mLibHandles;
-#endif
 };
 
 }  // namespace gmp

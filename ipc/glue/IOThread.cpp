@@ -6,18 +6,9 @@
 #include "mozilla/ipc/NodeController.h"
 #include "mozilla/Preferences.h"
 
-#if defined(XP_WIN)
-#  include <objbase.h>
-#endif
 
-#if defined(XP_WIN)
-#  include "chrome/common/ipc_channel_win.h"
-#else
-#  if defined(XP_DARWIN)
 #    include "chrome/common/ipc_channel_mach.h"
-#  endif
 #  include "chrome/common/ipc_channel_posix.h"
-#endif
 
 namespace mozilla {
 namespace ipc {
@@ -83,16 +74,10 @@ IOThreadParent::IOThreadParent() : IOThread("IPC I/O Parent") {
 
   // Select which type of channel will be used for IPC.
   mChannelKind = [] {
-#if defined(XP_WIN)
-    return &IPC::ChannelWin::sKind;
-#else
-#  if defined(XP_DARWIN)
     if (Preferences::GetBool("dom.ipc.backend.mach")) {
       return &IPC::ChannelMach::sKind;
     }
-#  endif
     return &IPC::ChannelPosix::sKind;
-#endif
   }();
 
   StartThread();
@@ -103,10 +88,6 @@ IOThreadParent::~IOThreadParent() { StopThread(); }
 void IOThreadParent::Init() {
   IOThread::Init();
 
-#if defined(XP_WIN)
-  // Initializes the COM library on the current thread.
-  CoInitialize(nullptr);
-#endif
 
   // Initialize the ports library in the current thread.
   NodeController::InitBrokerProcess(mChannelKind);
@@ -115,11 +96,6 @@ void IOThreadParent::Init() {
 void IOThreadParent::CleanUp() {
   NodeController::CleanUp();
 
-#if defined(XP_WIN)
-  // Closes the COM library on the current thread. CoInitialize must
-  // be balanced by a corresponding call to CoUninitialize.
-  CoUninitialize();
-#endif
 }
 
 //

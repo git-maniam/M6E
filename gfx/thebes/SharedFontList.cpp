@@ -312,11 +312,6 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
     auto* face = facePtrs[0].ToPtr<Face>(aList);
     if (face && face->HasValidDescriptor()) {
       aFaceList.AppendElement(face);
-#ifdef MOZ_WIDGET_GTK
-      if (face->mSize) {
-        return true;
-      }
-#endif
     }
     return false;
   }
@@ -343,11 +338,6 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
     auto* face = facePtrs[faceIndex].ToPtr<Face>(aList);
     if (face && face->HasValidDescriptor()) {
       aFaceList.AppendElement(face);
-#ifdef MOZ_WIDGET_GTK
-      if (face->mSize) {
-        return true;
-      }
-#endif
       return false;
     }
 
@@ -368,11 +358,6 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
       face = facePtrs[order[trial]].ToPtr<Face>(aList);
       if (face && face->HasValidDescriptor()) {
         aFaceList.AppendElement(face);
-#ifdef MOZ_WIDGET_GTK
-        if (face->mSize) {
-          return true;
-        }
-#endif
         return false;
       }
     }
@@ -413,11 +398,6 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
       } else if (distance == minDistance) {
         if (matched) {
           aFaceList.AppendElement(matched);
-#ifdef MOZ_WIDGET_GTK
-          if (matched->mSize) {
-            anyNonScalable = true;
-          }
-#endif
         }
         matched = face;
       }
@@ -427,11 +407,6 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
   MOZ_ASSERT(matched, "didn't match a font within a family");
   if (matched) {
     aFaceList.AppendElement(matched);
-#ifdef MOZ_WIDGET_GTK
-    if (matched->mSize) {
-      anyNonScalable = true;
-    }
-#endif
   }
 
   return anyNonScalable;
@@ -440,56 +415,9 @@ bool Family::FindAllFacesForStyleInternal(FontList* aList,
 void Family::FindAllFacesForStyle(FontList* aList, const gfxFontStyle& aStyle,
                                   nsTArray<Face*>& aFaceList,
                                   bool aIgnoreSizeTolerance) const {
-#ifdef MOZ_WIDGET_GTK
-  bool anyNonScalable =
-#else
   (void)
-#endif
       FindAllFacesForStyleInternal(aList, aStyle, aFaceList);
 
-#ifdef MOZ_WIDGET_GTK
-  // aFaceList now contains whatever faces are the best style match for
-  // the requested style. If specifically-sized bitmap faces are supported,
-  // we need to additionally filter the list to choose the appropriate size.
-  //
-  // It would be slightly more efficient to integrate this directly into the
-  // face-selection algorithm above, but it's a rare case that doesn't apply
-  // at all to most font families.
-  //
-  // Currently we only support pixel-sized bitmap font faces on Linux/Gtk (i.e.
-  // when using the gfxFcPlatformFontList implementation), so this filtering is
-  // not needed on other platforms.
-  //
-  // (Note that color-bitmap emoji fonts like Apple Color Emoji or Noto Color
-  // Emoji don't count here; they package multiple bitmap sizes into a single
-  // OpenType wrapper, so they appear as a single "scalable" face in our list.)
-  if (anyNonScalable) {
-    uint16_t best = 0;
-    gfxFloat dist = 0.0;
-    for (const auto& f : aFaceList) {
-      if (f->mSize == 0) {
-        // Scalable face; no size distance to compute.
-        continue;
-      }
-      gfxFloat d = fabs(gfxFloat(f->mSize) - aStyle.size);
-      if (!aIgnoreSizeTolerance && (d * 5.0 > f->mSize)) {
-        continue;  // Too far from the requested size, ignore.
-      }
-      // If we haven't found a "best" bitmap size yet, or if this is a better
-      // match, remember it.
-      if (!best || d < dist) {
-        best = f->mSize;
-        dist = d;
-      }
-    }
-    // Discard all faces except the chosen "best" size; or if no pixel size was
-    // chosen, all except scalable faces.
-    // This may eliminate *all* faces in the family, if all were bitmaps and
-    // none was a good enough size match, in which case we'll fall back to the
-    // next font-family name.
-    aFaceList.RemoveElementsBy([=](const auto& e) { return e->mSize != best; });
-  }
-#endif
 }
 
 Face* Family::FindFaceForStyle(FontList* aList, const gfxFontStyle& aStyle,
@@ -1231,91 +1159,6 @@ Family* FontList::FindFamily(const nsCString& aName, bool aPrimaryNameOnly) {
     }
   }
 
-#ifdef XP_WIN
-  // For Windows only, because of how DWrite munges font family names in some
-  // cases (see
-  // https://msdnshared.blob.core.windows.net/media/MSDNBlogsFS/prod.evol.blogs.msdn.com/CommunityServer.Components.PostAttachments/00/02/24/90/36/WPF%20Font%20Selection%20Model.pdf
-  // and discussion on the OpenType list), try stripping a possible style-name
-  // suffix from the end of the requested family name.
-  // After the deferred font loader has finished, this is no longer needed as
-  // the "real" family names will have been found in AliasFamilies() above.
-  if (aName.Contains(' ')) {
-    auto pfl = gfxPlatformFontList::PlatformFontList();
-    pfl->mLock.AssertCurrentThreadIn();
-    if (header.mAliasCount) {
-      // Aliases have been fully loaded by the parent process, so just discard
-      // any stray mAliasTable and mLocalNameTable entries from earlier calls
-      // to this code, and return.
-      pfl->mAliasTable.Clear();
-      pfl->mLocalNameTable.Clear();
-      mFaceNamesRead.Clear();
-      return nullptr;
-    }
-
-    // Do we already have an aliasData record for this name? If so, we just
-    // return its base family.
-    if (auto lookup = pfl->mAliasTable.Lookup(aName)) {
-      return FindFamily(lookup.Data()->mBaseFamily, true);
-    }
-
-    // Strip the style suffix (after last space in the name) to get a "base"
-    // family name.
-    const char* data = aName.BeginReading();
-    int32_t index = aName.Length();
-    while (--index > 0) {
-      if (data[index] == ' ') {
-        break;
-      }
-    }
-    if (index <= 0) {
-      return nullptr;
-    }
-    nsAutoCString base(Substring(aName, 0, index));
-    auto familyCount = header.mFamilyCount;
-    if (BinarySearchIf(families, 0, familyCount,
-                       FamilyNameComparator(this, base), &match)) {
-      // Check to see if we have already read the face names for this base
-      // family.
-
-      // First, extend mFaceNamesRead as-needed up to `familyCount` (setting
-      // new entries to 'false'):
-      const auto oldLength = mFaceNamesRead.Length();
-      mFaceNamesRead.EnsureLengthAtLeast(familyCount);
-      for (auto i = oldLength; i < mFaceNamesRead.Length(); i++) {
-        mFaceNamesRead[i] = false;
-      }
-
-      // Now we can check its entry at index `match` to see if we've already
-      // read this one:
-      if (mFaceNamesRead[match]) {
-        return nullptr;
-      }
-      // This may be a possible base family to satisfy the search; call
-      // ReadFaceNamesForFamily and see if the desired name ends up in
-      // mAliasTable.
-      // Note that ReadFaceNamesForFamily may store entries in mAliasTable
-      // (and mLocalNameTable), but if this is happening in a content
-      // process (which is the common case) those entries will not be saved
-      // into the shared font list; they're just used here until the "real"
-      // alias list is ready, then discarded.
-      Family* baseFamily = &families[match];
-      pfl->ReadFaceNamesForFamily(baseFamily, false);
-      mFaceNamesRead[match] = true;
-      if (auto lookup = pfl->mAliasTable.Lookup(aName)) {
-        if (lookup.Data()->mFaces.Length() != baseFamily->NumFaces()) {
-          // If the alias family doesn't have all the faces of the base family,
-          // then style matching may end up resolving to a face that isn't
-          // supposed to be available in the legacy styled family. To ensure
-          // such mis-styling will get fixed, we start the async font info
-          // loader (if it hasn't yet been triggered), which will pull in the
-          // full metadata we need and then force a reflow.
-          pfl->InitOtherFamilyNames(/* aDeferOtherFamilyNamesLoading */ true);
-        }
-        return baseFamily;
-      }
-    }
-  }
-#endif
 
   return nullptr;
 }

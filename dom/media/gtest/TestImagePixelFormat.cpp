@@ -14,10 +14,8 @@
 #include "mozilla/gfx/Types.h"
 #include "mozilla/layers/LayersSurfaces.h"
 
-#ifdef XP_MACOSX
 #  include "MacIOSurfaceImage.h"
 #  include "mozilla/gfx/MacIOSurface.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -130,7 +128,6 @@ TEST(TestImagePixelFormat, RemoteImages)
   EXPECT_EQ(ImageToPixelFormat(image10), Some(ImagePixelFormat::BGRX));
 }
 
-#ifdef XP_MACOSX
 static RefPtr<MacIOSurfaceImage> MakeBiPlanarImage(
     ChromaSubsampling aSubsampling, ColorDepth aDepth) {
   RefPtr<MacIOSurface> surface = MacIOSurface::CreateBiPlanarSurface(
@@ -172,4 +169,3 @@ TEST(TestImagePixelFormat, MacIOSurfaceImages)
   ASSERT_TRUE(nv16);
   EXPECT_EQ(ImageToPixelFormat(nv16), Nothing());
 }
-#endif

@@ -49,9 +49,6 @@ constexpr inline std::array<ElemT, 1 + sizeof...(More)> make_array(
   return {std::forward<ElemT>(arg1), std::forward<ElemT>(more)...};
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/ProfilerLabels.h"
-#endif
 
 namespace mozilla {
 
@@ -678,8 +675,6 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
 #ifndef MOZ_FUNCTION_NAME
 #  ifdef __GNUC__
 #    define MOZ_FUNCTION_NAME __PRETTY_FUNCTION__
-#  elif defined(_MSC_VER)
-#    define MOZ_FUNCTION_NAME __FUNCTION__
 #  else
 #    define MOZ_FUNCTION_NAME \
       __func__  // defined in C99, supported in various C++ compilers. Just raw
@@ -687,12 +682,7 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
 #  endif
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-// Record the name of the GL call for better hang stacks on Android.
-#  define ANDROID_ONLY_PROFILER_LABEL AUTO_PROFILER_LABEL(__func__, GRAPHICS);
-#else
 #  define ANDROID_ONLY_PROFILER_LABEL
-#endif
 
 #define BEFORE_GL_CALL                               \
   ANDROID_ONLY_PROFILER_LABEL                        \
@@ -846,13 +836,8 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
   }
 
   void InvalidateFramebuffer(GLenum target) {
-#ifdef XP_IOS
-    // LOCAL_GL_DEPTH_STENCIL_ATTACHMENT cannot be invalidated on iOS.
-    constexpr auto ATTACHMENTS = make_array(GLenum{LOCAL_GL_COLOR_ATTACHMENT0});
-#else
     constexpr auto ATTACHMENTS = make_array(GLenum{LOCAL_GL_COLOR_ATTACHMENT0},
                                             LOCAL_GL_DEPTH_STENCIL_ATTACHMENT);
-#endif
 
     fInvalidateFramebuffer(target, ATTACHMENTS.size(), ATTACHMENTS.data());
   }
@@ -2470,13 +2455,11 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
   }
 
   void fDeleteTextures(GLsizei n, const GLuint* names) {
-#ifdef XP_MACOSX
     // On the Mac the call to fDeleteTextures() triggers a flush. But it
     // happens at the wrong time, which can lead to crashes. To work around
     // this we call fFlush() explicitly ourselves, before the call to
     // fDeleteTextures(). This fixes bug 1666293.
     fFlush();
-#endif
     raw_fDeleteTextures(n, names);
     TRACKING_CONTEXT(DeletedTextures(this, n, names));
   }
@@ -3877,15 +3860,11 @@ class GLContext : public GenericAtomicRefCounted, public SupportsWeakPtr {
   virtual GLenum GetPreferredARGB32Format() const { return LOCAL_GL_RGBA; }
 
   virtual GLenum GetPreferredEGLImageTextureTarget() const {
-#ifdef MOZ_WIDGET_GTK
-    return LOCAL_GL_TEXTURE_2D;
-#else
     if (IsExtensionSupported(OES_EGL_image_external) &&
         mRenderer != GLRenderer::AndroidEmulator) {
       return LOCAL_GL_TEXTURE_EXTERNAL;
     }
     return LOCAL_GL_TEXTURE_2D;
-#endif
   }
 
   // Returns the texture target Mac IOSurfaces should be bound to

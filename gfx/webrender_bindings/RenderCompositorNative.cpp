@@ -15,9 +15,6 @@
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/layers/CompositionRecorder.h"
 #include "mozilla/layers/NativeLayer.h"
-#if defined(MOZ_WAYLAND)
-#  include "mozilla/layers/NativeLayerWayland.h"
-#endif
 #include "mozilla/layers/ProfilerScreenshots.h"
 #include "mozilla/layers/SurfacePool.h"
 #include "mozilla/webrender/RenderTextureHost.h"
@@ -37,18 +34,11 @@ RenderCompositorNative::RenderCompositorNative(
 
   MOZ_ASSERT(mNativeLayerRoot);
 
-#if defined(MOZ_WAYLAND)
-  if (auto* rootWayland = mNativeLayerRoot->AsNativeLayerRootWayland()) {
-    rootWayland->SetGLContext(aGL);
-  }
-#endif
 
-#if defined(XP_DARWIN) || defined(MOZ_WAYLAND)
   auto pool = RenderThread::Get()->SharedSurfacePool();
   if (pool) {
     mSurfacePoolHandle = pool->GetHandleForGL(aGL);
   }
-#endif
   MOZ_RELEASE_ASSERT(mSurfacePoolHandle);
 }
 
@@ -117,11 +107,7 @@ bool RenderCompositorNative::Resume() { return true; }
 inline layers::WebRenderCompositor RenderCompositorNative::CompositorType()
     const {
   if (gfx::gfxVars::UseWebRenderCompositor()) {
-#if defined(XP_DARWIN)
     return layers::WebRenderCompositor::CORE_ANIMATION;
-#elif defined(MOZ_WAYLAND)
-    return layers::WebRenderCompositor::WAYLAND;
-#endif
   }
   return layers::WebRenderCompositor::DRAW;
 }
@@ -137,9 +123,7 @@ bool RenderCompositorNative::ShouldUseNativeCompositor() {
 void RenderCompositorNative::GetCompositorCapabilities(
     CompositorCapabilities* aCaps) {
   RenderCompositor::GetCompositorCapabilities(aCaps);
-#if defined(XP_DARWIN)
   aCaps->supports_surface_for_backdrop = !gfx::gfxVars::UseSoftwareWebRender();
-#endif
 }
 
 RenderCompositorNative::Surface::~Surface() = default;
@@ -288,10 +272,8 @@ void RenderCompositorNative::CompositorEndFrame() {
   }
   mDrawnPixelCount = 0;
 
-#if defined(XP_DARWIN)
   // MacOS fails rendering without the flush here.
   DoFlush();
-#endif
 
   mNativeLayerRoot->SetLayers(mAddedLayers);
   mNativeLayerRoot->CommitToScreen();
@@ -586,7 +568,6 @@ void RenderCompositorNativeOGL::DoFlush() {
 }
 
 void RenderCompositorNativeOGL::InsertFrameDoneSync() {
-#ifdef XP_DARWIN
   // Only do this on macOS.
   // On other platforms, SwapBuffers automatically applies back-pressure.
   if (mThisFrameDoneFences && mThisFrameDoneFences->mSync) {
@@ -596,7 +577,6 @@ void RenderCompositorNativeOGL::InsertFrameDoneSync() {
       MakeUnique<BackPressureFences>(std::move(mPendingGpuFences));
   mThisFrameDoneFences->mSync =
       mGL->fFenceSync(LOCAL_GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-#endif
 }
 
 bool RenderCompositorNativeOGL::WaitForGPU() {

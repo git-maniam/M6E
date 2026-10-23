@@ -305,12 +305,5 @@ nsresult nsFilePickerProxy::ResolveSpecialDirectory(
 NS_IMETHODIMP
 nsFilePickerProxy::GetDomFilesInWebKitDirectory(
     nsISimpleEnumerator** aDomfiles) {
-#ifdef MOZ_WIDGET_ANDROID
-  auto enumerator =
-      mozilla::MakeRefPtr<SimpleEnumerator>(mFilesInWebKitDirectory);
-  enumerator.forget(aDomfiles);
-  return NS_OK;
-#else
   return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }

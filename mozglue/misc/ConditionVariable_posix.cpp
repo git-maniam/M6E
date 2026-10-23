@@ -18,9 +18,6 @@ using mozilla::TimeDuration;
 static const long NanoSecPerSec = 1000000000;
 
 // macOS has the clock functions, but not pthread_condattr_setclock.
-#if defined(HAVE_CLOCK_MONOTONIC) && !defined(__APPLE__)
-#  define CV_USE_CLOCK_API
-#endif
 
 #ifdef CV_USE_CLOCK_API
 // The C++ specification defines std::condition_variable::wait_for in terms of

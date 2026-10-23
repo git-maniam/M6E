@@ -24,9 +24,6 @@
 #include "js/AllocPolicy.h"
 #include "js/NativeStackLimits.h"
 
-#ifdef _WIN32
-struct _NT_TIB;
-#endif
 
 namespace js::wasm {
 
@@ -58,12 +55,6 @@ class Context {
   static constexpr size_t offsetOfMainStackTarget() {
     return offsetof(Context, mainStackTarget_);
   }
-#  ifdef _WIN32
-  static constexpr size_t offsetOfTib() { return offsetof(Context, tib_); }
-
-  // Load the current TIB stack fields and refresh our cached fields.
-  void updateWin32TibFields();
-#  endif
 
   ContStack* currentStack() { return currentStack_; }
   Handlers* baseHandlers() { return baseHandlers_; }
@@ -91,12 +82,6 @@ class Context {
   // A stack target for use when switching to the main stack.
   StackTarget mainStackTarget_;
 
-#  if defined(_WIN32)
-  // On WIN64, the Thread Information Block stack limits must be updated on
-  // stack switches to avoid failures on SP checks during vectored exeption
-  // handling for traps. We cache the TIB here for easy manipulation.
-  _NT_TIB* tib_ = nullptr;
-#  endif
 
   // The currently active continuation. Null if we're executing on the
   // main stack, otherwise we're on a continuation stack. This is a non owning

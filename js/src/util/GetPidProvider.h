@@ -5,11 +5,6 @@
 #ifndef util_GetPidProvider_h
 #define util_GetPidProvider_h
 
-#ifdef XP_WIN
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>
-#endif
 
 #endif /* util_GetPidProvider_h */

@@ -7,15 +7,10 @@
 
 #include "base/basictypes.h"
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
-#if defined(XP_UNIX)
 #  include <list>
 #  include <utility>
 #  include "nsISupportsImpl.h"
-#endif
 
 #include "base/message_loop.h"
 
@@ -71,9 +66,6 @@ class WaitableEvent {
   // does not necessarily mean that max_time was exceeded.
   bool TimedWait(const TimeDelta& max_time);
 
-#if defined(XP_WIN)
-  HANDLE handle() const { return handle_; }
-#endif
 
   // Wait, synchronously, on multiple events.
   //   waitables: an array of WaitableEvent pointers
@@ -117,9 +109,6 @@ class WaitableEvent {
  private:
   friend class WaitableEventWatcher;
 
-#if defined(XP_WIN)
-  HANDLE handle_;
-#else
   // On Windows, one can close a HANDLE which is currently being waited on. The
   // MSDN documentation says that the resulting behaviour is 'undefined', but
   // it doesn't crash. However, if we were to include the following members
@@ -161,7 +150,6 @@ class WaitableEvent {
   typedef std::pair<WaitableEvent*, size_t> WaiterAndIndex;
   static size_t EnqueueMany(WaiterAndIndex* waitables, size_t count,
                             Waiter* waiter);
-#endif
 
   DISALLOW_COPY_AND_ASSIGN(WaitableEvent);
 };

@@ -21,9 +21,6 @@
 #include "mozilla/webrender/RenderThread.h"
 #include "mozilla/widget/CompositorWidget.h"
 
-#if defined(MOZ_WAYLAND)
-#  include "mozilla/layers/NativeLayerWayland.h"
-#endif
 
 namespace mozilla::wr {
 
@@ -37,18 +34,11 @@ RenderCompositorLayerNative::RenderCompositorLayerNative(
   LOG("RenderCompositorLayerNative::RenderCompositorLayerNative()");
 
   MOZ_ASSERT(mNativeLayerRoot);
-#if defined(MOZ_WAYLAND)
-  if (auto* rootWayland = mNativeLayerRoot->AsNativeLayerRootWayland()) {
-    rootWayland->SetGLContext(aGL);
-  }
-#endif
 
-#if defined(XP_DARWIN) || defined(MOZ_WAYLAND)
   auto pool = RenderThread::Get()->SharedSurfacePool();
   if (pool) {
     mSurfacePoolHandle = pool->GetHandleForGL(aGL);
   }
-#endif
   MOZ_RELEASE_ASSERT(mSurfacePoolHandle);
 }
 
@@ -91,14 +81,7 @@ bool RenderCompositorLayerNative::Resume() { return true; }
 
 inline layers::WebRenderCompositor RenderCompositorLayerNative::CompositorType()
     const {
-#if defined(XP_DARWIN)
   return layers::WebRenderCompositor::CORE_ANIMATION;
-#elif defined(MOZ_WAYLAND)
-  return layers::WebRenderCompositor::WAYLAND;
-#else
-  MOZ_ASSERT_UNREACHABLE("Unexpected to be called!");
-  return layers::WebRenderCompositor::Unknown;
-#endif
 }
 
 LayoutDeviceIntSize RenderCompositorLayerNative::GetBufferSize() {
@@ -114,20 +97,9 @@ bool RenderCompositorLayerNative::ShouldUseLayerCompositor() const {
 bool RenderCompositorLayerNative::UseLayerCompositor() const { return true; }
 
 bool RenderCompositorLayerNative::EnableAsyncScreenshot() {
-#if defined(XP_DARWIN)
   // On macOS, NativeLayerRootSnapshotterCA supports to take snapshot with
   // multiple layers.
   return true;
-#else
-  // Request WebRender to use only one layer for content rendering during taking
-  // snapshot. In addition to the content layer, one debug layer could exist.
-  mAsyncScreenshotLastFrameUsed = mCurrentFrame;
-  if (!mEnableAsyncScreenshot) {
-    mEnableAsyncScreenshotInNextFrame = true;
-    return false;
-  }
-  return true;
-#endif
 }
 
 void RenderCompositorLayerNative::GetCompositorCapabilities(
@@ -254,10 +226,8 @@ void RenderCompositorLayerNative::CompositorBeginFrame() {
 }
 
 void RenderCompositorLayerNative::CompositorEndFrame() {
-#if defined(XP_DARWIN)
   // MacOS fails rendering without the flush here.
   DoFlush();
-#endif
 
   mAddedLayers.Reverse();
 
@@ -488,7 +458,6 @@ void RenderCompositorLayerNativeOGL::DoFlush() {
 }
 
 void RenderCompositorLayerNativeOGL::InsertFrameDoneSync() {
-#ifdef XP_DARWIN
   // Only do this on macOS.
   // On other platforms, SwapBuffers automatically applies back-pressure.
   if (mThisFrameDoneFences && mThisFrameDoneFences->mSync) {
@@ -498,7 +467,6 @@ void RenderCompositorLayerNativeOGL::InsertFrameDoneSync() {
       MakeUnique<BackPressureFences>(std::move(mPendingGpuFences));
   mThisFrameDoneFences->mSync =
       mGL->fFenceSync(LOCAL_GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-#endif
 }
 
 bool RenderCompositorLayerNativeOGL::WaitForGPU() {

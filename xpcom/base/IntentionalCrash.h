@@ -11,12 +11,7 @@
 #include <sstream>
 #include <string>
 
-#ifdef XP_WIN
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>
-#endif
 
 namespace mozilla {
 

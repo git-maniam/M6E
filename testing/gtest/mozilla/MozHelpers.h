@@ -47,38 +47,9 @@ namespace mozilla::gtest {
 #endif  // defined(HAS_GDB_SLEEP_DURATION)
 
 // Death tests are too slow on OSX because of the system crash reporter.
-#if !defined(XP_DARWIN)
-// Wrap ASSERT_DEATH_IF_SUPPORTED to disable the crash reporter
-// when entering the subprocess, so that the expected crashes don't
-// create a minidump that the gtest harness will interpret as an error.
-#  define ASSERT_DEATH_WRAP(a, b)                 \
-    ASSERT_DEATH_IF_SUPPORTED(                    \
-        {                                         \
-          mozilla::gtest::DisableCrashReporter(); \
-          a;                                      \
-        },                                        \
-        b)
-
-// Wrap EXPECT_DEATH_* macros to also disable the crash reporter.
-#  define EXPECT_DEATH_WRAP(a, b)                 \
-    EXPECT_DEATH_IF_SUPPORTED(                    \
-        {                                         \
-          mozilla::gtest::DisableCrashReporter(); \
-          a;                                      \
-        },                                        \
-        b)
-#  define EXPECT_DEBUG_DEATH_WRAP(a, b)           \
-    EXPECT_DEBUG_DEATH(                           \
-        {                                         \
-          mozilla::gtest::DisableCrashReporter(); \
-          a;                                      \
-        },                                        \
-        b)
-#else
 #  define ASSERT_DEATH_WRAP(a, b)
 #  define EXPECT_DEATH_WRAP(a, b)
 #  define EXPECT_DEBUG_DEATH_WRAP(a, b)
-#endif
 
 void EnableCrashReporter();
 void DisableCrashReporter();

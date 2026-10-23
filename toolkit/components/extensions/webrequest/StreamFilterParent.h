@@ -15,11 +15,7 @@
 #include "nsIThreadRetargetableStreamListener.h"
 #include "nsThreadUtils.h"
 
-#if defined(_MSC_VER)
-#  define FUNC __FUNCSIG__
-#else
 #  define FUNC __PRETTY_FUNCTION__
-#endif
 
 namespace mozilla {
 namespace dom {

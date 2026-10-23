@@ -22,9 +22,6 @@
 #include "mozilla/net/SocketProcessParent.h"
 #include "nsIOService.h"
 
-#ifdef XP_WIN
-#  include "nsAppDirectoryServiceDefs.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::ipc;
@@ -37,12 +34,7 @@ NS_IMPL_ISUPPORTS(SandboxTest, mozISandboxTest)
 inline void UnsetEnvVariable(const nsCString& aEnvVarName) {
   nsCString aEnvVarNameFull = aEnvVarName + "="_ns;
   int rv_unset =
-#ifdef XP_UNIX
       unsetenv(aEnvVarName.get());
-#endif  // XP_UNIX
-#ifdef XP_WIN
-  _putenv(aEnvVarNameFull.get());
-#endif  // XP_WIN
   MOZ_ASSERT(rv_unset == 0, "Error unsetting env var");
 }
 
@@ -90,19 +82,6 @@ NS_IMETHODIMP
 SandboxTest::StartTests(const nsTArray<nsCString>& aProcessesList) {
   MOZ_ASSERT(NS_IsMainThread());
 
-#if defined(XP_WIN)
-  nsCOMPtr<nsIFile> testFile;
-  NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(testFile));
-  MOZ_ASSERT(testFile);
-  nsCOMPtr<nsIFile> testChromeFile;
-  testFile->Clone(getter_AddRefs(testChromeFile));
-  testChromeFile->Append(u"chrome"_ns);
-  testChromeFile->Exists(&mChromeDirExisted);
-  testFile->Append(u"sandboxTest.txt"_ns);
-  testChromeFile->Append(u"sandboxTest.txt"_ns);
-  MOZ_ALWAYS_SUCCEEDS(testFile->Create(nsIFile::NORMAL_FILE_TYPE, 0666));
-  MOZ_ALWAYS_SUCCEEDS(testChromeFile->Create(nsIFile::NORMAL_FILE_TYPE, 0666));
-#endif
 
   for (const auto& processTypeName : aProcessesList) {
     SandboxingKind sandboxingKind = SandboxingKind::COUNT;
@@ -336,21 +315,6 @@ SandboxTest::FinishTests() {
   // Make sure there is no leftover for test --verify to run without failure
   mSandboxTestingParents.Clear();
 
-#if defined(XP_WIN)
-  nsCOMPtr<nsIFile> testFile;
-  NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR, getter_AddRefs(testFile));
-  MOZ_ASSERT(testFile);
-  nsCOMPtr<nsIFile> testChromeFile;
-  testFile->Clone(getter_AddRefs(testChromeFile));
-  testChromeFile->Append(u"chrome"_ns);
-  testFile->Append(u"sandboxTest.txt"_ns);
-  if (mChromeDirExisted) {
-    // Chrome dir existed, just delete test file.
-    testChromeFile->Append(u"sandboxTest.txt"_ns);
-  }
-  testFile->Remove(false);
-  testChromeFile->Remove(true);
-#endif
 
   return NS_OK;
 }

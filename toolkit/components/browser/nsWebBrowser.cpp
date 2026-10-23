@@ -433,10 +433,8 @@ nsWebBrowser::GoForward(bool aRequireUserInteraction, bool aUserActivation) {
 
 nsresult nsWebBrowser::LoadURI(nsIURI* aURI,
                                const dom::LoadURIOptions& aLoadURIOptions) {
-#ifndef ANDROID
   MOZ_ASSERT(aLoadURIOptions.mTriggeringPrincipal,
              "nsWebBrowser::LoadURI - Need a valid triggeringPrincipal");
-#endif
   NS_ENSURE_STATE(mDocShell);
 
   RefPtr<nsDocShell> docShell = mDocShell;
@@ -457,11 +455,9 @@ nsWebBrowser::LoadURIFromScript(nsIURI* aURI,
 
 nsresult nsWebBrowser::FixupAndLoadURIString(
     const nsAString& aURI, const dom::LoadURIOptions& aLoadURIOptions) {
-#ifndef ANDROID
   MOZ_ASSERT(
       aLoadURIOptions.mTriggeringPrincipal,
       "nsWebBrowser::FixupAndLoadURIString - Need a valid triggeringPrincipal");
-#endif
   NS_ENSURE_STATE(mDocShell);
 
   RefPtr<nsDocShell> docShell = mDocShell;

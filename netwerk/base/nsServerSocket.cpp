@@ -15,17 +15,6 @@
 #include "nsThreadUtils.h"
 #include "prio.h"
 #include "prnetdb.h"
-#if defined(XP_WIN)
-#  include <mstcpip.h>
-#  include <winsock2.h>
-
-#  include "private/pprio.h"
-
-#  ifndef IPV6_V6ONLY
-#    define IPV6_V6ONLY 27
-#  endif
-
-#endif
 
 namespace mozilla {
 namespace net {
@@ -218,13 +207,11 @@ void nsServerSocket::OnSocketDetached(PRFileDesc* fd) {
 }
 
 void nsServerSocket::IsLocal(bool* aIsLocal) {
-#if defined(XP_UNIX)
   // Unix-domain sockets are always local.
   if (mAddr.raw.family == PR_AF_LOCAL) {
     *aIsLocal = true;
     return;
   }
-#endif
 
   // If bound to loopback, this server socket only accepts local connections.
   *aIsLocal = PR_IsNetAddrType(&mAddr, PR_IpAddrLoopback);
@@ -282,7 +269,6 @@ nsServerSocket::InitDualStack(int32_t aPort, int32_t aBackLog) {
 NS_IMETHODIMP
 nsServerSocket::InitWithFilename(nsIFile* aPath, uint32_t aPermissions,
                                  int32_t aBacklog) {
-#if defined(XP_UNIX)
   nsresult rv;
 
   nsAutoCString path;
@@ -302,9 +288,6 @@ nsServerSocket::InitWithFilename(nsIFile* aPath, uint32_t aPermissions,
   if (NS_FAILED(rv)) return rv;
 
   return aPath->SetPermissions(aPermissions);
-#else
-  return NS_ERROR_SOCKET_ADDRESS_NOT_SUPPORTED;
-#endif
 }
 
 NS_IMETHODIMP
@@ -312,21 +295,7 @@ nsServerSocket::InitWithAbstractAddress(const nsACString& aName,
                                         int32_t aBacklog) {
   // Abstract socket address is supported on Linux and Android only.
   // If not Linux, we should return error.
-#if defined(XP_LINUX)
-  // Create an abstract socket address PRNetAddr referring to the name
-  PRNetAddr addr;
-  if (aName.Length() > sizeof(addr.local.path) - 2) {
-    return NS_ERROR_FILE_NAME_TOO_LONG;
-  }
-  addr.local.family = PR_AF_LOCAL;
-  addr.local.path[0] = 0;
-  memcpy(addr.local.path + 1, aName.BeginReading(), aName.Length());
-  addr.local.path[aName.Length() + 1] = 0;
-
-  return InitWithAddress(&addr, aBacklog);
-#else
   return NS_ERROR_SOCKET_ADDRESS_NOT_SUPPORTED;
-#endif
 }
 
 NS_IMETHODIMP
@@ -372,34 +341,11 @@ nsresult nsServerSocket::InitWithAddressInternal(const PRNetAddr* aAddr,
 
   PRSocketOptionData opt;
 
-#if defined(XP_WIN)
-  {
-    PROsfd osfd = PR_FileDesc2NativeHandle(mFD);
-    if (osfd != -1) {
-      // https://docs.microsoft.com/en-us/windows/win32/winsock/dual-stack-sockets
-      // To create a Dual-Stack Socket, we have to disable IPV6_V6ONLY.
-      if (aDualStack) {
-        int disable = 0;
-        setsockopt(osfd, IPPROTO_IPV6, IPV6_V6ONLY, (char*)&disable,
-                   sizeof(disable));
-      }
-
-      // On Windows, SO_REUSEADDR allows a second process to bind to a port that
-      // is already being actively listened on, enabling silent port hijacking.
-      // SO_EXCLUSIVEADDRUSE prevents this; the two options are mutually
-      // exclusive.
-      int enable = 1;
-      setsockopt(osfd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*)&enable,
-                 sizeof(enable));
-    }
-  }
-#else
   (void)aDualStack;
 
   opt.option = PR_SockOpt_Reuseaddr;
   opt.value.reuse_addr = true;
   PR_SetSocketOption(mFD, &opt);
-#endif
 
   opt.option = PR_SockOpt_Nonblocking;
   opt.value.non_blocking = true;

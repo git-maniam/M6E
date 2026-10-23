@@ -9,12 +9,6 @@
 #include "nsContentUtils.h"
 #include "nsJSUtils.h"
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 namespace mozilla::dom {
 
@@ -26,14 +20,6 @@ void MessageManagerGlobal::Dump(const nsAString& aStr) {
   NS_ConvertUTF16toUTF8 cStr(aStr);
   MOZ_LOG(nsContentUtils::DOMDumpLog(), mozilla::LogLevel::Debug,
           ("[MessageManager.Dump] %s", cStr.get()));
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", cStr.get());
-#endif
-#ifdef XP_WIN
-  if (IsDebuggerPresent()) {
-    OutputDebugStringW(PromiseFlatString(aStr).get());
-  }
-#endif
   fputs(cStr.get(), stdout);
   fflush(stdout);
 }

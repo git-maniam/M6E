@@ -39,13 +39,6 @@
 #  include "libavutil/version.h"
 #  include "mozilla/StaticMutex.h"
 #  include "mozilla/StaticPrefs_media.h"
-#  ifdef __linux__
-#    include <sys/sysmacros.h>
-#  elif defined(XP_SOLARIS) || defined(__sun)
-#    include <sys/mkdev.h>  // major(), minor() for st_rdev
-#  elif defined(XP_FREEBSD) || defined(XP_OPENBSD) || defined(XP_NETBSD)
-#    include <sys/types.h>  // major(), minor() for st_rdev (BSD)
-#  endif
 
 namespace mozilla {
 
@@ -958,44 +951,11 @@ static bool PhysicalDeviceHasVulkanVideoDecodeStack(
   return true;
 }
 
-#  ifdef XP_LINUX
-static bool NvidiaDrmModesetDisabled() {
-  static std::once_flag sOnce;
-  static bool sDisabled = true;
-  // Set disabled to false only if nvidia_drm is loaded and not set to N/n/0.
-  std::call_once(sOnce, [] {
-    FILE* f = fopen("/sys/module/nvidia_drm/parameters/modeset", "r");
-    if (f) {
-      const int c = fgetc(f);
-      fclose(f);
-      sDisabled = c == 'N' || c == 'n' || c == '0';
-    }
-  });
-  return sDisabled;
-}
-#  endif
 
 bool FFmpegVideoDecoder<LIBAV_VER>::FFmpegVulkanVideoDecoder::
     SelectVulkanDecoderPhysicalDevice(const StaticMutexAutoLock& aProofOfLock,
                                       const nsCString& aRendererNode) {
   uint32_t rendererDrmMajor = 0, rendererDrmMinor = 0;
-#  if defined(MOZ_WIDGET_GTK)
-  if (!aRendererNode.IsEmpty()) {
-    struct stat st = {};
-    if (stat(aRendererNode.get(), &st) == 0) {
-      rendererDrmMajor = major(st.st_rdev);
-      rendererDrmMinor = minor(st.st_rdev);
-      FFMPEGV_LOG("Renderer device from GPU: {} (major={}, minor={})",
-                  aRendererNode.get(), rendererDrmMajor, rendererDrmMinor);
-    } else {
-      FFMPEGV_LOG("Renderer device from GPU: {} - stat() failed (errno={})",
-                  aRendererNode.get(), errno);
-    }
-  } else {
-    // Empty when renderer is llvmpipe or glxtest failed to detect a DRM device
-    FFMPEGV_LOG("Renderer device from GPU: empty (gfxVars::DrmRenderDevice)");
-  }
-#  endif
 
   // The compositor's GPU doesn't change mid-process, so once we've enumerated
   // for a given renderer node, later selects for that same node can reuse the
@@ -1085,17 +1045,6 @@ bool FFmpegVideoDecoder<LIBAV_VER>::FFmpegVulkanVideoDecoder::
                 p.deviceName)) {
           continue;
         }
-#  ifdef XP_LINUX
-        if (p.vendorID == 0x10de) {
-          FFMPEGV_LOG("Checking {}: nvidia_drm modeset status", p.deviceName);
-          if (NvidiaDrmModesetDisabled()) {
-            FFMPEGV_LOG(
-                "Skipping {}: nvidia_drm modeset disabled or module not loaded",
-                p.deviceName);
-            continue;
-          }
-        }
-#  endif
         validDevices.push_back(
             std::make_pair(p, isDecoderMatchesRendererFound));
       }

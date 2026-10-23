@@ -32,12 +32,6 @@
 
 #include <stdio.h>
 
-#if defined(_MSC_VER) && MSC_VER < 1900
-#include <basetsd.h>
-
-#define snprintf _snprintf
-typedef SSIZE_T ssize_t;
-#endif
 
 
 #endif  // GOOGLE_BREAKPAD_COMMON_STDIO_WRAPPER_H

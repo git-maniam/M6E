@@ -676,17 +676,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
     return mSessionStoreChild;
   }
 
-#ifdef XP_WIN
-  // Check if the window this BrowserChild is associated with supports
-  // protected media (EME) or not.
-  // Returns a promise the will resolve true if the window supports
-  // protected media or false if it does not. The promise will be rejected
-  // with an ResponseRejectReason if the IPC needed to do the check fails.
-  // Callers should treat the reject case as if the window does not support
-  // protected media to ensure robust handling.
-  RefPtr<IsWindowSupportingProtectedMediaPromise>
-  DoesWindowSupportProtectedMedia();
-#endif
 
   // Notify the content blocking event in the parent process. This sends an
   // IPC message to the BrowserParent in the parent. The BrowserParent will
@@ -947,10 +936,6 @@ class BrowserChild final : public nsMessageManagerScriptExecutor,
   // When mChildToParentConversionMatrix is Nothing() this value is invalid.
   ScreenRect mTopLevelViewportVisibleRectInBrowserCoords;
 
-#ifdef XP_WIN
-  // Should only be accessed on main thread.
-  Maybe<bool> mWindowSupportsProtectedMedia;
-#endif
 
   // If set, resolve when we receive ChildToParentMatrix.
   RefPtr<dom::Promise> mContentTransformPromise;

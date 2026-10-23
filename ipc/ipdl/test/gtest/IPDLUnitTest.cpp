@@ -13,11 +13,6 @@
 #include "nsDebugImpl.h"
 #include "nsThreadManager.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "nsIAppShell.h"
-#  include "nsServiceManagerUtils.h"
-#  include "nsWidgetsCID.h"
-#endif
 
 namespace mozilla::_ipdltest {
 
@@ -32,11 +27,6 @@ const char* RegisterAllocChildActor(const char* aName,
 }
 
 already_AddRefed<IPDLUnitTestParent> IPDLUnitTestParent::CreateCrossProcess() {
-#ifdef MOZ_WIDGET_ANDROID
-  // Force-initialize the appshell on android, as android child process
-  // launching depends on widget component initialization.
-  nsCOMPtr<nsIAppShell> _appShell = do_GetService(NS_APPSHELL_CID);
-#endif
 
   RefPtr parent = MakeRefPtr<IPDLUnitTestParent>();
   parent->mSubprocess =

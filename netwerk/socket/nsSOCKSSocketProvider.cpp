@@ -20,23 +20,6 @@ NS_IMPL_ISUPPORTS(nsSOCKSSocketProvider, nsISocketProvider)
 // Per-platform implemenation of OpenTCPSocket helper function
 // Different platforms have special cases to handle
 
-#if defined(XP_WIN)
-// The proxy host on Windows may be a named pipe uri, in which
-// case a named-pipe (rather than a socket) should be returned
-static PRFileDesc* OpenTCPSocket(int32_t family, nsIProxyInfo* proxy) {
-  PRFileDesc* sock = nullptr;
-
-  nsAutoCString proxyHost;
-  proxy->GetHost(proxyHost);
-  if (IsNamedPipePath(proxyHost)) {
-    sock = CreateNamedPipeLayer();
-  } else {
-    sock = PR_OpenTCPSocket(family);
-  }
-
-  return sock;
-}
-#elif defined(XP_UNIX)
 // The proxy host on UNIX systems may point to a local file uri
 // in which case we should create an AF_LOCAL (UNIX Domain) socket
 // instead of the requested AF_INET or AF_INET6 socket.
@@ -54,12 +37,6 @@ static PRFileDesc* OpenTCPSocket(int32_t family, nsIProxyInfo* proxy) {
 
   return PR_OpenTCPSocket(family);
 }
-#else
-// Default, pass-through to PR_OpenTCPSocket
-static PRFileDesc* OpenTCPSocket(int32_t family, nsIProxyInfo*) {
-  return PR_OpenTCPSocket(family);
-}
-#endif
 
 NS_IMETHODIMP
 nsSOCKSSocketProvider::NewSocket(int32_t family, const char* host, int32_t port,

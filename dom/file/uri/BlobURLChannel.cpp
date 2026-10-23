@@ -4,9 +4,6 @@
 
 #include "BlobURLChannel.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/BasePrincipal.h"
-#endif
 
 #include "mozilla/dom/BlobImpl.h"
 #include "mozilla/dom/BlobURL.h"
@@ -104,17 +101,7 @@ nsresult BlobURLChannel::OpenContentStream(bool aAsync,
   }
 
   if (blobURL->Revoked()) {
-#ifdef MOZ_WIDGET_ANDROID
-    nsCOMPtr<nsILoadInfo> loadInfo;
-    GetLoadInfo(getter_AddRefs(loadInfo));
-    // if the channel was not triggered by the system principal,
-    // then we return here because the URL had been revoked
-    if (loadInfo && !loadInfo->TriggeringPrincipal()->IsSystemPrincipal()) {
-      return NS_ERROR_MALFORMED_URI;
-    }
-#else
     return NS_ERROR_MALFORMED_URI;
-#endif
   }
 
   // Defensively ensure this process is marked as untrusted.

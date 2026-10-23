@@ -217,15 +217,6 @@ void nsIDNService::InitCyrillicLatinConfusables() {
 
 void nsIDNService::InitThaiLatinConfusables() {
   // Some of the Thai characters are only confusable on Linux.
-#if defined(XP_LINUX) && !defined(ANDROID)
-  mThaiLatinConfusables.Insert(0x0E14);  // ด
-  mThaiLatinConfusables.Insert(0x0E17);  // ท
-  mThaiLatinConfusables.Insert(0x0E19);  // น
-  mThaiLatinConfusables.Insert(0x0E1B);  // ป
-  mThaiLatinConfusables.Insert(0x0E21);  // ม
-  mThaiLatinConfusables.Insert(0x0E25);  // ล
-  mThaiLatinConfusables.Insert(0x0E2B);  // ห
-#endif
 
   mThaiLatinConfusables.Insert(0x0E1A);  // บ
   mThaiLatinConfusables.Insert(0x0E1E);  // พ
@@ -463,14 +454,12 @@ bool nsIDNService::IsLabelSafe(mozilla::Span<const char32_t> aLabel,
       }
     }
 
-#ifdef XP_MACOSX
     // U+0620, U+0f8c, U+0f8d, U+0f8e, U+0f8f and are blocked due to a font
     // issue on macOS
     if (ch == 0x620 || ch == 0xf8c || ch == 0xf8d || ch == 0xf8e ||
         ch == 0xf8f) {
       return false;
     }
-#endif
 
     // U+30FC should be preceded by a Hiragana/Katakana.
     if (ch == 0x30fc && lastScript != Script::HIRAGANA &&

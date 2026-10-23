@@ -355,9 +355,6 @@ class nsZipHandle final {
   friend class nsZipFind;
   friend class mozilla::FileLocation;
   friend class nsJARInputStream;
-#if defined(XP_UNIX) && !defined(XP_DARWIN)
-  friend class MmapAccessScope;
-#endif
 
  public:
   static nsresult Init(nsIFile* file, nsZipHandle** ret,

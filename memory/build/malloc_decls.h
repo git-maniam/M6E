@@ -39,13 +39,9 @@
 // consistent declare certain functions as `throw()`, though.
 
 // Bionic and OS X don't seem to care about `throw()`ness.
-#  if defined(ANDROID) || defined(XP_DARWIN)
 #    undef NOTHROW_MALLOC_DECL
 #    define NOTHROW_MALLOC_DECL MALLOC_DECL
 // Some places don't care about the distinction.
-#  elif !defined(NOTHROW_MALLOC_DECL)
-#    define NOTHROW_MALLOC_DECL MALLOC_DECL
-#  endif
 
 #  if MALLOC_FUNCS & MALLOC_FUNCS_MALLOC_BASE
 MALLOC_DECL(malloc, void*, size_t)

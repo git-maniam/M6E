@@ -3453,11 +3453,6 @@ TEST_WithTailDispatch(TestAudioTrackGraph, EmptyProcessingInterval) {
 }
 
 TEST_WithTailDispatch(TestAudioTrackGraph, DefaultOutputDeviceIDTracking) {
-#ifdef ANDROID
-  GTEST_SKIP() << "On Android CubebDeviceEnumerator, not the cubeb backend, "
-                  "handles device enumeration, exposing only a single input "
-                  "and output device. Both with devid 0.";
-#else
   MockCubeb* cubeb = new MockCubeb(MockCubeb::RunningMode::Manual);
   AddDevices(cubeb, 1, CUBEB_DEVICE_TYPE_INPUT);
   AddDevices(cubeb, 2, CUBEB_DEVICE_TYPE_OUTPUT);
@@ -3564,7 +3559,6 @@ TEST_WithTailDispatch(TestAudioTrackGraph, DefaultOutputDeviceIDTracking) {
   // reference, and before the next test might ForceSetCubebContext() to
   // destroy our cubeb.
   (void)WaitFor(destroyPromise).unwrap()[0];
-#endif
 }
 
 class TrackDestroyShutdownFactory final : public nsIFactory {

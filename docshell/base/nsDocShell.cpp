@@ -8,12 +8,7 @@
 #include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/dom/HTMLFormElement.h"
 
-#ifdef XP_WIN
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>  // for getpid()
-#endif
 
 #include "nsDeviceContext.h"
 #include "mozilla/Attributes.h"
@@ -7663,10 +7658,8 @@ class InternalLoadEvent : public Runnable {
 
   NS_IMETHOD
   Run() override {
-#ifndef ANDROID
     MOZ_ASSERT(mLoadState->TriggeringPrincipal(),
                "InternalLoadEvent: Should always have a principal here");
-#endif
     return mDocShell->InternalLoad(mLoadState);
   }
 
@@ -12442,9 +12435,7 @@ nsresult nsDocShell::OnLinkClick(
     nsIInputStream* aHeadersDataStream, bool aIsUserTriggered,
     UserNavigationInvolvement aUserInvolvement,
     nsIPrincipal* aTriggeringPrincipal, nsIPolicyContainer* aPolicyContainer) {
-#ifndef ANDROID
   MOZ_ASSERT(aTriggeringPrincipal, "Need a valid triggeringPrincipal");
-#endif
   NS_ASSERTION(NS_IsMainThread(), "wrong thread");
 
   if (!IsNavigationAllowed() || !IsOKToLoadURI(aURI)) {

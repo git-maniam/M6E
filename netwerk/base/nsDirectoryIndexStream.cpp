@@ -187,16 +187,6 @@ nsDirectoryIndexStream::Read(char* aBuf, uint32_t aCount,
       // rjc: don't return hidden files/directories!
       // bbaetz: why not?
       nsresult rv;
-#ifndef XP_UNIX
-      bool hidden = false;
-      current->IsHidden(&hidden);
-      if (hidden) {
-        MOZ_LOG(gLog, LogLevel::Debug,
-                ("nsDirectoryIndexStream[%p]: skipping hidden file/directory",
-                 this));
-        continue;
-      }
-#endif
 
       int64_t fileSize = 0;
       current->GetFileSize(&fileSize);

@@ -7,9 +7,6 @@
 #include "nsPresContext.h"
 
 #include "nsPresContextInlines.h"
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/AsyncEventDispatcher.h"
-#endif
 #include "COLRFonts.h"
 #include "CounterStyleManager.h"
 #include "LayerUserData.h"
@@ -715,17 +712,6 @@ void nsPresContext::Init(nsDeviceContext* aDeviceContext) {
 
   mEventManager->SetPresContext(this);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (IsRootContentDocumentCrossProcess()) {
-    if (BrowserChild* browserChild = BrowserChild::GetFrom(GetDocShell())) {
-      if (MOZ_LIKELY(!Preferences::HasUserValue(
-              "layout.dynamic-toolbar-max-height"))) {
-        mDynamicToolbarMaxHeight = browserChild->GetDynamicToolbarMaxHeight();
-        mDynamicToolbarHeight = mDynamicToolbarMaxHeight;
-      }
-    }
-  }
-#endif
 
 #ifdef DEBUG
   mInitialized = true;
@@ -759,11 +745,6 @@ void nsPresContext::UpdateForcedColors(bool aNotify) {
     //
     // TODO(emilio): We might want to factor in here the lwtheme attribute in
     // the root element and so on.
-#ifdef XP_WIN
-    if (prefs.mUseAccessibilityTheme && prefs.mIsChrome) {
-      return StyleForcedColors::Requested;
-    }
-#endif
     return StyleForcedColors::None;
   }();
   if (aNotify && mForcedColors != old) {
@@ -2515,11 +2496,9 @@ enum InterruptMode { ModeRandom, ModeCounter, ModeEvent };
 // "random" (except on Windows) or "counter".  If neither is used, the mode is
 // ModeEvent.
 static InterruptMode sInterruptMode = ModeEvent;
-#ifndef XP_WIN
 // Used for the "random" mode.  Controlled by the GECKO_REFLOW_INTERRUPT_SEED
 // env var.
 static uint32_t sInterruptSeed = 1;
-#endif
 // Used for the "counter" mode.  This is the number of unskipped interrupt
 // checks that have to happen before we interrupt.  Controlled by the
 // GECKO_REFLOW_INTERRUPT_FREQUENCY env var.
@@ -2539,7 +2518,6 @@ static TimeDuration sInterruptTimeout;
 static void GetInterruptEnv() {
   char* ev = PR_GetEnv("GECKO_REFLOW_INTERRUPT_MODE");
   if (ev) {
-#ifndef XP_WIN
     if (nsCRT::strcasecmp(ev, "random") == 0) {
       ev = PR_GetEnv("GECKO_REFLOW_INTERRUPT_SEED");
       if (ev) {
@@ -2548,7 +2526,6 @@ static void GetInterruptEnv() {
       srandom(sInterruptSeed);
       sInterruptMode = ModeRandom;
     } else
-#endif
         if (PL_strcasecmp(ev, "counter") == 0) {
       ev = PR_GetEnv("GECKO_REFLOW_INTERRUPT_FREQUENCY");
       if (ev) {
@@ -2570,10 +2547,8 @@ static void GetInterruptEnv() {
 
 bool nsPresContext::HavePendingInputEvent() {
   switch (sInterruptMode) {
-#ifndef XP_WIN
     case ModeRandom:
       return (random() & 1);
-#endif
     case ModeCounter:
       if (sInterruptCounter < sInterruptMaxCounter) {
         ++sInterruptCounter;
@@ -2737,11 +2712,6 @@ void nsPresContext::NotifyContentfulPaint() {
   }
 
   if (!mHadNonTickContentfulPaint) {
-#ifdef MOZ_WIDGET_ANDROID
-    (new AsyncEventDispatcher(mDocument, u"MozFirstContentfulPaint"_ns,
-                              CanBubble::eYes, ChromeOnlyDispatch::eYes))
-        ->PostDOMEvent();
-#endif
     mHadNonTickContentfulPaint = true;
   }
 
@@ -2800,11 +2770,6 @@ void nsPresContext::NotifyContentfulPaint() {
 void nsPresContext::NotifyPaintStatusReset() {
   mHadNonBlankPaint = false;
   mHadFirstContentfulPaint = false;
-#if defined(MOZ_WIDGET_ANDROID)
-  (new AsyncEventDispatcher(mDocument, u"MozPaintStatusReset"_ns,
-                            CanBubble::eYes, ChromeOnlyDispatch::eYes))
-      ->PostDOMEvent();
-#endif
   mHadNonTickContentfulPaint = false;
 }
 

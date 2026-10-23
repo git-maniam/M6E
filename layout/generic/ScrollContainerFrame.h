@@ -1635,10 +1635,6 @@ class ScrollContainerFrame : public nsContainerFrame,
   // Whether the overlay scrollbars are disabled on this container.
   bool mForceDisableOverlayScrollbars : 1;
 
-#ifdef MOZ_WIDGET_ANDROID
-  // True if this scrollable frame was vertically overflowed on the last reflow.
-  bool mHasVerticalOverflowForDynamicToolbar : 1;
-#endif
 
   layout::ScrollVelocityQueue mVelocityQueue;
 

@@ -8,11 +8,6 @@
 #include "nsIWebAuthnService.h"
 #include "nsString.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-
-#  include "winwebauthn/webauthn.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -28,16 +23,6 @@ class WebAuthnAutoFillEntry final : public nsIWebAuthnAutoFillEntry {
     mCredentialId.Assign(aCredentialId);
   }
 
-#ifdef XP_WIN
-  explicit WebAuthnAutoFillEntry(
-      PCWEBAUTHN_CREDENTIAL_DETAILS aCredentialDetails) {
-    mProvider = nsIWebAuthnAutoFillEntry::PROVIDER_PLATFORM_WINDOWS;
-    mUserName.Assign(aCredentialDetails->pUserInformation->pwszName);
-    mRpId.Assign(aCredentialDetails->pRpInformation->pwszId);
-    mCredentialId.AppendElements(aCredentialDetails->pbCredentialID,
-                                 aCredentialDetails->cbCredentialID);
-  }
-#endif
 
  private:
   ~WebAuthnAutoFillEntry() = default;

@@ -12,28 +12,11 @@
 #  include "FuzzingInterface.h"  // FuzzingTestFuncRaw
 #endif
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-namespace sandbox {
-class BrokerServices;
-}
-#endif
 
 /**
  * Data needed by XRE_XPCShellMain.
  */
 struct XREShellData {
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  /**
-   * Chromium sandbox BrokerServices.
-   */
-  sandbox::BrokerServices* sandboxBrokerServices;
-#endif
-#if defined(ANDROID)
-  FILE* outFile;
-  FILE* errFile;
-  int crashChildNotificationSocket;
-  int crashHelperSocket;
-#endif
 #if defined(LIBFUZZER)
   LibFuzzerDriver fuzzerDriver;
 #endif

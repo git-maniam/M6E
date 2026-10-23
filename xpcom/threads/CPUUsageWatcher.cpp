@@ -7,11 +7,9 @@
 #include "mozilla/Try.h"
 #include "prsystem.h"
 
-#ifdef XP_MACOSX
 #  include <mach/clock.h>
 #  include <mach/mach_host.h>
 #  include <sys/resource.h>
-#endif
 
 #ifdef CPU_USAGE_WATCHER_ACTIVE
 #  include "mozilla/BackgroundHangMonitor.h"
@@ -35,7 +33,6 @@ struct CPUStats {
   uint64_t updateTime;
 };
 
-#  ifdef XP_MACOSX
 
 static const uint64_t kMicrosecondsPerSecond = 1000000LL;
 static const uint64_t kNanosecondsPerMicrosecond = 1000LL;
@@ -98,59 +95,7 @@ static Result<CPUStats, CPUUsageWatcherError> GetGlobalCPUStats() {
   return result;
 }
 
-#  endif  // XP_MACOSX
 
-#  ifdef XP_WIN
-
-// A FILETIME represents the number of 100-nanosecond ticks since 1/1/1601 UTC
-uint64_t FiletimeToInteger(FILETIME filetime) {
-  return ((uint64_t)filetime.dwLowDateTime) | (uint64_t)filetime.dwHighDateTime
-                                                  << 32;
-}
-
-Result<CPUStats, CPUUsageWatcherError> GetProcessCPUStats(int32_t numCPUs) {
-  CPUStats result = {};
-  FILETIME creationFiletime;
-  FILETIME exitFiletime;
-  FILETIME kernelFiletime;
-  FILETIME userFiletime;
-  bool success = GetProcessTimes(GetCurrentProcess(), &creationFiletime,
-                                 &exitFiletime, &kernelFiletime, &userFiletime);
-  if (!success) {
-    return Err(GetProcessTimesError);
-  }
-
-  result.usageTime =
-      FiletimeToInteger(kernelFiletime) + FiletimeToInteger(userFiletime);
-
-  FILETIME nowFiletime;
-  GetSystemTimeAsFileTime(&nowFiletime);
-  result.updateTime = FiletimeToInteger(nowFiletime);
-
-  result.usageTime /= numCPUs;
-
-  return result;
-}
-
-Result<CPUStats, CPUUsageWatcherError> GetGlobalCPUStats() {
-  CPUStats result = {};
-  FILETIME idleFiletime;
-  FILETIME kernelFiletime;
-  FILETIME userFiletime;
-  bool success = GetSystemTimes(&idleFiletime, &kernelFiletime, &userFiletime);
-
-  if (!success) {
-    return Err(GetSystemTimesError);
-  }
-
-  result.usageTime =
-      FiletimeToInteger(kernelFiletime) + FiletimeToInteger(userFiletime);
-  result.updateTime = result.usageTime + FiletimeToInteger(idleFiletime);
-
-  return result;
-}
-
-#  endif  // XP_WIN
 
 Result<Ok, CPUUsageWatcherError> CPUUsageWatcher::Init() {
   mNumCPUs = PR_GetNumberOfProcessors();

@@ -35,9 +35,7 @@ class VRGPUParent final : public PVRGPUParent {
 
   void DeferredDestroy();
 
-#if !defined(MOZ_WIDGET_ANDROID)
   RefPtr<VRService> mVRService;
-#endif
   bool mClosed;
 
   DISALLOW_COPY_AND_ASSIGN(VRGPUParent);

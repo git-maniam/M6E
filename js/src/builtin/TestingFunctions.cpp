@@ -28,11 +28,7 @@
 #include <ctime>
 #include <utility>
 
-#if defined(XP_UNIX) && !defined(XP_DARWIN)
-#  include <time.h>
-#else
 #  include <chrono>
-#endif
 
 #include "fdlibm.h"
 #include "jsapi.h"
@@ -358,29 +354,17 @@ static bool GetBuildConfiguration(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-#ifdef ANDROID
-  value = BooleanValue(true);
-#else
   value = BooleanValue(false);
-#endif
   if (!JS_SetProperty(cx, info, "android", value)) {
     return false;
   }
 
-#ifdef XP_WIN
-  value = BooleanValue(true);
-#else
   value = BooleanValue(false);
-#endif
   if (!JS_SetProperty(cx, info, "windows", value)) {
     return false;
   }
 
-#ifdef XP_MACOSX
   value = BooleanValue(true);
-#else
-  value = BooleanValue(false);
-#endif
   if (!JS_SetProperty(cx, info, "osx", value)) {
     return false;
   }
@@ -5264,21 +5248,12 @@ static bool DumpHeap(JSContext* cx, unsigned argc, Value* vp) {
       if (!fileNameBytes) {
         return false;
       }
-#ifdef XP_WIN
-      UniqueWideChars wideFileNameBytes =
-          JS::EncodeUtf8ToWide(cx, fileNameBytes.get());
-      if (!wideFileNameBytes) {
-        return false;
-      }
-      dumpFile = _wfopen(wideFileNameBytes.get(), L"w");
-#else
       UniqueChars narrowFileNameBytes =
           JS::EncodeUtf8ToNarrow(cx, fileNameBytes.get());
       if (!narrowFileNameBytes) {
         return false;
       }
       dumpFile = fopen(narrowFileNameBytes.get(), "w");
-#endif
       if (!dumpFile) {
         JS_ReportErrorUTF8(cx, "can't open %s", fileNameBytes.get());
         return false;
@@ -8916,12 +8891,6 @@ static bool GetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
 #ifndef __wasi__
   auto getTimeZone = [](std::time_t* now) -> const char* {
     std::tm local{};
-#  if defined(_WIN32)
-    _tzset();
-    if (localtime_s(&local, now) == 0) {
-      return _tzname[local.tm_isdst > 0];
-    }
-#  else
     tzset();
 #    if defined(HAVE_LOCALTIME_R)
     if (localtime_r(now, &local)) {
@@ -8937,7 +8906,6 @@ static bool GetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
       return tzname[local.tm_isdst > 0];
 #    endif /* HAVE_TM_ZONE_TM_GMTOFF */
     }
-#  endif   /* _WIN32 */
     return nullptr;
   };
 
@@ -8969,19 +8937,11 @@ static bool SetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
 
 #ifndef __wasi__
   auto setTimeZone = [](const char* value) {
-#  if defined(_WIN32)
-    return _putenv_s("TZ", value) == 0;
-#  else
     return setenv("TZ", value, true) == 0;
-#  endif /* _WIN32 */
   };
 
   auto unsetTimeZone = []() {
-#  if defined(_WIN32)
-    return _putenv_s("TZ", "") == 0;
-#  else
     return unsetenv("TZ") == 0;
-#  endif /* _WIN32 */
   };
 
   if (args[0].isString() && !args[0].toString()->empty()) {
@@ -9007,11 +8967,7 @@ static bool SetTimeZone(JSContext* cx, unsigned argc, Value* vp) {
     }
   }
 
-#  if defined(_WIN32)
-  _tzset();
-#  else
   tzset();
-#  endif /* _WIN32 */
 
   JS::ResetTimeZone();
 
@@ -9230,45 +9186,11 @@ static bool MonotonicNow(JSContext* cx, unsigned argc, Value* vp) {
 
 // The std::chrono symbols are too new to be present in STL on all platforms we
 // care about, so use raw POSIX clock APIs when it might be necessary.
-#if defined(XP_UNIX) && !defined(XP_DARWIN)
-  auto ComputeNow = [](const timespec& ts) {
-    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-  };
-
-  timespec ts;
-  if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
-    // Use a monotonic clock if available.
-    now = ComputeNow(ts);
-  } else {
-    // Use a realtime clock as fallback.
-    if (clock_gettime(CLOCK_REALTIME, &ts) != 0) {
-      // Fail if no clock is available.
-      JS_ReportErrorASCII(cx, "can't retrieve system clock");
-      return false;
-    }
-
-    now = ComputeNow(ts);
-
-    // Manually enforce atomicity on a non-monotonic clock.
-    {
-      static mozilla::Atomic<bool, mozilla::ReleaseAcquire> spinLock;
-      while (!spinLock.compareExchange(false, true)) {
-        continue;
-      }
-
-      static double lastNow = -FLT_MAX;
-      now = lastNow = std::max(now, lastNow);
-
-      spinLock = false;
-    }
-  }
-#else
   using std::chrono::duration_cast;
   using std::chrono::milliseconds;
   using std::chrono::steady_clock;
   now = duration_cast<milliseconds>(steady_clock::now().time_since_epoch())
             .count();
-#endif  // XP_UNIX && !XP_DARWIN
 
   args.rval().setNumber(now);
   return true;

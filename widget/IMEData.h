@@ -439,20 +439,9 @@ struct InputContext final {
            mHTMLInputType != aOldContext.mHTMLInputType ||
            mHTMLInputMode != aOldContext.mHTMLInputMode ||
 #endif
-#if defined(ANDROID) || defined(MOZ_WIDGET_GTK) || defined(XP_IOS)
-           // autocapitalize is supported by Android IME API, GTK IME API, and
-           // iOS API
-           mAutocapitalize != aOldContext.mAutocapitalize ||
-#endif
-#if defined(ANDROID) || defined(XP_IOS)
-           // enterkeyhint is only supported by Android IME API and iOS API.
-           mActionHint != aOldContext.mActionHint ||
-#endif
-#if defined(ANDROID) || defined(XP_DARWIN)
            // autocorrect is only supported by Android IME API, macOS text
            // substitution and iOS API.
            mAutocorrect != aOldContext.mAutocorrect ||
-#endif
            false;
   }
 

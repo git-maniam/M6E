@@ -880,9 +880,7 @@ EarlyHintPreloader::Notify(nsITimer* timer) {
       mChannel->Resume();
     }
     mChannel->CancelWithReason(NS_ERROR_ABORT, "parent-connect-timeout"_ns);
-#ifndef ANDROID
     glean::netwerk::parent_connect_timeout.Add(1);
-#endif
     mChannel = nullptr;
   }
   SetState(ePreloaderTimeout);

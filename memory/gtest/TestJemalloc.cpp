@@ -437,7 +437,6 @@ TEST(Jemalloc, InPlace)
 
 // Bug 1474254: disable this test for windows ccov builds because it leads to
 // timeout.
-#if !defined(XP_WIN) || !defined(MOZ_CODE_COVERAGE)
 TEST(Jemalloc, JunkPoison)
 {
   // Disable PHC allocations for this test, because CanReallocInPlace() isn't
@@ -645,7 +644,6 @@ TEST(Jemalloc, JunkPoison)
 
   RESTORE_GDB_SLEEP_LOCAL();
 }
-#endif  // !defined(XP_WIN) || !defined(MOZ_CODE_COVERAGE)
 
 TEST(Jemalloc, TrailingGuard)
 {

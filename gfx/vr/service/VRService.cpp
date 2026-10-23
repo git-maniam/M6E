@@ -14,17 +14,12 @@
 #include "nsThread.h"
 #include "nsXULAppAPI.h"
 
-#if defined(XP_WIN)
-#  include "OculusSession.h"
-#endif
 
 #if defined(XP_WIN) || defined(XP_MACOSX) || \
     (defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID))
 #  include "OpenVRSession.h"
 #endif
-#if !defined(MOZ_WIDGET_ANDROID)
 #  include "OSVRSession.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -189,16 +184,6 @@ void VRService::ServiceInitialize() {
     // We try Oculus first to ensure we use Oculus
     // devices trough the most native interface
     // when possible.
-#if defined(XP_WIN)
-    // Try Oculus
-    if (!session) {
-      session = MakeUnique<OculusSession>();
-      if (!session->Initialize(mSystemState,
-                               mBrowserState.detectRuntimesOnly)) {
-        session = nullptr;
-      }
-    }
-#endif
 
 #if defined(XP_WIN) || defined(XP_MACOSX) || \
     (defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID))
@@ -211,7 +196,6 @@ void VRService::ServiceInitialize() {
       }
     }
 #endif
-#if !defined(MOZ_WIDGET_ANDROID)
     // Try OSVR
     if (!session) {
       session = MakeUnique<OSVRSession>();
@@ -220,7 +204,6 @@ void VRService::ServiceInitialize() {
         session = nullptr;
       }
     }
-#endif
 
   }  // if (staticPrefs:VRPuppetEnabled())
 

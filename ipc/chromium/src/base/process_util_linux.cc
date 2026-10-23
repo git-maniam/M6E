@@ -14,9 +14,6 @@
 
 #include "mozilla/ipc/LaunchError.h"
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxLaunch.h"
-#endif
 
 #if defined(MOZ_CODE_COVERAGE)
 #  include "prenv.h"
@@ -48,16 +45,9 @@ Result<Ok, LaunchError> LaunchApp(const std::vector<std::string>& argv,
                                   ProcessHandle* process_handle) {
   mozilla::UniquePtr<char*[]> argv_cstr(new char*[argv.size() + 1]);
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  mozilla::SandboxLaunch launcher;
-  if (!launcher.Prepare(&options)) {
-    return Err(LaunchError("SL::Prepare", errno));
-  }
-#else
   struct {
     pid_t Fork() { return fork(); }
   } launcher;
-#endif
 
   EnvironmentArray env_storage;
   const EnvironmentArray& envp =

@@ -23,14 +23,7 @@
 #include "nsThreadUtils.h"
 #include "pratom.h"
 
-#ifdef XP_WIN
-#  include <process.h>
-#  ifndef getpid
-#    define getpid _getpid
-#  endif
-#else
 #  include <unistd.h>
-#endif
 
 using mozilla::Atomic;
 using mozilla::LogLevel;

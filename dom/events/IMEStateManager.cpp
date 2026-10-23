@@ -2087,13 +2087,7 @@ static void GetAutocapitalize(const IMEState& aState, const Element& aElement,
 static bool GetAutocorrect(const IMEState& aState, const Element& aElement,
                            const InputContext& aInputContext) {
   if (!StaticPrefs::dom_forms_autocorrect()) {
-#ifdef ANDROID
-    // Autocorrect was on-by-default on Android by bug 806349, despite
-    // autocorrect preference.
-    return true;
-#else
     return false;
-#endif
   }
 
   if (aElement.IsHTMLElement() && aState.IsEditable()) {

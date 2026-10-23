@@ -100,11 +100,7 @@ constexpr TestCaseState operator!(TestCaseState s) {
   return TestCaseState(!bool(s));
 }
 
-#ifdef XP_WIN
-constexpr static const TestCaseState WIN_ONLY = PASS;
-#else
 constexpr static const TestCaseState WIN_ONLY = FAIL;
-#endif
 
 using NarrowTestCase = std::pair<const char*, const char*>;
 constexpr std::pair<TestCaseState, NarrowTestCase> kStrMatches8[] = {
@@ -166,15 +162,6 @@ constexpr std::pair<TestCaseState, NarrowTestCase> kStrMatches8[] = {
     {FAIL, {"à", "à"}},
 };
 
-#ifdef XP_WIN
-using WideTestCase = std::pair<const char*, const wchar_t*>;
-std::pair<TestCaseState, WideTestCase> kStrMatches16[] = {
-    // (Turkish 'İ' may lowercase to 'i' in some locales, but
-    // we explicitly prevent that from being relevant)
-    {FAIL, {"i", L"İ"}},
-    {FAIL, {"mozilla", L"ṁozilla"}},
-};
-#endif
 
 constexpr const char* kRequiredArgs[] = {"aleph", "beth"};
 
@@ -309,11 +296,6 @@ void TestCommandLine(TestCaseState expectation, CommandLine const& cl,
   EXPECT_EQ(TestCommandLineImpl<char>(cl, withOptional), expectation)
       << "cl is: " << cl << "\n"
       << "withOptional is: " << bool(withOptional);
-#ifdef XP_WIN
-  EXPECT_EQ(TestCommandLineImpl<wchar_t>(cl, withOptional), expectation)
-      << "cl is: " << cl << "\n"
-      << "withOptional is: " << bool(withOptional);
-#endif
 }
 }  // namespace testzilla
 
@@ -330,21 +312,8 @@ TEST(CmdLineAndEnvUtils, strimatch)
     auto match = strimatch(left, right);
     EXPECT_EQ(match, result) << '<' << left << "> !~ <" << right << '>';
 
-#ifdef XP_WIN
-    wchar_t right_wide[200];
-    ::mbstowcs(right_wide, right, 200);
-    auto match_wide = strimatch(left, right_wide);
-    EXPECT_EQ(match_wide, result) << '<' << left << "> !~ L<" << right << '>';
-#endif
   }
 
-#ifdef XP_WIN
-  for (auto const& [result, data] : kStrMatches16) {
-    auto const& [left, right] = data;
-    EXPECT_EQ(strimatch(left, right), result)
-        << '<' << left << "> !~ L<" << right << '>';
-  }
-#endif
 }
 
 TEST(CmdLineAndEnvUtils, ArgStartsWith)

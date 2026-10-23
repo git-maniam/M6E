@@ -6,7 +6,6 @@
 
 namespace mozilla::geckoargs {
 
-#ifdef XP_UNIX
 // Table of file handles which have been passed from another process.
 // The default mapping is hard-coded here, but can be overridden for platforms
 // where that is necessary.
@@ -47,9 +46,7 @@ void AddToFdsToRemap(const ChildProcessArgs& aArgs,
         std::pair{aArgs.mFiles[i].get(), gInitialFileHandles[i]});
   }
 }
-#endif
 
-#ifdef XP_DARWIN
 // Table of mach send rights which have been sent by the parent process.
 static mach_port_t gMachSendRights[kMaxPassedMachSendRights] = {MACH_PORT_NULL};
 
@@ -71,35 +68,18 @@ void SetPassedMachReceiveRights(
     gMachReceiveRights[i] = aReceiveRights[i].release();
   }
 }
-#endif
 
 static void ParseHandleArgument(uint32_t aArg, UniqueFileHandle& aOutHandle) {
-#ifdef XP_WIN
-  // Recover the pointer-sized HANDLE from the 32-bit argument received over IPC
-  // by sign-extending to the full pointer width. See `SerializeHandleArgument`
-  // for an explanation.
-  aOutHandle = UniqueFileHandle{reinterpret_cast<HANDLE>(
-      static_cast<uintptr_t>(static_cast<int32_t>(aArg)))};
-#else
   // See the comment on gInitialFileHandles for an explanation of the
   // behaviour here.
   MOZ_RELEASE_ASSERT(aArg < std::size(gInitialFileHandles));
   aOutHandle = UniqueFileHandle{std::exchange(gInitialFileHandles[aArg], -1)};
-#endif
 }
 
 static Maybe<uint32_t> SerializeHandleArgument(UniqueFileHandle&& aValue,
                                                ChildProcessArgs& aArgs) {
   if (aValue) {
-#ifdef XP_WIN
-    // On Windows, we'll inherit the handle by-identity, so pass down the
-    // HANDLE's value. Handles are always 32-bits (potentially sign-extended),
-    // so we explicitly truncate them before sending over IPC.
-    HANDLE value = aValue.get();
-    uint32_t arg = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(value));
-#else
     uint32_t arg = static_cast<uint32_t>(aArgs.mFiles.size());
-#endif
     aArgs.mFiles.push_back(std::move(aValue));
     return Some(arg);
   }
@@ -127,7 +107,6 @@ void CommandLineArg<UniqueFileHandle>::PutCommon(const char* aName,
   }
 }
 
-#ifdef XP_DARWIN
 static void ParseHandleArgument(uint32_t aArg,
                                 UniqueMachSendRight& aOutHandle) {
   MOZ_RELEASE_ASSERT(aArg < std::size(gMachSendRights));
@@ -200,7 +179,6 @@ void CommandLineArg<UniqueMachReceiveRight>::PutCommon(
     CommandLineArg<uint32_t>::PutCommon(aName, *arg, aArgs);
   }
 }
-#endif  // XP_DARWIN
 
 // Shared memory handles are passed as a (handle, size) pair, which both turn
 // into numeric CLI arguments, so it's safe to use ":" as a separator.

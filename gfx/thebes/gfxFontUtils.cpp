@@ -20,9 +20,7 @@
 #include "nsIUUIDGenerator.h"
 #include "nsServiceManagerUtils.h"
 
-#ifdef XP_DARWIN
 #  include <CoreFoundation/CoreFoundation.h>
-#endif
 
 #ifdef MOZ_ENABLE_FREETYPE
 #  include "ft2build.h"
@@ -404,7 +402,6 @@ nsresult gfxFontUtils::ReadCMAPTableFormat14(const uint8_t* aBuf,
 // preferred on the Mac; on other platforms we allow the Microsoft-platform
 // subtable to replace it.
 
-#if defined(XP_MACOSX)
 #  define acceptableFormat4(p, e, k)                                         \
     (((p) == PLATFORM_ID_MICROSOFT && (e) == EncodingIDMicrosoft && !(k)) || \
      ((p) == PLATFORM_ID_UNICODE))
@@ -415,14 +412,6 @@ nsresult gfxFontUtils::ReadCMAPTableFormat14(const uint8_t* aBuf,
          (k) != 12 ||                                                         \
      ((p) == PLATFORM_ID_UNICODE && (e) != EncodingIDUVSForUnicodePlatform && \
       (e) != EncodingIDFullRepertoireForUnicodePlatform))
-#else
-#  define acceptableFormat4(p, e, k)                                 \
-    (((p) == PLATFORM_ID_MICROSOFT && (e) == EncodingIDMicrosoft) || \
-     ((p) == PLATFORM_ID_UNICODE))
-
-#  define acceptableUCS4Encoding(p, e, k) \
-    ((p) == PLATFORM_ID_MICROSOFT && (e) == EncodingIDUCS4ForMicrosoftPlatform)
-#endif
 
 #ifndef MOZ_ENABLE_FREETYPE
 static inline bool CheckFullFormat13Support() {
@@ -1313,13 +1302,8 @@ nsresult gfxFontUtils::GetFamilyNameFromTable(hb_blob_t* aNameTable,
 }
 
 enum {
-#if defined(XP_MACOSX)
   CANONICAL_LANG_ID = gfxFontUtils::LANG_ID_MAC_ENGLISH,
   PLATFORM_ID = gfxFontUtils::PLATFORM_ID_MAC
-#else
-  CANONICAL_LANG_ID = gfxFontUtils::LANG_ID_MICROSOFT_EN_US,
-  PLATFORM_ID = gfxFontUtils::PLATFORM_ID_MICROSOFT
-#endif
 };
 
 nsresult gfxFontUtils::ReadNames(const char* aNameData, uint32_t aDataLen,
@@ -1353,7 +1337,6 @@ nsresult gfxFontUtils::ReadCanonicalName(const char* aNameData,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-#if defined(XP_MACOSX)
   // may be dealing with font that only has Microsoft name entries
   if (names.Length() == 0) {
     rv = ReadNames(aNameData, aDataLen, aNameID, LANG_ID_MICROSOFT_EN_US,
@@ -1367,7 +1350,6 @@ nsresult gfxFontUtils::ReadCanonicalName(const char* aNameData,
       NS_ENSURE_SUCCESS(rv, rv);
     }
   }
-#endif
 
   // return the first name (99.9% of the time names will
   // contain a single English name)
@@ -1528,7 +1510,6 @@ bool gfxFontUtils::DecodeFontName(const char* aNameData, int32_t aByteLen,
   }
 
   if (encoding == X_USER_DEFINED_ENCODING) {
-#ifdef XP_DARWIN
     // Special case for macOS only: support legacy Mac encodings
     // that aren't part of the Encoding Standard.
     if (aPlatformCode == PLATFORM_ID_MAC) {
@@ -1546,7 +1527,6 @@ bool gfxFontUtils::DecodeFontName(const char* aNameData, int32_t aByteLen,
         return true;
       }
     }
-#endif
     NS_WARNING("failed to get the decoder for a font name string");
     return false;
   }
@@ -1825,17 +1805,6 @@ void gfxFontUtils::ReadOtherFamilyNamesForFace(
   }
 }
 
-#ifdef XP_WIN
-
-/* static */
-bool gfxFontUtils::IsCffFont(const uint8_t* aFontData) {
-  // this is only called after aFontData has passed basic validation,
-  // so we know there is enough data present to allow us to read the version!
-  const SFNTHeader* sfntHeader = reinterpret_cast<const SFNTHeader*>(aFontData);
-  return (sfntHeader->sfntVersion == TRUETYPE_TAG('O', 'T', 'T', 'O'));
-}
-
-#endif
 
 /* static */ bool gfxFontUtils::IsInServoTraversal() {
   if (NS_IsMainThread()) {

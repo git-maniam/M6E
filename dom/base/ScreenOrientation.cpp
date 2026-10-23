@@ -548,89 +548,9 @@ already_AddRefed<Promise> ScreenOrientation::LockInternal(
   // orientation, return a promise rejected with a "NotSupportedError"
   // DOMException and abort these steps.
 
-#if !defined(MOZ_WIDGET_ANDROID) && !defined(XP_WIN)
   // User agent does not support locking the screen orientation.
   p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
   return p.forget();
-#else
-  // Bypass locking screen orientation if preference is false
-  if (!StaticPrefs::dom_screenorientation_allow_lock()) {
-    p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return p.forget();
-  }
-
-#  if defined(XP_WIN)
-  // The actual configurations supporting this on Windows are very few, so it
-  // makes sense to disable screen locking under RFP.
-  if (doc->ShouldResistFingerprinting(RFPTarget::ScreenOrientation)) {
-    p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
-    return p.forget();
-  }
-#  endif
-
-  RefPtr<BrowsingContext> bc = docShell->GetBrowsingContext();
-  bc = bc ? bc->Top() : nullptr;
-  if (!bc) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
-  }
-
-  bc->SetOrientationLock(aOrientation, aRv);
-  if (aRv.Failed()) {
-    return nullptr;
-  }
-
-  AbortInProcessOrientationPromises(bc);
-  dom::ContentChild::GetSingleton()->SendAbortOtherOrientationPendingPromises(
-      bc);
-
-  if (!doc->SetOrientationPendingPromise(p)) {
-    p->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
-    return p.forget();
-  }
-
-  if (perm == LOCK_ALLOWED || doc->Fullscreen()) {
-    nsCOMPtr<nsIRunnable> lockOrientationTask = new LockOrientationTask(
-        this, p, aOrientation, doc, perm == FULLSCREEN_LOCK_ALLOWED);
-    aRv = NS_DispatchToMainThread(lockOrientationTask);
-    if (NS_WARN_IF(aRv.Failed())) {
-      return nullptr;
-    }
-
-    return p.forget();
-  }
-
-  MOZ_ASSERT(perm == FULLSCREEN_LOCK_ALLOWED);
-
-  // Full screen state is pending. We have to wait for the completion.
-  RefPtr<FullscreenWaitListener> listener = new FullscreenWaitListener();
-  RefPtr<Promise> promise = p;
-  listener->Promise(doc)->Then(
-      GetMainThreadSerialEventTarget(), __func__,
-      [self = RefPtr{this}, promise = std::move(promise), aOrientation,
-       document =
-           RefPtr{doc}](const GenericPromise::ResolveOrRejectValue& aValue) {
-        if (aValue.IsResolve()) {
-          nsCOMPtr<nsIRunnable> lockOrientationTask = new LockOrientationTask(
-              self, promise, aOrientation, document, true);
-          nsresult rv = NS_DispatchToMainThread(lockOrientationTask);
-          if (NS_SUCCEEDED(rv)) {
-            return;
-          }
-        }
-        // Pending full screen request is canceled or causes an error.
-        if (document->GetOrientationPendingPromise() != promise) {
-          // The document's pending promise is not associated with
-          // this promise.
-          return;
-        }
-        // pre-lock conditions aren't matched.
-        promise->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
-        document->ClearOrientationPendingPromise();
-      });
-
-  return p.forget();
-#endif
 }
 
 RefPtr<GenericNonExclusivePromise> ScreenOrientation::LockDeviceOrientation(

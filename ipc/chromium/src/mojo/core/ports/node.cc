@@ -118,10 +118,6 @@ int Node::GetPort(const PortName& port_name, PortRef* port_ref) {
     return ERROR_PORT_UNKNOWN;
   }
 
-#if defined(ANDROID) && defined(__aarch64__)
-  // Workaround for https://crbug.com/665869.
-  std::atomic_thread_fence(std::memory_order_seq_cst);
-#endif
 
   *port_ref = PortRef(port_name, iter->second);
   return OK;

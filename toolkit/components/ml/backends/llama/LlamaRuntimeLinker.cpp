@@ -12,9 +12,6 @@
 #include "nsXULAppAPI.h"
 #include "prlink.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 mozilla::LazyLogModule gLlamaLinkerLog("LlamaRuntimeLinker");
 extern mozilla::LazyLogModule gLlamaBackendLog;
@@ -58,40 +55,14 @@ static void LlamaLogCallback(ggml_log_level aLevel, const char* aText,
 static PRLibrary* LoadLlamaLib(nsIFile* aFile) {
   PRLibSpec lspec;
   PathString path = aFile->NativePath();
-#ifdef XP_WIN
-  lspec.type = PR_LibSpec_PathnameU;
-  lspec.value.pathname_u = path.get();
-#else
-#  if defined(XP_OPENBSD)
-  /* on OpenBSD, libraries are preloaded before sandboxing so make sure only
-   * the filename is passed to PR_LoadLibraryWithFlags(), dlopen() will return
-   * the preloaded library handle instead of failing to find it due to
-   * sandboxing */
-  nsAutoCString leaf;
-  nsresult rv = aFile->GetNativeLeafName(leaf);
-  if (NS_SUCCEEDED(rv)) {
-    path = PathString(leaf);
-  }
-#  endif  // defined(XP_OPENBSD)
   lspec.type = PR_LibSpec_Pathname;
   lspec.value.pathname = path.get();
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-  PRLibrary* lib = PR_LoadLibraryWithFlags(lspec, PR_LD_NOW | PR_LD_GLOBAL);
-#else
   PRLibrary* lib = PR_LoadLibraryWithFlags(lspec, PR_LD_NOW | PR_LD_LOCAL);
-#endif
   if (!lib) {
     bool exists = false;
     aFile->Exists(&exists);
-#ifdef XP_WIN
-    LOG(LogLevel::Error,
-        "unable to load library %s (exists=%d, GetLastError=%lu)",
-        aFile->HumanReadablePath().get(), exists, GetLastError());
-#else
     LOG(LogLevel::Error, "unable to load library %s (exists=%d)",
         aFile->HumanReadablePath().get(), exists);
-#endif
   }
   return lib;
 }
@@ -149,13 +120,8 @@ bool LlamaRuntimeLinker::Init() {
   sLinkStatus = LinkStatus_FAILED;
 
   // Get the path to the current executable/library
-#ifdef XP_WIN
-  PathString path =
-      GetLibraryFilePathname(LXUL_DLL, (PRFuncPtr)&LlamaRuntimeLinker::Init);
-#else
   PathString path =
       GetLibraryFilePathname(XUL_DLL, (PRFuncPtr)&LlamaRuntimeLinker::Init);
-#endif
   if (path.IsEmpty()) {
     LOG(LogLevel::Error, "Failed to get library path");
     return false;
@@ -206,7 +172,6 @@ bool LlamaRuntimeLinker::Init() {
 
   sLlamaLib.llama_log_set(LlamaLogCallback, nullptr);
 
-#ifdef XP_MACOSX
   // Content-process inference is CPU-only. Attempting to register a metal
   // device there triggers the compilation of a lot of shaders, and they cannot
   // be cached because the process cannot access the required directory.
@@ -215,7 +180,6 @@ bool LlamaRuntimeLinker::Init() {
   if (XRE_IsContentProcess()) {
     sLlamaLib.ggml_backend_metal_disable();
   }
-#endif
 
   sLinkStatus = LinkStatus_SUCCEEDED;
   LOG(LogLevel::Info, "Successfully initialized llama runtime linker");

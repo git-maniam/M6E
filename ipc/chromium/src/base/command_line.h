@@ -28,15 +28,9 @@ class InProcessBrowserTest;
 
 class CommandLine {
  public:
-#if defined(XP_WIN)
-  // Creates a parsed version of the given command-line string.
-  // The program name is assumed to be the first item in the string.
-  void ParseFromString(const std::wstring& command_line);
-#else
   // Initialize from an argv vector (or directly from main()'s argv).
   CommandLine(int argc, const char* const* argv);
   explicit CommandLine(const std::vector<std::string>& argv);
-#endif
 
   // Construct a new, empty command line.
   // |program| is the name of the program to run (aka argv[0]).
@@ -78,15 +72,8 @@ class CommandLine {
   // WARNING: this is incorrect on POSIX; we must do string conversions.
   std::vector<std::wstring> GetLooseValues() const;
 
-#if defined(XP_WIN)
-  // Returns the original command line string.
-  const std::wstring& command_line_string() const {
-    return command_line_string_;
-  }
-#else
   // Returns the original command line string as a vector of strings.
   const std::vector<std::string>& argv() const { return argv_; }
-#endif
 
   // Returns the program part of the command line string (the first item).
   std::wstring program() const;
@@ -112,11 +99,6 @@ class CommandLine {
   // Append a loose value to the command line.
   void AppendLooseValue(const std::wstring& value);
 
-#if defined(XP_WIN)
-  void AppendLooseValue(const wchar_t* value) {
-    AppendLooseValue(std::wstring(value));
-  }
-#endif
 
   // Append the arguments from another command line to this one.
   // If |include_program| is true, include |other|'s program as well.
@@ -144,17 +126,6 @@ class CommandLine {
   // We store a platform-native version of the command line, used when building
   // up a new command line to be executed.  This ifdef delimits that code.
 
-#if defined(XP_WIN)
-  // The quoted, space-separated command-line string.
-  std::wstring command_line_string_;
-
-  // The name of the program.
-  std::wstring program_;
-
-  // The type of native command line arguments.
-  typedef std::wstring StringType;
-
-#else
   // The argv array, with the program name in argv_[0].
   std::vector<std::string> argv_;
 
@@ -163,7 +134,6 @@ class CommandLine {
 
   // Shared by the two POSIX constructor forms.  Initalize from argv_.
   void InitFromArgv();
-#endif
 
   // Returns true and fills in |switch_string| and |switch_value|
   // if |parameter_string| represents a switch.

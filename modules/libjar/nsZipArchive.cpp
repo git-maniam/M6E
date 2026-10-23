@@ -25,43 +25,22 @@
 #include "nsZipArchive.h"
 #include "nsString.h"
 #include "prenv.h"
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
 // For placement new used for arena allocations of zip file list
 #include <new>
 #define ZIP_ARENABLOCKSIZE (1 * 1024)
 
-#ifdef XP_UNIX
 #  include <sys/mman.h>
 #  include <sys/types.h>
 #  include <sys/stat.h>
 #  include <limits.h>
 #  include <unistd.h>
-#elif defined(XP_WIN)
-#  include <io.h>
-#endif
 
 #ifdef __SYMBIAN32__
 #  include <sys/syslimits.h>
 #endif /*__SYMBIAN32__*/
 
-#ifndef XP_UNIX /* we need some constants defined in limits.h and unistd.h */
-#  ifndef S_IFMT
-#    define S_IFMT 0170000
-#  endif
-#  ifndef S_IFLNK
-#    define S_IFLNK 0120000
-#  endif
-#  ifndef PATH_MAX
-#    define PATH_MAX 1024
-#  endif
-#endif /* XP_UNIX */
 
-#ifdef XP_WIN
-#  include "private/pprio.h"  // To get PR_ImportFile
-#endif
 
 using namespace mozilla;
 
@@ -106,24 +85,9 @@ class ZipArchiveLogger {
       if (NS_FAILED(rv)) return;
 
       PRFileDesc* file;
-#ifdef XP_WIN
-      // PR_APPEND is racy on Windows, so open a handle ourselves with flags
-      // that will work, and use PR_ImportFile to make it a PRFileDesc. This can
-      // go away when bug 840435 is fixed.
-      nsAutoString path;
-      logFile->GetPath(path);
-      if (path.IsEmpty()) return;
-      HANDLE handle =
-          CreateFileW(path.get(), FILE_APPEND_DATA, FILE_SHARE_WRITE, nullptr,
-                      OPEN_ALWAYS, 0, nullptr);
-      if (handle == INVALID_HANDLE_VALUE) return;
-      file = PR_ImportFile((PROsfd)handle);
-      if (!file) return;
-#else
       rv = logFile->OpenNSPRFileDesc(
           PR_WRONLY | PR_CREATE_FILE | PR_APPEND | PR_SYNC, 0644, &file);
       if (NS_FAILED(rv)) return;
-#endif
       mFd = file;
     }
   }
@@ -187,9 +151,6 @@ NS_IMPL_RELEASE(nsZipHandle)
 nsresult nsZipHandle::Init(nsIFile* file, nsZipHandle** ret, PRFileDesc** aFd) {
   mozilla::AutoFDClose fd;
   int32_t flags = PR_RDONLY;
-#if defined(XP_WIN)
-  flags |= nsIFile::OS_READAHEAD;
-#endif
   LOG(("ZipHandle::Init %s", file->HumanReadablePath().get()));
   nsresult rv = file->OpenNSPRFileDesc(flags, 0000, getter_Transfers(fd));
   if (NS_FAILED(rv)) return rv;
@@ -215,23 +176,11 @@ nsresult nsZipHandle::Init(nsIFile* file, nsZipHandle** ret, PRFileDesc** aFd) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-#if defined(XP_UNIX)
   // Prefetch the archive into the page cache ahead of the ZIP directory scan
   // and entry reads at startup.
   madvise(buf, (size_t)size, MADV_WILLNEED);
-#  if defined(XP_LINUX)
-  // Exclude large archive mappings from core dumps; the file is on disk.
-  madvise(buf, (size_t)size, MADV_DONTDUMP);
-#  endif
-#endif
 
-#if defined(XP_WIN)
-  if (aFd) {
-    *aFd = fd.release();
-  }
-#else
   handle->mNSPRFileDesc = std::move(fd);
-#endif
   handle->mFile.Init(file);
   handle->mTotalLen = (uint32_t)size;
   handle->mFileStart = buf;
@@ -412,20 +361,10 @@ already_AddRefed<nsZipArchive> nsZipArchive::OpenArchive(
 /* static */
 already_AddRefed<nsZipArchive> nsZipArchive::OpenArchive(nsIFile* aFile) {
   RefPtr<nsZipHandle> handle;
-#if defined(XP_WIN)
-  mozilla::AutoFDClose fd;
-  nsresult rv =
-      nsZipHandle::Init(aFile, getter_AddRefs(handle), getter_Transfers(fd));
-#else
   nsresult rv = nsZipHandle::Init(aFile, getter_AddRefs(handle));
-#endif
   if (NS_FAILED(rv)) return nullptr;
 
-#if defined(XP_WIN)
-  return OpenArchive(handle, fd.get());
-#else
   return OpenArchive(handle);
-#endif
 }
 
 //---------------------------------------------

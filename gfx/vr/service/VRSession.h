@@ -7,11 +7,7 @@
 
 #include "moz_external_vr.h"
 
-#if defined(XP_WIN)
-#  include <d3d11_1.h>
-#elif defined(XP_MACOSX)
 class MacIOSurface;
-#endif
 
 namespace mozilla {
 namespace gfx {
@@ -26,11 +22,7 @@ class VRSession {
   VRSession(const VRSession&) = delete;
   VRSession& operator=(const VRSession&) = delete;
 
-#ifdef XP_WIN
-  virtual ~VRSession();
-#else
   virtual ~VRSession() = default;
-#endif
 
   static void UpdateTrigger(VRControllerState& aState, uint32_t aButtonIndex,
                             float aValue, float aThreshold);
@@ -65,23 +57,8 @@ class VRSession {
 
  protected:
   bool mShouldQuit;
-#if defined(XP_WIN)
-  virtual bool SubmitFrame(const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
-                           ID3D11Texture2D* aTexture) = 0;
-  bool CreateD3DContext(ID3D11Device* aDevice);
-
-  ID3D11Device1* GetD3DDevice();
-  ID3D11DeviceContext1* GetD3DDeviceContext();
-  ID3DDeviceContextState* GetD3DDeviceContextState();
-
-  ID3D11Device1* mDevice;
-  ID3D11DeviceContext1* mContext;
-  ID3DDeviceContextState* mDeviceContextState;
-
-#elif defined(XP_MACOSX)
   virtual bool SubmitFrame(const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
                            const VRLayerTextureHandle& aTexture) = 0;
-#endif
   void SetControllerSelectionAndSqueezeFrameId(
       VRControllerState& controllerState, uint64_t aFrameId);
 };

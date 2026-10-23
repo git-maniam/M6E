@@ -3,9 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "RemoteMediaManagerParent.h"
 
-#if XP_WIN
-#  include <objbase.h>
-#endif
 
 #include "ImageContainer.h"
 #include "PDMFactory.h"
@@ -34,9 +31,6 @@
 #  include "MFCDMParent.h"
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/MediaDrmRemoteCDMParent.h"
-#endif
 
 namespace mozilla {
 
@@ -282,11 +276,7 @@ already_AddRefed<PMFCDMParent> RemoteMediaManagerParent::AllocPMFCDMParent(
 
 already_AddRefed<PRemoteCDMParent>
 RemoteMediaManagerParent::AllocPRemoteCDMParent(const nsAString& aKeySystem) {
-#ifdef MOZ_WIDGET_ANDROID
-  return MakeAndAddRef<MediaDrmRemoteCDMParent>(aKeySystem);
-#else
   return nullptr;
-#endif
 }
 
 void RemoteMediaManagerParent::Open(

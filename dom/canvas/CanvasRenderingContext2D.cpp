@@ -123,9 +123,6 @@
 #undef free  // apparently defined by some windows header, clashing with a
              // free() method in SkTypes.h
 
-#ifdef XP_WIN
-#  include "gfxWindowsPlatform.h"
-#endif
 
 // windows.h (included by chromium code) defines this, in its infinite wisdom
 #undef DrawText
@@ -4408,9 +4405,6 @@ bool CanvasRenderingContext2D::SetFontInternal(const nsACString& aFont,
   params.explicitLanguage = CurrentState().explicitLang;
   params.userFontSet = c->GetUserFontSet();
   params.textPerf = c->GetTextPerfMetrics();
-#ifdef XP_WIN
-  params.allowForceGDIClassic = false;
-#endif
   RefPtr<nsFontMetrics> metrics = c->GetMetricsFor(resizedFont, params);
 
   gfxFontGroup* newFontGroup = metrics->GetThebesFontGroup();
@@ -4562,9 +4556,6 @@ bool CanvasRenderingContext2D::SetFontInternalDisconnected(
   }
 
   fontStyle.size = QuantizeFontSize(size);
-#ifdef XP_WIN
-  fontStyle.allowForceGDIClassic = false;
-#endif
 
   switch (state.fontWidth) {
     case CanvasFontStretch::Normal:
@@ -5948,27 +5939,9 @@ bool ValidSurfaceDescriptorForRemoteCanvas2d(
   switch (sdrd.videoType()) {
     case layers::RemoteDecoderVideoType::Buffer:
       break;
-#ifdef XP_MACOSX
     case layers::RemoteDecoderVideoType::MacIOSurface: {
       break;
     }
-#endif
-#ifdef XP_WIN
-    case layers::RemoteDecoderVideoType::D3D10: {
-      if (!StaticPrefs::gfx_canvas_remote_use_draw_image_fast_path_d3d()) {
-        return false;
-      }
-      break;
-    }
-#endif
-#ifdef MOZ_WIDGET_GTK
-    case layers::RemoteDecoderVideoType::DMABuf: {
-      if (!StaticPrefs::gfx_canvas_remote_use_draw_image_fast_path_dmabuf()) {
-        return false;
-      }
-      break;
-    }
-#endif
     default:
       return false;
   }
@@ -6155,9 +6128,6 @@ void CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     // Leaving it unrestricted would also route software decoded frames through
     // the descriptor path on every platform.
     Maybe<layers::RemoteDecoderVideoType> videoFrameType;
-#ifdef MOZ_WIDGET_GTK
-    videoFrameType = Some(layers::RemoteDecoderVideoType::DMABuf);
-#endif
 
     if (offscreenCanvas) {
       res = nsLayoutUtils::SurfaceFromOffscreenCanvas(offscreenCanvas, sfeFlags,

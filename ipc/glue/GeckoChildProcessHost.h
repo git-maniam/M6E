@@ -31,13 +31,7 @@
 #include "nsXULAppAPI.h"  // for GeckoProcessType
 #include "nsString.h"
 
-#if defined(XP_IOS)
-#  include "mozilla/ipc/ExtensionKitUtils.h"
-#endif
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-#  include "sandboxBroker.h"
-#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
 #  include "mozilla/Sandbox.h"
@@ -188,9 +182,7 @@ class GeckoChildProcessHost
 
   GeckoProcessType GetProcessType() { return mProcessType; }
 
-#ifdef XP_MACOSX
   task_t GetChildTask();
-#endif
 
 #ifdef ALLOW_GECKO_CHILD_PROCESS_ARCH
   void SetLaunchArchitecture(uint32_t aArch) { mLaunchArch = aArch; }
@@ -270,16 +262,6 @@ class GeckoChildProcessHost
 
   bool PrepareLaunch(geckoargs::ChildProcessArgs& aExtraOpts);
 
-#ifdef XP_WIN
-  void InitWindowsGroupID();
-  nsString mGroupId;
-#  ifdef MOZ_SANDBOX
-  UniquePtr<SandboxBroker> mSandboxBroker;
-  std::vector<std::wstring> mAllowedFilesRead;
-  bool mEnableSandboxLogging;
-  int32_t mSandboxLevel;
-#  endif
-#endif  // XP_WIN
 
   // Only set by UtilityProcessHost. The sandbox policy associated with
   // mUtilitySandbox will only be honored under MOZ_SANDBOX. However, on macOS,
@@ -290,15 +272,7 @@ class GeckoChildProcessHost
 
   mozilla::RWLock mHandleLock;
   ProcessHandle mChildProcessHandle MOZ_GUARDED_BY(mHandleLock);
-#if defined(XP_MACOSX)
   task_t mChildTask MOZ_GUARDED_BY(mHandleLock);
-#endif
-#if defined(MOZ_WIDGET_UIKIT)
-  Maybe<ExtensionKitProcess> mExtensionKitProcess MOZ_GUARDED_BY(mHandleLock);
-  DarwinObjectPtr<xpc_connection_t> mXPCConnection MOZ_GUARDED_BY(mHandleLock);
-  UniqueBEProcessCapabilityGrant mForegroundCapabilityGrant
-      MOZ_GUARDED_BY(mHandleLock);
-#endif
   RefPtr<ProcessHandlePromise> mHandlePromise;
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
@@ -335,7 +309,6 @@ class GeckoChildProcessHost
 
 nsCOMPtr<nsISerialEventTarget> GetIPCLauncher();
 
-#ifdef MOZ_WIDGET_COCOA
 enum class MacOSChildProcessBundleType { EME, GPU, PKCS11, Default, Count };
 
 nsLiteralCString GetChildProcessBundleNameForTesting(
@@ -346,7 +319,6 @@ nsLiteralCString GetChildProcessBundleNameForTesting(
 // without falling back to the branding macros.
 bool ResolveChildProcessPathFromPlistForTesting(
     MacOSChildProcessBundleType aBundleType, nsACString& aExecutablePath);
-#endif  // MOZ_WIDGET_COCOA
 
 } /* namespace ipc */
 } /* namespace mozilla */

@@ -10,9 +10,6 @@ namespace mozilla::dom::fs {
 
 bool IsValidName(const mozilla::dom::fs::Name& aName) {
   return !(aName.IsVoid() || aName.Length() == 0 ||
-#ifdef XP_WIN
-           aName.FindChar('\\') != kNotFound ||
-#endif
            aName.FindChar('/') != kNotFound || aName.EqualsLiteral(".") ||
            aName.EqualsLiteral(".."));
 }

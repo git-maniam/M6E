@@ -87,9 +87,7 @@ struct WebRenderCapabilities {
   bool mUseLayerCompositor = false;
   bool mUseTripleBuffering = false;
   bool mSupportsExternalBufferTextures = false;
-#ifdef XP_DARWIN
   wr::ImageBufferKind mIOSurfaceImageKind = wr::ImageBufferKind::Texture2D;
-#endif
 };
 
 /// A handler that can be bundled into a transaction and notified at specific
@@ -341,15 +339,6 @@ class WebRenderAPI final {
 
   RefPtr<EndRecordingPromise> EndRecording();
 
-#ifdef MOZ_WIDGET_ANDROID
-  using ScreenPixelsPromise = MozPromise<Ok, nsresult, true>;
-  // Queues a task to the render thread to capture screen pixels for the next
-  // rendered frame. Returns a promise that resolves once the pixels are
-  // captured.
-  RefPtr<ScreenPixelsPromise> RequestScreenPixels(
-      gfx::IntRect aSourceRect,
-      RefPtr<layers::AndroidHardwareBuffer> aHardwareBuffer);
-#endif
 
   layers::RemoteTextureInfoList* GetPendingRemoteTextureInfoList();
   layers::AsyncImagePipelineOps* GetPendingAsyncImagePipelineOps(

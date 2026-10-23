@@ -19,7 +19,6 @@ already_AddRefed<nsIWebAuthnService> NewWebAuthnService() {
   return webauthnService.forget();
 }
 
-#if defined(XP_MACOSX)
 namespace {
 
 // True when the request wants the PRF extension and is likely to be
@@ -66,7 +65,6 @@ bool PrfRequestedForSecurityKey(nsIWebAuthnSignArgs* aArgs) {
 }
 
 }  // namespace
-#endif
 
 NS_IMPL_ISUPPORTS(WebAuthnService, nsIWebAuthnService)
 
@@ -74,16 +72,6 @@ void WebAuthnService::ShowAttestationConsentPrompt(
     const nsString& aOrigin, uint64_t aTransactionId,
     uint64_t aBrowsingContextId) {
   RefPtr<WebAuthnService> self = this;
-#ifdef MOZ_WIDGET_ANDROID
-  // We don't have a way to prompt the user for consent on Android, so just
-  // assume consent not granted.
-  nsCOMPtr<nsIRunnable> runnable(
-      NS_NewRunnableFunction(__func__, [self, aTransactionId]() {
-        self->SetHasAttestationConsent(
-            aTransactionId,
-            StaticPrefs::security_webauthn_always_allow_direct_attestation());
-      }));
-#else
   nsCOMPtr<nsIRunnable> runnable(NS_NewRunnableFunction(
       __func__, [self, aOrigin, aTransactionId, aBrowsingContextId]() {
         if (StaticPrefs::security_webauthn_always_allow_direct_attestation()) {
@@ -104,7 +92,6 @@ void WebAuthnService::ShowAttestationConsentPrompt(
         MOZ_ALWAYS_SUCCEEDS(
             os->NotifyObservers(nullptr, "webauthn-prompt", json.get()));
       }));
-#endif
   NS_DispatchToMainThread(runnable.forget());
 }
 
@@ -123,7 +110,6 @@ WebAuthnService::MakeCredential(uint64_t aTransactionId,
                             .transactionId = aTransactionId,
                             .parentRegisterPromise = Some(aPromise)});
 
-#if defined(XP_MACOSX)
   if (__builtin_available(macos 26.4, *)) {
     // This branch is intentionally empty; using `!__builtin_available(...)`
     // results in a compiler warning.
@@ -139,7 +125,6 @@ WebAuthnService::MakeCredential(uint64_t aTransactionId,
       mActiveTransaction.ref().service = AuthrsService();
     }
   }
-#endif
 
   // We may need to show an attestation consent prompt before we return a
   // credential to WebAuthnTransactionParent, so we insert a new promise that
@@ -273,7 +258,6 @@ WebAuthnService::GetAssertion(uint64_t aTransactionId,
   mActiveTransaction = Some(TransactionState{.service = DefaultService(),
                                              .transactionId = aTransactionId});
 
-#if defined(XP_MACOSX)
   if (__builtin_available(macos 14.5, *)) {
     // This branch is intentionally empty; using `!__builtin_available(...)`
     // results in a compiler warning.
@@ -313,7 +297,6 @@ WebAuthnService::GetAssertion(uint64_t aTransactionId,
       mActiveTransaction.ref().service = AuthrsService();
     }
   }
-#endif
 
   nsresult rv = ActiveService()->GetAssertion(
       aTransactionId, aBrowsingContextId, aArgs, aPromise);

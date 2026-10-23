@@ -77,41 +77,6 @@ pid_t gettid_pthread() {
 #include "vm/BytecodeUtil.h"
 #include "vm/MutexIDs.h"
 
-#ifdef XP_WIN
-// clang-format off
-#  include "util/WindowsWrapper.h"
-#  include <evntprov.h>
-// clang-format on
-
-#  include <string>
-
-// We report JIT code to ETW through the Microsoft-JScript provider, using the
-// events JScript9 defined for it. V8 emits the same events (on a provider of
-// its own), see src/diagnostics/etw-jit-win.cc in Chromium.
-const GUID PROVIDER_JSCRIPT9 = {
-    0x57277741,
-    0x3638,
-    0x4a4b,
-    {0xbd, 0xba, 0x0a, 0xc6, 0xe4, 0x5d, 0xa5, 0x6c}};
-
-// Consumers decode these events with the Microsoft-JScript manifest, which TDH
-// looks up by provider GUID plus event ID and version, so those are the fields
-// that have to match the manifest; the task and opcode names it reports come
-// from the manifest rather than from the numbers below. The level and the
-// keyword have to agree between the two events, so that a session enabling one
-// of them also gets the other.
-const EVENT_DESCRIPTOR MethodLoad = {0x9, 0x0, 0x0, 0x4, 0xa, 0x1, 0x1};
-const EVENT_DESCRIPTOR SourceLoad = {0x29, 0x0, 0x0, 0x4, 0xc, 0x2, 0x1};
-
-static REGHANDLE sETWRegistrationHandle = NULL;
-
-static std::atomic<bool> etwCollection = false;
-
-// Bumped whenever an ETW session enables our provider. The new session has not
-// seen any of the SourceLoad events we emitted for previous ones, so this is
-// used to re-announce the sources we know about.
-static std::atomic<uint32_t> etwCollectionGeneration = 0;
-#endif
 
 using namespace js;
 using namespace js::jit;
@@ -127,14 +92,6 @@ MOZ_RUNINIT static js::Mutex PerfMutex(mutexid::PerfSpewer);
 static PersistentRooted<GCVector<JitCode*, 0, js::SystemAllocPolicy>>
     jitCodeVector;
 
-#ifdef XP_WIN
-// The ScriptSource ids we have already emitted a SourceLoad event for, and the
-// value etwCollectionGeneration had when we started filling it in. Both are
-// guarded by PerfMutex.
-MOZ_RUNINIT static HashSet<uint32_t, DefaultHasher<uint32_t>, SystemAllocPolicy>
-    etwLoadedSources;
-static uint32_t etwLoadedSourcesGeneration = 0;
-#endif
 
 #ifdef JS_ION_PERF
 constinit static UniqueChars spew_dir;
@@ -151,15 +108,7 @@ AutoLockPerfSpewer::~AutoLockPerfSpewer() { PerfMutex.unlock(); }
 #ifdef JS_ION_PERF
 static uint64_t GetMonotonicTimestamp() {
   using mozilla::TimeStamp;
-#  ifdef XP_LINUX
-  return TimeStamp::Now().RawClockMonotonicNanosecondsSinceBoot();
-#  elif XP_WIN
-  return TimeStamp::Now().RawQueryPerformanceCounterValue();
-#  elif XP_DARWIN
   return TimeStamp::Now().RawMachAbsoluteTimeNanoseconds();
-#  else
-  MOZ_CRASH("no timestamp");
-#  endif
 }
 
 // values are from /usr/include/elf.h
@@ -255,7 +204,6 @@ static bool openJitDump() {
   // On Android, setvbuf is not used because Android processes don't always
   // shut down cleanly, which would leave buffered data unflushed and produce
   // incomplete jitdump files.
-#  ifndef ANDROID
   constexpr size_t kJitDumpBufferSize = 2 * 1024 * 1024;
   jitDumpBuffer = js_pod_malloc<char>(kJitDumpBufferSize);
   if (!jitDumpBuffer) {
@@ -264,23 +212,7 @@ static bool openJitDump() {
     return false;
   }
   setvbuf(JitDumpFilePtr, jitDumpBuffer, _IOFBF, kJitDumpBufferSize);
-#  endif
 
-#  ifdef XP_LINUX
-  // We need to mmap the jitdump file for perf to find it.
-  long page_size = sysconf(_SC_PAGESIZE);
-  int prot = PROT_READ | PROT_EXEC;
-  // The mmap call fails on some Android devices if PROT_EXEC is specified, and
-  // it does not appear to be required by simpleperf, so omit it on Android.
-#    ifdef ANDROID
-  prot &= ~PROT_EXEC;
-#    endif
-  mmap_address = mmap(nullptr, page_size, prot, MAP_PRIVATE, fd, 0);
-  if (mmap_address == MAP_FAILED) {
-    PerfMode = PerfModeType::None;
-    return false;
-  }
-#  endif
 
   writeJitDumpHeader(lock);
   return true;
@@ -349,54 +281,17 @@ static void CheckPerf() {
 }
 #endif
 
-#ifdef XP_WIN
-void NTAPI ETWEnableCallback(LPCGUID aSourceId, ULONG aIsEnabled, UCHAR aLevel,
-                             ULONGLONG aMatchAnyKeyword,
-                             ULONGLONG aMatchAllKeyword,
-                             PEVENT_FILTER_DESCRIPTOR aFilterData,
-                             PVOID aCallbackContext) {
-  // This is called on a CRT worker thread. This means this might race with
-  // our main thread, but that is okay.
-  if (aIsEnabled) {
-    etwCollectionGeneration++;
-  }
-  etwCollection = aIsEnabled;
-  PerfMode = aIsEnabled ? PerfModeType::Function : PerfModeType::None;
-}
-
-void RegisterETW() {
-  static bool sHasRegisteredETW = false;
-  if (!sHasRegisteredETW) {
-    if (getenv("ETW_ENABLED")) {
-      EventRegister(&PROVIDER_JSCRIPT9,  // GUID that identifies the provider
-                    ETWEnableCallback,   // Callback for enabling collection
-                    NULL,                // Context not used
-                    &sETWRegistrationHandle  // Used when calling EventWrite
-                                             // and EventUnregister
-      );
-    }
-    sHasRegisteredETW = true;
-  }
-}
-#endif
 
 /* static */
 void PerfSpewer::Init() {
 #ifdef JS_ION_PERF
   CheckPerf();
 #endif
-#ifdef XP_WIN
-  RegisterETW();
-#endif
 }
 
 static void DisablePerfSpewer(AutoLockPerfSpewer& lock) {
   fprintf(stderr, "Warning: Disabling PerfSpewer.\n");
 
-#ifdef XP_WIN
-  etwCollection = false;
-  etwLoadedSources.clearAndCompact();
-#endif
   jitCodeVector.clear();
   if (PerfMode == PerfModeType::None) {
     return;
@@ -737,107 +632,6 @@ UniqueChars JitCodeDesc::nameWithSourceLocation() const {
   return JS_smprintf("%s (%s:%u:%u)", name.get(), filename, line, column);
 }
 
-#ifdef XP_WIN
-static bool ToETWString(const char* str, std::wstring& out) {
-  int len = int(strlen(str));
-  if (len == 0) {
-    out.clear();
-    return true;
-  }
-  int wideLen = MultiByteToWideChar(CP_UTF8, 0, str, len, nullptr, 0);
-  if (wideLen == 0) {
-    return false;
-  }
-  out.resize(size_t(wideLen));
-  return MultiByteToWideChar(CP_UTF8, 0, str, len, out.data(), wideLen) != 0;
-}
-
-// The size an ETW UNICODESTRING field takes up, including its terminator.
-static ULONG ETWStringSize(const std::wstring& str) {
-  return ULONG(sizeof(wchar_t) * (str.length() + 1));
-}
-
-// Tell ETW about the source |desc| was compiled from. Only the first call for
-// a given source in a given collection actually writes an event.
-static bool EmitETWSourceLoad(const JitCodeDesc& desc) {
-  auto sourceEntry = etwLoadedSources.lookupForAdd(desc.sourceId);
-  if (sourceEntry) {
-    return true;
-  }
-
-  uint64_t sourceId = desc.sourceId;
-  void* scriptContextId = nullptr;
-  uint32_t sourceFlags = 0;
-
-  std::wstring url;
-  if (!ToETWString(desc.filename, url)) {
-    return false;
-  }
-
-  EVENT_DATA_DESCRIPTOR EventData[4];
-  EventDataDescCreate(&EventData[0], &sourceId, sizeof(uint64_t));
-  EventDataDescCreate(&EventData[1], &scriptContextId, sizeof(PVOID));
-  EventDataDescCreate(&EventData[2], &sourceFlags, sizeof(uint32_t));
-  EventDataDescCreate(&EventData[3], url.c_str(), ETWStringSize(url));
-
-  if (EventWrite(sETWRegistrationHandle, &SourceLoad, (ULONG)4, EventData) !=
-      ERROR_SUCCESS) {
-    return false;
-  }
-
-  return etwLoadedSources.add(sourceEntry, desc.sourceId);
-}
-
-static bool EmitETWMethodLoad(const JitCodeDesc& desc, void* code_addr,
-                              uint64_t code_size) {
-  void* scriptContextId = nullptr;
-  uint32_t methodId = 0;
-  uint16_t methodFlags = 0;
-  uint16_t methodAddressRangeId = 0;
-  uint64_t sourceId = desc.sourceId;
-  uint32_t line = desc.line;
-  uint32_t column = desc.column;
-
-  std::wstring name;
-  if (!ToETWString(desc.name.get(), name)) {
-    return false;
-  }
-
-  EVENT_DATA_DESCRIPTOR EventData[10];
-  EventDataDescCreate(&EventData[0], &scriptContextId, sizeof(PVOID));
-  EventDataDescCreate(&EventData[1], &code_addr, sizeof(PVOID));
-  EventDataDescCreate(&EventData[2], &code_size, sizeof(uint64_t));
-  EventDataDescCreate(&EventData[3], &methodId, sizeof(uint32_t));
-  EventDataDescCreate(&EventData[4], &methodFlags, sizeof(uint16_t));
-  EventDataDescCreate(&EventData[5], &methodAddressRangeId, sizeof(uint16_t));
-  EventDataDescCreate(&EventData[6], &sourceId, sizeof(uint64_t));
-  EventDataDescCreate(&EventData[7], &line, sizeof(uint32_t));
-  EventDataDescCreate(&EventData[8], &column, sizeof(uint32_t));
-  EventDataDescCreate(&EventData[9], name.c_str(), ETWStringSize(name));
-
-  return EventWrite(sETWRegistrationHandle, &MethodLoad, (ULONG)10,
-                    EventData) == ERROR_SUCCESS;
-}
-
-// Report a range of JIT code to ETW, as a MethodLoad event preceded, the first
-// time we see a source, by the SourceLoad event describing it. Requires
-// PerfMutex to be held.
-static bool EmitETWEvents(const JitCodeDesc& desc, void* code_addr,
-                          uint64_t code_size) {
-  uint32_t generation = etwCollectionGeneration;
-  if (etwLoadedSourcesGeneration != generation) {
-    // A session started collecting since we last emitted a SourceLoad event.
-    // It hasn't seen any of them, so announce the sources again.
-    etwLoadedSources.clearAndCompact();
-    etwLoadedSourcesGeneration = generation;
-  }
-
-  if (desc.hasSource() && !EmitETWSourceLoad(desc)) {
-    return false;
-  }
-  return EmitETWMethodLoad(desc, code_addr, code_size);
-}
-#endif
 
 void PerfSpewer::CollectJitCodeInfo(JitCodeDesc& desc, JitCode* code,
                                     AutoLockPerfSpewer& lock) {
@@ -886,14 +680,6 @@ void PerfSpewer::CollectJitCodeInfo(JitCodeDesc& desc, void* code_addr,
     WriteToJitDumpFile(function_name.get(), strlen(function_name.get()) + 1,
                        lock);
     WriteToJitDumpFile(code_addr, code_size, lock);
-  }
-#endif
-#ifdef XP_WIN
-  if (etwCollection) {
-    if (!EmitETWEvents(desc, code_addr, code_size)) {
-      DisablePerfSpewer(lock);
-      return;
-    }
   }
 #endif
 }

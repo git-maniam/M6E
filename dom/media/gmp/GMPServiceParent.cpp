@@ -18,18 +18,12 @@
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "nsFmtString.h"
 #include "nsThreadUtils.h"
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxInfo.h"
-#endif
 #include "VideoUtils.h"
 #include "mozilla/AppShutdown.h"
 #include "mozilla/Services.h"
 #include "mozilla/SpinEventLoopUntil.h"
 #include "mozilla/StaticPrefs_media.h"
 #include "mozilla/SyncRunnable.h"
-#if defined(XP_WIN)
-#  include "mozilla/UntrustedModulesData.h"
-#endif
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsComponentManagerUtils.h"
 #include "nsDirectoryServiceDefs.h"
@@ -52,11 +46,6 @@
 #  include "mozilla/MFCDMParent.h"
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "media/NdkMediaCrypto.h"
-#  include "media/NdkMediaDrm.h"
-#  include "mozilla/gfx/gfxVars.h"
-#endif
 
 namespace mozilla::gmp {
 
@@ -548,36 +537,6 @@ RefPtr<GenericPromise> GeckoMediaPluginServiceParent::LoadFromEnvironment() {
     return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (RefPtr<GMPParent> clearkeyGmp = CreateGMPParent()) {
-    clearkeyGmp->InitForClearkey(this);
-
-    {
-      MutexAutoLock lock(mMutex);
-      mPlugins.AppendElement(std::move(clearkeyGmp));
-    }
-  }
-
-  // Querying MediaDrm may need to start the DRM HAL services, which can take a
-  // long time, so we do it here rather than on the main thread.
-  static constexpr uint8_t kWidevineUuid[] = {
-      0xed, 0xef, 0x8b, 0xa9, 0x79, 0xd6, 0x4a, 0xce,
-      0xa3, 0xc8, 0x27, 0xdc, 0xd5, 0x1d, 0x21, 0xed};
-  bool widevineSupported =
-      AMediaDrm_isCryptoSchemeSupported(kWidevineUuid, nullptr) &&
-      AMediaCrypto_isCryptoSchemeSupported(kWidevineUuid);
-
-  mMainThread->Dispatch(NS_NewRunnableFunction(
-      "GeckoMediaPluginServiceParent::UpdateWidevineSupport",
-      [self = RefPtr{this}, widevineSupported] {
-        if (gfx::gfxVars::IsInitialized()) {
-          gfx::gfxVars::SetWidevineSupport(
-              widevineSupported ? media::DrmSchemeSupport::Supported
-                                : media::DrmSchemeSupport::Unsupported);
-        }
-        self->UpdateContentProcessGMPCapabilities();
-      }));
-#endif
 
   const char* env = PR_GetEnv("MOZ_GMP_PATH");
   if (!env || !*env) {
@@ -756,66 +715,6 @@ void GeckoMediaPluginServiceParent::SendFlushFOGData(
   }
 }
 
-#if defined(XP_WIN)
-void GeckoMediaPluginServiceParent::SendGetUntrustedModulesData(
-    nsTArray<RefPtr<GetUntrustedModulesDataPromise>>& promises) {
-  MOZ_ASSERT(NS_IsMainThread());
-  MutexAutoLock lock(mMutex);
-
-  for (const RefPtr<GMPParent>& gmp : mPlugins) {
-    if (gmp->State() != GMPState::Loaded) {
-      // Plugins that are not in the Loaded state have no process attached to
-      // them, and any IPC we would attempt to send them would be ignored (or
-      // result in a warning on debug builds).
-      continue;
-    }
-    RefPtr<GetUntrustedModulesDataPromise::Private> promise =
-        new GetUntrustedModulesDataPromise::Private(__func__);
-    // Direct dispatch will resolve the promise on the same thread, which is
-    // faster; IPC will move execution back to the main thread.
-    promise->UseDirectTaskDispatch(__func__);
-    promises.EmplaceBack(promise);
-
-    mGMPThread->Dispatch(
-        NewRunnableMethod<ipc::ResolveCallback<Maybe<UntrustedModulesData>>&&,
-                          ipc::RejectCallback&&>(
-            "GMPParent::SendGetUntrustedModulesData", gmp,
-            static_cast<void (GMPParent::*)(
-                mozilla::ipc::ResolveCallback<Maybe<UntrustedModulesData>>&&
-                    aResolve,
-                mozilla::ipc::RejectCallback&& aReject)>(
-                &GMPParent::SendGetUntrustedModulesData),
-
-            [promise](Maybe<UntrustedModulesData>&& aValue) {
-              promise->Resolve(std::move(aValue), __func__);
-            },
-            [promise](ipc::ResponseRejectReason&& aReason) {
-              promise->Reject(std::move(aReason), __func__);
-            }),
-        NS_DISPATCH_NORMAL);
-  }
-}
-
-void GeckoMediaPluginServiceParent::SendUnblockUntrustedModulesThread() {
-  MOZ_ASSERT(NS_IsMainThread());
-  MutexAutoLock lock(mMutex);
-
-  for (const RefPtr<GMPParent>& gmp : mPlugins) {
-    if (gmp->State() != GMPState::Loaded) {
-      // Plugins that are not in the Loaded state have no process attached to
-      // them, and any IPC we would attempt to send them would be ignored (or
-      // result in a warning on debug builds).
-      continue;
-    }
-
-    mGMPThread->Dispatch(
-        NewRunnableMethod<>("GMPParent::SendUnblockUntrustedModulesThread", gmp,
-                            static_cast<bool (GMPParent::*)()>(
-                                &GMPParent::SendUnblockUntrustedModulesThread)),
-        NS_DISPATCH_NORMAL);
-  }
-}
-#endif
 
 RefPtr<PGMPParent::TestTriggerMetricsPromise>
 GeckoMediaPluginServiceParent::TestTriggerMetrics() {
@@ -1118,15 +1017,6 @@ already_AddRefed<GMPParent> GeckoMediaPluginServiceParent::SelectPluginForAPI(
 
 already_AddRefed<GMPParent> GeckoMediaPluginServiceParent::CreateGMPParent() {
   // Should run on the GMP thread.
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  if (!SandboxInfo::Get().CanSandboxMedia()) {
-    if (!StaticPrefs::media_gmp_insecure_allow()) {
-      NS_WARNING("Denying media plugin load due to lack of sandboxing.");
-      return nullptr;
-    }
-    NS_WARNING("Loading media plugin despite lack of sandboxing.");
-  }
-#endif
   nsCOMPtr<nsISerialEventTarget> gmpThread = GetGMPThread();
   RefPtr<GMPParent> gmpParent = new GMPParent(gmpThread);
   return gmpParent.forget();
@@ -1149,13 +1039,6 @@ already_AddRefed<GMPParent> GeckoMediaPluginServiceParent::ClonePlugin(
 
 RefPtr<GenericPromise> GeckoMediaPluginServiceParent::AddOnGMPThread(
     nsString aDirectory) {
-#ifdef XP_WIN
-  // On Windows our various test harnesses often pass paths with UNIX dir
-  // separators, or a mix of dir separators. NS_NewLocalFile() can't handle
-  // that, so fixup to match the platform's expected format. This makes us
-  // more robust in the face of bad input and test harnesses changing...
-  std::replace(aDirectory.BeginWriting(), aDirectory.EndWriting(), '/', '\\');
-#endif
 
   AssertOnGMPThread();
   nsCString dir = NS_ConvertUTF16toUTF8(aDirectory);

@@ -9,15 +9,6 @@
 #include "mozilla/Likely.h"
 #include "mozilla/MacroArgs.h"
 
-#ifdef ANDROID
-#  include <android/log.h>
-#  define LOG(...) \
-    __android_log_print(ANDROID_LOG_INFO, "GeckoLinker", __VA_ARGS__)
-#  define WARN(...) \
-    __android_log_print(ANDROID_LOG_WARN, "GeckoLinker", __VA_ARGS__)
-#  define ERROR(...) \
-    __android_log_print(ANDROID_LOG_ERROR, "GeckoLinker", __VA_ARGS__)
-#else
 #  include <cstdio>
 
 /* Expand to 1 or m depending on whether there is one argument or more
@@ -43,7 +34,6 @@
 #  define WARN(...) MOZ_CHOOSE_LOG("Warning: " __VA_ARGS__)
 #  define ERROR(...) MOZ_CHOOSE_LOG("Error: " __VA_ARGS__)
 
-#endif
 
 class Logging {
  public:

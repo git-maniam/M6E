@@ -10,9 +10,6 @@
 #include "mozilla/ipc/UtilityProcessChild.h"
 #include "mozilla/ipc/UtilityProcessSandboxing.h"
 
-#ifdef XP_LINUX
-#  include "mozilla/Sandbox.h"
-#endif
 
 #include "nsXULAppAPI.h"
 
@@ -60,9 +57,6 @@ void SandboxTestingChild::Bind(Endpoint<PSandboxTestingChild>&& aEndpoint) {
   DebugOnly<bool> ok = aEndpoint.Bind(this);
   MOZ_ASSERT(ok);
 
-#ifdef XP_LINUX
-  bool sandboxCrashOnError = SetSandboxCrashOnError(false);
-#endif
 
   if (XRE_IsContentProcess()) {
     RunTestsContent(this);
@@ -97,11 +91,6 @@ void SandboxTestingChild::Bind(Endpoint<PSandboxTestingChild>&& aEndpoint) {
         RunTestsUtilityMediaService(this, s->mSandbox);
         break;
 #endif
-#ifdef XP_WIN
-      case ipc::SandboxingKind::UTILITY_AUDIO_DECODING_WMF:
-        RunTestsUtilityMediaService(this, s->mSandbox);
-        break;
-#endif
 
       default:
         MOZ_ASSERT(false, "Invalid SandboxingKind");
@@ -109,9 +98,6 @@ void SandboxTestingChild::Bind(Endpoint<PSandboxTestingChild>&& aEndpoint) {
     }
   }
 
-#ifdef XP_LINUX
-  SetSandboxCrashOnError(sandboxCrashOnError);
-#endif
 
   // Tell SandboxTest that this process is done with all tests.
   SendTestCompleted();

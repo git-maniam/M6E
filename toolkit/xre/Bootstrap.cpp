@@ -7,16 +7,7 @@
 
 #include "AutoSQLiteLifetime.h"
 
-#if defined(XP_WIN) && defined(_M_X64) && defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
-#  include <windows.h>
-#endif  // XP_WIN && _M_X64 && MOZ_DIAGNOSTIC_ASSERT_ENABLED
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/jni/Utils.h"
-#  ifdef MOZ_PROFILE_GENERATE
-extern "C" int __llvm_profile_dump(void);
-#  endif
-#endif
 
 namespace mozilla {
 
@@ -63,23 +54,6 @@ class BootstrapImpl final : public Bootstrap {
     ::XRE_EnableSameExecutableForContentProc();
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  virtual void XRE_SetGeckoThreadEnv(JNIEnv* aEnv) override {
-    mozilla::jni::SetGeckoThreadEnv(aEnv);
-  }
-
-  virtual void XRE_SetAndroidChildFds(JNIEnv* aEnv, jintArray aFds) override {
-    ::XRE_SetAndroidChildFds(aEnv, aFds);
-  }
-
-#  ifdef MOZ_PROFILE_GENERATE
-  virtual void XRE_WriteLLVMProfData() override {
-    __android_log_print(ANDROID_LOG_INFO, "GeckoLibLoad",
-                        "Calling __llvm_profile_dump()");
-    __llvm_profile_dump();
-  }
-#  endif
-#endif
 
 #ifdef LIBFUZZER
   virtual void XRE_LibFuzzerSetDriver(LibFuzzerDriver aDriver) override {
@@ -94,26 +68,6 @@ class BootstrapImpl final : public Bootstrap {
 #endif
 };
 
-#if defined(XP_WIN) && defined(_M_X64) && defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
-extern "C" uint32_t _tls_index;
-
-extern "C" NS_EXPORT bool XRE_CheckBlockScopeStaticVarInit(
-    uint32_t* aTlsIndex) {
-  // Copy the value of xul's _tls_index for diagnostics.
-  if (aTlsIndex) {
-    *aTlsIndex = _tls_index;
-  }
-
-  // Check that block-scope static variable initialization works. We use
-  // volatile here to keep the compiler honest - we want it to generate the code
-  // that will ensure that only a single thread goes through the lambda.
-  static bool sItWorks = []() -> bool {
-    bool const volatile value = true;
-    return value;
-  }();
-  return sItWorks;
-}
-#endif  // XP_WIN && _M_X64 && MOZ_DIAGNOSTIC_ASSERT_ENABLED
 
 extern "C" NS_EXPORT void NS_FROZENCALL
 XRE_GetBootstrap(Bootstrap::UniquePtr& b) {

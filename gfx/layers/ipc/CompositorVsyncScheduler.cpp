@@ -10,9 +10,6 @@
 #include "base/task.h"    // for CancelableTask, etc
 #include "base/thread.h"  // for Thread
 #include "gfxPlatform.h"  // for gfxPlatform
-#ifdef MOZ_WIDGET_GTK
-#  include "gfxPlatformGtk.h"  // for gfxPlatform
-#endif
 #include "mozilla/AutoRestore.h"  // for AutoRestore
 #include "mozilla/DebugOnly.h"    // for DebugOnly
 #include "mozilla/StaticPrefs_gfx.h"
@@ -30,9 +27,6 @@
 #include "nsISupportsImpl.h"   // for MOZ_COUNT_CTOR, etc
 #include "nsIWidget.h"         // for nsIWidget
 #include "nsThreadUtils.h"     // for NS_IsMainThread
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-#  include "VsyncSource.h"
-#endif
 #include "VRManager.h"
 #include "mozilla/widget/CompositorWidget.h"
 
@@ -172,15 +166,6 @@ void CompositorVsyncScheduler::NotifyVsync(const VsyncEvent& aVsync) {
   // Called from the vsync dispatch thread. When in the GPU Process, that's
   // the same as the compositor thread.
 #ifdef DEBUG
-#  ifdef MOZ_WAYLAND
-  // On Wayland, we dispatch vsync from the main thread, without a GPU process.
-  // To allow this, we skip the following asserts if we're currently utilizing
-  // the Wayland backend. The IsParentProcess guard is needed to ensure that
-  // we don't accidentally attempt to initialize the gfxPlatform in the GPU
-  // process on X11.
-  if (!XRE_IsParentProcess() ||
-      !gfxPlatformGtk::GetPlatform()->IsWaylandDisplay())
-#  endif  // MOZ_WAYLAND
   {
     MOZ_ASSERT_IF(XRE_IsParentProcess(),
                   !CompositorThreadHolder::IsInCompositorThread());
@@ -191,14 +176,7 @@ void CompositorVsyncScheduler::NotifyVsync(const VsyncEvent& aVsync) {
                 CompositorThreadHolder::IsInCompositorThread());
 #endif  // DEBUG
 
-#if defined(MOZ_WIDGET_ANDROID)
-  gfx::VRManager* vm = gfx::VRManager::Get();
-  if (!vm->IsPresenting()) {
-    PostCompositeTask(aVsync, wr::RenderReasons::VSYNC);
-  }
-#else
   PostCompositeTask(aVsync, wr::RenderReasons::VSYNC);
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   PostVRTask(aVsync.mTime);
 }

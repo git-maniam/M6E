@@ -10,12 +10,7 @@
  */
 
 #ifdef OVR_CAPI_h
-#  ifdef _MSC_VER
-#    pragma message( \
-        "ovr_capi_dyanmic.h: OVR_CAPI.h included before ovr_capi_dynamic.h, skipping this")
-#  else
 #    warning OVR_CAPI.h included before ovr_capi_dynamic.h, skipping this
-#  endif
 #  define mozilla_ovr_capi_dynamic_h_
 
 #else
@@ -31,11 +26,7 @@
 #      define OVR_ON64(x) /**/
 #    endif
 
-#    if defined(_WIN32)
-#      define OVR_PFN __cdecl
-#    else
 #      define OVR_PFN
-#    endif
 
 #    if !defined(OVR_ALIGNAS)
 #      if defined(__GNUC__) || defined(__clang__)
@@ -186,11 +177,7 @@ typedef struct OVR_ALIGNAS(OVR_PTR_SIZE) {
 
 typedef struct ovrHmdStruct* ovrSession;
 
-#    ifdef XP_WIN
-typedef uint32_t ovrProcessId;
-#    else
 typedef pid_t ovrProcessId;
-#    endif
 
 typedef enum {
   ovrStatus_OrientationTracked = 0x0001,
@@ -921,27 +908,6 @@ typedef enum {
   ovrError_MisformattedBlock = -9002,
 } ovrErrorType;
 
-#    ifdef XP_WIN
-
-struct IUnknown;
-
-typedef ovrResult(OVR_PFN* pfn_ovr_CreateTextureSwapChainDX)(
-    ovrSession session, IUnknown* d3dPtr, const ovrTextureSwapChainDesc* desc,
-    ovrTextureSwapChain* out_TextureSwapChain);
-
-typedef ovrResult(OVR_PFN* pfn_ovr_GetTextureSwapChainBufferDX)(
-    ovrSession session, ovrTextureSwapChain chain, int index, IID iid,
-    void** out_Buffer);
-
-typedef ovrResult(OVR_PFN* pfn_ovr_CreateMirrorTextureDX)(
-    ovrSession session, IUnknown* d3dPtr, const ovrMirrorTextureDesc* desc,
-    ovrMirrorTexture* out_MirrorTexture);
-
-typedef ovrResult(OVR_PFN* pfn_ovr_GetMirrorTextureBufferDX)(
-    ovrSession session, ovrMirrorTexture mirrorTexture, IID iid,
-    void** out_Buffer);
-
-#    endif
 
 typedef ovrResult(OVR_PFN* pfn_ovr_CreateTextureSwapChainGL)(
     ovrSession session, const ovrTextureSwapChainDesc* desc,

@@ -8,9 +8,7 @@
 #include "base/basictypes.h"
 #include "base/process_util.h"
 #include "nsLiteralString.h"
-#ifdef XP_UNIX
 #  include "mozilla/UniquePtrExtensions.h"
-#endif
 
 // Fixed signature recorded via the CrashSignatureOverrideForTesting annotation
 // when the parent deliberately crashes a child hanging at shutdown, so these
@@ -43,9 +41,7 @@ class ProcessWatcher {
   static void EnsureProcessTerminated(base::ProcessHandle process_handle,
                                       bool force = kDefaultForce);
 
-#ifdef XP_UNIX
   static mozilla::UniqueFileHandle GetSignalPipe();
-#endif
 
  private:
   // Do not instantiate this class.

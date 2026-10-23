@@ -139,13 +139,6 @@ nrappkit copyright:
 #  ifdef LOG_TEMP_DEBUG
 #    define LOG_DEBUG LOG_TEMP_DEBUG
 #  endif
-#  ifdef XP_WIN
-#    ifdef LOG_DEBUG
-#      undef LOG_DEBUG
-#    endif
-// cloned from csi_platform.h.  Win32 doesn't like how we hide symbols
-#    define LOG_DEBUG 7
-#  endif
 #endif
 
 #include "async_wait.h"

@@ -9,9 +9,6 @@
 #include "mozilla/StaticPtr.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/DOMTypes.h"
-#ifdef MOZ_WAYLAND
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif /* MOZ_WAYLAND */
 
 static mozilla::LazyLogModule sScreenLog("WidgetScreen");
 
@@ -123,13 +120,6 @@ ScreenManager::ScreenForRect(int32_t aX, int32_t aY, int32_t aWidth,
 
 already_AddRefed<Screen> ScreenManager::ScreenForRect(
     const DesktopIntRect& aRect) {
-#if defined(MOZ_WAYLAND) && defined(MOZ_LOGGING)
-  static bool inWayland = GdkIsWaylandDisplay();
-  if (inWayland) {
-    MOZ_LOG(sScreenLog, LogLevel::Warning,
-            ("Getting screen in wayland, primary display will be returned."));
-  }
-#endif
 
   if (mScreenList.IsEmpty()) {
     MOZ_LOG(sScreenLog, LogLevel::Warning,

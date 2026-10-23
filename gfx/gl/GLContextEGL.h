@@ -143,9 +143,6 @@ class GLContextEGL final : public GLContext {
 
   static void DestroySurface(EglDisplay&, const EGLSurface aSurface);
 
-#ifdef MOZ_X11
-  static bool FindVisual(int* const out_visualId);
-#endif
 
  protected:
   friend class GLContextProviderEGL;
@@ -178,10 +175,6 @@ class GLContextEGL final : public GLContext {
       EglDisplay&, EGLConfig, EGLenum bindToTextureFormat,
       gfx::IntSize& pbsize);
 
-#ifdef MOZ_WAYLAND
-  static EGLSurface CreateWaylandOffscreenSurface(EglDisplay&, EGLConfig,
-                                                  gfx::IntSize& pbsize);
-#endif
 
  public:
   EGLSurface CreateCompatibleSurface(void* aWindow) const;

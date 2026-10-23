@@ -104,9 +104,6 @@
 #include "nsJSUtils.h"
 #include "nsStreamUtils.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/WindowsVersion.h"
-#endif
 
 #include "AutoplayPolicy.h"
 #include "mozilla/DetailedPromise.h"
@@ -2026,12 +2023,7 @@ bool Navigator::HasShareSupport(JSContext* cx, JSObject* obj) {
   if (!StaticPrefs::dom_webshare_enabled()) {
     return false;
   }
-#if defined(XP_WIN) && !defined(__MINGW32__)
-  // The first public build that supports ShareCanceled API
-  return IsWindows10BuildOrLater(18956);
-#else
   return true;
-#endif
 }
 
 /* static */
@@ -2079,16 +2071,8 @@ nsresult Navigator::GetPlatform(nsAString& aPlatform, Document* aCallerDoc,
     }
   }
 
-#if defined(WIN32)
-  aPlatform.AssignLiteral("Win32");
-#elif defined(XP_MACOSX)
   // Always return "MacIntel", even on ARM64 macOS like Safari does.
   aPlatform.AssignLiteral("MacIntel");
-#elif defined(ANDROID)
-  aPlatform.AssignLiteral("Linux armv81");
-#else
-  aPlatform.AssignLiteral("Linux x86_64");
-#endif
 
   return NS_OK;
 }

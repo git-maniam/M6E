@@ -201,19 +201,10 @@ class SimpleTimerTest : public ::testing::Test {
   AutoTestThread mThread;
 };
 
-#ifdef XP_MACOSX
 // For some reason, our OS X testers fire timed condition waits _extremely_
 // late (as much as 200ms).
 // See https://bugzilla.mozilla.org/show_bug.cgi?id=1726915
 const unsigned kSlowdownFactor = 50;
-#elif XP_WIN
-// Windows also needs some extra leniency, but not nearly as much as our OS X
-// testers
-// See https://bugzilla.mozilla.org/show_bug.cgi?id=1729035
-const unsigned kSlowdownFactor = 5;
-#else
-const unsigned kSlowdownFactor = 1;
-#endif
 
 // ComputeAcceptableFiringDelay can delay timer firings by up to
 // timerDuration / 8 for coalescing. As of bug 1783405, coalescing can only
@@ -289,7 +280,6 @@ TEST_F(SimpleTimerTest, RepeatingPrecise) {
 
 // gtest on 32bit Win7 debug build is unstable and somehow this test
 // makes it even worse.
-#if !defined(XP_WIN) || !defined(DEBUG) || defined(HAVE_64BIT_BUILD)
 
 class FindExpirationTimeState final {
  public:
@@ -536,7 +526,6 @@ TEST_F(SimpleTimerTest, FindExpirationTime) {
   }
 }
 
-#endif
 
 // Do these _after_ FindExpirationTime; apparently pausing the timer thread
 // schedules minute-long timers, which FindExpirationTime waits out before

@@ -21,9 +21,6 @@
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "nsISupportsUtils.h"
-#endif
 
 namespace mozilla {
 

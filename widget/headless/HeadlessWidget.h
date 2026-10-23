@@ -12,27 +12,9 @@
 
 // The various synthesized event values are hardcoded to avoid pulling
 // in the platform specific widget code.
-#if defined(MOZ_WIDGET_GTK)
-#  define MOZ_HEADLESS_SCROLL_MULTIPLIER 3
-#  define MOZ_HEADLESS_SCROLL_DELTA_MODE \
-    mozilla::dom::WheelEvent_Binding::DOM_DELTA_LINE
-#elif defined(XP_WIN)
-#  define MOZ_HEADLESS_SCROLL_MULTIPLIER \
-    .025  // default scroll lines (3) / WHEEL_DELTA (120)
-#  define MOZ_HEADLESS_SCROLL_DELTA_MODE \
-    mozilla::dom::WheelEvent_Binding::DOM_DELTA_LINE
-#elif defined(XP_MACOSX)
 #  define MOZ_HEADLESS_SCROLL_MULTIPLIER 1
 #  define MOZ_HEADLESS_SCROLL_DELTA_MODE \
     mozilla::dom::WheelEvent_Binding::DOM_DELTA_PIXEL
-#elif defined(ANDROID)
-#  define MOZ_HEADLESS_SCROLL_MULTIPLIER 1
-#  define MOZ_HEADLESS_SCROLL_DELTA_MODE \
-    mozilla::dom::WheelEvent_Binding::DOM_DELTA_LINE
-#else
-#  define MOZ_HEADLESS_SCROLL_MULTIPLIER -1
-#  define MOZ_HEADLESS_SCROLL_DELTA_MODE -1
-#endif
 
 namespace mozilla {
 enum class NativeKeyBindingsType : uint8_t;

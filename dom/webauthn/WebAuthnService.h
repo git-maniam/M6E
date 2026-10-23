@@ -11,17 +11,9 @@
 #include "mozilla/dom/WebAuthnPromiseHolder.h"
 #include "nsIWebAuthnService.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidWebAuthnService.h"
-#endif
 
-#ifdef XP_MACOSX
 #  include "MacOSWebAuthnService.h"
-#endif
 
-#ifdef XP_WIN
-#  include "WinWebAuthnService.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -34,24 +26,12 @@ class WebAuthnService final : public nsIWebAuthnService {
 
   WebAuthnService() {
     (void)authrs_service_constructor(getter_AddRefs(mAuthrsService));
-#if defined(XP_WIN)
-    if (WinWebAuthnService::AreWebAuthNApisAvailable()) {
-      mPlatformService = new WinWebAuthnService();
-    } else {
-      mPlatformService = mAuthrsService;
-    }
-#elif defined(MOZ_WIDGET_ANDROID)
-    mPlatformService = new AndroidWebAuthnService();
-#elif defined(XP_MACOSX)
     if (__builtin_available(macos 13.3, *)) {
       mPlatformService = NewMacOSWebAuthnServiceIfAvailable();
     }
     if (!mPlatformService) {
       mPlatformService = mAuthrsService;
     }
-#else
-    mPlatformService = mAuthrsService;
-#endif
   }
 
  private:

@@ -35,12 +35,6 @@ nsresult txNumberExpr::evaluate(txIEvalContext* aContext,
 
     case DIVIDE:
       if (rightDbl == 0) {
-#if defined(XP_WIN)
-        /* XXX MSVC miscompiles such that (NaN == 0) */
-        if (std::isnan(rightDbl))
-          result = mozilla::UnspecifiedNaN<double>();
-        else
-#endif
             if (leftDbl == 0 || std::isnan(leftDbl))
           result = mozilla::UnspecifiedNaN<double>();
         else if (mozilla::IsNegative(leftDbl) != mozilla::IsNegative(rightDbl))
@@ -55,12 +49,6 @@ nsresult txNumberExpr::evaluate(txIEvalContext* aContext,
       if (rightDbl == 0) {
         result = mozilla::UnspecifiedNaN<double>();
       } else {
-#if defined(XP_WIN)
-        /* Workaround MS fmod bug where 42 % (1/0) => NaN, not 42. */
-        if (!std::isinf(leftDbl) && std::isinf(rightDbl))
-          result = leftDbl;
-        else
-#endif
           result = fmod(leftDbl, rightDbl);
       }
       break;

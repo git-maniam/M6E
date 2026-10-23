@@ -9,12 +9,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifdef __MACH__
 #  include <mach/mach.h>
 #  include <mach/mach_time.h>
-#else
-#  include <time.h>
-#endif
 
 #ifdef NDEBUG
 #  define debugf(...)
@@ -24,40 +20,6 @@
 
 // #define PRINT_TIMINGS
 
-#ifdef _WIN32
-#  define ALWAYS_INLINE __forceinline
-#  define NO_INLINE __declspec(noinline)
-
-// Including Windows.h brings a huge amount of namespace polution so just
-// define a couple of things manually
-typedef int BOOL;
-#  define WINAPI __stdcall
-#  define DECLSPEC_IMPORT __declspec(dllimport)
-#  define WINBASEAPI DECLSPEC_IMPORT
-typedef unsigned long DWORD;
-typedef long LONG;
-typedef __int64 LONGLONG;
-#  define DUMMYSTRUCTNAME
-
-typedef union _LARGE_INTEGER {
-  struct {
-    DWORD LowPart;
-    LONG HighPart;
-  } DUMMYSTRUCTNAME;
-  struct {
-    DWORD LowPart;
-    LONG HighPart;
-  } u;
-  LONGLONG QuadPart;
-} LARGE_INTEGER;
-extern "C" {
-WINBASEAPI BOOL WINAPI
-QueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount);
-
-WINBASEAPI BOOL WINAPI QueryPerformanceFrequency(LARGE_INTEGER* lpFrequency);
-}
-
-#else
 // GCC is slower when dealing with always_inline, especially in debug builds.
 // When using Clang, use always_inline more aggressively.
 #  if defined(__clang__) || defined(NDEBUG)
@@ -66,7 +28,6 @@ WINBASEAPI BOOL WINAPI QueryPerformanceFrequency(LARGE_INTEGER* lpFrequency);
 #    define ALWAYS_INLINE inline
 #  endif
 #  define NO_INLINE __attribute__((noinline))
-#endif
 
 // Some functions may cause excessive binary bloat if inlined in debug or with
 // GCC builds, so use PREFER_INLINE on these instead of ALWAYS_INLINE.
@@ -88,11 +49,7 @@ WINBASEAPI BOOL WINAPI QueryPerformanceFrequency(LARGE_INTEGER* lpFrequency);
 #  define IMPLICIT
 #endif
 
-#if defined(_MSC_VER)
-#  define ALIGNED_DECL(_align, _type) __declspec(align(_align)) _type
-#else
 #  define ALIGNED_DECL(_align, _type) _type __attribute__((aligned(_align)))
-#endif
 
 #include "gl_defs.h"
 #include "glsl.h"
@@ -1549,25 +1506,7 @@ GLint GetUniformLocation(GLuint program, char* name) {
 }
 
 static uint64_t get_time_value() {
-#ifdef __MACH__
   return mach_absolute_time();
-#elif defined(_WIN32)
-  LARGE_INTEGER time;
-  static bool have_frequency = false;
-  static LARGE_INTEGER frequency;
-  if (!have_frequency) {
-    QueryPerformanceFrequency(&frequency);
-    have_frequency = true;
-  }
-  QueryPerformanceCounter(&time);
-  return time.QuadPart * 1000000000ULL / frequency.QuadPart;
-#else
-  return ({
-    struct timespec tp;
-    clock_gettime(CLOCK_MONOTONIC, &tp);
-    tp.tv_sec * 1000000000ULL + tp.tv_nsec;
-  });
-#endif
 }
 
 void BeginQuery(GLenum target, GLuint id) {

@@ -276,19 +276,8 @@ class FontList {
    * Using a larger block size will speed up allocation, at the cost of more
    * wasted space in the shared memory (on average).
    */
-#if ANDROID
-  // Android devices usually have a much smaller number of fonts than desktop
-  // systems, and memory is more constrained, so use a smaller default block
-  // size.
-  static constexpr uint32_t SHM_BLOCK_SIZE = 64 * 1024;
-#elif XP_LINUX
-  // On Linux, font face descriptors are rather large (serialized FcPatterns),
-  // so use a larger block size for efficiency.
-  static constexpr uint32_t SHM_BLOCK_SIZE = 1024 * 1024;
-#else
   // Default block size for Windows and macOS.
   static constexpr uint32_t SHM_BLOCK_SIZE = 256 * 1024;
-#endif
   static_assert(SHM_BLOCK_SIZE <= (1 << Pointer::kBlockShift),
                 "SHM_BLOCK_SIZE too large");
 
@@ -380,10 +369,6 @@ class FontList {
    */
   nsTArray<ipc::ReadOnlySharedMemoryHandle> mReadOnlyShmems;
 
-#ifdef XP_WIN
-  // Bool array to track whether we have read face names from the name table.
-  nsTArray<bool> mFaceNamesRead;
-#endif
 };
 
 }  // namespace fontlist

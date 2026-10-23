@@ -14,9 +14,6 @@
 #include "base/process.h"             // for ProcessId
 #include "gfxContext.h"               // for gfxContext
 #include "gfxPlatform.h"              // for gfxPlatform
-#ifdef MOZ_WIDGET_GTK
-#  include "gfxPlatformGtk.h"  // for gfxPlatform
-#endif
 #include "mozilla/AutoRestore.h"      // for AutoRestore
 #include "mozilla/ClearOnShutdown.h"  // for ClearOnShutdown
 #include "mozilla/DebugOnly.h"        // for DebugOnly
@@ -61,33 +58,21 @@
 #include "mozilla/mozalloc.h"                          // for operator new, etc
 #include "mozilla/webrender/RenderThread.h"
 #include "mozilla/webrender/WebRenderAPI.h"
-#ifndef MOZ_WIDGET_UIKIT
 #  include "mozilla/widget/HeadlessCompositorWidgetParent.h"
-#endif
 #include "nsCOMPtr.h"         // for already_AddRefed
 #include "nsDebug.h"          // for NS_ASSERTION, etc
 #include "nsISupportsImpl.h"  // for MOZ_COUNT_CTOR, etc
 #include "nsIWidget.h"        // for nsIWidget
 #include "nsTArray.h"         // for nsTArray
 #include "nsThreadUtils.h"    // for NS_IsMainThread
-#ifdef XP_WIN
-#  include "mozilla/layers/CompositorD3D11.h"
-#  include "mozilla/widget/WinCompositorWidget.h"
-#endif
 #include "mozilla/Hal.h"
 #include "mozilla/HalTypes.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/VsyncDispatcher.h"
 #include "mozilla/ipc/ProtocolTypes.h"
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-#  include "VsyncSource.h"
-#endif
 #include "mozilla/widget/CompositorWidget.h"
 #ifdef MOZ_WIDGET_SUPPORTS_OOP_COMPOSITING
 #  include "mozilla/widget/CompositorWidgetParent.h"
-#endif
-#ifdef XP_WIN
-#  include "mozilla/gfx/DeviceManagerDx.h"
 #endif
 
 namespace mozilla {
@@ -238,12 +223,6 @@ void CompositorBridgeParent::InitSameProcess(widget::CompositorWidget* aWidget,
 
   mWidget = aWidget;
   mRootLayerTreeID = aLayerTreeId;
-#if defined(XP_WIN)
-  // when run in headless mode, no WinCompositorWidget is created
-  if (widget::WinCompositorWidget* windows = mWidget->AsWindows()) {
-    windows->SetRootLayerTreeID(mRootLayerTreeID);
-  }
-#endif
 
   Initialize();
 }
@@ -260,12 +239,6 @@ mozilla::ipc::IPCResult CompositorBridgeParent::RecvInitialize(
   mRootLayerTreeID = aRootLayerTreeId;
   LAYERTREE_LOG("Widget compositor for root layer tree {:x} initialized",
                 mRootLayerTreeID);
-#ifdef XP_WIN
-  // headless mode is probably always same-process; but just in case...
-  if (widget::WinCompositorWidget* windows = mWidget->AsWindows()) {
-    windows->SetRootLayerTreeID(mRootLayerTreeID);
-  }
-#endif
 
   Initialize();
   return IPC_OK();
@@ -430,10 +403,6 @@ mozilla::ipc::IPCResult CompositorBridgeParent::RecvPause() {
 }
 
 mozilla::ipc::IPCResult CompositorBridgeParent::RecvRequestFxrOutput() {
-#ifdef XP_WIN
-  // Continue forwarding the request to the Widget + SwapChain
-  mWidget->AsWindows()->RequestFxrOutput();
-#endif
 
   return IPC_OK();
 }
@@ -562,13 +531,6 @@ bool CompositorBridgeParent::ResumeComposition() {
   resumed = resumed && mWrBridge->Resume();
 
   if (!resumed) {
-#ifdef MOZ_WIDGET_ANDROID
-    // We can't get a surface. This could be because the activity changed
-    // between the time resume was scheduled and now.
-    __android_log_print(
-        ANDROID_LOG_INFO, "CompositorBridgeParent",
-        "Unable to renew compositor surface; remaining in paused state");
-#endif
     return false;
   }
 
@@ -1187,19 +1149,6 @@ CompositorBridgeParent::AllocPWebRenderBridgeParent(
   MOZ_ASSERT(!mCompositorScheduler);
   MOZ_ASSERT(mWidget);
 
-#ifdef XP_WIN
-  if (mWidget && mWidget->AsWindows()) {
-    const auto options = mWidget->GetCompositorOptions();
-    if (!options.UseSoftwareWebRender() &&
-        (DeviceManagerDx::Get()->CanUseDComp() ||
-         gfxVars::UseWebRenderFlipSequentialWin())) {
-      mWidget->AsWindows()->EnsureCompositorWindow();
-    } else if (options.UseSoftwareWebRender() &&
-               mWidget->AsWindows()->GetCompositorHwnd()) {
-      mWidget->AsWindows()->DestroyCompositorWindow();
-    }
-  }
-#endif
 
   RefPtr<widget::CompositorWidget> widget = mWidget;
   wr::WrWindowId windowId = wr::NewWindowId();
@@ -1286,28 +1235,12 @@ void CompositorBridgeParent::EnsureWebRenderBridgeParentInitialized() {
   }
 
   RefPtr<wr::WebRenderAPI> api = result.unwrap();
-#ifdef MOZ_WIDGET_ANDROID
-  // On Android, WebRenderAPI::Resume() call is triggered from Java side. But
-  // Java side does not know about fallback to RenderCompositorOGLSWGL. In this
-  // fallback case, RenderCompositor::Resume() needs to be called from gfx code.
-  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  if (!mPaused && mWidget->GetCompositorOptions().UseSoftwareWebRender() &&
-      mWidget->GetCompositorOptions().AllowSoftwareWebRenderOGL()) {
-    api->Resume();
-  }
-#endif
 
   wr::TransactionBuilder txn(api);
   txn.SetRootPipeline(mWrBridge->PipelineId());
   api->SendTransaction(txn);
 
   bool useCompositorWnd = false;
-#ifdef XP_WIN
-  // Headless mode uses HeadlessWidget.
-  if (mWidget->AsWindows()) {
-    useCompositorWnd = !!mWidget->AsWindows()->GetCompositorHwnd();
-  }
-#endif
   mAsyncImageManager =
       new AsyncImagePipelineManager(api->Clone(), useCompositorWnd);
   RefPtr<AsyncImagePipelineManager> asyncMgr = mAsyncImageManager;
@@ -1602,7 +1535,6 @@ CompositorBridgeParent::AllocPCompositorWidgetParent(
     return nullptr;
   }
 
-#  ifndef MOZ_WIDGET_UIKIT
   if (aInitData.type() ==
       CompositorWidgetInitData::THeadlessCompositorWidgetInitData) {
     RefPtr widget = MakeRefPtr<widget::HeadlessCompositorWidgetParent>(
@@ -1610,7 +1542,6 @@ CompositorBridgeParent::AllocPCompositorWidgetParent(
     mWidget = widget;
     return widget.forget();
   }
-#  endif
 
   RefPtr widget =
       MakeRefPtr<widget::CompositorWidgetParent>(aInitData, mOptions);
@@ -1623,7 +1554,6 @@ CompositorBridgeParent::AllocPCompositorWidgetParent(
 #endif
 }
 
-#ifdef XP_MACOSX
 mozilla::ipc::IPCResult
 CompositorBridgeParent::RecvPCompositorWidgetConstructor(
     PCompositorWidgetParent* actor, CompositorWidgetInitData&& aInitData) {
@@ -1640,7 +1570,6 @@ CompositorBridgeParent::RecvPCompositorWidgetConstructor(
   widget->Init(std::move(aInitData));
   return IPC_OK();
 }
-#endif
 
 CompositorController*
 CompositorBridgeParent::LayerTreeState::GetCompositorController() const {

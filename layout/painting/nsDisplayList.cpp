@@ -5844,15 +5844,9 @@ bool nsDisplayFixedPosition::UpdateScrollData(
 }
 
 bool nsDisplayFixedPosition::ShouldGetFixedAnimationId() {
-#if defined(MOZ_WIDGET_ANDROID)
-  return mFrame->PresContext()->IsRootContentDocumentCrossProcess() &&
-         nsLayoutUtils::ScrollIdForRootScrollFrame(mFrame->PresContext()) ==
-             GetScrollTargetId();
-#else
   return HasDynamicToolbar() &&
          (nsLayoutUtils::ScrollIdForRootScrollFrame(mFrame->PresContext()) ==
           GetScrollTargetId());
-#endif
 }
 
 void nsDisplayFixedPosition::WriteDebugInfo(std::stringstream& aStream) {

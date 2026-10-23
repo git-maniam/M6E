@@ -74,19 +74,9 @@ using mozilla::dom::XULButtonElement;
 
 TimeStamp nsMenuPopupFrame::sLastKeyTime;
 
-#ifdef MOZ_WAYLAND
-#  include "mozilla/WidgetUtilsGtk.h"
-#  define IS_WAYLAND_DISPLAY() mozilla::widget::GdkIsWaylandDisplay()
-extern mozilla::LazyLogModule gWidgetPopupLog;
-#  define LOG_WAYLAND(...) \
-    MOZ_LOG(gWidgetPopupLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
-#  define LOG_WAYLAND_VERBOSE(...) \
-    MOZ_LOG(gWidgetPopupLog, mozilla::LogLevel::Verbose, (__VA_ARGS__))
-#else
 #  define IS_WAYLAND_DISPLAY() false
 #  define LOG_WAYLAND(...)
 #  define LOG_WAYLAND_VERBOSE(...)
-#endif
 
 nsIFrame* NS_NewMenuPopupFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
   return new nsMenuPopupFrame(aStyle, aPresShell->GetPresContext());
@@ -324,11 +314,6 @@ void nsMenuPopupFrame::CreateWidget() {
 }
 
 TransparencyMode nsMenuPopupFrame::WidgetTransparencyMode() const {
-#ifdef MOZ_WIDGET_GTK
-  if (!LookAndFeel::GetInt(LookAndFeel::IntID::GTKCSDTransparencyAvailable)) {
-    return TransparencyMode::Opaque;
-  }
-#endif
   return nsLayoutUtils::GetFrameTransparency(this, this);
 }
 
@@ -1596,7 +1581,6 @@ auto nsMenuPopupFrame::GetRects(const nsSize& aPrefSize) const -> Rects {
     } else {
       result.mUsedRect.MoveBy(margin.left, margin.top);
     }
-#ifdef XP_MACOSX
     // On macOS, tooltips follow standard flip rule but other popups like
     // context menus flip horizontally, not vertically.
     if (mPopupType == PopupType::Tooltip) {
@@ -1604,15 +1588,6 @@ auto nsMenuPopupFrame::GetRects(const nsSize& aPrefSize) const -> Rects {
     } else {
       hFlip = FlipStyle::Outside;
     }
-#else
-    // On Windows and Linux, other OS screen positioned popups can be flipped
-    // vertically. Only the context menu can be flipped horizontally as well, in
-    // order to avoid showing the context menu accidentally under the mouse.
-    vFlip = FlipStyle::Outside;
-    if (mIsContextMenu) {
-      hFlip = FlipStyle::Outside;
-    }
-#endif  // #ifdef XP_MACOSX
   }
 
   const int32_t a2d = pc->AppUnitsPerDevPixel();
@@ -1947,18 +1922,6 @@ ConsumeOutsideClicksResult nsMenuPopupFrame::ConsumeOutsideClicks() {
       return ConsumeOutsideClicks_True;  // Consume outside clicks for combo
                                          // boxes on all platforms
     }
-#if defined(XP_WIN)
-    // Don't consume outside clicks for menus in Windows
-    if (ni->Equals(nsGkAtoms::menu, kNameSpaceID_XUL) ||
-        ni->Equals(nsGkAtoms::popupset, kNameSpaceID_XUL) ||
-        ((ni->Equals(nsGkAtoms::button, kNameSpaceID_XUL) ||
-          ni->Equals(nsGkAtoms::toolbarbutton, kNameSpaceID_XUL)) &&
-         parentContent->AsElement()->AttrValueIs(
-             kNameSpaceID_None, nsGkAtoms::type, nsGkAtoms::menu,
-             eCaseMatters))) {
-      return ConsumeOutsideClicks_Never;
-    }
-#endif
   }
 
   return ConsumeOutsideClicks_True;
@@ -2083,11 +2046,6 @@ XULButtonElement* nsMenuPopupFrame::FindMenuWithShortcut(
         mIncrementalString.SetLength(mIncrementalString.Length() - 1);
         return nullptr;
       }
-#ifdef XP_WIN
-      if (nsCOMPtr<nsISound> sound = do_GetService("@mozilla.org/sound;1")) {
-        sound->Beep();
-      }
-#endif  // #ifdef XP_WIN
     }
     return nullptr;
   }
@@ -2127,15 +2085,6 @@ XULButtonElement* nsMenuPopupFrame::FindMenuWithShortcut(
   mIncrementalString.SetLength(mIncrementalString.Length() - 1);
 
   // didn't find a matching menu item
-#ifdef XP_WIN
-  // behavior on Windows - this item is in a menu popup off of the
-  // menu bar, so beep and do nothing else
-  if (isMenu) {
-    if (nsCOMPtr<nsISound> sound = do_GetService("@mozilla.org/sound;1")) {
-      sound->Beep();
-    }
-  }
-#endif  // #ifdef XP_WIN
 
   return nullptr;
 }

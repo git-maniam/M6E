@@ -34,7 +34,6 @@ TEST(UtilityProcessSandboxing, ParseEnvVar_DisableGenericOnly)
   EXPECT_TRUE(IsUtilitySandboxEnabled("utility:0", SandboxingKind::COUNT));
 }
 
-#if defined(XP_DARWIN)
 TEST(UtilityProcessSandboxing, ParseEnvVar_DisableAppleAudioOnly)
 {
 #  if defined(MOZ_APPLEMEDIA)
@@ -44,17 +43,7 @@ TEST(UtilityProcessSandboxing, ParseEnvVar_DisableAppleAudioOnly)
   EXPECT_TRUE(
       IsUtilitySandboxEnabled("utility:1", SandboxingKind::GENERIC_UTILITY));
 }
-#endif  // defined(XP_DARWIN)
 
-#if defined(XP_WIN)
-TEST(UtilityProcessSandboxing, ParseEnvVar_DisableWMFOnly)
-{
-  EXPECT_FALSE(IsUtilitySandboxEnabled(
-      "utility:1", SandboxingKind::UTILITY_AUDIO_DECODING_WMF));
-  EXPECT_TRUE(
-      IsUtilitySandboxEnabled("utility:1", SandboxingKind::GENERIC_UTILITY));
-}
-#endif  // defined(XP_WIN)
 
 TEST(UtilityProcessSandboxing, ParseEnvVar_DisableMultiple)
 {
@@ -65,11 +54,6 @@ TEST(UtilityProcessSandboxing, ParseEnvVar_DisableMultiple)
       "utility:1,utility:0,utility:2",
       SandboxingKind::UTILITY_AUDIO_DECODING_APPLE_MEDIA));
 #endif  // MOZ_APPLEMEDIA
-#if defined(XP_WIN)
-  EXPECT_FALSE(
-      IsUtilitySandboxEnabled("utility:1,utility:0,utility:2",
-                              SandboxingKind::UTILITY_AUDIO_DECODING_WMF));
-#endif  // XP_WIN
   std::ostringstream envVar;
   envVar << "utility:" << (SandboxingKind::COUNT + 1)
          << ",utility:0,utility:" << (SandboxingKind::COUNT + 3);

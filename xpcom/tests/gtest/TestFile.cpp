@@ -11,20 +11,9 @@
 #include "prio.h"
 #include "prsystem.h"
 
-#ifdef XP_WIN
-#  include <aclapi.h>
-
-#  include "mozilla/RandomNum.h"
-#  include "nsILocalFileWin.h"
-#  include "nsLocalFile.h"
-#  include "nsWindowsHelpers.h"
-#else
 #  include <limits.h>
-#endif
 
-#ifdef XP_MACOSX
 #  include "nsILocalFileMac.h"
-#endif
 
 #include <algorithm>
 
@@ -39,30 +28,13 @@
 // No-op on non-Windows platforms.
 class TestWithPrefixWinScope {
  public:
-#ifdef XP_WIN
-  explicit TestWithPrefixWinScope(bool aPrefix) : mOldValue(sEnabled) {
-    sEnabled = aPrefix;
-  }
-  ~TestWithPrefixWinScope() { sEnabled = mOldValue; }
-
-  static bool IsEnabled() { return sEnabled; }
-#else
   explicit TestWithPrefixWinScope(bool) {}
   static bool IsEnabled() { return false; }
-#endif
 
   TestWithPrefixWinScope(const TestWithPrefixWinScope&) = delete;
   TestWithPrefixWinScope& operator=(const TestWithPrefixWinScope&) = delete;
 
-#ifdef XP_WIN
- private:
-  bool mOldValue;
-  static bool sEnabled;
-#endif
 };
-#ifdef XP_WIN
-bool TestWithPrefixWinScope::sEnabled = false;
-#endif
 
 static bool VerifyResult(nsresult aRV, const char* aMsg) {
   bool failed = NS_FAILED(aRV);
@@ -70,71 +42,6 @@ static bool VerifyResult(nsresult aRV, const char* aMsg) {
   return !failed;
 }
 
-#ifdef XP_WIN
-static void SetUseDOSDevicePathSyntax(nsIFile* aFile) {
-  if (TestWithPrefixWinScope::IsEnabled()) {
-    nsresult rv;
-    nsCOMPtr<nsILocalFileWin> winFile = do_QueryInterface(aFile, &rv);
-    VerifyResult(rv, "Querying nsILocalFileWin");
-
-    MOZ_RELEASE_ASSERT(winFile);
-    winFile->SetUseDOSDevicePathSyntax(true);
-  }
-}
-
-static auto GetSecurityInfoStructured(nsIFile* aFile) {
-  nsAutoString pathStr;
-  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(aFile->GetTarget(pathStr)));
-
-  PACL pDacl = nullptr;
-  AutoFreeSecurityDescriptor secDesc;
-  DWORD errCode = ::GetNamedSecurityInfoW(
-      pathStr.getW(), SE_FILE_OBJECT,
-      DACL_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION |
-          GROUP_SECURITY_INFORMATION,
-      nullptr, nullptr, &pDacl, nullptr, mozilla::getter_Transfers(secDesc));
-  MOZ_RELEASE_ASSERT(errCode == ERROR_SUCCESS && pDacl);
-
-  return std::make_tuple(std::move(pathStr), mozilla::WrapNotNull(pDacl),
-                         std::move(secDesc));
-}
-
-// SECURITY_SID_SIZE() is not defined in mingw headers
-#  if !defined(__MINGW32__)
-static void AddAcesForRandomSidToDir(nsIFile* aDir) {
-  auto [dirPath, pDirDacl, secDesc] = GetSecurityInfoStructured(aDir);
-
-  constexpr BYTE kSubAuthorityCount = 4;
-  BYTE randomSidBuffer[SECURITY_SID_SIZE(4)];
-  ASSERT_TRUE(mozilla::GenerateRandomBytesFromOS(randomSidBuffer,
-                                                 sizeof(randomSidBuffer)));
-  auto* randomSid = reinterpret_cast<SID*>(randomSidBuffer);
-  randomSid->Revision = SID_REVISION;
-  randomSid->SubAuthorityCount = kSubAuthorityCount;
-  randomSid->IdentifierAuthority = SECURITY_NULL_SID_AUTHORITY;
-  ASSERT_TRUE(::IsValidSid(randomSid));
-
-  EXPLICIT_ACCESS_W newAccess[2];
-  newAccess[0].grfAccessMode = GRANT_ACCESS;
-  newAccess[0].grfAccessPermissions = GENERIC_READ;
-  newAccess[0].grfInheritance = SUB_OBJECTS_ONLY_INHERIT;
-  ::BuildTrusteeWithSidW(&newAccess[0].Trustee, randomSid);
-  newAccess[1].grfAccessMode = DENY_ACCESS;
-  newAccess[1].grfAccessPermissions = GENERIC_WRITE;
-  newAccess[1].grfInheritance = SUB_CONTAINERS_AND_OBJECTS_INHERIT;
-  ::BuildTrusteeWithSidW(&newAccess[1].Trustee, randomSid);
-  mozilla::UniquePtr<ACL, LocalFreeDeleter> newDacl;
-  ASSERT_EQ(::SetEntriesInAclW(std::size(newAccess), newAccess, pDirDacl,
-                               mozilla::getter_Transfers(newDacl)),
-            (ULONG)ERROR_SUCCESS);
-
-  ASSERT_EQ(::SetNamedSecurityInfoW(dirPath.get(), SE_FILE_OBJECT,
-                                    DACL_SECURITY_INFORMATION, nullptr, nullptr,
-                                    newDacl.get(), nullptr),
-            (ULONG)ERROR_SUCCESS);
-}
-#  endif
-#endif
 
 static already_AddRefed<nsIFile> NewFile(nsIFile* aBase) {
   nsresult rv;
@@ -142,9 +49,6 @@ static already_AddRefed<nsIFile> NewFile(nsIFile* aBase) {
   rv = NS_NewLocalFileWithFile(aBase, getter_AddRefs(file));
   VerifyResult(rv, "NS_NewLocalFileWithFile");
 
-#ifdef XP_WIN
-  SetUseDOSDevicePathSyntax(file);
-#endif
 
   return file.forget();
 }
@@ -155,11 +59,6 @@ static nsTString<char_type> FixName(const char_type* aName) {
   for (uint32_t i = 0; aName[i]; ++i) {
     char_type ch = aName[i];
     // PR_GetPathSeparator returns the wrong value on Mac so don't use it
-#if defined(XP_WIN)
-    if (ch == '/') {
-      ch = '\\';
-    }
-#endif
     name.Append(ch);
   }
   return name;
@@ -382,18 +281,6 @@ static bool TestMove(nsIFile* aBase, nsIFile* aDestDir, const char* aName,
     return false;
   }
 
-#ifdef XP_WIN
-  // Ensure ACE inheritance is correct.
-  auto [childPathStr, childDacl, childSecDesc] =
-      GetSecurityInfoStructured(file);
-  EXPECT_FALSE(childSecDesc->Control & SE_DACL_PROTECTED)
-      << "SE_DACL_PROTECTED bit should not be set on the security descriptor";
-  bool isDir = false;
-  EXPECT_NS_SUCCEEDED(file->IsDirectory(&isDir));
-  EXPECT_TRUE(nsLocalFile::ChildAclMatchesAclInheritedFromParent(
-      childDacl, isDir, childSecDesc, aDestDir))
-      << newName.get() << " ACL, does not match destination dir";
-#endif
 
   return true;
 }
@@ -517,15 +404,9 @@ static bool TestNormalizeNativePath(nsIFile* aBase, nsIFile* aStart) {
   if (!file) return false;
 
   auto path = file->NativePath();
-#ifdef XP_WIN
-  path.Append(FixName(u"/./.."));
-  nsresult rv = file->InitWithPath(path);
-  VerifyResult(rv, "InitWithPath");
-#else
   path.Append(FixName("/./.."));
   nsresult rv = file->InitWithNativePath(path);
   VerifyResult(rv, "InitWithNativePath");
-#endif
   rv = file->Normalize();
   VerifyResult(rv, "Normalize");
   path = file->NativePath();
@@ -577,9 +458,6 @@ static void SetupAndTestFunctions(const nsAString& aDirName,
   nsresult rv = NS_GetSpecialDirectory(NS_OS_TEMP_DIR, getter_AddRefs(base));
   ASSERT_TRUE(VerifyResult(rv, "Getting temp directory"));
 
-#ifdef XP_WIN
-  SetUseDOSDevicePathSyntax(base);
-#endif
 
   rv = base->Append(aDirName);
   ASSERT_TRUE(
@@ -644,35 +522,6 @@ static void SetupAndTestFunctions(const nsAString& aDirName,
   ASSERT_TRUE(TestMove(subdir, base, "file2.txt", "file4.txt"));
 
   // SECURITY_SID_SIZE() is not defined in mingw headers
-#if defined(XP_WIN) && !defined(__MINGW32__)
-  // On Windows if we move a file or directory to a directory on the same volume
-  // where the inherited ACLs differ between the source and target dirs, then we
-  // retain the ACEs from the original dir. Add inherited ACEs for random SIDs
-  // to subdir to ensure we reset the inheritance to just the target directory.
-  AddAcesForRandomSidToDir(subdir);
-  ASSERT_TRUE(TestCreate(subdir, "file8.txt", nsIFile::NORMAL_FILE_TYPE, 0600));
-  ASSERT_TRUE(TestMove(subdir, base, "file8.txt", "file8.txt"));
-
-  // Test that dir moves also get the ACL reset when required.
-  ASSERT_TRUE(TestCreate(subdir, "subdir2", nsIFile::DIRECTORY_TYPE, 0700));
-  ASSERT_TRUE(TestMove(subdir, base, "subdir2", "subdir2"));
-
-  // If we set the SE_DACL_PROTECTED bit on the file's security descriptor then
-  // no ACEs will be inherited in the moved file or the new ACL we create to
-  // compare it with. So we need an extra test to catch this case.
-  nsCOMPtr<nsIFile> file9;
-  ASSERT_TRUE(TestCreate(subdir, "file9.txt", nsIFile::NORMAL_FILE_TYPE, 0600,
-                         getter_AddRefs(file9)));
-  auto [file9Path, pFile9Dacl, f9sd] = GetSecurityInfoStructured(file9);
-  ASSERT_EQ(::SetNamedSecurityInfoW(
-                file9Path.get(), SE_FILE_OBJECT,
-                DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION,
-                nullptr, nullptr, pFile9Dacl.get(), nullptr),
-            (ULONG)ERROR_SUCCESS);
-  auto [f9p, f9d, file9SecDescAfter] = GetSecurityInfoStructured(file9);
-  ASSERT_TRUE(file9SecDescAfter->Control & SE_DACL_PROTECTED);
-  ASSERT_TRUE(TestMove(subdir, base, "file9.txt", "file9.txt"));
-#endif
 
   // Test copying across directories
   ASSERT_TRUE(TestCopy(base, subdir, "file4.txt", "file5.txt"));
@@ -773,33 +622,6 @@ TEST(TestFile, GetRelativePath)
   ASSERT_NS_SUCCEEDED(child->GetRelativePath(base, result));
   EXPECT_STREQ(result.get(), "places.sqlite");
 
-#ifdef XP_WIN
-  // GetRelativePath strips the \\?\ prefix before comparing, so paths with
-  // and without the prefix must yield the same result.
-  nsCOMPtr<nsIFile> prefixedBase;
-  ASSERT_NS_SUCCEEDED(base->Clone(getter_AddRefs(prefixedBase)));
-  nsCOMPtr<nsILocalFileWin> winPrefixedBase = do_QueryInterface(prefixedBase);
-  ASSERT_TRUE(winPrefixedBase);
-  winPrefixedBase->SetUseDOSDevicePathSyntax(true);
-
-  nsCOMPtr<nsIFile> prefixedChild;
-  ASSERT_NS_SUCCEEDED(child->Clone(getter_AddRefs(prefixedChild)));
-  nsCOMPtr<nsILocalFileWin> winPrefixedChild = do_QueryInterface(prefixedChild);
-  ASSERT_TRUE(winPrefixedChild);
-  winPrefixedChild->SetUseDOSDevicePathSyntax(true);
-
-  // Both paths with \\?\ prefix.
-  ASSERT_NS_SUCCEEDED(prefixedChild->GetRelativePath(prefixedBase, result));
-  EXPECT_STREQ(result.get(), "places.sqlite");
-
-  // Prefixed child, unprefixed base.
-  ASSERT_NS_SUCCEEDED(prefixedChild->GetRelativePath(base, result));
-  EXPECT_STREQ(result.get(), "places.sqlite");
-
-  // Unprefixed child, prefixed base.
-  ASSERT_NS_SUCCEEDED(child->GetRelativePath(prefixedBase, result));
-  EXPECT_STREQ(result.get(), "places.sqlite");
-#endif
 }
 
 // Writes aLen bytes of aData to aFile, creating/truncating it.
@@ -918,7 +740,6 @@ TEST(TestFile, CopyToContent)
     EXPECT_EQ(destContent, largeData);
   }
 
-#if !defined(XP_WIN) && !defined(ANDROID)
   // Permission preservation (Unix only, Android's filesystem sandbox does not
   // honour traditional Unix permissions).
   {
@@ -937,9 +758,7 @@ TEST(TestFile, CopyToContent)
     ASSERT_NS_SUCCEEDED(dest->GetPermissions(&perms));
     EXPECT_EQ(perms, static_cast<uint32_t>(0640));
   }
-#endif  // !defined(XP_WIN) && !defined(ANDROID)
 
-#if defined(XP_MACOSX)
   // Quarantine attribute handling.
   // Check two things:
   // - a source file with quarantine attribute shall result in the attribute
@@ -1004,7 +823,6 @@ TEST(TestFile, CopyToContent)
       EXPECT_FALSE(hasQuarantineAttr);
     }
   }
-#endif  // defined(XP_MACOSX)
 
   // Directory copy: structure and file contents preserved.
   {
@@ -1052,11 +870,7 @@ TEST(TestFile, CopyToContent)
 
 // These match the limits in nsLocalFileCommon.cpp's CreateUnique.
 static constexpr size_t kMaxUniqueFilenameLength = 250;
-#ifdef XP_WIN
-static constexpr int32_t kMaxUniquePathLength = MAX_PATH - 6;
-#else
 static constexpr int32_t kMaxUniquePathLength = PATH_MAX - 6;
-#endif
 
 TEST(TestFile, CreateUnique_TruncatesLongFilename)
 {
@@ -1153,13 +967,8 @@ TEST(TestFile, CreateUnique_TruncatesLongPath)
   nsCOMPtr<nsIFile> deepDir = NewFile(base);
   ASSERT_TRUE(deepDir);
 
-#ifdef XP_WIN
-  nsAutoString dirPath;
-  rv = deepDir->GetPath(dirPath);
-#else
   nsAutoCString dirPath;
   rv = deepDir->GetNativePath(dirPath);
-#endif
   ASSERT_NS_SUCCEEDED(rv);
 
   int32_t targetDirLen = kMaxUniquePathLength - kLeafLen - 1 + kOvershoot;
@@ -1179,11 +988,7 @@ TEST(TestFile, CreateUnique_TruncatesLongPath)
     rv = deepDir->Create(nsIFile::DIRECTORY_TYPE, 0700);
     ASSERT_NS_SUCCEEDED(rv);
 
-#ifdef XP_WIN
-    rv = deepDir->GetPath(dirPath);
-#else
     rv = deepDir->GetNativePath(dirPath);
-#endif
     ASSERT_NS_SUCCEEDED(rv);
   }
 
@@ -1202,13 +1007,8 @@ TEST(TestFile, CreateUnique_TruncatesLongPath)
     rv = file->AppendNative(name);
     ASSERT_NS_SUCCEEDED(rv);
 
-#ifdef XP_WIN
-    nsAutoString pathBefore;
-    rv = file->GetPath(pathBefore);
-#else
     nsAutoCString pathBefore;
     rv = file->GetNativePath(pathBefore);
-#endif
     ASSERT_NS_SUCCEEDED(rv);
     ASSERT_GT(static_cast<int32_t>(pathBefore.Length()), kMaxUniquePathLength)
         << "Test setup: path should exceed the limit before CreateUnique";
@@ -1221,13 +1021,8 @@ TEST(TestFile, CreateUnique_TruncatesLongPath)
     ASSERT_NS_SUCCEEDED(rv);
     EXPECT_TRUE(exists);
 
-#ifdef XP_WIN
-    nsAutoString pathAfter;
-    rv = file->GetPath(pathAfter);
-#else
     nsAutoCString pathAfter;
     rv = file->GetNativePath(pathAfter);
-#endif
     ASSERT_NS_SUCCEEDED(rv);
     EXPECT_LE(static_cast<int32_t>(pathAfter.Length()), kMaxUniquePathLength);
 

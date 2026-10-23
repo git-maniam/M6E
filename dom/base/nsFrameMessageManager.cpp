@@ -112,11 +112,6 @@
 #include "nscore.h"
 #include "xpcpublic.h"
 
-#ifdef XP_WIN
-#  if defined(SendMessage)
-#    undef SendMessage
-#  endif
-#endif
 
 #ifdef FUZZING
 #  include "MessageManagerFuzzer.h"

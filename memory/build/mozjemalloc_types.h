@@ -37,11 +37,7 @@
 #include <stdint.h>
 
 // grab size_t
-#ifdef _MSC_VER
-#  include <crtdefs.h>
-#else
 #  include <stddef.h>
-#endif
 #include <stdbool.h>
 
 #ifdef __cplusplus

@@ -16,18 +16,6 @@ namespace {
 
 // Microsoft Visual Studio
 
-#if defined(_MSC_VER)
-
-#  define FORCE_INLINE __forceinline
-
-#  define ROTL32(x, y) _rotl(x, y)
-#  define ROTL64(x, y) _rotl64(x, y)
-
-#  define BIG_CONSTANT(x) (x)
-
-// Other compilers
-
-#else  // defined(_MSC_VER)
 
 // We can't do always_inline, becasue -Werror -Wattribute will trigger
 // a "might not be able to inline" warning.
@@ -47,7 +35,6 @@ inline uint64_t rotl64(uint64_t x, int8_t r) {
 
 #  define BIG_CONSTANT(x) (x##LLU)
 
-#endif  // !defined(_MSC_VER)
 
 //-----------------------------------------------------------------------------
 // Block read - if your platform needs to do endian-swapping or can only

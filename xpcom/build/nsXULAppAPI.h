@@ -10,9 +10,6 @@
 #include "mozilla/TimeStamp.h"
 #include "nscore.h"
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include <jni.h>
-#endif
 
 class JSString;
 class MessageLoop;
@@ -105,7 +102,6 @@ struct BootstrapConfig;
  */
 #define XRE_SYS_SHARE_EXTENSION_PARENT_DIR "XRESysSExtPD"
 
-#if defined(XP_UNIX) || defined(XP_MACOSX)
 /**
  * Directory service keys for the system-wide and user-specific
  * directories where native manifests used by the WebExtensions
@@ -113,7 +109,6 @@ struct BootstrapConfig;
  */
 #  define XRE_SYS_NATIVE_MANIFESTS "XRESysNativeManifests"
 #  define XRE_USER_NATIVE_MANIFESTS "XREUserNativeManifests"
-#endif
 
 /**
  * A directory service key which specifies the user system extension
@@ -252,9 +247,6 @@ nsresult XRE_ParseAppData(nsIFile* aINIFile, mozilla::XREAppData& aAppData);
 const char* XRE_GeckoProcessTypeToString(GeckoProcessType aProcessType);
 const char* XRE_ChildProcessTypeToAnnotation(GeckoProcessType aProcessType);
 
-#if defined(MOZ_WIDGET_ANDROID)
-void XRE_SetAndroidChildFds(JNIEnv* env, jintArray fds);
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 nsresult XRE_InitChildProcess(int aArgc, char* aArgv[],
                               const XREChildData* aChildData);

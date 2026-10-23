@@ -44,12 +44,7 @@ TEST(TestVideoSink, FrameThrottling)
   RefPtr container = new VideoFrameContainer(
       owner.get(),
       MakeAndAddRef<ImageContainer>(ImageUsageType::VideoFrameContainer,
-#ifdef MOZ_WIDGET_ANDROID
-                                    // Work around bug 1922144
-                                    ImageContainer::SYNCHRONOUS
-#else
                                     ImageContainer::ASYNCHRONOUS
-#endif
                                     ));
 
   MediaQueue<VideoData> videoQueue;
@@ -184,12 +179,7 @@ class TestVideoSinkPause : public testing::Test {
     mContainer = new VideoFrameContainer(
         mOwner.get(),
         MakeAndAddRef<ImageContainer>(ImageUsageType::VideoFrameContainer,
-#ifdef MOZ_WIDGET_ANDROID
-                                      // Work around bug 1922144
-                                      ImageContainer::SYNCHRONOUS
-#else
                                       ImageContainer::ASYNCHRONOUS
-#endif
                                       ));
     mVideoSink = new VideoSink(AbstractThread::GetCurrent(), wrapper,
                                mVideoQueue, mContainer, *mFrameStatistics,

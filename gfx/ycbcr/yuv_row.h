@@ -116,13 +116,7 @@ void LinearScaleYUVToRGB32Row_C(const uint8_t* y_buf,
                                 int source_dx);
 
 
-#if defined(_MSC_VER) && !defined(__CLR_VER) && !defined(__clang__)
-#if defined(VISUALC_HAS_AVX2)
-#define SIMD_ALIGNED(var) __declspec(align(32)) var
-#else
-#define SIMD_ALIGNED(var) __declspec(align(16)) var
-#endif
-#elif defined(__GNUC__) || defined(__clang__)
+#if   defined(__GNUC__) || defined(__clang__)
 // Caveat GCC 4.2 to 4.7 have a known issue using vectors with const.
 #if defined(CLANG_HAS_AVX2) || defined(GCC_HAS_AVX2)
 #define SIMD_ALIGNED(var) var __attribute__((aligned(32)))
@@ -139,12 +133,7 @@ extern SIMD_ALIGNED(const int16_t kCoefficientsRgbY[768][4]);
 // Warning C4799: function has no EMMS instruction.
 // EMMS() is slow and should be called by the calling function once per image.
 #if defined(ARCH_CPU_X86) && !defined(ARCH_CPU_X86_64)
-#if defined(_MSC_VER)
-#define EMMS() __asm emms
-#pragma warning(disable: 4799)
-#else
 #define EMMS() asm("emms")
-#endif
 #else
 #define EMMS() ((void)0)
 #endif

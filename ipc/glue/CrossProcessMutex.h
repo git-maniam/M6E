@@ -8,14 +8,9 @@
 #include "base/process.h"
 #include "mozilla/Mutex.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/UniquePtrExtensions.h"
-#endif
-#if !defined(XP_WIN) && !defined(XP_NETBSD) && !defined(XP_OPENBSD)
 #  include <pthread.h>
 #  include "mozilla/ipc/SharedMemoryMapping.h"
 #  include "mozilla/Atomics.h"
-#endif
 
 namespace IPC {
 template <typename T>
@@ -34,15 +29,7 @@ struct ParamTraits;
 // preferred to making bare calls to CrossProcessMutex.Lock and Unlock.
 //
 namespace mozilla {
-#if defined(XP_WIN)
-typedef mozilla::UniqueFileHandle CrossProcessMutexHandle;
-#elif !defined(XP_NETBSD) && !defined(XP_OPENBSD)
 typedef mozilla::ipc::MutableSharedMemoryHandle CrossProcessMutexHandle;
-#else
-// Stub for other platforms. We can't use uintptr_t here since different
-// processes could disagree on its size.
-typedef uintptr_t CrossProcessMutexHandle;
-#endif
 
 class CrossProcessMutex {
  public:
@@ -103,13 +90,9 @@ class CrossProcessMutex {
   CrossProcessMutex& operator=(const CrossProcessMutex&);
   // NOLINTEND(modernize-use-equals-delete)
 
-#if defined(XP_WIN)
-  HANDLE mMutex;
-#elif !defined(XP_NETBSD) && !defined(XP_OPENBSD)
   mozilla::ipc::SharedMemoryMappingWithHandle mSharedBuffer;
   pthread_mutex_t* mMutex;
   mozilla::Atomic<int32_t>* mCount;
-#endif
 };
 
 typedef detail::BaseAutoLock<CrossProcessMutex&> CrossProcessMutexAutoLock;

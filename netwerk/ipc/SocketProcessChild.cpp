@@ -53,18 +53,8 @@
 #include "nsSocketTransportService2.h"
 #include "nsThreadManager.h"
 
-#if defined(XP_WIN)
-#  include <process.h>
-
-#  include "mozilla/WinDllServices.h"
-#else
 #  include <unistd.h>
-#endif
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/Sandbox.h"
-#  include "mozilla/SandboxProfilerObserver.h"
-#endif
 
 #include "ChildProfilerController.h"
 
@@ -104,11 +94,9 @@ SocketProcessChild* SocketProcessChild::GetSingleton() {
   return sSocketProcessChild;
 }
 
-#if defined(XP_MACOSX)
 extern "C" {
 void CGSShutdownServerConnections();
 };
-#endif
 
 void SocketProcessChild::InitSocketBackground() {
   Endpoint<PSocketProcessBackgroundParent> parentEndpoint;
@@ -178,12 +166,10 @@ bool SocketProcessChild::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
   InitSocketBackground();
 
   SetThisProcessName("Socket Process");
-#if defined(XP_MACOSX)
   // Close all current connections to the WindowServer. This ensures that the
   // Activity Monitor will not label the socket process as "Not responding"
   // because it's not running a native event loop. See bug 1384336.
   CGSShutdownServerConnections();
-#endif  // XP_MACOSX
 
   nsresult rv;
   nsCOMPtr<nsIIOService> ios = do_GetIOService(&rv);
@@ -229,9 +215,6 @@ void SocketProcessChild::ActorDestroy(ActorDestroyReason aWhy) {
     mShuttingDown = true;
   }
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  DestroySandboxProfiler();
-#endif
 
   if (AbnormalShutdown == aWhy) {
     NS_WARNING("Shutting down Socket process early due to a crash!");
@@ -287,13 +270,7 @@ mozilla::ipc::IPCResult SocketProcessChild::RecvInit(
     (void)RecvInitLinuxSandbox(aAttributes.mSandboxBroker());
   }
 
-#if defined(XP_WIN)
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->StartUntrustedModulesProcessor(
-      aAttributes.mIsReadyForBackgroundProcessing());
-#endif  // defined(XP_WIN)
 
-#if defined(XP_MACOSX) || defined(XP_IOS)
   if (aAttributes.mAppleFastDatapathProbeAllowed()) {
     NS_DispatchBackgroundTask(
         NS_NewRunnableFunction("net::AppleFastDatapathProbe", []() {
@@ -307,7 +284,6 @@ mozilla::ipc::IPCResult SocketProcessChild::RecvInit(
               }));
         }));
   }
-#endif  // defined(XP_MACOSX) || defined(XP_IOS)
 
   return IPC_OK();
 }
@@ -358,11 +334,6 @@ mozilla::ipc::IPCResult SocketProcessChild::RecvSetConnectivity(
 
 mozilla::ipc::IPCResult SocketProcessChild::RecvInitLinuxSandbox(
     const Maybe<ipc::FileDescriptor>& aBrokerFd) {
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  RegisterProfilerObserversForSandboxProfiler();
-  SetSocketProcessSandbox(
-      SocketProcessSandboxParams::ForThisProcess(aBrokerFd));
-#endif  // XP_LINUX && MOZ_SANDBOX
   return IPC_OK();
 }
 
@@ -803,28 +774,6 @@ mozilla::ipc::IPCResult SocketProcessChild::RecvTestTriggerMetrics(
   return IPC_OK();
 }
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult SocketProcessChild::RecvGetUntrustedModulesData(
-    GetUntrustedModulesDataResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetUntrustedModulesData()->Then(
-      GetMainThreadSerialEventTarget(), __func__,
-      [aResolver](Maybe<UntrustedModulesData>&& aData) {
-        aResolver(std::move(aData));
-      },
-      [aResolver](nsresult aReason) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-SocketProcessChild::RecvUnblockUntrustedModulesThread() {
-  if (nsCOMPtr<nsIObserverService> obs =
-          mozilla::services::GetObserverService()) {
-    obs->NotifyObservers(nullptr, "unblock-untrusted-modules-thread", nullptr);
-  }
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 bool SocketProcessChild::IsShuttingDown() {
   MutexAutoLock lock(mMutex);

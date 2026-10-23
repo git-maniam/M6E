@@ -40,11 +40,7 @@ nsresult NS_CopyUnicodeToNative(const nsAString& aInput, nsACString& aOutput);
  * system  encoding is UTF-8.
  */
 inline constexpr bool NS_IsNativeUTF8() {
-#ifdef XP_WIN
-  return false;
-#else
   return true;
-#endif
 }
 
 #endif  // nsNativeCharsetUtils_h_

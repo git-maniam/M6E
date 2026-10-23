@@ -5,18 +5,12 @@
 #ifndef _nsPROCESSWIN_H_
 #define _nsPROCESSWIN_H_
 
-#if defined(XP_WIN)
-#  define PROCESSMODEL_WINAPI
-#endif
 
 #include "mozilla/Mutex.h"
 #include "nsIObserver.h"
 #include "nsIProcess.h"
 #include "nsMaybeWeakPtr.h"
 #include "nsString.h"
-#ifndef XP_UNIX
-#  include "prproces.h"
-#endif
 #if defined(PROCESSMODEL_WINAPI)
 // clang-format off
 #  include <windows.h>
@@ -69,8 +63,6 @@ class nsProcess final : public nsIProcess, public nsIObserver {
   int32_t mExitValue MOZ_GUARDED_BY(mLock);
 #if defined(PROCESSMODEL_WINAPI)
   HANDLE mProcess MOZ_GUARDED_BY(mLock);
-#elif !defined(XP_UNIX)
-  PRProcess* mProcess MOZ_GUARDED_BY(mLock);
 #endif
 };
 

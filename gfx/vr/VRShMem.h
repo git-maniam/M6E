@@ -83,20 +83,10 @@ class VRShMem final {
   // being passed into the constructor or accessed via GeckoVRManager
   bool mIsSharedExternalShmem;
 
-#if defined(XP_WIN)
-  bool mRequiresMutex;
-#endif
 
-#if defined(XP_MACOSX)
   int mShmemFD;
-#elif defined(XP_WIN)
-  base::ProcessHandle mShmemFile;
-  base::ProcessHandle mMutex;
-#endif
 
-#if !defined(MOZ_WIDGET_ANDROID)
   int64_t mBrowserGeneration = 0;
-#endif
 };
 }  // namespace gfx
 }  // namespace mozilla

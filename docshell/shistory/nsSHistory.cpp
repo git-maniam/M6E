@@ -290,11 +290,7 @@ NS_INTERFACE_MAP_END
 uint32_t nsSHistory::CalcMaxTotalViewers() {
 // This value allows tweaking how fast the allowed amount of content viewers
 // grows with increasing amounts of memory. Larger values mean slower growth.
-#ifdef ANDROID
-#  define MAX_TOTAL_VIEWERS_BIAS 15.9
-#else
 #  define MAX_TOTAL_VIEWERS_BIAS 14
-#endif
 
   // Calculate an estimate of how many DocumentViewers we should cache based
   // on RAM.  This assumes that the average DocumentViewer is 4MB (conservative)

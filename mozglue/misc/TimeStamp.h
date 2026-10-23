@@ -382,13 +382,11 @@ class TimeStamp {
    * compositors.
    * UNTESTED ON OTHER PLATFORMS
    */
-#if defined(XP_DARWIN) || defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GTK)
   static TimeStamp FromSystemTime(int64_t aSystemTime) {
     static_assert(sizeof(aSystemTime) == sizeof(TimeStampValue),
                   "System timestamp should be same units as TimeStampValue");
     return TimeStamp(aSystemTime);
   }
-#endif
 
   /**
    * Return true if this is the "null" moment
@@ -452,22 +450,10 @@ class TimeStamp {
    */
   static MFBT_API void RecordProcessRestart();
 
-#ifdef XP_LINUX
-  uint64_t RawClockMonotonicNanosecondsSinceBoot() const {
-    return static_cast<uint64_t>(mValue);
-  }
-#endif
 
-#ifdef XP_DARWIN
   // Returns the number of nanoseconds since the mach_absolute_time origin.
   MFBT_API uint64_t RawMachAbsoluteTimeNanoseconds() const;
-#endif
 
-#ifdef XP_WIN
-  uint64_t RawQueryPerformanceCounterValue() const {
-    return static_cast<uint64_t>(mValue);
-  }
-#endif
 
   /**
    * Compute the difference between two timestamps. Both must be non-null.

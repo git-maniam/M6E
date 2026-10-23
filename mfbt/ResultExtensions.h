@@ -279,64 +279,6 @@ auto ToResultInvokeMember(const SmartPtr<const T>& aObj,
   return ToResultInvokeMember<E>(*aObj, aFunc, std::forward<Args>(aArgs)...);
 }
 
-#if defined(XP_WIN) && !defined(_WIN64)
-template <typename E = nsresult, typename T, typename U, typename... XArgs,
-          typename... Args,
-          typename = std::enable_if_t<std::is_base_of_v<U, T>>>
-auto ToResultInvokeMember(T& aObj, nsresult (__stdcall U::*aFunc)(XArgs...),
-                          Args&&... aArgs) {
-  return detail::ToResultInvokeMemberInternal<E,
-                                              detail::select_last_t<XArgs...>>(
-      aObj, aFunc, std::forward<Args>(aArgs)...);
-}
-
-template <typename E = nsresult, typename T, typename U, typename... XArgs,
-          typename... Args,
-          typename = std::enable_if_t<std::is_base_of_v<U, T>>>
-auto ToResultInvokeMember(const T& aObj,
-                          nsresult (__stdcall U::*aFunc)(XArgs...) const,
-                          Args&&... aArgs) {
-  return detail::ToResultInvokeMemberInternal<E,
-                                              detail::select_last_t<XArgs...>>(
-      aObj, aFunc, std::forward<Args>(aArgs)...);
-}
-
-template <typename E = nsresult, typename T, typename U, typename... XArgs,
-          typename... Args>
-auto ToResultInvokeMember(T* const aObj,
-                          nsresult (__stdcall U::*aFunc)(XArgs...),
-                          Args&&... aArgs) {
-  return ToResultInvokeMember<E>(*aObj, aFunc, std::forward<Args>(aArgs)...);
-}
-
-template <typename E = nsresult, typename T, typename U, typename... XArgs,
-          typename... Args>
-auto ToResultInvokeMember(const T* const aObj,
-                          nsresult (__stdcall U::*aFunc)(XArgs...) const,
-                          Args&&... aArgs) {
-  return ToResultInvokeMember<E>(*aObj, aFunc, std::forward<Args>(aArgs)...);
-}
-
-template <typename E = nsresult, template <class> class SmartPtr, typename T,
-          typename U, typename... XArgs, typename... Args,
-          typename = std::enable_if_t<std::is_base_of_v<U, T>>,
-          typename = decltype(*std::declval<const SmartPtr<T>>())>
-auto ToResultInvokeMember(const SmartPtr<T>& aObj,
-                          nsresult (__stdcall U::*aFunc)(XArgs...),
-                          Args&&... aArgs) {
-  return ToResultInvokeMember<E>(*aObj, aFunc, std::forward<Args>(aArgs)...);
-}
-
-template <typename E = nsresult, template <class> class SmartPtr, typename T,
-          typename U, typename... XArgs, typename... Args,
-          typename = std::enable_if_t<std::is_base_of_v<U, T>>,
-          typename = decltype(*std::declval<const SmartPtr<T>>())>
-auto ToResultInvokeMember(const SmartPtr<const T>& aObj,
-                          nsresult (__stdcall U::*aFunc)(XArgs...) const,
-                          Args&&... aArgs) {
-  return ToResultInvokeMember<E>(*aObj, aFunc, std::forward<Args>(aArgs)...);
-}
-#endif
 
 // Macro version of ToResultInvokeMember for member functions. The macro has
 // the advantage of not requiring spelling out the member function's declarator

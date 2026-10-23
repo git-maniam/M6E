@@ -9,13 +9,7 @@
 #include "mar.h"
 #include "mar_cmdline.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#  include <direct.h>
-#  define chdir _chdir
-#else
 #  include <unistd.h>
-#endif
 
 #if !defined(NO_SIGN_VERIFY) && defined(MAR_NSS)
 #  include "cert.h"

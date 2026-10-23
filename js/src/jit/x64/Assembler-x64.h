@@ -118,25 +118,6 @@ static constexpr Register CallTempReg4 = rsi;
 static constexpr Register CallTempReg5 = rdx;
 
 // Different argument registers for WIN64
-#if defined(_WIN64)
-static constexpr Register IntArgReg0 = rcx;
-static constexpr Register IntArgReg1 = rdx;
-static constexpr Register IntArgReg2 = r8;
-static constexpr Register IntArgReg3 = r9;
-static constexpr uint32_t NumIntArgRegs = 4;
-static constexpr Register IntArgRegs[NumIntArgRegs] = {rcx, rdx, r8, r9};
-
-static constexpr Register CallTempNonArgRegs[] = {rax, rdi, rbx, rsi};
-static constexpr uint32_t NumCallTempNonArgRegs = std::size(CallTempNonArgRegs);
-
-static constexpr FloatRegister FloatArgReg0 = xmm0;
-static constexpr FloatRegister FloatArgReg1 = xmm1;
-static constexpr FloatRegister FloatArgReg2 = xmm2;
-static constexpr FloatRegister FloatArgReg3 = xmm3;
-static constexpr uint32_t NumFloatArgRegs = 4;
-static constexpr FloatRegister FloatArgRegs[NumFloatArgRegs] = {xmm0, xmm1,
-                                                                xmm2, xmm3};
-#else
 static constexpr Register IntArgReg0 = rdi;
 static constexpr Register IntArgReg1 = rsi;
 static constexpr Register IntArgReg2 = rdx;
@@ -161,7 +142,6 @@ static constexpr FloatRegister FloatArgReg7 = xmm7;
 static constexpr uint32_t NumFloatArgRegs = 8;
 static constexpr FloatRegister FloatArgRegs[NumFloatArgRegs] = {
     xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
-#endif
 
 // Registers used by RegExpMatcher and RegExpExecMatch stubs (do not use
 // JSReturnOperand).
@@ -183,12 +163,8 @@ static constexpr Register RegExpSearcherLastIndexReg = CallTempReg3;
 static constexpr Register BailoutStubHandlerReg = CallTempReg0;
 
 class ABIArgGenerator : public ABIArgGeneratorShared {
-#if defined(XP_WIN)
-  unsigned regIndex_;
-#else
   unsigned intRegIndex_;
   unsigned floatRegIndex_;
-#endif
   ABIArg current_;
 
  public:
@@ -1241,11 +1217,7 @@ class Assembler : public AssemblerX86Shared {
 
 static inline bool GetIntArgReg(uint32_t intArg, uint32_t floatArg,
                                 Register* out) {
-#if defined(_WIN64)
-  uint32_t arg = intArg + floatArg;
-#else
   uint32_t arg = intArg;
-#endif
   if (arg >= NumIntArgRegs) {
     return false;
   }
@@ -1266,11 +1238,7 @@ static inline bool GetTempRegForIntArg(uint32_t usedIntArgs,
   // Unfortunately, we have to assume things about the point at which
   // GetIntArgReg returns false, because we need to know how many registers it
   // can allocate.
-#if defined(_WIN64)
-  uint32_t arg = usedIntArgs + usedFloatArgs;
-#else
   uint32_t arg = usedIntArgs;
-#endif
   arg -= NumIntArgRegs;
   if (arg >= NumCallTempNonArgRegs) {
     return false;
@@ -1281,11 +1249,7 @@ static inline bool GetTempRegForIntArg(uint32_t usedIntArgs,
 
 static inline bool GetFloatArgReg(uint32_t intArg, uint32_t floatArg,
                                   FloatRegister* out) {
-#if defined(_WIN64)
-  uint32_t arg = intArg + floatArg;
-#else
   uint32_t arg = floatArg;
-#endif
   if (floatArg >= NumFloatArgRegs) {
     return false;
   }

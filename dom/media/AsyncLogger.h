@@ -17,12 +17,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/dom/UnboundedMPSCQueue.h"
 
-#if defined(_WIN32)
-#  include <process.h>
-#  define getpid() _getpid()
-#else
 #  include <unistd.h>
-#endif
 
 namespace mozilla {
 
@@ -325,8 +320,5 @@ class AsyncLogger {
 
 }  // end namespace mozilla
 
-#if defined(_WIN32)
-#  undef getpid
-#endif
 
 #endif  // mozilla_dom_AsyncLogger_h

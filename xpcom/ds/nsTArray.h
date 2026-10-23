@@ -774,11 +774,6 @@ namespace detail {
 // Comparator wrapper for a tri-state comparator function
 template <typename T>
 struct CompareWrapper {
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable : 4180) /* Silence "qualifier applied to function \
-                                     type has no meaning" warning */
-#endif
   MOZ_IMPLICIT CompareWrapper(const T& aComparator)
       : mComparator(aComparator) {}
 
@@ -816,9 +811,6 @@ struct CompareWrapper {
   }
 
   const T& mComparator;
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 };
 
 }  // namespace detail

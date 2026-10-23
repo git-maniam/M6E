@@ -67,9 +67,7 @@ MediaEngineWebRTCMicrophoneSource::MediaEngineWebRTCMicrophoneSource(
           // It would be great if it did but we're already on the media thread.
           /* aStrict = */ false)) {
   MOZ_ASSERT(aMediaDevice->mMediaSource == MediaSourceEnum::Microphone);
-#ifndef ANDROID
   MOZ_ASSERT(mDeviceInfo->DeviceID());
-#endif
 
   // We'll init lazily as needed
   mSettings->mEchoCancellation.Construct(0);

@@ -29,7 +29,6 @@
 #ifndef mozilla_TaggedAnonymousMemory_h
 #define mozilla_TaggedAnonymousMemory_h
 
-#ifndef XP_WIN
 
 #  ifdef __wasi__
 #    include <stdlib.h>
@@ -40,24 +39,6 @@
 
 #  include "mozilla/Types.h"  // IWYU pragma: keep(MFBT_API)
 
-#  ifdef XP_LINUX
-
-#    ifdef __cplusplus
-extern "C" {
-#    endif
-
-MFBT_API void MozTagAnonymousMemory(const void* aPtr, size_t aLength,
-                                    const char* aTag);
-
-MFBT_API void* MozTaggedAnonymousMmap(void* aAddr, size_t aLength, int aProt,
-                                      int aFlags, int aFd, off_t aOffset,
-                                      const char* aTag);
-
-#    ifdef __cplusplus
-}  // extern "C"
-#    endif
-
-#  else  // XP_LINUX
 
 static inline void MozTagAnonymousMemory(const void* aPtr, size_t aLength,
                                          const char* aTag) {}
@@ -73,8 +54,6 @@ static inline void* MozTaggedAnonymousMmap(void* aAddr, size_t aLength,
 #    endif
 }
 
-#  endif  // XP_LINUX
 
-#endif  // !XP_WIN
 
 #endif  // mozilla_TaggedAnonymousMemory_h

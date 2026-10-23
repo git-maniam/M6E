@@ -10,9 +10,6 @@
 #  include "mozilla/a11y/DocAccessibleParent.h"
 #  include "mozilla/a11y/Platform.h"
 #  include "nsAccessibilityService.h"
-#  if defined(XP_WIN)
-#    include "mozilla/a11y/nsWinUtils.h"
-#  endif
 #endif
 #include "MMPrinter.h"
 #include "mozilla/AntiTrackingUtils.h"
@@ -684,9 +681,6 @@ IPCResult WindowGlobalParent::RecvDestroy() {
       // as the owner element. For example, this allows us to gracefully fire
       // accessibility events notifying of the destruction.
       if (auto* docAcc = a11y::DocAccessibleParent::GetFrom(this)) {
-#  if defined(ANDROID)
-        MonitorAutoLock mal(nsAccessibilityService::GetAndroidMonitor());
-#  endif
         docAcc->Destroy();
       }
 #endif
@@ -2267,9 +2261,6 @@ WindowGlobalParent::AllocPDocAccessibleParent(const uint64_t&, const bool&) {
 mozilla::ipc::IPCResult WindowGlobalParent::RecvPDocAccessibleConstructor(
     a11y::PDocAccessibleParent* aDoc, const uint64_t& aParentID,
     const bool& aIsPrintDoc) {
-#  if defined(ANDROID)
-  MonitorAutoLock mal(nsAccessibilityService::GetAndroidMonitor());
-#  endif
   if (ManagedPDocAccessibleParent().Count() > 1) {
     return IPC_FAIL(
         this, "Attempt to construct second PDocAccessible for a PWindowGlobal");
@@ -2338,11 +2329,6 @@ mozilla::ipc::IPCResult WindowGlobalParent::RecvPDocAccessibleConstructor(
       return added;
     }
 
-#  ifdef XP_WIN
-    if (a11y::nsWinUtils::IsWindowEmulationStarted()) {
-      doc->SetEmulatedWindowHandle(parentDoc->GetEmulatedWindowHandle());
-    }
-#  endif
 
     return IPC_OK();
   }
@@ -2394,11 +2380,6 @@ mozilla::ipc::IPCResult WindowGlobalParent::RecvPDocAccessibleConstructor(
   MOZ_ASSERT(IsTop());
   doc->SetTopLevel();
   a11y::DocManager::RemoteDocAdded(doc);
-#  ifdef XP_WIN
-  if (!aIsPrintDoc) {
-    doc->MaybeInitWindowEmulation();
-  }
-#  endif
   return IPC_OK();
 }
 #endif  // ACCESSIBILITY

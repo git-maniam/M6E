@@ -24,11 +24,7 @@ namespace mozilla::ipc {
 
 ChildThreadId GetChildThreadIdFromArgs(
     const CrashReporter::CrashReporterInitArgs& aInitArgs) {
-#if defined(XP_DARWIN)
   return RetainMachSendRight(aInitArgs.threadId().get());
-#else
-  return aInitArgs.threadId();
-#endif  // defined(XP_DARWIN)
 }
 
 CrashReporterHost::CrashReporterHost(

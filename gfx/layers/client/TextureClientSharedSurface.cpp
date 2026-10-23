@@ -11,9 +11,6 @@
 #include "mozilla/layers/ISurfaceAllocator.h"
 #include "nsThreadUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#endif
 
 using namespace mozilla::gl;
 
@@ -56,32 +53,10 @@ TextureFlags SharedSurfaceTextureData::GetTextureFlags() const {
 }
 
 Maybe<uint64_t> SharedSurfaceTextureData::GetBufferId() const {
-#ifdef MOZ_WIDGET_ANDROID
-  if (mDesc.type() ==
-      SurfaceDescriptor::TSurfaceDescriptorAndroidHardwareBuffer) {
-    const SurfaceDescriptorAndroidHardwareBuffer& desc =
-        mDesc.get_SurfaceDescriptorAndroidHardwareBuffer();
-    return Some(desc.bufferId());
-  }
-#endif
   return Nothing();
 }
 
 UniqueFileHandle SharedSurfaceTextureData::GetAcquireFence() {
-#ifdef MOZ_WIDGET_ANDROID
-  if (mDesc.type() ==
-      SurfaceDescriptor::TSurfaceDescriptorAndroidHardwareBuffer) {
-    const SurfaceDescriptorAndroidHardwareBuffer& desc =
-        mDesc.get_SurfaceDescriptorAndroidHardwareBuffer();
-    RefPtr<AndroidHardwareBuffer> buffer =
-        AndroidHardwareBufferManager::Get()->GetBuffer(desc.bufferId());
-    if (!buffer) {
-      return UniqueFileHandle();
-    }
-
-    return buffer->GetAcquireFence();
-  }
-#endif
   return UniqueFileHandle();
 }
 

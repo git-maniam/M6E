@@ -19,9 +19,6 @@
 #include "prenv.h"
 #include "prlink.h"
 
-#ifdef XP_WIN
-#  include "../layers/d3d11/CompositorD3D11.h"
-#endif
 
 #include "VRDisplayClient.h"
 #include "VRDisplayPresentation.h"

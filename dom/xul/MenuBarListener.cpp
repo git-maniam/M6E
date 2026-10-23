@@ -203,55 +203,9 @@ nsresult MenuBarListener::KeyPress(Event* aKeyEvent) {
     mAccessKeyDownCanceled = true;
   }
 
-#ifndef XP_MACOSX
-  // Need to handle F10 specially on Non-Mac platform.
-  if (nativeKeyEvent->mMessage == eKeyPress && keyCode == NS_VK_F10) {
-    if ((keyEvent->GetModifiersForMenuAccessKey() & ~MODIFIER_CONTROL) == 0) {
-      // If the keyboard event should activate the menubar and will be
-      // sent to a remote process, it should be executed with reply
-      // event from the focused remote process.  Note that if the menubar
-      // is active, the event is already marked as "stop cross
-      // process dispatching".  So, in that case, this won't wait
-      // reply from the remote content.
-      if (nativeKeyEvent->WillBeSentToRemoteProcess()) {
-        nativeKeyEvent->StopImmediatePropagation();
-        nativeKeyEvent->MarkAsWaitingReplyFromRemoteProcess();
-        return NS_OK;
-      }
-      // The F10 key just went down by itself or with ctrl pressed.
-      // In Windows, both of these activate the menu bar.
-      ToggleMenuActiveState(ByKeyboard::Yes);
-
-      if (mMenuBar && mMenuBar->IsActive()) {
-#  ifdef MOZ_WIDGET_GTK
-        if (RefPtr child = mMenuBar->GetActiveMenuChild()) {
-          // In GTK, this also opens the first menu.
-          child->OpenMenuPopup(false);
-        }
-#  endif
-        aKeyEvent->StopPropagation();
-        aKeyEvent->PreventDefault();
-      }
-    }
-
-    return NS_OK;
-  }
-#endif  // !XP_MACOSX
 
   RefPtr menuForKey = GetMenuForKeyEvent(*keyEvent);
   if (!menuForKey) {
-#ifdef XP_WIN
-    // Behavior on Windows - this item is on the menu bar, beep and deactivate
-    // the menu bar.
-    // TODO(emilio): This is rather odd, and I cannot get the beep to work,
-    // but this matches what old code was doing...
-    if (mMenuBar && mMenuBar->IsActive() && mMenuBar->IsActiveByKeyboard()) {
-      if (nsCOMPtr<nsISound> sound = do_GetService("@mozilla.org/sound;1")) {
-        sound->Beep();
-      }
-      ToggleMenuActiveState(ByKeyboard::Yes);
-    }
-#endif
     return NS_OK;
   }
 
@@ -330,12 +284,6 @@ nsresult MenuBarListener::KeyDown(Event* aKeyEvent) {
   uint16_t eventPhase = keyEvent->EventPhase();
   bool capturing = (eventPhase == dom::Event_Binding::CAPTURING_PHASE);
 
-#ifndef XP_MACOSX
-  if (capturing && !mAccessKeyDown && theChar == NS_VK_F10 &&
-      (keyEvent->GetModifiersForMenuAccessKey() & ~MODIFIER_CONTROL) == 0) {
-    ReserveKeyIfNeeded(aKeyEvent);
-  }
-#endif
 
   const auto accessKey = LookAndFeel::GetMenuAccessKey();
   if (accessKey && StaticPrefs::ui_key_menuAccessKeyFocuses()) {

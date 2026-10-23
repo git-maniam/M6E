@@ -75,10 +75,6 @@ namespace mozilla {
 class PClipboardWriteRequestParent;
 class PRemoteSpellcheckEngineParent;
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-class SandboxBroker;
-class SandboxBrokerPolicyFactory;
-#endif
 
 class PreallocatedProcessManagerImpl;
 
@@ -1121,7 +1117,6 @@ class ContentParent final : public PContentParent,
   mozilla::ipc::IPCResult RecvCreateAudioIPCConnection(
       CreateAudioIPCConnectionResolver&& aResolver);
 
-#ifndef ANDROID
   // Points mHWInferenceKeepAlive at the live HWInference process, launching it
   // if it is gone. Leaves it null once the restart budget is spent.
   void EnsureHWInferenceConnection();
@@ -1134,7 +1129,6 @@ class ContentParent final : public PContentParent,
 #  endif
 
   mozilla::ipc::IPCResult RecvReleaseHWInferenceConnection();
-#endif  // !ANDROID
 
   already_AddRefed<extensions::PExtensionsParent> AllocPExtensionsParent();
 
@@ -1279,11 +1273,6 @@ class ContentParent final : public PContentParent,
       const MaybeDiscarded<BrowsingContext>& aContext,
       const bool& aShouldAddCount);
 
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvGetModulesTrust(
-      ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-      GetModulesTrustResolver&& aResolver);
-#endif  // defined(XP_WIN)
 
   mozilla::ipc::IPCResult RecvReportServiceWorkerShutdownProgress(
       uint32_t aShutdownStateId,
@@ -1530,11 +1519,9 @@ class ContentParent final : public PContentParent,
   // they're attached to.
   const RefPtr<ThreadsafeContentParentHandle> mThreadsafeHandle;
 
-#ifndef ANDROID
   // One keep-alive held for as long as this process has a connection.
   uint32_t mHWInferenceConnections = 0;
   RefPtr<mozilla::ipc::UtilityProcessKeepAlive> mHWInferenceKeepAlive;
-#endif  // !ANDROID
 
   // The process starts in the LAUNCHING state, and transitions to
   // ALIVE once it can accept IPC messages.  It remains ALIVE only
@@ -1591,11 +1578,6 @@ class ContentParent final : public PContentParent,
 
   nsTArray<nsCOMPtr<nsIObserver>> mIdleListeners;
 
-#ifdef MOZ_X11
-  // Dup of child's X socket, used to scope its resources to this
-  // object instead of the child process's lifetime.
-  UniqueFileHandle mChildXSocketFdDup;
-#endif
 
   RefPtr<PProcessHangMonitorParent> mHangMonitorActor;
 
@@ -1608,11 +1590,6 @@ class ContentParent final : public PContentParent,
 
   RefPtr<glean::FOGTransportParent> mFOGTransportParentActor;
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  RefPtr<SandboxBroker> mSandboxBroker;
-  static mozilla::StaticAutoPtr<SandboxBrokerPolicyFactory>
-      sSandboxBrokerPolicyFactory;
-#endif
 
   // This hashtable is used to run GetFilesHelper objects in the parent process.
   // GetFilesHelper can be aborted by receiving RecvDeleteGetFilesRequest.

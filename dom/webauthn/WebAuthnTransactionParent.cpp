@@ -16,9 +16,6 @@
 #include "nsIWebAuthnRelatedOriginFetcher.h"
 #include "nsThreadUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/WebAuthnTokenManagerWrappers.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -770,47 +767,6 @@ mozilla::ipc::IPCResult WebAuthnTransactionParent::RecvRequestIsUVPAA(
     RequestIsUVPAAResolver&& aResolver) {
   MOZ_ASSERT(NS_IsMainThread());
 
-#ifdef MOZ_WIDGET_ANDROID
-  // Try the nsIWebAuthnService. If we're configured for tests we
-  // will get a result. Otherwise we expect NS_ERROR_NOT_IMPLEMENTED.
-  nsCOMPtr<nsIWebAuthnService> service(
-      do_GetService("@mozilla.org/webauthn/service;1"));
-  bool available;
-  nsresult rv = service->GetIsUVPAA(&available);
-  if (NS_SUCCEEDED(rv)) {
-    aResolver(available);
-    return IPC_OK();
-  }
-
-  // Don't consult the platform API if resident key support is disabled.
-  if (!StaticPrefs::
-          security_webauthn_webauthn_enable_android_fido2_residentkey()) {
-    aResolver(false);
-    return IPC_OK();
-  }
-
-  // The GeckoView implementation of
-  // isUserVerifiyingPlatformAuthenticatorAvailable dispatches the work to a
-  // background thread and returns a MozPromise which we can ->Then to call
-  // aResolver on the current thread.
-  nsCOMPtr<nsISerialEventTarget> target = GetCurrentSerialEventTarget();
-  auto result = java::WebAuthnTokenManager::
-      WebAuthnIsUserVerifyingPlatformAuthenticatorAvailable();
-  auto geckoResult = java::GeckoResult::LocalRef(std::move(result));
-  MozPromise<bool, bool, false>::FromGeckoResult(geckoResult)
-      ->Then(target, __func__,
-             [resolver = std::move(aResolver)](
-                 const MozPromise<bool, bool, false>::ResolveOrRejectValue&
-                     aValue) {
-               if (aValue.IsResolve()) {
-                 resolver(aValue.ResolveValue());
-               } else {
-                 resolver(false);
-               }
-             });
-  return IPC_OK();
-
-#else
 
   nsCOMPtr<nsISerialEventTarget> target = GetCurrentSerialEventTarget();
   nsCOMPtr<nsIRunnable> runnable(NS_NewRunnableFunction(
@@ -834,7 +790,6 @@ mozilla::ipc::IPCResult WebAuthnTransactionParent::RecvRequestIsUVPAA(
       }));
   NS_DispatchBackgroundTask(runnable.forget(), NS_DISPATCH_EVENT_MAY_BLOCK);
   return IPC_OK();
-#endif
 }
 
 void WebAuthnTransactionParent::ActorDestroy(ActorDestroyReason aWhy) {

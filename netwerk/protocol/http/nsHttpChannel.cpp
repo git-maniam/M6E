@@ -146,12 +146,7 @@
 #include "nsUnknownDecoder.h"
 #include "prnetdb.h"
 #include "sslt.h"
-#ifdef XP_WIN
-#  include "HttpWinUtils.h"
-#endif
-#ifdef XP_MACOSX
 #  include "MicrosoftEntraSSOUtils.h"
-#endif
 #ifdef FUZZING
 #  include "mozilla/StaticPrefs_fuzzing.h"
 #endif
@@ -730,7 +725,6 @@ nsresult nsHttpChannel::PrepareToConnect() {
     AddCookiesToRequest();
   }
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
 
   auto prefEnabledForCurrentContainer = [&]() {
     uint32_t containerId = mLoadInfo->GetOriginAttributes().mUserContextId;
@@ -738,15 +732,9 @@ nsresult nsHttpChannel::PrepareToConnect() {
     static_assert(nsIScriptSecurityManager::DEFAULT_USER_CONTEXT_ID == 0);
 
     nsAutoCString prefName;
-#  ifdef XP_WIN
-    prefName = nsPrintfCString("network.http.windows-sso.container-enabled.%u",
-                               containerId);
-#  endif
 
-#  ifdef XP_MACOSX
     prefName = nsPrintfCString(
         "network.http.microsoft-entra-sso.container-enabled.%u", containerId);
-#  endif
 
     bool enabled = false;
     Preferences::GetBool(prefName.get(), &enabled);
@@ -756,25 +744,8 @@ nsresult nsHttpChannel::PrepareToConnect() {
     return enabled;
   };
 
-#endif  // defined(XP_WIN) || defined(XP_MACOSX)
 
-#ifdef XP_WIN
 
-  // If Windows 10 SSO is enabled, we potentially add auth
-  // information to secure top level loads (DOCUMENTs) and iframes
-  // (SUBDOCUMENTs) that aren't anonymous or private browsing.
-  if (StaticPrefs::network_http_windows_sso_enabled() && IsHTTPS() &&
-      !(mLoadFlags & LOAD_ANONYMOUS) && !mPrivateBrowsing) {
-    ExtContentPolicyType type = mLoadInfo->GetExternalContentPolicyType();
-    if ((type == ExtContentPolicy::TYPE_DOCUMENT ||
-         type == ExtContentPolicy::TYPE_SUBDOCUMENT) &&
-        prefEnabledForCurrentContainer()) {
-      AddWindowsSSO(this);
-    }
-  }
-#endif
-
-#ifdef XP_MACOSX
 
   auto isUriMSAuthority = [&]() {
     nsAutoCString endPoint;
@@ -818,7 +789,6 @@ nsresult nsHttpChannel::PrepareToConnect() {
     }
   }
 
-#endif
 
   return ContinuePrepareToConnect();
 }
@@ -1462,12 +1432,6 @@ nsresult nsHttpChannel::Connect() {
     }
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  bool val = false;
-  if (nsIOService::ShouldAddAdditionalSearchHeaders(mURI, &val)) {
-    SetRequestHeader("X-Search-Subdivision"_ns, val ? "1"_ns : "0"_ns, false);
-  }
-#endif
 
   bool isTrackingResource = IsThirdPartyTrackingResource();
   LOG(("nsHttpChannel %p tracking resource=%d, cos=%lu, inc=%d", this,
@@ -4999,14 +4963,10 @@ static bool IsSubRangeRequest(nsHttpRequestHead& aRequestHead) {
   }
 
   if (byteRange.EqualsLiteral("bytes=0-")) {
-#ifndef ANDROID
     glean::network::byte_range_request.Get("cacheable"_ns).Add(1);
-#endif
     return false;
   }
-#ifndef ANDROID
   glean::network::byte_range_request.Get("not_cacheable"_ns).Add(1);
-#endif
   return true;
 }
 

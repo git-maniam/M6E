@@ -285,9 +285,6 @@ ScrollContainerFrame::ScrollContainerFrame(ComputedStyle* aStyle,
       mMayScheduleScrollAnimations(false),
       mScrollbarClickAndHoldScrollendPending(false),
       mForceDisableOverlayScrollbars(false),
-#ifdef MOZ_WIDGET_ANDROID
-      mHasVerticalOverflowForDynamicToolbar(false),
-#endif
       mVelocityQueue(PresContext()) {
   AppendScrollUpdate(ScrollPositionUpdate::NewScrollframe(nsPoint()));
 
@@ -5894,11 +5891,7 @@ void ScrollContainerFrame::DidSetComputedStyle(
   const bool disableOverlayScrollbars =
       [&](const RefPtr<ComputedStyle>& style) {
         if (mIsRoot) {
-#ifdef MOZ_WIDGET_ANDROID
-          const bool isOnMobileOrRDMPane = true;
-#else
           const bool isOnMobileOrRDMPane = PresShell()->InRDMPane();
-#endif
           // On mobile overlay scrollbars on the top level root scroll
           // container are never disabled, that's what Chrome does.
           if (isOnMobileOrRDMPane &&
@@ -6416,19 +6409,6 @@ bool ScrollContainerFrame::ReflowFinished() {
   // reflow has finished.
   AutoScrolledRectCache scrolledRectCache(this, nullptr);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (mIsRoot) {
-    const bool hasVerticalOverflow =
-        GetOverflowAxes().contains(PhysicalAxis::Vertical) &&
-        GetScrollStyles().mVertical != StyleOverflow::Hidden;
-    if (!hasVerticalOverflow &&
-        (mFirstReflow || mHasVerticalOverflowForDynamicToolbar)) {
-      PresShell()->MaybeNotifyShowDynamicToolbar();
-    }
-
-    mHasVerticalOverflowForDynamicToolbar = hasVerticalOverflow;
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   bool doScroll = true;
   if (IsSubtreeDirty()) {

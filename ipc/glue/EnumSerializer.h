@@ -22,9 +22,6 @@ class MessageReader;
 class MessageWriter;
 }  // namespace IPC
 
-#ifdef _MSC_VER
-#  pragma warning(disable : 4800)
-#endif
 
 namespace IPC {
 

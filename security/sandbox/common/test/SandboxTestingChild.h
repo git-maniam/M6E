@@ -12,9 +12,7 @@
 #include "mozilla/UniquePtr.h"
 #include "nsISupports.h"
 
-#ifdef XP_UNIX
 #  include "nsString.h"
-#endif
 
 #if !defined(MOZ_SANDBOX) || !defined(MOZ_DEBUG) || !defined(ENABLE_TESTS)
 #  error "This file should not be used outside of debug with tests"

@@ -50,46 +50,22 @@ void LogTerm();
  * GRE_CONF_NAME          - Name of the GRE Configuration file
  */
 
-#if defined(XP_WIN)
-
-#  define XPCOM_SEARCH_KEY "PATH"
-#  define GRE_CONF_NAME "gre.config"
-#  define GRE_WIN_REG_LOC L"Software\\mozilla.org\\GRE"
-#  define XPCOM_DLL XUL_DLL
-#  define LXPCOM_DLL LXUL_DLL
-#  define XUL_DLL "xul.dll"
-#  define LXUL_DLL L"xul.dll"
-
-#else                  // Unix
 #  include <limits.h>  // for PATH_MAX
 
 #  define XPCOM_DLL XUL_DLL
 
 // you have to love apple..
-#  ifdef XP_MACOSX
 #    define XPCOM_SEARCH_KEY "DYLD_LIBRARY_PATH"
 #    define GRE_FRAMEWORK_NAME "XUL.framework"
 #    define XUL_DLL "XUL"
-#  else
-#    define XPCOM_SEARCH_KEY "LD_LIBRARY_PATH"
-#    define XUL_DLL "libxul" MOZ_DLL_SUFFIX
-#  endif
 
 #  define GRE_CONF_NAME ".gre.config"
 #  define GRE_CONF_PATH "/etc/gre.conf"
 #  define GRE_CONF_DIR "/etc/gre.d"
 #  define GRE_USER_CONF_DIR ".gre.d"
-#endif
 
-#if defined(XP_WIN)
-#  define XPCOM_FILE_PATH_SEPARATOR "\\"
-#  define XPCOM_ENV_PATH_SEPARATOR ";"
-#elif defined(XP_UNIX)
 #  define XPCOM_FILE_PATH_SEPARATOR "/"
 #  define XPCOM_ENV_PATH_SEPARATOR ":"
-#else
-#  error need_to_define_your_file_path_separator_and_illegal_characters
-#endif
 
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX

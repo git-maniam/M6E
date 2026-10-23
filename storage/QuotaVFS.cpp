@@ -14,9 +14,7 @@
 #include "nsEscape.h"
 #include "sqlite3.h"
 
-#if defined(XP_WIN) || defined(XP_UNIX)
 #  include "mozilla/StaticPrefs_dom.h"
-#endif
 
 // The last VFS version for which this file has been updated.
 #define LAST_KNOWN_VFS_VERSION 3
@@ -399,42 +397,6 @@ int QuotaAccess(sqlite3_vfs* vfs, const char* zName, int flags, int* pResOut) {
 
 int QuotaFullPathname(sqlite3_vfs* vfs, const char* zName, int nOut,
                       char* zOut) {
-#if defined(XP_WIN)
-  // SQLite uses GetFullPathnameW which also normailizes file path. If a file
-  // component ends with a dot, it would be removed. However, it's not desired.
-  //
-  // And that would result SQLite uses wrong database and quotaObject.
-  // Note that we are safe to avoid the GetFullPathnameW call for \\?\ prefixed
-  // paths.
-  // And note that this hack will be removed once the issue is fixed directly in
-  // SQLite.
-
-  // zName that starts with "//?/" is the case when a file URI was passed and
-  // zName that starts with "\\?\" is the case when a normal path was passed
-  // (not file URI).
-  if (StaticPrefs::dom_quotaManager_overrideXFullPathname() &&
-      ((zName[0] == '/' && zName[1] == '/' && zName[2] == '?' &&
-        zName[3] == '/') ||
-       (zName[0] == '\\' && zName[1] == '\\' && zName[2] == '?' &&
-        zName[3] == '\\'))) {
-    MOZ_ASSERT(nOut >= vfs->mxPathname);
-    MOZ_ASSERT(static_cast<size_t>(nOut) > strlen(zName));
-
-    size_t index = 0;
-    while (zName[index] != '\0') {
-      if (zName[index] == '/') {
-        zOut[index] = '\\';
-      } else {
-        zOut[index] = zName[index];
-      }
-
-      index++;
-    }
-    zOut[index] = '\0';
-
-    return SQLITE_OK;
-  }
-#elif defined(XP_UNIX)
   // SQLite canonicalizes (resolves path components) file paths on Unix which
   // doesn't work well with file path sanity checks in quota manager. This is
   // especially a problem on mac where /var is a symlink to /private/var.
@@ -488,7 +450,6 @@ int QuotaFullPathname(sqlite3_vfs* vfs, const char* zName, int nOut,
 
     return SQLITE_OK;
   }
-#endif
 
   sqlite3_vfs* orig_vfs = static_cast<sqlite3_vfs*>(vfs->pAppData);
   return orig_vfs->xFullPathname(orig_vfs, zName, nOut, zOut);

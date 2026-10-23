@@ -10,9 +10,7 @@
 #include "mozilla/BlockingResourceBase.h"
 #include "mozilla/ThreadSafety.h"
 
-#ifndef XP_WIN
 #  include <pthread.h>
-#endif
 
 namespace mozilla {
 
@@ -59,14 +57,7 @@ class MOZ_CAPABILITY("recursive mutex") RecursiveMutex
   size_t mEntryCount;
 #endif
 
-#if !defined(XP_WIN)
   pthread_mutex_t mMutex;
-#else
-  // We eschew including windows.h and using CRITICAL_SECTION here so that files
-  // including us don't also pull in windows.h.  Just use a type that's big
-  // enough for CRITICAL_SECTION, and we'll fix it up later.
-  void* mMutex[6];
-#endif
 };
 
 class MOZ_RAII MOZ_SCOPED_CAPABILITY RecursiveMutexAutoLock {

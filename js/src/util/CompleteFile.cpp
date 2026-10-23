@@ -92,19 +92,11 @@ static bool NormalizeWASIPath(const char* filename,
 #endif
 
 static FILE* OpenFile(JSContext* cx, const char* filename) {
-#ifdef XP_WIN
-  JS::UniqueWideChars wideFilename = JS::EncodeUtf8ToWide(cx, filename);
-  if (!wideFilename) {
-    return nullptr;
-  }
-  return _wfopen(wideFilename.get(), L"r");
-#else
   JS::UniqueChars narrowFilename = JS::EncodeUtf8ToNarrow(cx, filename);
   if (!narrowFilename) {
     return nullptr;
   }
   return fopen(narrowFilename.get(), "r");
-#endif
 }
 
 /*

@@ -67,9 +67,6 @@ extern "C" MOZ_ASAN_IGNORE MOZ_EXPORT const char* __asan_default_options() {
 #ifdef MOZ_ASAN_REPORTER
          ":malloc_context_size=20"
 #endif
-#ifdef __ANDROID__
-         ":fast_unwind_on_check=1:fast_unwind_on_fatal=1"
-#endif
          ":max_free_fill_size=268435456:max_malloc_fill_size=268435456"
          ":malloc_fill_byte=228:free_fill_byte=229"
          ":handle_sigill=1:handle_abort=1:handle_sigtrap=1"

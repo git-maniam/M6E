@@ -194,9 +194,7 @@ void WebGLContext::BindBufferRange(GLenum target, GLuint index,
 
   bool needsPrebind = false;
   needsPrebind |= gl->IsANGLE();
-#ifdef XP_MACOSX
   needsPrebind = true;
-#endif
 
   if (gl->WorkAroundDriverBugs() && buffer && needsPrebind) {
     // BindBufferBase/Range will fail (on some drivers) if the buffer name has

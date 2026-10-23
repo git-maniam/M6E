@@ -5,14 +5,8 @@
 #include <cstdlib>
 #include <fcntl.h>
 
-#ifdef _WIN32
-#  include <windows.h>
-#  include <io.h>
-#  include <process.h>
-#else
 #  include <unistd.h>
 #  include <pthread.h>
-#endif
 
 #include "replace_malloc.h"
 #include "FdPrintf.h"
@@ -24,27 +18,16 @@ static bool sStdoutOrStderr = false;
 
 static Mutex sMutex MOZ_UNANNOTATED;
 
-#ifndef _WIN32
 static void prefork() MOZ_NO_THREAD_SAFETY_ANALYSIS { sMutex.Lock(); }
 static void postfork_parent() MOZ_NO_THREAD_SAFETY_ANALYSIS { sMutex.Unlock(); }
 static void postfork_child() { sMutex.Init(); }
-#endif
 
 static size_t GetPid() { return size_t(getpid()); }
 
 static size_t GetTid() {
-#if defined(_WIN32)
-  return size_t(GetCurrentThreadId());
-#else
   return size_t(pthread_self());
-#endif
 }
 
-#ifdef ANDROID
-/* Android doesn't have pthread_atfork defined in pthread.h */
-extern "C" MOZ_EXPORT int pthread_atfork(void (*)(void), void (*)(void),
-                                         void (*)(void));
-#endif
 
 class LogAllocBridge : public ReplaceMallocBridge {
   virtual void InitDebugFd(mozilla::DebugFdRegistry& aRegistry) override {
@@ -133,11 +116,7 @@ void replace_init(malloc_table_t* aTable, ReplaceMallocBridge** aBridge) {
   /* Initialize output file descriptor from the MALLOC_LOG environment
    * variable. Numbers up to 9999 are considered as a preopened file
    * descriptor number. Other values are considered as a file name. */
-#ifdef _WIN32
-  wchar_t* log = _wgetenv(L"MALLOC_LOG");
-#else
   char* log = getenv("MALLOC_LOG");
-#endif
   if (log && *log) {
     int fd = 0;
     const auto* fd_num = log;
@@ -158,27 +137,12 @@ void replace_init(malloc_table_t* aTable, ReplaceMallocBridge** aBridge) {
     if (fd == 1 || fd == 2) {
       sStdoutOrStderr = true;
     }
-#ifdef _WIN32
-    // See comment in FdPrintf.h as to why CreateFile is used.
-    HANDLE handle;
-    if (fd > 0) {
-      handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
-    } else {
-      handle =
-          CreateFileW(log, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                      nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    }
-    if (handle != INVALID_HANDLE_VALUE) {
-      sFd = handle;
-    }
-#else
     if (fd == -1) {
       fd = open(log, O_WRONLY | O_CREAT | O_APPEND, 0644);
     }
     if (fd > 0) {
       sFd = fd;
     }
-#endif
   }
 
   // Don't initialize if we weren't passed a valid MALLOC_LOG.
@@ -200,7 +164,6 @@ void replace_init(malloc_table_t* aTable, ReplaceMallocBridge** aBridge) {
   }
   *aBridge = &bridge;
 
-#ifndef _WIN32
   /* When another thread has acquired a lock before forking, the child
    * process will inherit the lock state but the thread, being nonexistent
    * in the child process, will never release it, leading to a dead-lock
@@ -234,5 +197,4 @@ void replace_init(malloc_table_t* aTable, ReplaceMallocBridge** aBridge) {
    * effects by calling malloc with a size it can't possibly allocate. */
   sFuncs.malloc(-1);
   pthread_atfork(prefork, postfork_parent, postfork_child);
-#endif
 }

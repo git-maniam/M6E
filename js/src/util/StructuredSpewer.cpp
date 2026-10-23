@@ -26,13 +26,7 @@ const StructuredSpewer::NameArray StructuredSpewer::names_ = {
 // The preference here is to use the current working directory,
 // except on Android.
 #  ifndef DEFAULT_SPEW_DIRECTORY
-#    if defined(_WIN32)
 #      define DEFAULT_SPEW_DIRECTORY "."
-#    elif defined(__ANDROID__)
-#      define DEFAULT_SPEW_DIRECTORY "/data/local/tmp"
-#    else
-#      define DEFAULT_SPEW_DIRECTORY "."
-#    endif
 #  endif
 
 bool StructuredSpewer::ensureInitializationAttempted() {

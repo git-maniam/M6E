@@ -6,9 +6,6 @@
 
 #include <algorithm>
 
-#ifdef XP_WIN
-#  include <winsock.h>  // for htonl, htons, ntohl, ntohs
-#endif
 
 #include "mozilla/Components.h"
 #include "mozilla/Sprintf.h"

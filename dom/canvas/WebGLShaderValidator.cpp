@@ -172,12 +172,10 @@ std::unique_ptr<webgl::ShaderValidator> WebGLContext::CreateShaderValidator(
   resources.FragmentPrecisionHigh = mDisableFragHighP ? 0 : 1;
 
   if (gl->WorkAroundDriverBugs()) {
-#ifdef XP_MACOSX
     if (gl->Vendor() == gl::GLVendor::NVIDIA) {
       // Work around bug 890432
       resources.MaxExpressionComplexity = 1000;
     }
-#endif
   }
 
   // -

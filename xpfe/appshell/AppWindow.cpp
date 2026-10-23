@@ -70,18 +70,11 @@
 #include "mozilla/intl/LocaleService.h"
 #include "mozilla/EventDispatcher.h"
 
-#ifdef XP_WIN
-#  include "mozilla/PreXULSkeletonUI.h"
-#  include "mozilla/WindowsVersion.h"
-#  include "nsIWindowsUIUtils.h"
-#endif
 
 #include "mozilla/dom/DocumentL10n.h"
 
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_GTK)
 #  include "mozilla/widget/NativeMenuSupport.h"
 #  define USE_NATIVE_MENUS
-#endif
 
 #define SIZEMODE_NORMAL u"normal"_ns
 #define SIZEMODE_MAXIMIZED u"maximized"_ns
@@ -519,21 +512,11 @@ NS_IMETHODIMP AppWindow::Destroy() {
   // XXX: Skip unmapping the window on Linux due to GLX hangs on the compositor
   // thread with NVIDIA driver 310.32. We don't need to worry about user
   // interactions with destroyed windows on X11 either.
-#ifndef MOZ_WIDGET_GTK
   if (mWindow) mWindow->Show(false);
-#endif
 
   // Raise and focus our parent explicitly on Windows, if visible. Apparently
   // Windows gets the z-order and focus wrong otherwise for nested modal
   // windows, see bug 1977581.
-#ifdef XP_WIN
-  if (nsCOMPtr<nsIBaseWindow> parent = do_QueryReferent(mParentWindow)) {
-    if (nsCOMPtr<nsIWidget> parentWidget = parent->GetMainWidget();
-        parentWidget && parentWidget->IsVisible()) {
-      parentWidget->SetFocus(nsIWidget::Raise::Yes, dom::CallerType::System);
-    }
-  }
-#endif
 
   RemoveTooltipSupport();
 
@@ -1665,153 +1648,6 @@ nsresult AppWindow::GetDocXulStoreKeys(nsString& aUriSpec,
 
 nsresult AppWindow::MaybeSaveEarlyWindowPersistentValues(
     const LayoutDeviceIntRect& aRect) {
-#ifdef XP_WIN
-  if (!ShouldSavePersistentValues()) {
-    return NS_OK;
-  }
-
-  nsAutoString uri;
-  nsAutoString windowElementId;
-  nsresult rv = GetDocXulStoreKeys(uri, windowElementId);
-
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  if (!windowElementId.EqualsLiteral("main-window") ||
-      !uri.EqualsLiteral("chrome://browser/content/browser.xhtml")) {
-    return NS_OK;
-  }
-
-  SkeletonUISettings settings;
-
-  settings.screenX = aRect.X();
-  settings.screenY = aRect.Y();
-  settings.width = aRect.Width();
-  settings.height = aRect.Height();
-
-  settings.maximized = mWindow->SizeMode() == nsSizeMode_Maximized;
-  settings.cssToDevPixelScaling = UnscaledDevicePixelsPerCSSPixel().scale;
-
-  nsCOMPtr<dom::Element> windowElement = GetWindowDOMElement();
-  Document* doc = windowElement->GetComposedDoc();
-  // The bar fills its container at rest and can be wider than it while in the
-  // top layer with its results popover open, so take the span from the
-  // container. The vertical position of the urlbar will be fixed.
-  Element* urlbarContainerEl = doc->GetElementById(u"urlbar-container"_ns);
-
-  nsCOMPtr<nsPIDOMWindowOuter> window = mDocShell->GetWindow();
-  nsCOMPtr<nsIDOMWindowUtils> utils =
-      nsGlobalWindowOuter::Cast(window)->WindowUtils();
-  RefPtr<dom::DOMRect> urlbarRect;
-  rv = utils->GetBoundsWithoutFlushing(urlbarContainerEl,
-                                       getter_AddRefs(urlbarRect));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  CSSPixelSpan urlbar;
-  urlbar.start = urlbarRect->X();
-  urlbar.end = urlbar.start + urlbarRect->Width();
-  settings.urlbarSpan = urlbar;
-
-  Element* navbar = doc->GetElementById(u"nav-bar"_ns);
-
-  // The container holds whichever search bar is shown.
-  Element* searchContainerEl = doc->GetElementById(u"search-container"_ns);
-  CSSPixelSpan searchbar;
-  if (navbar->Contains(searchContainerEl)) {
-    RefPtr<dom::DOMRect> searchbarRect;
-    rv = utils->GetBoundsWithoutFlushing(searchContainerEl,
-                                         getter_AddRefs(searchbarRect));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-    searchbar.start = searchbarRect->X();
-    searchbar.end = searchbar.start + searchbarRect->Width();
-  } else {
-    // There is no searchbar in the UI
-    searchbar.start = 0;
-    searchbar.end = 0;
-  }
-  settings.searchbarSpan = searchbar;
-
-  nsAutoString bookmarksVisibility;
-  Preferences::GetString("browser.toolbars.bookmarks.visibility",
-                         bookmarksVisibility);
-  settings.bookmarksToolbarShown =
-      bookmarksVisibility.EqualsLiteral("always") ||
-      bookmarksVisibility.EqualsLiteral("newtab");
-
-  Element* menubar = doc->GetElementById(u"toolbar-menubar"_ns);
-  settings.menubarShown = !menubar->HasAttribute(u"autohide"_ns);
-
-  ErrorResult err;
-  RefPtr<dom::HTMLCollection> toolbarSprings = navbar->GetElementsByTagNameNS(
-      u"http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"_ns,
-      u"toolbarspring"_ns, err);
-  if (err.Failed()) {
-    return NS_ERROR_FAILURE;
-  }
-  mozilla::Vector<CSSPixelSpan> springs;
-  for (size_t i = 0; i < toolbarSprings->Length(); i++) {
-    RefPtr<Element> springEl = toolbarSprings->Item(i);
-    RefPtr<dom::DOMRect> springRect;
-    rv = utils->GetBoundsWithoutFlushing(springEl, getter_AddRefs(springRect));
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-    CSSPixelSpan spring;
-    spring.start = springRect->X();
-    spring.end = spring.start + springRect->Width();
-    if (!settings.springs.append(spring)) {
-      return NS_ERROR_FAILURE;
-    }
-  }
-
-  settings.rtlEnabled = intl::LocaleService::GetInstance()->IsAppLocaleRTL();
-
-  bool isInTabletMode = false;
-  bool const autoTouchModePref =
-      Preferences::GetBool("browser.touchmode.auto", false);
-  if (autoTouchModePref) {
-    nsCOMPtr<nsIWindowsUIUtils> uiUtils(
-        do_GetService("@mozilla.org/windows-ui-utils;1"));
-    if (!NS_WARN_IF(!uiUtils)) {
-      // We switch to the touch-optimized layout in both Win10 and Win11 tablet-
-      // modes, since only the input mechanism is relevant. (See bug 1819421.)
-      if (IsWin11OrLater()) {
-        uiUtils->GetInWin11TabletMode(&isInTabletMode);
-      } else {
-        uiUtils->GetInWin10TabletMode(&isInTabletMode);
-      }
-    }
-  }
-
-  if (isInTabletMode) {
-    settings.uiDensity = SkeletonUIDensity::Touch;
-  } else {
-    int uiDensityPref = Preferences::GetInt("browser.uidensity", 0);
-    switch (uiDensityPref) {
-      case 0: {
-        settings.uiDensity = SkeletonUIDensity::Default;
-        break;
-      }
-      case 1: {
-        settings.uiDensity = SkeletonUIDensity::Compact;
-        break;
-      }
-      case 2: {
-        settings.uiDensity = SkeletonUIDensity::Touch;
-        break;
-      }
-    }
-  }
-
-  settings.verticalTabs = Preferences::GetBool("sidebar.verticalTabs", false);
-
-  (void)PersistPreXULSkeletonUIValues(settings);
-#endif
 
   return NS_OK;
 }
@@ -2758,11 +2594,7 @@ struct LoadNativeMenusListener {
 // On macOS the hidden window is created eagerly, and we want to wait for it to
 // load the native menus.
 static bool sWaitingForHiddenWindowToLoadNativeMenus =
-#  ifdef XP_MACOSX
     true
-#  else
-    false
-#  endif
     ;
 
 constinit static nsTArray<LoadNativeMenusListener> sLoadNativeMenusListeners;

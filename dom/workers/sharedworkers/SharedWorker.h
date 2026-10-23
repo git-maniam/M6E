@@ -9,9 +9,6 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/WorkerCommon.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 class nsPIDOMWindowInner;
 

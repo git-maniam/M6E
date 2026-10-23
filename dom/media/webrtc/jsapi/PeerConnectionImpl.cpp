@@ -51,12 +51,6 @@
 #include "transportbridge/MediaPipeline.h"
 #include "transportbridge/RtpLogger.h"
 
-#ifdef XP_WIN
-// We need to undef the MS macro for Document::CreateEvent
-#  ifdef CreateEvent
-#    undef CreateEvent
-#  endif
-#endif  // XP_WIN
 
 #include "AudioStreamTrack.h"
 #include "DOMMediaStream.h"
@@ -116,13 +110,6 @@
 #include "nsXULAppAPI.h"
 #include "transport/nr_socket_proxy_config.h"
 
-#ifdef XP_WIN
-// We need to undef the MS macro again in case the windows include file
-// got imported after we included mozilla/dom/Document.h
-#  ifdef CreateEvent
-#    undef CreateEvent
-#  endif
-#endif  // XP_WIN
 
 #include "MediaSegment.h"
 

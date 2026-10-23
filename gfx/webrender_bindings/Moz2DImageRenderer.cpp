@@ -21,13 +21,7 @@
 #  include "prenv.h"
 #endif
 
-#ifdef XP_DARWIN
 #  include "mozilla/gfx/UnscaledFontMac.h"
-#elif defined(XP_WIN)
-#  include "mozilla/gfx/UnscaledFontDWrite.h"
-#else
-#  include "mozilla/gfx/UnscaledFontFreeType.h"
-#endif
 
 namespace std {
 template <>
@@ -176,19 +170,8 @@ void AddNativeFontHandle(WrFontKey aKey, void* aHandle, uint32_t aIndex) {
   auto i = sFontDataTable.find(aKey);
   if (i == sFontDataTable.end()) {
     FontTemplate& font = sFontDataTable[aKey];
-#ifdef XP_DARWIN
     font.mUnscaledFont =
         new UnscaledFontMac(reinterpret_cast<CGFontRef>(aHandle), false);
-#elif defined(XP_WIN)
-    font.mUnscaledFont = new UnscaledFontDWrite(
-        reinterpret_cast<IDWriteFontFace*>(aHandle), nullptr);
-#elif defined(ANDROID)
-    font.mUnscaledFont = new UnscaledFontFreeType(
-        reinterpret_cast<const char*>(aHandle), aIndex);
-#else
-    font.mUnscaledFont = new UnscaledFontFontconfig(
-        reinterpret_cast<const char*>(aHandle), aIndex);
-#endif
   }
 }
 
@@ -252,15 +235,7 @@ static RefPtr<UnscaledFont> GetUnscaledFont(Translator* aTranslator,
   }
   MOZ_ASSERT(data.mData);
   FontType type =
-#ifdef XP_DARWIN
       FontType::MAC;
-#elif defined(XP_WIN)
-      FontType::DWRITE;
-#elif defined(ANDROID)
-      FontType::FREETYPE;
-#else
-      FontType::FONTCONFIG;
-#endif
   // makes a copy of the data
   RefPtr<NativeFontResource> fontResource = Factory::CreateNativeFontResource(
       (uint8_t*)data.mData, data.mSize, type, aTranslator->GetFontContext());

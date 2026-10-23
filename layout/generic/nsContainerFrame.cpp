@@ -803,9 +803,6 @@ void nsContainerFrame::FinishReflowChild(
 
   aKidFrame->DidReflow(aPresContext, aReflowInput);
 }
-#if defined(_MSC_VER) && !defined(__clang__) && defined(_M_AMD64)
-#  pragma optimize("", on)
-#endif
 
 // XXX temporary: hold on to a copy of the old physical version of
 //    FinishReflowChild so that we can convert callers incrementally.

@@ -58,9 +58,6 @@
 #include "secerr.h"
 #include "sslerr.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/ClientAuthCertificateManagerWrappers.h"
-#endif  // MOZ_WIDGET_ANDROID
 
 using namespace mozilla;
 using namespace mozilla::pkix;
@@ -539,25 +536,6 @@ void SelectClientAuthCertificate::DispatchContinuation(
   // selected certificate.
   // On Android, there are no pre-built certificate chains, so use what the OS
   // says is the issuer certificate chain.
-#ifdef MOZ_WIDGET_ANDROID
-  if (jni::IsAvailable()) {
-    jni::ByteArray::LocalRef certBytes = jni::ByteArray::New(
-        reinterpret_cast<const int8_t*>(selectedCertBytes.Elements()),
-        selectedCertBytes.Length());
-    jni::ObjectArray::LocalRef issuersBytes =
-        java::ClientAuthCertificateManager::GetCertificateIssuersBytes(
-            certBytes);
-    if (issuersBytes) {
-      for (size_t i = 0; i < issuersBytes->Length(); i++) {
-        jni::ByteArray::LocalRef issuer = issuersBytes->GetElement(i);
-        nsTArray<uint8_t> issuerBytes(
-            reinterpret_cast<uint8_t*>(issuer->GetElements().Elements()),
-            issuer->Length());
-        selectedCertChainBytes.AppendElement(std::move(issuerBytes));
-      }
-    }
-  }
-#else
   for (const auto& clientCertificateChain : mPotentialClientCertificateChains) {
     if (clientCertificateChain.Length() > 0 &&
         clientCertificateChain[0] == selectedCertBytes) {
@@ -567,7 +545,6 @@ void SelectClientAuthCertificate::DispatchContinuation(
       break;
     }
   }
-#endif  // MOZ_WIDGET_ANDROID
   mContinuation->SetSelectedClientAuthData(std::move(selectedCertBytes),
                                            std::move(selectedCertChainBytes));
   nsCOMPtr<nsIEventTarget> socketThread(
@@ -934,7 +911,6 @@ void DoSelectClientAuthCertificate(NSSSocketControl* info,
   // On Android, gathering potential client certificates and filtering them by
   // issuer is handled by the OS, so `potentialClientCertificates` is expected
   // to be empty here.
-#ifndef MOZ_WIDGET_ANDROID
   FilterPotentialClientCertificatesByCANames(potentialClientCertificates,
                                              caNames, enterpriseCertificates,
                                              potentialClientCertificateChains);
@@ -947,7 +923,6 @@ void DoSelectClientAuthCertificate(NSSSocketControl* info,
     (void)continuation->Run();
     return;
   }
-#endif  // MOZ_WIDGET_ANDROID
 
   nsCOMPtr<nsIRunnable> selectClientAuthCertificate(
       new SelectClientAuthCertificate(

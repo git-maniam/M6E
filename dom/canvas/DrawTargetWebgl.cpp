@@ -39,9 +39,7 @@
 #include "nsIMemoryReporter.h"
 #include "skia/include/core/SkPixmap.h"
 
-#ifdef XP_MACOSX
 #  include "mozilla/gfx/ScaledFontMac.h"
-#endif
 
 namespace mozilla::gfx {
 
@@ -94,24 +92,12 @@ BackingTexture::BackingTexture(const IntSize& aSize, SurfaceFormat aFormat,
                                const RefPtr<WebGLTexture>& aTexture)
     : mSize(aSize), mFormat(aFormat), mTexture(aTexture) {}
 
-#ifdef XP_WIN
-// Work around buggy ANGLE/D3D drivers that may copy blocks of pixels outside
-// the row length. Extra space is reserved at the end of each row up to stride
-// alignment. This does not affect standalone textures.
-static const Etagere::AllocatorOptions kR8AllocatorOptions = {16, 1, 1, 0};
-#endif
 
 SharedTexture::SharedTexture(const IntSize& aSize, SurfaceFormat aFormat,
                              const RefPtr<WebGLTexture>& aTexture,
                              const dom::ContentParentId& aContentId)
     : BackingTexture(aSize, aFormat, aTexture),
       mAtlasAllocator(
-#ifdef XP_WIN
-          aFormat == SurfaceFormat::A8
-              ? Etagere::etagere_atlas_allocator_with_options(
-                    aSize.width, aSize.height, &kR8AllocatorOptions)
-              :
-#endif
               Etagere::etagere_atlas_allocator_new(aSize.width, aSize.height)),
       mContentId(aContentId) {
 }
@@ -6215,7 +6201,6 @@ bool SharedContextWebgl::DrawGlyphsAccel(ScaledFont* aFont,
   DeviceColor color = aOptions.mCompositionOp == CompositionOp::OP_CLEAR
                           ? DeviceColor(1, 1, 1, 1)
                           : static_cast<const ColorPattern&>(aPattern).mColor;
-#if defined(XP_MACOSX)
   // macOS uses gamma-aware blending with font smooth from subpixel AA.
   // If font smoothing is requested, even if there is no subpixel AA, gamma-
   // aware blending might be used and differing amounts of dilation might be
@@ -6223,21 +6208,6 @@ bool SharedContextWebgl::DrawGlyphsAccel(ScaledFont* aFont,
   bool usePreblend = aUseSubpixelAA ||
                      (aFont->GetType() == FontType::MAC &&
                       static_cast<ScaledFontMac*>(aFont)->UseFontSmoothing());
-#elif defined(XP_WIN)
-  // Windows uses gamma-aware blending via ClearType with grayscale and subpixel
-  // AA.
-  bool usePreblend =
-      aUseSubpixelAA || aOptions.mAntialiasMode != AntialiasMode::NONE;
-#elif defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_ANDROID)
-  // FreeType preblend is conditional on gamma pref being enabled.
-  bool usePreblend =
-      (StaticPrefs::gfx_font_rendering_freetype_gamma() >= 0 ||
-       StaticPrefs::gfx_font_rendering_freetype_enhanced_contrast() > 0) &&
-      (aUseSubpixelAA || aOptions.mAntialiasMode != AntialiasMode::NONE);
-#else
-  // Other platforms (uikit) do not use preblend.
-  bool usePreblend = false;
-#endif
 
   // If the font has bitmaps, use the color directly. Otherwise, the texture
   // holds a grayscale mask, so encode the key's subpixel state in the color.

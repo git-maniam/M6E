@@ -121,12 +121,6 @@
 #    define CURL_FORMAT_CURL_OFF_TU    "lu"
 #    define CURL_SUFFIX_CURL_OFF_T     L
 #    define CURL_SUFFIX_CURL_OFF_TU    UL
-#  elif defined(_MSC_VER)
-#    define CURL_TYPEOF_CURL_OFF_T     __int64
-#    define CURL_FORMAT_CURL_OFF_T     "I64d"
-#    define CURL_FORMAT_CURL_OFF_TU    "I64u"
-#    define CURL_SUFFIX_CURL_OFF_T     i64
-#    define CURL_SUFFIX_CURL_OFF_TU    ui64
 #  else
 #    define CURL_TYPEOF_CURL_OFF_T     long long
 #    define CURL_FORMAT_CURL_OFF_T     "lld"
@@ -182,16 +176,6 @@
 #  define CURL_SUFFIX_CURL_OFF_T     i64
 #  define CURL_SUFFIX_CURL_OFF_TU    ui64
 #  define CURL_TYPEOF_CURL_SOCKLEN_T int
-
-#elif defined(__MINGW32__)
-#  define CURL_TYPEOF_CURL_OFF_T     long long
-#  define CURL_FORMAT_CURL_OFF_T     "I64d"
-#  define CURL_FORMAT_CURL_OFF_TU    "I64u"
-#  define CURL_SUFFIX_CURL_OFF_T     LL
-#  define CURL_SUFFIX_CURL_OFF_TU    ULL
-#  define CURL_TYPEOF_CURL_SOCKLEN_T socklen_t
-#  define CURL_PULL_SYS_TYPES_H      1
-#  define CURL_PULL_WS2TCPIP_H       1
 
 #elif defined(__VMS)
 #  if defined(__VAX)
@@ -340,26 +324,6 @@
 
 /* ===================================== */
 /*    KEEP MSVC THE PENULTIMATE ENTRY    */
-/* ===================================== */
-
-#elif defined(_MSC_VER)
-#  if (_MSC_VER >= 900) && (_INTEGRAL_MAX_BITS >= 64)
-#    define CURL_TYPEOF_CURL_OFF_T     __int64
-#    define CURL_FORMAT_CURL_OFF_T     "I64d"
-#    define CURL_FORMAT_CURL_OFF_TU    "I64u"
-#    define CURL_SUFFIX_CURL_OFF_T     i64
-#    define CURL_SUFFIX_CURL_OFF_TU    ui64
-#  else
-#    define CURL_TYPEOF_CURL_OFF_T     long
-#    define CURL_FORMAT_CURL_OFF_T     "ld"
-#    define CURL_FORMAT_CURL_OFF_TU    "lu"
-#    define CURL_SUFFIX_CURL_OFF_T     L
-#    define CURL_SUFFIX_CURL_OFF_TU    UL
-#  endif
-#  define CURL_TYPEOF_CURL_SOCKLEN_T int
-
-/* ===================================== */
-/*    KEEP GENERIC GCC THE LAST ENTRY    */
 /* ===================================== */
 
 #elif defined(__GNUC__) && !defined(_SCO_DS)

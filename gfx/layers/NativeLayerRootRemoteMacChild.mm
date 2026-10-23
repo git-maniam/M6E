@@ -82,7 +82,6 @@ void NativeLayerRootRemoteMacChild::SetLayers(
 
 UniquePtr<NativeLayerRootSnapshotter>
 NativeLayerRootRemoteMacChild::CreateSnapshotter() {
-#ifdef XP_MACOSX
   MOZ_RELEASE_ASSERT(!mWeakSnapshotter,
                      "No NativeLayerRootSnapshotter for this NativeLayerRoot "
                      "should exist when this is called");
@@ -92,9 +91,6 @@ NativeLayerRootRemoteMacChild::CreateSnapshotter() {
     mWeakSnapshotter = cr.get();
   }
   return cr;
-#else
-  return nullptr;
-#endif
 }
 
 void NativeLayerRootRemoteMacChild::OnNativeLayerRootSnapshotterDestroyed(

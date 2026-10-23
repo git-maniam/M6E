@@ -42,13 +42,9 @@
 #include <sanitizer/msan_interface.h>
 #endif
 
-#if defined(__APPLE__) || defined(__FreeBSD__)
 #define sys_mmap mmap
 #define sys_munmap munmap
 #define MAP_ANONYMOUS MAP_ANON
-#else
-#include "third_party/lss/linux_syscall_support.h"
-#endif
 
 namespace google_breakpad {
 

@@ -23,14 +23,6 @@
 #include "wasm/WasmPI.h"
 #include "wasm/WasmStacks.h"
 
-#ifdef XP_WIN
-// We only need the `windows.h` header, but this file can get unified built
-// with WasmSignalHandlers.cpp, which requires `winternal.h` to be included
-// before the `windows.h` header, and so we must include it here for that case.
-#  include <winternl.h>  // must include before util/WindowsWrapper.h's `#undef`s
-
-#  include "util/WindowsWrapper.h"
-#endif
 
 using namespace js::wasm;
 
@@ -69,22 +61,10 @@ void Context::initStackLimit(JSContext* cx) {
   MOZ_ASSERT(!mainStackTarget_.stack);
 
   // See the comment on wasm::Context for why we do this.
-#  if defined(_WIN32)
-  tib_ = reinterpret_cast<_NT_TIB*>(::NtCurrentTeb());
-  updateWin32TibFields();
-#  endif  // _WIN32
 #endif    // ENABLE_WASM_JSPI
 }
 
 #ifdef ENABLE_WASM_JSPI
-#  ifdef _WIN32
-void Context::updateWin32TibFields() {
-  // We must be on the main stack to be able to get accurate values here.
-  MOZ_RELEASE_ASSERT(!onContStack());
-  mainStackTarget_.tibStackBase = tib_->StackBase;
-  mainStackTarget_.tibStackLimit = tib_->StackLimit;
-}
-#  endif  // _WIN32
 #endif    // ENABLE_WASM_JSPI
 
 #ifdef ENABLE_WASM_JSPI

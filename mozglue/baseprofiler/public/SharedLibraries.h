@@ -100,9 +100,6 @@ static bool CompareAddresses(const SharedLibrary& first,
 class SharedLibraryInfo {
  public:
   MFBT_API static SharedLibraryInfo GetInfoForSelf();
-#ifdef XP_WIN
-  MFBT_API static SharedLibraryInfo GetInfoFromPath(const wchar_t* aPath);
-#endif
 
   MFBT_API static void Initialize();
 

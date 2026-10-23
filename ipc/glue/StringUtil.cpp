@@ -15,11 +15,7 @@
 
 // FIXME/cjones: these really only pertain to the linux sys string
 // converters.
-#ifdef XP_WIN
-#  define ICONV_WCHAR_T_ENCODING "UTF-16"
-#else
 #  define ICONV_WCHAR_T_ENCODING "WCHAR_T"
-#endif
 
 // FIXME/cjones: BIG assumption here that std::string is a good
 // container of UTF8-encoded strings.  this is probably wrong, as its
@@ -57,28 +53,6 @@ namespace base {
 // converters, and implementing the one that doesn't exist for OS X
 // and Windows.
 
-#if !defined(XP_DARWIN) && !defined(XP_WIN)
-std::string SysWideToUTF8(const std::wstring& wide) {
-  // FIXME/cjones: do this with iconv
-  return HackyStringConvert<std::wstring, std::string>(wide);
-}
-#endif
 
-#if !defined(XP_DARWIN) && !defined(XP_WIN)
-std::wstring SysUTF8ToWide(const StringPiece& utf8) {
-  // FIXME/cjones: do this with iconv
-  return HackyStringConvert<StringPiece, std::wstring>(utf8);
-}
-
-std::string SysWideToNativeMB(const std::wstring& wide) {
-  // TODO(evanm): we can't assume Linux is UTF-8.
-  return SysWideToUTF8(wide);
-}
-
-std::wstring SysNativeMBToWide(const StringPiece& native_mb) {
-  // TODO(evanm): we can't assume Linux is UTF-8.
-  return SysUTF8ToWide(native_mb);
-}
-#endif
 
 }  // namespace base

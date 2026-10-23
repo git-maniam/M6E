@@ -151,13 +151,11 @@
 #include "mozilla/glean/IpcMetrics.h"
 #include "mozilla/glean/PFOGTransport.h"
 #include "mozilla/hal_sandbox/PHalParent.h"
-#ifndef ANDROID
 #  include "mozilla/hwinference/HWInferenceParent.h"
 #  include "mozilla/hwinference/HWInferenceProcess.h"
 #  ifdef MOZ_WEBSPEECH
 #    include "mozilla/hwinference/PSpeechRecognitionChild.h"
 #  endif
-#endif  // !ANDROID
 #include "mozilla/intl/L10nRegistry.h"
 #include "mozilla/intl/LocaleService.h"
 #include "mozilla/intl/OSPreferences.h"
@@ -250,9 +248,6 @@
 #include "nsIWebBrowserChrome.h"
 #include "nsIXULRuntime.h"
 #include "nsPIDNSService.h"
-#if defined(MOZ_WIDGET_GTK) || defined(XP_WIN)
-#  include "nsIconChannel.h"
-#endif
 #include "XPCSelfHostedShmem.h"
 #include "nsFrameLoaderOwner.h"
 #include "nsMemoryInfoDumper.h"
@@ -283,36 +278,18 @@
 #  include "jsapi/WebrtcGlobalParent.h"
 #endif
 
-#if defined(XP_MACOSX)
 #  include "mozilla/AvailableMemoryWatcher.h"
 #  include "nsMacUtilsImpl.h"
-#endif
 
 #if defined(ANDROID) || defined(LINUX)
 #  include "nsSystemInfo.h"
 #endif
 
-#if defined(XP_LINUX)
-#  include "mozilla/Hal.h"
-#endif
 
-#ifdef ANDROID
-#  include "gfxAndroidPlatform.h"
-#endif
 
 #include "mozilla/PermissionManager.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidBridge.h"
-#  include "mozilla/java/GeckoProcessManagerWrappers.h"
-#  include "mozilla/java/GeckoProcessTypeWrappers.h"
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-#  include <gdk/gdk.h>
-
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
 #include "Crypto.h"
 #include "mozilla/RemoteSpellCheckEngineParent.h"
@@ -323,19 +300,9 @@
 
 #if defined(MOZ_SANDBOX)
 #  include "mozilla/SandboxSettings.h"
-#  if defined(XP_LINUX)
-#    include "mozilla/SandboxBroker.h"
-#    include "mozilla/SandboxBrokerPolicyFactory.h"
-#    include "mozilla/SandboxInfo.h"
-#  endif
-#  if defined(XP_MACOSX)
 #    include "mozilla/Sandbox.h"
-#  endif
 #endif
 
-#ifdef XP_WIN
-#  include "mozilla/WinDllServices.h"
-#endif
 
 #ifdef MOZ_CODE_COVERAGE
 #  include "mozilla/CodeCoverageHandler.h"
@@ -603,10 +570,6 @@ ProcessID GetTelemetryProcessID(const RemoteType& remoteType) {
 }  // anonymous namespace
 
 StaticAutoPtr<LinkedList<ContentParent>> ContentParent::sContentParents;
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-StaticAutoPtr<SandboxBrokerPolicyFactory>
-    ContentParent::sSandboxBrokerPolicyFactory;
-#endif
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
 StaticAutoPtr<std::vector<std::string>> ContentParent::sMacSandboxParams;
 #endif
@@ -687,9 +650,6 @@ void ContentParent::StartUp() {
   Preferences::RegisterCallbackAndCall(&OnFissionBlocklistPrefChange,
                                        kFissionOmitBlockListValues);
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  sSandboxBrokerPolicyFactory = new SandboxBrokerPolicyFactory();
-#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
   sMacSandboxParams = new std::vector<std::string>();
@@ -701,9 +661,6 @@ void ContentParent::ShutDown() {
   // For the most, we rely on normal process shutdown and
   // ClearOnShutdown() to clean up our state.
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  sSandboxBrokerPolicyFactory = nullptr;
-#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
   sMacSandboxParams = nullptr;
@@ -1823,30 +1780,6 @@ void ContentParent::MarkAsDead() {
   // Prevent this process from being re-used.
   PreallocatedProcessManager::Erase(this);
 
-#if defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_PROFILE_GENERATE)
-  if (IsAlive()) {
-    // We're intentionally killing the content process at this point to ensure
-    // that we never have a "dead" content process sitting around and occupying
-    // an Android Service.
-    //
-    // The exception is in MOZ_PROFILE_GENERATE builds where we must allow the
-    // process to shutdown cleanly so that profile data can be dumped. This is
-    // okay as we will not reach our process limit during the profile run.
-    nsCOMPtr<nsIEventTarget> launcherThread(GetIPCLauncher());
-    MOZ_ASSERT(launcherThread);
-
-    auto procType = java::GeckoProcessType::CONTENT();
-    auto selector =
-        java::GeckoProcessManager::Selector::New(procType, OtherPid());
-
-    launcherThread->Dispatch(NS_NewRunnableFunction(
-        "ContentParent::MarkAsDead",
-        [selector =
-             java::GeckoProcessManager::Selector::GlobalRef(selector)]() {
-          java::GeckoProcessManager::ShutdownProcess(selector);
-        }));
-  }
-#endif
 
   mLifecycleState = LifecycleState::DEAD;
 }
@@ -1892,11 +1825,9 @@ void ContentParent::ActorDestroy(ActorDestroyReason why) {
     fss->Forget(ChildID());
   }
 
-#ifndef ANDROID
   // A process that dies never sends its ReleaseHWInferenceConnection.
   mHWInferenceConnections = 0;
   mHWInferenceKeepAlive = nullptr;
-#endif  // !ANDROID
 
   if (why == NormalShutdown && !mCalledClose) {
     // If we shut down normally but haven't called Close, assume somebody
@@ -1960,11 +1891,9 @@ void ContentParent::ActorDestroy(ActorDestroyReason why) {
         // if mCreatedPairedMinidumps is true, we've already generated
         // parent/child dumps for desktop crashes.
         if (!mCreatedPairedMinidumps) {
-#if defined(XP_MACOSX)
           RefPtr<nsAvailableMemoryWatcherBase> memWatcher;
           memWatcher = nsAvailableMemoryWatcherBase::GetSingleton();
           memWatcher->AddChildAnnotations(mCrashReporter);
-#endif
 
           mCrashReporter->GenerateCrashReport();
         }
@@ -2435,12 +2364,6 @@ bool ContentParent::BeginSubprocessLaunch(ProcessPriority aPriority) {
   nsCString parentBuildID(mozilla::PlatformBuildID());
   geckoargs::sParentBuildID.Put(parentBuildID.get(), extraArgs);
 
-#ifdef MOZ_WIDGET_GTK
-  // This is X11-only pending a solution for WebGL in Wayland mode.
-  if (StaticPrefs::dom_ipc_avoid_gtk() && widget::GdkIsX11Display()) {
-    mSubprocess->SetEnv("MOZ_HEADLESS", "1");
-  }
-#endif
 
   MOZ_LOG(mozilla::ipc::gChildProcessLifecycleLog, LogLevel::Info,
           ("REMOTETYPE [childID = %" PRIi32 "] [remoteType = %s]",
@@ -2603,13 +2526,6 @@ ContentParent::ContentParent(const RemoteType& aRemoteType)
 
   mMessageManager = nsFrameMessageManager::NewProcessMessageManager(true);
 
-#if defined(XP_WIN)
-  // Request Windows message deferral behavior on our side of the PContent
-  // channel. Generally only applies to the situation where we get caught in
-  // a deadlock with the plugin process when sending CPOWs.
-  GetIPCChannel()->SetChannelFlags(
-      MessageChannel::REQUIRE_DEFERRED_MESSAGE_PROTECTION);
-#endif
 
   MOZ_LOG(ContentParent::GetLog(), LogLevel::Verbose,
           ("CreateSubprocess: ContentParent id=%p mSubprocess id=%p childID=%d",
@@ -2835,10 +2751,6 @@ bool ContentParent::InitInternal(ProcessPriority aInitialPriority) {
   }
 
   bool isReadyForBackgroundProcessing = false;
-#if defined(XP_WIN)
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  isReadyForBackgroundProcessing = dllSvc->IsReadyForBackgroundProcessing();
-#endif
 
   xpcomInit.perfStatsMask() = PerfStats::GetCollectionMask();
 
@@ -3017,28 +2929,7 @@ bool ContentParent::InitInternal(ProcessPriority aInitialPriority) {
   // purpose. If the decision is made to permanently rely on the pref, this
   // should be changed so that it is required to restart firefox for the change
   // of value to take effect. Always send SetProcessSandbox message on macOS.
-#  if !defined(XP_MACOSX)
-  shouldSandbox = IsContentSandboxEnabled();
-#  endif
 
-#  ifdef XP_LINUX
-  if (shouldSandbox) {
-    MOZ_ASSERT(!mSandboxBroker);
-    bool isFileProcess = mRemoteType.IsFile();
-    UniquePtr<SandboxBroker::Policy> policy =
-        sSandboxBrokerPolicyFactory->GetContentPolicy(Pid(), isFileProcess);
-    if (policy) {
-      brokerFd = Some(FileDescriptor());
-      mSandboxBroker =
-          SandboxBroker::Create(std::move(policy), Pid(), brokerFd.ref());
-      if (!mSandboxBroker) {
-        KillHard("SandboxBroker::Create failed");
-        return false;
-      }
-      MOZ_ASSERT(brokerFd.ref().IsValid());
-    }
-  }
-#  endif
   if (shouldSandbox && !SendSetProcessSandbox(brokerFd)) {
     KillHard("SandboxInitFailed");
   }
@@ -3528,22 +3419,6 @@ ContentParent::AllocPClipboardWriteRequestParent(
 mozilla::ipc::IPCResult ContentParent::RecvGetIconForExtension(
     const nsACString& aFileExt, const uint32_t& aIconSize,
     nsTArray<uint8_t>* bits) {
-#ifdef MOZ_WIDGET_ANDROID
-  NS_ASSERTION(AndroidBridge::Bridge() != nullptr,
-               "AndroidBridge is not available");
-  if (AndroidBridge::Bridge() == nullptr) {
-    // Do not fail - just no icon will be shown
-    return IPC_OK();
-  }
-
-  // Explicitly zero-initialize the output to ensure we do not send
-  // uninitialized heap memory over IPC to the child process to avoid heap data
-  // leakage.
-  bits->InsertElementsAt(0, aIconSize * aIconSize * 4, 0);
-
-  AndroidBridge::Bridge()->GetIconForExtension(aFileExt, aIconSize,
-                                               bits->Elements());
-#endif
   return IPC_OK();
 }
 
@@ -5093,14 +4968,7 @@ mozilla::ipc::IPCResult ContentParent::RecvRemoveIdleObserver(
 
 mozilla::ipc::IPCResult ContentParent::RecvBackUpXResources(
     const FileDescriptor& aXSocketFd) {
-#ifndef MOZ_X11
   MOZ_CRASH("This message only makes sense on X11 platforms");
-#else
-  MOZ_ASSERT(!mChildXSocketFdDup, "Already backed up X resources??");
-  if (aXSocketFd.IsValid()) {
-    mChildXSocketFdDup = aXSocketFd.ClonePlatformHandle();
-  }
-#endif
   return IPC_OK();
 }
 
@@ -5189,7 +5057,6 @@ mozilla::ipc::IPCResult ContentParent::RecvCreateAudioIPCConnection(
   return IPC_OK();
 }
 
-#ifndef ANDROID
 void ContentParent::EnsureHWInferenceConnection() {
   // Re-acquiring unconditionally: a no-op when the process and its actor are
   // up, and what recovers when either went away under us.
@@ -5236,7 +5103,6 @@ mozilla::ipc::IPCResult ContentParent::RecvReleaseHWInferenceConnection() {
   }
   return IPC_OK();
 }
-#endif  // !ANDROID
 
 already_AddRefed<extensions::PExtensionsParent>
 ContentParent::AllocPExtensionsParent() {
@@ -6315,52 +6181,6 @@ static void QueryFirstDailyLoad(const nsACString& aDomain,
 #endif
 }
 
-#ifdef ANDROID
-void ContentParent::RecordAndroidAppLinkTelemetry(
-    mozilla::performance::pageload_event::PageloadEventData* aPageloadData,
-    const TimeStamp& aNavStartTime, CanonicalBrowsingContext* cbc) {
-  MOZ_ASSERT(aPageloadData);
-  MOZ_ASSERT(cbc);
-  uint32_t appLinkLaunchType = cbc->GetAndroidAppLinkLaunchType();
-  if (appLinkLaunchType == 0 /* Unknown applink type */) {
-    return;
-  }
-  // Clear so only the first page load in this context is attributed as an app
-  // link launch; subsequent navigations should not inherit it.
-  cbc->SetAndroidAppLinkLaunchType(0);
-
-  aPageloadData->set_androidAppLinkLaunchType(appLinkLaunchType);
-
-  //  ProcessStart to navigationStart is only meaningful for cold applink
-  //  launches
-  if (appLinkLaunchType != 1 /* Cold applink */) {
-    return;
-  }
-
-  const TimeStamp parentProcessCreationTime = TimeStamp::ProcessCreation();
-  if (parentProcessCreationTime.IsNull() || aNavStartTime.IsNull()) {
-    return;
-  }
-
-  const TimeDuration delta = aNavStartTime - parentProcessCreationTime;
-  if (delta.IsZero()) {
-    return;
-  }
-
-  aPageloadData->set_androidAppLinkToNavigationStart(
-      static_cast<uint32_t>(delta.ToMilliseconds()));
-
-  if (profiler_thread_is_being_profiled_for_markers()) {
-    PROFILER_MARKER_FMT("Applink Startup", NETWORK,
-                        MarkerOptions(MarkerTiming::Interval(
-                            parentProcessCreationTime, aNavStartTime)),
-                        "ContentParent::RecordAndroidAppLinkTelemetry - Parent "
-                        "Process Start To "
-                        "Navigation Start for appLinkLaunchType {}",
-                        appLinkLaunchType);
-  }
-}
-#endif
 
 mozilla::ipc::IPCResult ContentParent::RecvRecordPageLoadEvent(
     mozilla::performance::pageload_event::PageloadEventData&&
@@ -6375,50 +6195,8 @@ mozilla::ipc::IPCResult ContentParent::RecvRecordPageLoadEvent(
       mozilla::performance::pageload_event::IsActiveClient());
 #endif
 
-#if defined(ANDROID)
-  // Get network link type iff android.
-  aPageloadEventData.set_networkType(UpdateNetworkLinkType());
-#endif
 
-#if defined(XP_WIN)
-  // The "hasSSD" property is only set on Windows during the first
-  // call to nsISystemInfo.diskInfo - which is done before
-  // browser-startup-idle-tasks-finished
-  // Other platforms do not compute hasSSD, so there's no reason to
-  // query this on other platforms.
-  nsresult rv;
-  nsCOMPtr<nsIPropertyBag2> infoService =
-      mozilla::components::SystemInfo::Service();
-  bool hasSSD;
-  rv = infoService->GetPropertyAsBool(u"hasSSD"_ns, &hasSSD);
-  if (NS_SUCCEEDED(rv)) {
-    aPageloadEventData.set_hasSsd(hasSSD);
-  }
-#endif
 
-#ifdef ANDROID
-  if (!aBrowsingContext.IsNullOrDiscarded()) {
-    RefPtr<CanonicalBrowsingContext> cbc = aBrowsingContext.get_canonical();
-    if (cbc->IsOwnedByProcess(ChildID())) {
-      RecordAndroidAppLinkTelemetry(&aPageloadEventData, aNavigationStartTime,
-                                    cbc);
-    }
-  }
-
-  // Set the process isolation category based on the remote type for Android.
-  using namespace mozilla::performance::pageload_event;
-  AndroidIsolationCategory isolationCategory;
-  if (mRemoteType.IsSharedWeb()) {
-    isolationCategory = AndroidIsolationCategory::SHARED_WEB;
-  } else if (mRemoteType.IsWebCoopCoep()) {
-    isolationCategory = AndroidIsolationCategory::COOP_ISOLATED;
-  } else if (mRemoteType.IsIsolatedWeb()) {
-    isolationCategory = AndroidIsolationCategory::SITE_ISOLATED;
-  } else {
-    isolationCategory = AndroidIsolationCategory::OTHER;
-  }
-  aPageloadEventData.set_androidIsolationCategory(isolationCategory);
-#endif
 
   // If the domain information exists, then we need to send it using a special
   // page load event ping that is sent via ohttp and stripped of any information
@@ -6913,21 +6691,6 @@ mozilla::ipc::IPCResult ContentParent::RecvAddOrRemovePageAwakeRequest(
   return IPC_OK();
 }
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult ContentParent::RecvGetModulesTrust(
-    ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-    GetModulesTrustResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetModulesTrust(std::move(aModIdents), aRunAtNormalPriority)
-      ->Then(
-          GetMainThreadSerialEventTarget(), __func__,
-          [aResolver](ModulesMapResult&& aResult) {
-            aResolver(Some(ModulesMapResult(std::move(aResult))));
-          },
-          [aResolver](nsresult aRv) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 mozilla::ipc::IPCResult ContentParent::RecvCreateBrowsingContext(
     uint64_t aGroupId, BrowsingContext::IPCInitializer&& aInit) {
@@ -8139,31 +7902,9 @@ IPCResult ContentParent::RecvGetSystemIcon(nsIURI* aURI,
     return IPC_OK();
   }
 
-#if defined(MOZ_WIDGET_GTK)
-  Maybe<ByteBuf> bytebuf = Some(ByteBuf{});
-  nsresult rv = nsIconChannel::GetIcon(aURI, bytebuf.ptr());
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    bytebuf = Nothing();
-  }
-  aResolver(ResolverArgs(rv, std::move(bytebuf)));
-  return IPC_OK();
-#elif defined(XP_WIN)
-  nsIconChannel::GetIconAsync(aURI)->Then(
-      GetCurrentSerialEventTarget(), __func__,
-      [aResolver](ByteBuf&& aByteBuf) {
-        Maybe<ByteBuf> bytebuf = Some(std::move(aByteBuf));
-        aResolver(ResolverArgs(NS_OK, std::move(bytebuf)));
-      },
-      [aResolver](nsresult aErr) {
-        Maybe<ByteBuf> bytebuf = Nothing();
-        aResolver(ResolverArgs(aErr, std::move(bytebuf)));
-      });
-  return IPC_OK();
-#else
   MOZ_CRASH(
       "This message is currently implemented only on GTK and Windows "
       "platforms");
-#endif
 }
 
 IPCResult ContentParent::RecvGetSystemGeolocationPermissionBehavior(

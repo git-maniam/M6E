@@ -17,10 +17,6 @@
 #endif
 #include "mozilla/StaticPrefs_media.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "ffvpx/hwcontext_mediacodec.h"
-#  include "ffvpx/mediacodec.h"
-#endif
 
 namespace mozilla {
 
@@ -124,18 +120,6 @@ RefPtr<MediaDataDecoder::InitPromise> FFmpegAudioDecoder<LIBAV_VER>::Init() {
   }
 
   MediaResult rv(NS_ERROR_NOT_AVAILABLE);
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-  if ((mCDM || mCodecID == AV_CODEC_ID_AAC) &&
-      (XRE_IsRDDProcess() || XRE_IsUtilityProcess())) {
-    AVCodec* codec = FindHardwareAVCodec(mLib, mCodecID, AV_HWDEVICE_TYPE_NONE);
-    if (codec) {
-      rv = InitDecoder(codec, &options);
-      mIsMediaCodec = NS_SUCCEEDED(rv);
-    }
-  }
-
-  if (NS_FAILED(rv))
-#endif
   {
     rv = InitSWDecoder(&options);
   }
@@ -266,9 +250,6 @@ RefPtr<MediaDataDecoder::FlushPromise>
 FFmpegAudioDecoder<LIBAV_VER>::ProcessFlush() {
   MOZ_ASSERT(mTaskQueue->IsOnCurrentThread());
   mInputTimes.Clear();
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-  mHasSentDrainPacket = false;
-#endif
   return FFmpegDataDecoder::ProcessFlush();
 }
 
@@ -415,11 +396,6 @@ MediaResult FFmpegAudioDecoder<LIBAV_VER>::DecodeUsingFFmpeg(
   // resulting audio buffers.
   int32_t submitted = 0;
   int ret = 0;
-#  if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-  // ProcessDrain submits an empty packet to flush the decoder.
-  const bool draining = aPacket->size == 0;
-  if (!draining || !mHasSentDrainPacket) {
-#  endif
     ret = mLib->avcodec_send_packet(mCodecContext, aPacket);
     switch (ret) {
       case AVRESULT_OK:
@@ -438,10 +414,6 @@ MediaResult FFmpegAudioDecoder<LIBAV_VER>::DecodeUsingFFmpeg(
         return MediaResult(NS_ERROR_DOM_MEDIA_DECODE_ERR,
                            RESULT_DETAIL("FFmpeg audio error"));
     }
-#  if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-    mHasSentDrainPacket = draining && ret == AVRESULT_OK;
-  }
-#  endif
 
   MediaResult rv;
   media::NullableTimeUnit previousEnd;
@@ -467,19 +439,6 @@ MediaResult FFmpegAudioDecoder<LIBAV_VER>::DecodeUsingFFmpeg(
         }
         FFMPEG_LOG("  EAGAIN (packets submitted: {}).", submitted);
         rv = NS_OK;
-#  if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-        // Any call that consumed a MediaCodec event rather than a buffer, such
-        // as the output format change reported before the first frame, returns
-        // EAGAIN even though frames are still held. Wait until the drain times
-        // out or we reach EOS.
-        if (draining && mIsMediaCodec &&
-            !mLib->moz_avcodec_mediacodec_is_eos(mCodecContext) &&
-            MaybeDeferDrain(aResults)) {
-          FFMPEG_LOG("  MediaCodec still holding frames, polling for them");
-          return MediaResult(NS_ERROR_NOT_AVAILABLE,
-                             RESULT_DETAIL("Drain deferred"));
-        }
-#  endif
         break;
       }
       case AVERROR_EOF: {
@@ -520,12 +479,6 @@ MediaResult FFmpegAudioDecoder<LIBAV_VER>::DoDecode(MediaRawData* aSample,
   mLib->av_init_packet(packet);
 #endif
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-  MediaResult ret = MaybeAttachCryptoInfo(aSample, packet);
-  if (NS_FAILED(ret)) {
-    return ret;
-  }
-#endif
 
   FFMPEG_LOG("FFmpegAudioDecoder::DoDecode: {} bytes, [{},{}] (Duration: {})",
              aSize, aSample->mTime.ToString().get(),

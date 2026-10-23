@@ -4,9 +4,6 @@
 
 #include "Globals.h"
 
-#ifdef XP_WIN
-#  include <processenv.h>
-#endif
 
 // ***************************************************************************
 // Constants defining allocator size classes and behavior.
@@ -36,21 +33,6 @@ void DefineGlobals() {
 }
 #endif
 
-#ifdef XP_WIN
-
-// Implement getenv without using malloc.
-static char mozillaMallocOptionsBuf[64];
-
-#  define getenv xgetenv
-static char* getenv(const char* name) {
-  if (GetEnvironmentVariableA(name, mozillaMallocOptionsBuf,
-                              sizeof(mozillaMallocOptionsBuf)) > 0) {
-    return mozillaMallocOptionsBuf;
-  }
-
-  return nullptr;
-}
-#endif
 
 // *****************************
 // Runtime configuration options.

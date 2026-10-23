@@ -54,9 +54,6 @@
 class nsExpatDriver;
 class nsIRunnable;
 
-#ifdef _MSC_VER
-#  pragma warning(disable : 4275)
-#endif
 
 class nsParser final : public nsIParser,
                        public nsIStreamListener,

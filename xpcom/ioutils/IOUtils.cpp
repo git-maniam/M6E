@@ -65,19 +65,11 @@
 #include "prtypes.h"
 #include "secoidt.h"
 
-#if defined(XP_UNIX) && !defined(ANDROID)
 #  include "nsSystemInfo.h"
-#endif
 
-#if defined(XP_WIN)
-#  include "nsILocalFileWin.h"
-#elif defined(XP_MACOSX)
 #  include "nsILocalFileMac.h"
-#endif
 
-#ifdef XP_UNIX
 #  include "base/process_util.h"
-#endif
 
 #define REJECT_IF_INIT_PATH_FAILED(_file, _path, _promise, _msg, ...) \
   do {                                                                \
@@ -933,11 +925,9 @@ already_AddRefed<Promise> IOUtils::SetPermissions(GlobalObject& aGlobal,
                                                   ErrorResult& aError) {
   return WithPromiseAndState(
       aGlobal, aError, [&](Promise* promise, auto& state) {
-#if defined(XP_UNIX) && !defined(ANDROID)
         if (aHonorUmask) {
           aPermissions &= ~nsSystemInfo::gUserUmask;
         }
-#endif
 
         nsCOMPtr<nsIFile> file = new nsLocalFile();
         REJECT_IF_INIT_PATH_FAILED(file, aPath, promise,
@@ -1049,98 +1039,6 @@ already_AddRefed<Promise> IOUtils::ComputeHexDigest(
       });
 }
 
-#if defined(XP_WIN)
-
-/* static */
-already_AddRefed<Promise> IOUtils::GetWindowsAttributes(GlobalObject& aGlobal,
-                                                        const nsAString& aPath,
-                                                        ErrorResult& aError) {
-  return WithPromiseAndState(
-      aGlobal, aError, [&](Promise* promise, auto& state) {
-        nsCOMPtr<nsIFile> file = new nsLocalFile();
-        REJECT_IF_INIT_PATH_FAILED(file, aPath, promise,
-                                   "Could not get Windows file attributes of "
-                                   "`%s'",
-                                   NS_ConvertUTF16toUTF8(aPath).get());
-
-        RefPtr<StrongWorkerRef> workerRef;
-        if (!NS_IsMainThread()) {
-          // We need to manually keep the worker alive until the promise
-          // returned by Dispatch() resolves or rejects.
-          workerRef = StrongWorkerRef::CreateForcibly(
-              GetCurrentThreadWorkerPrivate(), __func__);
-        }
-
-        state->mEventQueue
-            ->template Dispatch<uint32_t>([file = std::move(file)]() {
-              return GetWindowsAttributesSync(file);
-            })
-            ->Then(
-                GetCurrentSerialEventTarget(), __func__,
-                [workerRef, promise = RefPtr{promise}](const uint32_t aAttrs) {
-                  WindowsFileAttributes attrs;
-
-                  attrs.mReadOnly.Construct(aAttrs & FILE_ATTRIBUTE_READONLY);
-                  attrs.mHidden.Construct(aAttrs & FILE_ATTRIBUTE_HIDDEN);
-                  attrs.mSystem.Construct(aAttrs & FILE_ATTRIBUTE_SYSTEM);
-
-                  promise->MaybeResolve(attrs);
-                },
-                [workerRef, promise = RefPtr{promise}](const IOError& aErr) {
-                  RejectJSPromise(promise, aErr);
-                });
-      });
-}
-
-/* static */
-already_AddRefed<Promise> IOUtils::SetWindowsAttributes(
-    GlobalObject& aGlobal, const nsAString& aPath,
-    const WindowsFileAttributes& aAttrs, bool aRecursive, ErrorResult& aError) {
-  return WithPromiseAndState(
-      aGlobal, aError, [&](Promise* promise, auto& state) {
-        nsCOMPtr<nsIFile> file = new nsLocalFile();
-        REJECT_IF_INIT_PATH_FAILED(
-            file, aPath, promise,
-            "Could not set Windows file attributes on `%s'",
-            NS_ConvertUTF16toUTF8(aPath).get());
-
-        uint32_t setAttrs = 0;
-        uint32_t clearAttrs = 0;
-
-        if (aAttrs.mReadOnly.WasPassed()) {
-          if (aAttrs.mReadOnly.Value()) {
-            setAttrs |= FILE_ATTRIBUTE_READONLY;
-          } else {
-            clearAttrs |= FILE_ATTRIBUTE_READONLY;
-          }
-        }
-
-        if (aAttrs.mHidden.WasPassed()) {
-          if (aAttrs.mHidden.Value()) {
-            setAttrs |= FILE_ATTRIBUTE_HIDDEN;
-          } else {
-            clearAttrs |= FILE_ATTRIBUTE_HIDDEN;
-          }
-        }
-
-        if (aAttrs.mSystem.WasPassed()) {
-          if (aAttrs.mSystem.Value()) {
-            setAttrs |= FILE_ATTRIBUTE_SYSTEM;
-          } else {
-            clearAttrs |= FILE_ATTRIBUTE_SYSTEM;
-          }
-        }
-
-        DispatchAndResolve<Ok>(
-            state->mEventQueue, promise,
-            [file = std::move(file), setAttrs, clearAttrs, aRecursive]() {
-              return SetWindowsAttributesSync(file, setAttrs, clearAttrs,
-                                              aRecursive);
-            });
-      });
-}
-
-#elif defined(XP_MACOSX)
 
 /* static */
 already_AddRefed<Promise> IOUtils::HasMacXAttr(GlobalObject& aGlobal,
@@ -1243,7 +1141,6 @@ already_AddRefed<Promise> IOUtils::DelMacXAttr(GlobalObject& aGlobal,
       });
 }
 
-#endif
 
 /* static */
 already_AddRefed<Promise> IOUtils::GetFile(
@@ -1887,23 +1784,6 @@ Result<Ok, IOUtils::IOError> IOUtils::RemoveSync(nsIFile* aFile,
                          aFile->HumanReadablePath().get()));
     }
 
-#ifdef XP_WIN
-    // If aRetryReadonly && aRecursive then we will try recursively removing
-    // read-only status and then delete again.
-    if (aRetryReadonly && (rv == NS_ERROR_FILE_ACCESS_DENIED ||
-                           (rv == NS_ERROR_FILE_DIR_NOT_EMPTY && aRecursive))) {
-      if (auto result = SetWindowsAttributesSync(
-              aFile, 0, FILE_ATTRIBUTE_READONLY, aRecursive);
-          result.isErr()) {
-        return Err(IOError::WithCause(
-            result.unwrapErr(),
-            "Could not remove `%s': could not clear readonly attribute",
-            aFile->HumanReadablePath().get()));
-      }
-      return RemoveSync(aFile, aIgnoreAbsent, aRecursive,
-                        /* aRetryReadonly = */ false);
-    }
-#endif
 
     if (rv == NS_ERROR_FILE_DIR_NOT_EMPTY) {
       return Err(IOError(rv,
@@ -2303,62 +2183,6 @@ Result<nsCString, IOUtils::IOError> IOUtils::ComputeHexDigestSync(
   return hexDigest;
 }
 
-#if defined(XP_WIN)
-
-Result<uint32_t, IOUtils::IOError> IOUtils::GetWindowsAttributesSync(
-    nsIFile* aFile) {
-  MOZ_ASSERT(!NS_IsMainThread());
-
-  uint32_t attrs = 0;
-
-  nsCOMPtr<nsILocalFileWin> file = do_QueryInterface(aFile);
-  MOZ_ASSERT(file);
-
-  if (nsresult rv = file->GetWindowsFileAttributes(&attrs); NS_FAILED(rv)) {
-    return Err(IOError(rv, "Could not get Windows file attributes for `%s'",
-                       aFile->HumanReadablePath().get()));
-  }
-  return attrs;
-}
-
-Result<Ok, IOUtils::IOError> IOUtils::SetWindowsAttributesSync(
-    nsIFile* aFile, const uint32_t aSetAttrs, const uint32_t aClearAttrs,
-    bool aRecursive) {
-  MOZ_ASSERT(!NS_IsMainThread());
-
-  nsCOMPtr<nsILocalFileWin> file = do_QueryInterface(aFile);
-  MOZ_ASSERT(file);
-
-  nsresult rv;
-  if (rv = file->SetWindowsFileAttributes(aSetAttrs, aClearAttrs);
-      NS_FAILED(rv)) {
-    return Err(IOError(rv, "Could not set Windows file attributes for `%s'",
-                       aFile->HumanReadablePath().get()));
-  }
-
-  if (!aRecursive) {
-    return Ok{};
-  }
-
-  auto fileInfo = MOZ_TRY(StatSync(aFile));
-  if (fileInfo.mType != FileType::Directory) {
-    return Ok{};
-  }
-
-  auto entries = MOZ_TRY(GetChildrenSync(aFile, /* ignoreAbsent = */ false));
-  for (const auto& entry : entries) {
-    nsCOMPtr<nsIFile> file = new nsLocalFile();
-    rv = PathUtils::InitFileWithPath(file, entry);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      continue;
-    }
-    MOZ_TRY(SetWindowsAttributesSync(file, aSetAttrs, aClearAttrs, aRecursive));
-  }
-
-  return Ok{};
-}
-
-#elif defined(XP_MACOSX)
 
 /* static */
 Result<bool, IOUtils::IOError> IOUtils::HasMacXAttrSync(
@@ -2440,7 +2264,6 @@ Result<Ok, IOUtils::IOError> IOUtils::DelMacXAttrSync(nsIFile* aFile,
   return Ok{};
 }
 
-#endif
 
 /* static */
 void IOUtils::GetProfileBeforeChange(GlobalObject& aGlobal,
@@ -3357,7 +3180,6 @@ void SyncReadFile::ReadBytesInto(const Uint8Array& aDestArray,
 
 void SyncReadFile::Close() { mStream = nullptr; }
 
-#ifdef XP_UNIX
 namespace {
 
 static nsCString FromUnixString(const IOUtils::UnixString& aString) {
@@ -3412,9 +3234,7 @@ uint32_t IOUtils::LaunchProcess(GlobalObject& aGlobal,
     }
   }
 
-#  ifdef XP_MACOSX
   options.disclaim = aOptions.mDisclaim;
-#  endif
 
   base::ProcessHandle pid;
   static_assert(sizeof(pid) <= sizeof(uint32_t),
@@ -3429,7 +3249,6 @@ uint32_t IOUtils::LaunchProcess(GlobalObject& aGlobal,
   MOZ_ASSERT(pid >= 0);
   return static_cast<uint32_t>(pid);
 }
-#endif  // XP_UNIX
 
 }  // namespace mozilla
 

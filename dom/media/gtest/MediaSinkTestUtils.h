@@ -59,12 +59,7 @@ inline already_AddRefed<VideoFrameContainer> MakeSinkTestVideoFrameContainer(
   RefPtr container = new VideoFrameContainer(
       aOwner, MakeAndAddRef<layers::ImageContainer>(
                   layers::ImageUsageType::VideoFrameContainer,
-#ifdef MOZ_WIDGET_ANDROID
-                  // TODO(bug 1922144): Android should use ASYNCHRONOUS too.
-                  layers::ImageContainer::SYNCHRONOUS
-#else
                   layers::ImageContainer::ASYNCHRONOUS
-#endif
                   ));
   return container.forget();
 }

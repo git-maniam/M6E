@@ -10,21 +10,6 @@
 #include "nsIXULAppInfo.h"
 #include "nsString.h"
 
-#if defined(XP_WIN)
-
-#  include <direct.h>
-#  include <guiddef.h>
-#  include <knownfolders.h>
-#  include <shlobj.h>
-#  include <stdio.h>
-#  include <stdlib.h>
-#  include <string.h>
-#  include <windows.h>
-
-#  include "mozilla/WinHeaderOnlyUtils.h"
-#  include "nsIWindowsRegKey.h"
-
-#elif defined(XP_UNIX)
 
 #  include <limits.h>
 #  include <stdlib.h>
@@ -33,19 +18,9 @@
 
 #  include "prenv.h"
 #  include "xpcpublic.h"
-#  if defined(XP_DARWIN)
 #    include "DarwinFileUtils.h"
-#    if defined(MOZ_WIDGET_COCOA)
 #      include "CFTypeRefPtr.h"
-#    elif defined(MOZ_WIDGET_UIKIT)
-#      include "mozilla/UIKitDirProvider.h"
-#    endif
-#  endif
-#  if defined(MOZ_WIDGET_GTK)
-#    include "mozilla/WidgetUtilsGtk.h"
-#  endif
 
-#endif
 
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX
@@ -61,108 +36,12 @@
 #  endif
 #endif
 
-#if defined(XP_WIN)
-// OneDrive For Business folders are named "Business1", "Business2", ...
-// "Business10".
-static const uint32_t kOneDriveBusinessFolderStartIdx = 1;
-static const uint32_t kOneDriveBusinessFolderEndIdx = 10;
 
-static nsresult GetKnownFolder(REFKNOWNFOLDERID aFolderId, nsIFile** aFile) {
-  mozilla::UniquePtr<WCHAR, mozilla::CoTaskMemFreeDeleter> path;
-  SHGetKnownFolderPath(aFolderId, 0, nullptr, getter_Transfers(path));
-
-  if (!path) {
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_NewLocalFile(nsDependentString(path.get()), aFile);
-}
-
-/**
- * Provides a fallback for getting the path to APPDATA or LOCALAPPDATA by
- * querying the registry when the call to SHGetSpecialFolderPathW is unable to
- * provide these paths (Bug 513958).
- */
-static nsresult GetRegWindowsAppDataFolder(bool aLocal, nsIFile** aFile) {
-  HKEY key;
-  LPCWSTR keyName =
-      L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
-  DWORD res = ::RegOpenKeyExW(HKEY_CURRENT_USER, keyName, 0, KEY_READ, &key);
-  if (res != ERROR_SUCCESS) {
-    return NS_ERROR_FAILURE;
-  }
-
-  WCHAR path[MAX_PATH + 2];
-  DWORD type, size;
-  res = RegQueryValueExW(key, (aLocal ? L"Local AppData" : L"AppData"), nullptr,
-                         &type, (LPBYTE)&path, &size);
-  ::RegCloseKey(key);
-  // The call to RegQueryValueExW must succeed, the type must be REG_SZ, the
-  // buffer size must not equal 0, and the buffer size be a multiple of 2.
-  if (res != ERROR_SUCCESS || type != REG_SZ || size == 0 || size % 2 != 0) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Append the trailing slash
-  int len = wcslen(path);
-  if (len > 1 && path[len - 1] != L'\\') {
-    path[len] = L'\\';
-    path[++len] = L'\0';
-  }
-
-  return NS_NewLocalFile(nsDependentString(path, len), aFile);
-}
-
-static const auto kOneDrivePersonalSubkey{u"Personal"_ns};
-
-static nsresult GetOneDriveSyncRoot(const nsAString& aSubkey, nsIFile** aFolder,
-                                    nsIWindowsRegKey* aRegistrySvc = nullptr) {
-  nsresult rv = NS_OK;
-  nsCOMPtr<nsIWindowsRegKey> registrySvc = aRegistrySvc;
-  if (!registrySvc) {
-    registrySvc = do_CreateInstance("@mozilla.org/windows-registry-key;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-  const nsAutoString path =
-      u"Software\\Microsoft\\OneDrive\\Accounts\\"_ns + aSubkey;
-  rv = registrySvc->Open(nsIWindowsRegKey::ROOT_KEY_CURRENT_USER, path,
-                         nsIWindowsRegKey::ACCESS_READ);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (aSubkey.Equals(kOneDrivePersonalSubkey)) {
-    auto isUserLoggedIn{false};
-    rv = registrySvc->HasValue(u"cid"_ns, &isUserLoggedIn);
-    NS_ENSURE_SUCCESS(rv, rv);
-    if (!isUserLoggedIn) {
-      return NS_ERROR_FILE_NOT_FOUND;
-    }
-  }
-  bool hasUserFolder = false;
-  rv = registrySvc->HasValue(u"UserFolder"_ns, &hasUserFolder);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (!hasUserFolder) {
-    return NS_ERROR_FILE_NOT_FOUND;
-  }
-  nsAutoString folderPath;
-  rv = registrySvc->ReadStringValue(u"UserFolder"_ns, folderPath);
-  NS_ENSURE_SUCCESS(rv, rv);
-  return NS_NewLocalFile(folderPath, aFolder);
-}
-#endif  // XP_WIN
-
-#if defined(XP_UNIX)
 static nsresult GetUnixHomeDir(nsIFile** aFile) {
-#  if defined(ANDROID)
-  // XXX no home dir on android; maybe we should return the sdcard if present?
-  return NS_ERROR_FAILURE;
-#  else
   return NS_NewNativeLocalFile(nsDependentCString(PR_GetEnv("HOME")), aFile);
-#  endif
 }
 
 static nsresult GetUnixSystemConfigDir(nsIFile** aFile) {
-#  if defined(ANDROID)
-  return NS_ERROR_FAILURE;
-#  else
   nsAutoCString appName;
   if (nsCOMPtr<nsIXULAppInfo> appInfo =
           do_GetService("@mozilla.org/xre/app-info;1")) {
@@ -180,18 +59,12 @@ static nsresult GetUnixSystemConfigDir(nsIFile** aFile) {
       sysConfigDir.Assign(nsDependentCString(mozSystemConfigDir));
     }
   }
-#    if defined(MOZ_WIDGET_GTK)
-  if (sysConfigDir.IsEmpty() && mozilla::widget::IsRunningUnderFlatpak()) {
-    sysConfigDir.Assign(nsLiteralCString("/app/etc"));
-  }
-#    endif
   if (sysConfigDir.IsEmpty()) {
     sysConfigDir.Assign(nsLiteralCString("/etc"));
   }
   MOZ_TRY(NS_NewNativeLocalFile(sysConfigDir, aFile));
   MOZ_TRY((*aFile)->AppendNative(appName));
   return NS_OK;
-#  endif
 }
 
 /*
@@ -432,70 +305,26 @@ static nsresult GetUnixXDGUserDirectory(SystemDirectories aSystemDirectory,
 
   return NS_OK;
 }
-#endif
 
 nsresult GetSpecialSystemDirectory(SystemDirectories aSystemSystemDirectory,
                                    nsIFile** aFile) {
-#if defined(XP_WIN)
-  WCHAR path[MAX_PATH];
-#else
   char path[MAXPATHLEN];
-#endif
 
   switch (aSystemSystemDirectory) {
     case OS_CurrentWorkingDirectory:
-#if defined(XP_WIN)
-      if (!_wgetcwd(path, MAX_PATH)) {
-        return NS_ERROR_FAILURE;
-      }
-      return NS_NewLocalFile(nsDependentString(path), aFile);
-#else
       if (!getcwd(path, MAXPATHLEN)) {
         return NS_ERROR_FAILURE;
       }
-#endif
 
-#if !defined(XP_WIN)
       return NS_NewNativeLocalFile(nsDependentCString(path), aFile);
-#endif
 
     case OS_TemporaryDirectory:
-#if defined(XP_WIN)
-    {
-      DWORD len = ::GetTempPathW(MAX_PATH, path);
-      if (len == 0) {
-        break;
-      }
-      return NS_NewLocalFile(nsDependentString(path, len), aFile);
-    }
-#elif defined(XP_DARWIN)
     {
       nsAutoCString tempDir;
       DarwinFileUtils::GetTemporaryDirectory(tempDir);
       return NS_NewNativeLocalFile(tempDir, aFile);
     }
 
-#elif defined(XP_UNIX)
-    {
-      static const char* tPath = nullptr;
-      if (!tPath) {
-        tPath = PR_GetEnv("TMPDIR");
-        if (!tPath || !*tPath) {
-          tPath = PR_GetEnv("TMP");
-          if (!tPath || !*tPath) {
-            tPath = PR_GetEnv("TEMP");
-            if (!tPath || !*tPath) {
-              tPath = "/tmp/";
-            }
-          }
-        }
-      }
-      return NS_NewNativeLocalFile(nsDependentCString(tPath), aFile);
-    }
-#else
-      break;
-#endif
-#if defined(MOZ_WIDGET_COCOA)
     case Mac_SystemDirectory: {
       return GetOSXFolderType(kClassicDomain, kSystemFolderType, aFile);
     }
@@ -546,62 +375,7 @@ nsresult GetSpecialSystemDirectory(SystemDirectories aSystemSystemDirectory,
 
       return NS_NewLocalFile(path, aFile);
     }
-#elif defined(XP_WIN)
-    case Win_SystemDirectory: {
-      return GetKnownFolder(FOLDERID_System, aFile);
-    }
 
-    case Win_WindowsDirectory: {
-      return GetKnownFolder(FOLDERID_Windows, aFile);
-    }
-
-    case Win_ProgramFiles: {
-      return GetKnownFolder(FOLDERID_ProgramFiles, aFile);
-    }
-
-    case Win_HomeDirectory: {
-      return GetKnownFolder(FOLDERID_Profile, aFile);
-    }
-    case Win_Programs: {
-      return GetKnownFolder(FOLDERID_Programs, aFile);
-    }
-
-    case Win_Downloads: {
-      return GetKnownFolder(FOLDERID_Downloads, aFile);
-    }
-
-    case Win_Favorites: {
-      return GetKnownFolder(FOLDERID_Favorites, aFile);
-    }
-    case Win_Desktopdirectory: {
-      return GetKnownFolder(FOLDERID_Desktop, aFile);
-    }
-    case Win_Cookies: {
-      return GetKnownFolder(FOLDERID_Cookies, aFile);
-    }
-    case Win_Appdata: {
-      nsresult rv = GetKnownFolder(FOLDERID_RoamingAppData, aFile);
-      if (NS_FAILED(rv)) {
-        rv = GetRegWindowsAppDataFolder(false, aFile);
-      }
-      return rv;
-    }
-    case Win_LocalAppdata: {
-      nsresult rv = GetKnownFolder(FOLDERID_LocalAppData, aFile);
-      if (NS_FAILED(rv)) {
-        rv = GetRegWindowsAppDataFolder(true, aFile);
-      }
-      return rv;
-    }
-    case Win_Documents: {
-      return GetKnownFolder(FOLDERID_Documents, aFile);
-    }
-    case Win_OneDrivePersonal: {
-      return GetOneDriveSyncRoot(kOneDrivePersonalSubkey, aFile);
-    }
-#endif  // XP_WIN
-
-#if defined(XP_UNIX)
     case Unix_HomeDirectory:
       return GetUnixHomeDir(aFile);
 
@@ -612,7 +386,6 @@ nsresult GetSpecialSystemDirectory(SystemDirectories aSystemSystemDirectory,
 
     case Unix_SystemConfigDirectory:
       return GetUnixSystemConfigDir(aFile);
-#endif
 
     default:
       break;
@@ -624,36 +397,12 @@ nsresult GetSpecialSystemDirectoryList(
     SystemDirectoryLists aSystemDirectoryLists,
     nsCOMArray<nsIFile>& aDirectories) {
   switch (aSystemDirectoryLists) {
-#ifdef XP_WIN
-    case Win_OneDriveBusiness: {
-      nsresult rv;
-      nsCOMPtr<nsIWindowsRegKey> registrySvc =
-          do_GetService("@mozilla.org/windows-registry-key;1", &rv);
-      NS_ENSURE_SUCCESS(rv, rv);
-      for (uint32_t idx = kOneDriveBusinessFolderStartIdx;
-           idx <= kOneDriveBusinessFolderEndIdx; ++idx) {
-        nsAutoString businessValue;
-        businessValue.AppendPrintf("Business%d", idx);
-        nsCOMPtr<nsIFile> folder;
-        rv = GetOneDriveSyncRoot(businessValue, getter_AddRefs(folder),
-                                 registrySvc);
-        // Skip folder on error.  Report error only if not
-        // NS_ERROR_FILE_NOT_FOUND, which indicates an unused business folder.
-        if (rv == NS_ERROR_FILE_NOT_FOUND || NS_WARN_IF(NS_FAILED(rv))) {
-          continue;
-        }
-        aDirectories.AppendElement(folder);
-      }
-      return NS_OK;
-    }
-#endif  // XP_WIN
     default:
       break;
   }
   return NS_ERROR_NOT_AVAILABLE;
 }
 
-#if defined(MOZ_WIDGET_COCOA)
 nsresult GetOSXFolderType(short aDomain, OSType aFolderType,
                           nsIFile** aLocalFile) {
   nsresult rv = NS_ERROR_FAILURE;
@@ -668,4 +417,3 @@ nsresult GetOSXFolderType(short aDomain, OSType aFolderType,
   }
   return rv;
 }
-#endif

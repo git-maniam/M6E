@@ -34,18 +34,8 @@
 #include "nsISupportsUtils.h"  // for NS_IF_ADDREF
 #include "nsProxyRelease.h"
 
-#ifdef XP_DARWIN
 #  include "MacIOSurfaceImage.h"
-#endif
 
-#ifdef XP_WIN
-#  include <d3d10_1.h>
-
-#  include "gfxWindowsPlatform.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/layers/D3D11ShareHandleImage.h"
-#  include "mozilla/layers/D3D11YCbCrImage.h"
-#endif
 
 namespace mozilla::layers {
 
@@ -602,62 +592,7 @@ void ImageContainer::EnsureRecycleAllocatorForRDD(
   mRecycleAllocator->SetMaxPoolSize(MAX_POOLED_VIDEO_COUNT);
 }
 
-#ifdef XP_WIN
-already_AddRefed<D3D11RecycleAllocator>
-ImageContainer::GetD3D11RecycleAllocator(KnowsCompositor* aKnowsCompositor,
-                                         gfx::SurfaceFormat aPreferredFormat) {
-  MOZ_ASSERT(aKnowsCompositor);
 
-  if (!aKnowsCompositor->SupportsD3D11()) {
-    return nullptr;
-  }
-
-  RefPtr<ID3D11Device> device = gfx::DeviceManagerDx::Get()->GetImageDevice();
-  if (!device) {
-    return nullptr;
-  }
-
-  RecursiveMutexAutoLock lock(mRecursiveMutex);
-  if (mD3D11RecycleAllocator && mD3D11RecycleAllocator->mDevice == device &&
-      mD3D11RecycleAllocator->GetKnowsCompositor() == aKnowsCompositor) {
-    return do_AddRef(mD3D11RecycleAllocator);
-  }
-
-  mD3D11RecycleAllocator = MakeRefPtr<D3D11RecycleAllocator>(
-      aKnowsCompositor, device, aPreferredFormat);
-
-  if (device != DeviceManagerDx::Get()->GetCompositorDevice()) {
-    RefPtr<SyncObjectClient> syncObject =
-        SyncObjectClient::CreateSyncObjectClient(
-            aKnowsCompositor->GetTextureFactoryIdentifier().mSyncHandle,
-            device);
-    mD3D11RecycleAllocator->SetSyncObject(syncObject);
-  }
-
-  return do_AddRef(mD3D11RecycleAllocator);
-}
-
-already_AddRefed<D3D11YCbCrRecycleAllocator>
-ImageContainer::GetD3D11YCbCrRecycleAllocator(
-    KnowsCompositor* aKnowsCompositor) {
-  if (!aKnowsCompositor->SupportsD3D11() ||
-      !gfx::DeviceManagerDx::Get()->GetImageDevice()) {
-    return nullptr;
-  }
-
-  RecursiveMutexAutoLock lock(mRecursiveMutex);
-  if (mD3D11YCbCrRecycleAllocator &&
-      aKnowsCompositor == mD3D11YCbCrRecycleAllocator->GetKnowsCompositor()) {
-    return do_AddRef(mD3D11YCbCrRecycleAllocator);
-  }
-
-  mD3D11YCbCrRecycleAllocator =
-      MakeRefPtr<D3D11YCbCrRecycleAllocator>(aKnowsCompositor);
-  return do_AddRef(mD3D11YCbCrRecycleAllocator);
-}
-#endif
-
-#ifdef XP_DARWIN
 already_AddRefed<MacIOSurfaceRecycleAllocator>
 ImageContainer::GetMacIOSurfaceRecycleAllocator() {
   RecursiveMutexAutoLock lock(mRecursiveMutex);
@@ -667,7 +602,6 @@ ImageContainer::GetMacIOSurfaceRecycleAllocator() {
 
   return do_AddRef(mMacIOSurfaceRecycleAllocator);
 }
-#endif
 
 // -
 // https://searchfox.org/firefox-main/source/dom/media/ipc/RemoteImageHolder.cpp#46

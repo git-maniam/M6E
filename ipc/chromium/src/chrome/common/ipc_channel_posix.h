@@ -42,9 +42,7 @@ class ChannelPosix final : public Channel, public MessageLoopForIO::Watcher {
 
   void SetOtherPid(base::ProcessId other_pid) override;
 
-#if defined(XP_DARWIN)
   void SetOtherMachTask(task_t task) MOZ_EXCLUDES(SendMutex()) override;
-#endif
 
   const ChannelKind* GetKind() const override { return &sKind; }
 
@@ -72,7 +70,6 @@ class ChannelPosix final : public Channel, public MessageLoopForIO::Watcher {
   virtual void OnFileCanReadWithoutBlocking(int fd) override;
   virtual void OnFileCanWriteWithoutBlocking(int fd) override;
 
-#if defined(XP_DARWIN)
   void CloseDescriptors(uint32_t pending_fd_id) MOZ_REQUIRES(IOThread())
       MOZ_EXCLUDES(SendMutex());
 
@@ -80,7 +77,6 @@ class ChannelPosix final : public Channel, public MessageLoopForIO::Watcher {
   // handles to the remote process, or accept handles from the remote process.
   bool AcceptMachPorts(Message& msg) MOZ_REQUIRES(IOThread());
   bool TransferMachPorts(Message& msg) MOZ_REQUIRES_SHARED(chan_cap_);
-#endif
 
   void OutputQueuePush(mozilla::UniquePtr<Message> msg)
       MOZ_REQUIRES(SendMutex());
@@ -156,7 +152,6 @@ class ChannelPosix final : public Channel, public MessageLoopForIO::Watcher {
   base::ProcessId other_pid_ MOZ_GUARDED_BY(chan_cap_) =
       base::kInvalidProcessId;
 
-#if defined(XP_DARWIN)
   struct PendingDescriptors {
     uint32_t id;
     nsTArray<mozilla::UniqueFileHandle> handles;
@@ -170,7 +165,6 @@ class ChannelPosix final : public Channel, public MessageLoopForIO::Watcher {
   // If available, the task port for the remote process.
   // Only used if mode_ == MODE_BROKER_SERVER.
   mozilla::UniqueMachSendRight other_task_ MOZ_GUARDED_BY(chan_cap_);
-#endif
 };
 
 }  // namespace IPC

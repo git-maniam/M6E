@@ -50,15 +50,8 @@
 #include "js/ProfilingStack.h"
 #include "js/Transcoding.h"
 
-#ifdef XP_WIN
-#  include "mozilla/WinHeaderOnlyUtils.h"
-#else
 #  include <sys/mman.h>
-#endif
 
-#ifdef XP_IOS
-#  include <CoreFoundation/CoreFoundation.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -77,17 +70,6 @@ nsIPrincipal* nsXPConnect::gSystemPrincipal = nullptr;
 
 /***************************************************************************/
 
-#ifdef XP_IOS
-// Check if iOS LockdownMode is enabled, which blocks the JIT everywhere.
-static bool IsLockdownModeEnabled() {
-  CFPropertyListRef prefValue = CFPreferencesCopyValue(
-      CFSTR("LDMGlobalEnabled"), kCFPreferencesAnyApplication,
-      kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
-  bool enabled = prefValue == kCFBooleanTrue;
-  if (prefValue) CFRelease(prefValue);
-  return enabled;
-}
-#endif
 
 static void InitJSEngine() {
 #if defined(ENABLE_JIT_SIMD) && \
@@ -103,11 +85,6 @@ static void InitJSEngine() {
                 javascript_options_other_processes_disable_jit()) {
     JS::DisableJitBackend();
   }
-#ifdef XP_IOS
-  else if (IsLockdownModeEnabled()) {
-    JS::DisableJitBackend();
-  }
-#endif
 
   // Set all JS::Prefs.
   SET_JS_PREFS_FROM_BROWSER_PREFS;
@@ -1180,27 +1157,15 @@ void xpc::ReadOnlyPage::Write(const volatile bool* aPtr, bool aValue) {
   MOZ_RELEASE_ASSERT(PR_GetPageSize() == alignof(ReadOnlyPage));
   MOZ_RELEASE_ASSERT(
       reinterpret_cast<uintptr_t>(&sInstance) % alignof(ReadOnlyPage) == 0);
-#ifdef XP_WIN
-  AutoVirtualProtect prot(const_cast<ReadOnlyPage*>(&sInstance),
-                          alignof(ReadOnlyPage), PAGE_READWRITE);
-  MOZ_RELEASE_ASSERT(prot && (prot.PrevProt() & 0xFF) == PAGE_READONLY);
-#else
   int ret = mprotect(const_cast<ReadOnlyPage*>(&sInstance),
                      alignof(ReadOnlyPage), PROT_READ | PROT_WRITE);
   MOZ_RELEASE_ASSERT(ret == 0);
-#endif
   MOZ_RELEASE_ASSERT(aPtr == &sInstance.mNonLocalConnectionsDisabled ||
                      aPtr == &sInstance.mTurnOffAllSecurityPref);
-#ifdef XP_WIN
-  BOOL ret = WriteProcessMemory(GetCurrentProcess(), const_cast<bool*>(aPtr),
-                                &aValue, sizeof(bool), nullptr);
-  MOZ_RELEASE_ASSERT(ret);
-#else
   *const_cast<volatile bool*>(aPtr) = aValue;
   ret = mprotect(const_cast<ReadOnlyPage*>(&sInstance), alignof(ReadOnlyPage),
                  PROT_READ);
   MOZ_RELEASE_ASSERT(ret == 0);
-#endif
 }
 
 void xpc::ReadOnlyPage::Init() {

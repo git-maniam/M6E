@@ -38,19 +38,10 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
 #if (defined(XP_WIN) || defined(MOZ_WIDGET_GTK) || \
      defined(MOZ_WIDGET_ANDROID)) &&               \
     defined(MOZ_USE_HWDECODE) && !defined(MOZ_FFVPX_AUDIOONLY)
-#  ifdef XP_WIN
-    if (!XRE_IsGPUProcess()) {
-      return;
-    }
-#  else
     if (!XRE_IsRDDProcess() && !XRE_IsUtilityProcess() &&
-#    ifdef MOZ_WIDGET_ANDROID
-        !XRE_IsGPUProcess() &&
-#    endif
         !(XRE_IsParentProcess() && PR_GetEnv("MOZ_RUN_GTEST"))) {
       return;
     }
-#  endif
 
     if (!gfx::gfxVars::IsInitialized()) {
       MOZ_ASSERT(AppShutdown::IsInOrBeyond(ShutdownPhase::XPCOMShutdown));
@@ -58,20 +49,6 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
     }
 
     const AVHWDeviceType kDeviceTypes[] = {
-#  ifdef XP_WIN
-        AV_HWDEVICE_TYPE_D3D11VA,
-#  endif
-#  ifdef MOZ_WIDGET_GTK
-#    ifdef MOZ_USE_HWDECODE_VULKAN
-        AV_HWDEVICE_TYPE_VULKAN,
-#    endif
-        AV_HWDEVICE_TYPE_VAAPI,
-        AV_HWDEVICE_TYPE_NONE,  // Placeholder for V4L2.
-#  endif
-#  ifdef MOZ_WIDGET_ANDROID
-        AV_HWDEVICE_TYPE_MEDIACODEC,
-        AV_HWDEVICE_TYPE_NONE,  // Placeholder for audio.
-#  endif
     };
 
     struct CodecEntry {
@@ -93,21 +70,6 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
         {AV_CODEC_ID_VP8, gfx::gfxVars::UseVP8HwDecode()},
 #  endif
 
-#  if defined(MOZ_WIDGET_GTK) && !defined(FFVPX_VERSION)
-    // These proprietary video codecs can only be decoded via hardware by using
-    // the system ffmpeg, not supported by ffvpx.
-#    if LIBAVCODEC_VERSION_MAJOR >= 55
-        {AV_CODEC_ID_HEVC, gfx::gfxVars::UseHEVCHwDecode()},
-#    endif
-        {AV_CODEC_ID_H264, gfx::gfxVars::UseH264HwDecode()},
-#  endif
-#  ifdef MOZ_WIDGET_ANDROID
-        // These proprietary codecs can only be decoded via MediaCodec decoders,
-        // but the underlying implementation may be software or hardware.
-        {AV_CODEC_ID_HEVC, true},
-        {AV_CODEC_ID_H264, true},
-        {AV_CODEC_ID_AAC, true},
-#  endif
     };
 
     {
@@ -243,23 +205,9 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
       supports += media::DecodeSupport::SoftwareDecode;
     }
     if (IsHWDecodingSupported(codecId)) {
-#ifdef MOZ_WIDGET_ANDROID
-      const auto* videoInfo = trackInfo.GetAsVideoInfo();
-      const gfx::ColorDepth colorDepth =
-          videoInfo ? videoInfo->mColorDepth : gfx::ColorDepth::COLOR_8;
-      const gfx::IntSize size = videoInfo ? videoInfo->mImage : gfx::IntSize();
-      supports +=
-          GetMediaCodecDecodeSupport(codecId, mimeType, colorDepth, size);
-#else
       supports += media::DecodeSupport::HardwareDecode;
-#endif
     }
 
-#ifdef XP_WIN
-    // TODO : add this for Android as well in bug 1974849.
-    MOZ_ASSERT_IF(XRE_IsGPUProcess() && IsVideoCodec(codecId),
-                  !supports.contains(media::DecodeSupport::SoftwareDecode));
-#endif
 
     MOZ_LOG_FMT(sPDMLog, LogLevel::Debug,
                 "FFmpeg decoder {} requested type '{}'",
@@ -275,60 +223,9 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
     return true;
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  // Returns the support for decoding with MediaCodec given the color depth and
-  // frame size.
-  static media::DecodeSupportSet GetMediaCodecDecodeSupport(
-      AVCodecID aCodec, const nsACString& aMimeType,
-      gfx::ColorDepth aColorDepth, const gfx::IntSize& aSize) {
-    // Because we don't provide software implementations of H264 or HEVC on
-    // Android, we must use the platform software decoders even if true
-    // hardware decoding support is missing.
-    const media::MediaCodec codec =
-        media::MCSInfo::GetMediaCodecFromMimeType(aMimeType);
-    media::DecodeSupportSet support;
-    switch (aCodec) {
-      case AV_CODEC_ID_H264:
-      case AV_CODEC_ID_HEVC:
-        if (media::MCSInfo::SupportsSoftwareDecode(
-                gfx::gfxVars::PlatformMediaCodecsSupported(), codec)) {
-          support += media::DecodeSupport::SoftwareDecode;
-        }
-        if (aCodec == AV_CODEC_ID_H264 ? gfx::gfxVars::UseH264HwDecode()
-                                       : gfx::gfxVars::UseHEVCHwDecode()) {
-          support += media::DecodeSupport::HardwareDecode;
-        }
-        break;
-      default:
-        support += media::DecodeSupport::HardwareDecode;
-        break;
-    }
-    return media::MCSInfo::GetMediaCodecDecodeSupportForSize(
-        codec,
-        media::MCSInfo::GetMediaCodecDecodeSupportForColorDepth(codec, support,
-                                                                aColorDepth),
-        aSize);
-  }
-#endif
 
   bool IsSWDecodingSupported(const AVCodecID& aCodec,
                              const SupportDecoderParams& aParams) const {
-#ifdef XP_WIN
-    // SW video decoding is not allowed in the GPU process.
-    if (IsVideoCodec(aCodec) && XRE_IsGPUProcess()) {
-      return false;
-    }
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-    // With a CDM, video is always decoded with MediaCodec, so it must support
-    // the color depth.
-    const auto* videoInfo = aParams.mConfig.GetAsVideoInfo();
-    if (aParams.mCDM && videoInfo &&
-        !FFmpegVideoDecoder<V>::MediaCodecSupportsColorDepth(
-            aCodec, aParams.MimeType(), videoInfo->mColorDepth)) {
-      return false;
-    }
-#endif
     return FFmpegDataDecoder<V>::FindSoftwareAVCodec(mLib, aCodec);
   }
 
@@ -360,24 +257,6 @@ class FFmpegDecoderModule : public PlatformDecoderModule {
             CreateDecoderParams::Option::Output8BitPerChannel),
         aParams.mTrackingId, aParams.mCDM);
 
-#ifdef XP_WIN
-    // Ensure that decoding is exclusively performed using HW decoding in
-    // the GPU process. If FFmpeg does not support HW decoding, reset the
-    // decoder to allow PDMFactory to select an alternative HW-capable decoder
-    // module if available. In contrast, in the RDD process, it is acceptable
-    // to fallback to SW decoding when HW decoding is not available.
-    if (XRE_IsGPUProcess()) {
-      AVCodecID videoCodec =
-          FFmpegVideoDecoder<V>::GetCodecId(aParams.mConfig.mMimeType);
-      if (IsHWDecodingSupported(videoCodec) &&
-          !decoder->IsHardwareAccelerated()) {
-        MOZ_LOG_FMT(sPDMLog, LogLevel::Debug,
-                    "FFmpeg video decoder can't perform hw decoding, abort!");
-        (void)decoder->Shutdown();
-        decoder = nullptr;
-      }
-    }
-#endif
     return decoder.forget();
   }
 

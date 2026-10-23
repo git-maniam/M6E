@@ -24,10 +24,6 @@
 #include "nsPrintfCString.h"  // for nsPrintfCString
 #include "nsString.h"         // for nsAutoCString
 
-#if XP_WIN
-#  include "mozilla/layers/GpuProcessD3D11TextureMap.h"
-#  include "mozilla/layers/TextureHostWrapperD3D11.h"
-#endif
 
 namespace mozilla {
 
@@ -337,37 +333,6 @@ TextureHost* WebRenderImageHost::GetAsTextureHostForComposite(
   const TimedImage* img = GetImage(imageIndex);
 
   RefPtr<TextureHost> texture = img->mTextureHost.get();
-#if XP_WIN
-  // Convert YUV BufferTextureHost to TextureHostWrapperD3D11 if possible
-  if (const auto* bufferHost = texture->AsBufferTextureHost()) {
-    auto identifier = aAsyncImageManager->GetTextureFactoryIdentifier();
-    const bool tryConvertToNV12 =
-        StaticPrefs::gfx_video_convert_yuv_to_nv12_image_host_win() &&
-        identifier.mSupportsD3D11NV12 &&
-        KnowsCompositor::SupportsD3D11(identifier) && (bufferHost->IsYCbCr());
-    if (tryConvertToNV12) {
-      PROFILER_MARKER_TEXT("WebRenderImageHost", GRAPHICS, {},
-                           "Try ConvertToNV12"_ns);
-
-      if (!mTextureAllocator) {
-        mTextureAllocator = new TextureWrapperD3D11Allocator();
-      }
-      RefPtr<TextureHost> textureWrapper =
-          TextureHostWrapperD3D11::CreateFromBufferTexture(mTextureAllocator,
-                                                           texture);
-      if (textureWrapper) {
-        texture = textureWrapper;
-      }
-    } else if (profiler_thread_is_being_profiled_for_markers() &&
-               StaticPrefs::gfx_video_convert_yuv_to_nv12_image_host_win() &&
-               texture->GetFormat() == gfx::SurfaceFormat::YUV420) {
-      nsPrintfCString str("No ConvertToNV12 D3D11 %d NV12 %d",
-                          KnowsCompositor::SupportsD3D11(identifier),
-                          identifier.mSupportsD3D11NV12);
-      PROFILER_MARKER_TEXT("WebRenderImageHost", GRAPHICS, {}, str);
-    }
-  }
-#endif
   SetCurrentTextureHost(texture);
 
   if (mCurrentAsyncImageManager->GetCompositionTime()) {

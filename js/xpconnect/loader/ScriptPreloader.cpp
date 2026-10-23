@@ -47,15 +47,6 @@
 #include "js/experimental/JSStencil.h"      // JS::Stencil, JS::DecodeStencil
 #include "js/Transcoding.h"
 
-#if defined(XP_LINUX)
-#  include <sys/mman.h>
-// MADV_COLD was added in Linux 5.4 / Android API 30; define it for older SDKs
-// so we can call madvise() unconditionally (the kernel will return EINVAL and
-// we ignore it).
-#  ifndef MADV_COLD
-#    define MADV_COLD 20
-#  endif
-#endif
 
 #define STARTUP_COMPLETE_TOPIC "browser-delayed-startup-finished"
 #define CONTENT_DOCUMENT_LOADED_TOPIC "content-document-loaded"
@@ -375,15 +366,6 @@ nsresult ScriptPreloader::Observe(nsISupports* subject, const char* topic,
     MOZ_ASSERT(XRE_IsParentProcess());
     mStartupHasAdvancedToCacheWritingStage = true;
 
-#if defined(XP_LINUX)
-    // Startup is complete; mark the cache mapping cold so the kernel can
-    // reclaim these pages under memory pressure without unmapping them.
-    if (mCacheData->initialized()) {
-      // MADV_COLD may return EINVAL on kernels older than 5.4.
-      uint8_t* ptr = const_cast<uint8_t*>(mCacheData->get<uint8_t>().get());
-      (void)madvise(ptr, mCacheData->size(), MADV_COLD);
-    }
-#endif
 
     StartCacheWriteIfReady();
   } else if (mContentStartupFinishedTopic.Equals(topic)) {
@@ -436,17 +418,6 @@ void ScriptPreloader::FinishContentStartup() {
     mChildActor->SendScriptsAndFinalize(mScripts);
   }
 
-#ifdef XP_WIN
-  // Record the amount of USS at startup. This is Windows-only for now,
-  // we could turn it on for Linux relatively cheaply. On macOS it can have
-  // a perf impact. Only record this for non-privileged processes because
-  // privileged processes record this value at a different time, leading to
-  // a higher value which skews the telemetry.
-  if (sProcessType != ProcessType::PrivilegedAbout) {
-    mozilla::glean::memory::unique_content_startup.Accumulate(
-        nsMemoryReporterManager::ResidentUnique() / 1024);
-  }
-#endif
 }
 
 bool ScriptPreloader::WillWriteScripts() {

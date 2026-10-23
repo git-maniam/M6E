@@ -94,24 +94,6 @@ void CheckEquals(VideoInfo& aVideoInfo, MDD::PropertyName aPropertyName,
     CheckEquals(info, prop, Nothing(), __func__); \
   } while (0)
 
-#ifdef MOZ_WIDGET_ANDROID
-void CheckAndroid(VideoInfo& aVideoInfo, MDD::PropertyName aProperty) {
-  switch (aProperty) {
-    case MDD::PropertyName::MaxNumVideoBuffers:
-      [[fallthrough]];
-    case MDD::PropertyName::MinNumVideoBuffers:
-      CheckEquals(aVideoInfo, aProperty, Some(MDD::PropertyValue(3U)),
-                  __func__);
-      break;
-    case MDD::PropertyName::MaxNumCurrentImages:
-      CheckEquals(aVideoInfo, aProperty, Some(MDD::PropertyValue(1U)),
-                  __func__);
-      break;
-    default:
-      CHECK_NOT_DEFINED(aVideoInfo, aProperty);
-  }
-}
-#endif
 
 static RefPtr<VideoData> DecodeFirstAV1FrameViaFFVPX(
     const char* aFileName, gfx::ColorSpace2 aConfigPrimaries,
@@ -249,9 +231,7 @@ INSTANTIATE_TEST_SUITE_P(TestMediaDataDecoder, PropertyTest,
 
 TEST_P(PropertyTest, DefaultValues) {
   auto param = static_cast<MDD::PropertyName>(GetParam());
-#ifdef MOZ_WIDGET_ANDROID
-  CheckAndroid(*sAVCInfo, param);
-#elif defined(MOZ_APPLEMEDIA)
+#if   defined(MOZ_APPLEMEDIA)
   CheckApple(*sAVCInfo, param);
 #else
   CHECK_NOT_DEFINED(*sAVCInfo, param);
@@ -259,8 +239,3 @@ TEST_P(PropertyTest, DefaultValues) {
 }
 
 // On Android, VP9 video with alpha channel is decoded with libvpx.
-#ifdef MOZ_WIDGET_ANDROID
-TEST_P(PropertyTest, NotDefinedForVP9WithAlphaOnAndroid) {
-  CHECK_NOT_DEFINED(*sVP9Info, static_cast<MDD::PropertyName>(GetParam()));
-}
-#endif

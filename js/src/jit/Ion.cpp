@@ -79,9 +79,6 @@
 #include "vm/JSScript-inl.h"
 #include "vm/Realm-inl.h"
 
-#if defined(ANDROID)
-#  include <sys/system_properties.h>
-#endif
 
 using mozilla::CheckedInt;
 using mozilla::DebugOnly;

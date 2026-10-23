@@ -14,18 +14,7 @@
 
 #include <bit>
 
-#ifdef XP_LINUX
-#  include <errno.h>
-#  include <linux/magic.h>
-#  include <stdio.h>
-#  include <string.h>
-#  include <sys/statfs.h>
-#  include <sys/utsname.h>
-#endif
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 namespace mozilla::ipc {
 
@@ -340,78 +329,7 @@ TEST(IPCSharedMemory, FreezeAndReprotect)
       (char*)roMem, 1, ipc::shared_memory::AccessReadWrite));
 }
 
-#if !defined(XP_WIN) && !defined(XP_DARWIN)
-// This essentially tests whether FreezeAndReprotect would have failed
-// without the freeze.
-//
-// It doesn't work on Windows: VirtualProtect can't exceed the permissions set
-// in MapViewOfFile regardless of the security status of the original handle.
-//
-// It doesn't work on MacOS: we passed the same value as cur_prot and max_prot
-// when calling mach_vm_map, so the permissions can't be increased.
-TEST(IPCSharedMemory, Reprotect)
-{
-  // Create
-  auto handle = ipc::shared_memory::CreateFreezable(1);
-  ASSERT_TRUE(handle);
 
-  // Initialize
-  auto mapping = std::move(handle).Map();
-  ASSERT_TRUE(mapping);
-  auto* mem = mapping.DataAs<char>();
-  ASSERT_TRUE(mem);
-  *mem = 'A';
-
-  // Unmap without freezing.
-  auto rwHandle = std::move(mapping).Unmap().WontFreeze();
-  ASSERT_TRUE(rwHandle);
-  auto roHandle = std::move(rwHandle).ToReadOnly();
-  ASSERT_TRUE(roHandle);
-
-  // Re-map
-  auto roMapping = roHandle.Map();
-  ASSERT_TRUE(roMapping);
-  const auto* cmem = roMapping.DataAs<char>();
-  ASSERT_EQ(*cmem, 'A');
-
-  // Try to alter protection; should succeed, because not frozen
-  EXPECT_TRUE(ipc::shared_memory::LocalProtect(
-      (char*)cmem, 1, ipc::shared_memory::AccessReadWrite));
-}
-#endif
-
-#ifdef XP_WIN
-// Try to regain write permissions on a read-only handle using
-// DuplicateHandle; this will succeed if the object has no DACL.
-// See also https://crbug.com/338538
-TEST(IPCSharedMemory, WinUnfreeze)
-{
-  // Create
-  auto handle = ipc::shared_memory::CreateFreezable(1);
-  ASSERT_TRUE(handle);
-
-  // Initialize
-  auto mapping = std::move(handle).Map();
-  ASSERT_TRUE(mapping);
-  auto* mem = mapping.DataAs<char>();
-  ASSERT_TRUE(mem);
-  *mem = 'A';
-
-  // Freeze
-  auto roHandle = std::move(mapping).Freeze();
-  ASSERT_TRUE(roHandle);
-
-  // Extract handle.
-  auto platformHandle = std::move(roHandle).TakePlatformHandle();
-
-  // Unfreeze.
-  HANDLE newHandle = INVALID_HANDLE_VALUE;
-  bool unfroze = ::DuplicateHandle(
-      GetCurrentProcess(), platformHandle.release(), GetCurrentProcess(),
-      &newHandle, FILE_MAP_ALL_ACCESS, false, DUPLICATE_CLOSE_SOURCE);
-  ASSERT_FALSE(unfroze);
-}
-#endif
 
 // Test that a read-only copy sees changes made to the writeable
 // mapping in the case that the page wasn't accessed before the copy.
@@ -481,69 +399,6 @@ TEST(IPCSharedMemory, BasicIsZero)
 }
 #endif
 
-#if defined(XP_LINUX) && !defined(ANDROID)
-class IPCSharedMemoryLinuxTest : public ::testing::Test {
-  int mMajor = 0;
-  int mMinor = 0;
-
- protected:
-  void SetUp() override {
-    if (mMajor != 0) {
-      return;
-    }
-    struct utsname uts{};
-    ASSERT_EQ(uname(&uts), 0) << strerror(errno);
-    ASSERT_STREQ(uts.sysname, "Linux");
-    ASSERT_EQ(sscanf(uts.release, "%d.%d", &mMajor, &mMinor), 2);
-  }
-
-  bool HaveKernelVersion(int aMajor, int aMinor) {
-    return mMajor > aMajor || (mMajor == aMajor && mMinor >= aMinor);
-  }
-
-  bool ShouldHaveMemfd() { return HaveKernelVersion(3, 17); }
-
-  bool ShouldHaveMemfdNoExec() { return HaveKernelVersion(6, 3); }
-};
-
-// Test that memfd_create is used where expected.
-//
-// More precisely: if memfd_create support is expected, verify that
-// shared memory isn't subject to a filesystem size limit.
-TEST_F(IPCSharedMemoryLinuxTest, IsMemfd) {
-  auto handle = ipc::shared_memory::Create(1);
-  UniqueFileHandle fd = std::move(handle).TakePlatformHandle();
-  ASSERT_TRUE(fd);
-
-  struct statfs fs{};
-  ASSERT_EQ(fstatfs(fd.get(), &fs), 0) << strerror(errno);
-  EXPECT_EQ(fs.f_type, TMPFS_MAGIC);
-  static constexpr decltype(fs.f_blocks) kNoLimit = 0;
-  if (ShouldHaveMemfd()) {
-    EXPECT_EQ(fs.f_blocks, kNoLimit);
-  } else {
-    // On older kernels, we expect the memfd / no-limit test to fail.
-    // (In theory it could succeed if backported memfd support exists;
-    // if that ever happens, this check can be removed.)
-    EXPECT_NE(fs.f_blocks, kNoLimit);
-  }
-}
-
-TEST_F(IPCSharedMemoryLinuxTest, MemfdNoExec) {
-  const bool expectExec = ShouldHaveMemfd() && !ShouldHaveMemfdNoExec();
-
-  auto handle = ipc::shared_memory::Create(1);
-  UniqueFileHandle fd = std::move(handle).TakePlatformHandle();
-  ASSERT_TRUE(fd);
-
-  struct stat sb{};
-  ASSERT_EQ(fstat(fd.get(), &sb), 0) << strerror(errno);
-  // Check that mode is reasonable.
-  EXPECT_EQ(sb.st_mode & (S_IRUSR | S_IWUSR), mode_t(S_IRUSR | S_IWUSR));
-  // Chech the exec bit
-  EXPECT_EQ(sb.st_mode & S_IXUSR, mode_t(expectExec ? S_IXUSR : 0));
-}
-#endif
 
 TEST(IPCSharedMemory, CursorWriteRead)
 {
@@ -641,13 +496,9 @@ TEST_F(SharedMemoryInternalTest, SizeChangeMsg) {
   UnsafeSetSize(handle, kFakeSize);
   ASSERT_SHMEM(handle, kFakeSize);
 
-#if defined(XP_UNIX) && !defined(XP_DARWIN)
-  EXPECT_FALSE(SerializeAndDeserialize(std::move(handle), &handle));
-#else  // Win/Mac
   ASSERT_TRUE(SerializeAndDeserialize(std::move(handle), &handle));
   auto mapping = handle.Map();
   EXPECT_FALSE(mapping.IsValid());
-#endif
 }
 
 // If the claimed size is lower than the real size, that's fine; it doesn't

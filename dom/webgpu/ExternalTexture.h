@@ -278,15 +278,6 @@ class ExternalTextureSourceHost {
   const std::array<float, 6> mSampleTransform;
   const std::array<float, 6> mLoadTransform;
 
-#ifdef XP_WIN
-  // ID used to obtain the texture's write fence from the
-  // CompositeProcessD3D11FencesHolderMap. The fence is created by the encoder,
-  // which will signal the fence with a value of FenceD3D11::mFenceValue when
-  // it has finished writing to the texture. We must therefore ensure we wait
-  // for the fence to reach this value prior to reading from the texture. A
-  // value of Nothing indicates that we do not need to wait at all.
-  Maybe<layers::CompositeProcessFencesHolderId> mFenceId;
-#endif
 };
 
 }  // namespace webgpu

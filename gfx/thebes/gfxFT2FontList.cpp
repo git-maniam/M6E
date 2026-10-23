@@ -55,11 +55,6 @@
 #include "nsTArray.h"
 #include "nsUnicharUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidBuild.h"
-#  include "AndroidSystemFontIterator.h"
-#  include "mozilla/jni/Utils.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -431,14 +426,6 @@ nsresult FT2FontEntry::ReadCMAP(FontInfoData* aFontInfoData) {
     }
   }
 
-#if defined(MOZ_WIDGET_ANDROID) && !defined(NIGHTLY_BUILD)
-  // Hack for the SamsungDevanagari font, bug 1012365:
-  // pretend the font supports U+0972.
-  if (!charmap->test(0x0972) && charmap->test(0x0905) &&
-      charmap->test(0x0945)) {
-    charmap->set(0x0972);
-  }
-#endif
 
   bool setCharMap = true;
   if (NS_SUCCEEDED(rv)) {
@@ -1544,46 +1531,6 @@ void gfxFT2FontList::FindFonts() {
   }
   mFontNameCache->Init();
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // Android API 29+ provides system font and font matcher API for native code.
-
-  nsAutoCString androidFontsRoot = [&] {
-    // ANDROID_ROOT is the root of the android system, typically /system;
-    // font files are in /$ANDROID_ROOT/fonts/
-    nsAutoCString root;
-    char* androidRoot = PR_GetEnv("ANDROID_ROOT");
-    if (androidRoot) {
-      root = androidRoot;
-    } else {
-      root = "/system"_ns;
-    }
-    root.AppendLiteral("/fonts");
-    return root;
-  }();
-
-  bool useSystemFontAPI = !gfxAndroidPlatform::IsFontAPIDisabled();
-
-  if (useSystemFontAPI) {
-    bool noFontByFontAPI = true;
-    if (__builtin_available(android 29, *)) {
-      gfxAndroidPlatform::WaitForInitializeFontAPI();
-      AndroidSystemFontIterator iter;
-      while (Maybe<AndroidFont> androidFont = iter.Next()) {
-        const char* _Nonnull fontPath = androidFont->GetFontFilePath();
-        noFontByFontAPI = false;
-        AppendFacesFromFontFile(nsDependentCString(fontPath),
-                                mFontNameCache.get(), kStandard);
-      }
-    }
-
-    if (noFontByFontAPI) {
-      // Font API doesn't seem to work. Use legacy way.
-      useSystemFontAPI = false;
-    }
-  }
-
-  if (!useSystemFontAPI)
-#endif
   {
     FindFontsInDir(androidFontsRoot, mFontNameCache.get());
   }
@@ -1909,12 +1856,6 @@ FontFamily gfxFT2FontList::GetDefaultFontForPlatform(
     FontVisibilityProvider* aFontVisibilityProvider, const gfxFontStyle* aStyle,
     nsAtom* aLanguage) {
   FontFamily ff;
-#if defined(MOZ_WIDGET_ANDROID)
-  ff = FindFamily(aFontVisibilityProvider, "Roboto"_ns);
-  if (ff.IsNull()) {
-    ff = FindFamily(aFontVisibilityProvider, "Droid Sans"_ns);
-  }
-#endif
   /* TODO: what about Qt or other platforms that may use this? */
   return ff;
 }

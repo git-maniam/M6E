@@ -32,22 +32,7 @@ class HeadlessCompositorWidgetParent final : public PCompositorWidgetParent,
   mozilla::ipc::IPCResult RecvNotifyClientSizeChanged(
       const LayoutDeviceIntSize& aClientSize) override;
 
-#ifdef XP_WIN
-  // Windows PCompositorWidget messages which have no native-window work to do
-  // for a headless widget.
-  mozilla::ipc::IPCResult RecvInitialize(
-      const RemoteBackbufferHandles& aRemoteHandles) override;
-  mozilla::ipc::IPCResult RecvEnterPresentLock() override;
-  mozilla::ipc::IPCResult RecvLeavePresentLock() override;
-  mozilla::ipc::IPCResult RecvNotifyVisibilityUpdated(
-      const bool& aIsFullyOccluded) override;
-  mozilla::ipc::IPCResult RecvUpdateTransparency(
-      const TransparencyMode& aMode) override;
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-  mozilla::ipc::IPCResult RecvCleanupResources() override { return IPC_OK(); }
-#endif
 
  private:
   ~HeadlessCompositorWidgetParent() override;

@@ -32,9 +32,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include "WMFDecoderModule.h"
-#endif
 
 namespace mozilla {
 
@@ -301,9 +298,6 @@ already_AddRefed<SharedThreadPool> GetMediaThreadPool(MediaThreadType aType) {
   bool needsLargerStacks = aType == MediaThreadType::PLATFORM_DECODER;
 // On Windows, platform encoder threads require larger stacks as well for
 // libaom.
-#ifdef XP_WIN
-  needsLargerStacks |= aType == MediaThreadType::PLATFORM_ENCODER;
-#endif
   if (needsLargerStacks) {
     const uint32_t minStackSize = 512 * 1024;
     uint32_t stackSize;

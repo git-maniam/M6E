@@ -18,10 +18,8 @@
 #include <string_view>
 #include <time.h>
 
-#if !defined(XP_WIN)
 #  include <limits.h>
 #  include <unistd.h>
-#endif /* !defined(XP_WIN) */
 
 #if JS_HAS_INTL_API
 #  include "builtin/intl/FormatBuffer.h"
@@ -41,10 +39,7 @@ static bool ComputeLocalTime(time_t local, struct tm* ptm) {
   // been called, therefore we need to explicitly call it to ensure any time
   // zone changes are correctly picked up.
 
-#if defined(_WIN32)
-  _tzset();
-  return localtime_s(ptm, &local) == 0;
-#elif defined(HAVE_LOCALTIME_R)
+#if   defined(HAVE_LOCALTIME_R)
 #  ifndef __wasi__
   tzset();
 #  endif
@@ -60,9 +55,7 @@ static bool ComputeLocalTime(time_t local, struct tm* ptm) {
 }
 
 static bool ComputeUTCTime(time_t t, struct tm* ptm) {
-#if defined(_WIN32)
-  return gmtime_s(ptm, &t) == 0;
-#elif defined(HAVE_GMTIME_R)
+#if   defined(HAVE_GMTIME_R)
   return gmtime_r(&t, ptm);
 #else
   struct tm* otm = gmtime(&t);
@@ -640,56 +633,6 @@ JS_PUBLIC_API void JS::ResetTimeZone() {
 }
 
 #if JS_HAS_INTL_API
-#  if defined(XP_WIN)
-static bool IsOlsonCompatibleWindowsTimeZoneId(std::string_view tz) {
-  // ICU ignores the TZ environment variable on Windows and instead directly
-  // invokes Win API functions to retrieve the current time zone. But since
-  // we're still using the POSIX-derived localtime_s() function on Windows
-  // and localtime_s() does return a time zone adjusted value based on the
-  // TZ environment variable, we need to manually adjust the default ICU
-  // time zone if TZ is set.
-  //
-  // Windows supports the following format for TZ: tzn[+|-]hh[:mm[:ss]][dzn]
-  // where "tzn" is the time zone name for standard time, the time zone
-  // offset is positive for time zones west of GMT, and "dzn" is the
-  // optional time zone name when daylight savings are observed. Daylight
-  // savings are always based on the U.S. daylight saving rules, that means
-  // for example it's not possible to use "TZ=CET-1CEST" to select the IANA
-  // time zone "CET".
-  //
-  // When comparing this restricted format for TZ to all IANA time zone
-  // names, the following time zones are in the intersection of what's
-  // supported by Windows and is also a valid IANA time zone identifier.
-  //
-  // Even though the time zone offset is marked as mandatory on MSDN, it
-  // appears it defaults to zero when omitted. This in turn means we can
-  // also allow the time zone identifiers "UCT", "UTC", and "GMT".
-
-  static const char* const allowedIds[] = {
-      // From tzdata's "northamerica" file:
-      "EST5EDT",
-      "CST6CDT",
-      "MST7MDT",
-      "PST8PDT",
-
-      // From tzdata's "backward" file:
-      "GMT+0",
-      "GMT-0",
-      "GMT0",
-      "UCT",
-      "UTC",
-
-      // From tzdata's "etcetera" file:
-      "GMT",
-  };
-  for (const auto& allowedId : allowedIds) {
-    if (tz == allowedId) {
-      return true;
-    }
-  }
-  return false;
-}
-#  else
 static std::string_view TZContainsAbsolutePath(std::string_view tzVar) {
   // A TZ environment variable may be an absolute path. The path
   // format of TZ may begin with a colon. (ICU handles relative paths.)
@@ -847,7 +790,6 @@ static bool ReadTimeZoneLink(std::string_view tz,
   }
   return result.append(timeZone.data(), timeZone.length());
 }
-#  endif /* defined(XP_WIN) */
 #endif   /* JS_HAS_INTL_API */
 
 void js::DateTimeInfo::internalResyncICUDefaultTimeZone() {
@@ -857,17 +799,6 @@ void js::DateTimeInfo::internalResyncICUDefaultTimeZone() {
 
     mozilla::Span<const char> tzid;
 
-#  if defined(XP_WIN)
-    // If TZ is set and its value is valid under Windows' and IANA's time zone
-    // identifier rules, update the ICU default time zone to use this value.
-    if (IsOlsonCompatibleWindowsTimeZoneId(tz)) {
-      tzid = mozilla::Span(tz.data(), tz.length());
-    } else {
-      // If |tz| isn't a supported time zone identifier, use the default Windows
-      // time zone for ICU.
-      // TODO: Handle invalid time zone identifiers (bug 342068).
-    }
-#  else
     // The TZ environment variable allows both absolute and relative paths,
     // optionally beginning with a colon (':'). (Relative paths, without the
     // colon, are just Olson time zone names.)  We need to handle absolute paths
@@ -883,14 +814,6 @@ void js::DateTimeInfo::internalResyncICUDefaultTimeZone() {
       tzid = tzidVector;
     }
 
-#    ifdef ANDROID
-    // ICU ignores the TZ environment variable on Android. If it doesn't contain
-    // an absolute path, try to parse it as a time zone name.
-    else if (IsTimeZoneId(tz)) {
-      tzid = mozilla::Span(tz.data(), tz.length());
-    }
-#    endif
-#  endif /* defined(XP_WIN) */
 
     if (!tzid.empty()) {
       auto result = mozilla::intl::TimeZone::SetDefaultTimeZone(tzid);

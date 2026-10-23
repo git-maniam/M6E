@@ -76,17 +76,7 @@
 #include "js/Prefs.h"
 #include "js/WasmFeatures.h"
 
-#if defined(XP_LINUX) && !defined(ANDROID)
-// For getrlimit and min/max.
-#  include <algorithm>
-#  include <sys/resource.h>
-#endif
 
-#ifdef XP_WIN
-// For min.
-#  include <algorithm>
-#  include <windows.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -1113,40 +1103,6 @@ XPCJSContext* XPCJSContext::Get() {
   return xpc ? xpc->GetContext() : nullptr;
 }
 
-#ifdef XP_WIN
-static size_t GetWindowsStackSize() {
-  // First, get the stack base. Because the stack grows down, this is the top
-  // of the stack.
-  const uint8_t* stackTop;
-#  ifdef _WIN64
-  PNT_TIB64 pTib = reinterpret_cast<PNT_TIB64>(NtCurrentTeb());
-  stackTop = reinterpret_cast<const uint8_t*>(pTib->StackBase);
-#  else
-  PNT_TIB pTib = reinterpret_cast<PNT_TIB>(NtCurrentTeb());
-  stackTop = reinterpret_cast<const uint8_t*>(pTib->StackBase);
-#  endif
-
-  // Now determine the stack bottom. Note that we can't use tib->StackLimit,
-  // because that's the size of the committed area and we're also interested
-  // in the reserved pages below that.
-  MEMORY_BASIC_INFORMATION mbi;
-  if (!VirtualQuery(&mbi, &mbi, sizeof(mbi))) {
-    MOZ_CRASH("VirtualQuery failed");
-  }
-
-  const uint8_t* stackBottom =
-      reinterpret_cast<const uint8_t*>(mbi.AllocationBase);
-
-  // Do some sanity checks.
-  size_t stackSize = size_t(stackTop - stackBottom);
-  MOZ_RELEASE_ASSERT(stackSize >= 1 * 1024 * 1024);
-  MOZ_RELEASE_ASSERT(stackSize <= 32 * 1024 * 1024);
-
-  // Subtract 40 KB (Win32) or 80 KB (Win64) to account for things like
-  // the guard page and large PGO stack frames.
-  return stackSize - 10 * sizeof(uintptr_t) * 1024;
-}
-#endif
 
 XPCJSRuntime* XPCJSContext::Runtime() const {
   return static_cast<XPCJSRuntime*>(CycleCollectedJSContext::Runtime());
@@ -1302,82 +1258,10 @@ nsresult XPCJSContext::Initialize() {
   // Set maximum stack size for different configurations. This value is then
   // capped below because huge stacks are not web-compatible.
 
-#if defined(XP_MACOSX) || defined(DARWIN)
   // MacOS has a gargantuan default stack size of 8MB. Go wild with 7MB,
   // and give trusted script 180k extra. The stack is huge on mac anyway.
   const size_t kUncappedStackQuota = 7 * 1024 * 1024;
   const size_t kTrustedScriptBuffer = 180 * 1024;
-#elif defined(XP_LINUX) && !defined(ANDROID)
-  // Most Linux distributions set default stack size to 8MB.  Use it as the
-  // maximum value.
-  const size_t kStackQuotaMax = 8 * 1024 * 1024;
-#  if defined(MOZ_ASAN) || defined(DEBUG)
-  // Bug 803182: account for the 4x difference in the size of js::Interpret
-  // between optimized and debug builds.  We use 2x since the JIT part
-  // doesn't increase much.
-  // See the standalone MOZ_ASAN branch below for the ASan case.
-  const size_t kStackQuotaMin = 2 * kDefaultStackQuota;
-#  else
-  const size_t kStackQuotaMin = kDefaultStackQuota;
-#  endif
-  // Allocate 128kB margin for the safe space.
-  const size_t kStackSafeMargin = 128 * 1024;
-
-  struct rlimit rlim;
-  const size_t kUncappedStackQuota =
-      getrlimit(RLIMIT_STACK, &rlim) == 0
-          ? std::clamp(size_t(rlim.rlim_cur - kStackSafeMargin), kStackQuotaMin,
-                       kStackQuotaMax - kStackSafeMargin)
-          : kStackQuotaMin;
-#  if defined(MOZ_ASAN)
-  // See the standalone MOZ_ASAN branch below for the ASan case.
-  const size_t kTrustedScriptBuffer = 450 * 1024;
-#  else
-  const size_t kTrustedScriptBuffer = 180 * 1024;
-#  endif
-#elif defined(XP_WIN)
-  // 1MB is the default stack size on Windows. We use the -STACK linker flag
-  // (see WIN32_EXE_DEFAULT_LDFLAGS in build/moz.configure/windows.configure) to
-  // request a larger stack, so we determine the stack size at runtime.
-  const size_t kUncappedStackQuota = GetWindowsStackSize();
-#  if defined(MOZ_ASAN)
-  // See the standalone MOZ_ASAN branch below for the ASan case.
-  const size_t kTrustedScriptBuffer = 450 * 1024;
-#  else
-  const size_t kTrustedScriptBuffer = (sizeof(size_t) == 8)
-                                          ? 180 * 1024   // win64
-                                          : 120 * 1024;  // win32
-#  endif
-#elif defined(MOZ_ASAN)
-  // ASan requires more stack space due to red-zones, so give it double the
-  // default (1MB on 32-bit, 2MB on 64-bit). ASAN stack frame measurements
-  // were not taken at the time of this writing, so we hazard a guess that
-  // ASAN builds have roughly thrice the stack overhead as normal builds.
-  // On normal builds, the largest stack frame size we might encounter is
-  // 9.0k (see above), so let's use a buffer of 9.0 * 5 * 10 = 450k.
-  //
-  // FIXME: Does this branch make sense for Windows and Android?
-  // (See bug 1415195)
-  const size_t kUncappedStackQuota = 2 * kDefaultStackQuota;
-  const size_t kTrustedScriptBuffer = 450 * 1024;
-#elif defined(ANDROID)
-  // Android appears to have 1MB stacks. Allow the use of 3/4 of that size
-  // (768KB on 32-bit), since otherwise we can crash with a stack overflow
-  // when nearing the 1MB limit.
-  const size_t kUncappedStackQuota =
-      kDefaultStackQuota + kDefaultStackQuota / 2;
-  const size_t kTrustedScriptBuffer = sizeof(size_t) * 12800;
-#else
-  // Catch-all configuration for other environments.
-#  if defined(DEBUG)
-  const size_t kUncappedStackQuota = 2 * kDefaultStackQuota;
-#  else
-  const size_t kUncappedStackQuota = kDefaultStackQuota;
-#  endif
-  // Given the numbers above, we use 50k and 100k trusted buffers on 32-bit
-  // and 64-bit respectively.
-  const size_t kTrustedScriptBuffer = sizeof(size_t) * 12800;
-#endif
 
   // Avoid an unused variable warning on platforms where we don't use the
   // default.

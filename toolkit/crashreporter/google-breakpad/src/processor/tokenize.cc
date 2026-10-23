@@ -36,9 +36,6 @@
 
 namespace google_breakpad {
 
-#ifdef _MSC_VER
-#define strtok_r strtok_s
-#endif
 
 using std::vector;
 

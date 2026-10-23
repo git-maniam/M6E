@@ -98,7 +98,6 @@ static void PrintAndFlush(const char* aFormat, ...) {
 // Mac-specific code
 //---------------------------------------------------------------------------
 
-#if defined(__APPLE__)
 
 // Because of the pkg_energy_statistics_t::pkes_version check below, the
 // earliest OS X version this code will work with is 10.9.0 (xnu-2422.1.72).
@@ -428,176 +427,6 @@ class RAPL {
 // Linux-specific code
 //---------------------------------------------------------------------------
 
-#elif defined(__linux__)
-
-#  include <linux/perf_event.h>
-#  include <sys/syscall.h>
-
-// There is no glibc wrapper for this system call so we provide our own.
-static int perf_event_open(struct perf_event_attr* aAttr, pid_t aPid, int aCpu,
-                           int aGroupFd, unsigned long aFlags) {
-  return syscall(__NR_perf_event_open, aAttr, aPid, aCpu, aGroupFd, aFlags);
-}
-
-// Returns false if the file cannot be opened.
-template <typename T>
-static bool ReadValueFromPowerFile(const char* aStr1, const char* aStr2,
-                                   const char* aStr3, const char* aScanfString,
-                                   T* aOut) {
-  // The filenames going into this buffer are under our control and the longest
-  // one is "/sys/bus/event_source/devices/power/events/energy-cores.scale".
-  // So 256 chars is plenty.
-  char filename[256];
-
-  sprintf(filename, "/sys/bus/event_source/devices/power/%s%s%s", aStr1, aStr2,
-          aStr3);
-  FILE* fp = fopen(filename, "r");
-  if (!fp) {
-    return false;
-  }
-  if (fscanf(fp, aScanfString, aOut) != 1) {
-    Abort("fscanf() failed");
-  }
-  fclose(fp);
-
-  return true;
-}
-
-// This class encapsulates the reading of a single RAPL domain.
-class Domain {
-  bool mIsSupported;  // Is the domain supported by the processor?
-
-  // These three are only set if |mIsSupported| is true.
-  double mJoulesPerTick;  // How many Joules each tick of the MSR represents.
-  int mFd;                // The fd through which the MSR is read.
-  double mPrevTicks;      // The previous sample's MSR value.
-
- public:
-  enum IsOptional { Optional, NonOptional };
-
-  Domain(const char* aName, uint32_t aType,
-         IsOptional aOptional = NonOptional) {
-    uint64_t config;
-    if (!ReadValueFromPowerFile("events/energy-", aName, "", "event=%llx",
-                                &config)) {
-      // Failure is allowed for optional domains.
-      if (aOptional == NonOptional) {
-        Abort(
-            "failed to open file for non-optional domain '%s'\n"
-            "- Is your kernel version 3.14 or later, as required? "
-            "Run |uname -r| to see.",
-            aName);
-      }
-      mIsSupported = false;
-      return;
-    }
-
-    mIsSupported = true;
-
-    if (!ReadValueFromPowerFile("events/energy-", aName, ".scale", "%lf",
-                                &mJoulesPerTick)) {
-      Abort("failed to read from .scale file");
-    }
-
-    // The unit should be "Joules", so 128 chars should be plenty.
-    char unit[128];
-    if (!ReadValueFromPowerFile("events/energy-", aName, ".unit", "%127s",
-                                unit)) {
-      Abort("failed to read from .unit file");
-    }
-    if (strcmp(unit, "Joules") != 0) {
-      Abort("unexpected unit '%s' in .unit file", unit);
-    }
-
-    struct perf_event_attr attr;
-    memset(&attr, 0, sizeof(attr));
-    attr.type = aType;
-    attr.size = uint32_t(sizeof(attr));
-    attr.config = config;
-
-    // Measure all processes/threads. The specified CPU doesn't matter.
-    mFd = perf_event_open(&attr, /* aPid = */ -1, /* aCpu = */ 0,
-                          /* aGroupFd = */ -1, /* aFlags = */ 0);
-    if (mFd < 0) {
-      Abort(
-          "perf_event_open() failed\n"
-          "- Did you run as root (e.g. with |sudo|) or set\n"
-          "  /proc/sys/kernel/perf_event_paranoid to 0, as required?");
-    }
-
-    mPrevTicks = 0;
-  }
-
-  ~Domain() {
-    if (mIsSupported) {
-      close(mFd);
-    }
-  }
-
-  double EnergyEstimate() {
-    if (!mIsSupported) {
-      return kUnsupported_j;
-    }
-
-    uint64_t thisTicks;
-    if (read(mFd, &thisTicks, sizeof(uint64_t)) != sizeof(uint64_t)) {
-      Abort("read() failed");
-    }
-
-    uint64_t ticks = thisTicks - mPrevTicks;
-    mPrevTicks = thisTicks;
-    double joules = ticks * mJoulesPerTick;
-    return joules;
-  }
-};
-
-class RAPL {
-  Domain* mPkg;
-  Domain* mCores;
-  Domain* mGpu;
-  Domain* mRam;
-
- public:
-  RAPL() {
-    uint32_t type;
-    if (!ReadValueFromPowerFile("type", "", "", "%u", &type)) {
-      Abort("failed to read from type file");
-    }
-
-    mPkg = new Domain("pkg", type);
-    mCores = new Domain("cores", type);
-    mGpu = new Domain("gpu", type, Domain::Optional);
-    mRam = new Domain("ram", type, Domain::Optional);
-    if (!mPkg || !mCores || !mGpu || !mRam) {
-      Abort("new Domain() failed");
-    }
-  }
-
-  ~RAPL() {
-    delete mPkg;
-    delete mCores;
-    delete mGpu;
-    delete mRam;
-  }
-
-  void EnergyEstimates(double& aPkg_J, double& aCores_J, double& aGpu_J,
-                       double& aRam_J) {
-    aPkg_J = mPkg->EnergyEstimate();
-    aCores_J = mCores->EnergyEstimate();
-    aGpu_J = mGpu->EnergyEstimate();
-    aRam_J = mRam->EnergyEstimate();
-  }
-};
-
-#else
-
-//---------------------------------------------------------------------------
-// Unsupported platforms
-//---------------------------------------------------------------------------
-
-#  error Sorry, this platform is not supported
-
-#endif  // platform
 
 //---------------------------------------------------------------------------
 // The main loop
@@ -746,15 +575,7 @@ static void PrintUsage() {
       "  -n --sample-count <N>     get N samples (0 means unlimited) "
       "[default=0]\n"
       "\n"
-#if defined(__APPLE__)
       "On Mac this program can be run by any user.\n"
-#elif defined(__linux__)
-      "On Linux this program can only be run by the super-user unless the "
-      "contents\n"
-      "of /proc/sys/kernel/perf_event_paranoid is set to 0 or lower.\n"
-#else
-#  error Sorry, this platform is not supported
-#endif
       "\n");
 }
 

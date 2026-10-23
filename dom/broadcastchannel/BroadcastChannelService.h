@@ -9,9 +9,6 @@
 #include "nsHashKeys.h"
 #include "nsISupportsImpl.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 namespace mozilla::dom {
 

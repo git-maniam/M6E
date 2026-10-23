@@ -15,14 +15,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/RemoteMediaManagerParent.h"
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/Sandbox.h"
-#  include "mozilla/SandboxProfilerObserver.h"
-#endif
 
-#if defined(XP_OPENBSD) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxSettings.h"
-#endif
 
 #if defined(MOZ_SANDBOX) && defined(MOZ_DEBUG) && defined(ENABLE_TESTS)
 #  include "mozilla/SandboxTestingChild.h"
@@ -30,11 +23,6 @@
 
 #include "mozilla/Telemetry.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/WinDllServices.h"
-#  include "mozilla/dom/WindowsUtilsChild.h"
-#  include "mozilla/widget/filedialog/WinFileDialogChild.h"
-#endif
 
 #include "nsDebugImpl.h"
 #include "nsIXULRuntime.h"
@@ -125,12 +113,6 @@ bool UtilityProcessChild::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
     if (!JS_FrontendOnlyInit()) {
       return false;
     }
-#if defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-    // Bug 1823458: delay pledge initialization, otherwise
-    // JS_FrontendOnlyInit triggers sysctl(KERN_PROC_ID) which isnt
-    // permitted with the current pledge.utility config
-    StartOpenBSDSandbox(GeckoProcessType_Utility, mSandbox);
-#endif
   }
 
   profiler_set_process_name(nsCString("Utility Process"));
@@ -171,30 +153,13 @@ mozilla::ipc::IPCResult UtilityProcessChild::RecvInit(
   mozilla::ipc::SetThisProcessName("Utility Process");
 
 #if defined(MOZ_SANDBOX)
-#  if defined(XP_MACOSX)
   // Close all current connections to the WindowServer. This ensures that the
   // Activity Monitor will not label the content process as "Not responding"
   // because it's not running a native event loop. See bug 1384336.
   CGSShutdownServerConnections();
 
-#  elif defined(XP_LINUX)
-  int fd = -1;
-  if (aBrokerFd.isSome()) {
-    fd = aBrokerFd.value().ClonePlatformHandle().release();
-  }
-
-  RegisterProfilerObserversForSandboxProfiler();
-  SetUtilitySandbox(fd, mSandbox);
-
-#  endif  // XP_MACOSX/XP_LINUX
 #endif    // MOZ_SANDBOX
 
-#if defined(XP_WIN)
-  if (aCanRecordReleaseTelemetry) {
-    RefPtr<DllServices> dllSvc(DllServices::Get());
-    dllSvc->StartUntrustedModulesProcessor(aIsReadyForBackgroundProcessing);
-  }
-#endif  // defined(XP_WIN)
 
   PROFILER_MARKER_UNTYPED(
       "UtilityProcessChild::RecvInit", IPC,
@@ -307,7 +272,6 @@ mozilla::ipc::IPCResult UtilityProcessChild::RecvStartJSOracleService(
   return IPC_OK();
 }
 
-#ifndef ANDROID
 already_AddRefed<hwinference::PHWInferenceChild>
 UtilityProcessChild::AllocPHWInferenceChild() {
   PROFILER_MARKER_UNTYPED(
@@ -317,64 +281,7 @@ UtilityProcessChild::AllocPHWInferenceChild() {
   mHWInferenceInstance = MakeRefPtr<hwinference::HWInferenceChild>();
   return do_AddRef(mHWInferenceInstance);
 }
-#endif  // !ANDROID
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult UtilityProcessChild::RecvStartWindowsUtilsService(
-    Endpoint<dom::PWindowsUtilsChild>&& aEndpoint) {
-  PROFILER_MARKER_UNTYPED(
-      "UtilityProcessChild::RecvStartWindowsUtilsService", OTHER,
-      MarkerOptions(MarkerTiming::IntervalUntilNowFrom(mChildStartTime)));
-  mWindowsUtilsInstance = new dom::WindowsUtilsChild();
-  if (!mWindowsUtilsInstance) {
-    return IPC_FAIL(this, "Failed to create WindowsUtilsChild");
-  }
-
-  [[maybe_unused]] bool ok = std::move(aEndpoint).Bind(mWindowsUtilsInstance);
-  MOZ_ASSERT(ok);
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult UtilityProcessChild::RecvStartWinFileDialogService(
-    Endpoint<widget::filedialog::PWinFileDialogChild>&& aEndpoint) {
-  PROFILER_MARKER_UNTYPED(
-      "UtilityProcessChild::RecvStartWinFileDialogService", OTHER,
-      MarkerOptions(MarkerTiming::IntervalUntilNowFrom(mChildStartTime)));
-
-  auto instance = MakeRefPtr<widget::filedialog::WinFileDialogChild>();
-  if (!instance) {
-    return IPC_FAIL(this, "Failed to create WinFileDialogChild");
-  }
-
-  bool const ok = std::move(aEndpoint).Bind(instance.get());
-  if (!ok) {
-    return IPC_FAIL(this, "Failed to bind created WinFileDialogChild");
-  }
-
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult UtilityProcessChild::RecvGetUntrustedModulesData(
-    GetUntrustedModulesDataResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetUntrustedModulesData()->Then(
-      GetMainThreadSerialEventTarget(), __func__,
-      [aResolver](Maybe<UntrustedModulesData>&& aData) {
-        aResolver(std::move(aData));
-      },
-      [aResolver](nsresult aReason) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult
-UtilityProcessChild::RecvUnblockUntrustedModulesThread() {
-  if (nsCOMPtr<nsIObserverService> obs =
-          mozilla::services::GetObserverService()) {
-    obs->NotifyObservers(nullptr, "unblock-untrusted-modules-thread", nullptr);
-  }
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 mozilla::ipc::IPCResult UtilityProcessChild::RecvShutdown() {
   // Send the last bits of Glean data over to the main process. Doing this in
@@ -414,9 +321,6 @@ mozilla::ipc::IPCResult UtilityProcessChild::RecvShutdown() {
 }
 
 void UtilityProcessChild::ActorDestroy(ActorDestroyReason aWhy) {
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  DestroySandboxProfiler();
-#endif
 
   if (AbnormalShutdown == aWhy) {
     NS_WARNING("Shutting down Utility process early due to a crash!");
@@ -442,15 +346,10 @@ void UtilityProcessChild::ActorDestroy(ActorDestroyReason aWhy) {
 
   mJSOracleInstance = nullptr;
 
-#  ifndef ANDROID
   // A managed actor holds its manager; keeping it alive here would keep this
   // process' toplevel alive too.
   mHWInferenceInstance = nullptr;
-#  endif  // !ANDROID
 
-#  ifdef XP_WIN
-  mWindowsUtilsInstance = nullptr;
-#  endif
 
 #  if defined(NIGHTLY_BUILD) && !defined(MOZ_NO_SMART_CARDS)
   mPKCS11ModuleInstance = nullptr;
@@ -465,12 +364,6 @@ void UtilityProcessChild::ActorDestroy(ActorDestroyReason aWhy) {
   // nsIAsyncShutdownService once it is not JS, see bug 1760855
   mShutdownBlockers.WaitUntilClear(timeout)->Then(
       GetCurrentSerialEventTarget(), __func__, [&]() {
-#  ifdef XP_WIN
-        {
-          RefPtr<DllServices> dllSvc(DllServices::Get());
-          dllSvc->DisableFull();
-        }
-#  endif  // defined(XP_WIN)
 
         ipc::CrashReporterClient::DestroySingleton();
         XRE_ShutdownChildProcess();

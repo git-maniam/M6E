@@ -19,9 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
 using double_conversion::DoubleToStringConverter;
 using DTSC = DoubleToStringConverter;
@@ -51,9 +48,6 @@ using NumArgStateVector =
 #define TYPE_STRING 9
 #define TYPE_INTSTR 10
 #define TYPE_POINTER 11
-#if defined(XP_WIN)
-#  define TYPE_WSTRING 12
-#endif
 #define TYPE_SCHAR 14
 #define TYPE_UCHAR 15
 #define TYPE_UNKNOWN 20
@@ -586,21 +580,11 @@ static bool BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas) {
         break;
 
       case 'S':
-#if defined(XP_WIN)
-        nas[cn].type = TYPE_WSTRING;
-#else
         MOZ_ASSERT(0);
         nas[cn].type = TYPE_UNKNOWN;
-#endif
         break;
 
       case 's':
-#if defined(XP_WIN)
-        if (nas[cn].type == TYPE_LONG) {
-          nas[cn].type = TYPE_WSTRING;
-          break;
-        }
-#endif
         // Other type sizes are not supported here.
         MOZ_ASSERT(nas[cn].type == TYPE_INTN);
         nas[cn].type = TYPE_STRING;
@@ -667,11 +651,6 @@ static bool BuildArgArray(const char* fmt, va_list ap, NumArgStateVector& nas) {
       case TYPE_POINTER:
         (void)va_arg(ap, void*);
         break;
-#if defined(XP_WIN)
-      case TYPE_WSTRING:
-        (void)va_arg(ap, wchar_t*);
-        break;
-#endif
 
       default:
         MOZ_CRASH();
@@ -697,9 +676,6 @@ bool mozilla::PrintfTarget::vprint(const char* fmt, va_list ap) {
     const char* s;
     int* ip;
     void* p;
-#if defined(XP_WIN)
-    const wchar_t* ws;
-#endif
   } u{};
   const char* hexp;
   int i;
@@ -1012,32 +988,8 @@ bool mozilla::PrintfTarget::vprint(const char* fmt, va_list ap) {
         MOZ_ASSERT(type == TYPE_LONG);
         [[fallthrough]];
       case 'S':
-#if defined(XP_WIN)
-      {
-        u.ws = va_arg(ap, const wchar_t*);
-
-        int rv = WideCharToMultiByte(CP_ACP, 0, u.ws, -1, NULL, 0, NULL, NULL);
-        if (rv == 0 && GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
-          if (!cvt_s("<unicode errors in string>", width, prec, flags)) {
-            return false;
-          }
-        } else {
-          if (rv == 0) {
-            rv = 1;
-          }
-          UniqueFreePtr<char[]> buf((char*)malloc(rv));
-          WideCharToMultiByte(CP_ACP, 0, u.ws, -1, buf.get(), rv, NULL, NULL);
-          buf[rv - 1] = '\0';
-
-          if (!cvt_s(buf.get(), width, prec, flags)) {
-            return false;
-          }
-        }
-      }
-#else
         // Not supported here.
         MOZ_ASSERT(0);
-#endif
       break;
 
       case 'n':

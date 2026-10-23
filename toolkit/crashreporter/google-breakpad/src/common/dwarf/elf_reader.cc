@@ -57,7 +57,6 @@
 #endif
 
 // Map Linux macros to their Apple equivalents.
-#if __APPLE__ || __FreeBSD__
 #ifndef __LITTLE_ENDIAN
 #define __LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
 #endif  // __LITTLE_ENDIAN
@@ -67,7 +66,6 @@
 #ifndef __BYTE_ORDER
 #define __BYTE_ORDER __BYTE_ORDER__
 #endif  // __BYTE_ORDER
-#endif  // __APPLE__
 
 // TODO(dthomson): Can be removed once all Java code is using the Google3
 // launcher. We need to avoid processing PLT functions as it causes memory

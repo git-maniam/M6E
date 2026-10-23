@@ -4,9 +4,6 @@
 
 #include "nsClipboardProxy.h"
 
-#if defined(ACCESSIBILITY) && defined(XP_WIN)
-#  include "mozilla/a11y/Compatibility.h"
-#endif
 #include "PermissionMessageUtils.h"
 #include "mozilla/ClipboardContentAnalysisChild.h"
 #include "mozilla/ClipboardReadRequestChild.h"
@@ -38,9 +35,6 @@ nsClipboardProxy::SetData(nsITransferable* aTransferable,
                           nsIClipboardOwner* anOwner,
                           nsIClipboard::ClipboardType aWhichClipboard,
                           mozilla::dom::WindowContext* aWindowContext) {
-#if defined(ACCESSIBILITY) && defined(XP_WIN)
-  a11y::Compatibility::SuppressA11yForClipboardCopy();
-#endif
 
   IPCTransferable ipcTransferable;
   nsContentUtils::TransferableToIPCTransferable(aTransferable, &ipcTransferable,

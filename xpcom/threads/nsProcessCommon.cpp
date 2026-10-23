@@ -30,17 +30,10 @@
 #  include "nsReadableUtils.h"
 #  include "nsString.h"
 #else
-#  ifdef XP_MACOSX
 #    include <crt_externs.h>
 #    include <spawn.h>
-#  endif
-#  ifdef XP_UNIX
-#    ifndef XP_MACOSX
-#      include "base/process_util.h"
-#    endif
 #    include <sys/errno.h>
 #    include <sys/wait.h>
-#  endif
 #  include <signal.h>
 #  include <sys/types.h>
 #endif
@@ -62,10 +55,6 @@ nsProcess::nsProcess()
       mNoShell(false),
       mPid(-1),
       mExitValue(-1)
-#if !defined(XP_UNIX)
-      ,
-      mProcess(nullptr)
-#endif
 {
 }
 
@@ -95,10 +84,6 @@ nsProcess::Init(nsIFile* aExecutable) {
   // Store the nsIFile in mExecutable
   mExecutable = aExecutable;
   // Get the path because it is needed by the NSPR process creation
-#ifdef XP_WIN
-  rv = mExecutable->GetTarget(mTargetPath);
-  if (NS_FAILED(rv) || mTargetPath.IsEmpty())
-#endif
     rv = mExecutable->GetPath(mTargetPath);
 
   return rv;
@@ -141,7 +126,6 @@ void nsProcess::Monitor(void* aArg) {
     }
   }
 #else
-#  ifdef XP_UNIX
   int exitCode = -1;
   int status = 0;
   pid_t result;
@@ -155,26 +139,10 @@ void nsProcess::Monitor(void* aArg) {
       exitCode = 256;  // match NSPR's signal exit status
     }
   }
-#  else
-  int32_t exitCode = -1;
-  PRProcess* prProcess;
-  {
-    // The mutex region cannot include PR_WaitProcess otherwise we'll
-    // block calls such as Kill. So lock on access and store a local.
-    MutexAutoLock lock(process->mLock);
-    prProcess = process->mProcess;
-  }
-  if (PR_WaitProcess(prProcess, &exitCode) != PR_SUCCESS) {
-    exitCode = -1;
-  }
-#  endif
 
   // Lock in case Kill or GetExitCode are called during this
   {
     MutexAutoLock lock(process->mLock);
-#  if !defined(XP_UNIX)
-    process->mProcess = nullptr;
-#  endif
     process->mExitValue = exitCode;
     if (process->mShutdown) {
       return;
@@ -407,7 +375,7 @@ nsresult nsProcess::RunProcess(bool aBlocking, char** aMyArgv,
     MutexAutoLock lock(mLock);
     mPid = GetProcessId(mProcess);
   }
-#elif defined(XP_MACOSX)
+#else
   // Note: |aMyArgv| is already null-terminated as required by posix_spawnp.
   pid_t newPid = 0;
   int result = posix_spawnp(&newPid, aMyArgv[0], nullptr, nullptr, aMyArgv,
@@ -416,37 +384,6 @@ nsresult nsProcess::RunProcess(bool aBlocking, char** aMyArgv,
 
   if (result != 0) {
     return NS_ERROR_FAILURE;
-  }
-#elif defined(XP_UNIX)
-  base::LaunchOptions options;
-  std::vector<std::string> argvVec;
-  for (char** arg = aMyArgv; *arg != nullptr; ++arg) {
-    argvVec.push_back(*arg);
-  }
-  pid_t newPid;
-  if (base::LaunchApp(argvVec, std::move(options), &newPid).isOk()) {
-    static_assert(sizeof(pid_t) <= sizeof(int32_t),
-                  "mPid is large enough to hold a pid");
-    mPid = static_cast<int32_t>(newPid);
-  } else {
-    return NS_ERROR_FAILURE;
-  }
-#else
-  {
-    PRProcess* prProcess =
-        PR_CreateProcess(aMyArgv[0], aMyArgv, nullptr, nullptr);
-    if (!prProcess) {
-      return NS_ERROR_FAILURE;
-    }
-    {
-      MutexAutoLock lock(mLock);
-      mProcess = prProcess;
-    }
-    struct MYProcess {
-      uint32_t pid;
-    };
-    MYProcess* ptrProc = (MYProcess*)mProcess;
-    mPid = ptrProc->pid;
   }
 #endif
 
@@ -543,12 +480,8 @@ nsProcess::Kill() {
     if (TerminateProcess(mProcess, 0) == 0) {
       return NS_ERROR_FAILURE;
     }
-#elif defined(XP_UNIX)
-    if (kill(mPid, SIGKILL) != 0) {
-      return NS_ERROR_FAILURE;
-    }
 #else
-    if (!mProcess || (PR_KillProcess(mProcess) != PR_SUCCESS)) {
+    if (kill(mPid, SIGKILL) != 0) {
       return NS_ERROR_FAILURE;
     }
 #endif

@@ -63,9 +63,6 @@
 #include "nscore.h"
 #include "txMozillaXSLTProcessor.h"
 
-#ifdef XP_WIN
-#  include "mozilla/widget/WinAudioSession.h"
-#endif
 #include "CubebUtils.h"
 #include "DecoderDoctorLogger.h"
 #include "MediaDecoder.h"
@@ -208,11 +205,6 @@ nsresult nsLayoutStatics::Initialize() {
 
   DecoderDoctorLogger::Init();
 
-#ifdef XP_WIN
-  if (XRE_IsParentProcess()) {
-    widget::CreateAudioSession();
-  }
-#endif
   CubebUtils::InitLibrary();
 
   nsHtml5Module::InitializeStatics();
@@ -338,11 +330,6 @@ void nsLayoutStatics::Shutdown() {
 
   CubebUtils::ShutdownLibrary();
   WebAudioUtils::Shutdown();
-#ifdef XP_WIN
-  if (XRE_IsParentProcess()) {
-    widget::DestroyAudioSession();
-  }
-#endif
 
   nsCORSListenerProxy::Shutdown();
 

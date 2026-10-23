@@ -3001,9 +3001,6 @@ void Console::ExecuteDumpFunction(const nsAString& aMessage) {
 
   NS_ConvertUTF16toUTF8 str(aMessage);
   MOZ_LOG(nsContentUtils::DOMDumpLog(), LogLevel::Debug, ("%s", str.get()));
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", str.get());
-#endif
   fputs(str.get(), stdout);
   fflush(stdout);
 }

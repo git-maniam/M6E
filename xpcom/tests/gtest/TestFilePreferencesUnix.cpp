@@ -158,7 +158,6 @@ TEST(TestFilePreferencesUnix, Simple)
   rv = newPath->AppendNative(".."_ns);
   ASSERT_EQ(rv, NS_ERROR_FILE_UNRECOGNIZED_PATH);
 
-#if defined(XP_UNIX) && !defined(ANDROID)
   nsAutoCString homePath;
   rv = NS_GetSpecialDirectory(NS_OS_HOME_DIR, getter_AddRefs(newPath));
   ASSERT_EQ(rv, NS_OK);
@@ -174,11 +173,7 @@ TEST(TestFilePreferencesUnix, Simple)
   ASSERT_TRUE(newPath->NativePath().Equals(homePath + "/foo"_ns));
 
   nsLiteralCString homeBase =
-#  ifdef XP_MACOSX
       "/Users"_ns;
-#  else
-      "/home"_ns;
-#  endif
 
   rv = newPath->InitWithNativePath("~foo"_ns);
   ASSERT_EQ(rv, NS_OK);
@@ -187,7 +182,6 @@ TEST(TestFilePreferencesUnix, Simple)
   rv = newPath->InitWithNativePath("~foo/bar"_ns);
   ASSERT_EQ(rv, NS_OK);
   ASSERT_TRUE(newPath->NativePath().Equals(homeBase + "/foo/bar"_ns));
-#endif
 
   nsAutoCString trickyPath(tempPath);
   trickyPath.AppendLiteral("/allowed/../forbidden_dir/file");

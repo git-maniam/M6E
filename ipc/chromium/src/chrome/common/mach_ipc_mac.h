@@ -8,9 +8,7 @@
 #include <mach/mach.h>
 #include <mach/message.h>
 #include <sys/types.h>
-#ifdef XP_MACOSX
 #  include <vector>
-#endif
 
 #include "mozilla/Maybe.h"
 #include "mozilla/MozPromise.h"
@@ -38,7 +36,6 @@ kern_return_t MachReceivePortSendRight(
     mozilla::UniqueMachSendRight* attachment,
     audit_token_t* audit_token = nullptr);
 
-#ifdef XP_MACOSX
 //==============================================================================
 // Called by XRE_InitChildProcess to check-in with the parent process, sending
 // the child process task port to the parent, and receiving any ports sent by
@@ -58,6 +55,5 @@ RefPtr<MachHandleProcessCheckInPromise> MachHandleProcessCheckIn(
     mozilla::TimeDuration timeout,
     std::vector<mozilla::UniqueMachSendRight> send_rights,
     std::vector<mozilla::UniqueMachReceiveRight> receive_rights);
-#endif
 
 #endif  // BASE_MACH_IPC_MAC_H_

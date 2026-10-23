@@ -30,13 +30,7 @@
 #include "nscore.h"
 #include "prenv.h"
 #include "prlink.h"
-#ifdef XP_WIN
-#  include <io.h>
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>
-#endif
 
 #include <vector>
 
@@ -54,9 +48,7 @@
 #endif
 
 // dynamic_cast<void*> is not supported on Windows without RTTI.
-#ifndef _WIN32
 #  define HAVE_CPP_DYNAMIC_CAST_TO_VOID_PTR
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -76,12 +68,7 @@ class MOZ_CAPABILITY("mutex") TraceLogMutex
   }
 };
 
-#ifdef XP_WIN
-// The Windows futex mutex supports constant initialization.
-constinit static TraceLogMutex gTraceLog;
-#else
 MOZ_RUNINIT static TraceLogMutex gTraceLog;
-#endif
 
 class MOZ_RAII AutoTraceLogLock {
  public:
@@ -502,16 +489,9 @@ using EnvCharType = mozilla::filesystem::Path::value_type;
 
 static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
                     FILE** aResult, const char* aProcType) {
-#ifdef XP_WIN
-  // This is gross, I know.
-  const wchar_t* envvar = reinterpret_cast<const wchar_t*>(aEnvVar);
-  const char16_t* value = reinterpret_cast<const char16_t*>(::_wgetenv(envvar));
-#  define ENVVAR_PRINTF "%S"
-#else
   const char* envvar = aEnvVar;
   const char* value = ::getenv(aEnvVar);
 #  define ENVVAR_PRINTF "%s"
-#endif
 
   if (value) {
     nsTDependentString<EnvCharType> fname(value);
@@ -542,13 +522,8 @@ static bool InitLog(const EnvCharType* aEnvVar, const char* aMsg,
         fname.AppendLiteral(".log");
       }
     }
-#ifdef XP_WIN
-    FILE* stream = ::_wfopen(fname.get(), L"wN");
-    const wchar_t* fp = (const wchar_t*)fname.get();
-#else
     FILE* stream = ::fopen(fname.get(), "w");
     const char* fp = fname.get();
-#endif
     if (stream) {
       MozillaRegisterDebugFD(fileno(stream));
       *aResult = stream;
@@ -582,11 +557,7 @@ static void maybeUnregisterAndCloseFile(FILE*& aFile) {
 }
 
 static void DoInitTraceLog(const char* aProcType) {
-#ifdef XP_WIN
-#  define ENVVAR(x) u"" x
-#else
 #  define ENVVAR(x) x
-#endif
 
   bool defined = InitLog(ENVVAR("XPCOM_MEM_BLOAT_LOG"), "bloat/leaks",
                          &gBloatLog, aProcType);
@@ -744,17 +715,9 @@ void nsTraceRefcnt::EarlyInit() { InitTraceLog(); }
 extern "C" {
 
 static void EnsureWrite(FILE* aStream, const char* aBuf, size_t aLen) {
-#ifdef XP_WIN
-  int fd = _fileno(aStream);
-#else
   int fd = fileno(aStream);
-#endif
   while (aLen > 0) {
-#ifdef XP_WIN
-    auto written = _write(fd, aBuf, aLen);
-#else
     auto written = write(fd, aBuf, aLen);
-#endif
     if (written <= 0 || size_t(written) > aLen) {
       break;
     }
@@ -1201,11 +1164,7 @@ void nsTraceRefcnt::StartLoggingClass(const char* aClass) {
   // it would cause assertions. gObjectsToLog can't be used because it
   // relies on serial numbers.
 
-#ifdef XP_WIN
-#  define ENVVAR(x) u"" x
-#else
 #  define ENVVAR(x) x
-#endif
 
   if (!gRefcntsLog) {
     InitLog(ENVVAR("XPCOM_MEM_LATE_REFCNT_LOG"), "refcounts", &gRefcntsLog,

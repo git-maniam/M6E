@@ -12,13 +12,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
-#ifdef __linux__
-#  include <sys/sysmacros.h>
-#elif defined(XP_SOLARIS) || defined(__sun)
-#  include <sys/mkdev.h>  // major(), minor() for st_rdev
-#elif defined(XP_FREEBSD) || defined(XP_OPENBSD) || defined(XP_NETBSD)
-#  include <sys/types.h>  // major(), minor() for st_rdev (BSD)
-#endif
 #include <vulkan/vulkan.h>
 
 #include "mozilla/GfxInfoUtils.h"
@@ -209,15 +202,6 @@ static void vulkan_probe(const char* aDrmRenderPath) {
 
   log("vulkantest start\n");
 
-#ifdef __linux__
-  if (aDrmRenderPath && *aDrmRenderPath) {
-    struct stat st = {};
-    if (stat(aDrmRenderPath, &st) == 0) {
-      rendererDrmMajor = major(st.st_rdev);
-      rendererDrmMinor = minor(st.st_rdev);
-    }
-  }
-#endif
 
   auto autoRelease = mozilla::MakeScopeExit([&] {
     if (instance != VK_NULL_HANDLE && libvulkan) {

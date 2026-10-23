@@ -15,9 +15,6 @@
 #include "mozilla/media/MediaUtils.h"
 #include "mozilla/ipc/ProcessUtils.h"
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxBroker.h"
-#endif
 
 namespace mozilla::ipc {
 
@@ -158,9 +155,6 @@ class UtilityProcessHost final : public mozilla::ipc::GeckoChildProcessHost {
   // Will be set to true if the Utility process as successfully started.
   bool mLaunchCompleted = false;
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  RefPtr<SandboxBroker> mSandboxBroker{};
-#endif
 };
 
 }  // namespace mozilla::ipc

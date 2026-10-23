@@ -86,10 +86,8 @@
 
 #include <csi_platform.h>
 
-#ifndef WIN32
 #include <sys/time.h>
 #include <time.h>
-#endif
 
 int r_timeval_diff(struct timeval *t1,struct timeval *t0, struct timeval *diff);
 int r_timeval_cmp(struct timeval *t1,struct timeval *t2);

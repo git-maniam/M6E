@@ -91,31 +91,16 @@
 #include "nsStandardURL.h"
 #include "prsystem.h"
 
-#if defined(XP_UNIX)
 #  include <sys/utsname.h>
-#endif
 
-#if defined(MOZ_WIDGET_GTK)
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
-#if defined(XP_WIN)
-#  include <windows.h>
 
-#  include "mozilla/WindowsVersion.h"
-#endif
-
-#if defined(XP_MACOSX)
 #  include <CoreServices/CoreServices.h>
-#endif
 
 //-----------------------------------------------------------------------------
 #include "mozilla/net/HttpChannelChild.h"
 
 #define UA_PREF_PREFIX "general.useragent."
-#ifdef XP_WIN
-#  define UA_SPARE_PLATFORM
-#endif
 
 #define HTTP_PREF_PREFIX "network.http."
 #define INTL_ACCEPT_LANGUAGES "intl.accept_languages"
@@ -146,48 +131,10 @@ namespace mozilla::net {
 LazyLogModule gHttpLog("nsHttp");
 LazyLogModule gHttpIOLog("HttpIO");
 
-#ifdef ANDROID
-static nsCString GetDeviceModelId() {
-  // Assumed to be running on the main thread
-  // We need the device property in either case
-  nsAutoCString deviceModelId;
-  nsCOMPtr<nsIPropertyBag2> infoService;
-  infoService = mozilla::components::SystemInfo::Service();
-  MOZ_ASSERT(infoService, "Could not find a system info service");
-  nsAutoString androidDevice;
-  nsresult rv = infoService->GetPropertyAsAString(u"device"_ns, androidDevice);
-  if (NS_SUCCEEDED(rv)) {
-    deviceModelId = NS_LossyConvertUTF16toASCII(androidDevice);
-  }
-  nsAutoCString deviceString;
-  rv = Preferences::GetCString(UA_PREF("device_string"), deviceString);
-  if (NS_SUCCEEDED(rv)) {
-    deviceString.Trim(" ", true, true);
-    deviceString.ReplaceSubstring("%DEVICEID%"_ns, deviceModelId);
-    return std::move(deviceString);
-  }
-  return std::move(deviceModelId);
-}
-#endif
 
-#ifdef XP_UNIX
 static bool IsRunningUnderUbuntuSnap() {
-#  if defined(MOZ_WIDGET_GTK)
-  if (!widget::IsRunningUnderSnap()) {
-    return false;
-  }
-
-  char version[100];
-  if (PR_GetSystemInfo(PR_SI_RELEASE_BUILD, version, sizeof(version)) ==
-      PR_SUCCESS) {
-    if (strstr(version, "Ubuntu")) {
-      return true;
-    }
-  }
-#  endif
   return false;
 }
-#endif
 
 //-----------------------------------------------------------------------------
 // nsHttpHandler <public>
@@ -470,11 +417,7 @@ nsresult nsHttpHandler::Init() {
 
   mRequestContextService = RequestContextService::GetOrCreate();
 
-#if defined(ANDROID) || defined(XP_IOS)
-  mProductSub.AssignLiteral(MOZILLA_UAVERSION);
-#else
   mProductSub.AssignLiteral(LEGACY_UA_GECKO_TRAIL);
-#endif
 
 #if DEBUG
   // dump user agent prefs
@@ -1086,16 +1029,6 @@ void nsHttpHandler::BuildUserAgent() {
   }
 }
 
-#ifdef XP_WIN
-// Hardcode the reported Windows version to 10.0. This way, Microsoft doesn't
-// get to change Web compat-sensitive values without our veto. The compat-
-// sensitivity keeps going up as 10.0 stays as the current value for longer
-// and longer. If the system-reported version ever changes, we'll be able to
-// take our time to evaluate the Web compat impact instead of having to
-// scramble to react like happened with macOS changing from 10.x to 11.x.
-#  define OSCPU_WINDOWS "Windows NT 10.0"
-#  define OSCPU_WIN64 OSCPU_WINDOWS "; Win64; x64"
-#endif
 
 void nsHttpHandler::InitUserAgentComponents() {
   // Don't build user agent components in socket process, since the system info
@@ -1107,129 +1040,21 @@ void nsHttpHandler::InitUserAgentComponents() {
 
   // Gather platform.
   mPlatform.AssignLiteral(
-#if defined(ANDROID)
-      "Android"
-#elif defined(XP_WIN)
-      "Windows"
-#elif defined(XP_MACOSX)
       "Macintosh"
-#elif defined(XP_IOS)
-      "iPhone"
-#elif defined(XP_UNIX)
-      // We historically have always had X11 here,
-      // and there seems little a webpage can sensibly do
-      // based on it being something else, so use X11 for
-      // backwards compatibility in all cases.
-      "X11"
-#endif
   );
 
-#ifdef XP_UNIX
   if (IsRunningUnderUbuntuSnap()) {
     mPlatform.AppendLiteral("; Ubuntu");
   }
-#endif
 
-#ifdef ANDROID
-  nsCOMPtr<nsIPropertyBag2> infoService;
-  infoService = mozilla::components::SystemInfo::Service();
-  MOZ_ASSERT(infoService, "Could not find a system info service");
-  nsresult rv;
 
-  // Add the Android version number to the Fennec platform identifier.
-  nsAutoString androidVersion;
-  rv = infoService->GetPropertyAsAString(u"release_version"_ns, androidVersion);
-  MOZ_ASSERT_IF(
-      NS_SUCCEEDED(rv),
-      // Like version "9"
-      (androidVersion.Length() == 1 && std::isdigit(androidVersion[0])) ||
-          // Or like version "8.1", "10", or "12.1"
-          (androidVersion.Length() >= 2 && std::isdigit(androidVersion[0]) &&
-           (androidVersion[1] == u'.' || std::isdigit(androidVersion[1]))));
-
-  // Normalize: strip any minor-version suffix (everything from the first '.'
-  // onward, including the '.'). Some OEM firmwares report Build.VERSION.RELEASE
-  // as e.g. "14.0" while stock AOSP reports "14"; that variance splits the
-  // population into fingerprintable subsets without conveying any useful
-  // information about the OS. Bug 2043395.
-  int32_t dotIdx = androidVersion.FindChar(u'.');
-  if (dotIdx >= 0) {
-    androidVersion.Truncate(dotIdx);
-  }
-
-  // Spoof version "Android 10" for Android OS versions < 10 to reduce their
-  // fingerprintable user information. For Android OS versions >= 10, report
-  // the real OS version because some enterprise websites only want to permit
-  // clients with recent OS version (like bug 1876742). After the truncation
-  // above, all versions are bare integers; two digits means the version is
-  // >= 10.
-  mPlatform += " ";
-  if (NS_SUCCEEDED(rv) && androidVersion.Length() >= 2 &&
-      std::isdigit(androidVersion[0]) && std::isdigit(androidVersion[1])) {
-    mPlatform += NS_LossyConvertUTF16toASCII(androidVersion);
-  } else {
-    mPlatform.AppendLiteral("10");
-  }
-
-  // Add the `Mobile` or `TV` token when running on device.
-  bool isTV;
-  rv = infoService->GetPropertyAsBool(u"tv"_ns, &isTV);
-  if (NS_SUCCEEDED(rv) && isTV) {
-    mCompatDevice.AssignLiteral("TV");
-  } else {
-    mCompatDevice.AssignLiteral("Mobile");
-  }
-
-  if (Preferences::GetBool(UA_PREF("use_device"), false)) {
-    mDeviceModelId = mozilla::net::GetDeviceModelId();
-  }
-#endif  // ANDROID
-
-#if defined(XP_IOS)
-  // Freeze the iOS version to 18.0, use an underscore separator to avoid
-  // detection as macOS.
-  mCompatDevice.AssignLiteral("CPU iPhone OS 18_0 like Mac OS X");
-#endif
 
   // Gather OS/CPU.
-#if defined(XP_WIN)
-
-#  if defined _M_X64 || defined _M_AMD64
-  mOscpu.AssignLiteral(OSCPU_WIN64);
-#  elif defined(_ARM64_)
-  // Report ARM64 Windows 11+ as x86_64 and Windows 10 as x86. Windows 11+
-  // supports x86_64 emulation, but Windows 10 only supports x86 emulation.
-  if (IsWin11OrLater()) {
-    mOscpu.AssignLiteral(OSCPU_WIN64);
-  } else {
-    mOscpu.AssignLiteral(OSCPU_WINDOWS);
-  }
-#  else
-  BOOL isWow64 = FALSE;
-  if (!IsWow64Process(GetCurrentProcess(), &isWow64)) {
-    isWow64 = FALSE;
-  }
-  if (isWow64) {
-    mOscpu.AssignLiteral(OSCPU_WIN64);
-  } else {
-    mOscpu.AssignLiteral(OSCPU_WINDOWS);
-  }
-#  endif
-
-#elif defined(XP_MACOSX)
   mOscpu.AssignLiteral("Intel Mac OS X 10.15");
-#elif defined(ANDROID)
-  mOscpu.AssignLiteral("Linux armv81");
-#elif defined(XP_IOS)
-  mOscpu.AssignLiteral("iPhone");
-#else
-  mOscpu.AssignLiteral("Linux x86_64");
-#endif
 
   mUserAgentIsDirty = true;
 }
 
-#ifdef XP_MACOSX
 void nsHttpHandler::InitMSAuthorities() {
   if (!StaticPrefs::network_http_microsoft_entra_sso_enabled()) {
     return;
@@ -1250,7 +1075,6 @@ void nsHttpHandler::InitMSAuthorities() {
     mMSAuthorities.Insert(token);
   }
 }
-#endif
 
 uint32_t nsHttpHandler::MaxSocketCount() {
   PR_CallOnce(&nsSocketTransportService::gMaxCountInitOnce,
@@ -1327,24 +1151,6 @@ void nsHttpHandler::PrefsChanged(const char* pref) {
     mUserAgentIsDirty = true;
   }
 
-#ifdef ANDROID
-  // general.useragent.use_device
-  if (PREF_CHANGED(UA_PREF("use_device"))) {
-    if (Preferences::GetBool(UA_PREF("use_device"), false)) {
-      if (!XRE_IsSocketProcess()) {
-        mDeviceModelId = mozilla::net::GetDeviceModelId();
-        if (gIOService->SocketProcessReady()) {
-          RefPtr<SocketProcessParent> socketParent =
-              SocketProcessParent::GetSingleton();
-          (void)socketParent->SendUpdateDeviceModelId(mDeviceModelId);
-        }
-      }
-    } else {
-      mDeviceModelId.Truncate();
-    }
-    mUserAgentIsDirty = true;
-  }
-#endif
 
   //
   // HTTP options
@@ -2048,7 +1854,6 @@ void nsHttpHandler::PrefsChanged(const char* pref) {
     }
   }
 
-#ifdef XP_MACOSX
   if (XRE_IsParentProcess()) {
     if (PREF_CHANGED(HTTP_PREF("microsoft-entra-sso.enabled"))) {
       rv =
@@ -2058,7 +1863,6 @@ void nsHttpHandler::PrefsChanged(const char* pref) {
       }
     }
   }
-#endif
 
   // Enable HTTP response timeout if TCP Keepalives are disabled.
   mResponseTimeoutEnabled =
@@ -3100,13 +2904,11 @@ bool nsHttpHandler::IsHostExcludedForHTTPSRR(const nsACString& aHost) {
   return mExcludedHostsForHTTPSRRUpgrade.Contains(aHost);
 }
 
-#ifdef XP_MACOSX
 bool nsHttpHandler::IsHostMSAuthority(const nsACString& aHost) {
   MOZ_ASSERT(NS_IsMainThread());
 
   return mMSAuthorities.Contains(aHost);
 }
-#endif
 
 void nsHttpHandler::Exclude0RttTcp(const nsHttpConnectionInfo* ci) {
   MOZ_ASSERT(OnSocketThread());

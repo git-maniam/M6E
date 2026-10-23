@@ -15,9 +15,6 @@
 #  include "mozilla/Logging.h"
 #endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "nsDebug.h"
-#endif
 #include "2D.h"
 #include "BaseRect.h"
 #include "LoggingConstants.h"
@@ -131,9 +128,6 @@ struct BasicLogger {
   // in the appropriate places in that method.
   static bool ShouldOutputMessage(int aLevel) {
     if (StaticPrefs::gfx_logging_level() >= aLevel) {
-#if defined(MOZ_WIDGET_ANDROID)
-      return true;
-#else
 #  if defined(MOZ_LOGGING)
       if (MOZ_LOG_TEST(GetGFX2DLog(), PRLogLevelForLevel(aLevel))) {
         return true;
@@ -143,7 +137,6 @@ struct BasicLogger {
               (aLevel < LOG_DEBUG)) {
         return true;
       }
-#endif
     }
     return false;
   }
@@ -162,9 +155,6 @@ struct BasicLogger {
     // make the corresponding change in the ShouldOutputMessage method
     // above.
     if (StaticPrefs::gfx_logging_level() >= aLevel) {
-#if defined(MOZ_WIDGET_ANDROID)
-      printf_stderr("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
-#else
 #  if defined(MOZ_LOGGING)
       if (MOZ_LOG_TEST(GetGFX2DLog(), PRLogLevelForLevel(aLevel))) {
         MOZ_LOG(GetGFX2DLog(), PRLogLevelForLevel(aLevel),
@@ -175,7 +165,6 @@ struct BasicLogger {
               (aLevel < LOG_DEBUG)) {
         printf("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
       }
-#endif
     }
   }
 };
@@ -237,9 +226,6 @@ Hexa<T> hexa(T val) {
   return Hexa<T>(val);
 }
 
-#ifdef WIN32
-void LogWStr(const wchar_t* aStr, std::stringstream& aOut);
-#endif
 
 template <int L, typename Logger = BasicLogger>
 class Log final {
@@ -291,14 +277,6 @@ class Log final {
     }
     return *this;
   }
-#ifdef WIN32
-  Log& operator<<(const wchar_t aWStr[]) {
-    if (MOZ_UNLIKELY(LogIt())) {
-      LogWStr(aWStr, mMessage);
-    }
-    return *this;
-  }
-#endif
   Log& operator<<(bool aBool) {
     if (MOZ_UNLIKELY(LogIt())) {
       mMessage << (aBool ? "true" : "false");

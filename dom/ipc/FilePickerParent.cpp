@@ -223,25 +223,6 @@ void FilePickerParent::Done(nsIFilePicker::ResultCode aResult) {
 
   nsTArray<RefPtr<BlobImpl>> blobsInWebKitDirectory;
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (mMode == nsIFilePicker::modeGetFolder) {
-    nsCOMPtr<nsISimpleEnumerator> iter;
-    if (NS_SUCCEEDED(
-            mFilePicker->GetDomFilesInWebKitDirectory(getter_AddRefs(iter)))) {
-      nsCOMPtr<nsISupports> supports;
-
-      bool loop = true;
-      while (NS_SUCCEEDED(iter->HasMoreElements(&loop)) && loop) {
-        iter->GetNext(getter_AddRefs(supports));
-        if (supports) {
-          RefPtr<BlobImpl> file = static_cast<File*>(supports.get())->Impl();
-          MOZ_ASSERT(file);
-          blobsInWebKitDirectory.AppendElement(file);
-        }
-      }
-    }
-  }
-#endif
 
   MOZ_ASSERT(!mRunnable);
   mRunnable =

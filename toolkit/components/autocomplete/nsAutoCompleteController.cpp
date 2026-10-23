@@ -540,9 +540,6 @@ nsAutoCompleteController::HandleKeyNavigation(uint32_t aKey, bool* _retval) {
     }
   } else if (aKey == dom::KeyboardEvent_Binding::DOM_VK_LEFT ||
              aKey == dom::KeyboardEvent_Binding::DOM_VK_RIGHT
-#ifndef XP_MACOSX
-             || aKey == dom::KeyboardEvent_Binding::DOM_VK_HOME
-#endif
   ) {
     // The user hit a text-navigation key.
     bool isOpen = false;

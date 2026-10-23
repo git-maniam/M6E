@@ -14,20 +14,10 @@ void InitPrefs();
 void InitDirectoriesAllowlist();
 bool IsBlockedUNCPath(const nsAString& aFilePath);
 
-#ifdef XP_WIN
-bool IsAllowedPath(const nsAString& aFilePath);
-#else
 bool IsAllowedPath(const nsACString& aFilePath);
-#endif
 
-#ifdef XP_WIN
-bool StartsWithDiskDesignatorAndBackslash(const nsAString& aAbsolutePath);
-#endif
 
 extern const char kPathSeparator;
-#ifdef XP_WIN
-extern const nsLiteralString kDevicePathSpecifier;
-#endif
 
 namespace testing {
 

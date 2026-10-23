@@ -134,9 +134,6 @@
 #include "nsThreadUtils.h"
 #include "nsURIHashKey.h"
 #include "nsURLHelper.h"
-#ifdef XP_WIN
-#  include "objbase.h"
-#endif
 #include "xpcpublic.h"
 
 mozilla::LazyLogModule gMediaElementLog("HTMLMediaElement");
@@ -4773,12 +4770,10 @@ class HTMLMediaElement::GVAutoplayObserver final : public nsIObserver {
       : mElement(aElement), mPhase(Phase::Init) {
     MOZ_ASSERT(NS_IsMainThread());
     MOZ_ASSERT(aElement);
-#if !defined(MOZ_WIDGET_ANDROID)
     LOG(LogLevel::Error, ("{} GVAutoplayObserver used outside Android!",
                           fmt::ptr(mElement.get())));
     MOZ_ASSERT_UNREACHABLE(
         "GVAutoplayObserver should never be constructed outside of Android.");
-#endif
     Subscribe();
   }
 
@@ -5081,11 +5076,6 @@ void HTMLMediaElement::Init() {
   // in JS)
   MediaShutdownManager::InitStatics();
 
-#if defined(MOZ_WIDGET_ANDROID)
-  GVAutoplayPermissionRequestor::AskForPermissionIfNeeded(
-      OwnerDoc()->GetInnerWindow());
-  StartObservingGVAutoplayIfNeeded();
-#endif
 
   OwnerDoc()->SetDocTreeHadMedia();
   mShutdownObserver->Subscribe(this);
@@ -5105,9 +5095,6 @@ HTMLMediaElement::~HTMLMediaElement() {
 
   mWatchManager.Shutdown();
 
-#if defined(MOZ_WIDGET_ANDROID)
-  mGVAutoplayObserver = nullptr;
-#endif
 
   mShutdownObserver->Unsubscribe();
 
@@ -5263,15 +5250,6 @@ already_AddRefed<Promise> HTMLMediaElement::Play(ErrorResult& aRv) {
 
     MaybeMarkSHEntryAsUserInteracted();
   } else {
-#if defined(MOZ_WIDGET_ANDROID)
-    if (ShouldDelayPlayUntilGVAutoplayRequestResolved()) {
-      AUTOPLAY_LOG("delay MediaElement {} play while waiting for GeckoView",
-                   fmt::ptr(this));
-      StartObservingGVAutoplayIfNeeded();
-      MaybeDoLoad();
-      return promise.forget();
-    }
-#endif
     AUTOPLAY_LOG("reject MediaElement {} to play", fmt::ptr(this));
     AsyncRejectPendingPlayPromises(NS_ERROR_DOM_MEDIA_NOT_ALLOWED_ERR);
   }
@@ -5300,17 +5278,6 @@ void HTMLMediaElement::MaybeNotifyAutoplayBlocked() {
 }
 
 void HTMLMediaElement::DispatchBlockEventForVideoControl() {
-#if defined(MOZ_WIDGET_ANDROID)
-  nsVideoFrame* videoFrame = do_QueryFrame(GetPrimaryFrame());
-  if (!videoFrame || !videoFrame->GetVideoControls()) {
-    return;
-  }
-
-  RefPtr<AsyncEventDispatcher> asyncDispatcher = new AsyncEventDispatcher(
-      videoFrame->GetVideoControls(), u"MozNoControlsBlockedVideo"_ns,
-      CanBubble::eYes);
-  asyncDispatcher->PostDOMEvent();
-#endif
 }
 
 void HTMLMediaElement::MaybeRecordRuntimeMutedContentAttrImpact() {
@@ -5329,10 +5296,6 @@ void HTMLMediaElement::MaybeRecordRuntimeMutedContentAttrImpact() {
 }
 
 void HTMLMediaElement::PlayInternal(bool aHandlingUserInput) {
-#if defined(MOZ_WIDGET_ANDROID)
-  AUTOPLAY_LOG("Stop observing GV autoplay permission (PlayInternal starting)");
-  StopObservingGVAutoplayIfNeeded();
-#endif
 
   if (mPreloadAction == HTMLMediaElement::PRELOAD_NONE) {
     // The media load algorithm will be initiated by a user interaction.
@@ -5751,9 +5714,6 @@ void HTMLMediaElement::AfterSetAttr(int32_t aNameSpaceID, nsAtom* aName,
       if (aNotify) {
         if (aValue) {
           if (!mLazyLoading) {
-#if defined(MOZ_WIDGET_ANDROID)
-            StartObservingGVAutoplayIfNeeded();
-#endif
             StopSuspendingAfterFirstFrame();
             CheckAutoplayDataReady();
           }
@@ -7127,56 +7087,13 @@ void HTMLMediaElement::ChangeNetworkState(nsMediaNetworkState aState) {
 }
 
 void HTMLMediaElement::StartObservingGVAutoplayIfNeeded() {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (mGVAutoplayObserver || !StaticPrefs::media_geckoview_autoplay_request()) {
-    return;
-  }
-  nsPIDOMWindowInner* inner = OwnerDoc()->GetInnerWindow();
-  RefPtr<BrowsingContext> ctx = inner ? inner->GetBrowsingContext() : nullptr;
-  if (ctx && GVAutoplayPermissionRequestor::HasUnresolvedRequest(inner)) {
-    mGVAutoplayObserver = MakeAndAddRef<GVAutoplayObserver>(this);
-  }
-#endif
 }
 
 void HTMLMediaElement::StopObservingGVAutoplayIfNeeded() {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (!mGVAutoplayObserver) {
-    return;
-  }
-  nsPIDOMWindowInner* inner = OwnerDoc()->GetInnerWindow();
-  RefPtr<BrowsingContext> ctx = inner ? inner->GetBrowsingContext() : nullptr;
-  if (ctx == nullptr ||
-      !GVAutoplayPermissionRequestor::HasUnresolvedRequest(inner)) {
-    mGVAutoplayObserver = nullptr;
-  }
-#endif
 }
 
 bool HTMLMediaElement::ShouldDelayPlayUntilGVAutoplayRequestResolved() const {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (!StaticPrefs::media_geckoview_autoplay_request()) {
-    return false;
-  }
-  nsPIDOMWindowInner* inner = OwnerDoc()->GetInnerWindow();
-  if (!inner) {
-    return false;
-  }
-  RefPtr<BrowsingContext> context = inner->GetBrowsingContext();
-  if (!context) {
-    return false;
-  }
-  context = context->Top();
-  const bool isInaudible = Volume() == 0.0 || Muted() ||
-                           (!HasAudio() && mReadyState >= HAVE_METADATA);
-  const auto status = isInaudible
-                          ? context->GetGVInaudibleAutoplayRequestStatus()
-                          : context->GetGVAudibleAutoplayRequestStatus();
-  return status == GVAutoplayRequestStatus::eUNKNOWN ||
-         status == GVAutoplayRequestStatus::ePENDING;
-#else
   return false;
-#endif
 }
 
 bool HTMLMediaElement::IsEligibleForAutoplay() {
@@ -7233,9 +7150,6 @@ void HTMLMediaElement::CheckAutoplayDataReady() {
     DispatchEventsWhenPlayWasNotAllowed();
     return;
   }
-#if defined(MOZ_WIDGET_ANDROID)
-  StopObservingGVAutoplayIfNeeded();
-#endif
   RunAutoplay();
 }
 
@@ -7643,28 +7557,6 @@ void HTMLMediaElement::NotifyOwnerDocumentActivityChanged() {
     }
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // Android-only probe (bug 2066141) to help the mobile product team
-  // answer how often background media playback happens. It is recorded when
-  // this element transitions to hidden while audibly playing (the app is
-  // backgrounded), once per background episode, and reset when the document
-  // becomes visible again. Picture-in-Picture is excluded, since there the
-  // document is hidden but the video is still visible to the user.
-  //
-  // This is a broad signal: it only fires on the foreground-to-background
-  // transition, so it does NOT capture all background media playback (for
-  // example media that starts or resumes while already backgrounded) and will
-  // under-count.
-  if (OwnerDoc()->Hidden() && !OwnerDoc()->InAndroidPipMode() && !mPaused &&
-      IsAudible()) {
-    if (!mRecordedBackgroundAudioPlayback) {
-      mRecordedBackgroundAudioPlayback = true;
-      glean::media::background_audio_playback.Record();
-    }
-  } else if (!OwnerDoc()->Hidden()) {
-    mRecordedBackgroundAudioPlayback = false;
-  }
-#endif
 
   AddRemoveSelfReference();
 }

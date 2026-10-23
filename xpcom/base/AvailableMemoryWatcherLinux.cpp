@@ -19,10 +19,8 @@
 #include "nsITimer.h"
 #include "nsMemoryPressure.h"
 #include "nsPrintfCString.h"
-#if !defined(ANDROID)
 #  include "mozilla/glean/XpcomMetrics.h"
 #  include "nsIPSIProvider.h"
-#endif
 
 #define NON_OOM_DELAY_SEC 120
 
@@ -99,9 +97,7 @@ class nsAvailableMemoryWatcher final
     : public nsITimerCallback,
       public nsINamed,
       public nsAvailableMemoryWatcherBase,
-#if !defined(ANDROID)
       public nsIPSIProvider,
-#endif
       public nsIAvailableMemoryWatcherTestingLinux {
  public:
   NS_DECL_ISUPPORTS_INHERITED
@@ -116,7 +112,6 @@ class nsAvailableMemoryWatcher final
   void HandleLowMemory();
   void MaybeHandleHighMemory();
 
-#if !defined(ANDROID)
   NS_IMETHOD GetCachedPSIInfo(mozilla::PSIInfo& aResult) override;
 
   void RecordNonOOMPSI(const PSIInfo& aPsi);
@@ -129,7 +124,6 @@ class nsAvailableMemoryWatcher final
     // kills.
     mLastOOMTime = TimeStamp::Now();
   }
-#endif
 
  private:
   ~nsAvailableMemoryWatcher();
@@ -212,7 +206,6 @@ nsresult GetLastPSISnapshot(PSIInfo& aResult) {
   return provider->GetCachedPSIInfo(aResult);
 }
 
-#if !defined(ANDROID)
 void StartNonOOMPSISampling() {
   RefPtr<nsIAvailableMemoryWatcherBase> watcher =
       nsAvailableMemoryWatcherBase::GetSingleton();
@@ -225,7 +218,6 @@ void StartNonOOMPSISampling() {
     provider->StartNonOOMPSISampling();
   }
 }
-#endif
 
 nsresult nsAvailableMemoryWatcher::Init() {
   nsresult rv = nsAvailableMemoryWatcherBase::Init();
@@ -398,7 +390,6 @@ void nsAvailableMemoryWatcher::UpdateCrashAnnotation(const MutexAutoLock&)
       CrashReporter::Annotation::LinuxMemoryPSI, psiValues);
 }
 
-#if !defined(ANDROID)
 void nsAvailableMemoryWatcher::RecordNonOOMPSI(const mozilla::PSIInfo& aPsi) {
   const mozilla::PSIInfo& psi = aPsi;
 
@@ -410,11 +401,9 @@ void nsAvailableMemoryWatcher::RecordNonOOMPSI(const mozilla::PSIInfo& aPsi) {
   extra.psiFullAvg60 = mozilla::Some(nsPrintfCString("%lu", psi.full_avg60));
   mozilla::glean::memory_watcher::non_oom_sample.Record(mozilla::Some(extra));
 }
-#endif
 
 void nsAvailableMemoryWatcher::UpdatePSIInfo(const MutexAutoLock&)
     MOZ_REQUIRES(mMutex) {
-#if !defined(ANDROID)
   if ((mPSIInfo.full_avg10 || mPSIInfo.full_avg60) && !mLastOOMTime.IsNull() &&
       (TimeStamp::Now() >
        mLastOOMTime + TimeDuration::FromSeconds(NON_OOM_DELAY_SEC))) {
@@ -429,7 +418,6 @@ void nsAvailableMemoryWatcher::UpdatePSIInfo(const MutexAutoLock&)
                                }));
     mLastOOMTime = TimeStamp();
   }
-#endif
 
   // Skip reading PSI file if it has failed before (e.g., AppArmor denial)
   // to avoid spamming syslog with repeated access denials

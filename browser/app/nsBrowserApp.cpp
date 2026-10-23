@@ -12,14 +12,9 @@
 #include "mozilla/RuntimeExceptionModule.h"
 #include "mozilla/ScopeExit.h"
 #include "BrowserDefines.h"
-#if defined(XP_WIN)
-#  include <windows.h>
-#  include <stdlib.h>
-#elif defined(XP_UNIX)
 #  include <sys/resource.h>
 #  include <unistd.h>
 #  include <fcntl.h>
-#endif
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -27,25 +22,6 @@
 
 #include "nsCOMPtr.h"
 
-#ifdef XP_WIN
-#  include "mozilla/PreXULSkeletonUI.h"
-#  include "freestanding/SharedSection.h"
-#  include "LauncherProcessWin.h"
-#  include "mozilla/GeckoArgs.h"
-#  include "mozilla/mscom/ProcessRuntime.h"
-#  include "mozilla/WindowsDllBlocklist.h"
-#  include "mozilla/WindowsDpiInitialization.h"
-#  include "mozilla/WindowsProcessMitigations.h"
-
-#  define XRE_WANT_ENVIRON
-#  include "nsWindowsWMain.cpp"
-
-#  define strcasecmp _stricmp
-#  ifdef MOZ_SANDBOX
-#    include "mozilla/sandboxing/SandboxInitialization.h"
-#    include "mozilla/sandboxing/TargetGeckoServices.h"
-#  endif
-#endif
 #include "BinaryPath.h"
 
 #include "nsXPCOMPrivate.h"  // for MAXPATHLEN and XPCOM_DLL
@@ -96,9 +72,6 @@ __attribute__((constructor)) static void SSE2Check() {
 }
 #endif
 
-#if !defined(MOZ_WIDGET_COCOA) && !defined(MOZ_WIDGET_ANDROID)
-#  define MOZ_BROWSER_CAN_BE_CONTENTPROC
-#endif
 
 using namespace mozilla;
 
@@ -106,59 +79,12 @@ using namespace mozilla;
 
 // Only `Output` below cares about this, and only on Windows, where it decides
 // whether to pop up a message box.
-#if defined(MOZ_BACKGROUNDTASKS) && defined(XP_WIN) && !MOZ_WINCONSOLE
-static bool gIsBackgroundTask = false;
-#endif
 
 static MOZ_FORMAT_PRINTF(1, 2) void Output(const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
 
-#ifndef XP_WIN
   vfprintf(stderr, fmt, ap);
-#else
-  bool showMessageBox = true;
-
-  char msg[2048];
-  vsnprintf_s(msg, _countof(msg), _TRUNCATE, fmt, ap);
-
-  wchar_t wide_msg[2048];
-  MultiByteToWideChar(CP_UTF8, 0, msg, -1, wide_msg, _countof(wide_msg));
-
-#  if MOZ_WINCONSOLE
-  showMessageBox = false;
-#  elif defined(MOZ_BACKGROUNDTASKS)
-  // Only show a UI if this isn't a background tasks.
-  showMessageBox = !gIsBackgroundTask;
-#  endif
-
-  if (showMessageBox) {
-    // Linking user32 at load-time interferes with the DLL blocklist (bug
-    // 932100). This is a rare codepath, so we can load user32 at run-time
-    // instead.
-
-    // If we fail to display the message box, we set showMessageBox to false to
-    // fall back to printing to stderr below.
-    HMODULE user32 = LoadLibraryW(L"user32.dll");
-    if (user32) {
-      decltype(MessageBoxW)* messageBoxW =
-          (decltype(MessageBoxW)*)GetProcAddress(user32, "MessageBoxW");
-      if (messageBoxW) {
-        messageBoxW(nullptr, wide_msg, L"Firefox",
-                    MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
-      } else {
-        showMessageBox = false;
-      }
-      FreeLibrary(user32);
-    } else {
-      showMessageBox = false;
-    }
-  }
-
-  if (!showMessageBox) {
-    fwprintf_s(stderr, wide_msg);
-  }
-#endif
 
   va_end(ap);
 }
@@ -174,28 +100,10 @@ static bool IsFlag(const char* arg, const char* s) {
     return !strcasecmp(arg, s);
   }
 
-#if defined(XP_WIN)
-  if (*arg == '/') return !strcasecmp(++arg, s);
-#endif
 
   return false;
 }
 
-#if defined(MOZ_BACKGROUNDTASKS) && defined(XP_WIN) && !MOZ_WINCONSOLE
-/**
- * Return true if any arguments are flags with the given string.
- *
- * A flag is defined per `IsFlag`.
- */
-static bool HasFlag(int argc, char* argv[], const char* s) {
-  for (int i = 1; i < argc; i++) {
-    if (IsFlag(argv[i], s)) {
-      return true;
-    }
-  }
-  return false;
-}
-#endif
 
 constinit Bootstrap::UniquePtr gBootstrap;
 
@@ -225,10 +133,6 @@ static int do_main(int argc, char* argv[], char* envp[]) {
     }
 
     XREShellData shellData;
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-    shellData.sandboxBrokerServices =
-        sandboxing::GetInitializedBrokerServices();
-#endif
 
 #ifdef LIBFUZZER
     shellData.fuzzerDriver = fuzzer::FuzzerDriver;
@@ -251,15 +155,6 @@ static int do_main(int argc, char* argv[], char* envp[]) {
     config.appDataPath = kDesktopFolder;
   }
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  sandbox::BrokerServices* brokerServices =
-      sandboxing::GetInitializedBrokerServices();
-  if (!brokerServices) {
-    Output("Couldn't initialize the broker services.\n");
-    return 255;
-  }
-  config.sandboxBrokerServices = brokerServices;
-#endif
 
 #ifdef LIBFUZZER
   if (getenv("FUZZER"))
@@ -302,7 +197,6 @@ static nsresult InitXPCOMGlue(LibLoadingStrategy aLibLoadingStrategy) {
 uint32_t gBlocklistInitFlags = eDllBlocklistInitFlagDefault;
 #endif
 
-#if defined(XP_UNIX)
 static void ReserveDefaultFileDescriptors() {
   // Reserve the lower positions of the file descriptors to make sure
   // we don't reuse stdin/stdout/stderr in case they were closed
@@ -315,38 +209,11 @@ static void ReserveDefaultFileDescriptors() {
     [[maybe_unused]] int r = dup(fd);
   }
 }
-#endif
 
-#ifdef XP_LINUX
-// Linux performance hack: when the fd table expands to the next power
-// of two, in a multithreaded process it blocks for 30-50ms due to
-// RCU, and this applies separately to each process, so it can add up.
-// But, for a single-threaded process it's basically free, so we can
-// pre-expand early in startup to a value that will usually be enough.
-// The table takes one machine word per entry, so it's cheap in memory.
-//
-// Idea from https://chromium-review.googlesource.com/c/chromium/src/+/6845921
-static void ExpandFileDescriptorTable() {
-  // Expand the table to size 512 by creating a fd with the first
-  // unused number greater than 255 (unlike dup2, this won't overwrite
-  // an existing fd).  Empirically, 512 seems to be enough for our
-  // content processes in most cases.
-  mozilla::UniqueFileHandle fdTableExpander(fcntl(0, F_DUPFD, 256));
-  // The fd is immediately closed (if it was created; we ignore errors
-  // because this is just an optimization).
-}
-#endif
 
 int main(int argc, char* argv[], char* envp[]) {
-#if defined(XP_UNIX)
   ReserveDefaultFileDescriptors();
-#endif
 
-#if defined(MOZ_BACKGROUNDTASKS) && defined(XP_WIN) && !MOZ_WINCONSOLE
-  // Check whether this is a background task very early, as the `Output`
-  // function uses this information.
-  gIsBackgroundTask = HasFlag(argc, argv, "backgroundtask");
-#endif
 
 #ifdef MOZ_BROWSER_CAN_BE_CONTENTPROC
   if (argc > 1 && IsFlag(argv[1], "contentproc")) {
@@ -382,11 +249,6 @@ int main(int argc, char* argv[], char* envp[]) {
   }
 #endif
 
-#ifdef XP_LINUX
-  // Do this as early as possible but after the fork server hook,
-  // because forking resets the fd table size.
-  ExpandFileDescriptorTable();
-#endif
 
   mozilla::TimeStamp start = mozilla::TimeStamp::Now();
 
@@ -406,16 +268,6 @@ int main(int argc, char* argv[], char* envp[]) {
   // We are launching as a content process, delegate to the appropriate
   // main
   if (GetGeckoProcessType() != GeckoProcessType_Default) {
-#  if defined(XP_WIN) && defined(MOZ_SANDBOX)
-    // We need to set whether our process is supposed to have win32k locked down
-    // from the command line setting before DllBlocklist_Initialize,
-    // GetInitializedTargetServices and WindowsDpiInitialization.
-    Maybe<bool> win32kLockedDown =
-        mozilla::geckoargs::sWin32kLockedDown.Get(argc, argv);
-    if (win32kLockedDown.isSome() && *win32kLockedDown) {
-      mozilla::SetWin32kLockedDownInPolicy();
-    }
-#  endif
 
 #  ifdef HAS_DLL_BLOCKLIST
     uint32_t initFlags =
@@ -424,27 +276,6 @@ int main(int argc, char* argv[], char* envp[]) {
     DllBlocklist_Initialize(initFlags);
 #  endif  // HAS_DLL_BLOCKLIST
 
-#  if defined(XP_WIN) && defined(MOZ_SANDBOX)
-    // We need to initialize the sandbox TargetServices before InitXPCOMGlue
-    // because we might need the sandbox broker to give access to some files.
-    if (IsSandboxedProcess() && !sandboxing::GetInitializedTargetServices()) {
-      Output("Failed to initialize the sandbox target services.");
-      return 255;
-    }
-#  endif
-#  if defined(XP_WIN)
-    // Ideally, we would be able to set our DPI awareness in
-    // firefox.exe.manifest Unfortunately, that would cause Win32k calls when
-    // user32.dll gets loaded, which would be incompatible with Win32k Lockdown
-    //
-    // MSDN says that it's allowed-but-not-recommended to initialize DPI
-    // programatically, as long as it's done before any HWNDs are created.
-    // Thus, we do it almost as soon as we possibly can
-    {
-      auto result = mozilla::WindowsDpiInitialization();
-      (void)result;  // Ignore errors since some tools block DPI calls
-    }
-#  endif
 
     nsresult rv = InitXPCOMGlue(LibLoadingStrategy::NoReadAhead);
     if (NS_FAILED(rv)) {
@@ -453,18 +284,6 @@ int main(int argc, char* argv[], char* envp[]) {
 
     XREChildData childData;
 
-#  if defined(XP_WIN) && defined(MOZ_SANDBOX)
-    if (IsSandboxedProcess()) {
-      childData.sandboxTargetServices =
-          mozilla::sandboxing::GetInitializedTargetServices();
-      if (!childData.sandboxTargetServices) {
-        return 1;
-      }
-
-      childData.setTargetGeckoServices =
-          mozilla::sandboxing::SetTargetGeckoServices;
-    }
-#  endif
 
     rv = gBootstrap->XRE_InitChildProcess(argc, argv, &childData);
 
@@ -485,48 +304,11 @@ int main(int argc, char* argv[], char* envp[]) {
 
 // We will likely only ever support this as a command line argument on Windows
 // and OSX, so we're ifdefing here just to not create any expectations.
-#if defined(XP_WIN) || defined(XP_MACOSX)
   if (argc > 1 && IsFlag(argv[1], "silentmode")) {
     ::putenv(const_cast<char*>("MOZ_APP_SILENT_START=1"));
-#  if defined(XP_WIN)
-    // On windows We also want to set a separate variable, which we want to
-    // persist across restarts, which will let us keep the process alive
-    // even if the last window is closed.
-    ::putenv(const_cast<char*>("MOZ_APP_ALLOW_WINDOWLESS=1"));
-#  endif
-#  if defined(XP_MACOSX)
     ::putenv(const_cast<char*>("MOZ_APP_NO_DOCK=1"));
-#  endif
-  }
-#endif
-
-#if defined(XP_WIN)
-
-  // Ideally, we would be able to set our DPI awareness in firefox.exe.manifest
-  // Unfortunately, that would cause Win32k calls when user32.dll gets loaded,
-  // which would be incompatible with Win32k Lockdown
-  //
-  // MSDN says that it's allowed-but-not-recommended to initialize DPI
-  // programatically, as long as it's done before any HWNDs are created.
-  // Thus, we do it almost as soon as we possibly can
-  {
-    auto result = mozilla::WindowsDpiInitialization();
-    (void)result;  // Ignore errors since some tools block DPI calls
   }
 
-  // Once the browser process hits the main function, we no longer need
-  // a writable section handle because all dependent modules have been
-  // loaded.
-  mozilla::freestanding::gSharedSection.ConvertToReadOnly();
-
-  mozilla::CreateAndStorePreXULSkeletonUI(GetModuleHandle(nullptr), argc, argv);
-
-  // Preload cryptbase.dll from the system directory to avoid loading a
-  // planted one. This used to be done unconditionally in mozglue's DllMain;
-  // it's now parent-only, as child processes either don't need it, or by
-  // the time they do the sandbox already guarantees PreferSystem32Images.
-  ::LoadLibraryExW(L"cryptbase.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-#endif
 
   nsresult rv = InitXPCOMGlue(LibLoadingStrategy::ReadAhead);
   if (NS_FAILED(rv)) {
@@ -541,9 +323,6 @@ int main(int argc, char* argv[], char* envp[]) {
 
   int result = do_main(argc, argv, envp);
 
-#if defined(XP_WIN)
-  CleanupProcessRuntime();
-#endif
 
   gBootstrap->NS_LogTerm();
 
@@ -551,14 +330,12 @@ int main(int argc, char* argv[], char* envp[]) {
   DllBlocklist_Shutdown();
 #endif
 
-#ifdef XP_MACOSX
   // Allow writes again. While we would like to catch writes from static
   // destructors to allow early exits to use _exit, we know that there is
   // at least one such write that we don't control (see bug 826029). For
   // now we enable writes again and early exits will have to use exit instead
   // of _exit.
   gBootstrap->XRE_StopLateWriteChecks();
-#endif
 
   gBootstrap.reset();
 

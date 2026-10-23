@@ -130,12 +130,7 @@ class TestMediaFormatReader : public ::testing::Test {
     RefPtr container = new VideoFrameContainer(
         mOwner.get(),
         MakeAndAddRef<ImageContainer>(ImageUsageType::VideoFrameContainer,
-#ifdef MOZ_WIDGET_ANDROID
-                                      // Work around bug 1922144
-                                      ImageContainer::SYNCHRONOUS
-#else
                                       ImageContainer::ASYNCHRONOUS
-#endif
                                       ));
     MediaFormatReaderInit init;
     init.mVideoFrameContainer = container;
@@ -1186,12 +1181,7 @@ class TestMFRCryptoSampleSizeCheck : public ::testing::Test {
     mContainer = new VideoFrameContainer(
         mOwner.get(),
         MakeAndAddRef<ImageContainer>(ImageUsageType::VideoFrameContainer,
-#ifdef MOZ_WIDGET_ANDROID
-                                      // Work around bug 1922144
-                                      ImageContainer::SYNCHRONOUS
-#else
                                       ImageContainer::ASYNCHRONOUS
-#endif
                                       ));
     MediaFormatReaderInit init;
     init.mVideoFrameContainer = mContainer;

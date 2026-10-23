@@ -8,10 +8,6 @@
 #include "ia32_settings.h"
 extern ia32_settings_t ia32_settings;
 
-#ifdef _MSC_VER
-        #define snprintf        _snprintf
-        #define inline          __inline
-#endif
 
 
 /* =========================================================== INIT/TERM */

@@ -16,10 +16,8 @@
 #include "nsDebug.h"
 #include "nsXULAppAPI.h"
 
-#ifdef XP_MACOSX
 #  include <bsm/libbsm.h>
 #  include <servers/bootstrap.h>
-#endif
 
 namespace {
 // Struct for sending a Mach message with a single port.
@@ -105,7 +103,6 @@ kern_return_t MachReceivePortSendRight(
   return KERN_SUCCESS;
 }
 
-#ifdef XP_MACOSX
 static std::string FormatMachError(kern_return_t kr) {
   return StringPrintf("0x%x %s", kr, mach_error_string(kr));
 }
@@ -424,4 +421,3 @@ RefPtr<MachHandleProcessCheckInPromise> MachHandleProcessCheckIn(
   return promise;
 }
 
-#endif

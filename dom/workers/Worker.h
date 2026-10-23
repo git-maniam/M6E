@@ -11,9 +11,6 @@
 #include "mozilla/WeakPtr.h"
 #include "mozilla/dom/DebuggerNotificationBinding.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 namespace mozilla::dom {
 

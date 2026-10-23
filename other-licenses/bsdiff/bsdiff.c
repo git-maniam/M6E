@@ -23,19 +23,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <stdarg.h>
-#ifdef XP_WIN
-#include <io.h>
-#include <winsock2.h>
-#define open _open
-#define close _close
-#define read _read
-#define lseek _lseek
-#define write _write
-#else
 #include <unistd.h>
 #include <arpa/inet.h>
 #define _O_BINARY 0
-#endif
 
 #include "crctable.h"
 

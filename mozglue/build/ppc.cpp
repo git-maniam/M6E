@@ -9,14 +9,6 @@
 
 #include "mozilla/Attributes.h"
 
-#if defined(XP_LINUX)
-// Use the getauxval() function if available.
-// ARCH_3_00 wasn't defined until glibc 2.23, so include just in case.
-#  include <sys/auxv.h>
-#  ifndef PPC_FEATURE2_ARCH_3_00
-#    define PPC_FEATURE2_ARCH_3_00 0x00800000
-#  endif
-#endif
 
 const unsigned PPC_FLAG_VMX = 1;
 const unsigned PPC_FLAG_VSX = 2;
@@ -31,24 +23,8 @@ static signed get_ppc_cpu_flags(void) {
   }
   cpu_flags = 0;
 
-#if defined(XP_LINUX)
-  // Try getauxval().
-  unsigned long int cap = getauxval(AT_HWCAP);
-  unsigned long int cap2 = getauxval(AT_HWCAP2);
-
-  if (cap & PPC_FEATURE_HAS_ALTIVEC) {
-    cpu_flags |= PPC_FLAG_VMX;
-  }
-  if (cap & PPC_FEATURE_HAS_VSX) {
-    cpu_flags |= PPC_FLAG_VSX;
-  }
-  if (cap2 & PPC_FEATURE2_ARCH_3_00) {
-    cpu_flags |= PPC_FLAG_VSX3;
-  }
-#else
   // Non-Linux detection here. Currently, on systems other than Linux,
   // no CPU SIMD features will be detected.
-#endif
 
   return cpu_flags;
 }

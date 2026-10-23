@@ -25,16 +25,8 @@ bool DefaultCodecPreferences::H264EnabledStatic() {
 }
 
 bool DefaultCodecPreferences::SoftwareH264EnabledStatic() {
-#ifdef MOZ_WIDGET_ANDROID
-  // Although Play Store policy doesn't allow GMP plugin, Android has H.264 SW
-  // codec.
-  MOZ_ASSERT(!HaveGMPFor("encode-video"_ns, {"h264"_ns}),
-             "GMP plugin not allowed on Android");
-  return true;
-#else
   return HaveGMPFor("encode-video"_ns, {"h264"_ns}) &&
          HaveGMPFor("decode-video"_ns, {"h264"_ns});
-#endif
 }
 
 bool DefaultCodecPreferences::HardwareH264EnabledStatic() {

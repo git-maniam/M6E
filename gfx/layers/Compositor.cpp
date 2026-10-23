@@ -54,13 +54,7 @@ class CompositorRecordedFrame final : public RecordedFrame {
 Compositor::Compositor(widget::CompositorWidget* aWidget)
     : mWidget(aWidget),
       mIsDestroyed(false),
-#if defined(MOZ_WIDGET_ANDROID)
-      // If the default color isn't white for Fennec, there is a black
-      // flash before the first page of a tab is loaded.
-      mClearColor(gfx::ToDeviceColor(gfx::sRGBColor::OpaqueWhite()))
-#else
       mClearColor(gfx::DeviceColor())
-#endif
 {
 }
 

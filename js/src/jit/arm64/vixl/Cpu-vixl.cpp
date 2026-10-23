@@ -28,10 +28,6 @@
 
 #include "jstypes.h"
 
-#if defined(__aarch64__) && (defined(__ANDROID__) || defined(__linux__))
-#include <sys/auxv.h>
-#define VIXL_USE_LINUX_HWCAP 1
-#endif
 
 #include "jit/arm64/vixl/Utils-vixl.h"
 
@@ -384,7 +380,7 @@ CPUFeatures CPU::InferCPUFeaturesFromOS(
   if (features.Has(CPUFeatures::kMTE)) {
     features.Combine(CPUFeatures::kMTEInstructions);
   }
-#elif defined(XP_DARWIN)
+#else
   // Apple processors have kJSCVT, kDotProduct, and kAtomics features.
   features.Combine(CPUFeatures::kJSCVT, CPUFeatures::kDotProduct,
                    CPUFeatures::kAtomics);

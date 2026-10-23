@@ -27,12 +27,8 @@ struct FutexImpl {
 };
 
 using Futex = FutexImpl<uint32_t>;
-#ifdef XP_WIN
-using SmallFutex = FutexImpl<uint8_t>;
-#else
 // On Linux the futex word must be a 32-bit value.
 using SmallFutex = Futex;
-#endif
 
 }  // namespace mozilla
 

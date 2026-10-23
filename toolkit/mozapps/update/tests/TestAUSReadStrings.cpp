@@ -6,16 +6,8 @@
  * This binary tests the updater's ReadStrings ini parser and should run in a
  * directory with a Unicode character to test bug 473417.
  */
-#ifdef XP_WIN
-#  include <windows.h>
-#  define NS_main wmain
-#  define PATH_SEPARATOR_CHAR L'\\'
-// On Windows, argv[0] can also have forward slashes instead
-#  define ALT_PATH_SEPARATOR_CHAR L'/'
-#else
 #  define NS_main main
 #  define PATH_SEPARATOR_CHAR '/'
-#endif
 
 #include <stdio.h>
 #include <stdarg.h>

@@ -14,18 +14,10 @@
 #  error "DMD requires MOZ_PROFILING"
 #endif
 
-#ifdef XP_WIN
-#  include <windows.h>
-#  include <process.h>
-#else
 #  include <pthread.h>
 #  include <sys/types.h>
 #  include <unistd.h>
-#endif
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
 #include "nscore.h"
 
@@ -210,16 +202,12 @@ static size_t MallocSizeOf(const void* aPtr) {
 }
 
 void DMDFuncs::StatusMsg(const char* aFmt, va_list aAp) {
-#ifdef ANDROID
-  __android_log_vprint(ANDROID_LOG_INFO, "DMD", aFmt, aAp);
-#else
   // The +64 is easily enough for the "DMD[<pid>] " prefix and the NUL.
   size_t size = strlen(aFmt) + 64;
   char* fmt = (char*)InfallibleAllocPolicy::malloc_(size);
   snprintf(fmt, size, "DMD[%d] %s", getpid(), aFmt);
   vfprintf(stderr, fmt, aAp);
   InfallibleAllocPolicy::free_(fmt);
-#endif
 }
 
 /* static */
@@ -362,22 +350,6 @@ static Options* gOptions;
 
 // MutexBase implements the platform-specific parts of a mutex.
 
-#ifdef XP_WIN
-
-class MutexBase {
-  CRITICAL_SECTION mCS;
-
-  DISALLOW_COPY_AND_ASSIGN(MutexBase);
-
- public:
-  MutexBase() { InitializeCriticalSection(&mCS); }
-  ~MutexBase() { DeleteCriticalSection(&mCS); }
-
-  void Lock() { EnterCriticalSection(&mCS); }
-  void Unlock() { LeaveCriticalSection(&mCS); }
-};
-
-#else
 
 class MutexBase {
   pthread_mutex_t mMutex;
@@ -391,7 +363,6 @@ class MutexBase {
   void Unlock() { pthread_mutex_unlock(&mMutex); }
 };
 
-#endif
 
 class Mutex : private MutexBase {
   bool mIsLocked = false;
@@ -446,12 +417,8 @@ class AutoUnlockState {
 // On MacOS, the first __thread/thread_local access calls malloc, which leads
 // to an infinite loop. So we use pthread-based TLS instead, which somehow
 // doesn't have this problem.
-#if !defined(XP_DARWIN)
-#  define DMD_THREAD_LOCAL(T) MOZ_THREAD_LOCAL(T)
-#else
 #  define DMD_THREAD_LOCAL(T) \
     detail::ThreadLocal<T, detail::ThreadLocalKeyStorage>
-#endif
 
 class Thread {
   // Required for allocation via InfallibleAllocPolicy::new_.
@@ -624,21 +591,6 @@ static uint32_t gGCStackTraceTableWhenSizeExceeds = 4 * 1024;
     // In each of the following cases, skipFrames is chosen so that the
     // first frame in each stack trace is a replace_* function (or as close as
     // possible, given the vagaries of inlining on different platforms).
-#if defined(XP_WIN) && defined(_M_IX86)
-    // This avoids MozStackWalk(), which causes unusably slow startup on Win32
-    // when it is called during static initialization (see bug 1241684).
-    //
-    // This code is cribbed from the Gecko Profiler, which also uses
-    // FramePointerStackWalk() on Win32: REGISTERS_SYNC_POPULATE() for the
-    // frame pointer, and GetStackTop() for the stack end.
-    CONTEXT context;
-    RtlCaptureContext(&context);
-    void** fp = reinterpret_cast<void**>(context.Ebp);
-
-    PNT_TIB pTib = reinterpret_cast<PNT_TIB>(NtCurrentTeb());
-    void* stackEnd = static_cast<void*>(pTib->StackBase);
-    FramePointerStackWalk(StackWalkCallback, MaxFrames, &tmp, fp, stackEnd);
-#elif defined(XP_MACOSX)
     // This avoids MozStackWalk(), which has become unusably slow on Mac due to
     // changes in libunwind.
     //
@@ -651,9 +603,6 @@ static uint32_t gGCStackTraceTableWhenSizeExceeds = 4 * 1024;
 #  pragma GCC diagnostic pop
     void* stackEnd = pthread_get_stackaddr_np(pthread_self());
     FramePointerStackWalk(StackWalkCallback, MaxFrames, &tmp, fp, stackEnd);
-#else
-    MozStackWalk(StackWalkCallback, nullptr, MaxFrames, &tmp);
-#endif
   }
 
   StackTraceTable::AddPtr p = gStackTraceTable->lookupForAdd(&tmp);
@@ -1313,7 +1262,6 @@ const char* Options::ModeString() const {
 // DMD start-up
 //---------------------------------------------------------------------------
 
-#ifndef XP_WIN
 static void prefork() {
   if (gStateLock) {
     gStateLock->Lock();
@@ -1325,7 +1273,6 @@ static void postfork() {
     gStateLock->Unlock();
   }
 }
-#endif
 
 // WARNING: this function runs *very* early -- before all static initializers
 // have run.  For this reason, non-scalar globals such as gStateLock and
@@ -1346,7 +1293,6 @@ static bool Init(malloc_table_t* aMallocTable) {
 
   gDMDBridge = InfallibleAllocPolicy::new_<DMDBridge>();
 
-#ifndef XP_WIN
   // Avoid deadlocks when forking by acquiring our state lock prior to forking
   // and releasing it after forking. See |LogAlloc|'s |replace_init| for
   // in-depth details.
@@ -1354,7 +1300,6 @@ static bool Init(malloc_table_t* aMallocTable) {
   // Note: This must run after attempting an allocation so as to give the
   // system malloc a chance to insert its own atfork handler.
   pthread_atfork(prefork, postfork, postfork);
-#endif
   // Parse $DMD env var.
   gOptions = InfallibleAllocPolicy::new_<Options>(e);
 

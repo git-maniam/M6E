@@ -10,10 +10,6 @@
 #include "mozilla/CmdLineAndEnvUtils.h"
 #include "mozilla/Maybe.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/PolicyChecks.h"
-#  include <windows.h>
-#endif  // defined(XP_WIN)
 
 // Undo X11/X.h's definition of None
 #undef None
@@ -44,31 +40,12 @@ inline Maybe<bool> IsSafeModeRequested(
 
   bool result = ar == ARG_FOUND;
 
-#if defined(XP_WIN)
-  // If the shift key is pressed and the ctrl and / or alt keys are not pressed
-  // during startup, start in safe mode. GetKeyState returns a short and the
-  // high order bit will be 1 if the key is pressed. By masking the returned
-  // short with 0x8000 the result will be 0 if the key is not pressed and
-  // non-zero otherwise.
-  if (!(aFlags & SafeModeFlag::NoKeyPressCheck) &&
-      (GetKeyState(VK_SHIFT) & 0x8000) && !(GetKeyState(VK_CONTROL) & 0x8000) &&
-      !(GetKeyState(VK_MENU) & 0x8000) &&
-      !EnvHasValue("MOZ_DISABLE_SAFE_MODE_KEY")) {
-    result = true;
-  }
 
-  if (result && PolicyCheckBoolean(L"DisableSafeMode")) {
-    result = false;
-  }
-#endif  // defined(XP_WIN)
-
-#if defined(XP_MACOSX)
   if (!(aFlags & SafeModeFlag::NoKeyPressCheck) &&
       (GetCurrentEventKeyModifiers() & optionKey) &&
       !EnvHasValue("MOZ_DISABLE_SAFE_MODE_KEY")) {
     result = true;
   }
-#endif  // defined(XP_MACOSX)
 
   // The Safe Mode Policy should not be enforced for the env var case
   // (used by updater and crash-recovery).

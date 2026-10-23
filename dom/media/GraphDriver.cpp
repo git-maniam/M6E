@@ -24,11 +24,9 @@
 #  include "webrtc/MediaEngineWebRTC.h"
 #endif
 
-#ifdef XP_MACOSX
 #  include <sys/sysctl.h>
 
 #  include "nsCocoaFeatures.h"
-#endif
 
 extern mozilla::LazyLogModule gMediaTrackGraphLog;
 #ifdef LOG
@@ -185,19 +183,15 @@ SystemClockDriver::SystemClockDriver(GraphInterface* aGraphInterface,
 SystemClockDriver::~SystemClockDriver() = default;
 
 void SystemClockDriver::RunThread() {
-#ifdef XP_MACOSX
   // Timed waits of normal priority threads can be coalesced far beyond their
   // deadline when the process is otherwise idle, real-time threads are exempt.
   atp_handle* handle = atp_promote_current_thread_to_real_time(0, mSampleRate);
-#endif
 
   ThreadedDriver::RunThread();
 
-#ifdef XP_MACOSX
   if (handle) {
     atp_demote_current_thread_from_real_time(handle);
   }
-#endif
 }
 
 void ThreadedDriver::RunThread() {
@@ -648,9 +642,7 @@ void AudioCallbackDriver::Init(const nsCString& aStreamName) {
     return;
   }
 
-#ifdef XP_MACOSX
   PanOutputIfNeeded(inputWanted);
-#endif
 
   if (inputWanted && InputDevicePreference() == AudioInputType::Voice) {
     SetInputProcessingParams(mInputProcessingRequest);
@@ -1001,7 +993,6 @@ long AudioCallbackDriver::DataCallback(const AudioDataValue* aInputBuffer,
   NaNToZeroInPlace(aOutputBuffer, aFrames * mOutputChannelCount);
 #endif
 
-#ifdef XP_MACOSX
   // This only happens when the output is on a macbookpro's external speaker,
   // that are stereo, but let's just be safe.
   if (mNeedsPanning && mOutputChannelCount == 2) {
@@ -1011,7 +1002,6 @@ long AudioCallbackDriver::DataCallback(const AudioDataValue* aInputBuffer,
       aOutputBuffer[i] = 0.0;
     }
   }
-#endif
 
   // No-op if MOZ_DUMP_AUDIO is not defined as an environment variable
   if (aInputBuffer) {
@@ -1151,7 +1141,6 @@ void AudioCallbackDriver::MixerCallback(AudioChunk* aMixedBuffer,
 };
 
 void AudioCallbackDriver::PanOutputIfNeeded(bool aMicrophoneActive) {
-#ifdef XP_MACOSX
   TRACE("AudioCallbackDriver::PanOutputIfNeeded");
   cubeb_device* out = nullptr;
   int rv;
@@ -1205,7 +1194,6 @@ void AudioCallbackDriver::PanOutputIfNeeded(bool aMicrophoneActive) {
       cubeb_stream_device_destroy(streamLocked.ref(), out);
     }
   }
-#endif
 }
 
 void AudioCallbackDriver::DeviceChangedCallback() {
@@ -1246,14 +1234,12 @@ void AudioCallbackDriver::DeviceChangedCallback() {
   // Tell the audio engine the device has changed, it might want to reset some
   // state.
   Graph()->DeviceChanged();
-#ifdef XP_MACOSX
   RefPtr<AudioCallbackDriver> self(this);
   bool hasInput = mInputChannelCount;
   NS_DispatchBackgroundTask(NS_NewRunnableFunction(
       "PanOutputIfNeeded", [self{std::move(self)}, hasInput]() {
         self->PanOutputIfNeeded(hasInput);
       }));
-#endif
 }
 
 TimeDuration AudioCallbackDriver::IterationDuration() {

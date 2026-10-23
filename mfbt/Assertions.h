@@ -17,15 +17,9 @@
     !defined(__wasi__)
 #  define MOZ_DUMP_ASSERTION_STACK
 #endif
-#if defined(XP_WIN) && (defined(DEBUG) || defined(FUZZING))
-#  define MOZ_BUFFER_STDERR
-#endif
 
 // It appears that this is sometimes compiled without XP_WIN
-#if defined(_WIN32)
-#  include <process.h>
-#  define MOZ_GET_PID() _getpid()
-#elif !defined(__wasi__)
+#if   !defined(__wasi__)
 #  include <unistd.h>
 #  define MOZ_GET_PID() getpid()
 #else
@@ -74,34 +68,9 @@ static inline void AnnotateMozCrashReason(const char* reason) {
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _MSC_VER
-/*
- * TerminateProcess and GetCurrentProcess are defined in <winbase.h>, which
- * further depends on <windef.h>.  We hardcode these few definitions manually
- * because those headers clutter the global namespace with a significant
- * number of undesired macros and symbols.
- */
-MOZ_BEGIN_EXTERN_C
-__declspec(dllimport) int __stdcall TerminateProcess(void* hProcess,
-                                                     unsigned int uExitCode);
-__declspec(dllimport) void* __stdcall GetCurrentProcess(void);
-MOZ_END_EXTERN_C
-#endif
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
 MOZ_BEGIN_EXTERN_C
 
-#if defined(ANDROID) && defined(MOZ_DUMP_ASSERTION_STACK)
-[[maybe_unused]] static void MOZ_ReportAssertionFailurePrintFrame(
-    const char* aBuf) {
-  __android_log_print(ANDROID_LOG_FATAL, "MOZ_Assert", "%s", aBuf);
-}
-[[maybe_unused]] static void MOZ_CrashPrintFrame(const char* aBuf) {
-  __android_log_print(ANDROID_LOG_FATAL, "MOZ_Crash", "%s", aBuf);
-}
-#endif
 
 /*
  * Strip leading relative path components (../, ./) from a file path. With
@@ -141,15 +110,6 @@ MOZ_ReportAssertionFailure(const char* aStr, const char* aFilename,
                            int aLine) MOZ_PRETEND_NORETURN_FOR_STATIC_ANALYSIS {
   aFilename = MOZ_StripRelativeComponents(aFilename);
   MOZ_FUZZING_HANDLE_CRASH_EVENT4("MOZ_ASSERT", aFilename, aLine, aStr);
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_FATAL, "MOZ_Assert",
-                      "[%d] Assertion failure: %s, at %s:%d\n", MOZ_GET_PID(),
-                      aStr, aFilename, aLine);
-#  if defined(MOZ_DUMP_ASSERTION_STACK)
-  MozWalkTheStackWithWriter(MOZ_ReportAssertionFailurePrintFrame, CallerPC(),
-                            /* aMaxFrames */ 0);
-#  endif
-#else
 #  if defined(MOZ_BUFFER_STDERR)
   char msg[1024] = "";
   snprintf(msg, sizeof(msg) - 1, "[%d] Assertion failure: %s, at %s:%d\n",
@@ -163,22 +123,12 @@ MOZ_ReportAssertionFailure(const char* aStr, const char* aFilename,
   MozWalkTheStack(stderr, CallerPC(), /* aMaxFrames */ 0);
 #  endif
   fflush(stderr);
-#endif
 }
 
 [[maybe_unused]] static MOZ_COLD MOZ_NEVER_INLINE void MOZ_ReportCrash(
     const char* aStr, const char* aFilename,
     int aLine) MOZ_PRETEND_NORETURN_FOR_STATIC_ANALYSIS {
   aFilename = MOZ_StripRelativeComponents(aFilename);
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_FATAL, "MOZ_CRASH",
-                      "[%d] Hit MOZ_CRASH(%s) at %s:%d\n", MOZ_GET_PID(), aStr,
-                      aFilename, aLine);
-#  if defined(MOZ_DUMP_ASSERTION_STACK)
-  MozWalkTheStackWithWriter(MOZ_CrashPrintFrame, CallerPC(),
-                            /* aMaxFrames */ 0);
-#  endif
-#else
 #  if defined(MOZ_BUFFER_STDERR)
   char msg[1024] = "";
   snprintf(msg, sizeof(msg) - 1, "[%d] Hit MOZ_CRASH(%s) at %s:%d\n",
@@ -192,7 +142,6 @@ MOZ_ReportAssertionFailure(const char* aStr, const char* aFilename,
   MozWalkTheStack(stderr, CallerPC(), /* aMaxFrames */ 0);
 #  endif
   fflush(stderr);
-#endif
 }
 
 /*
@@ -208,43 +157,7 @@ MOZ_ReportAssertionFailure(const char* aStr, const char* aFilename,
  * MOZ_REALLY_CRASH is used in the implementation of MOZ_CRASH().  You should
  * call MOZ_CRASH instead.
  */
-#if defined(_MSC_VER)
-/*
- * On MSVC use the __debugbreak compiler intrinsic, which produces an inline
- * (not nested in a system function) breakpoint.  This distinctively invokes
- * Breakpad without requiring system library symbols on all stack-processing
- * machines, as a nested breakpoint would require.
- *
- * We use __LINE__ to prevent the compiler from folding multiple crash sites
- * together, which would make crash reports hard to understand.
- *
- * We use TerminateProcess with the exit code aborting would generate
- * because we don't want to invoke atexit handlers, destructors, library
- * unload handlers, and so on when our process might be in a compromised
- * state.
- *
- * We don't use abort() because it'd cause Windows to annoyingly pop up the
- * process error dialog multiple times.  See bug 345118 and bug 426163.
- *
- * (Technically these are Windows requirements, not MSVC requirements.  But
- * practically you need MSVC for debugging, and we only ship builds created
- * by MSVC, so doing it this way reduces complexity.)
- */
-
-[[maybe_unused, noreturn]] static MOZ_COLD MOZ_NEVER_INLINE void MOZ_NoReturn(
-    int aLine) {
-  *((volatile int*)NULL) = aLine;
-  TerminateProcess(GetCurrentProcess(), 3);
-  MOZ_ASSUME_UNREACHABLE_MARKER();
-}
-
-#  define MOZ_REALLY_CRASH(line)  \
-    do {                          \
-      MOZ_NOMERGE __debugbreak(); \
-      MOZ_NoReturn(line);         \
-    } while (false)
-
-#elif __wasi__
+#if   __wasi__
 
 #  define MOZ_REALLY_CRASH(line) __builtin_trap()
 

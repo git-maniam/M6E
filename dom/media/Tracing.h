@@ -12,10 +12,7 @@
 #include "AsyncLogger.h"
 #include "mozilla/Attributes.h"
 
-#if defined(_MSC_VER)
-// MSVC
-#  define FUNCTION_SIGNATURE __FUNCSIG__
-#elif defined(__GNUC__)
+#if   defined(__GNUC__)
 // gcc, clang
 #  define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 #endif

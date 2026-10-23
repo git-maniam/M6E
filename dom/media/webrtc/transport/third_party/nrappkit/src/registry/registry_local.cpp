@@ -44,11 +44,9 @@
 
 #include <assert.h>
 #include <string.h>
-#ifndef WIN32
 #include <strings.h>
 #include <sys/param.h>
 #include <netinet/in.h>
-#endif
 #ifdef OPENSSL
 #include <openssl/ssl.h>
 #endif

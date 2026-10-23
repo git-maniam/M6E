@@ -13,66 +13,19 @@
 #include "mozilla/UniquePtrExtensions.h"
 #include "nsXPCOMPrivate.h"
 
-#if defined(XP_WIN) && defined(_M_X64) && defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
-#  include "mozilla/WindowsDiagnostics.h"
-#endif  // XP_WIN && _M_X64 && MOZ_DIAGNOSTIC_ASSERT_ENABLED
 
 using namespace mozilla;
 
 #define XPCOM_DEPENDENT_LIBS_LIST "dependentlibs.list"
 
-#if defined(XP_WIN)
-#  define READ_TEXTMODE L"rt"
-#else
 #  define READ_TEXTMODE "r"
-#endif
 
 typedef void (*NSFuncPtr)();
 
-#if defined(XP_WIN)
-#  include <windows.h>
-using LibHandleType = HMODULE;
-#else
 using LibHandleType = void*;
-#endif
 
 using LibHandleResult = ::mozilla::Result<LibHandleType, DLErrorType>;
 
-#if defined(XP_WIN)
-#  include <mbstring.h>
-
-#  include "mozilla/PreXULSkeletonUI.h"
-
-static LibHandleResult GetLibHandle(pathstr_t aDependentLib) {
-  LibHandleType libHandle =
-      LoadLibraryExW(aDependentLib, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
-
-  if (!libHandle) {
-    DWORD err = GetLastError();
-#  if defined(DEBUG)
-    LPWSTR lpMsgBuf;
-    FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                       FORMAT_MESSAGE_IGNORE_INSERTS,
-                   nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                   (LPWSTR)&lpMsgBuf, 0, nullptr);
-    wprintf(L"Error loading %ls: %s\n", aDependentLib, lpMsgBuf);
-    LocalFree(lpMsgBuf);
-#  endif  // defined(DEBUG)
-    return Err(err);
-  }
-
-  return libHandle;
-}
-
-static NSFuncPtr GetSymbol(LibHandleType aLibHandle, const char* aSymbol) {
-  return (NSFuncPtr)GetProcAddress(aLibHandle, aSymbol);
-}
-
-static void CloseLibHandle(LibHandleType aLibHandle) {
-  FreeLibrary(aLibHandle);
-}
-
-#else
 #  include <dlfcn.h>
 
 #  if defined(MOZ_LINKER)
@@ -89,9 +42,7 @@ NS_HIDDEN __typeof(dlclose) __wrap_dlclose;
 
 static LibHandleResult GetLibHandle(pathstr_t aDependentLib) {
   LibHandleType libHandle = dlopen(aDependentLib, RTLD_GLOBAL | RTLD_LAZY
-#  ifdef XP_MACOSX
                                                       | RTLD_FIRST
-#  endif
   );
   if (!libHandle) {
     UniqueFreePtr<char> errMsg(strdup(dlerror()));
@@ -109,7 +60,6 @@ static NSFuncPtr GetSymbol(LibHandleType aLibHandle, const char* aSymbol) {
 #  if !defined(MOZ_LINKER) && !defined(__ANDROID__)
 static void CloseLibHandle(LibHandleType aLibHandle) { dlclose(aLibHandle); }
 #  endif
-#endif
 
 struct DependentLib {
   LibHandleType libHandle;
@@ -148,25 +98,9 @@ static ReadDependentCBResult ReadDependentCB(
   return Ok();
 }
 
-#ifdef XP_WIN
-static ReadDependentCBResult ReadDependentCB(
-    const char* aDependentLib, LibLoadingStrategy aLibLoadingStrategy) {
-  wchar_t wideDependentLib[MAX_PATH];
-  MultiByteToWideChar(CP_UTF8, 0, aDependentLib, -1, wideDependentLib,
-                      MAX_PATH);
-  return ReadDependentCB(wideDependentLib, aLibLoadingStrategy);
-}
-
-inline FILE* TS_tfopen(const char* path, const wchar_t* mode) {
-  wchar_t wPath[MAX_PATH];
-  MultiByteToWideChar(CP_UTF8, 0, path, -1, wPath, MAX_PATH);
-  return _wfopen(wPath, mode);
-}
-#else
 inline FILE* TS_tfopen(const char* aPath, const char* aMode) {
   return fopen(aPath, aMode);
 }
-#endif
 
 #if !defined(MOZ_LINKER) && !defined(__ANDROID__)
 static void XPCOMGlueUnload() {
@@ -181,23 +115,6 @@ static void XPCOMGlueUnload() {
 }
 #endif
 
-#if defined(XP_WIN)
-// like strpbrk but finds the *last* char, not the first
-static const char* ns_strrpbrk(const char* string, const char* strCharSet) {
-  const char* found = nullptr;
-  for (; *string; ++string) {
-    for (const char* search = strCharSet; *search; ++search) {
-      if (*search == *string) {
-        found = string;
-        // Since we're looking for the last char, we save "found"
-        // until we're at the end of the string.
-      }
-    }
-  }
-
-  return found;
-}
-#endif
 
 using XPCOMGlueLoadError = BootstrapError;
 using XPCOMGlueLoadResult =
@@ -213,9 +130,6 @@ static XPCOMGlueLoadResult XPCOMGlueLoad(
   }
 #else
   char xpcomDir[MAXPATHLEN];
-#  ifdef XP_WIN
-  const char* lastSlash = ns_strrpbrk(aXPCOMFile, "/\\");
-#  elif XP_MACOSX
   // On OSX, the dependentlibs.list file lives under Contents/Resources.
   // However, the actual libraries listed in dependentlibs.list live under
   // Contents/MacOS. We want to read the list from Contents/Resources, then
@@ -231,25 +145,18 @@ static XPCOMGlueLoadResult XPCOMGlueLoad(
   const char* slash = strrchr(tempBuffer, '/');
   tempLen = size_t(slash - tempBuffer);
   const char* lastSlash = aXPCOMFile + tempLen;
-#  else
-  const char* lastSlash = strrchr(aXPCOMFile, '/');
-#  endif
   char* cursor;
   if (lastSlash) {
     size_t len = size_t(lastSlash - aXPCOMFile);
 
     if (len > MAXPATHLEN - sizeof(XPCOM_FILE_PATH_SEPARATOR
-#  ifdef XP_MACOSX
                                   "Resources" XPCOM_FILE_PATH_SEPARATOR
-#  endif
                                       XPCOM_DEPENDENT_LIBS_LIST)) {
       return Err(AsVariant(NS_ERROR_FAILURE));
     }
     memcpy(xpcomDir, aXPCOMFile, len);
     strcpy(xpcomDir + len, XPCOM_FILE_PATH_SEPARATOR
-#  ifdef XP_MACOSX
            "Resources" XPCOM_FILE_PATH_SEPARATOR
-#  endif
                XPCOM_DEPENDENT_LIBS_LIST);
     cursor = xpcomDir + len + 1;
   } else {
@@ -275,14 +182,12 @@ static XPCOMGlueLoadResult XPCOMGlueLoad(
     return Err(AsVariant(NS_ERROR_FAILURE));
   }
 
-#  ifdef XP_MACOSX
   tempLen = size_t(cursor - xpcomDir);
   if (tempLen > MAXPATHLEN - sizeof("MacOS" XPCOM_FILE_PATH_SEPARATOR) - 1) {
     return Err(AsVariant(NS_ERROR_FAILURE));
   }
   strcpy(cursor, "MacOS" XPCOM_FILE_PATH_SEPARATOR);
   cursor += strlen(cursor);
-#  endif
   *cursor = '\0';
 
   char buffer[MAXPATHLEN];
@@ -312,17 +217,6 @@ static XPCOMGlueLoadResult XPCOMGlueLoad(
       return Err(AsVariant(readDependentCBResult.unwrapErr()));
     }
 
-#  ifdef XP_WIN
-    // We call PollPreXULSkeletonUIEvents here in order to not get flagged by
-    // Windows as nonresponsive. In order to not be flagged as such, we seem to
-    // simply need to respond to *a* message every few seconds. The halfway
-    // point on slow systems between process start and nsWindow taking over the
-    // skeleton UI window seems to be XUL being loaded. Accordingly, placing
-    // this call here covers the most ground (as we will call this after
-    // prefetching and loading all of the dlls in dependentlibs.list, which
-    // includes xul.dll.)
-    PollPreXULSkeletonUIEvents();
-#  endif
   }
 #endif
   return Ok();
@@ -394,60 +288,6 @@ BootstrapResult GetBootstrap(const char* aXPCOMFile,
     return Err(AsVariant(NS_ERROR_NOT_AVAILABLE));
   }
 
-#if defined(XP_WIN) && defined(_M_X64) && defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
-  auto check = reinterpret_cast<decltype(&XRE_CheckBlockScopeStaticVarInit)>(
-      GetSymbol(sTop->libHandle, "XRE_CheckBlockScopeStaticVarInit"));
-
-  // Detect bug 1816848 ahead of the usual crash location.
-  uint32_t xulTlsIndex = 0;
-  // HACK: if `check` is nullptr, xul.dll doesn't have the above export. Skip
-  // trying to perform the check. (See bug 1909898.)
-  if (check && !check(&xulTlsIndex)) {
-    // Unload xul, then load it again while recording single-step data.
-    XPCOMGlueUnload();
-
-    static constexpr int kMaxStepsNtdll = 0xc000;
-    static constexpr int kMaxErrorStatesNtdll = 0x200;
-    using NtdllSingleStepData =
-        ModuleSingleStepData<kMaxStepsNtdll, kMaxErrorStatesNtdll>;
-
-    XPCOMGlueLoadResult result = Err(AsVariant(NS_ERROR_FAILURE));
-    WindowsDiagnosticsError rv = CollectModuleSingleStepData<
-        kMaxStepsNtdll, kMaxErrorStatesNtdll>(
-        L"ntdll.dll",
-        [&result, &file, aLibLoadingStrategy]() {
-          result = XPCOMGlueLoad(file.get(), aLibLoadingStrategy);
-        },
-        [&result, xulTlsIndex](const NtdllSingleStepData& aData) {
-          bool didReload = false;
-          bool isStillBroken = false;
-          uint32_t newXulTlsIndex = 0;
-          if (result.isOk() && sTop) {
-            auto check =
-                reinterpret_cast<decltype(&XRE_CheckBlockScopeStaticVarInit)>(
-                    GetSymbol(sTop->libHandle,
-                              "XRE_CheckBlockScopeStaticVarInit"));
-            if (check) {
-              didReload = true;
-              isStillBroken = !check(&newXulTlsIndex);
-            }
-          }
-
-          // Crashing here gives access to the single-step data on stack.
-          MOZ_CRASH_UNSAFE_PRINTF(
-              "Detected lack of initialization of block-scope static variables "
-              "in xul, got single-step data (didReload=%d, isStillBroken=%d, "
-              "xulTlsIndex=%u, newXulTlsIndex=%u)",
-              didReload, isStillBroken, xulTlsIndex, newXulTlsIndex);
-        },
-        InstructionFilter::CallRet);
-
-    MOZ_CRASH_UNSAFE_PRINTF(
-        "Detected lack of initialization of block-scope static variables in "
-        "xul, failed to collect single-step data (rv=%d)",
-        static_cast<int>(rv));
-  }
-#endif  // XP_WIN && _M_X64 && MOZ_DIAGNOSTIC_ASSERT_ENABLED
 
   GetBootstrapType func =
       (GetBootstrapType)GetSymbol(sTop->libHandle, "XRE_GetBootstrap");

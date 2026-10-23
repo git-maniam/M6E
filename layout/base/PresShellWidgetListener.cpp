@@ -177,30 +177,11 @@ void PresShellWidgetListener::DynamicToolbarOffsetChanged(
 void PresShellWidgetListener::KeyboardHeightChanged(ScreenIntCoord aHeight) {
   MOZ_ASSERT(XRE_IsParentProcess(),
              "Should be only called for the browser parent process");
-#ifdef MOZ_WIDGET_ANDROID
-  CallOnAllRemoteChildren(
-      [aHeight](dom::BrowserParent* aBrowserParent) -> CallState {
-        // Skip background tabs.
-        if (!aBrowserParent->GetDocShellIsActive()) {
-          return CallState::Continue;
-        }
-
-        aBrowserParent->KeyboardHeightChanged(aHeight);
-        return CallState::Stop;
-      });
-#endif
 }
 
 void PresShellWidgetListener::AndroidPipModeChanged(bool aPipMode) {
   MOZ_ASSERT(XRE_IsParentProcess(),
              "Should be only called for the browser parent process");
-#ifdef MOZ_WIDGET_ANDROID
-  CallOnAllRemoteChildren(
-      [aPipMode](dom::BrowserParent* aBrowserParent) -> CallState {
-        aBrowserParent->AndroidPipModeChanged(aPipMode);
-        return CallState::Continue;
-      });
-#endif
 }
 
 void PresShellWidgetListener::PaintWindow(nsIWidget* aWidget) {

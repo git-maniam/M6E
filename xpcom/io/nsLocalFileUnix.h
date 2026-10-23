@@ -13,34 +13,19 @@
 
 #include "nsString.h"
 #include "nscore.h"
-#ifdef MOZ_WIDGET_COCOA
 #  include "nsILocalFileMac.h"
-#else
-#  include "nsIFile.h"
-#  include "nsLocalFile.h"
-#endif
 
 // stat64 and lstat64 are deprecated on OS X. Normal stat and lstat are
 // 64-bit by default on OS X 10.6+.
-#if defined(HAVE_STAT64) && defined(HAVE_LSTAT64) && !defined(XP_DARWIN)
-#  define STAT stat64
-#  define LSTAT lstat64
-#  define HAVE_STATS64 1
-#else
 #  define STAT stat
 #  define LSTAT lstat
-#endif
 
 #if defined(HAVE_SYS_QUOTA_H) && defined(HAVE_LINUX_QUOTA_H)
 #  define USE_LINUX_QUOTACTL
 #endif
 
 class nsLocalFile final
-#ifdef MOZ_WIDGET_COCOA
     : public nsILocalFileMac
-#else
-    : public nsIFile
-#endif
 {
  public:
   NS_DEFINE_STATIC_CID_ACCESSOR(NS_LOCAL_FILE_CID)
@@ -52,9 +37,7 @@ class nsLocalFile final
 
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIFILE
-#ifdef MOZ_WIDGET_COCOA
   NS_DECL_NSILOCALFILEMAC
-#endif
 
  private:
   nsLocalFile(const nsLocalFile& aOther);

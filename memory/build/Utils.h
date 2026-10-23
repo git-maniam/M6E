@@ -9,9 +9,6 @@
 #include <type_traits>
 #include <limits.h>
 
-#ifdef XP_WIN
-#  include <io.h>  // for _write()
-#endif
 
 #include "mozilla/CheckedInt.h"
 #include "mozilla/MathAlgorithms.h"
@@ -205,11 +202,7 @@ unsigned inline operator/(unsigned num, FastDivisor<T> divisor) {
 
 static inline const char* _getprogname(void) { return "<jemalloc>"; }
 
-#ifdef XP_WIN
-#  define STDERR_FILENO 2
-#else
 #  define _write write
-#endif
 inline void _malloc_message(const char* p) {
   // Pretend to check _write() errors to suppress gcc warnings about
   // warn_unused_result annotations in some versions of glibc headers.

@@ -34,11 +34,7 @@ enum class Type {
   Freezable,
 };
 
-#if defined(XP_DARWIN)
 using PlatformHandle = mozilla::UniqueMachSendRight;
-#else
-using PlatformHandle = mozilla::UniqueFileHandle;
-#endif
 
 template <Type T>
 struct Handle;
@@ -257,10 +253,6 @@ struct Handle<Type::Freezable> : HandleBase {
                                 void* aFixedAddress = nullptr) &&;
 
   friend class Platform;
-#if !defined(XP_DARWIN) && !defined(XP_WIN) && !defined(ANDROID)
- private:
-  PlatformHandle mFrozenFile;
-#endif
 };
 
 /**
@@ -280,16 +272,6 @@ MutableHandle Create(uint64_t aSize);
  */
 FreezableHandle CreateFreezable(uint64_t aSize);
 
-#if defined(XP_LINUX)
-// If named POSIX shm is being used, append the prefix (including
-// the leading '/') that would be used by a process with the given
-// pid to the given string and return true.  If not, return false.
-// (This is public so that the Linux sandboxing code can use it.)
-bool AppendPosixShmPrefix(std::string* str, pid_t pid);
-
-// Returns whether POSIX shm is in use.
-bool UsingPosixShm();
-#endif
 
 }  // namespace shared_memory
 

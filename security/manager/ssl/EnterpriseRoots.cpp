@@ -12,20 +12,11 @@
 #include "nsCRT.h"
 #include "nsThreadUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/EnterpriseRootsWrappers.h"
-#endif  // MOZ_WIDGET_ANDROID
 
-#ifdef XP_MACOSX
 #  include <Security/Security.h>
 
 #  include "KeychainSecret.h"
-#endif
 
-#ifdef XP_WIN
-#  include <wincrypt.h>
-#  include <windows.h>
-#endif  // XP_WIN
 
 extern mozilla::LazyLogModule gPIPNSSLog;
 
@@ -60,165 +51,7 @@ bool EnterpriseCert::IsKnownRoot(UniqueSECMODModule& rootsModule) {
   return false;
 }
 
-#ifdef XP_WIN
-struct CertStoreLocation {
-  const wchar_t* mName;
-  const bool mIsRoot;
 
-  CertStoreLocation(const wchar_t* name, bool isRoot)
-      : mName(name), mIsRoot(isRoot) {}
-};
-
-// The documentation doesn't make this clear, but the certificate location
-// identified by "ROOT" contains trusted root certificates. The certificate
-// location identified by "CA" contains intermediate certificates.
-MOZ_RUNINIT const CertStoreLocation kCertStoreLocations[] = {
-    CertStoreLocation(L"ROOT", true), CertStoreLocation(L"CA", false)};
-
-// Because HCERTSTORE is just a typedef void*, we can't use any of the nice
-// scoped or unique pointer templates. To elaborate, any attempt would
-// instantiate those templates with T = void. When T gets used in the context
-// of T&, this results in void&, which isn't legal.
-class ScopedCertStore final {
- public:
-  explicit ScopedCertStore(HCERTSTORE certstore) : certstore(certstore) {}
-
-  ~ScopedCertStore() { CertCloseStore(certstore, 0); }
-
-  HCERTSTORE get() { return certstore; }
-
- private:
-  ScopedCertStore(const ScopedCertStore&) = delete;
-  ScopedCertStore& operator=(const ScopedCertStore&) = delete;
-  HCERTSTORE certstore;
-};
-
-// To determine if a certificate would be useful when verifying a server
-// certificate for TLS server auth, Windows provides the function
-// `CertGetEnhancedKeyUsage`, which combines the extended key usage extension
-// with something called "enhanced key usage", which appears to be a Microsoft
-// concept.
-static bool CertCanBeUsedForTLSServerAuth(PCCERT_CONTEXT certificate) {
-  DWORD usageSize = 0;
-  if (!CertGetEnhancedKeyUsage(certificate, 0, NULL, &usageSize)) {
-    return false;
-  }
-  nsTArray<uint8_t> usageBytes;
-  usageBytes.SetLength(usageSize);
-  PCERT_ENHKEY_USAGE usage(
-      reinterpret_cast<PCERT_ENHKEY_USAGE>(usageBytes.Elements()));
-  if (!CertGetEnhancedKeyUsage(certificate, 0, usage, &usageSize)) {
-    return false;
-  }
-  // https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-certgetenhancedkeyusage:
-  // "If the cUsageIdentifier member is zero, the certificate might be valid
-  // for all uses or the certificate might have no valid uses. The return from
-  // a call to GetLastError can be used to determine whether the certificate is
-  // good for all uses or for none. If GetLastError returns CRYPT_E_NOT_FOUND,
-  // the certificate is good for all uses. If it returns zero, the certificate
-  // has no valid uses."
-  if (usage->cUsageIdentifier == 0) {
-    return GetLastError() == static_cast<DWORD>(CRYPT_E_NOT_FOUND);
-  }
-  for (DWORD i = 0; i < usage->cUsageIdentifier; i++) {
-    if (!nsCRT::strcmp(usage->rgpszUsageIdentifier[i],
-                       szOID_PKIX_KP_SERVER_AUTH) ||
-        !nsCRT::strcmp(usage->rgpszUsageIdentifier[i],
-                       szOID_ANY_ENHANCED_KEY_USAGE)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Loads the enterprise roots at the registry location corresponding to the
-// given location flag.
-// Supported flags are:
-//   CERT_SYSTEM_STORE_LOCAL_MACHINE
-//     (for HKLM\SOFTWARE\Microsoft\SystemCertificates)
-//   CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY
-//     (for HKLM\SOFTWARE\Policy\Microsoft\SystemCertificates)
-//   CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE
-//     (for HKLM\SOFTWARE\Microsoft\EnterpriseCertificates)
-//   CERT_SYSTEM_STORE_CURRENT_USER
-//     (for HKCU\SOFTWARE\Microsoft\SystemCertificates)
-//   CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY
-//     (for HKCU\SOFTWARE\Policy\Microsoft\SystemCertificates)
-static void GatherEnterpriseCertsForLocation(DWORD locationFlag,
-                                             nsTArray<EnterpriseCert>& certs,
-                                             UniqueSECMODModule& rootsModule) {
-  MOZ_ASSERT(locationFlag == CERT_SYSTEM_STORE_LOCAL_MACHINE ||
-                 locationFlag == CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY ||
-                 locationFlag == CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE ||
-                 locationFlag == CERT_SYSTEM_STORE_CURRENT_USER ||
-                 locationFlag == CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY,
-             "unexpected locationFlag for GatherEnterpriseRootsForLocation");
-  if (!(locationFlag == CERT_SYSTEM_STORE_LOCAL_MACHINE ||
-        locationFlag == CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY ||
-        locationFlag == CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE ||
-        locationFlag == CERT_SYSTEM_STORE_CURRENT_USER ||
-        locationFlag == CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY)) {
-    return;
-  }
-
-  DWORD flags =
-      locationFlag | CERT_STORE_OPEN_EXISTING_FLAG | CERT_STORE_READONLY_FLAG;
-  // The certificate store being opened should consist only of certificates
-  // added by a user or administrator and not any certificates that are part
-  // of Microsoft's root store program.
-  // The 3rd parameter to CertOpenStore should be NULL according to
-  // https://msdn.microsoft.com/en-us/library/windows/desktop/aa376559%28v=vs.85%29.aspx
-  for (const auto& location : kCertStoreLocations) {
-    ScopedCertStore certStore(CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_W,
-                                            0, NULL, flags, location.mName));
-    if (!certStore.get()) {
-      MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-              ("failed to open certificate store"));
-      continue;
-    }
-    PCCERT_CONTEXT certificate = nullptr;
-    uint32_t numImported = 0;
-    while ((certificate = CertFindCertificateInStore(
-                certStore.get(), X509_ASN_ENCODING, 0, CERT_FIND_ANY, nullptr,
-                certificate))) {
-      if (!CertCanBeUsedForTLSServerAuth(certificate)) {
-        MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-                ("skipping cert not relevant for TLS server auth"));
-        continue;
-      }
-      EnterpriseCert enterpriseCert(certificate->pbCertEncoded,
-                                    certificate->cbCertEncoded,
-                                    location.mIsRoot);
-      if (enterpriseCert.GetIsRoot() ||
-          !enterpriseCert.IsKnownRoot(rootsModule)) {
-        certs.AppendElement(std::move(enterpriseCert));
-        numImported++;
-      } else {
-        MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-                ("skipping intermediate that is a known root cert"));
-      }
-    }
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-            ("imported %u certs from %S", numImported, location.mName));
-  }
-}
-
-static void GatherEnterpriseCertsWindows(nsTArray<EnterpriseCert>& certs,
-                                         UniqueSECMODModule& rootsModule) {
-  GatherEnterpriseCertsForLocation(CERT_SYSTEM_STORE_LOCAL_MACHINE, certs,
-                                   rootsModule);
-  GatherEnterpriseCertsForLocation(CERT_SYSTEM_STORE_LOCAL_MACHINE_GROUP_POLICY,
-                                   certs, rootsModule);
-  GatherEnterpriseCertsForLocation(CERT_SYSTEM_STORE_LOCAL_MACHINE_ENTERPRISE,
-                                   certs, rootsModule);
-  GatherEnterpriseCertsForLocation(CERT_SYSTEM_STORE_CURRENT_USER, certs,
-                                   rootsModule);
-  GatherEnterpriseCertsForLocation(CERT_SYSTEM_STORE_CURRENT_USER_GROUP_POLICY,
-                                   certs, rootsModule);
-}
-#endif  // XP_WIN
-
-#ifdef XP_MACOSX
 enum class CertificateTrustResult {
   CanUseAsIntermediate,
   CanUseAsTrustAnchor,
@@ -463,37 +296,7 @@ OSStatus GatherEnterpriseCertsMacOS(nsTArray<EnterpriseCert>& certs,
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("imported %u certs", numImported));
   return errSecSuccess;
 }
-#endif  // XP_MACOSX
 
-#ifdef MOZ_WIDGET_ANDROID
-void GatherEnterpriseCertsAndroid(nsTArray<EnterpriseCert>& certs,
-                                  UniqueSECMODModule& rootsModule) {
-  if (!jni::IsAvailable()) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("JNI not available"));
-    return;
-  }
-  jni::ObjectArray::LocalRef roots =
-      java::EnterpriseRoots::GatherEnterpriseRoots();
-  uint32_t numImported = 0;
-  for (size_t i = 0; i < roots->Length(); i++) {
-    jni::ByteArray::LocalRef root = roots->GetElement(i);
-    // Currently we treat all certificates gleaned from the Android
-    // CA store as roots.
-    EnterpriseCert enterpriseCert(
-        reinterpret_cast<uint8_t*>(root->GetElements().Elements()),
-        root->Length(), true);
-    if (enterpriseCert.GetIsRoot() ||
-        !enterpriseCert.IsKnownRoot(rootsModule)) {
-      certs.AppendElement(std::move(enterpriseCert));
-      numImported++;
-    } else {
-      MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-              ("skipping intermediate that is a known root cert"));
-    }
-  }
-  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("imported %u certs", numImported));
-}
-#endif  // MOZ_WIDGET_ANDROID
 
 nsresult GatherEnterpriseCerts(nsTArray<EnterpriseCert>& certs) {
   MOZ_ASSERT(!NS_IsMainThread());
@@ -503,17 +306,9 @@ nsresult GatherEnterpriseCerts(nsTArray<EnterpriseCert>& certs) {
 
   certs.Clear();
   UniqueSECMODModule rootsModule(SECMOD_FindModule(kRootModuleName.get()));
-#ifdef XP_WIN
-  GatherEnterpriseCertsWindows(certs, rootsModule);
-#endif  // XP_WIN
-#ifdef XP_MACOSX
   OSStatus rv = GatherEnterpriseCertsMacOS(certs, rootsModule);
   if (rv != errSecSuccess) {
     return NS_ERROR_FAILURE;
   }
-#endif  // XP_MACOSX
-#ifdef MOZ_WIDGET_ANDROID
-  GatherEnterpriseCertsAndroid(certs, rootsModule);
-#endif  // MOZ_WIDGET_ANDROID
   return NS_OK;
 }

@@ -22,14 +22,7 @@ class TestManyHandlesChild : public PTestManyHandlesChild {
       UniqueFileHandle handle = aDescrs[i].TakePlatformHandle();
       int value;
       const int size = sizeof(value);
-#ifdef XP_WIN
-      DWORD numberOfBytesRead;
-      EXPECT_TRUE(
-          ::ReadFile(handle.get(), &value, size, &numberOfBytesRead, nullptr));
-      EXPECT_EQ(numberOfBytesRead, (DWORD)size);
-#else
       EXPECT_EQ(read(handle.get(), &value, size), size);
-#endif
       EXPECT_EQ(value, i);
     }
     Close();
@@ -53,20 +46,11 @@ IPDL_TEST(TestManyHandles) {
     const int size = sizeof(i);
     UniqueFileHandle readPipe;
     UniqueFileHandle writePipe;
-#ifdef XP_WIN
-    ASSERT_TRUE(::CreatePipe(getter_Transfers(readPipe),
-                             getter_Transfers(writePipe), nullptr, size));
-    DWORD numberOfBytesWritten;
-    ASSERT_TRUE(
-        ::WriteFile(writePipe.get(), &i, size, &numberOfBytesWritten, nullptr));
-    ASSERT_EQ(numberOfBytesWritten, (DWORD)size);
-#else
     int fds[2];
     ASSERT_EQ(pipe(fds), 0);
     readPipe.reset(fds[0]);
     writePipe.reset(fds[1]);
     ASSERT_EQ(write(writePipe.get(), &i, size), size);
-#endif
     descrs.AppendElement(FileDescriptor(std::move(readPipe)));
   }
   bool ok = mActor->SendManyHandles(descrs);

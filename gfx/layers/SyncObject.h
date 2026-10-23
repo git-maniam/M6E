@@ -13,21 +13,13 @@ struct ID3D11Device;
 namespace mozilla {
 namespace layers {
 
-#ifdef XP_WIN
-typedef RefPtr<gfx::FileHandleWrapper> SyncHandle;
-#else
 typedef uintptr_t SyncHandle;
-#endif  // XP_WIN
 
 class SyncObjectHost : public external::AtomicRefCounted<SyncObjectHost> {
  public:
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(SyncObjectHost)
   virtual ~SyncObjectHost() = default;
 
-#ifdef XP_WIN
-  static already_AddRefed<SyncObjectHost> CreateSyncObjectHost(
-      ID3D11Device* aDevice);
-#endif
   virtual bool Init() = 0;
 
   virtual SyncHandle GetSyncHandle() = 0;
@@ -44,10 +36,6 @@ class SyncObjectClient : public external::AtomicRefCounted<SyncObjectClient> {
   MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(SyncObjectClient)
   virtual ~SyncObjectClient() = default;
 
-#ifdef XP_WIN
-  static already_AddRefed<SyncObjectClient> CreateSyncObjectClient(
-      SyncHandle aHandle, ID3D11Device* aDevice);
-#endif
   static already_AddRefed<SyncObjectClient>
   CreateSyncObjectClientForContentDevice(SyncHandle aHandle);
 

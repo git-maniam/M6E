@@ -21,9 +21,6 @@
 
 #include <sstream>
 
-#ifdef XP_WIN
-#  include "mozilla/WinDllServices.h"
-#endif
 
 namespace mozilla::contentanalysis {
 
@@ -98,38 +95,7 @@ nsresult ExternalAgentBackend::ConvertRequestToProtobuf(
   auto* requestData = aOut->mutable_request_data();
 
   if (analysisType == nsIContentAnalysisRequest::AnalysisType::ePrint) {
-#if XP_WIN
-    nsTArray<uint8_t> printData;
-    MOZ_TRY(aRequest->GetPrintData(printData));
-    // Copy the PDF bytes into a file-mapping section so the agent can map them
-    // into its own process. The agent duplicates this handle out of our process
-    // while servicing the request, so the caller must keep the handle open
-    // until this request's response arrives (see
-    // ExternalAgentBackend::Analyze).
-    LARGE_INTEGER dataContentLength;
-    dataContentLength.QuadPart = static_cast<LONGLONG>(printData.Length());
-    HANDLE printDataHandle = ::CreateFileMappingW(
-        INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE,
-        dataContentLength.HighPart, dataContentLength.LowPart, nullptr);
-    if (!printDataHandle) {
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
-    {
-      mozilla::nt::AutoMappedView view(printDataHandle, FILE_MAP_ALL_ACCESS);
-      memcpy(view.as<uint8_t>(), printData.Elements(), printData.Length());
-    }
-    aOut->mutable_print_data()->set_handle(
-        static_cast<uint64_t>(reinterpret_cast<uintptr_t>(printDataHandle)));
-    aOut->mutable_print_data()->set_size(printData.Length());
-
-    nsString printerName;
-    MOZ_TRY(aRequest->GetPrinterName(printerName));
-    requestData->mutable_print_metadata()->set_printer_name(
-        NS_ConvertUTF16toUTF8(printerName).get());
-    return NS_OK;
-#else
     return NS_ERROR_NOT_IMPLEMENTED;
-#endif
   }
 
   nsString filePath;
@@ -364,39 +330,6 @@ nsresult ExternalAgentBackend::CreateContentAnalysisClient(
     LOGD("ContentAnalysis::IsShutDown is true");
   }
 
-#ifdef XP_WIN
-  if (client && !aClientSignatureSetting.IsEmpty()) {
-    std::string agentPath = client->GetAgentInfo().binary_path;
-    nsString agentWidePath = NS_ConvertUTF8toUTF16(agentPath);
-    UniquePtr<wchar_t[]> orgName =
-        mozilla::DllServices::Get()->GetBinaryOrgName(agentWidePath.get());
-    bool signatureMatches = false;
-    if (orgName) {
-      auto dependentOrgName = nsDependentString(orgName.get());
-      LOGD("Content analysis client signed with organization name \"%S\"",
-           dependentOrgName.getW());
-      signatureMatches = aClientSignatureSetting.Equals(dependentOrgName);
-    } else {
-      LOGD("Content analysis client has no signature");
-    }
-    if (!signatureMatches) {
-      LOGE(
-          "Got mismatched content analysis client signature! All content "
-          "analysis operations will fail.");
-      nsresult rv = NS_ERROR_INVALID_SIGNATURE;
-      glean::content_analysis::connection_failure
-          .Get(nsCString{SafeGetStaticErrorName(rv)})
-          .Add();
-      NS_DispatchToMainThread(
-          NS_NewRunnableFunction(__func__, [self = RefPtr{this}, rv]() {
-            AssertIsOnMainThread();
-            self->mClientPromise->Reject(rv, __func__);
-            self->mCreatingClient = false;
-          }));
-      return NS_OK;
-    }
-  }
-#endif  // XP_WIN
   NS_DispatchToMainThread(NS_NewRunnableFunction(
       __func__,
       [self = RefPtr{this}, isShutDown, client = std::move(client)]() {
@@ -761,14 +694,6 @@ nsresult ExternalAgentBackend::Analyze(
   // retries, where that map entry is briefly removed and re-inserted. Empty on
   // platforms that do not transport print data via a handle.
   std::shared_ptr<void> printDataHandleGuard;
-#ifdef XP_WIN
-  if (pbRequest.has_print_data() && pbRequest.print_data().handle()) {
-    printDataHandleGuard = std::shared_ptr<void>(
-        reinterpret_cast<HANDLE>(
-            static_cast<uintptr_t>(pbRequest.print_data().handle())),
-        [](void* aHandle) { ::CloseHandle(aHandle); });
-  }
-#endif
 
   LOGD("Issuing ContentAnalysisRequest for token %s", requestToken.get());
   LogRequest(&pbRequest);

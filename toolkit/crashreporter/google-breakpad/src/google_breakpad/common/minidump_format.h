@@ -66,12 +66,6 @@
 #include "google_breakpad/common/breakpad_types.h"
 
 
-#if defined(_MSC_VER)
-/* Disable "zero-sized array in struct/union" warnings when compiling in
- * MSVC.  DbgHelp.h does this too. */
-#pragma warning(push)
-#pragma warning(disable:4200)
-#endif  /* _MSC_VER */
 
 
 /*
@@ -1170,9 +1164,6 @@ typedef struct {
   MDRawThreadName thread_names[0];
 } MDRawThreadNamesList;
 
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif  /* _MSC_VER */
 
 
 #endif  /* GOOGLE_BREAKPAD_COMMON_MINIDUMP_FORMAT_H__ */

@@ -5,9 +5,6 @@
 #ifndef GLLIBRARYEGL_H_
 #define GLLIBRARYEGL_H_
 
-#if defined(MOZ_X11)
-#  include "mozilla/X11Util.h"
-#endif
 
 #include <bitset>
 #include <memory>
@@ -26,16 +23,8 @@
 #include "nsISupports.h"
 #include "prlink.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidBuild.h"
-#  include "mozilla/ProfilerLabels.h"
-#endif
 
-#if defined(MOZ_X11)
-#  define EGL_DEFAULT_DISPLAY ((EGLNativeDisplayType)mozilla::DefaultXDisplay())
-#else
 #  define EGL_DEFAULT_DISPLAY ((EGLNativeDisplayType)0)
-#endif
 
 struct ID3D11Device;
 
@@ -201,17 +190,11 @@ class GLLibraryEGL final {
   // -
   // PFN wrappers
 
-#ifdef MOZ_WIDGET_ANDROID
-#  define PROFILE_CALL AUTO_PROFILER_LABEL(__func__, GRAPHICS);
-#else
 #  define PROFILE_CALL
-#endif
 
 #ifndef MOZ_FUNCTION_NAME
 #  ifdef __GNUC__
 #    define MOZ_FUNCTION_NAME __PRETTY_FUNCTION__
-#  elif defined(_MSC_VER)
-#    define MOZ_FUNCTION_NAME __FUNCTION__
 #  else
 #    define MOZ_FUNCTION_NAME \
       __func__  // defined in C99, supported in various C++ compilers. Just raw

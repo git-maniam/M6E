@@ -15,30 +15,16 @@
 #include "nsString.h"
 #include "nsXREDirProvider.h"
 #include "prenv.h"
-#if defined(MOZ_WIDGET_COCOA)
 #  include <Carbon/Carbon.h>
 
 #  include "CocoaFileUtils.h"
 #  include "nsILocalFileMac.h"
-#elif defined(XP_WIN)
-#  include <shlobj.h>
-#  include <windows.h>
-#elif defined(XP_UNIX)
-#  include <sys/param.h>
-#  include <unistd.h>
-#endif
 
 // WARNING: These hard coded names need to go away. They need to
 // come from localizable resources
 
-#if defined(MOZ_WIDGET_COCOA)
 #  define APP_REGISTRY_NAME "Application Registry"_ns
 #  define ESSENTIAL_FILES "Essential Files"_ns
-#elif defined(XP_WIN)
-#  define APP_REGISTRY_NAME "registry.dat"_ns
-#else
-#  define APP_REGISTRY_NAME "appreg"_ns
-#endif
 
 // define default product directory
 #define DEFAULT_PRODUCT_DIR nsLiteralCString(MOZ_USER_DIR)
@@ -183,7 +169,6 @@ nsresult nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
   bool exists;
   nsCOMPtr<nsIFile> localDir;
 
-#if defined(MOZ_WIDGET_COCOA)
   nsCOMPtr<nsILocalFileMac> localDirMac;
   rv = NS_NewLocalFileWithCFURL(
       CocoaFileUtils::GetProductDirectory(aLocal).get(),
@@ -192,56 +177,8 @@ nsresult nsAppFileLocationProvider::GetProductDirectory(nsIFile** aLocalFile,
     return rv;
   }
   localDir = localDirMac.forget();
-#elif defined(XP_WIN)
-  nsCOMPtr<nsIProperties> directoryService =
-      do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID, &rv);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  const char* prop = aLocal ? NS_WIN_LOCAL_APPDATA_DIR : NS_WIN_APPDATA_DIR;
-  rv = directoryService->Get(prop, NS_GET_IID(nsIFile),
-                             getter_AddRefs(localDir));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-#elif defined(XP_UNIX)
-  const char* homeDir = PR_GetEnv("HOME");
-  rv = NS_NewNativeLocalFile(nsDependentCString(homeDir),
-                             getter_AddRefs(localDir));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
 
-#  if defined(MOZ_WIDGET_GTK)
-  rv = nsXREDirProvider::GetLegacyOrXDGHomePath(homeDir,
-                                                getter_AddRefs(localDir));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-#  endif
-
-#else
-#  error dont_know_how_to_get_product_dir_on_your_platform
-#endif
-
-#if defined(MOZ_WIDGET_GTK)
-  bool legacyExists = nsXREDirProvider::LegacyHomeExists(nullptr);
-  if (legacyExists || nsXREDirProvider::IsForceLegacyHome()) {
-    nsAutoCString productDir;
-    nsAutoCString mozUserDir;
-    mozUserDir = nsLiteralCString(MOZ_USER_DIR);
-    if (mozUserDir.get()[0] != '.') {
-      productDir = "."_ns + DEFAULT_PRODUCT_DIR;
-    } else {
-      productDir = DEFAULT_PRODUCT_DIR;
-    }
-    rv = localDir->AppendNative(productDir);
-  } else {
-    rv = localDir->AppendNative(DEFAULT_PRODUCT_DIR);
-  }
-#else
   rv = localDir->AppendNative(DEFAULT_PRODUCT_DIR);
-#endif
 
   if (NS_FAILED(rv)) {
     return rv;
@@ -284,7 +221,6 @@ nsresult nsAppFileLocationProvider::GetDefaultUserProfileRoot(
     return rv;
   }
 
-#if defined(MOZ_WIDGET_COCOA) || defined(XP_WIN)
   // These 3 platforms share this part of the path - do them as one
   rv = localDir->AppendRelativeNativePath("Profiles"_ns);
   if (NS_FAILED(rv)) {
@@ -299,7 +235,6 @@ nsresult nsAppFileLocationProvider::GetDefaultUserProfileRoot(
   if (NS_FAILED(rv)) {
     return rv;
   }
-#endif
 
   localDir.forget(aLocalFile);
 

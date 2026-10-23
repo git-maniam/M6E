@@ -17,9 +17,6 @@
 #include "nsWifiAccessPoint.h"
 #include "nsWifiMonitor.h"
 
-#if defined(XP_WIN) && defined(_M_IX86)
-#  include <objbase.h>  // STDMETHODCALLTYPE
-#endif
 
 // Tests that wifi scanning happens on the right network change events,
 // and that wifi-scan polling is operable on mobile networks.
@@ -63,18 +60,10 @@ class MockWifiListener : public nsIWifiListener {
 
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
-#if defined(XP_WIN) && defined(_M_IX86)
-  MOCK_METHOD(nsresult, OnChange,
-              (const nsTArray<RefPtr<nsIWifiAccessPoint>>& accessPoints),
-              (override, Calltype(STDMETHODCALLTYPE)));
-  MOCK_METHOD(nsresult, OnError, (nsresult error),
-              (override, Calltype(STDMETHODCALLTYPE)));
-#else
   MOCK_METHOD(nsresult, OnChange,
               (const nsTArray<RefPtr<nsIWifiAccessPoint>>& accessPoints),
               (override));
   MOCK_METHOD(nsresult, OnError, (nsresult error), (override));
-#endif
 };
 
 NS_IMPL_ISUPPORTS(MockWifiListener, nsIWifiListener)

@@ -299,12 +299,6 @@ EditorBase::EditorBase(EditorType aEditorType)
       mHidingCaret(false),
       mSpellCheckerDictionaryUpdated(true),
       mIsHTMLEditorClass(aEditorType == EditorType::HTML) {
-#ifdef XP_WIN
-  if (!mCaretStyle && !IsTextEditor()) {
-    // Wordpad-like caret behavior.
-    mCaretStyle = 1;
-  }
-#endif  // #ifdef XP_WIN
   if (mNewlineHandling < nsIEditor::eNewlinesPasteIntact ||
       mNewlineHandling > nsIEditor::eNewlinesStripSurroundingWhitespace) {
     mNewlineHandling = nsIEditor::eNewlinesPasteToFirst;

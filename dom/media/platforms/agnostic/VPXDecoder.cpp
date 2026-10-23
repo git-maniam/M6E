@@ -39,14 +39,6 @@ static VPXDecoder::Codec MimeTypeToCodec(const nsACString& aMimeType) {
   if (aMimeType.EqualsLiteral("video/vp9")) {
     return VPXDecoder::Codec::VP9;
   }
-#ifdef ANDROID
-  if (aMimeType.EqualsLiteral("video/x-vnd.on2.vp8")) {
-    return VPXDecoder::Codec::VP8;
-  }
-  if (aMimeType.EqualsLiteral("video/x-vnd.on2.vp9")) {
-    return VPXDecoder::Codec::VP9;
-  }
-#endif
   return VPXDecoder::Codec::Unknown;
 }
 

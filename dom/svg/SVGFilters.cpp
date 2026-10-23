@@ -31,10 +31,6 @@
 #include "nsIFrame.h"
 #include "nsLayoutUtils.h"
 
-#if defined(XP_WIN)
-// Prevent Windows redefining LoadImage
-#  undef LoadImage
-#endif
 
 using namespace mozilla::gfx;
 

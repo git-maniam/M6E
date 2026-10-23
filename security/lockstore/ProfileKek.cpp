@@ -21,9 +21,7 @@
 #include "nsTArray.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_MACOSX
 #  include "MacApplicationDelegate.h"
-#endif
 
 namespace mozilla::security::lockstore {
 
@@ -197,11 +195,9 @@ static bool SyncLockstoreWithPrimaryPassword() {
     return syncIsSkippable;
   }
 
-#ifdef XP_MACOSX
   // This runs before XRE_mainRun initializes the Cocoa app for the first
   // window. Calling InitializeMacApp more than once does nothing.
   InitializeMacApp();
-#endif
 
   while (true) {
     char16_t* rawPassword = nullptr;

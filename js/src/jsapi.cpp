@@ -15,9 +15,6 @@
 
 #include <algorithm>
 #include <cstdarg>
-#ifdef __linux__
-#  include <dlfcn.h>
-#endif
 #include <stdarg.h>
 #include <string.h>
 
@@ -5173,13 +5170,6 @@ JS_PUBLIC_API JS::JSTimers JS::GetJSTimers(JSContext* cx) {
 namespace js {
 
 JS_PUBLIC_API void NoteIntentionalCrash() {
-#ifdef __linux__
-  static bool* addr =
-      reinterpret_cast<bool*>(dlsym(RTLD_DEFAULT, "gBreakpadInjectorEnabled"));
-  if (addr) {
-    *addr = false;
-  }
-#endif
 }
 
 #ifdef DEBUG

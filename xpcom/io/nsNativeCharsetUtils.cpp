@@ -5,7 +5,6 @@
 //-----------------------------------------------------------------------------
 // Non-Windows
 //-----------------------------------------------------------------------------
-#ifndef XP_WIN
 
 #  include "nsAString.h"
 #  include "nsReadableUtils.h"
@@ -24,74 +23,3 @@ nsresult NS_CopyUnicodeToNative(const nsAString& aInput, nsACString& aOutput) {
 //-----------------------------------------------------------------------------
 // XP_WIN
 //-----------------------------------------------------------------------------
-#else
-
-#  include <windows.h>
-
-#  include "nsAString.h"
-#  include "nsReadableUtils.h"
-#  include "nsString.h"
-
-using namespace mozilla;
-
-nsresult NS_CopyNativeToUnicode(const nsACString& aInput, nsAString& aOutput) {
-  uint32_t inputLen = aInput.Length();
-
-  nsACString::const_iterator iter;
-  aInput.BeginReading(iter);
-
-  const char* buf = iter.get();
-
-  // determine length of result
-  uint32_t resultLen = 0;
-  int n = ::MultiByteToWideChar(CP_ACP, 0, buf, inputLen, nullptr, 0);
-  if (n > 0) {
-    resultLen += n;
-  }
-
-  // allocate sufficient space
-  if (!aOutput.SetLength(resultLen, fallible)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  if (resultLen > 0) {
-    char16ptr_t result = aOutput.BeginWriting();
-    ::MultiByteToWideChar(CP_ACP, 0, buf, inputLen, result, resultLen);
-  }
-  return NS_OK;
-}
-
-nsresult NS_CopyUnicodeToNative(const nsAString& aInput, nsACString& aOutput) {
-  uint32_t inputLen = aInput.Length();
-
-  nsAString::const_iterator iter;
-  aInput.BeginReading(iter);
-
-  char16ptr_t buf = iter.get();
-
-  // determine length of result
-  uint32_t resultLen = 0;
-
-  int n = ::WideCharToMultiByte(CP_ACP, 0, buf, inputLen, nullptr, 0, nullptr,
-                                nullptr);
-  if (n > 0) {
-    resultLen += n;
-  }
-
-  // allocate sufficient space
-  if (!aOutput.SetLength(resultLen, fallible)) {
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-  if (resultLen > 0) {
-    char* result = aOutput.BeginWriting();
-
-    // default "defaultChar" is '?', which is an illegal character on windows
-    // file system.  That will cause file uncreatable. Change it to '_'
-    const char defaultChar = '_';
-
-    ::WideCharToMultiByte(CP_ACP, 0, buf, inputLen, result, resultLen,
-                          &defaultChar, nullptr);
-  }
-  return NS_OK;
-}
-
-#endif

@@ -12,9 +12,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsTHashMap.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif  // XP_WIN
 
 #if defined(MOZ_MEMORY)
 #  define HAVE_JEMALLOC_STATS 1
@@ -181,20 +178,12 @@ class nsMemoryReporterManager final : public nsIMemoryReporterManager,
   // Returns 0 if, for some reason, the resident unique memory cannot be
   // determined - typically if there is a race between us and someone else
   // closing the process and we lost that race.
-#ifdef XP_WIN
-  static int64_t ResidentUnique(HANDLE aProcess = nullptr);
-#elif XP_MACOSX
   // On MacOS this can sometimes be significantly slow. It should not be used
   // except in debugging or at the request of a user (eg about:memory).
   static int64_t ResidentUnique(mach_port_t aPort = 0);
-#else
-  static int64_t ResidentUnique(pid_t aPid = 0);
-#endif  // XP_{WIN, MACOSX, LINUX, *}
 
-#ifdef XP_MACOSX
   // Retrive the "phys_footprint" memory statistic on MacOS.
   static int64_t PhysicalFootprint(mach_port_t aPort = 0);
-#endif
 
   // Functions that measure per-tab memory consumption.
   struct SizeOfTabFns {

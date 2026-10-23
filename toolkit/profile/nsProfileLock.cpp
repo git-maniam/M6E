@@ -9,20 +9,11 @@
 #include "nsPrintfCString.h"
 #include "nsDebug.h"
 
-#if defined(XP_WIN)
-#  include "ProfileUnlockerWin.h"
-#endif
 
-#if defined(XP_MACOSX)
 #  include <Carbon/Carbon.h>
 #  include <CoreFoundation/CoreFoundation.h>
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "ProfileUnlockerAndroid.h"
-#endif
 
-#ifdef XP_UNIX
 #  include <unistd.h>
 #  include <fcntl.h>
 #  include <errno.h>
@@ -32,7 +23,6 @@
 #  include "prsystem.h"
 #  include "prenv.h"
 #  include "mozilla/Printf.h"
-#endif
 
 // **********************************************************************
 // class nsProfileLock
@@ -40,26 +30,17 @@
 // This code was moved from profile/src/nsProfileAccess.
 // **********************************************************************
 
-#if defined(XP_UNIX)
 static bool sDisableSignalHandling = false;
-#endif
 
 nsProfileLock::nsProfileLock()
     : mHaveLock(false),
       mReplacedLockTime(0)
-#if defined(XP_WIN)
-      ,
-      mLockFileHandle(INVALID_HANDLE_VALUE)
-#elif defined(XP_UNIX)
       ,
       mPidLockFileName(nullptr),
       mLockFileDesc(-1)
-#endif
 {
-#if defined(XP_UNIX)
   next = prev = this;
   sDisableSignalHandling = PR_GetEnv("MOZ_DISABLE_SIG_HANDLER") ? true : false;
-#endif
 }
 
 nsProfileLock::nsProfileLock(nsProfileLock& src) { *this = src; }
@@ -73,10 +54,6 @@ nsProfileLock& nsProfileLock::operator=(nsProfileLock& rhs) {
   rhs.mHaveLock = false;
   mReplacedLockTime = rhs.mReplacedLockTime;
 
-#if defined(XP_WIN)
-  mLockFileHandle = rhs.mLockFileHandle;
-  rhs.mLockFileHandle = INVALID_HANDLE_VALUE;
-#elif defined(XP_UNIX)
   mLockFileDesc = rhs.mLockFileDesc;
   rhs.mLockFileDesc = -1;
   mPidLockFileName = rhs.mPidLockFileName;
@@ -86,7 +63,6 @@ nsProfileLock& nsProfileLock::operator=(nsProfileLock& rhs) {
     PR_REMOVE_LINK(&rhs);
     PR_APPEND_LINK(this, &mPidLockList);
   }
-#endif
 
   return *this;
 }
@@ -97,7 +73,6 @@ nsProfileLock::~nsProfileLock() {
   // the profile was last used based on the modification time of the lock file.
 }
 
-#if defined(XP_UNIX)
 
 static int setupPidLockCleanup;
 
@@ -220,13 +195,6 @@ nsresult nsProfileLock::LockWithFcntl(nsIFile* aLockFile,
       mLockFileDesc = -1;
       rv = NS_ERROR_FAILURE;
     } else if (fcntl(mLockFileDesc, F_SETLK, &lock) == -1) {
-#  ifdef MOZ_WIDGET_ANDROID
-      MOZ_ASSERT(aUnlocker);
-      RefPtr<mozilla::ProfileUnlockerAndroid> unlocker(
-          new mozilla::ProfileUnlockerAndroid(testlock.l_pid));
-      nsCOMPtr<nsIProfileUnlocker> unlockerInterface(do_QueryObject(unlocker));
-      unlockerInterface.forget(aUnlocker);
-#  endif
 
       close(mLockFileDesc);
       mLockFileDesc = -1;
@@ -405,30 +373,20 @@ nsresult nsProfileLock::LockWithSymlink(nsIFile* aLockFile,
   }
   return rv;
 }
-#endif /* XP_UNIX */
 
 nsresult nsProfileLock::GetReplacedLockTime(PRTime* aResult) {
   *aResult = mReplacedLockTime;
   return NS_OK;
 }
 
-#if defined(XP_MACOSX)
 constexpr auto LOCKFILE_NAME = u".parentlock"_ns;
 constexpr auto OLD_LOCKFILE_NAME = u"parent.lock"_ns;
-#elif defined(XP_UNIX)
-constexpr auto OLD_LOCKFILE_NAME = u"lock"_ns;
-constexpr auto LOCKFILE_NAME = u".parentlock"_ns;
-#else
-constexpr auto LOCKFILE_NAME = u"parent.lock"_ns;
-#endif
 
 bool nsProfileLock::IsMaybeLockFile(nsIFile* aFile) {
   nsAutoString tmp;
   if (NS_SUCCEEDED(aFile->GetLeafName(tmp))) {
     if (tmp.Equals(LOCKFILE_NAME)) return true;
-#if (defined(XP_MACOSX) || defined(XP_UNIX))
     if (tmp.Equals(OLD_LOCKFILE_NAME)) return true;
-#endif
   }
   return false;
 }
@@ -456,7 +414,6 @@ nsresult nsProfileLock::Lock(nsIFile* aProfileDir,
   rv = lockFile->Clone(getter_AddRefs(mLockFile));
   if (NS_FAILED(rv)) return rv;
 
-#if defined(XP_DARWIN)
   // First, try locking using fcntl. It is more reliable on
   // a local machine, but may not be supported by an NFS server.
 
@@ -466,64 +423,6 @@ nsresult nsProfileLock::Lock(nsIFile* aProfileDir,
     // assume we tried an NFS that does not support it. Now, try with symlink.
     rv = LockWithSymlink(lockFile, false);
   }
-#elif defined(XP_UNIX)
-  // Get the old lockfile name
-  nsCOMPtr<nsIFile> oldLockFile;
-  rv = aProfileDir->Clone(getter_AddRefs(oldLockFile));
-  if (NS_FAILED(rv)) return rv;
-  rv = oldLockFile->Append(OLD_LOCKFILE_NAME);
-  if (NS_FAILED(rv)) return rv;
-
-  // First, try locking using fcntl. It is more reliable on
-  // a local machine, but may not be supported by an NFS server.
-  rv = LockWithFcntl(lockFile, aUnlocker);
-  if (NS_SUCCEEDED(rv)) {
-    // Check to see whether there is a symlink lock held by an older
-    // Firefox build, and also place our own symlink lock --- but
-    // mark it "obsolete" so that other newer builds can break the lock
-    // if they obtain the fcntl lock
-    rv = LockWithSymlink(oldLockFile, true);
-
-    // If the symlink failed for some reason other than it already
-    // exists, then something went wrong e.g. the file system
-    // doesn't support symlinks, or we don't have permission to
-    // create a symlink there.  In such cases we should just
-    // continue because it's unlikely there is an old build
-    // running with a symlink there and we've already successfully
-    // placed a fcntl lock.
-    if (rv != NS_ERROR_FILE_ACCESS_DENIED) rv = NS_OK;
-  } else if (rv != NS_ERROR_FILE_ACCESS_DENIED) {
-    // If that failed for any reason other than NS_ERROR_FILE_ACCESS_DENIED,
-    // assume we tried an NFS that does not support it. Now, try with symlink
-    // using the old symlink path
-    rv = LockWithSymlink(oldLockFile, false);
-  }
-
-#elif defined(XP_WIN)
-  nsAutoString filePath;
-  rv = lockFile->GetPath(filePath);
-  if (NS_FAILED(rv)) return rv;
-
-  lockFile->GetLastModifiedTime(&mReplacedLockTime);
-
-  // always create the profile lock and never delete it so we can use its
-  // modification timestamp to detect startup crashes
-  mLockFileHandle = CreateFileW(filePath.get(), GENERIC_READ | GENERIC_WRITE,
-                                0,  // no sharing - of course
-                                nullptr, CREATE_ALWAYS, 0, nullptr);
-  if (mLockFileHandle == INVALID_HANDLE_VALUE) {
-    if (aUnlocker) {
-      RefPtr<mozilla::ProfileUnlockerWin> unlocker(
-          new mozilla::ProfileUnlockerWin(filePath));
-      if (NS_SUCCEEDED(unlocker->Init())) {
-        nsCOMPtr<nsIProfileUnlocker> unlockerInterface(
-            do_QueryObject(unlocker));
-        unlockerInterface.forget(aUnlocker);
-      }
-    }
-    return NS_ERROR_FILE_ACCESS_DENIED;
-  }
-#endif
 
   if (NS_SUCCEEDED(rv)) mHaveLock = true;
 
@@ -539,12 +438,6 @@ nsresult nsProfileLock::Unlock(bool aFatalSignal) {
 #pragma GCC diagnostic ignored "-Wuninitialized"
   if (mHaveLock) {
 #pragma GCC diagnostic pop
-#if defined(XP_WIN)
-    if (mLockFileHandle != INVALID_HANDLE_VALUE) {
-      CloseHandle(mLockFileHandle);
-      mLockFileHandle = INVALID_HANDLE_VALUE;
-    }
-#elif defined(XP_UNIX)
     if (mPidLockFileName) {
       PR_REMOVE_LINK(this);
       (void)unlink(mPidLockFileName);
@@ -562,7 +455,6 @@ nsresult nsProfileLock::Unlock(bool aFatalSignal) {
       mLockFileDesc = -1;
       // Don't remove it
     }
-#endif
 
     mHaveLock = false;
   }

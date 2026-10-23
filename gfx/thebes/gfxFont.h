@@ -81,13 +81,7 @@ typedef struct _cairo_scaled_font cairo_scaled_font_t;
 
 // The skew factor used for synthetic-italic [oblique] fonts;
 // we use a platform-dependent value to harmonize with the platform's own APIs.
-#ifdef XP_WIN
-#  define OBLIQUE_SKEW_FACTOR 0.3f
-#elif defined(MOZ_WIDGET_GTK)
-#  define OBLIQUE_SKEW_FACTOR 0.2f
-#else
 #  define OBLIQUE_SKEW_FACTOR 0.25f
-#endif
 
 struct gfxFontStyle {
   using FontWidth = mozilla::FontWidth;
@@ -99,9 +93,6 @@ struct gfxFontStyle {
   gfxFontStyle(FontSlantStyle aStyle, FontWeight aWeight, FontWidth aWidth,
                gfxFloat aSize, const FontSizeAdjust& aSizeAdjust,
                bool aSystemFont, bool aPrinterFont,
-#ifdef XP_WIN
-               bool aAllowForceGDIClassic,
-#endif
                bool aWeightSynthesis,
                mozilla::StyleFontSynthesisStyle aStyleSynthesis,
                bool aSmallCapsSynthesis, bool aPositionSynthesis,
@@ -190,9 +181,6 @@ struct gfxFontStyle {
   // Say that this font is used for print or print preview.
   bool printerFont : 1;
 
-#ifdef XP_WIN
-  bool allowForceGDIClassic : 1;
-#endif
 
   // Used to imitate -webkit-font-smoothing: antialiased
   bool useGrayscaleAntialiasing : 1;
@@ -249,9 +237,6 @@ struct gfxFontStyle {
            (useSyntheticPosition == other.useSyntheticPosition) &&
            (systemFont == other.systemFont) &&
            (printerFont == other.printerFont) &&
-#ifdef XP_WIN
-           (allowForceGDIClassic == other.allowForceGDIClassic) &&
-#endif
            (useGrayscaleAntialiasing == other.useGrayscaleAntialiasing) &&
            (baselineOffset == other.baselineOffset) &&
            mozilla::NumbersAreBitwiseIdentical(sizeAdjust, other.sizeAdjust) &&

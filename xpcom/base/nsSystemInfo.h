@@ -9,21 +9,7 @@
 #include "nsHashPropertyBag.h"
 #include "nsISystemInfo.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/dom/PContent.h"
-#endif  // MOZ_WIDGET_ANDROID
 
-#if defined(XP_WIN)
-#  include <inspectable.h>
-
-// The UUID comes from winrt/windows.system.profile.idl
-// in the Windows SDK
-MIDL_INTERFACE("7D1D81DB-8D63-4789-9EA5-DDCF65A94F3C")
-IWindowsIntegrityPolicyStatics : public IInspectable {
- public:
-  virtual HRESULT STDMETHODCALLTYPE get_IsEnabled(bool* value) = 0;
-};
-#endif
 
 class nsISerialEventTarget;
 
@@ -97,12 +83,6 @@ class nsSystemInfo final : public nsISystemInfo, public nsHashPropertyBag {
   // See comments above the variable definition and in NS_InitXPCOM.
   static uint32_t gUserUmask;
 
-#ifdef MOZ_WIDGET_ANDROID
-  static void GetAndroidSystemInfo(mozilla::dom::AndroidSystemInfo* aInfo);
-
- protected:
-  void SetupAndroidInfo(const mozilla::dom::AndroidSystemInfo&);
-#endif
 
  protected:
   void SetInt32Property(const nsAString& aPropertyName, const int32_t aValue);

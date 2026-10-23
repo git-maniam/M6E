@@ -144,9 +144,7 @@ static nsresult SelectCellElement(nsIContent* aCellElement,
 // Therefore, we should run nsHTMLCopyEncoder part in all desktop platforms if
 // it's a debug build. Thus, we can check the result on Linux machines in
 // tryserver.
-#if defined(XP_MACOSX) || (defined(DEBUG) && !defined(ANDROID))
 #  define RUN_MAYBE_UPDATE_SELECTION_CACHE_REPAINT_SELECTION
-#endif
 
 #ifdef RUN_MAYBE_UPDATE_SELECTION_CACHE_REPAINT_SELECTION
 static nsresult MaybeUpdateSelectionCacheOnRepaintSelection(Selection* aSel);
@@ -2631,11 +2629,7 @@ nsresult nsFrameSelection::TableSelection::HandleMouseUpOrDown(
     // Any other mouseup actions require that Ctrl or Cmd key is pressed
     //  else stop table selection mode
     bool doMouseUpAction = false;
-#ifdef XP_MACOSX
     doMouseUpAction = aMouseEvent->IsMeta();
-#else
-    doMouseUpAction = aMouseEvent->IsControl();
-#endif
     if (!doMouseUpAction) {
 #ifdef DEBUG_TABLE_SELECTION
       printf(
@@ -3332,14 +3326,8 @@ static nsresult MaybeUpdateSelectionCacheOnRepaintSelection(Selection* aSel) {
   if (aDoc && aSel && !aSel->IsCollapsed()) {
     return nsCopySupport::EncodeDocumentWithContextAndPutToClipboard(
         aSel, aDoc, nsIClipboard::kSelectionCache, false,
-#  ifdef XP_MACOSX
         // Update the selection cache on macOS
         nsCopySupport::UpdateClipboard::Yes
-#  else
-        // Do not update the clipboard on the other platforms, just run the
-        // serializer to detect assertion failures.
-        nsCopySupport::UpdateClipboard::No
-#  endif
     );
   }
 

@@ -28,9 +28,6 @@
 #include "mozilla/CheckedInt.h"
 #include "mozilla/ipc/SharedMemoryMapping.h"
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
 template <typename T>
 class RefPtr;
@@ -125,7 +122,6 @@ class MOZ_STACK_CLASS MessageWriter final {
     message_.WritePort(std::move(port));
   }
 
-#if defined(XP_DARWIN)
   bool WriteMachSendRight(mozilla::UniqueMachSendRight port) {
     return message_.WriteMachSendRight(std::move(port));
   }
@@ -133,7 +129,6 @@ class MOZ_STACK_CLASS MessageWriter final {
   bool WriteMachReceiveRight(mozilla::UniqueMachReceiveRight port) {
     return message_.WriteMachReceiveRight(std::move(port));
   }
-#endif
 
   void FatalError(const char* aErrorMsg) const {
     mozilla::ipc::PickleFatalError(aErrorMsg, actor_);
@@ -223,7 +218,6 @@ class MOZ_STACK_CLASS MessageReader final {
     return message_.ConsumePort(&iter_, port);
   }
 
-#if defined(XP_DARWIN)
   [[nodiscard]] bool ConsumeMachSendRight(mozilla::UniqueMachSendRight* port) {
     return message_.ConsumeMachSendRight(&iter_, port);
   }
@@ -232,7 +226,6 @@ class MOZ_STACK_CLASS MessageReader final {
       mozilla::UniqueMachReceiveRight* port) {
     return message_.ConsumeMachReceiveRight(&iter_, port);
   }
-#endif
 
   void FatalError(const char* aErrorMsg) const {
     mozilla::ipc::PickleFatalError(aErrorMsg, actor_);
@@ -1253,31 +1246,6 @@ struct ParamTraitsStd<std::bitset<N>> {
 template <class P>
 struct ParamTraitsWindows : ParamTraitsStd<P> {};
 
-#if defined(XP_WIN)
-template <>
-struct ParamTraitsWindows<HANDLE> {
-  static_assert(sizeof(HANDLE) == sizeof(intptr_t), "Wrong size for HANDLE?");
-
-  static void Write(MessageWriter* writer, HANDLE p) {
-    writer->WriteIntPtr(reinterpret_cast<intptr_t>(p));
-  }
-  static bool Read(MessageReader* reader, HANDLE* r) {
-    return reader->ReadIntPtr(reinterpret_cast<intptr_t*>(r));
-  }
-};
-
-template <>
-struct ParamTraitsWindows<HWND> {
-  static_assert(sizeof(HWND) == sizeof(intptr_t), "Wrong size for HWND?");
-
-  static void Write(MessageWriter* writer, HWND p) {
-    writer->WriteIntPtr(reinterpret_cast<intptr_t>(p));
-  }
-  static bool Read(MessageReader* reader, HWND* r) {
-    return reader->ReadIntPtr(reinterpret_cast<intptr_t*>(r));
-  }
-};
-#endif  // defined(XP_WIN)
 
 // Various ipc/chromium types.
 
@@ -1327,7 +1295,6 @@ struct ParamTraitsIPC<mozilla::UniqueFileHandle> {
   }
 };
 
-#if defined(XP_DARWIN)
 // `UniqueMachSendRight` may be serialized over IPC channels. On the receiving
 // side, the UniqueMachSendRight is the local name of the right which was
 // transmitted.
@@ -1413,7 +1380,6 @@ struct ParamTraitsIPC<mozilla::UniqueMachReceiveRight> {
     return true;
   }
 };
-#endif
 
 // Mozilla-specific types.
 

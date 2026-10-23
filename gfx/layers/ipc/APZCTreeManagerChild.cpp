@@ -11,9 +11,6 @@
 #include "mozilla/layers/DoubleTapToZoom.h"     // for DoubleTapToZoomMetrics
 #include "mozilla/layers/GeckoContentController.h"  // for GeckoContentController
 #include "mozilla/layers/RemoteCompositorSession.h"  // for RemoteCompositorSession
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/jni/Utils.h"  // for DispatchToGeckoPriorityQueue
-#endif
 
 namespace mozilla {
 namespace layers {

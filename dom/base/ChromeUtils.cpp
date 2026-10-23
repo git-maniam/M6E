@@ -88,29 +88,18 @@
 #include "nsString.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_UNIX
 #  include <errno.h>
 #  include <fcntl.h>
 #  include <poll.h>
 #  include <sys/wait.h>
 #  include <unistd.h>
 
-#  ifdef XP_LINUX
-#    include <sys/prctl.h>
-#  endif
-#endif
 
 #ifdef MOZ_WMF_CDM
 #  include "mozilla/MFCDMParent.h"
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#endif
 
-#ifdef MOZ_WAYLAND
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -1208,7 +1197,6 @@ void ChromeUtils::DefineESModuleGetters(
   }
 }
 
-#ifdef XP_UNIX
 /* static */
 void ChromeUtils::GetLibcConstants(const GlobalObject&,
                                    LibcConstants& aConsts) {
@@ -1243,12 +1231,7 @@ void ChromeUtils::GetLibcConstants(const GlobalObject&,
 
   aConsts.mWNOHANG.Construct(WNOHANG);
 
-#  ifdef XP_LINUX
-  aConsts.mPR_CAPBSET_READ.Construct(PR_CAPBSET_READ);
-  aConsts.mO_PATH.Construct(O_PATH);
-#  endif
 }
-#endif
 
 /* static */
 void ChromeUtils::OriginAttributesToSuffix(
@@ -2028,10 +2011,8 @@ already_AddRefed<Promise> ChromeUtils::RequestProcInfo(GlobalObject& aGlobal,
                                                      // DOM windows.
         /* aUtilityInfo = */ std::move(utilityActors),
         /* aChild = */ 0  // Without a ContentProcess, no ChildId.
-#ifdef XP_MACOSX
         ,
         /* aChildTask = */ geckoProcess->GetChildTask()
-#endif  // XP_MACOSX
     );
   }
 
@@ -2132,10 +2113,8 @@ already_AddRefed<Promise> ChromeUtils::RequestProcInfo(GlobalObject& aGlobal,
         /* aWindowInfo = */ std::move(windows),
         /* aUtilityInfo = */ nsTArray<UtilityInfo>(),
         /* aChild = */ contentParent->ChildID()
-#ifdef XP_MACOSX
             ,
         /* aChildTask = */ contentParent->Process()->GetChildTask()
-#endif  // XP_MACOSX
     );
   }
 
@@ -2237,15 +2216,6 @@ already_AddRefed<Promise> ChromeUtils::RequestXDGActivationToken(
     return nullptr;
   }
 
-#ifdef MOZ_WAYLAND
-  if (RefPtr tokenPromise = widget::RequestWaylandFocusPromise()) {
-    tokenPromise->Then(
-        GetCurrentSerialEventTarget(), __func__,
-        [promise](const nsCString& aToken) { promise->MaybeResolve(aToken); },
-        [promise](bool) { promise->MaybeResolve(JS::NullHandleValue); });
-    return promise.forget();
-  }
-#endif
 
   promise->MaybeResolve(JS::NullHandleValue);
   return promise.forget();
@@ -2927,10 +2897,6 @@ already_AddRefed<Promise> ChromeUtils::GetGMPContentDecryptionModuleInformation(
 }
 
 void ChromeUtils::AndroidMoveTaskToBack(GlobalObject& aGlobal) {
-#ifdef MOZ_WIDGET_ANDROID
-  MOZ_RELEASE_ASSERT(XRE_IsParentProcess());
-  java::GeckoAppShell::MoveTaskToBack();
-#endif
 }
 
 already_AddRefed<nsIContentSecurityPolicy> ChromeUtils::CreateCSPFromHeader(

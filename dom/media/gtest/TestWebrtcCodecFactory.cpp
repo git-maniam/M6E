@@ -40,13 +40,8 @@ struct TestWebrtcVideoDecoderFactory : public WebrtcVideoDecoderFactory,
                     SupportDecoderParams(VideoInfo())))
             .unwrap();
 
-#ifdef ANDROID
-    ASSERT_EQ(h264GmpSupport, media::DecodeSupportSet{});
-    GTEST_SKIP() << "fakeopenh264 plugin does not load on Android";
-#else
     ASSERT_EQ(h264GmpSupport,
               media::DecodeSupportSet{media::DecodeSupport::SoftwareDecode});
-#endif
   }
 
   void TearDown() override {
@@ -78,13 +73,8 @@ struct TestWebrtcVideoEncoderFactory : public WebrtcVideoEncoderFactory,
                 EncoderConfig::CodecSpecific(H264Specific()))))
             .unwrap();
 
-#ifdef ANDROID
-    ASSERT_EQ(h264GmpSupport, media::EncodeSupportSet{});
-    GTEST_SKIP() << "fakeopenh264 plugin does not load on Android";
-#else
     ASSERT_EQ(h264GmpSupport,
               media::EncodeSupportSet{media::EncodeSupport::SoftwareEncode});
-#endif
   }
 
   void TearDown() override {

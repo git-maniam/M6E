@@ -17,11 +17,6 @@
 #include "nsIHttpAuthenticableChannel.h"
 #include "nsIPrefBranch.h"
 #include "nsIURI.h"
-#ifdef XP_WIN
-#  include "nsIChannel.h"
-#  include "nsITransportSecurityInfo.h"
-#  include "nsIX509Cert.h"
-#endif
 #include "mozilla/Base64.h"
 #include "mozilla/CheckedInt.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -221,26 +216,9 @@ nsHttpNTLMAuth::ChallengeReceived(nsIHttpAuthenticableChannel* channel,
         // a default credentials attempt once we return.
         module = nsIAuthModule::CreateInstance("sys-ntlm");
       }
-#  ifdef XP_WIN
-      else {
-        // Try to use native NTLM and prompt the user for their domain,
-        // username, and password. (only supported by windows nsAuthSSPI
-        // module.) Note, for servers that use LMv1 a weak hash of the user's
-        // password will be sent. We rely on windows internal apis to decide
-        // whether we should support this older, less secure version of the
-        // protocol.
-        module = nsIAuthModule::CreateInstance("sys-ntlm");
-        *identityInvalid = true;
-      }
-#  endif  // XP_WIN
       if (!module) LOG(("Native sys-ntlm auth module not found.\n"));
     }
 
-#  ifdef XP_WIN
-    // On windows, never fall back unless the user has specifically requested
-    // so.
-    if (!forceGeneric && !module) return NS_ERROR_UNEXPECTED;
-#  endif
 
     // If no native support was available. Fall back on our internal NTLM
     // implementation.
@@ -553,40 +531,6 @@ nsHttpNTLMAuth::GenerateCredentials(
 // Currently only implemented for Windows, linux support will be landing in
 // a separate patch, update this #ifdef accordingly then.
 // Extended protection update is just for Linux and Windows machines.
-#if defined(XP_WIN) /* || defined (LINUX) */
-    // We should retrieve the server certificate and compute the CBT,
-    // but only when we are using the native NTLM implementation and
-    // not the internal one.
-    // It is a valid case not having the security info object.  This
-    // occures when we connect an https site through an ntlm proxy.
-    // After the ssl tunnel has been created, we get here the second
-    // time and now generate the CBT from now valid security info.
-    nsCOMPtr<nsIChannel> channel = do_QueryInterface(authChannel, &rv);
-    if (NS_FAILED(rv)) return rv;
-
-    nsCOMPtr<nsITransportSecurityInfo> securityInfo;
-    rv = channel->GetSecurityInfo(getter_AddRefs(securityInfo));
-    if (NS_FAILED(rv)) return rv;
-
-    if (useNative && securityInfo) {
-      nsCOMPtr<nsIX509Cert> cert;
-      rv = securityInfo->GetServerCert(getter_AddRefs(cert));
-      if (NS_FAILED(rv)) return rv;
-
-      if (cert) {
-        certArray.emplace();
-        rv = cert->GetRawDER(*certArray);
-        if (NS_FAILED(rv)) {
-          return rv;
-        }
-
-        // If there is a server certificate, we pass it along the
-        // first time we call GetNextToken().
-        inBufLen = certArray->Length();
-        inBuf = certArray->Elements();
-      }
-    }
-#endif
   } else {
     // decode challenge; skip past "NTLM " to the start of the base64
     // encoded data.

@@ -24,11 +24,6 @@
 #include "nsPropertyTable.h"    // for typedefs
 
 // Including 'windows.h' will #define GetClassInfo to something else.
-#ifdef XP_WIN
-#  ifdef GetClassInfo
-#    undef GetClassInfo
-#  endif
-#endif
 
 class AttrArray;
 class nsAttrChildContentList;

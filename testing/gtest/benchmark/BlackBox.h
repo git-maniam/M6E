@@ -16,23 +16,9 @@
 #define GTEST_BLACKBOX_H
 
 #include "mozilla/Attributes.h"
-#if defined(_MSC_VER)
-#  include <intrin.h>
-#endif  // _MSC_VER
 
 namespace mozilla {
 
-#if defined(_MSC_VER)
-
-char volatile* UseCharPointer(char volatile*);
-
-MOZ_ALWAYS_INLINE_EVEN_DEBUG void* BlackBoxVoidPtr(void* aPtr) {
-  aPtr = const_cast<char*>(UseCharPointer(reinterpret_cast<char*>(aPtr)));
-  _ReadWriteBarrier();
-  return aPtr;
-}
-
-#else
 
 // See: https://youtu.be/nXaxk27zwlk?t=2441
 MOZ_ALWAYS_INLINE_EVEN_DEBUG void* BlackBoxVoidPtr(void* aPtr) {
@@ -49,7 +35,6 @@ MOZ_ALWAYS_INLINE_EVEN_DEBUG void* BlackBoxVoidPtr(void* aPtr) {
   return aPtr;
 }
 
-#endif  // _MSC_VER
 
 template <class T>
 MOZ_ALWAYS_INLINE_EVEN_DEBUG T* BlackBox(T* aPtr) {

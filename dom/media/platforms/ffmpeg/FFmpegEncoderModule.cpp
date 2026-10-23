@@ -32,12 +32,8 @@ template <int V>
      defined(MOZ_WIDGET_ANDROID)) &&                              \
     defined(MOZ_USE_HWDECODE) && !defined(MOZ_FFVPX_AUDIOONLY) && \
     LIBAVCODEC_VERSION_MAJOR >= 58
-#  ifdef XP_WIN
-  if (!XRE_IsGPUProcess())
-#  else
   if (!XRE_IsRDDProcess() &&
       !(XRE_IsParentProcess() && PR_GetEnv("MOZ_RUN_GTEST")))
-#  endif
   {
     MOZ_LOG_FMT(sPEMLog, LogLevel::Debug, "No support in {} process",
                 XRE_GetProcessTypeString());
@@ -61,22 +57,7 @@ template <int V>
       {AV_CODEC_ID_AV1, gfx::gfxVars::UseAV1HwEncode()},
 #  endif
       {AV_CODEC_ID_VP9, gfx::gfxVars::UseVP9HwEncode()},
-#  if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_ANDROID)
-      {AV_CODEC_ID_VP8, gfx::gfxVars::UseVP8HwEncode()},
-#  endif
 
-#  if defined(MOZ_WIDGET_GTK) && !defined(FFVPX_VERSION)
-      // These proprietary video codecs can only be encoded via hardware by
-      // using the system ffmpeg, not supported by ffvpx.
-      {AV_CODEC_ID_HEVC, gfx::gfxVars::UseHEVCHwEncode()},
-      {AV_CODEC_ID_H264, gfx::gfxVars::UseH264HwEncode()},
-#  endif
-#  if defined(MOZ_WIDGET_ANDROID)
-      // These proprietary codecs can only be encoded via MediaCodec encoders,
-      // but the underlying implementation may be software or hardware.
-      {AV_CODEC_ID_HEVC, true},
-      {AV_CODEC_ID_H264, true},
-#  endif
   };
 
   // Reset the list of supported hardware codecs and reevaluate them.
@@ -155,28 +136,7 @@ EncodeSupportSet FFmpegEncoderModule<V>::SupportsCodec(CodecType aCodec) const {
     // populated sSupportedHWCodecs.
     auto hwCodecs = sSupportedHWCodecs.Lock();
     if (hwCodecs->Contains(static_cast<uint32_t>(id))) {
-#  ifdef MOZ_WIDGET_ANDROID
-      // Because we don't provide software implementations of H264 or HEVC on
-      // Android, we must use the platform software encoders even if true
-      // hardware encoding support is missing.
-      switch (id) {
-        case AV_CODEC_ID_H264:
-          supports += gfx::gfxVars::UseH264HwEncode()
-                          ? EncodeSupport::HardwareEncode
-                          : EncodeSupport::SoftwareEncode;
-          break;
-        case AV_CODEC_ID_HEVC:
-          supports += gfx::gfxVars::UseHEVCHwEncode()
-                          ? EncodeSupport::HardwareEncode
-                          : EncodeSupport::SoftwareEncode;
-          break;
-        default:
-          supports += EncodeSupport::HardwareEncode;
-          break;
-      }
-#  else
       supports += EncodeSupport::HardwareEncode;
-#  endif
     }
   }
 #endif

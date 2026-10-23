@@ -5,7 +5,6 @@
 #ifndef devtools_Instruments_h
 #define devtools_Instruments_h
 
-#ifdef __APPLE__
 
 #  include <unistd.h>
 
@@ -18,6 +17,5 @@ void Stop(const char* profileName);
 
 }  // namespace Instruments
 
-#endif /* __APPLE__ */
 
 #endif /* devtools_Instruments_h */

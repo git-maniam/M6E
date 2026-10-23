@@ -12,14 +12,6 @@
 #include "jit/RegisterSets.h"
 #include "jit/Simulator.h"
 
-#if defined(__linux__) && !defined(JS_SIMULATOR_LOONG64)
-#  if __has_include(<asm/hwcap.h>) && __has_include(<sys/auxv.h>)
-#    define USE_HWCAP
-#  endif
-#  if __has_include(<larchintrin.h>)
-#    define USE_LARCHINTRIN
-#  endif
-#endif
 
 #ifdef USE_HWCAP
 #  include <asm/hwcap.h>

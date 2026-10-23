@@ -5,9 +5,6 @@
 #define _include_ipc_glue_UtilityProcessImpl_h_
 #include "mozilla/ipc/ProcessChild.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/mscom/ProcessRuntime.h"
-#endif
 
 #include "mozilla/ipc/UtilityProcessChild.h"
 
@@ -24,16 +21,10 @@ class UtilityProcessImpl final : public ipc::ProcessChild {
   bool Init(int aArgc, char* aArgv[]) override;
   void CleanUp() override;
 
-#if defined(XP_WIN)
-  static void LoadLibraryOrCrash(LPCWSTR aLib);
-#endif  // defined(XP_WIN)
 
  private:
   RefPtr<UtilityProcessChild> mUtility = UtilityProcessChild::GetSingleton();
 
-#if defined(XP_WIN)
-  mozilla::mscom::ProcessRuntime mCOMRuntime;
-#endif
 };
 
 }  // namespace mozilla::ipc

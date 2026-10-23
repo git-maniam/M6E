@@ -10,7 +10,6 @@
 #include "private/pprio.h"
 #include "prmem.h"
 
-#if defined(XP_MACOSX)
 #  include <fcntl.h>
 #  include <limits.h>
 #  include <mach-o/fat.h>
@@ -19,19 +18,6 @@
 #  include <sys/mman.h>
 #  include <sys/stat.h>
 #  include <unistd.h>
-#elif defined(XP_UNIX)
-#  include <fcntl.h>
-#  include <unistd.h>
-#  if defined(LINUX)
-#    include <elf.h>
-#  endif
-#  include <sys/stat.h>
-#  include <sys/types.h>
-#elif defined(XP_WIN)
-#  include <mozilla/NativeNt.h>
-#  include <mozilla/ScopeExit.h>
-#  include <nsWindowsHelpers.h>
-#endif
 
 // Functions that are not to be used in standalone glue must be implemented
 // within this #if block
@@ -42,21 +28,7 @@
 bool mozilla::fallocate(PRFileDesc* aFD, int64_t aLength) {
 #  if defined(HAVE_POSIX_FALLOCATE)
   return posix_fallocate(PR_FileDesc2NativeHandle(aFD), 0, aLength) == 0;
-#  elif defined(XP_WIN)
-  int64_t oldpos = PR_Seek64(aFD, 0, PR_SEEK_CUR);
-  if (oldpos == -1) {
-    return false;
-  }
-
-  if (PR_Seek64(aFD, aLength, PR_SEEK_SET) != aLength) {
-    return false;
-  }
-
-  bool retval = (0 != SetEndOfFile((HANDLE)PR_FileDesc2NativeHandle(aFD)));
-
-  PR_Seek64(aFD, oldpos, PR_SEEK_SET);
-  return retval;
-#  elif defined(XP_MACOSX)
+#  else
   int fd = PR_FileDesc2NativeHandle(aFD);
   fstore_t store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, aLength};
   // Try to get a continous chunk of disk space
@@ -70,107 +42,28 @@ bool mozilla::fallocate(PRFileDesc* aFD, int64_t aLength) {
     }
   }
   return ftruncate(fd, aLength) == 0;
-#  elif defined(XP_UNIX)
-  // The following is copied from fcntlSizeHint in sqlite
-  /* If the OS does not have posix_fallocate(), fake it. First use
-  ** ftruncate() to set the file size, then write a single byte to
-  ** the last byte in each block within the extended region. This
-  ** is the same technique used by glibc to implement posix_fallocate()
-  ** on systems that do not have a real fallocate() system call.
-  */
-  int64_t oldpos = PR_Seek64(aFD, 0, PR_SEEK_CUR);
-  if (oldpos == -1) {
-    return false;
-  }
-
-  struct stat buf;
-  int fd = PR_FileDesc2NativeHandle(aFD);
-  if (fstat(fd, &buf)) {
-    return false;
-  }
-
-  if (buf.st_size >= aLength) {
-    return false;
-  }
-
-  const int nBlk = buf.st_blksize;
-
-  if (!nBlk) {
-    return false;
-  }
-
-  if (ftruncate(fd, aLength)) {
-    return false;
-  }
-
-  int nWrite;  // Return value from write()
-  int64_t iWrite = ((buf.st_size + 2 * nBlk - 1) / nBlk) * nBlk -
-                   1;  // Next offset to write to
-  while (iWrite < aLength) {
-    nWrite = 0;
-    if (PR_Seek64(aFD, iWrite, PR_SEEK_SET) == iWrite) {
-      nWrite = PR_Write(aFD, "", 1);
-    }
-    if (nWrite != 1) {
-      break;
-    }
-    iWrite += nBlk;
-  }
-
-  PR_Seek64(aFD, oldpos, PR_SEEK_SET);
-  return nWrite == 1;
-#  else
-  return false;
 #  endif
 }
 
 void mozilla::ReadAheadLib(nsIFile* aFile) {
-#  if defined(XP_WIN)
-  nsAutoString path;
-  if (!aFile || NS_FAILED(aFile->GetPath(path))) {
-    return;
-  }
-  ReadAheadLib(path.get());
-#  elif defined(LINUX) && !defined(ANDROID) || defined(XP_MACOSX)
   nsAutoCString nativePath;
   if (!aFile || NS_FAILED(aFile->GetNativePath(nativePath))) {
     return;
   }
   ReadAheadLib(nativePath.get());
-#  endif
 }
 
 void mozilla::ReadAheadFile(nsIFile* aFile, const size_t aOffset,
                             const size_t aCount, mozilla::filedesc_t* aOutFd) {
-#  if defined(XP_WIN)
-  nsAutoString path;
-  if (!aFile || NS_FAILED(aFile->GetPath(path))) {
-    return;
-  }
-  ReadAheadFile(path.get(), aOffset, aCount, aOutFd);
-#  elif defined(LINUX) && !defined(ANDROID) || defined(XP_MACOSX)
   nsAutoCString nativePath;
   if (!aFile || NS_FAILED(aFile->GetNativePath(nativePath))) {
     return;
   }
   ReadAheadFile(nativePath.get(), aOffset, aCount, aOutFd);
-#  endif
 }
 
 mozilla::PathString mozilla::GetLibraryName(mozilla::pathstr_t aDirectory,
                                             const char* aLib) {
-#  ifdef XP_WIN
-  nsAutoString fullName;
-  if (aDirectory) {
-    fullName.Assign(aDirectory);
-    fullName.Append('\\');
-  }
-  AppendUTF8toUTF16(MakeStringSpan(aLib), fullName);
-  if (!strstr(aLib, ".dll")) {
-    fullName.AppendLiteral(".dll");
-  }
-  return fullName;
-#  else
   char* temp = PR_GetLibraryName(aDirectory, aLib);
   if (!temp) {
     return ""_ns;
@@ -178,28 +71,10 @@ mozilla::PathString mozilla::GetLibraryName(mozilla::pathstr_t aDirectory,
   nsAutoCString libname(temp);
   PR_FreeLibraryName(temp);
   return libname;
-#  endif
 }
 
 mozilla::PathString mozilla::GetLibraryFilePathname(mozilla::pathstr_t aName,
                                                     PRFuncPtr aAddr) {
-#  ifdef XP_WIN
-  HMODULE handle = GetModuleHandleW(char16ptr_t(aName));
-  if (!handle) {
-    return u""_ns;
-  }
-
-  nsAutoString path;
-  path.SetLength(MAX_PATH);
-  DWORD len = GetModuleFileNameW(handle, char16ptr_t(path.BeginWriting()),
-                                 path.Length());
-  if (!len) {
-    return u""_ns;
-  }
-
-  path.SetLength(len);
-  return path;
-#  else
   char* temp = PR_GetLibraryFilePathname(aName, aAddr);
   if (!temp) {
     return ""_ns;
@@ -207,7 +82,6 @@ mozilla::PathString mozilla::GetLibraryFilePathname(mozilla::pathstr_t aName,
   nsAutoCString path(temp);
   PR_Free(temp);  // PR_GetLibraryFilePathname() uses PR_Malloc().
   return path;
-#  endif
 }
 
 #endif  // defined(MOZILLA_INTERNAL_API)
@@ -228,7 +102,7 @@ static const unsigned char ELFCLASS = ELFCLASS32;
 typedef Elf32_Off Elf_Off;
 #  endif
 
-#elif defined(XP_MACOSX)
+#else
 
 #  if defined(__i386__)
 static const uint32_t CPU_TYPE = CPU_TYPE_X86;
@@ -292,58 +166,11 @@ class ScopedMMap {
 
 void mozilla::ReadAhead(mozilla::filedesc_t aFd, const size_t aOffset,
                         const size_t aCount) {
-#if defined(XP_WIN)
-
-  LARGE_INTEGER fpOriginal;
-  LARGE_INTEGER fpOffset;
-#  if defined(HAVE_LONG_LONG)
-  fpOffset.QuadPart = 0;
-#  else
-  fpOffset.u.LowPart = 0;
-  fpOffset.u.HighPart = 0;
-#  endif
-
-  // Get the current file pointer so that we can restore it. This isn't
-  // really necessary other than to provide the same semantics regarding the
-  // file pointer that other platforms do
-  if (!SetFilePointerEx(aFd, fpOffset, &fpOriginal, FILE_CURRENT)) {
-    return;
-  }
-
-  if (aOffset) {
-#  if defined(HAVE_LONG_LONG)
-    fpOffset.QuadPart = static_cast<LONGLONG>(aOffset);
-#  else
-    fpOffset.u.LowPart = aOffset;
-    fpOffset.u.HighPart = 0;
-#  endif
-
-    if (!SetFilePointerEx(aFd, fpOffset, nullptr, FILE_BEGIN)) {
-      return;
-    }
-  }
-
-  char buf[64 * 1024];
-  size_t totalBytesRead = 0;
-  DWORD dwBytesRead;
-  // Do dummy reads to trigger kernel-side readhead via
-  // FILE_FLAG_SEQUENTIAL_SCAN. Abort when underfilling because during testing
-  // the buffers are read fully A buffer that's not keeping up would imply that
-  // readahead isn't working right
-  while (totalBytesRead < aCount &&
-         ReadFile(aFd, buf, sizeof(buf), &dwBytesRead, nullptr) &&
-         dwBytesRead == sizeof(buf)) {
-    totalBytesRead += dwBytesRead;
-  }
-
-  // Restore the file pointer
-  SetFilePointerEx(aFd, fpOriginal, nullptr, FILE_BEGIN);
-
-#elif defined(LINUX)
+#if   defined(LINUX)
 
   (void)posix_fadvise(aFd, aOffset, aCount, POSIX_FADV_WILLNEED);
 
-#elif defined(XP_MACOSX)
+#else
 
   struct radvisory ra;
   ra.ra_offset = aOffset;
@@ -359,67 +186,12 @@ void mozilla::ReadAheadLib(mozilla::pathstr_t aFilePath) {
     return;
   }
 
-#ifdef XP_WIN
-  auto WideToUTF8 = [](const wchar_t* aStr) -> std::string {
-    std::string s;
-    // Determine the number of output bytes (including null terminator).
-    const int numConv = ::WideCharToMultiByte(CP_UTF8, 0, aStr, -1, nullptr, 0,
-                                              nullptr, nullptr);
-    if (numConv == 0) {
-      return s;
-    }
-    s.resize(numConv);
-    const int numConvd = ::WideCharToMultiByte(CP_UTF8, 0, aStr, -1, s.data(),
-                                               numConv, nullptr, nullptr);
-    if (numConvd != numConv) {
-      // Error during conversion, remove any temporary data.
-      s.clear();
-    }
-    return s;
-  };
-#endif
 
   AUTO_BASE_PROFILER_MARKER_TEXT("ReadAheadLib", OTHER, {},
-#ifdef XP_WIN
-                                 WideToUTF8(aFilePath)
-#else
                                  aFilePath
-#endif
   );
 
-#if defined(XP_WIN)
-  if (!CanPrefetchMemory()) {
-    ReadAheadFile(aFilePath);
-    return;
-  }
-  nsAutoHandle fd(CreateFileW(aFilePath, GENERIC_READ | GENERIC_EXECUTE,
-                              FILE_SHARE_READ, nullptr, OPEN_EXISTING,
-                              FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
-  if (!fd) {
-    return;
-  }
-
-  nsAutoHandle mapping(CreateFileMapping(
-      fd, nullptr, SEC_IMAGE | PAGE_EXECUTE_READ, 0, 0, nullptr));
-  if (!mapping) {
-    return;
-  }
-
-  PVOID data = MapViewOfFile(
-      mapping, FILE_MAP_READ | FILE_MAP_EXECUTE | SEC_IMAGE, 0, 0, 0);
-  if (!data) {
-    return;
-  }
-  auto guard = MakeScopeExit([=]() { UnmapViewOfFile(data); });
-  mozilla::nt::PEHeaders headers(data);
-  Maybe<Span<const uint8_t>> bounds = headers.GetBounds();
-  if (!bounds) {
-    return;
-  }
-
-  PrefetchMemory((uint8_t*)data, bounds->Length());
-
-#elif defined(LINUX) && !defined(ANDROID)
+#if   defined(LINUX) && !defined(ANDROID)
   int fd = open(aFilePath, O_RDONLY);
   if (fd < 0) {
     return;
@@ -465,7 +237,7 @@ void mozilla::ReadAheadLib(mozilla::pathstr_t aFilePath) {
     ReadAhead(fd, 0, end);
   }
   close(fd);
-#elif defined(XP_MACOSX)
+#else
   ScopedMMap buf(aFilePath);
   char* base = buf;
   if (!base) {
@@ -526,26 +298,6 @@ void mozilla::ReadAheadLib(mozilla::pathstr_t aFilePath) {
 
 void mozilla::ReadAheadFile(mozilla::pathstr_t aFilePath, const size_t aOffset,
                             const size_t aCount, mozilla::filedesc_t* aOutFd) {
-#if defined(XP_WIN)
-  if (!aFilePath) {
-    if (aOutFd) {
-      *aOutFd = INVALID_HANDLE_VALUE;
-    }
-    return;
-  }
-  HANDLE fd = CreateFileW(aFilePath, GENERIC_READ, FILE_SHARE_READ, nullptr,
-                          OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
-  if (aOutFd) {
-    *aOutFd = fd;
-  }
-  if (fd == INVALID_HANDLE_VALUE) {
-    return;
-  }
-  ReadAhead(fd, aOffset, aCount);
-  if (!aOutFd) {
-    CloseHandle(fd);
-  }
-#elif defined(LINUX) && !defined(ANDROID) || defined(XP_MACOSX)
   if (!aFilePath) {
     if (aOutFd) {
       *aOutFd = -1;
@@ -576,5 +328,4 @@ void mozilla::ReadAheadFile(mozilla::pathstr_t aFilePath, const size_t aOffset,
   if (!aOutFd) {
     close(fd);
   }
-#endif
 }

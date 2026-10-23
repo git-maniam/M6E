@@ -193,9 +193,7 @@ JSString* ToJSString(JSContext* cx, const nsAString& aStr) {
 }
 
 SupportedProduct GetCurrentProduct() {
-#if defined(MOZ_WIDGET_ANDROID)
-  return SupportedProduct::Fennec;
-#elif defined(MOZ_THUNDERBIRD)
+#if   defined(MOZ_THUNDERBIRD)
   return SupportedProduct::Thunderbird;
 #else
   return SupportedProduct::Firefox;

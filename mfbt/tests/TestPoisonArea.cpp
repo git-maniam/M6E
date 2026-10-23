@@ -87,9 +87,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#  include <windows.h>
-#else
 #  include <sys/mman.h>
 #  include <sys/types.h>
 #  include <sys/wait.h>
@@ -101,7 +98,6 @@
 #      error "Don't know how to get anonymous memory"
 #    endif
 #  endif
-#endif
 
 #define SIZxPTR ((int)(sizeof(uintptr_t) * 2))
 
@@ -179,52 +175,6 @@ static const ia64_instr _return_instr = {
 
 // Miscellaneous Windows/Unix portability gumph
 
-#ifdef _WIN32
-// Uses of this function deliberately leak the string.
-static LPSTR StrW32Error(DWORD aErrcode) {
-  LPSTR errmsg;
-  FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                     FORMAT_MESSAGE_IGNORE_INSERTS,
-                 nullptr, aErrcode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                 (LPSTR)&errmsg, 0, nullptr);
-
-  // FormatMessage puts an unwanted newline at the end of the string
-  size_t n = strlen(errmsg) - 1;
-  while (errmsg[n] == '\r' || errmsg[n] == '\n') {
-    n--;
-  }
-  errmsg[n + 1] = '\0';
-  return errmsg;
-}
-#  define LastErrMsg() (StrW32Error(GetLastError()))
-
-// Because we use VirtualAlloc in MEM_RESERVE mode, the "page size" we want
-// is the allocation granularity.
-static SYSTEM_INFO sInfo_;
-
-static inline uint32_t PageSize() { return sInfo_.dwAllocationGranularity; }
-
-static void* ReserveRegion(uintptr_t aRequest, bool aAccessible) {
-  return VirtualAlloc((void*)aRequest, PageSize(),
-                      aAccessible ? MEM_RESERVE | MEM_COMMIT : MEM_RESERVE,
-                      aAccessible ? PAGE_EXECUTE_READWRITE : PAGE_NOACCESS);
-}
-
-static void ReleaseRegion(void* aPage) {
-  VirtualFree(aPage, PageSize(), MEM_RELEASE);
-}
-
-static bool ProbeRegion(uintptr_t aPage) {
-  return aPage >= (uintptr_t)sInfo_.lpMaximumApplicationAddress &&
-         aPage + PageSize() >= (uintptr_t)sInfo_.lpMaximumApplicationAddress;
-}
-
-static bool MakeRegionExecutable(void*) { return false; }
-
-#  undef MAP_FAILED
-#  define MAP_FAILED 0
-
-#else  // Unix
 
 #  define LastErrMsg() (strerror(errno))
 
@@ -241,12 +191,7 @@ static void* ReserveRegion(uintptr_t aRequest, bool aAccessible) {
 static void ReleaseRegion(void* aPage) { munmap(aPage, PageSize()); }
 
 static bool ProbeRegion(uintptr_t aPage) {
-#  ifdef XP_SOLARIS
-  return !!posix_madvise(reinterpret_cast<void*>(aPage), PageSize(),
-                         POSIX_MADV_NORMAL);
-#  else
   return !!madvise(reinterpret_cast<void*>(aPage), PageSize(), MADV_NORMAL);
-#  endif
 }
 
 static int MakeRegionExecutable(void* aPage) {
@@ -254,7 +199,6 @@ static int MakeRegionExecutable(void* aPage) {
                   PROT_READ | PROT_WRITE | PROT_EXEC);
 }
 
-#endif
 
 static uintptr_t ReservePoisonArea() {
   if (sizeof(uintptr_t) == 8) {
@@ -360,7 +304,6 @@ static uintptr_t ReserveNegativeControl() {
   return (uintptr_t)result;
 }
 
-#ifndef _WIN32
 static void JumpTo(uintptr_t aOpaddr) {
 #  ifdef __ia64
   struct func_call {
@@ -374,7 +317,6 @@ static void JumpTo(uintptr_t aOpaddr) {
   ((void (*)())aOpaddr)();
 #  endif
 }
-#endif
 
 /* Test each page.  */
 static bool TestPage(const char* aPageLabel, uintptr_t aPageAddr,
@@ -403,46 +345,6 @@ static bool TestPage(const char* aPageLabel, uintptr_t aPageAddr,
         abort();
     }
 
-#ifdef _WIN32
-    bool badptr = true;
-    MEMORY_BASIC_INFORMATION mbi = {};
-
-    if (VirtualQuery((LPCVOID)opaddr, &mbi, sizeof(mbi)) &&
-        mbi.State == MEM_COMMIT) {
-      switch (test) {
-        case 0:  // read
-          badptr = !(mbi.Protect & (PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE |
-                                    PAGE_READONLY | PAGE_READWRITE));
-          break;
-        case 1:  // execute
-          badptr =
-              !(mbi.Protect & (PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE));
-          break;
-        case 2:  // write
-          badptr = !(mbi.Protect & (PAGE_READWRITE | PAGE_EXECUTE_READWRITE));
-          break;
-        default:
-          abort();
-      }
-    }
-
-    if (badptr) {
-      if (aShouldSucceed) {
-        printf("TEST-UNEXPECTED-FAIL | %s %s\n", oplabel, aPageLabel);
-        failed = true;
-      } else {
-        printf("TEST-PASS | %s %s\n", oplabel, aPageLabel);
-      }
-    } else {
-      // if control reaches this point the probe succeeded
-      if (aShouldSucceed) {
-        printf("TEST-PASS | %s %s\n", oplabel, aPageLabel);
-      } else {
-        printf("TEST-UNEXPECTED-FAIL | %s %s\n", oplabel, aPageLabel);
-        failed = true;
-      }
-    }
-#else
     pid_t pid = fork();
     if (pid == -1) {
       printf("ERROR | %s %s | fork=%s\n", oplabel, aPageLabel, LastErrMsg());
@@ -498,17 +400,12 @@ static bool TestPage(const char* aPageLabel, uintptr_t aPageAddr,
         exit(2);
       }
     }
-#endif
   }
   return failed;
 }
 
 int main() {
-#ifdef _WIN32
-  GetSystemInfo(&sInfo_);
-#else
   gUnixPageSize = sysconf(_SC_PAGESIZE);
-#endif
 
   uintptr_t ncontrol = ReserveNegativeControl();
   if (!ncontrol) {

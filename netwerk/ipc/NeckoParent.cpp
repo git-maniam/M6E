@@ -18,9 +18,6 @@
 #include "mozilla/net/WebSocketEventListenerParent.h"
 #include "nsBaseParentChannel.h"
 #include "nsHttp.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/net/GeckoViewContentChannelParent.h"
-#endif
 #include "mozilla/net/AltDataOutputStreamParent.h"
 #include "mozilla/net/CacheEntryWriteHandleParent.h"
 #include "mozilla/net/DNSRequestParent.h"
@@ -384,45 +381,6 @@ mozilla::ipc::IPCResult NeckoParent::RecvConnectBaseChannel(
   return IPC_OK();
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-static already_AddRefed<nsIPrincipal> GetRequestingPrincipal(
-    const GeckoViewContentChannelArgs& aArgs) {
-  if (aArgs.type() !=
-      GeckoViewContentChannelArgs::TGeckoViewContentChannelOpenArgs) {
-    return nullptr;
-  }
-
-  const GeckoViewContentChannelOpenArgs& args =
-      aArgs.get_GeckoViewContentChannelOpenArgs();
-  return GetRequestingPrincipal(args.loadInfo());
-}
-
-already_AddRefed<PGeckoViewContentChannelParent>
-NeckoParent::AllocPGeckoViewContentChannelParent(
-    PBrowserParent* aBrowser, const SerializedLoadContext& aSerialized,
-    const GeckoViewContentChannelArgs& aOpenArgs) {
-  nsCOMPtr<nsIPrincipal> requestingPrincipal =
-      GetRequestingPrincipal(aOpenArgs);
-
-  nsCOMPtr<nsILoadContext> loadContext;
-  CreateChannelLoadContext(aBrowser, Manager(), aSerialized,
-                           requestingPrincipal, loadContext);
-  return MakeAndAddRef<GeckoViewContentChannelParent>(
-      BrowserParent::GetFrom(aBrowser), loadContext);
-}
-
-mozilla::ipc::IPCResult NeckoParent::RecvPGeckoViewContentChannelConstructor(
-    PGeckoViewContentChannelParent* actor, PBrowserParent* aBrowser,
-    const SerializedLoadContext& aSerialized,
-    const GeckoViewContentChannelArgs& aArgs) {
-  GeckoViewContentChannelParent* p =
-      static_cast<GeckoViewContentChannelParent*>(actor);
-  if (!p->Init(aArgs)) {
-    return IPC_FAIL(this, "Init is failed");
-  }
-  return IPC_OK();
-}
-#endif
 
 mozilla::ipc::IPCResult NeckoParent::RecvNotifyFileChannelOpened(
     const FileChannelInfo& aInfo) {

@@ -22,29 +22,11 @@
 #include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/TextureHost.h"
 #include "nsIObserverService.h"
-#if !defined(MOZ_WIDGET_ANDROID)
 #  include "VRServiceHost.h"
-#endif
 
-#ifdef XP_WIN
-#  include <d3d11.h>
-
-#  include "CompositorD3D11.h"
-#  include "TextureD3D11.h"
-#  include "gfxWindowsPlatform.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#elif defined(XP_MACOSX)
 #  include <errno.h>
 
 #  include "mozilla/gfx/MacIOSurface.h"
-#elif defined(MOZ_WIDGET_ANDROID)
-#  include <pthread.h>
-#  include <string.h>
-
-#  include "GeckoVRManager.h"
-#  include "mozilla/java/GeckoSurfaceTextureWrappers.h"
-#  include "mozilla/layers/CompositorThread.h"
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -151,7 +133,6 @@ VRManager::VRManager()
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(ValidVRManagerProcess());
 
-#if !defined(MOZ_WIDGET_ANDROID)
   // XRE_IsGPUProcess() is helping us to check some platforms like
   // Win 7 try which are not using GPU process but VR process is enabled.
   mVRProcessEnabled = StaticPrefs::dom_vr_process_enabled_AtStartup() &&
@@ -162,11 +143,6 @@ VRManager::VRManager()
   // on ShutdownPhase::XPCOMShutdownFinal, potentially before VRManager.
   // We hold a reference to VRServiceHost to ensure it stays
   // alive until we have shut down.
-#else
-  // For Android, there is no VRProcess available and no VR service is
-  // created, so default to false.
-  mVRProcessEnabled = false;
-#endif  // !defined(MOZ_WIDGET_ANDROID)
 
   nsCOMPtr<nsIObserverService> service = services::GetObserverService();
   if (service) {
@@ -179,7 +155,6 @@ void VRManager::OpenShmem() {
   if (mShmem == nullptr) {
     mShmem = new VRShMem(nullptr, true /*aRequiresMutex*/);
 
-#if !defined(MOZ_WIDGET_ANDROID)
     mShmem->CreateShMem(mVRProcessEnabled /*aCreateOnSharedMemory*/);
     // The VR Service accesses all hardware from a separate process
     // and replaces the other VRManager when enabled.
@@ -190,9 +165,6 @@ void VRManager::OpenShmem() {
       mServiceHost->CreateService(mShmem->GetExternalShmem());
       return;
     }
-#else
-    mShmem->CreateShMemForAndroid();
-#endif
   } else {
     mShmem->ClearShMem();
   }
@@ -225,9 +197,7 @@ VRManager::~VRManager() {
     service->RemoveObserver(this, "application-foreground");
   }
 
-#if !defined(MOZ_WIDGET_ANDROID)
   mServiceHost->Shutdown();
-#endif
   CloseShmem();
 }
 
@@ -449,10 +419,8 @@ void VRManager::Run100msTasks() {
   // Note that enumeration itself may activate display hardware, such
   // as Oculus, so we only do this when we know we are displaying content
   // that is looking for VR displays.
-#if !defined(MOZ_WIDGET_ANDROID)
   mServiceHost->Refresh();
   CheckForPuppetCompletion();
-#endif
   ProcessManagerState();
 }
 
@@ -487,7 +455,6 @@ void VRManager::CheckForShutdown() {
   }
 }
 
-#if !defined(MOZ_WIDGET_ANDROID)
 void VRManager::CheckForPuppetCompletion() {
   // Notify content process about completion of puppet test resets
   if (mState != VRManagerState::Active) {
@@ -511,7 +478,6 @@ void VRManager::NotifyPuppetComplete() {
   }
 }
 
-#endif  // !defined(MOZ_WIDGET_ANDROID)
 
 void VRManager::StartFrame() {
   if (mState != VRManagerState::Active) {
@@ -634,11 +600,6 @@ void VRManager::ProcessManagerState_Stopping() {
    * this flag and transitions out of the VRManagerState::Stopping
    * state to VRManagerState::Idle.
    */
-#if defined(MOZ_WIDGET_ANDROID)
-  // On Android, the VR service never actually shuts
-  // down or requests VRManager to stop.
-  Shutdown();
-#endif  // defined(MOZ_WIDGET_ANDROID)
 }
 
 void VRManager::ProcessManagerState_Idle_StartEnumeration() {
@@ -677,21 +638,6 @@ void VRManager::ProcessManagerState_Idle_StartEnumeration() {
   // We must block until enumeration has completed in order
   // to signal that the WebVR promise should be resolved at the
   // right time.
-#if defined(MOZ_WIDGET_ANDROID)
-  // In Android, we need to make sure calling
-  // GeckoVRManager::SetExternalContext() from an external VR service
-  // before doing enumeration.
-  if (!mShmem->GetExternalShmem()) {
-    mShmem->CreateShMemForAndroid();
-  }
-  if (mShmem->GetExternalShmem()) {
-    mState = VRManagerState::Enumeration;
-  } else {
-    // Not connected to shmem, so no devices to enumerate.
-    mDisplayInfo.Clear();
-    DispatchVRDisplayInfoUpdate();
-  }
-#else
 
   PushState();
 
@@ -706,7 +652,6 @@ void VRManager::ProcessManagerState_Idle_StartEnumeration() {
    */
   mServiceHost->StartService();
   mState = VRManagerState::Enumeration;
-#endif  // MOZ_WIDGET_ANDROID
 }
 
 void VRManager::ProcessManagerState_Idle_StartRuntimeDetection() {
@@ -719,22 +664,6 @@ void VRManager::ProcessManagerState_Idle_StartRuntimeDetection() {
   // We must block until enumeration has completed in order
   // to signal that the WebVR promise should be resolved at the
   // right time.
-#if defined(MOZ_WIDGET_ANDROID)
-  // In Android, we need to make sure calling
-  // GeckoVRManager::SetExternalContext() from an external VR service
-  // before doing enumeration.
-  if (!mShmem->GetExternalShmem()) {
-    mShmem->CreateShMemForAndroid();
-  }
-  if (mShmem->GetExternalShmem()) {
-    mState = VRManagerState::RuntimeDetection;
-  } else {
-    // Not connected to shmem, so no runtimes to detect.
-    mRuntimeSupportFlags = VRDisplayCapabilityFlags::Cap_None;
-    mRuntimeDetectionCompleted = true;
-    DispatchRuntimeCapabilitiesUpdate();
-  }
-#else
 
   PushState();
 
@@ -749,7 +678,6 @@ void VRManager::ProcessManagerState_Idle_StartRuntimeDetection() {
    */
   mServiceHost->StartService();
   mState = VRManagerState::RuntimeDetection;
-#endif  // MOZ_WIDGET_ANDROID
 }
 
 void VRManager::ProcessManagerState_Idle() {
@@ -996,7 +924,6 @@ void VRManager::StopVRNavigation(const uint32_t& aDisplayID,
   mVRNavigationTransitionEnd = TimeStamp::Now() + aTimeout;
 }
 
-#if !defined(MOZ_WIDGET_ANDROID)
 
 bool VRManager::RunPuppet(const nsTArray<uint64_t>& aBuffer,
                           VRManagerParent* aManagerParent) {
@@ -1034,7 +961,6 @@ void VRManager::ResetPuppet(VRManagerParent* aManagerParent) {
   CheckForPuppetCompletion();
 }
 
-#endif  // !defined(MOZ_WIDGET_ANDROID)
 
 void VRManager::PullState(
     const std::function<bool()>& aWaitCondition /* = nullptr */) {
@@ -1106,9 +1032,7 @@ void VRManager::Shutdown() {
     DispatchVRDisplayInfoUpdate();
   }
 
-#if !defined(MOZ_WIDGET_ANDROID)
   mServiceHost->StopService();
-#endif
   mState = VRManagerState::Idle;
 
   // We will close Shmem in the DTOR to avoid
@@ -1320,15 +1244,11 @@ void VRManager::SubmitFrame(VRLayerParent* aLayer,
 
   if (!mCurrentSubmitTask) {
     mCurrentSubmitTask = task;
-#if !defined(MOZ_WIDGET_ANDROID)
     if (!mSubmitThread) {
       mSubmitThread = new VRThread("VR_SubmitFrame"_ns);
     }
     mSubmitThread->Start();
     mSubmitThread->PostTask(task.forget());
-#else
-    CompositorThread()->Dispatch(task.forget());
-#endif  // defined(MOZ_WIDGET_ANDROID)
   }
 }
 
@@ -1338,25 +1258,12 @@ bool VRManager::SubmitFrame(const layers::SurfaceDescriptor& aTexture,
   if (mState != VRManagerState::Active) {
     return false;
   }
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(MOZ_WIDGET_ANDROID)
   MOZ_ASSERT(mBrowserState.layerState[0].type ==
              VRLayerType::LayerType_Stereo_Immersive);
   VRLayer_Stereo_Immersive& layer =
       mBrowserState.layerState[0].layer_stereo_immersive;
 
   switch (aTexture.type()) {
-#  if defined(XP_WIN)
-    case SurfaceDescriptor::TSurfaceDescriptorD3D10: {
-      const SurfaceDescriptorD3D10& surf =
-          aTexture.get_SurfaceDescriptorD3D10();
-      auto handle = surf.handle()->ClonePlatformHandle();
-      layer.textureType =
-          VRLayerTextureType::LayerTextureType_D3D10SurfaceDescriptor;
-      layer.textureHandle = (void*)handle.release();
-      layer.textureSize.width = surf.size().width;
-      layer.textureSize.height = surf.size().height;
-    } break;
-#  elif defined(XP_MACOSX)
     case SurfaceDescriptor::TSurfaceDescriptorMacIOSurface: {
       // MacIOSurface ptr can't be fetched or used at different threads.
       // Both of fetching and using this MacIOSurface are at the VRService
@@ -1375,23 +1282,6 @@ bool VRManager::SubmitFrame(const layers::SurfaceDescriptor& aTexture,
         layer.textureSize.height = surf->GetDevicePixelHeight();
       }
     } break;
-#  elif defined(MOZ_WIDGET_ANDROID)
-    case SurfaceDescriptor::TSurfaceTextureDescriptor: {
-      const SurfaceTextureDescriptor& desc =
-          aTexture.get_SurfaceTextureDescriptor();
-      java::GeckoSurfaceTexture::LocalRef surfaceTexture =
-          java::GeckoSurfaceTexture::Lookup(desc.handle());
-      if (!surfaceTexture) {
-        NS_WARNING("VRManager::SubmitFrame failed to get a SurfaceTexture");
-        return false;
-      }
-      layer.textureType =
-          VRLayerTextureType::LayerTextureType_GeckoSurfaceTexture;
-      layer.textureHandle = desc.handle();
-      layer.textureSize.width = desc.size().width;
-      layer.textureSize.height = desc.size().height;
-    } break;
-#  endif
     default: {
       MOZ_ASSERT(false);
       return false;
@@ -1428,19 +1318,13 @@ bool VRManager::SubmitFrame(const layers::SurfaceDescriptor& aTexture,
   }
 
   return mDisplayInfo.mDisplayState.lastSubmittedFrameSuccessful;
-#else
-  MOZ_ASSERT(false);  // Not implmented for this platform
-  return false;
-#endif
 }
 
 void VRManager::SubmitFrameInternal(const layers::SurfaceDescriptor& aTexture,
                                     uint64_t aFrameId,
                                     const gfx::Rect& aLeftEyeRect,
                                     const gfx::Rect& aRightEyeRect) {
-#if !defined(MOZ_WIDGET_ANDROID)
   MOZ_ASSERT(mSubmitThread->GetThread() == NS_GetCurrentThread());
-#endif  // !defined(MOZ_WIDGET_ANDROID)
   AUTO_PROFILER_MARKER("SubmitFrameAtVRDisplayExternal", OTHER);
 
   {  // scope lock
@@ -1453,7 +1337,6 @@ void VRManager::SubmitFrameInternal(const layers::SurfaceDescriptor& aTexture,
     mCurrentSubmitTask = nullptr;
   }
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
 
   /**
    * Trigger the next VSync immediately after we are successfully
@@ -1467,10 +1350,6 @@ void VRManager::SubmitFrameInternal(const layers::SurfaceDescriptor& aTexture,
    */
   CompositorThread()->Dispatch(NewRunnableMethod("gfx::VRManager::StartFrame",
                                                  this, &VRManager::StartFrame));
-#elif defined(MOZ_WIDGET_ANDROID)
-  // We are already in the CompositorThreadHolder event loop on Android.
-  StartFrame();
-#endif
 }
 
 void VRManager::CancelCurrentSubmitTask() {

@@ -249,7 +249,6 @@ class NativeLayerRootCA final : public NativeLayerRoot {
 
 class RenderSourceNLRS;
 
-#ifdef XP_MACOSX
 class NativeLayerRootSnapshotterCA final : public NativeLayerRootSnapshotter {
  public:
   static UniquePtr<NativeLayerRootSnapshotterCA> Create(
@@ -278,7 +277,6 @@ class NativeLayerRootSnapshotterCA final : public NativeLayerRootSnapshotter {
   RefPtr<RenderSourceNLRS> mSnapshot;
   CARenderer* mRenderer = nullptr;  // strong
 };
-#endif
 
 // Wraps one CALayer representation of NativeLayerCA.
 struct NativeLayerCARepresentation {

@@ -1538,13 +1538,6 @@ bool PointerEventHandler::IsDragAndDropEnabled(WidgetMouseEvent& aEvent) {
     return false;
   }
   MOZ_ASSERT(aEvent.mMessage != eMouseRawUpdate);
-#ifdef XP_WIN
-  if (StaticPrefs::dom_w3c_pointer_events_dispatch_by_pointer_messages()) {
-    // WM_POINTER does not support drag and drop, see bug 1692277
-    return (aEvent.mInputSource != dom::MouseEvent_Binding::MOZ_SOURCE_PEN &&
-            aEvent.mReason != WidgetMouseEvent::eSynthesized);  // bug 1692151
-  }
-#endif
   return true;
 }
 

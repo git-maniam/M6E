@@ -12,10 +12,6 @@
 #include "mozilla/HangAnnotations.h"
 #include "nsIAppShell.h"
 
-#if defined(XP_WIN)
-// XPerf-backed probes
-#  include "mozilla/perfprobe.h"
-#endif  // defined(XP_WIN)
 
 // {7DD4D320-C84B-4624-8D45-7BB9B2356977}
 #define NS_TOOLKIT_APPSTARTUP_CID \
@@ -57,18 +53,6 @@ class nsAppStartup final : public nsIAppStartup,
   // "startup" window for both happens to coincide.
   bool mStartupCrashAndHangTrackingEnded;
   bool mWasSilentlyStarted;  // Was this startup a silent start?
-#if defined(XP_WIN)
-  // If true, allow the process to live on after the last window is closed
-  bool mAllowWindowless;
-
-  // Interaction with OS-provided profiling probes
-  typedef mozilla::probes::ProbeManager ProbeManager;
-  typedef mozilla::probes::Probe Probe;
-  RefPtr<ProbeManager> mProbesManager;
-  RefPtr<Probe> mPlacesInitCompleteProbe;
-  RefPtr<Probe> mSessionWindowRestoredProbe;
-  RefPtr<Probe> mXPCOMShutdownProbe;
-#endif
 };
 
 #endif  // nsAppStartup_h_

@@ -409,9 +409,7 @@ static nsTArray<SVCBWrapper> FlattenRecords(const nsACString& aHost,
 }
 
 static void TelemetryForServiceModeRecord(const nsACString& aKey) {
-#ifndef ANDROID
   glean::networking::https_record_state.Get(aKey).Add(1);
-#endif
 }
 
 already_AddRefed<nsISVCBRecord>

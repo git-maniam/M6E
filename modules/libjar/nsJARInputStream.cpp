@@ -15,9 +15,6 @@
 #include "nsDebug.h"
 #include <algorithm>
 #include <limits>
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
 /*---------------------------------------------
  *  nsISupports implementation

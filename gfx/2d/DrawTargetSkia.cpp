@@ -40,15 +40,10 @@
 #include "skia/src/core/SkWriteBuffer.h"
 #include "skia/src/shaders/SkEmptyShader.h"
 
-#ifdef XP_DARWIN
 #  include <CoreGraphics/CGBitmapContext.h>
 
 #  include "BorrowedContext.h"
-#endif
 
-#ifdef XP_WIN
-#  include "ScaledFontDWrite.h"
-#endif
 
 #ifdef ACCESSIBILITY
 #  include "mozilla/a11y/PdfStructTreeBuilder.h"
@@ -335,14 +330,12 @@ DrawTargetSkia::DrawTargetSkia()
     : mCanvas(nullptr),
       mSnapshot(nullptr),
       mSnapshotLock{"DrawTargetSkia::mSnapshotLock"}
-#ifdef MOZ_WIDGET_COCOA
       ,
       mCG(nullptr),
       mColorSpace(nullptr),
       mCanvasData(nullptr),
       mCGSize(0, 0),
       mNeedLayer(false)
-#endif
 {
 }
 
@@ -353,7 +346,6 @@ DrawTargetSkia::~DrawTargetSkia() {
     mSnapshot->GiveSurface(mSurface.forget().take());
   }
 
-#ifdef MOZ_WIDGET_COCOA
   if (mCG) {
     CGContextRelease(mCG);
     mCG = nullptr;
@@ -363,7 +355,6 @@ DrawTargetSkia::~DrawTargetSkia() {
     CGColorSpaceRelease(mColorSpace);
     mColorSpace = nullptr;
   }
-#endif
 }
 
 void DrawTargetSkia::Link(const char* aDest, const char* aURI,
@@ -1069,7 +1060,6 @@ void DrawTargetSkia::Fill(const Path* aPath, const Pattern& aPattern,
   mCanvas->drawPath(skiaPath->GetPath(), paint.mPaint);
 }
 
-#ifdef XP_DARWIN
 static inline CGAffineTransform GfxMatrixToCGAffineTransform(const Matrix& m) {
   CGAffineTransform t;
   t.a = m._11;
@@ -1280,7 +1270,6 @@ void BorrowedCGContext::ReturnCGContextToDrawTarget(DrawTarget* aDT,
   DrawTargetSkia* skiaDT = static_cast<DrawTargetSkia*>(aDT);
   skiaDT->ReturnCGContext(cg);
 }
-#endif
 
 static bool CanDrawFont(ScaledFont* aFont) {
   switch (aFont->GetType()) {
@@ -1947,25 +1936,9 @@ void DrawTargetSkia::UpdateSurfaceProps() {
   // Default to no enhanced contrast.
   SkScalar contrast = 0;
 
-#ifdef XP_DARWIN
   // Default to sRGB gamma.
   SkScalar gamma = 0;
-#else
-  // Default to linear gamma.
-  SkScalar gamma = SK_Scalar1;
-#endif
 
-#if defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_ANDROID)
-  int32_t gammaVal = StaticPrefs::gfx_font_rendering_freetype_gamma();
-  int32_t contrastVal =
-      StaticPrefs::gfx_font_rendering_freetype_enhanced_contrast();
-  if (gammaVal >= 0) {
-    gamma = SkScalar(std::min(gammaVal, 400)) / 100;
-  }
-  if (contrastVal > 0) {
-    contrast = SkScalar(std::min(contrastVal, 100)) / 100;
-  }
-#endif
 
   sSurfaceProps =
       Some(SkSurfaceProps(0, GetSkPixelGeometry(), contrast, gamma));
@@ -2318,10 +2291,8 @@ void DrawTargetSkia::PushLayerWithBlend(bool aOpaque, Float aOpacity,
 
   SetPermitSubpixelAA(aOpaque);
 
-#ifdef MOZ_WIDGET_COCOA
   CGContextRelease(mCG);
   mCG = nullptr;
-#endif
 }
 
 void DrawTargetSkia::PopLayer() {
@@ -2365,10 +2336,8 @@ void DrawTargetSkia::PopLayer() {
 
   mPushedLayers.pop_back();
 
-#ifdef MOZ_WIDGET_COCOA
   CGContextRelease(mCG);
   mCG = nullptr;
-#endif
 }
 
 already_AddRefed<GradientStops> DrawTargetSkia::CreateGradientStops(

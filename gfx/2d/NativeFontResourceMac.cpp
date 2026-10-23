@@ -11,9 +11,6 @@
 #include "mozilla/DataMutex.h"
 #include "mozilla/RefPtr.h"
 
-#ifdef MOZ_WIDGET_UIKIT
-#  include <CoreFoundation/CoreFoundation.h>
-#endif
 
 #include "nsIMemoryReporter.h"
 

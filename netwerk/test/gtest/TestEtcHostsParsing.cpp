@@ -12,15 +12,9 @@
 #include "nsTArray.h"
 #include "nsUnicharUtils.h"
 
-#ifndef XP_WIN
 #  include <sys/file.h>
 #  include <unistd.h>
-#endif
 
-#ifdef XP_WIN
-#  include <io.h>
-#  include <share.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -78,11 +72,7 @@ class TestEtcHostsParsing : public ::testing::Test {
 
     // Close any open file descriptors
     if (mLockFd != -1) {
-#ifdef XP_WIN
-      _close(mLockFd);
-#else
       close(mLockFd);
-#endif
       mLockFd = -1;
     }
   }
@@ -128,21 +118,15 @@ class TestEtcHostsParsing : public ::testing::Test {
     rv = GetCrossplatformNativePath(mLockedHostsFile, nativePath);
     ASSERT_TRUE(NS_SUCCEEDED(rv));
 
-#ifdef XP_WIN
-    // On Windows, open with no sharing to simulate a locked file
-    mLockFd = _sopen(nativePath.get(), _O_RDONLY, _SH_DENYRW, _S_IREAD);
-#else
     // On Unix, use flock to lock the file
     mLockFd = open(nativePath.get(), O_RDONLY);
     if (mLockFd != -1) {
       ::flock(mLockFd, LOCK_EX | LOCK_NB);  // Exclusive, non-blocking lock
     }
-#endif
     ASSERT_NE(mLockFd, -1);
   }
 
   void CreateNoPermissionFile() {
-#ifndef XP_WIN
     // Create the file first
     nsCOMPtr<nsIOutputStream> stream;
     nsresult rv =
@@ -161,19 +145,10 @@ class TestEtcHostsParsing : public ::testing::Test {
     rv = GetCrossplatformNativePath(mNoPermHostsFile, nativePath);
     ASSERT_TRUE(NS_SUCCEEDED(rv));
     chmod(nativePath.get(), 0000);  // No permissions
-#endif
   }
 
   nsresult GetCrossplatformNativePath(nsIFile* aFile, nsACString& aPath) {
-#ifdef XP_WIN
-    nsAutoString widePath;
-    nsresult rv = aFile->GetPath(widePath);
-    if (NS_FAILED(rv)) return rv;
-    aPath = NS_ConvertUTF16toUTF8(widePath);
-    return NS_OK;
-#else
     return aFile->GetNativePath(aPath);
-#endif
   }
 
   static bool TestCallback(const nsTArray<nsCString>* aArray) {
@@ -251,7 +226,6 @@ TEST_F(TestEtcHostsParsing, ParseLockedFile) {
 }
 
 TEST_F(TestEtcHostsParsing, ParseNoPermissionFile) {
-#ifndef XP_WIN
   sCurrentTest = this;
   CreateNoPermissionFile();
 
@@ -264,7 +238,6 @@ TEST_F(TestEtcHostsParsing, ParseNoPermissionFile) {
 
   // Callback should not be invoked for files we can't read
   EXPECT_FALSE(mCallbackInvoked);
-#endif
 }
 
 TEST_F(TestEtcHostsParsing, ParseNonExistentFile) {

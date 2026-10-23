@@ -1316,13 +1316,8 @@ struct PaintGlyph {
       // On macOS we can't use FillGlyphs because when we render the glyph,
       // Core Text's own color font support may step in and ignore the
       // pattern. So to avoid this, fill the glyph as a path instead.
-#if XP_MACOSX
       RefPtr<Path> path = GetPathForGlyphs(aState, buffer);
       aState.mDrawTarget->Fill(path, *fillPattern, aState.mDrawOptions);
-#else
-      aState.mDrawTarget->FillGlyphs(aState.mScaledFont, buffer, *fillPattern,
-                                     aState.mDrawOptions);
-#endif
       return true;
     }
     RefPtr<Path> path = GetPathForGlyphs(aState, buffer);

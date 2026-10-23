@@ -282,7 +282,6 @@ bool AppleDecoderModule::CanCreateHWDecoder(const MediaCodec& aCodec) {
 
 /* static */
 bool AppleDecoderModule::RegisterSupplementalDecoder(const MediaCodec& aCodec) {
-#ifdef XP_MACOSX
   static bool sRegisterIfAvailable = [&]() {
     if (__builtin_available(macos 11.0, *)) {
       VTRegisterSupplementalVideoDecoderIfAvailable(
@@ -292,9 +291,6 @@ bool AppleDecoderModule::RegisterSupplementalDecoder(const MediaCodec& aCodec) {
     return false;
   }();
   return sRegisterIfAvailable;
-#else  // iOS
-  return false;
-#endif
 }
 
 /* static */

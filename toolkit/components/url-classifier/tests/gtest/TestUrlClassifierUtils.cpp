@@ -274,13 +274,8 @@ TEST(UrlClassifierUtils, MakeUpdateRequestV5)
   // The expected request contains
   // 1. The V5 list name "uws-4b" or "uwsa-4b" depending on the platform.
   // 2. The decoded state for the above kTestState.
-#ifndef MOZ_WIDGET_ANDROID
   ASSERT_TRUE(request.EqualsLiteral(
       "&names=uws-4b&version=Cg0IAxAGGAEiAzAwMTABEMfKERoCGAm5biH4"));
-#else
-  ASSERT_TRUE(request.EqualsLiteral(
-      "&names=uwsa-4b&version=Cg0IAxAGGAEiAzAwMTABEMfKERoCGAm5biH4"));
-#endif
 }
 
 TEST(UrlClassifierUtils, makeFindFullHashRequestV5)

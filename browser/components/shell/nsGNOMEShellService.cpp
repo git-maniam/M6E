@@ -26,11 +26,6 @@
 #include "mozilla/dom/Promise.h"
 #include "nsXULAppAPI.h"
 
-#ifdef MOZ_ENABLE_DBUS
-#  include "nsWindow.h"
-#  include "WidgetUtils.h"
-#  include "mozilla/widget/AsyncDBus.h"
-#endif
 
 #include <glib.h>
 #include <gio/gio.h>
@@ -71,12 +66,6 @@ static const MimeTypeAssociation appTypes[] = {
 nsresult nsGNOMEShellService::Init() {
   nsresult rv;
 
-#ifdef MOZ_ENABLE_DBUS
-  if (widget::IsGnomeDesktopEnvironment() &&
-      Preferences::GetBool("browser.gnome-search-provider.enabled", false)) {
-    mSearchProvider.Startup();
-  }
-#endif
 
   // Check G_BROKEN_FILENAMES.  If it's set, then filenames in glib use
   // the locale encoding.  If it's not set, they use UTF-8.
@@ -523,262 +512,17 @@ class AsyncGIconReader {
   ~AsyncGIconReader() = default;
 };
 
-#ifdef MOZ_ENABLE_DBUS
-static RefPtr<widget::DBusProxyPromise> CreateDynamicLauncherProxy() {
-  return widget::CreateDBusProxyForBus(
-      G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE, nullptr,
-      "org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop",
-      "org.freedesktop.portal.DynamicLauncher");
-}
-#endif
 
 NS_IMETHODIMP nsGNOMEShellService::RequestInstallDynamicLauncher(
     const nsACString& aEntryId, nsIINIParserWriter* aDesktopEntry,
     mozIDOMWindowProxy* aWindow, JSContext* aCx, dom::Promise** aPromise) {
   MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
 
-#ifdef MOZ_ENABLE_DBUS
-  ErrorResult rv;
-  RefPtr<dom::Promise> promise =
-      dom::Promise::Create(xpc::CurrentNativeGlobal(aCx), rv);
-  if (MOZ_UNLIKELY(rv.Failed())) {
-    return rv.StealNSResult();
-  }
-
-  nsWindow* window = nullptr;
-  if (aWindow) {
-    auto* parent = nsPIDOMWindowOuter::From(aWindow);
-    RefPtr<nsIWidget> widget =
-        mozilla::widget::WidgetUtils::DOMWindowToWidget(parent);
-    NS_ENSURE_TRUE(widget, NS_ERROR_FAILURE);
-
-    window = nsWindow::FromWidget(widget);
-  }
-
-  nsCOMPtr<nsIINIParser> entryINI(do_QueryInterface(aDesktopEntry));
-  NS_ENSURE_ARG(entryINI);
-
-  nsCString entryName;
-  nsCString entryIcon;
-  nsCString entryContent;
-  MOZ_TRY(entryINI->GetString("Desktop Entry"_ns, "Name"_ns, entryName));
-  MOZ_TRY(entryINI->GetString("Desktop Entry"_ns, "Icon"_ns, entryIcon));
-  MOZ_TRY(aDesktopEntry->WriteToString(entryContent));
-
-  auto* target = GetCurrentSerialEventTarget();
-
-  // MozPromise doesn't seem to support ::All with different types, so make one
-  // type to contain them all.
-  using DynamicLauncherPromise =
-      MozPromise<Variant<RefPtr<GDBusProxy>, RefPtr<GIcon>, nsCString>,
-                 GUniquePtr<GError>, true>;
-
-  RefPtr<DynamicLauncherPromise> dbusProxyPromise =
-      CreateDynamicLauncherProxy()->Map(
-          target, __func__,
-          [](RefPtr<GDBusProxy>&& proxy)
-              -> DynamicLauncherPromise::ResolveValueType {
-            return AsVariant(std::move(proxy));
-          });
-
-  RefPtr<AsyncGIconReader> reader = new AsyncGIconReader(entryIcon);
-  RefPtr<DynamicLauncherPromise> iconPromise = reader->Start()->Map(
-      target, __func__,
-      [](RefPtr<GIcon>&& icon) -> DynamicLauncherPromise::ResolveValueType {
-        return AsVariant(std::move(icon));
-      });
-
-  RefPtr<DynamicLauncherPromise> exportPromise =
-      (window
-           ? window->ExportHandle()
-           : nsWindow::ExportHandlePromise::CreateAndResolve(""_ns, __func__))
-          ->Then(
-              GetCurrentSerialEventTarget(), __func__,
-              [](nsWindow::ExportHandlePromise::ResolveOrRejectValue&& aValue) {
-                if (aValue.IsResolve()) {
-                  return DynamicLauncherPromise::CreateAndResolve(
-                      AsVariant(aValue.ResolveValue()), __func__);
-                }
-
-                NS_WARNING("Failed to export window for DynamicLauncher");
-                return DynamicLauncherPromise::CreateAndResolve(
-                    AsVariant(EmptyCString()), __func__);
-              });
-
-  nsTArray<RefPtr<DynamicLauncherPromise>> promises = {
-      RefPtr(dbusProxyPromise), RefPtr(iconPromise), RefPtr(exportPromise)};
-  DynamicLauncherPromise::All(target, promises)
-      ->Then(
-          target, __func__,
-          [target = nsCOMPtr{target}, entryId = nsCString(aEntryId),
-           entryContent = std::move(entryContent),
-           entryName = std::move(entryName)](
-              DynamicLauncherPromise::AllPromiseType::ResolveOrRejectValue&&
-                  aValue) {
-            if (aValue.IsReject()) {
-              return widget::DBusCallPromise::AllPromiseType::CreateAndReject(
-                  std::move(aValue.RejectValue()), __func__);
-            }
-
-            auto values = aValue.ResolveValue();
-            RefPtr<GDBusProxy> proxy =
-                std::move(values[0].template as<RefPtr<GDBusProxy>>());
-            RefPtr<GIcon> icon = values[1].template as<RefPtr<GIcon>>();
-            nsCString exportedWindow = values[2].template as<nsCString>();
-
-            nsAutoCString token;
-            widget::MakePortalRequestToken("DynamicLauncher"_ns, token);
-
-            nsAutoCString requestPath;
-            widget::GetPortalRequestPath(proxy.get(), token, requestPath);
-
-            auto holder =
-                std::make_shared<MozPromiseHolder<widget::DBusCallPromise>>();
-            RefPtr<widget::DBusCallPromise> installPromise =
-                holder->Ensure(__func__);
-
-            GVariantDict options;
-            g_variant_dict_init(&options, nullptr);
-            g_variant_dict_insert(&options, "handle_token", "s", token.get());
-
-            RefPtr<GVariant> args = dont_AddRef(g_variant_ref_sink(
-                g_variant_new("(ssv@a{sv})",        //
-                              exportedWindow.get(), /* parent window */
-                              entryName.get(),      /* name of entry */
-                              g_icon_serialize(G_ICON(icon.get())), /* icon */
-                              g_variant_dict_end(&options)))); /* options */
-
-            auto subscription = std::make_shared<unsigned>(0);
-            *subscription = widget::OnDBusPortalResponse(
-                G_DBUS_PROXY(proxy.get()), token,
-                [target = nsCOMPtr{target}, entryId = std::move(entryId),
-                 entryContent, proxy, holder, subscription](GVariant* variant) {
-                  *subscription = 0;
-
-                  unsigned response = 2;  // '2' indicates 'other error'
-                  RefPtr<GVariant> options = nullptr;
-                  g_variant_get(variant, "(u@a{sv})", &response,
-                                options.StartAssignment());
-                  if (response != 0) {
-                    holder->Reject(GUniquePtr<GError>(g_error_new(
-                                       G_IO_ERROR, G_IO_ERROR_FAILED,
-                                       "Response was non-zero")),
-                                   __func__);
-                    return;
-                  }
-
-                  const char* responseToken;
-                  if (!g_variant_lookup(options, "token", "&s",
-                                        &responseToken)) {
-                    holder->Reject(
-                        GUniquePtr<GError>(g_error_new(
-                            G_IO_ERROR, G_IO_ERROR_FAILED,
-                            "No token was provided from the portal")),
-                        __func__);
-                    return;
-                  }
-
-                  nsPrintfCString entryIdWithExtension("%s.desktop",
-                                                       entryId.get());
-                  RefPtr<GVariant> args = dont_AddRef(g_variant_ref_sink(
-                      g_variant_new("(sssa{sv})", responseToken,
-                                    entryIdWithExtension.get(),
-                                    entryContent.get(), nullptr)));
-
-                  widget::DBusProxyCall(proxy.get(), "Install", args,
-                                        G_DBUS_CALL_FLAGS_NONE, -1)
-                      ->Then(target, __func__,
-                             [holder = std::move(holder)](
-                                 widget::DBusCallPromise::ResolveOrRejectValue&&
-                                     aValue) {
-                               holder->ResolveOrReject(std::move(aValue),
-                                                       __func__);
-                             });
-                });
-
-            RefPtr<widget::DBusCallPromise> prepareInstallPromise =
-                widget::DBusProxyCall(G_DBUS_PROXY(proxy.get()),
-                                      "PrepareInstall", args,
-                                      G_DBUS_CALL_FLAGS_NONE, -1)
-                    ->MapErr(target, __func__,
-                             [subscriptionptr = std::move(subscription), proxy,
-                              holder](GUniquePtr<GError>&& err) {
-                               if (*subscriptionptr) {
-                                 g_dbus_connection_signal_unsubscribe(
-                                     g_dbus_proxy_get_connection(proxy.get()),
-                                     *subscriptionptr);
-                               }
-
-                               holder->Reject(
-                                   GUniquePtr<GError>(g_error_copy(err.get())),
-                                   __func__);
-                               return std::move(err);
-                             });
-
-            nsTArray<RefPtr<widget::DBusCallPromise>> promises = {
-                prepareInstallPromise, installPromise};
-            return widget::DBusCallPromise::All(target, promises);
-          })
-      ->Then(target, __func__,
-             [promise](
-                 widget::DBusCallPromise::AllPromiseType::ResolveOrRejectValue&&
-                     aValue) {
-               if (aValue.IsReject()) {
-                 nsDependentCString message(aValue.RejectValue()->message);
-                 promise->MaybeRejectWithOperationError(message);
-               } else {
-                 promise->MaybeResolveWithUndefined();
-               }
-             });
-
-  promise.forget(aPromise);
-  return NS_OK;
-#else
   return NS_ERROR_FAILURE;
-#endif
 }
 
 NS_IMETHODIMP nsGNOMEShellService::RequestUninstallDynamicLauncher(
     const nsACString& aEntryId, JSContext* aCx, dom::Promise** aPromise) {
   MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
-#ifdef MOZ_ENABLE_DBUS
-  ErrorResult rv;
-  RefPtr<dom::Promise> promise =
-      dom::Promise::Create(xpc::CurrentNativeGlobal(aCx), rv);
-  if (MOZ_UNLIKELY(rv.Failed())) {
-    return rv.StealNSResult();
-  }
-
-  nsCString entryId = PromiseFlatCString(aEntryId);
-  nsPrintfCString entryIdWithExtension("%s.desktop", entryId.get());
-
-  CreateDynamicLauncherProxy()
-      ->Then(
-          GetCurrentSerialEventTarget(), __func__,
-          [entryIdWithExtension](const RefPtr<GDBusProxy>& aProxy) {
-            RefPtr<GVariant> args =
-                dont_AddRef(g_variant_ref_sink(g_variant_new(
-                    "(sa{sv})", entryIdWithExtension.get(), nullptr)));
-            return widget::DBusProxyCall(aProxy.get(), "Uninstall", args,
-                                         G_DBUS_CALL_FLAGS_NONE, -1);
-          },
-          [](GUniquePtr<GError>&& error) {
-            return widget::DBusCallPromise::CreateAndReject(std::move(error),
-                                                            __func__);
-          })
-      ->Then(GetCurrentSerialEventTarget(), __func__,
-             [promise](widget::DBusCallPromise::ResolveOrRejectValue&& aValue) {
-               if (aValue.IsReject()) {
-                 nsDependentCString message(aValue.RejectValue()->message);
-                 promise->MaybeRejectWithOperationError(message);
-               } else {
-                 promise->MaybeResolveWithUndefined();
-               }
-             });
-
-  promise.forget(aPromise);
-  return NS_OK;
-#else
   return NS_ERROR_FAILURE;
-#endif
 }

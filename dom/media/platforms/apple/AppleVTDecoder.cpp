@@ -63,15 +63,10 @@ AppleVTDecoder::AppleVTDecoder(const VideoInfo& aConfig,
           aOptions.contains(CreateDecoderParams::Option::LowLatency))),
       mImageContainer(aImageContainer),
       mKnowsCompositor(aKnowsCompositor)
-#ifdef MOZ_WIDGET_UIKIT
-      ,
-      mUseSoftwareImages(true)
-#else
       ,
       mUseSoftwareImages(aKnowsCompositor &&
                          aKnowsCompositor->GetWebRenderCompositorType() ==
                              layers::WebRenderCompositor::SOFTWARE)
-#endif
       ,
       mTrackingId(aTrackingId),
       mIsFlushing(false),

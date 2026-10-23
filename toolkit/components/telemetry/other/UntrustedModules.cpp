@@ -171,27 +171,6 @@ MultiGetUntrustedModulesData::GetUntrustedModuleLoadEvents() {
   return mPromise;
 }
 
-#if defined(XP_WIN)
-nsTArray<nsDependentSubstring> GetBlockedModules() {
-  nsTArray<nsDependentSubstring> blockedModules;
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  nt::SharedSection* sharedSection = dllSvc->GetSharedSection();
-  if (!sharedSection) {
-    return blockedModules;
-  }
-
-  auto dynamicBlocklist = sharedSection->GetDynamicBlocklist();
-  for (const auto& blockedEntry : dynamicBlocklist) {
-    if (!blockedEntry.IsValidDynamicBlocklistEntry()) {
-      break;
-    }
-    blockedModules.AppendElement(
-        nsDependentSubstring(blockedEntry.mName.Buffer,
-                             blockedEntry.mName.Length / sizeof(wchar_t)));
-  }
-  return blockedModules;
-}
-#endif
 
 nsresult MultiGetUntrustedModulesData::SubmitToGlean() {
   MOZ_ASSERT(mFlags == 0,
@@ -405,14 +384,6 @@ nsresult MultiGetUntrustedModulesData::SubmitToGlean() {
   glean::third_party_modules::modules.Set(std::move(modules));
   glean::third_party_modules::processes.Set(std::move(processes));
 
-#if defined(XP_WIN)
-  nsTArray<nsDependentSubstring> uBlockedModules = GetBlockedModules();
-  nsTArray<nsCString> blockedModules;
-  for (const auto& blockedModule : uBlockedModules) {
-    blockedModules.EmplaceBack(NS_ConvertUTF16toUTF8(blockedModule));
-  }
-  glean::third_party_modules::blocked_modules.Set(blockedModules);
-#endif
   glean_pings::ThirdPartyModules.Submit();
   return NS_OK;
 }
@@ -501,16 +472,6 @@ void MultiGetUntrustedModulesData::Serialize(RefPtr<dom::Promise>&& aPromise) {
     }
   }
 
-#if defined(XP_WIN)
-  nsTArray<nsDependentSubstring> blockedModules = GetBlockedModules();
-  if (!blockedModules.IsEmpty()) {
-    rv = serializer.AddBlockedModules(blockedModules);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      aPromise->MaybeReject(rv);
-      return;
-    }
-  }
-#endif
 
   JS::Rooted<JS::Value> jsval(cx);
   serializer.GetObject(&jsval);

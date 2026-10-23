@@ -61,13 +61,8 @@
 // for ntohs
 #ifdef HAVE_NETINET_IN_H
 #  include <netinet/in.h>
-#elif defined XP_WIN
-#  include <winsock2.h>
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidBridge.h"
-#endif
 
 namespace mozilla {
 

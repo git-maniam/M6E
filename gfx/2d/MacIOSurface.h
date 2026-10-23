@@ -4,7 +4,6 @@
 
 #ifndef MacIOSurface_h_
 #define MacIOSurface_h_
-#ifdef XP_DARWIN
 #  include <CoreVideo/CoreVideo.h>
 #  include <IOSurface/IOSurfaceRef.h>
 #  include <QuartzCore/QuartzCore.h>
@@ -20,20 +19,12 @@ class GLContext;
 }
 }  // namespace mozilla
 
-#  ifdef XP_MACOSX
 struct _CGLContextObject;
 
 typedef _CGLContextObject* CGLContextObj;
-#  endif
 typedef uint32_t IOSurfaceID;
 
-#  ifdef XP_MACOSX
 #    import <OpenGL/OpenGL.h>
-#  else
-#    include "GLTypes.h"
-typedef realGLboolean GLboolean;
-#    include <OpenGLES/ES2/gl.h>
-#  endif
 
 #  include "2D.h"
 #  include "mozilla/RefCounted.h"
@@ -177,5 +168,4 @@ class MacIOSurface final
   bool mIsLocked = false;
 };
 
-#endif
 #endif

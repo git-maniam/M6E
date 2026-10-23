@@ -11,11 +11,6 @@
 #  include "mozilla/a11y/DocAccessibleParent.h"
 #  include "mozilla/a11y/Platform.h"
 #  include "nsAccessibilityService.h"
-#  if defined(XP_WIN)
-#    include "mozilla/a11y/AccessibleWrap.h"
-#    include "mozilla/a11y/Compatibility.h"
-#    include "mozilla/a11y/nsWinUtils.h"
-#  endif
 #endif
 #include "mozilla/AppShutdown.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
@@ -2457,47 +2452,6 @@ nsresult BrowsingContext::LoadURI(nsDocShellLoadState* aLoadState,
       // is created.
       Canonical()->AttemptSpeculativeLoadInParent(aLoadState);
 
-#ifdef ANDROID
-      uint32_t appLinkLaunchType = aLoadState->GetAppLinkLaunchType();
-      Canonical()->SetAndroidAppLinkLaunchType(appLinkLaunchType);
-
-      // Record timing for cold app link launches
-      constexpr uint32_t APPLINK_COLD = 1;
-      if (appLinkLaunchType == APPLINK_COLD) {
-        const TimeStamp loadUriTime = TimeStamp::Now();
-
-        // Process creation to load URI timing
-        const TimeStamp processCreationTime = TimeStamp::ProcessCreation();
-        if (!processCreationTime.IsNull()) {
-          const TimeDuration delta = loadUriTime - processCreationTime;
-          mozilla::glean::perf::cold_applink_process_launch_to_load_uri
-              .AccumulateRawDuration(delta);
-
-          PROFILER_MARKER("Cold App Link Process Creation to Load URI", NETWORK,
-                          MarkerOptions(MarkerTiming::Interval(
-                              processCreationTime, loadUriTime)),
-                          Tracing, "AppLink");
-        }
-
-        // StartupTimeline::MAIN to load URI timing
-        const TimeStamp mainTime = StartupTimeline::Get(StartupTimeline::MAIN);
-        if (!mainTime.IsNull()) {
-          const TimeDuration mainDelta = loadUriTime - mainTime;
-          mozilla::glean::perf::cold_applink_main_to_load_uri
-              .AccumulateRawDuration(mainDelta);
-
-          PROFILER_MARKER(
-              "Cold App Link Main to Load URI", NETWORK,
-              MarkerOptions(MarkerTiming::Interval(mainTime, loadUriTime)),
-              Tracing, "AppLink");
-        }
-      }
-
-      PROFILER_MARKER_FMT("BrowsingContext::LoadURI", NETWORK, {},
-                          "android appLinkLaunchType {} URL {}",
-                          appLinkLaunchType,
-                          aLoadState->URI()->GetSpecOrDefault().get());
-#endif
 
       (void)cp->SendLoadURI(this, mozilla::WrapNotNull(aLoadState),
                             aSetNavigating);
@@ -3268,23 +3222,6 @@ void BrowsingContext::ActivenessChanged(bool aIsActive) {
   if (XRE_IsParentProcess()) {
     if (BrowserParent* bp = Canonical()->GetBrowserParent()) {
       bp->RecomputeProcessPriority();
-#if defined(XP_WIN) && defined(ACCESSIBILITY)
-      if (a11y::Compatibility::IsDolphin()) {
-        // update active accessible documents on windows
-        if (a11y::DocAccessibleParent* tabDoc =
-                bp->GetTopLevelDocAccessible()) {
-          HWND window = tabDoc->GetEmulatedWindowHandle();
-          MOZ_ASSERT(window);
-          if (window) {
-            if (aIsActive) {
-              a11y::nsWinUtils::ShowNativeWindow(window);
-            } else {
-              a11y::nsWinUtils::HideNativeWindow(window);
-            }
-          }
-        }
-      }
-#endif
     }
 
     // NOTE(emilio): Ideally we'd want to reuse the ExplicitActiveStatus::None

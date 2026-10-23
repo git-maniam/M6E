@@ -48,10 +48,6 @@
 #include "nsTextRunTransformations.h"
 #include "nsUGenCategory.h"
 #include "nsUnicodeProperties.h"
-#ifdef XP_WIN
-#  include "cairo-win32.h"
-#  include "gfxWindowsPlatform.h"
-#endif
 
 #include <algorithm>
 #include <cmath>
@@ -5117,9 +5113,6 @@ gfxFontStyle::gfxFontStyle()
       sizeAdjustBasis(uint8_t(FontSizeAdjust::Tag::None)),
       systemFont(false),
       printerFont(false),
-#ifdef XP_WIN
-      allowForceGDIClassic(true),
-#endif
       useGrayscaleAntialiasing(false),
       allowSyntheticWeight(true),
       synthesisStyle(StyleFontSynthesisStyle::Auto),
@@ -5131,9 +5124,6 @@ gfxFontStyle::gfxFontStyle()
 gfxFontStyle::gfxFontStyle(
     FontSlantStyle aStyle, FontWeight aWeight, FontWidth aWidth, gfxFloat aSize,
     const FontSizeAdjust& aSizeAdjust, bool aSystemFont, bool aPrinterFont,
-#ifdef XP_WIN
-    bool aAllowForceGDIClassic,
-#endif
     bool aAllowWeightSynthesis, StyleFontSynthesisStyle aStyleSynthesis,
     bool aAllowSmallCapsSynthesis, bool aUsePositionSynthesis,
     StyleFontLanguageOverride aLanguageOverride)
@@ -5147,9 +5137,6 @@ gfxFontStyle::gfxFontStyle(
       variantSubSuper(StyleFontVariantPosition::Normal),
       systemFont(aSystemFont),
       printerFont(aPrinterFont),
-#ifdef XP_WIN
-      allowForceGDIClassic(aAllowForceGDIClassic),
-#endif
       useGrayscaleAntialiasing(false),
       allowSyntheticWeight(aAllowWeightSynthesis),
       synthesisStyle(aStyleSynthesis),

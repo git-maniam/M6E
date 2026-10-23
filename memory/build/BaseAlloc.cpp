@@ -886,11 +886,7 @@ size_t BaseAllocCell::CommitAll() {
 static size_t GetPid() { return size_t(getpid()); }
 
 static void BaseLog(const char* fmt, ...) {
-#  ifdef _WIN32
-#    define LOG_STDERR GetStdHandle(STD_ERROR_HANDLE)
-#  else
 #    define LOG_STDERR 2
-#  endif
 
   char buf[256];
   size_t pos = SNPrintf(buf, sizeof(buf), "BaseAlloc[%zu] ", GetPid());

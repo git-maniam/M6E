@@ -7,9 +7,7 @@
 #include <mach/mach.h>
 #include <sys/fileport.h>
 
-#ifdef XP_MACOSX
 #  include <bsm/libbsm.h>
-#endif
 
 #include "base/process_util.h"
 #include "chrome/common/ipc_channel_utils.h"
@@ -420,13 +418,11 @@ bool ChannelMach::ProcessIncomingMessage() {
       CHROMIUM_LOG(ERROR) << "Expected send_port in HELLO message";
       return false;
     }
-#ifdef XP_MACOSX
     if (XRE_IsParentProcess() &&
         audit_token_to_pid(trailer->msgh_audit) != other_pid) {
       CHROMIUM_LOG(ERROR) << "audit token does not correspond to given pid";
       return false;
     }
-#endif
 
     SetOtherPid(other_pid);
     if (!send_port_) {

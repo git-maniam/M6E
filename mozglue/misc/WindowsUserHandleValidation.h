@@ -26,10 +26,6 @@ inline uint32_t& GetWin32UserFlagsFromTeb() {
   auto* teb = reinterpret_cast<uint8_t*>(NtCurrentTeb());
   uint8_t* baseForOffset = teb;
   size_t win32kClientInfoUserFlagsOffset;
-#if defined(_WIN64)
-  win32kClientInfoUserFlagsOffset =
-      kX64AndWowWin32ClientInfoOffsetInBytes + kX64AndWowUserFlagsOffsetInBytes;
-#else
   static const size_t kNativeX86Win32ClientInfoOffsetInBytes = 0x6cc;
   static const size_t kNativeX86UserFlagsOffsetInBytes = 0x14;
 
@@ -52,7 +48,6 @@ inline uint32_t& GetWin32UserFlagsFromTeb() {
     win32kClientInfoUserFlagsOffset = kNativeX86Win32ClientInfoOffsetInBytes +
                                       kNativeX86UserFlagsOffsetInBytes;
   }
-#endif
 
   return *reinterpret_cast<uint32_t*>(baseForOffset +
                                       win32kClientInfoUserFlagsOffset);

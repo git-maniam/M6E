@@ -10,23 +10,10 @@
 #include "nsComponentManagerUtils.h"
 #include "nsServiceManagerUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidLocationProvider.h"
-#endif
 
-#ifdef MOZ_ENABLE_DBUS
-#  include "GeoclueLocationProvider.h"
-#  include "PortalLocationProvider.h"
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
-#ifdef MOZ_WIDGET_COCOA
 #  include "CoreLocationLocationProvider.h"
-#endif
 
-#ifdef XP_WIN
-#  include "WindowsLocationProvider.h"
-#endif
 
 // XXX(krosylight): We should stop directly involving child process and
 // Geolocation API here. See also bug 2037074.
@@ -76,50 +63,12 @@ nsresult GeolocationService::Init(bool aIsOverride) {
 
   obs->AddObserver(this, "xpcom-shutdown", false);
 
-#ifdef MOZ_WIDGET_ANDROID
-  mProvider = new AndroidLocationProvider();
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-#  ifdef MOZ_ENABLE_DBUS
-  if (!mProvider && widget::ShouldUsePortal(widget::PortalKind::Location)) {
-    mProvider = new PortalLocationProvider();
-    MOZ_LOG(gGeolocationLog, LogLevel::Debug,
-            ("Selected PortalLocationProvider"));
-    glean::geolocation::linux_provider
-        .EnumGet(glean::geolocation::LinuxProviderLabel::ePortal)
-        .Set(true);
-  }
 
-  if (!mProvider && StaticPrefs::geo_provider_use_geoclue()) {
-    nsCOMPtr<nsIGeolocationProvider> gcProvider = new GeoclueLocationProvider();
-    MOZ_LOG(gGeolocationLog, LogLevel::Debug,
-            ("Checking GeoclueLocationProvider"));
-    // The Startup() method will only succeed if Geoclue is available on D-Bus
-    if (NS_SUCCEEDED(gcProvider->Startup())) {
-      gcProvider->Shutdown();
-      mProvider = std::move(gcProvider);
-      MOZ_LOG(gGeolocationLog, LogLevel::Debug,
-              ("Selected GeoclueLocationProvider"));
-      glean::geolocation::linux_provider
-          .EnumGet(glean::geolocation::LinuxProviderLabel::eGeoclue)
-          .Set(true);
-    }
-  }
-#  endif
-#endif
-
-#ifdef MOZ_WIDGET_COCOA
   if (Preferences::GetBool("geo.provider.use_corelocation", true)) {
     mProvider = new CoreLocationLocationProvider();
   }
-#endif
 
-#ifdef XP_WIN
-  if (Preferences::GetBool("geo.provider.ms-windows-location", false)) {
-    mProvider = new WindowsLocationProvider();
-  }
-#endif
 
   if (Preferences::GetBool("geo.provider.use_mls", false)) {
     mProvider = do_CreateInstance("@mozilla.org/geolocation/mls-provider;1");

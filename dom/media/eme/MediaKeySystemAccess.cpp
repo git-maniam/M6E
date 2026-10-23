@@ -28,10 +28,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsUnicharUtils.h"
 
-#ifdef XP_WIN
-#  include "PDMFactory.h"
-#  include "WMFDecoderModule.h"
-#endif
 #if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WMF_CDM)
 #  include "mozilla/gfx/gfxVars.h"
 #endif
@@ -158,21 +154,6 @@ MediaKeySystemStatus MediaKeySystemAccess::GetKeySystemStatus(
         return MediaKeySystemStatus::Cdm_disabled;
       }
       return EnsureCDMInstalled(keySystem, SecureLevel::Software, aOutMessage);
-#ifdef MOZ_WIDGET_ANDROID
-    } else if (Preferences::GetBool("media.mediadrm-widevinecdm.visible",
-                                    false)) {
-      media::DrmSchemeSupport support = gfx::gfxVars::WidevineSupport();
-      if (support == media::DrmSchemeSupport::Unknown) {
-        aOutMessage = "Waiting for MediaDrm Widevine support"_ns;
-        return MediaKeySystemStatus::Cdm_not_installed;
-      }
-      if (support != media::DrmSchemeSupport::Supported) {
-        aOutMessage = nsLiteralCString(
-            "KeySystem or Minimum API level not met for Widevine EME");
-        return MediaKeySystemStatus::Cdm_not_supported;
-      }
-      return MediaKeySystemStatus::Available;
-#endif
     }
   }
 
@@ -474,20 +455,6 @@ static bool CanDecryptAndDecode(
     // Neither the GMP nor Gecko can both decrypt and decode. We don't
     // support this codec.
 
-#if defined(XP_WIN)
-    // Widevine CDM doesn't include an AAC decoder. So if WMF can't
-    // decode AAC, and a codec wasn't specified, be conservative
-    // and reject the MediaKeys request, since we assume Widevine
-    // will be used with AAC.
-    if (codec == KeySystemConfig::EME_CODEC_AAC &&
-        IsWidevineKeySystem(aKeySystem) && aDiagnostics) {
-      auto pdmFactory = MakeRefPtr<PDMFactory>();
-      if (pdmFactory->SupportsMimeType("audio/mp4a-latm"_ns).isEmpty()) {
-        aDiagnostics->SetKeySystemIssue(
-            DecoderDoctorDiagnostics::eWidevineWithNoWMF);
-      }
-    }
-#endif
     return false;
   }
   return true;
@@ -1152,27 +1119,6 @@ static bool GetSupportedConfig(const KeySystemConfig& aKeySystem,
 
   // Note: Omitting steps 20-22. We don't ask for consent.
 
-#if defined(XP_WIN)
-  // Widevine CDM doesn't include an AAC decoder. So if WMF can't decode AAC,
-  // and a codec wasn't specified, be conservative and reject the MediaKeys
-  // request.
-  if (IsWidevineKeySystem(aKeySystem.mKeySystem) &&
-      (aCandidate.mAudioCapabilities.IsEmpty() ||
-       aCandidate.mVideoCapabilities.IsEmpty())) {
-    auto pdmFactory = MakeRefPtr<PDMFactory>();
-    if (pdmFactory->SupportsMimeType("audio/mp4a-latm"_ns).isEmpty()) {
-      if (aDiagnostics) {
-        aDiagnostics->SetKeySystemIssue(
-            DecoderDoctorDiagnostics::eWidevineWithNoWMF);
-      }
-      EME_LOG(
-          "MediaKeySystemConfiguration (label='{}') rejected; "
-          "WMF required for Widevine decoding, but it's not available.",
-          NS_ConvertUTF16toUTF8(aCandidate.mLabel).get());
-      return false;
-    }
-  }
-#endif
 
   // Return accumulated configuration.
   aOutConfig = config;

@@ -2689,28 +2689,6 @@ nsStandardURL::GetRelativeSpec(nsIURI* uri2, nsACString& aResult) {
   thisIndex = startCharPos;
   thatIndex = stdurl2->mSpec.get() + mDirectory.mPos;
 
-#ifdef XP_WIN
-  bool isFileScheme = SegmentIs(mScheme, "file");
-  if (isFileScheme) {
-    // on windows, we need to match the first segment of the path
-    // if these don't match then we need to return an absolute path
-    // skip over any leading '/' in path
-    while ((*thisIndex == *thatIndex) && (*thisIndex == '/')) {
-      thisIndex++;
-      thatIndex++;
-    }
-    // look for end of first segment
-    while ((*thisIndex == *thatIndex) && *thisIndex && (*thisIndex != '/')) {
-      thisIndex++;
-      thatIndex++;
-    }
-
-    // if we didn't match through the first segment, return absolute path
-    if ((*thisIndex != '/') || (*thatIndex != '/')) {
-      return uri2->GetSpec(aResult);
-    }
-  }
-#endif
 
   while ((*thisIndex == *thatIndex) && *thisIndex) {
     thisIndex++;

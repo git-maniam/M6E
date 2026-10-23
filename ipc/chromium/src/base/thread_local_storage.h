@@ -7,9 +7,7 @@
 
 #include "base/basictypes.h"
 
-#if defined(XP_UNIX)
 #  include <pthread.h>
-#endif
 
 // Wrapper for thread local storage.  This class doesn't do much except provide
 // an API for portability.
@@ -54,34 +52,11 @@ class ThreadLocalStorage {
    private:
     // The internals of this struct should be considered private.
     bool initialized_;
-#if defined(XP_WIN)
-    int slot_;
-#else
     pthread_key_t key_;
-#endif
 
     DISALLOW_COPY_AND_ASSIGN(Slot);
   };
 
-#if defined(XP_WIN)
-  // Function called when on thread exit to call TLS
-  // destructor functions.  This function is used internally.
-  static void ThreadExit();
-
- private:
-  // Function to lazily initialize our thread local storage.
-  static void** Initialize();
-
- private:
-  // The maximum number of 'slots' in our thread local storage stack.
-  // For now, this is fixed.  We could either increase statically, or
-  // we could make it dynamic in the future.
-  static const int kThreadLocalStorageSize = 64;
-
-  static long tls_key_;
-  static long tls_max_;
-  static TLSDestructorFunc tls_destructors_[kThreadLocalStorageSize];
-#endif  // XP_WIN
 
   DISALLOW_COPY_AND_ASSIGN(ThreadLocalStorage);
 };

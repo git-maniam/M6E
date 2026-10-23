@@ -8,13 +8,7 @@
 #include <stdio.h>
 #include "mar.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-
-typedef WCHAR NS_tchar;
-#else
 typedef char NS_tchar;
-#endif
 
 // This class provides an API to extract files from an update archive.
 class ArchiveReader {

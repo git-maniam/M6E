@@ -10,11 +10,6 @@
 namespace mozilla::dom::quota {
 
 nsAutoCString MakeSanitizedOriginCString(const nsACString& aOrigin) {
-#ifdef XP_WIN
-  NS_ASSERTION(!strcmp(QuotaManager::kReplaceChars,
-                       FILE_ILLEGAL_CHARACTERS FILE_PATH_SEPARATOR),
-               "Illegal file characters have changed!");
-#endif
 
   nsAutoCString res{aOrigin};
 

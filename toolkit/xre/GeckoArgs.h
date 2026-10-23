@@ -24,13 +24,10 @@ namespace geckoargs {
 struct ChildProcessArgs {
   std::vector<std::string> mArgs;
   std::vector<UniqueFileHandle> mFiles;
-#ifdef XP_DARWIN
   std::vector<UniqueMachSendRight> mSendRights;
   std::vector<UniqueMachReceiveRight> mReceiveRights;
-#endif
 };
 
-#ifdef XP_UNIX
 // On some unix platforms, file handles are passed down without using a fixed
 // file descriptor. This method can be used to override the default mapping.
 void SetPassedFileHandles(Span<int> aFiles);
@@ -39,9 +36,7 @@ void SetPassedFileHandles(std::vector<UniqueFileHandle>&& aFiles);
 // Add the file handles from a ChildProcessArgs to a fdsToRemap table.
 void AddToFdsToRemap(const ChildProcessArgs& aArgs,
                      std::vector<std::pair<int, int>>& aFdsToRemap);
-#endif
 
-#ifdef XP_DARWIN
 // Size of the internal static array of mach send rights. This acts as a limit
 // to the number of mach send rights which can be passed on the command line.
 constexpr size_t kMaxPassedMachSendRights = 10;
@@ -56,7 +51,6 @@ constexpr size_t kMaxPassedMachReceiveRights = 1;
 void SetPassedMachSendRights(std::vector<UniqueMachSendRight>&& aSendRights);
 void SetPassedMachReceiveRights(
     std::vector<UniqueMachReceiveRight>&& aReceiveRights);
-#endif
 
 template <typename T>
 struct CommandLineArg {
@@ -138,14 +132,12 @@ template <>
 Maybe<UniqueFileHandle> CommandLineArg<UniqueFileHandle>::GetCommon(
     const char* aMatch, int& aArgc, char** aArgv, const CheckArgFlag aFlags);
 
-#ifdef XP_DARWIN
 template <>
 Maybe<UniqueMachSendRight> CommandLineArg<UniqueMachSendRight>::GetCommon(
     const char* aMatch, int& aArgc, char** aArgv, const CheckArgFlag aFlags);
 template <>
 Maybe<UniqueMachReceiveRight> CommandLineArg<UniqueMachReceiveRight>::GetCommon(
     const char* aMatch, int& aArgc, char** aArgv, const CheckArgFlag aFlags);
-#endif  // XP_DARWIN
 
 template <>
 Maybe<mozilla::ipc::ReadOnlySharedMemoryHandle>
@@ -190,7 +182,6 @@ void CommandLineArg<UniqueFileHandle>::PutCommon(const char* aName,
                                                  UniqueFileHandle aValue,
                                                  ChildProcessArgs& aArgs);
 
-#ifdef XP_DARWIN
 template <>
 void CommandLineArg<UniqueMachSendRight>::PutCommon(const char* aName,
                                                     UniqueMachSendRight aValue,
@@ -198,7 +189,6 @@ void CommandLineArg<UniqueMachSendRight>::PutCommon(const char* aName,
 template <>
 void CommandLineArg<UniqueMachReceiveRight>::PutCommon(
     const char* aName, UniqueMachReceiveRight aValue, ChildProcessArgs& aArgs);
-#endif  // XP_DARWIN
 
 template <>
 void CommandLineArg<mozilla::ipc::ReadOnlySharedMemoryHandle>::PutCommon(
@@ -221,9 +211,7 @@ static CommandLineArg<const char*> sAppOmni{"-appomni", "appomni"};
 static CommandLineArg<const char*> sProfile{"-profile", "profile"};
 
 static CommandLineArg<UniqueFileHandle> sIPCHandle{"-ipcHandle", "ipchandle"};
-#if defined(XP_DARWIN)
 static CommandLineArg<UniqueMachSendRight> sIPCPort{"-ipcPort", "ipcport"};
-#endif
 
 static CommandLineArg<mozilla::ipc::ReadOnlySharedMemoryHandle> sJsInitHandle{
     "-jsInitHandle", "jsinithandle"};
@@ -244,40 +232,16 @@ static CommandLineArg<bool> sNotForBrowser{"-notForBrowser", "notforbrowser"};
 static CommandLineArg<const char*> sPluginPath{"-pluginPath", "pluginpath"};
 static CommandLineArg<bool> sPluginNativeEvent{"-pluginNativeEvent",
                                                "pluginnativeevent"};
-#if defined(XP_WIN) || defined(XP_MACOSX) || defined(XP_IOS)
 static CommandLineArg<const char*> sCrashReporter{"-crashReporter",
                                                   "crashreporter"};
-#else
-static CommandLineArg<UniqueFileHandle> sCrashReporter{"-crashReporter",
-                                                       "crashreporter"};
-#endif
-#if defined(XP_DARWIN)
 static CommandLineArg<UniqueMachSendRight> sCrashHelperSend{"-crashHelperSend",
                                                             "crashhelpersend"};
 static CommandLineArg<UniqueMachReceiveRight> sCrashHelperRecv{
     "-crashHelperRecv", "crashhelperrecv"};
-#else
-static CommandLineArg<UniqueFileHandle> sCrashHelper{"-crashHelper",
-                                                     "crashhelper"};
-#endif  // XP_DARWIN
 static CommandLineArg<uint64_t> sCrashHelperPid{"-crashHelperPid",
                                                 "crashhelperpid"};
 
-#if defined(XP_WIN)
-#  if defined(MOZ_SANDBOX)
-static CommandLineArg<bool> sWin32kLockedDown{"-win32kLockedDown",
-                                              "win32klockeddown"};
-#  endif  // defined(MOZ_SANDBOX)
-static CommandLineArg<bool> sDisableDynamicDllBlocklist{
-    "-disableDynamicBlocklist", "disabledynamicblocklist"};
-#endif  // defined(XP_WIN)
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-static CommandLineArg<UniqueFileHandle> sSandboxReporter{"-sandboxReporter",
-                                                         "sandboxreporter"};
-static CommandLineArg<UniqueFileHandle> sChrootClient{"-chrootClient",
-                                                      "chrootclient"};
-#endif
 
 #ifdef MOZ_ENABLE_FORKSERVER
 static CommandLineArg<UniqueFileHandle> sSignalPipe{"-signalPipe",

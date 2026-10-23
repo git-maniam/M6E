@@ -1465,10 +1465,8 @@ HttpChannelParent::OnStopRequest(nsIRequest* aRequest, nsresult aStatusCode) {
     bool isLocal = false;
     NetAddr peerAddr = mChannel->GetPeerAddr();
 
-#if defined(XP_UNIX)
     // Unix-domain sockets are always local.
     isLocal = (peerAddr.raw.family == PR_AF_LOCAL);
-#endif
 
     isLocal = isLocal || peerAddr.IsLoopbackAddr();
 

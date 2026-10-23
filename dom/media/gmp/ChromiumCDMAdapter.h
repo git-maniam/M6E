@@ -18,11 +18,7 @@ struct GMPPlatformAPI;
 
 namespace mozilla {
 
-#if defined(XP_WIN)
-typedef nsString HostFileString;
-#else
 typedef nsCString HostFileString;
-#endif
 
 class HostFile {
  public:

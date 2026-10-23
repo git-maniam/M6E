@@ -10,25 +10,9 @@
 
 #include "js/friend/DumpFunctions.h"  // JS::FormatStackDump
 
-#ifdef XP_WIN
-#  include <windows.h>
 
-#  include "nsPrintfCString.h"
-#endif
-
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
 static void DebugDump(const char* str) {
-#ifdef XP_WIN
-  if (IsDebuggerPresent()) {
-    nsPrintfCString output("%s\n", str);
-    OutputDebugStringA(output.get());
-  }
-#elif defined(ANDROID)
-  __android_log_print(ANDROID_LOG_DEBUG, "Gecko", "%s\n", str);
-#endif
   printf("%s\n", str);
 }
 

@@ -7,9 +7,6 @@
 #ifndef nsContentUtils_h_
 #define nsContentUtils_h_
 
-#if defined(XP_WIN)
-#  include <float.h>
-#endif
 
 #if defined(SOLARIS)
 #  include <ieeefp.h>
@@ -59,10 +56,6 @@
 #include "nsTLiteralString.h"
 #include "prtime.h"
 
-#if defined(XP_WIN)
-// Undefine LoadImage to prevent naming conflict with Windows.
-#  undef LoadImage
-#endif
 
 class JSObject;
 class imgICache;

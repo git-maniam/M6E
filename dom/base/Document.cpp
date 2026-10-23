@@ -1662,7 +1662,6 @@ Document::Document(const char* aContentType,
   mReferrerInfo = new dom::ReferrerInfo(nullptr);
 }
 
-#ifndef ANDROID
 // unused by GeckoView
 static bool IsAboutErrorPage(nsGlobalWindowInner* aWin, const char* aSpec) {
   if (NS_WARN_IF(!aWin)) {
@@ -1685,29 +1684,16 @@ static bool IsAboutErrorPage(nsGlobalWindowInner* aWin, const char* aSpec) {
 
   return aboutSpec.EqualsASCII(aSpec);
 }
-#endif
 
 bool Document::CallerIsTrustedAboutNetError(JSContext* aCx, JSObject* aObject) {
   nsGlobalWindowInner* win = xpc::WindowOrNull(aObject);
-#ifdef ANDROID
-  // GeckoView uses data URLs for error pages, so for now just check for any
-  // error page
-  return win && win->GetDocument() && win->GetDocument()->IsErrorPage();
-#else
   return win && IsAboutErrorPage(win, "neterror");
-#endif
 }
 
 bool Document::CallerIsTrustedAboutHttpsOnlyError(JSContext* aCx,
                                                   JSObject* aObject) {
   nsGlobalWindowInner* win = xpc::WindowOrNull(aObject);
-#ifdef ANDROID
-  // GeckoView uses data URLs for error pages, so for now just check for any
-  // error page
-  return win && win->GetDocument() && win->GetDocument()->IsErrorPage();
-#else
   return win && IsAboutErrorPage(win, "httpsonlyerror");
-#endif
 }
 
 already_AddRefed<mozilla::dom::Promise> Document::AddCertException(
@@ -1827,13 +1813,7 @@ void Document::GetNetErrorInfo(NetErrorInfo& aInfo, ErrorResult& aRv) {
 bool Document::CallerIsTrustedAboutCertError(JSContext* aCx,
                                              JSObject* aObject) {
   nsGlobalWindowInner* win = xpc::WindowOrNull(aObject);
-#ifdef ANDROID
-  // GeckoView uses data URLs for error pages, so for now just check for any
-  // error page
-  return win && win->GetDocument() && win->GetDocument()->IsErrorPage();
-#else
   return win && IsAboutErrorPage(win, "certerror");
-#endif
 }
 
 bool Document::CallerIsSystemPrincipalOrWebCompatAddon(JSContext* aCx,

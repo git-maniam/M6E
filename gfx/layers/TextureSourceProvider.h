@@ -50,10 +50,6 @@ class TextureSourceProvider {
   // return nullptr.
   virtual CompositorOGL* AsCompositorOGL() { return nullptr; }
 
-#ifdef XP_WIN
-  // On Windows, if this provides Direct3D textures, it must expose the device.
-  virtual ID3D11Device* GetD3D11Device() const { return nullptr; }
-#endif
 
   // If this provides OpenGL textures, it must expose the GLContext.
   virtual gl::GLContext* GetGLContext() const { return nullptr; }

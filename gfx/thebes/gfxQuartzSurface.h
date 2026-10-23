@@ -9,11 +9,7 @@
 #include "gfxPoint.h"
 #include "nsSize.h"
 
-#ifdef MOZ_WIDGET_COCOA
 #  include <Carbon/Carbon.h>
-#else
-#  include <CoreGraphics/CoreGraphics.h>
-#endif
 
 class gfxContext;
 class gfxImageSurface;

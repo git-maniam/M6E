@@ -8,14 +8,8 @@
 #include <stdio.h>
 #include <string>
 
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-#define PATHSEP_CHAR '\\'
-#define PATHSEP_STRING "\\"
-#else
 #define PATHSEP_CHAR '/'
 #define PATHSEP_STRING "/"
-#endif
 
 // Make sure that all directories on path exist, excluding the final element of
 // the path.
@@ -33,16 +27,11 @@ struct AutoLockFile {
   // Absolute path to the analysis file
   std::string Filename;
 
-#if defined(_WIN32) || defined(_WIN64)
-  // Handle for the named Mutex
-  HANDLE Handle = NULL;
-#else
   // fd for the *source* file that corresponds to the analysis file. We use
   // the source file because it doesn't change while the analysis file gets
   // repeatedly replaced by a new version written to a separate tmp file.
   // This fd is used when using flock to synchronize access.
   int FileDescriptor = -1;
-#endif
 
   // SrcFile should be the absolute path to the source code file, and DstFile
   // the absolute path to the corresponding analysis file. This constructor

@@ -78,10 +78,6 @@ struct StackTarget {
 
   // The Win32 TIB stack base and limit fields. With lazy commit these may
   // change as the stack grows.
-#  if defined(_WIN32)
-  void* tibStackBase = nullptr;
-  void* tibStackLimit = nullptr;
-#  endif
 
   bool isMainStack() const { return !stack; }
 };

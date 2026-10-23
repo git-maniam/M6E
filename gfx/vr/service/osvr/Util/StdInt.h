@@ -31,10 +31,6 @@
 
 /* IWYU pragma: begin_exports */
 
-#if !defined(_MSC_VER) || (defined(_MSC_VER) && _MSC_VER >= 1600)
-#else
-#  include "MSStdIntC.h"
-#endif
 
 /* IWYU pragma: end_exports */
 

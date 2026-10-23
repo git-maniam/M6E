@@ -3,21 +3,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsRemoteClient.h"
-#ifdef MOZ_WIDGET_GTK
-#  ifdef MOZ_ENABLE_DBUS
-#    include "nsDBusRemoteServer.h"
-#    include "nsDBusRemoteClient.h"
-#  else
-#    include "nsGTKRemoteServer.h"
-#    include "nsXRemoteClient.h"
-#  endif
-#elif defined(XP_WIN)
-#  include "nsWinRemoteServer.h"
-#  include "nsWinRemoteClient.h"
-#elif defined(XP_DARWIN)
 #  include "nsMacRemoteServer.h"
 #  include "nsMacRemoteClient.h"
-#endif
 #include "nsRemoteService.h"
 
 #include "nsIObserverService.h"
@@ -60,11 +47,6 @@ void nsRemoteService::SetProgram(const char* aProgram) {
 }
 void nsRemoteService::SetProfile(nsACString& aProfile) { mProfile = aProfile; }
 
-#ifdef MOZ_WIDGET_GTK
-void nsRemoteService::SetStartupToken(nsACString& aStartupToken) {
-  mStartupToken = aStartupToken;
-}
-#endif
 
 // Attempts to lock the given directory by polling until the timeout is reached.
 static nsresult AcquireLock(nsIFile* aMutexDir, double aTimeout,
@@ -192,19 +174,7 @@ nsresult nsRemoteService::SendCommandLine(const nsACString& aProfile,
   }
 
   UniquePtr<nsRemoteClient> client;
-#ifdef MOZ_WIDGET_GTK
-#  if defined(MOZ_ENABLE_DBUS)
-  client = MakeUnique<nsDBusRemoteClient>(mStartupToken);
-#  else
-  client = MakeUnique<nsXRemoteClient>(mStartupToken);
-#  endif
-#elif defined(XP_WIN)
-  client = MakeUnique<nsWinRemoteClient>();
-#elif defined(XP_DARWIN)
   client = MakeUnique<nsMacRemoteClient>();
-#else
-  return NS_ERROR_NOT_AVAILABLE;
-#endif
 
   nsresult rv = client ? client->Init() : NS_ERROR_FAILURE;
   NS_ENSURE_SUCCESS(rv, rv);
@@ -218,13 +188,6 @@ NS_IMETHODIMP
 nsRemoteService::SendCommandLine(const nsACString& aProfile,
                                  const nsTArray<nsCString>& aArgs,
                                  bool aRaise) {
-#ifdef MOZ_WIDGET_GTK
-  // Linux clients block until they receive a response so it is impossible to
-  // send a remote command to the current profile.
-  if (aProfile.Equals(mProfile)) {
-    return NS_ERROR_INVALID_ARG;
-  }
-#endif
   nsAutoCString binaryPath;
 
   nsTArray<const char*> args;
@@ -254,19 +217,7 @@ void nsRemoteService::StartupServer() {
     return;
   }
 
-#ifdef MOZ_WIDGET_GTK
-#  if defined(MOZ_ENABLE_DBUS)
-  mRemoteServer = MakeUnique<nsDBusRemoteServer>();
-#  else
-  mRemoteServer = MakeUnique<nsGTKRemoteServer>();
-#  endif
-#elif defined(XP_WIN)
-  mRemoteServer = MakeUnique<nsWinRemoteServer>();
-#elif defined(XP_DARWIN)
   mRemoteServer = MakeUnique<nsMacRemoteServer>();
-#else
-  return;
-#endif
 
   if (!mRemoteServer) {
     return;

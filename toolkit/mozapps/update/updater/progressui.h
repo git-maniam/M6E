@@ -7,28 +7,14 @@
 
 #include "updatedefines.h"
 
-#if defined(XP_WIN)
-typedef WCHAR NS_tchar;
-#  define NS_main wmain
-#else
 typedef char NS_tchar;
 #  define NS_main main
-#endif
 
 // Called to perform any initialization of the widget toolkit
 int InitProgressUI(int* argc, NS_tchar*** argv);
 
-#if defined(XP_WIN)
-// Called on the main thread at startup
-int ShowProgressUI(bool indeterminate = false, bool initUIStrings = true);
-int InitProgressUIStrings();
-#elif defined(XP_MACOSX)
 // Called on the main thread at startup
 int ShowProgressUI(bool indeterminate = false);
-#else
-// Called on the main thread at startup
-int ShowProgressUI();
-#endif
 // May be called from any thread
 void QuitProgressUI();
 

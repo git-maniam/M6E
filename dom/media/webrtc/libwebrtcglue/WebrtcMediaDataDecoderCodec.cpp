@@ -85,12 +85,6 @@ bool WebrtcMediaDataDecoder::Configure(
                     settings.max_render_resolution().Height());
   mInfo.mMimeType = mCodecType;
 
-#ifdef MOZ_WIDGET_GTK
-  if (mInfo.mMimeType.EqualsLiteral("video/vp8") &&
-      !StaticPrefs::media_navigator_mediadatadecoder_vp8_hardware_enabled()) {
-    mDisabledHardwareAcceleration = true;
-  }
-#endif
 
   return WEBRTC_VIDEO_CODEC_OK == CreateDecoder();
 }

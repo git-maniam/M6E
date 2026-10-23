@@ -1711,13 +1711,6 @@ QuotaManager::Observer::Observe(nsISupports* aSubject, const char* aTopic,
       return rv;
     }
 
-#ifdef XP_WIN
-    // Annotate if our profile lives on a network resource.
-    bool isNetworkPath = PathIsNetworkPathW(gBasePath->get());
-    CrashReporter::RecordAnnotationBool(
-        CrashReporter::Annotation::QuotaManagerStorageIsNetworkResource,
-        isNetworkPath);
-#endif
 
     QM_LOG(("Base path: %s", NS_ConvertUTF16toUTF8(*gBasePath).get()));
 
@@ -2340,9 +2333,6 @@ uint64_t QuotaManager::CollectOriginsForEviction(
 nsresult QuotaManager::Init() {
   AssertIsOnOwningThread();
 
-#ifdef XP_WIN
-  CacheUseDOSDevicePathSyntaxPrefValue();
-#endif
 
   QM_TRY_INSPECT(const auto& baseDir, QM_NewLocalFile(mBasePath));
 

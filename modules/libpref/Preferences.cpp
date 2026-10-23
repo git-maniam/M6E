@@ -107,17 +107,9 @@
 #  include "mozmemory.h"
 #endif
 
-#ifdef XP_WIN
-#  include "windows.h"
-#endif
 
-#if defined(MOZ_WIDGET_GTK)
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif  // defined(MOZ_WIDGET_GTK)
 
-#ifdef MOZ_WIDGET_COCOA
 #  include "ChannelPrefsUtil.h"
-#endif
 
 using namespace mozilla;
 
@@ -4537,45 +4529,8 @@ class AddPreferencesMemoryReporterRunnable : public Runnable {
 }  // namespace
 
 static const char kTelemetryPref[] = "toolkit.telemetry.enabled";
-#if !(defined(MOZ_WIDGET_ANDROID) && defined(MOZ_TELEMETRY_ON_BY_DEFAULT))
 static const char kChannelPref[] = "app.update.channel";
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-
-static Maybe<bool> TelemetryPrefValue() {
-  // Leave it unchanged if it's already set.
-  // XXX: how could it already be set?
-  if (Preferences::GetType(kTelemetryPref) != nsIPrefBranch::PREF_INVALID) {
-    return Nothing();
-  }
-
-  // Determine the correct default for toolkit.telemetry.enabled. If this
-  // build has MOZ_TELEMETRY_ON_BY_DEFAULT *or* we're on the beta channel,
-  // telemetry is on by default, otherwise not. This is necessary so that
-  // beta users who are testing final release builds don't flipflop defaults.
-#  ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
-  return Some(true);
-#  else
-  nsAutoCString channelPrefValue;
-  (void)Preferences::GetCString(kChannelPref, channelPrefValue,
-                                PrefValueKind::Default);
-  return Some(channelPrefValue.EqualsLiteral("beta"));
-#  endif
-}
-
-/* static */
-void PreferencesImpl::SetupTelemetryPref() {
-  MOZ_ASSERT(XRE_IsParentProcess());
-
-  Maybe<bool> telemetryPrefValue = TelemetryPrefValue();
-  if (telemetryPrefValue.isSome()) {
-    Preferences::SetBool(kTelemetryPref, *telemetryPrefValue,
-                         PrefValueKind::Default);
-  }
-}
-
-#else  // !MOZ_WIDGET_ANDROID
 
 static bool TelemetryPrefValue() {
   // For platforms with Unified Telemetry (here meaning not-Android),
@@ -4620,7 +4575,6 @@ void PreferencesImpl::SetupTelemetryPref() {
   Preferences::Lock(kTelemetryPref);
 }
 
-#endif  // MOZ_WIDGET_ANDROID
 
 /* static */
 already_AddRefed<Preferences> Preferences::GetInstanceForService() {
@@ -6099,24 +6053,8 @@ nsresult PreferencesImpl::InitInitialObjects(bool aIsStartup) {
 
   RefPtr<nsZipArchive> jarReader = Omnijar::GetReader(Omnijar::GRE);
   if (jarReader) {
-#ifdef MOZ_WIDGET_ANDROID
-    // Try to load an architecture-specific greprefs.js first. This will be
-    // present in FAT AAR builds of GeckoView on Android.
-    const char* abi = getenv("MOZ_ANDROID_CPU_ABI");
-    if (abi) {
-      nsAutoCString path;
-      path.AppendPrintf("%s/greprefs.js", abi);
-      rv = pref_ReadPrefFromJar(jarReader, path.get());
-    }
-
-    if (NS_FAILED(rv)) {
-      // Fallback to toplevel greprefs.js if arch-specific load fails.
-      rv = pref_ReadPrefFromJar(jarReader, "greprefs.js");
-    }
-#else
     // Load jar:$gre/omni.jar!/greprefs.js.
     rv = pref_ReadPrefFromJar(jarReader, "greprefs.js");
-#endif
     NS_ENSURE_SUCCESS(rv, rv);
 
     // Load jar:$gre/omni.jar!/defaults/pref/*.js.
@@ -6130,13 +6068,6 @@ nsresult PreferencesImpl::InitInitialObjects(bool aIsStartup) {
     }
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-    // Load jar:$gre/omni.jar!/defaults/pref/$MOZ_ANDROID_CPU_ABI/*.js.
-    nsAutoCString path;
-    path.AppendPrintf("jar:$gre/omni.jar!/defaults/pref/%s/*.js$", abi);
-    pref_ReadDefaultPrefs(jarReader, path.get());
-    NS_ENSURE_SUCCESS(rv, rv);
-#endif
   } else {
     // Load $gre/greprefs.js.
     nsCOMPtr<nsIFile> greprefsFile;
@@ -6165,7 +6096,6 @@ nsresult PreferencesImpl::InitInitialObjects(bool aIsStartup) {
     NS_WARNING("Error parsing application default preferences.");
   }
 
-#ifdef MOZ_WIDGET_COCOA
   // On macOS, channel-prefs.js is no longer bundled with the application and
   // the "app.update.channel" pref is now read from a Framework instead.
   // Previously, channel-prefs.js was read as one of the files in
@@ -6184,7 +6114,6 @@ nsresult PreferencesImpl::InitInitialObjects(bool aIsStartup) {
                /* isSticky */ false,
                /* isLocked */ true,
                /* fromInit */ true);
-#endif
 
   // Load jar:$app/omni.jar!/defaults/preferences/*.js
   // or jar:$gre/omni.jar!/defaults/preferences/*.js.
@@ -6258,23 +6187,6 @@ nsresult PreferencesImpl::InitInitialObjects(bool aIsStartup) {
     }
   }
 
-#if defined(MOZ_WIDGET_GTK) && defined(MOZ_SYSTEM_PREFERENCES)
-  // To ensure the system-wide preferences are not overwritten by
-  // firefox/browser/defauts/preferences/*.js we need to load
-  // the /etc/firefox/defaults/pref/*.js settings as last.
-  // Under Flatpak, the NS_OS_SYSTEM_CONFIG_DIR points to /app/etc/firefox
-  nsCOMPtr<nsIFile> defaultSystemPrefDir;
-  rv = NS_GetSpecialDirectory(NS_OS_SYSTEM_CONFIG_DIR,
-                              getter_AddRefs(defaultSystemPrefDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-  defaultSystemPrefDir->AppendNative("defaults"_ns);
-  defaultSystemPrefDir->AppendNative("pref"_ns);
-
-  rv = pref_LoadPrefsInDir(defaultSystemPrefDir);
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Error parsing application default preferences.");
-  }
-#endif
 
   if (XRE_IsParentProcess()) {
     SetupTelemetryPref();

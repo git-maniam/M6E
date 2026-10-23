@@ -27,13 +27,6 @@
 #include "nsPrintfCString.h"
 #include "nsServiceManagerUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidDecoderModule.h"
-#  include "mozilla/MediaDrmCDMProxy.h"
-#  include "mozilla/RemoteCDMProxy.h"
-#  include "mozilla/RemoteMediaManagerChild.h"
-#  include "mozilla/StaticPrefs_media.h"
-#endif
 #ifdef MOZ_WMF_CDM
 #  include "mozilla/WMFCDMProxy.h"
 #endif
@@ -439,21 +432,6 @@ already_AddRefed<CDMProxy> MediaKeys::CreateCDMProxy() {
   EME_LOG("MediaKeys[{}]::CreateCDMProxy(), isHardwareDecryptionSupported={}",
           fmt::ptr(this), isHardwareDecryptionSupported);
   RefPtr<CDMProxy> proxy;
-#ifdef MOZ_WIDGET_ANDROID
-  if (IsWidevineKeySystem(mKeySystem)) {
-    if (AndroidDecoderModule::IsJavaDecoderModuleAllowed()) {
-      proxy = new MediaDrmCDMProxy(
-          this, mKeySystem,
-          mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
-          mConfig.mPersistentState == MediaKeysRequirement::Required);
-    } else {
-      proxy = RemoteMediaManagerChild::CreateCDM(
-          RemoteMediaIn::RddProcess, this, mKeySystem,
-          mConfig.mDistinctiveIdentifier == MediaKeysRequirement::Required,
-          mConfig.mPersistentState == MediaKeysRequirement::Required);
-    }
-  } else
-#endif
 #ifdef MOZ_WMF_CDM
       if (IsPlayReadyKeySystemAndSupported(mKeySystem) ||
           IsWidevineExperimentKeySystemAndSupported(mKeySystem) ||

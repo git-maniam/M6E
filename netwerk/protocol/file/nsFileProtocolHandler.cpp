@@ -14,23 +14,10 @@
 
 // URL file handling, copied and modified from
 // xpfe/components/bookmarks/src/nsBookmarksService.cpp
-#ifdef XP_WIN
-// clang-format off
-#  include <shlobj.h>
-#  include <intshcut.h>
-// clang-format on
-
-#  include "nsIFileURL.h"
-#  ifdef CompareString
-#    undef CompareString
-#  endif
-#endif
 
 // URL file handling for freedesktop.org
-#ifdef XP_UNIX
 #  include "nsINIParser.h"
 #  define DESKTOP_ENTRY_SECTION "Desktop Entry"
-#endif
 
 //-----------------------------------------------------------------------------
 
@@ -42,50 +29,6 @@ NS_IMPL_ISUPPORTS(nsFileProtocolHandler, nsIFileProtocolHandler,
 //-----------------------------------------------------------------------------
 // nsIProtocolHandler methods:
 
-#if defined(XP_WIN)
-NS_IMETHODIMP
-nsFileProtocolHandler::ReadURLFile(nsIFile* aFile, nsIURI** aURI) {
-  nsAutoString path;
-  nsresult rv = aFile->GetPath(path);
-  if (NS_FAILED(rv)) return rv;
-
-  if (path.Length() < 4) return NS_ERROR_NOT_AVAILABLE;
-  if (!StringTail(path, 4).LowerCaseEqualsLiteral(".url"))
-    return NS_ERROR_NOT_AVAILABLE;
-
-  HRESULT result;
-
-  rv = NS_ERROR_NOT_AVAILABLE;
-
-  IUniformResourceLocatorW* urlLink = nullptr;
-  result =
-      ::CoCreateInstance(CLSID_InternetShortcut, nullptr, CLSCTX_INPROC_SERVER,
-                         IID_IUniformResourceLocatorW, (void**)&urlLink);
-  if (SUCCEEDED(result) && urlLink) {
-    IPersistFile* urlFile = nullptr;
-    result = urlLink->QueryInterface(IID_IPersistFile, (void**)&urlFile);
-    if (SUCCEEDED(result) && urlFile) {
-      result = urlFile->Load(path.get(), STGM_READ);
-      if (SUCCEEDED(result)) {
-        LPWSTR lpTemp = nullptr;
-
-        // The URL this method will give us back seems to be already
-        // escaped. Hence, do not do escaping of our own.
-        result = urlLink->GetURL(&lpTemp);
-        if (SUCCEEDED(result) && lpTemp) {
-          rv = NS_NewURI(aURI, nsDependentString(lpTemp));
-          // free the string that GetURL alloc'd
-          CoTaskMemFree(lpTemp);
-        }
-      }
-      urlFile->Release();
-    }
-    urlLink->Release();
-  }
-  return rv;
-}
-
-#elif defined(XP_UNIX)
 NS_IMETHODIMP
 nsFileProtocolHandler::ReadURLFile(nsIFile* aFile, nsIURI** aURI) {
   // We only support desktop files that end in ".desktop" like the spec says:
@@ -117,43 +60,10 @@ nsFileProtocolHandler::ReadURLFile(nsIFile* aFile, nsIURI** aURI) {
   return NS_NewURI(aURI, url);
 }
 
-#else   // other platforms
-NS_IMETHODIMP
-nsFileProtocolHandler::ReadURLFile(nsIFile* aFile, nsIURI** aURI) {
-  return NS_ERROR_NOT_AVAILABLE;
-}
-#endif  // ReadURLFile()
 
 NS_IMETHODIMP
 nsFileProtocolHandler::ReadShellLink(nsIFile* aFile, nsIURI** aURI) {
-#if defined(XP_WIN)
-  nsAutoString path;
-  MOZ_TRY(aFile->GetPath(path));
-
-  if (path.Length() < 4 ||
-      !StringTail(path, 4).LowerCaseEqualsLiteral(".lnk")) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-  RefPtr<IPersistFile> persistFile;
-  RefPtr<IShellLinkW> shellLink;
-  WCHAR lpTemp[MAX_PATH];
-  // Get a pointer to the IPersistFile interface.
-  if (FAILED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER,
-                              IID_IShellLinkW, getter_AddRefs(shellLink))) ||
-      FAILED(shellLink->QueryInterface(IID_IPersistFile,
-                                       getter_AddRefs(persistFile))) ||
-      FAILED(persistFile->Load(path.get(), STGM_READ)) ||
-      FAILED(shellLink->Resolve(nullptr, SLR_NO_UI)) ||
-      FAILED(shellLink->GetPath(lpTemp, MAX_PATH, nullptr, SLGP_UNCPRIORITY))) {
-    return NS_ERROR_FAILURE;
-  }
-  nsCOMPtr<nsIFile> linkedFile;
-  MOZ_TRY(
-      NS_NewLocalFile(nsDependentString(lpTemp), getter_AddRefs(linkedFile)));
-  return NS_NewFileURI(aURI, linkedFile);
-#else
   return NS_ERROR_NOT_AVAILABLE;
-#endif
 }
 
 NS_IMETHODIMP

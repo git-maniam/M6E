@@ -10,13 +10,7 @@
 #include "mozilla/webrender/RenderThread.h"
 #include "mozilla/webrender/WebRenderAPI.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/layers/TextureHostOGL.h"
-#endif
 
-#ifdef XP_WIN
-#  include "mozilla/layers/TextureD3D11.h"
-#endif
 
 namespace mozilla::layers {
 
@@ -117,27 +111,11 @@ void WebRenderTextureHost::MaybeDestroyRenderTexture() {
 }
 
 void WebRenderTextureHost::NotifyNotUsed() {
-#ifdef MOZ_WIDGET_ANDROID
-  // When SurfaceTextureHost is wrapped by RemoteTextureHostWrapper,
-  // NotifyNotUsed() is handled by SurfaceTextureHost.
-  if (IsWrappingSurfaceTextureHost() &&
-      !mWrappedTextureHost->AsRemoteTextureHostWrapper()) {
-    wr::RenderThread::Get()->NotifyNotUsed(GetExternalImageKey());
-  }
-#endif
   mWrappedTextureHost->NotifyNotUsed();
   TextureHost::NotifyNotUsed();
 }
 
 void WebRenderTextureHost::MaybeNotifyForUse(wr::TransactionBuilder& aTxn) {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (IsWrappingSurfaceTextureHost() &&
-      !mWrappedTextureHost->AsRemoteTextureHostWrapper()) {
-    wr::RenderThread::Get()->NotifyForUse(GetExternalImageKey());
-    aTxn.Notify(wr::Checkpoint::FrameTexturesUpdated,
-                MakeUnique<ScheduleHandleRenderTextureOps>());
-  }
-#endif
 }
 
 bool WebRenderTextureHost::IsWrappingSurfaceTextureHost() {

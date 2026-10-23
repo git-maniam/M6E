@@ -184,15 +184,6 @@ class IOUtils final {
       dom::GlobalObject& aGlobal, const nsAString& aPath,
       const dom::HashAlgorithm aAlgorithm, ErrorResult& aError);
 
-#if defined(XP_WIN)
-  static already_AddRefed<dom::Promise> GetWindowsAttributes(
-      dom::GlobalObject& aGlobal, const nsAString& aPath, ErrorResult& aError);
-
-  static already_AddRefed<dom::Promise> SetWindowsAttributes(
-      dom::GlobalObject& aGlobal, const nsAString& aPath,
-      const mozilla::dom::WindowsFileAttributes& aAttrs, bool aRecursive,
-      ErrorResult& aError);
-#elif defined(XP_MACOSX)
   static already_AddRefed<dom::Promise> HasMacXAttr(dom::GlobalObject& aGlobal,
                                                     const nsAString& aPath,
                                                     const nsACString& aAttr,
@@ -209,15 +200,12 @@ class IOUtils final {
                                                     const nsAString& aPath,
                                                     const nsACString& aAttr,
                                                     ErrorResult& aError);
-#endif
 
-#ifdef XP_UNIX
   using UnixString = dom::OwningUTF8StringOrUint8Array;
   static uint32_t LaunchProcess(dom::GlobalObject& aGlobal,
                                 const dom::Sequence<UnixString>& aArgv,
                                 const dom::LaunchOptions& aOptions,
                                 ErrorResult& aRv);
-#endif
 
   static already_AddRefed<dom::Promise> GetFile(
       dom::GlobalObject& aGlobal, const dom::Sequence<nsString>& aComponents,
@@ -546,31 +534,6 @@ class IOUtils final {
   static Result<nsCString, IOError> ComputeHexDigestSync(
       nsIFile* aFile, const dom::HashAlgorithm aAlgorithm);
 
-#if defined(XP_WIN)
-  /**
-   * Return the Windows-specific attributes of the file.
-   *
-   * @param aFile The location of the file.
-   *
-   * @return The Windows-specific attributes of the file.
-   */
-  static Result<uint32_t, IOError> GetWindowsAttributesSync(nsIFile* aFile);
-
-  /**
-   * Set the Windows-specific attributes of the file.
-   *
-   * @param aFile       The location of the file.
-   * @param aSetAttrs   The attributes to set on the file.
-   * @param aClearAttrs The attributes to clear on the file.
-   * @param aRecursive  Whether or not to apply the change to folder contents
-   *                    recursively.
-   *
-   * @return |Ok| if the attributes were successfully set, or an error.
-   */
-  static Result<Ok, IOError> SetWindowsAttributesSync(
-      nsIFile* aFile, const uint32_t aSetAttrs, const uint32_t aClearAttrs,
-      bool aRecursive);
-#elif defined(XP_MACOSX)
   static Result<bool, IOError> HasMacXAttrSync(nsIFile* aFile,
                                                const nsCString& aAttr);
   static Result<nsTArray<uint8_t>, IOError> GetMacXAttrSync(
@@ -580,7 +543,6 @@ class IOUtils final {
                                              const nsTArray<uint8_t>& aValue);
   static Result<Ok, IOError> DelMacXAttrSync(nsIFile* aFile,
                                              const nsCString& aAttr);
-#endif
 
   static void GetShutdownClient(dom::GlobalObject& aGlobal,
                                 JS::MutableHandle<JS::Value> aClient,

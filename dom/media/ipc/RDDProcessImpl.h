@@ -5,9 +5,6 @@
 #define _include_dom_media_ipc_RDDProcessImpl_h_
 #include "mozilla/ipc/ProcessChild.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/mscom/ProcessRuntime.h"
-#endif
 
 #include "RDDParent.h"
 
@@ -26,10 +23,6 @@ class RDDProcessImpl final : public ipc::ProcessChild {
  private:
   RefPtr<RDDParent> mRDD = new RDDParent;
 
-#if defined(XP_WIN)
-  // This object initializes and configures COM.
-  mozilla::mscom::ProcessRuntime mCOMRuntime;
-#endif
 };
 
 }  // namespace mozilla

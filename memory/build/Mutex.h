@@ -5,23 +5,13 @@
 #ifndef Mutex_h
 #define Mutex_h
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#else
 #  include <pthread.h>
-#endif
-#if defined(XP_DARWIN)
 #  include <os/lock.h>
-#endif
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
-#if defined(XP_WIN)
-#  include "mozilla/PlatformMutex.h"
-#endif
 #include "mozilla/ThreadSafety.h"
 
-#if defined(XP_DARWIN)
 // For information about the following undocumented flags and functions see
 // https://github.com/apple/darwin-xnu/blob/main/bsd/sys/ulock.h and
 // https://github.com/apple/darwin-libplatform/blob/main/private/os/lock_private.h
@@ -35,7 +25,6 @@ OS_UNFAIR_LOCK_AVAILABILITY
 OS_EXPORT OS_NOTHROW OS_NONNULL_ALL void os_unfair_lock_lock_with_options(
     os_unfair_lock_t lock, os_unfair_lock_options_t options);
 }
-#endif  // defined(XP_DARWIN)
 
 // Mutexes are based on spinlocks.  We can't use normal pthread spinlocks in all
 // places, because they require malloc()ed memory, which causes bootstrapping
@@ -47,17 +36,8 @@ OS_EXPORT OS_NOTHROW OS_NONNULL_ALL void os_unfair_lock_lock_with_options(
 // that is constinit, but the mutex won't be initialised, you must still
 // call Init() before the mutex can be used.
 struct MOZ_CAPABILITY("mutex") Mutex
-#if defined(XP_WIN)
-    : private mozilla::detail::MutexImpl
-#endif
 {
-#if defined(XP_DARWIN)
   os_unfair_lock mMutex = OS_UNFAIR_LOCK_INIT;
-#elif defined(XP_LINUX) && !defined(ANDROID)
-  pthread_mutex_t mMutex = PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP;
-#elif !defined(XP_WIN)
-  pthread_mutex_t mMutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
 
 #ifdef MOZ_DEBUG
   bool mInitialised = false;
@@ -77,36 +57,13 @@ struct MOZ_CAPABILITY("mutex") Mutex
 #ifdef MOZ_DEBUG
     mInitialised = true;
 #endif
-#if defined(XP_WIN)
-    reset();
-    return true;
-#elif defined(XP_DARWIN)
     mMutex = OS_UNFAIR_LOCK_INIT;
-#elif defined(XP_LINUX) && !defined(ANDROID)
-    pthread_mutexattr_t attr;
-    if (pthread_mutexattr_init(&attr) != 0) {
-      return false;
-    }
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ADAPTIVE_NP);
-    if (pthread_mutex_init(&mMutex, &attr) != 0) {
-      pthread_mutexattr_destroy(&attr);
-      return false;
-    }
-    pthread_mutexattr_destroy(&attr);
-#else
-    if (pthread_mutex_init(&mMutex, nullptr) != 0) {
-      return false;
-    }
-#endif
     return true;
   }
 
   inline void Lock() MOZ_CAPABILITY_ACQUIRE() {
     MOZ_ASSERT(mInitialised);
 
-#if defined(XP_WIN)
-    mozilla::detail::MutexImpl::lock();
-#elif defined(XP_DARWIN)
     // We rely on a non-public function to improve performance here.
     // The OS_UNFAIR_LOCK_DATA_SYNCHRONIZATION flag informs the kernel that
     // the calling thread is able to make progress even in absence of actions
@@ -117,9 +74,6 @@ struct MOZ_CAPABILITY("mutex") Mutex
     os_unfair_lock_lock_with_options(
         &mMutex,
         OS_UNFAIR_LOCK_DATA_SYNCHRONIZATION | OS_UNFAIR_LOCK_ADAPTIVE_SPIN);
-#else
-    pthread_mutex_lock(&mMutex);
-#endif
   }
 
   [[nodiscard]] bool TryLock() MOZ_TRY_ACQUIRE(true);
@@ -127,19 +81,11 @@ struct MOZ_CAPABILITY("mutex") Mutex
   inline void Unlock() MOZ_CAPABILITY_RELEASE() {
     MOZ_ASSERT(mInitialised);
 
-#if defined(XP_WIN)
-    mozilla::detail::MutexImpl::unlock();
-#elif defined(XP_DARWIN)
     os_unfair_lock_unlock(&mMutex);
-#else
-    pthread_mutex_unlock(&mMutex);
-#endif
   }
 
-#if defined(XP_DARWIN)
   static bool SpinInKernelSpace();
   static const bool gSpinInKernelSpace;
-#endif  // XP_DARWIN
 };
 
 // Mutex that can be used for static initialization.
@@ -147,17 +93,11 @@ struct MOZ_CAPABILITY("mutex") StaticMutex : public Mutex {
   constexpr StaticMutex() : Mutex(true) {}
 };
 
-#ifdef XP_WIN
-typedef DWORD ThreadId;
-inline ThreadId GetThreadId() { return GetCurrentThreadId(); }
-inline bool ThreadIdEqual(ThreadId a, ThreadId b) { return a == b; }
-#else
 typedef pthread_t ThreadId;
 inline ThreadId GetThreadId() { return pthread_self(); }
 inline bool ThreadIdEqual(ThreadId a, ThreadId b) {
   return pthread_equal(a, b);
 }
-#endif
 
 class MOZ_CAPABILITY("mutex") MaybeMutex : public Mutex {
  public:
@@ -174,7 +114,6 @@ class MOZ_CAPABILITY("mutex") MaybeMutex : public Mutex {
     return Mutex::Init();
   }
 
-#ifndef XP_WIN
   // Re initialise after fork(), assumes that mDoLock is already initialised.
   void Reinit(pthread_t aForkingThread) {
     if (mDoLock == MUST_LOCK) {
@@ -194,7 +133,6 @@ class MOZ_CAPABILITY("mutex") MaybeMutex : public Mutex {
     }
 #  endif
   }
-#endif
 
   inline void Lock() MOZ_CAPABILITY_ACQUIRE() {
     if (ShouldLock()) {
@@ -221,9 +159,7 @@ class MOZ_CAPABILITY("mutex") MaybeMutex : public Mutex {
 
  private:
   bool ShouldLock() {
-#ifndef XP_WIN
     MOZ_ASSERT(!mDeniedAfterFork);
-#endif
 
     if (mDoLock == MUST_LOCK) {
       return true;

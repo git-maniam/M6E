@@ -4,10 +4,6 @@
 
 #include "elevation_type.h"
 #include "updatecommon.h"
-#ifdef XP_WIN
-#  include "mozilla/WinHeaderOnlyUtils.h"
-#  include "mozilla/WinTokenUtils.h"
-#endif
 
 const char* BoolResultToString(BoolResult boolResult) {
   switch (boolResult) {
@@ -29,32 +25,6 @@ const char* BoolResultToString(BoolResult boolResult) {
 // _usually_ be unelevated and the second invocation should always be
 // elevated. `gInvocation` can be used for that purpose.
 BoolResult isProcessElevated(const NS_tchar* cmd) {
-#ifdef XP_WIN
-  auto isAdmin = mozilla::UserHasAdminPrivileges();
-  if (isAdmin.isErr()) {
-    fprintf(stderr,
-            "Failed to query if the current process has admin privileges.\n");
-    return BoolResult::Error;
-  }
-  auto isLocalSystem = mozilla::UserIsLocalSystem();
-  if (isLocalSystem.isErr()) {
-    fprintf(
-        stderr,
-        "Failed to query if the current process has LocalSystem privileges.\n");
-    return BoolResult::Error;
-  }
-  // While is it technically redundant to check LocalSystem in addition to
-  // Admin given the former contains privileges of the latter, we have opt
-  // to verify both. A few reasons for this decision include the off chance
-  // that the Windows security model changes in the future and weird system
-  // setups where someone has modified the group lists in surprising ways.
-  //
-  // We use this to detect if we were launched from the Maintenance Service
-  // under LocalSystem or UAC under the user's account, and therefore can
-  // proceed with an install to `Program Files` or `Program Files(x86)`.
-  return isAdmin.unwrap() || isLocalSystem.unwrap() ? BoolResult::True
-                                                    : BoolResult::False;
-#elif defined(XP_MACOSX)
   if (!cmd) {
     return BoolResult::False;
   }
@@ -62,9 +32,6 @@ BoolResult isProcessElevated(const NS_tchar* cmd) {
                  nullptr
              ? BoolResult::True
              : BoolResult::False;
-#else
-  return BoolResult::False;
-#endif
 }
 
 const char* elevationTypeToString(ElevationType elevationType) {
@@ -86,11 +53,9 @@ const char* elevationTypeToString(ElevationType elevationType) {
 ElevationType getElevationType(int argc, NS_tchar** argv) {
   // First, are we elevated at all?
   const NS_tchar* cmd = nullptr;
-#ifdef XP_MACOSX
   if (argc > 0) {
     cmd = argv[0];
   }
-#endif
   BoolResult isElevatedResult = isProcessElevated(cmd);
   if (isElevatedResult == BoolResult::Error) {
     fprintf(stderr, "Check for elevation failed\n");

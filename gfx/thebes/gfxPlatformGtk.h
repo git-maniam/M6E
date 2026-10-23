@@ -10,10 +10,6 @@
 #include "nsAutoRef.h"
 #include "nsTArray.h"
 
-#ifdef MOZ_X11
-struct _XDisplay;
-typedef struct _XDisplay Display;
-#endif  // MOZ_X11
 
 class gfxPlatformGtk final : public gfxPlatform {
   friend class gfxPlatform;

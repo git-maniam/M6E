@@ -11,14 +11,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#ifdef XP_WIN
-#  include <direct.h>
-#  include <process.h>
-#  include <string.h>
-#  include <wchar.h>
-
-#  include "util/WindowsWrapper.h"
-#elif __wasi__
+#if   __wasi__
 #  include <dirent.h>
 #  include <sys/types.h>
 #  include <unistd.h>
@@ -55,12 +48,7 @@
 
 #include "vm/JSObject-inl.h"
 
-#ifdef XP_WIN
-#  ifndef PATH_MAX
-#    define PATH_MAX (MAX_PATH > _MAX_DIR ? MAX_PATH : _MAX_DIR)
-#  endif
-#  define getcwd _getcwd
-#elif defined(__wasi__)
+#if   defined(__wasi__)
 // Nothing.
 #else
 #  include <libgen.h>
@@ -74,44 +62,11 @@ namespace shell {
 bool IsAbsolutePath(JSLinearString* filename) {
   size_t length = filename->length();
 
-#ifdef XP_WIN
-  // On Windows there are various forms of absolute paths (see
-  // http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
-  // for details):
-  //
-  //   "\..."
-  //   "\\..."
-  //   "C:\..."
-  //
-  // The first two cases are handled by the common test below so we only need a
-  // specific test for the last one here.
-
-  if (length > 3 && mozilla::IsAsciiAlpha(CharAt(filename, 0)) &&
-      CharAt(filename, 1) == u':' && CharAt(filename, 2) == u'\\') {
-    return true;
-  }
-#endif
 
   return length > 0 && CharAt(filename, 0) == PathSeparator;
 }
 
 static UniqueChars DirectoryName(JSContext* cx, const char* path) {
-#ifdef XP_WIN
-  UniqueWideChars widePath = JS::EncodeUtf8ToWide(cx, path);
-  if (!widePath) {
-    return nullptr;
-  }
-
-  wchar_t dirName[PATH_MAX + 1];
-  wchar_t* drive = nullptr;
-  wchar_t* fileName = nullptr;
-  wchar_t* fileExt = nullptr;
-
-  // The docs say it can return EINVAL, but the compiler says it's void
-  _wsplitpath(widePath.get(), drive, dirName, fileName, fileExt);
-
-  return JS::EncodeWideToUtf8(cx, dirName);
-#else
   UniqueChars narrowPath = JS::EncodeUtf8ToNarrow(cx, path);
   if (!narrowPath) {
     return nullptr;
@@ -154,7 +109,6 @@ static UniqueChars DirectoryName(JSContext* cx, const char* path) {
 #  endif
 
   return JS::EncodeNarrowToUtf8(cx, dirName);
-#endif
 }
 
 /*
@@ -168,9 +122,7 @@ static UniqueChars DirectoryName(JSContext* cx, const char* path) {
 JSString* ResolvePath(JSContext* cx, HandleString filenameStr,
                       PathResolutionMode resolveMode) {
   if (!filenameStr) {
-#ifdef XP_WIN
-    return JS_NewStringCopyZ(cx, "nul");
-#elif defined(__wasi__)
+#if   defined(__wasi__)
     MOZ_CRASH("NYI for WASI");
     return nullptr;
 #else
@@ -236,29 +188,12 @@ JSString* ResolvePath(JSContext* cx, HandleString filenameStr,
 }
 
 FILE* OpenFile(JSContext* cx, const char* filename, const char* mode) {
-#ifdef XP_WIN
-  // Maximum valid mode string is "w+xb". Longer strings or strings
-  // containing invalid input lead to undefined behavior.
-  constexpr size_t MaxValidModeLength = 4;
-  wchar_t wideMode[MaxValidModeLength + 1] = {0};
-  for (size_t i = 0; i < MaxValidModeLength && mode[i] != '\0'; i++) {
-    wideMode[i] = mode[i] & 0x7f;
-  }
-
-  UniqueWideChars wideFilename = JS::EncodeUtf8ToWide(cx, filename);
-  if (!wideFilename) {
-    return nullptr;
-  }
-
-  FILE* file = _wfopen(wideFilename.get(), wideMode);
-#else
   UniqueChars narrowFilename = JS::EncodeUtf8ToNarrow(cx, filename);
   if (!narrowFilename) {
     return nullptr;
   }
 
   FILE* file = fopen(narrowFilename.get(), mode);
-#endif
 
   if (!file) {
     if (UniqueChars error = SystemErrorMessage(cx, errno)) {
@@ -386,21 +321,12 @@ JSObject* FileAsImmutableTypedArray(JSContext* cx,
  * Return the current working directory or |null| on failure.
  */
 UniqueChars GetCWD(JSContext* cx) {
-#ifdef XP_WIN
-  wchar_t buffer[PATH_MAX + 1];
-  const wchar_t* cwd = _wgetcwd(buffer, PATH_MAX);
-  if (!cwd) {
-    return nullptr;
-  }
-  return JS::EncodeWideToUtf8(cx, buffer);
-#else
   char buffer[PATH_MAX + 1];
   const char* cwd = getcwd(buffer, PATH_MAX);
   if (!cwd) {
     return nullptr;
   }
   return JS::EncodeNarrowToUtf8(cx, buffer);
-#endif
 }
 
 static bool ReadFile(JSContext* cx, unsigned argc, Value* vp,
@@ -502,7 +428,6 @@ static bool ListDir(JSContext* cx, unsigned argc, Value* vp,
     return true;
   };
 
-#if defined(XP_UNIX)
   {
     DIR* dir = opendir(pathname.get());
     if (!dir) {
@@ -522,36 +447,6 @@ static bool ListDir(JSContext* cx, unsigned argc, Value* vp,
       }
     }
   }
-#elif defined(XP_WIN)
-  {
-    const size_t pathlen = strlen(pathname.get());
-    Vector<char> pattern(cx);
-    if (!pattern.append(pathname.get(), pathlen) ||
-        !pattern.append(PathSeparator) || !pattern.append("*", 2)) {
-      js::ReportOutOfMemory(cx);
-      return false;
-    }
-
-    WIN32_FIND_DATAA FindFileData;
-    HANDLE hFind = FindFirstFileA(pattern.begin(), &FindFileData);
-    if (hFind == INVALID_HANDLE_VALUE) {
-      JS_ReportErrorUTF8(cx, "os.file.listDir is unable to open: %s",
-                         pathname.get());
-      return false;
-    }
-    auto close = mozilla::MakeScopeExit([&] {
-      if (!FindClose(hFind)) {
-        MOZ_CRASH("Could not close Find");
-      }
-    });
-    for (bool found = (hFind != INVALID_HANDLE_VALUE); found;
-         found = FindNextFileA(hFind, &FindFileData)) {
-      if (!append(FindFileData.cFileName)) {
-        return false;
-      }
-    }
-  }
-#endif
 
   JSObject* array = JS::NewArrayObject(cx, elems);
   if (!array) {
@@ -1005,7 +900,6 @@ static bool os_getpid(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-#if !defined(XP_WIN)
 
 // There are two possible definitions of strerror_r floating around. The GNU
 // one returns a char* which may or may not be the buffer you passed in. The
@@ -1018,17 +912,8 @@ inline char* strerror_message(int result, char* buffer) {
 
 inline char* strerror_message(char* result, char* buffer) { return result; }
 
-#endif
 
 UniqueChars SystemErrorMessage(JSContext* cx, int errnum) {
-#if defined(XP_WIN)
-  wchar_t buffer[200];
-  const wchar_t* errstr = buffer;
-  if (_wcserror_s(buffer, std::size(buffer), errnum) != 0) {
-    errstr = L"unknown error";
-  }
-  return JS::EncodeWideToUtf8(cx, errstr);
-#else
   char buffer[200];
   const char* errstr =
       strerror_message(strerror_r(errno, buffer, std::size(buffer)), buffer);
@@ -1036,7 +921,6 @@ UniqueChars SystemErrorMessage(JSContext* cx, int errnum) {
     errstr = "unknown error";
   }
   return JS::EncodeNarrowToUtf8(cx, errstr);
-#endif
 }
 
 #ifndef __wasi__
@@ -1066,25 +950,12 @@ static bool os_system(JSContext* cx, unsigned argc, Value* vp) {
     return false;
   }
 
-#  ifdef XP_WIN
-  UniqueWideChars wideCommand = JS::EncodeUtf8ToWide(cx, command.get());
-  if (!wideCommand) {
-    return false;
-  }
-
-  // Existing streams must be explicitly flushed or closed before calling
-  // the system() function on Windows.
-  _flushall();
-
-  int result = _wsystem(wideCommand.get());
-#  else
   UniqueChars narrowCommand = JS::EncodeUtf8ToNarrow(cx, command.get());
   if (!narrowCommand) {
     return false;
   }
 
   int result = system(narrowCommand.get());
-#  endif
   if (result == -1) {
     ReportSysError(cx, "system call failed");
     return false;
@@ -1094,7 +965,6 @@ static bool os_system(JSContext* cx, unsigned argc, Value* vp) {
   return true;
 }
 
-#  ifndef XP_WIN
 static bool os_spawn(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
@@ -1217,7 +1087,6 @@ static bool os_waitpid(JSContext* cx, unsigned argc, Value* vp) {
   args.rval().setObject(*info);
   return true;
 }
-#  endif
 #endif  // !__wasi__
 
 // clang-format off
@@ -1236,7 +1105,6 @@ static const JSFunctionSpecWithHelp os_functions[] = {
 "  Execute command on the current host, returning result code or throwing an\n"
 "  exception on failure."),
 
-#  ifndef XP_WIN
     JS_FN_HELP("spawn", os_spawn, 1, 0,
 "spawn(command)",
 "  Start up a separate process running the given command. Returns the pid."),
@@ -1251,7 +1119,6 @@ static const JSFunctionSpecWithHelp os_functions[] = {
 "  Calls waitpid(). 'nohang' is a boolean indicating whether to pass WNOHANG.\n"
 "  The return value is an object containing a 'pid' field, if a process was waitable\n"
 "  and an 'exitStatus' field if a pid exited."),
-#  endif
 #endif  // !__wasi__
 
     JS_FS_HELP_END
@@ -1338,7 +1205,3 @@ bool DefineOS(JSContext* cx, HandleObject global, bool fuzzingSafe,
 }  // namespace shell
 }  // namespace js
 
-#ifdef XP_WIN
-#  undef PATH_MAX
-#  undef getcwd
-#endif

@@ -42,14 +42,6 @@
 #include "jit/MacroAssembler-inl.h"
 #include "vm/JSObject-inl.h"
 
-#ifdef XP_WIN
-// We only need the `windows.h` header, but this file can get unified built
-// with WasmSignalHandlers.cpp, which requires `winternal.h` to be included
-// before the `windows.h` header, and so we must include it here for that case.
-#  include <winternl.h>  // must include before util/WindowsWrapper.h's `#undef`s
-
-#  include "util/WindowsWrapper.h"
-#endif
 
 using namespace js;
 using namespace js::jit;
@@ -541,11 +533,6 @@ void ContStack::init(ContStackArena* arena, uintptr_t allocationBase,
 
   stack->target_.stack = stack;
   stack->target_.jitLimit = stack->stackLimitForJit_;
-#  if defined(_WIN32)
-  stack->target_.tibStackBase = reinterpret_cast<void*>(stack->stackBase_);
-  stack->target_.tibStackLimit =
-      reinterpret_cast<void*>(stack->stackLimitForSystem_);
-#  endif
 
   MOZ_ASSERT(
       (reinterpret_cast<uintptr_t>(stack->baseFrame()) + sizeof(wasm::Frame)) %
@@ -1219,20 +1206,6 @@ void EmitEnterStackTarget(MacroAssembler& masm, Register cx,
   // TIB directly through its segment register in masm.
   //
   // NOTE: cx will be clobbered here.
-#  ifdef _WIN32
-  // Load the TIB into cx.
-  masm.loadPtr(
-      Address(cx, JSContext::offsetOfWasm() + wasm::Context::offsetOfTib()),
-      cx);
-
-  masm.loadPtr(Address(stackTarget, offsetof(wasm::StackTarget, tibStackBase)),
-               scratch);
-  masm.storePtr(scratch, Address(cx, offsetof(_NT_TIB, StackBase)));
-
-  masm.loadPtr(Address(stackTarget, offsetof(wasm::StackTarget, tibStackLimit)),
-               scratch);
-  masm.storePtr(scratch, Address(cx, offsetof(_NT_TIB, StackLimit)));
-#  endif
 }
 
 // Performs a full stack switch to the destination described by `switchTarget`.
@@ -1719,23 +1692,6 @@ static void EmitPushHandlers(MacroAssembler& masm, size_t sizeOfHandlers,
   masm.bind(&onMainStack);
 
   // Refresh the Win32 TIB limits on wasm::Context with the latest values.
-#  ifdef _WIN32
-  masm.loadPtr(Address(scratch3, JSContext::offsetOfWasm() +
-                                     wasm::Context::offsetOfTib()),
-               scratch2);
-  masm.loadPtr(Address(scratch2, offsetof(_NT_TIB, StackBase)), scratch1);
-  masm.storePtr(
-      scratch1,
-      Address(scratch3, JSContext::offsetOfWasm() +
-                            wasm::Context::offsetOfMainStackTarget() +
-                            offsetof(wasm::StackTarget, tibStackBase)));
-  masm.loadPtr(Address(scratch2, offsetof(_NT_TIB, StackLimit)), scratch1);
-  masm.storePtr(
-      scratch1,
-      Address(scratch3, JSContext::offsetOfWasm() +
-                            wasm::Context::offsetOfMainStackTarget() +
-                            offsetof(wasm::StackTarget, tibStackLimit)));
-#  endif
 
   // This will be the base handler on the main stack. Assert no one has set it.
   masm.assertPtrZero(Address(

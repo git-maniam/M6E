@@ -429,9 +429,6 @@ class nsAccessibilityService final : public mozilla::a11y::DocManager,
   static uint64_t GetActiveCacheDomains() { return gCacheDomains; }
   bool ShouldAllowNewCacheDomains() { return mShouldAllowNewCacheDomains; }
 
-#if defined(ANDROID)
-  static mozilla::Monitor& GetAndroidMonitor();
-#endif
 
  private:
   // nsAccessibilityService creation is controlled by friend

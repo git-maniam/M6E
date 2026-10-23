@@ -11,9 +11,6 @@
 #include "mozilla/LinkedList.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/MoveOnlyFunction.h"
-#if defined(XP_WIN)
-#  include "mozilla/ipc/Neutering.h"
-#endif  // defined(XP_WIN)
 
 #include <functional>
 
@@ -297,43 +294,6 @@ class MessageChannel : HasResultCodes {
   }
 #endif
 
-#ifdef XP_WIN
-  struct MOZ_STACK_CLASS SyncStackFrame {
-    explicit SyncStackFrame(MessageChannel* channel);
-    ~SyncStackFrame();
-
-    bool mSpinNestedEvents;
-    bool mListenerNotified;
-    MessageChannel* mChannel;
-
-    // The previous stack frame for this channel.
-    SyncStackFrame* mPrev;
-
-    // The previous stack frame on any channel.
-    SyncStackFrame* mStaticPrev;
-  };
-  friend struct MessageChannel::SyncStackFrame;
-
-  static bool IsSpinLoopActive() {
-    for (SyncStackFrame* frame = sStaticTopFrame; frame; frame = frame->mPrev) {
-      if (frame->mSpinNestedEvents) return true;
-    }
-    return false;
-  }
-
- protected:
-  // The deepest sync stack frame for this channel.
-  SyncStackFrame* mTopFrame = nullptr;
-
-  bool mIsSyncWaitingOnNonMainThread = false;
-
-  // The deepest sync stack frame on any channel.
-  static SyncStackFrame* sStaticTopFrame;
-
- public:
-  void ProcessNativeEventsInInterruptCall();
-  static void NotifyGeckoEventDispatch();
-#endif  // defined(XP_WIN)
 
  private:
   void PostErrorNotifyTask() MOZ_REQUIRES(*mMonitor);
@@ -733,9 +693,6 @@ class MessageChannel : HasResultCodes {
   // by mMonitor.
   bool mOnCxxStack = false;
 
-#ifdef XP_WIN
-  HANDLE mEvent;
-#endif
 
   // Should the channel abort the process from the I/O thread when
   // a channel error occurs?

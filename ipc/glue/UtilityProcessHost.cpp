@@ -20,13 +20,7 @@
 #  include "mozilla/Sandbox.h"
 #endif
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxBrokerPolicyFactory.h"
-#endif
 
-#if defined(XP_WIN)
-#  include "mozilla/WinDllServices.h"
-#endif  // defined(XP_WIN)
 
 #if defined(MOZ_WMF_CDM) && defined(MOZ_SANDBOX) && !defined(MOZ_ASAN)
 #  define MOZ_WMF_CDM_LPAC_SANDBOX true
@@ -183,43 +177,8 @@ void UtilityProcessHost::InitAfterConnect(bool aSucceeded) {
 
   Maybe<FileDescriptor> brokerFd;
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  UniquePtr<SandboxBroker::Policy> policy;
-  if (IsUtilitySandboxEnabled(mUtilitySandbox)) {
-    switch (mUtilitySandbox) {
-      case SandboxingKind::GENERIC_UTILITY:
-        policy = SandboxBrokerPolicyFactory::GetUtilityProcessPolicy(
-            GetActor()->OtherPid());
-        break;
-
-#  ifndef ANDROID
-      case SandboxingKind::HW_INFERENCE:
-        policy = SandboxBrokerPolicyFactory::GetHWInferencePolicy(
-            GetActor()->OtherPid());
-        break;
-#  endif  // !ANDROID
-
-      default:
-        MOZ_ASSERT(false, "Invalid SandboxingKind");
-        break;
-    }
-  }
-  if (policy != nullptr) {
-    brokerFd = Some(FileDescriptor());
-    mSandboxBroker = SandboxBroker::Create(
-        std::move(policy), GetActor()->OtherPid(), brokerFd.ref());
-    // This is unlikely to fail and probably indicates OS resource
-    // exhaustion, but we can at least try to recover.
-    (void)NS_WARN_IF(mSandboxBroker == nullptr);
-    MOZ_ASSERT(brokerFd.ref().IsValid());
-  }
-#endif  // XP_LINUX && MOZ_SANDBOX
 
   bool isReadyForBackgroundProcessing = false;
-#if defined(XP_WIN)
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  isReadyForBackgroundProcessing = dllSvc->IsReadyForBackgroundProcessing();
-#endif
 
   (void)GetActor()->SendInit(brokerFd, Telemetry::CanRecordReleaseData(),
                              isReadyForBackgroundProcessing);

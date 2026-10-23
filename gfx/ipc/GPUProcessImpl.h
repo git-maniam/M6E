@@ -7,9 +7,6 @@
 #include "GPUParent.h"
 #include "mozilla/ipc/ProcessChild.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/mscom/ProcessRuntime.h"
-#endif
 
 namespace mozilla {
 namespace gfx {
@@ -27,10 +24,6 @@ class GPUProcessImpl final : public ipc::ProcessChild {
  private:
   RefPtr<GPUParent> mGPU = new GPUParent;
 
-#if defined(XP_WIN)
-  // This object initializes and configures COM.
-  mozilla::mscom::ProcessRuntime mCOMRuntime;
-#endif
 };
 
 }  // namespace gfx

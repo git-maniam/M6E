@@ -16,11 +16,9 @@
 #include "nsIContentInlines.h"
 #include "nsIWidget.h"
 #include "nsPIDOMWindowInlines.h"
-#ifdef XP_MACOSX
 #  include "mozilla/EventDispatcher.h"
 #  include "mozilla/dom/Event.h"
 #  include "nsFocusManager.h"
-#endif
 
 namespace mozilla::dom {
 

@@ -29,7 +29,6 @@ mozilla::StaticRefPtr<nsIFile> sOurAppFile;
 already_AddRefed<nsIFile> nsMIMEInfoBase::GetCanonicalExecutable(
     nsIFile* aFile) {
   nsCOMPtr<nsIFile> binary = aFile;
-#ifdef XP_MACOSX
   nsAutoString path;
   if (binary) {
     binary->GetPath(path);
@@ -51,7 +50,6 @@ already_AddRefed<nsIFile> nsMIMEInfoBase::GetCanonicalExecutable(
       binary->GetLeafName(leafName);
     }
   }
-#endif
   return binary.forget();
 }
 
@@ -325,13 +323,11 @@ nsMIMEInfoBase::LaunchWithFile(nsIFile* aFile) {
   if (mPreferredAction == useHelperApp) {
     if (!mPreferredApplication) return NS_ERROR_FILE_NOT_FOUND;
 
-#ifdef XP_UNIX
     nsCOMPtr<nsIGIOHandlerApp> handler =
         do_QueryInterface(mPreferredApplication, &rv);
     if (NS_SUCCEEDED(rv)) {
       return handler->LaunchFile(aFile->NativePath());
     }
-#endif
     // at the moment, we only know how to hand files off to local handlers
     nsCOMPtr<nsILocalHandlerApp> localHandler =
         do_QueryInterface(mPreferredApplication, &rv);

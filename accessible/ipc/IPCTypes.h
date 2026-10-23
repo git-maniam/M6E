@@ -131,7 +131,6 @@ typedef uint32_t role;
  * define types used by PDocAccessible differently depending on platform.
  */
 
-#if defined(MOZ_WIDGET_COCOA)
 #  if defined(ACCESSIBILITY)
 #    include "mozilla/a11y/PlatformExtTypes.h"
 namespace IPC {
@@ -151,6 +150,5 @@ typedef uint32_t EWhichRange;
 }  // namespace a11y
 }  // namespace mozilla
 #  endif  // defined(ACCESSIBILITY)
-#endif    // defined(MOZ_WIDGET_COCOA)
 
 #endif  // mozilla_a11y_IPCTypes_h

@@ -249,16 +249,6 @@ class DocAccessibleParent : public RemoteAccessible,
     return LiveDocs().Get(mChildDocs[aIdx]);
   }
 
-#if defined(XP_WIN)
-  void MaybeInitWindowEmulation();
-
-  /**
-   * Set emulated native window handle for a document.
-   * @param aWindowHandle emulated native window handle
-   */
-  void SetEmulatedWindowHandle(HWND aWindowHandle);
-  HWND GetEmulatedWindowHandle() const { return mEmulatedWindowHandle; }
-#endif
 
   // Accessible
   virtual Accessible* Parent() const override {
@@ -325,7 +315,6 @@ class DocAccessibleParent : public RemoteAccessible,
   // are currently on screen (making any acc not in this list offscreen).
   nsTHashSet<uint64_t> mOnScreenAccessibles;
 
-#ifdef MOZ_WIDGET_COCOA
   // Bounds (in screen-relative Gecko device pixels) of the focused accessible.
   // This is used to suppress redundant notifications on viewport cache updates.
   // This field is updated:
@@ -334,7 +323,6 @@ class DocAccessibleParent : public RemoteAccessible,
   //   the focused accessible differ from the last-cached bounds in this field.
   // Nothing() indicates we have not yet computed bounds for the focused acc.
   Maybe<LayoutDeviceIntRect> mFocusedAccBounds;
-#endif
 
   static DocAccessibleParent* GetFrom(dom::WindowContext* aWindowContext,
                                       bool aAllowShutdown = false);
@@ -427,10 +415,6 @@ class DocAccessibleParent : public RemoteAccessible,
 
   nsTArray<uint64_t> mChildDocs;
 
-#if defined(XP_WIN)
-  // The handle associated with the emulated window that contains this document
-  HWND mEmulatedWindowHandle;
-#endif  // defined(XP_WIN)
 
   /*
    * Conceptually this is a map from IDs to proxies, but we store the ID in the

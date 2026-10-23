@@ -11,10 +11,6 @@
 
 #include "nsIXULRuntime.h"
 
-#ifdef __OpenBSD__
-#  include "mozilla/ipc/UtilityProcessSandboxing.h"
-#  include "nsXULAppAPI.h"
-#endif
 
 namespace mozilla {
 
@@ -29,11 +25,7 @@ int GetEffectiveSocketProcessSandboxLevel();
 int GetEffectiveGpuSandboxLevel();
 
 #if defined(MOZ_PROFILE_GENERATE)
-#  if defined(XP_WIN)
-bool GetLlvmProfileDir(std::wstring& parentPath);
-#  else
 bool GetLlvmProfileDir(std::string& parentPath);
-#  endif
 #endif
 
 // Checks whether the effective content sandbox level is > 0.
@@ -48,14 +40,8 @@ bool GetContentWin32kLockdownEnabled();
 
 nsIXULRuntime::ContentWin32kLockdownState GetContentWin32kLockdownState();
 
-#if defined(XP_MACOSX)
 int ClampFlashSandboxLevel(const int aLevel);
-#endif
 
-#if defined(__OpenBSD__)
-bool StartOpenBSDSandbox(GeckoProcessType type,
-                         ipc::SandboxingKind kind = ipc::SandboxingKind::COUNT);
-#endif
 
 }  // namespace mozilla
 #endif  // mozilla_SandboxPolicies_h

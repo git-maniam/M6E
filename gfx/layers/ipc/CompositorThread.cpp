@@ -16,9 +16,6 @@
 #include "mozilla/media/MediaSystemResourceService.h"
 #include "nsThread.h"
 #include "nsThreadUtils.h"
-#ifdef XP_WIN
-#  include "mozilla/WindowsUserHandleValidation.h"
-#endif
 
 namespace mozilla {
 namespace layers {
@@ -97,9 +94,6 @@ CompositorThreadHolder::CreateCompositorThread() {
                 2048);
             nsCOMPtr<nsIThread> thread = NS_GetCurrentThread();
             static_cast<nsThread*>(thread.get())->SetUseHangMonitor(true);
-#ifdef XP_WIN
-            mozilla::ForceToGuiThreadAndFixTebValidateHandlesFlag();
-#endif
           }),
       {.stackSize = stackSize});
 

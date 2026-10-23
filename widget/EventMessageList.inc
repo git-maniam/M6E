@@ -410,9 +410,6 @@ NS_EVENT_MESSAGE(eDeviceOrientationAbsolute)
 NS_EVENT_MESSAGE(eDeviceMotion)
 NS_EVENT_MESSAGE(eUserProximity)
 NS_EVENT_MESSAGE(eDeviceLight)
-#if defined(MOZ_WIDGET_ANDROID)
-NS_EVENT_MESSAGE(eOrientationChange)
-#endif
 
 // WebVR events
 NS_EVENT_MESSAGE(eVRDisplayActivate)

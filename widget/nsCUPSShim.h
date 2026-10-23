@@ -10,9 +10,6 @@
 #include "mozilla/Mutex.h"
 
 // TODO: This should be a configure option, ideally.
-#ifndef XP_MACOSX
-#  define CUPS_SHIM_RUNTIME_LINK
-#endif
 
 struct PRLibrary;
 

@@ -2,9 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidDecoderModule.h"
-#endif
 
 #include "BrowserChild.h"
 #include "ChildProfilerController.h"
@@ -147,31 +144,10 @@
 #include "nsXPLookAndFeel.h"
 
 #if defined(MOZ_SANDBOX)
-#  if defined(XP_WIN)
-#    include "mozilla/sandboxTarget.h"
-#  elif defined(XP_LINUX)
-#    include "CubebUtils.h"
-#    include "mozilla/Sandbox.h"
-#    include "mozilla/SandboxInfo.h"
-#    include "mozilla/SandboxProfilerObserver.h"
-#  elif defined(XP_MACOSX)
 #    include <CoreGraphics/CGError.h>
 
 #    include "mozilla/Sandbox.h"
 #    include "mozilla/SandboxSettings.h"
-#  elif defined(__OpenBSD__)
-#    include <err.h>
-#    include <sys/stat.h>
-#    include <unistd.h>
-
-#    include <fstream>
-
-#    include "BinaryPath.h"
-#    include "SpecialSystemDirectory.h"
-#    include "mozilla/SandboxSettings.h"
-#    include "mozilla/ipc/UtilityProcessSandboxing.h"
-#    include "nsILineInputStream.h"
-#  endif
 #  if defined(MOZ_DEBUG) && defined(ENABLE_TESTS)
 #    include "mozilla/SandboxTestingChild.h"
 #  endif
@@ -233,34 +209,15 @@
 #include "mozilla/dom/PermissionObserver.h"
 #include "mozilla/dom/PermissionStatusBinding.h"
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include <sched.h>
 
-#  include "APKOpen.h"
-#endif
 
-#ifdef XP_WIN
-#  include <process.h>
-#  include <windows.h>
-#  define getpid _getpid
-#  include "mozilla/WinDllServices.h"
-#endif
-
-#if defined(XP_MACOSX)
 #  include <sys/qos.h>
 
 #  include "nsMacUtilsImpl.h"
-#endif /* XP_MACOSX */
 
-#ifdef MOZ_X11
-#  include "mozilla/X11Util.h"
-#endif
 
 #ifdef ACCESSIBILITY
 #  include "nsAccessibilityService.h"
-#  ifdef XP_WIN
-#    include "mozilla/a11y/AccessibleWrap.h"
-#  endif
 #  include "mozilla/a11y/DocAccessible.h"
 #  include "mozilla/a11y/DocManager.h"
 #  include "mozilla/a11y/OuterDocAccessible.h"
@@ -294,12 +251,6 @@
 #include "nscore.h"  // for NS_FREE_PERMANENT_DATA
 #include "private/pprio.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include <gtk/gtk.h>
-
-#  include "mozilla/WidgetUtilsGtk.h"
-#  include "nsAppRunner.h"
-#endif
 
 #ifdef MOZ_CODE_COVERAGE
 #  include "mozilla/CodeCoverageHandler.h"
@@ -646,12 +597,6 @@ ContentChild::ContentChild()
   }
 }
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable                                               \
-                  : 4722) /* Silence "destructor never returns" warning \
-                           */
-#endif
 
 ContentChild::~ContentChild() {
   profiler_remove_state_change_callback(reinterpret_cast<uintptr_t>(this));
@@ -661,9 +606,6 @@ ContentChild::~ContentChild() {
 #endif
 }
 
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
 NS_INTERFACE_MAP_BEGIN(ContentChild)
   NS_INTERFACE_MAP_ENTRY(nsIDOMProcessChild)
@@ -703,47 +645,7 @@ mozilla::ipc::IPCResult ContentChild::RecvSetXPCOMProcessAttributes(
 
 void ContentChild::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
                         const char* aParentBuildID, bool aIsForBrowser) {
-#ifdef MOZ_WIDGET_GTK
-  // When running X11 only build we need to pass a display down
-  // to gtk_init because it's not going to use the one from the environment
-  // on its own when deciding which backend to use, and when starting under
-  // XWayland, it may choose to start with the wayland backend
-  // instead of the x11 backend.
-  // The DISPLAY environment variable is normally set by the parent process.
-  // The MOZ_GDK_DISPLAY environment variable is set from nsAppRunner.cpp
-  // when --display is set by the command line.
-  if (!gfxPlatform::IsHeadless()) {
-    const char* display_name = PR_GetEnv("MOZ_GDK_DISPLAY");
-    if (!display_name) {
-      bool waylandEnabled = false;
-#  ifdef MOZ_WAYLAND
-      waylandEnabled = IsWaylandEnabled();
-#  endif
-      if (!waylandEnabled) {
-        display_name = PR_GetEnv("DISPLAY");
-      }
-    }
-    if (display_name) {
-      int argc = 3;
-      char option_name[] = "--display";
-      char* argv[] = {
-          // argv0 is unused because g_set_prgname() was called in
-          // XRE_InitChildProcess().
-          nullptr, option_name, const_cast<char*>(display_name), nullptr};
-      char** argvp = argv;
-      gtk_init(&argc, &argvp);
-    } else {
-      gtk_init(nullptr, nullptr);
-    }
-  }
-#endif
 
-#ifdef MOZ_X11
-  if (!gfxPlatform::IsHeadless()) {
-    // Do this after initializing GDK, or GDK will install its own handler.
-    XRE_InstallX11ErrorHandler();
-  }
-#endif
 
   MOZ_ASSERT(!sSingleton, "only one ContentChild per child");
 
@@ -774,20 +676,7 @@ void ContentChild::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
     ProcessChild::QuickExit();
   }
 
-#if defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-  StartOpenBSDSandbox(GeckoProcessType_Content);
-#endif
 
-#ifdef MOZ_X11
-#  ifdef MOZ_WIDGET_GTK
-  if (GdkIsX11Display() && !gfxPlatform::IsHeadless()) {
-    // Send the parent our X socket to act as a proxy reference for our X
-    // resources.
-    int xSocketFd = ConnectionNumber(DefaultXDisplay());
-    SendBackUpXResources(FileDescriptor(xSocketFd));
-  }
-#  endif
-#endif
 
   CrashReporterClient::InitSingleton(this);
 
@@ -826,17 +715,9 @@ void ContentChild::SetProcessName(const nsACString& aName,
                                   const nsACString* aCurrentProfile) {
   char* name;
   if ((name = PR_GetEnv("MOZ_DEBUG_APP_PROCESS")) && aName.EqualsASCII(name)) {
-#ifdef XP_UNIX
     printf_stderr("\n\nCHILDCHILDCHILDCHILD\n  [%s] debug me @%d\n\n", name,
                   getpid());
     sleep(30);
-#elif defined(XP_WIN)
-    // Windows has a decent JIT debugging story, so NS_DebugBreak does the
-    // right thing.
-    NS_DebugBreak(NS_DEBUG_BREAK,
-                  "Invoking NS_DebugBreak() to debug child process", nullptr,
-                  __FILE__, __LINE__);
-#endif
   }
 
   if (aSite) {
@@ -859,14 +740,6 @@ void ContentChild::SetProcessName(const nsACString& aName,
         || StaticPrefs::fission_processPrivateWindowSiteNames()
 #endif
     ) {
-#if !defined(XP_MACOSX)
-      // Mac doesn't have the 15-character limit Linux does
-      // Sets profiler process name
-      constexpr nsLiteralCString prefix = "https://"_ns;
-      if (StringBeginsWith(*aSite, prefix)) {
-        mProcessName = Substring(*aSite, prefix.Length());
-      } else
-#endif
       {
         mProcessName = *aSite;
       }
@@ -1322,12 +1195,6 @@ void ContentChild::InitXPCOM(
     XPCOMInitData& aXPCOMInit,
     NotNull<mozilla::dom::ipc::StructuredCloneData*> aInitialData,
     bool aIsReadyForBackgroundProcessing) {
-#if defined(XP_WIN)
-  // DLL services untrusted modules processing depends on
-  // BackgroundChild::Startup having been called
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->StartUntrustedModulesProcessor(aIsReadyForBackgroundProcessing);
-#endif  // defined(XP_WIN)
 
   PBackgroundChild* actorChild = BackgroundChild::GetOrCreateForCurrentThread();
   if (NS_WARN_IF(!actorChild)) {
@@ -1495,27 +1362,6 @@ mozilla::ipc::IPCResult ContentChild::RecvDecodeImage(
   return IPC_OK();
 }
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult ContentChild::RecvGetUntrustedModulesData(
-    GetUntrustedModulesDataResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetUntrustedModulesData()->Then(
-      GetMainThreadSerialEventTarget(), __func__,
-      [aResolver](Maybe<UntrustedModulesData>&& aData) {
-        aResolver(std::move(aData));
-      },
-      [aResolver](nsresult aReason) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult ContentChild::RecvUnblockUntrustedModulesThread() {
-  if (nsCOMPtr<nsIObserverService> obs =
-          mozilla::services::GetObserverService()) {
-    obs->NotifyObservers(nullptr, "unblock-untrusted-modules-thread", nullptr);
-  }
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 PCycleCollectWithLogsChild* ContentChild::AllocPCycleCollectWithLogsChild(
     const bool& aDumpAllTraces, const FileDescriptor& aGCLog,
@@ -1586,11 +1432,9 @@ mozilla::ipc::IPCResult ContentChild::GetResultForRenderingInitFailure(
   return IPC_OK();
 }
 
-#if defined(XP_MACOSX)
 extern "C" {
 void CGSShutdownServerConnections();
 };
-#endif
 
 mozilla::ipc::IPCResult ContentChild::RecvInitRendering(
     Endpoint<PCompositorManagerChild>&& aCompositor,
@@ -1751,36 +1595,11 @@ mozilla::ipc::IPCResult ContentChild::RecvSetProcessSandbox(
 #if defined(MOZ_SANDBOX)
 
   bool sandboxEnabled = true;
-#  if defined(XP_LINUX)
-  // On Linux, we have to support systems that can't use any sandboxing.
-  sandboxEnabled = SandboxInfo::Get().CanSandboxContent();
-
-  if (sandboxEnabled && !StaticPrefs::media_cubeb_sandbox()) {
-    // Pre-start audio before sandboxing; see bug 1443612.
-    (void)CubebUtils::GetCubeb();
-  }
-
-  if (sandboxEnabled) {
-    RegisterProfilerObserversForSandboxProfiler();
-    sandboxEnabled = SetContentProcessSandbox(
-        ContentProcessSandboxParams::ForThisProcess(aBroker));
-  }
-#  elif defined(XP_WIN)
-  mozilla::SandboxTarget::Instance()->LowerContentSandbox();
-#  elif defined(XP_MACOSX)
   sandboxEnabled = (GetEffectiveContentSandboxLevel() >= 1);
   DisconnectWindowServer(sandboxEnabled);
-#  elif defined(XP_IOS)
-  LockdownExtensionKitProcess(ExtensionKitSandboxRevision::Revision1);
-#  endif
 
   CrashReporter::RecordAnnotationBool(
       CrashReporter::Annotation::ContentSandboxEnabled, sandboxEnabled);
-#  if defined(XP_LINUX) && !defined(ANDROID)
-  CrashReporter::RecordAnnotationU32(
-      CrashReporter::Annotation::ContentSandboxCapabilities,
-      SandboxInfo::Get().AsInteger());
-#  endif /* XP_LINUX && !ANDROID */
 #endif   /* MOZ_SANDBOX */
 
   return IPC_OK();
@@ -2212,9 +2031,6 @@ mozilla::ipc::IPCResult ContentChild::RecvSetTRRMode(
 }
 
 void ContentChild::ActorDestroy(ActorDestroyReason why) {
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  DestroySandboxProfiler();
-#endif
 
   if (mForceKillTimer) {
     mForceKillTimer->Cancel();
@@ -2235,10 +2051,6 @@ void ContentChild::ActorDestroy(ActorDestroyReason why) {
   // Destroy our JSProcessActors, and reject any pending queries.
   JSActorDidDestroy();
 
-#  if defined(XP_WIN)
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->DisableFull();
-#  endif  // defined(XP_WIN)
 
   if (gFirstIdleTask) {
     gFirstIdleTask->Cancel();
@@ -2897,18 +2709,6 @@ mozilla::ipc::IPCResult ContentChild::RecvNotifyProcessPriorityChanged(
 
   ConfigureThreadPerformanceHints(aPriority);
 
-#ifdef XP_WIN
-  bool raiseMainThreadPriority =
-      aPriority >= hal::PROCESS_PRIORITY_FOREGROUND &&
-      StaticPrefs::
-          dom_ipc_processPriorityManager_foregroundRaisesMainThreadPriority();
-  if (raiseMainThreadPriority != mMainThreadPriorityRaised &&
-      ::SetThreadPriority(::GetCurrentThread(),
-                          raiseMainThreadPriority ? THREAD_PRIORITY_ABOVE_NORMAL
-                                                  : THREAD_PRIORITY_NORMAL)) {
-    mMainThreadPriorityRaised = raiseMainThreadPriority;
-  }
-#endif
 
   mProcessPriority = aPriority;
 
@@ -4869,11 +4669,7 @@ void ContentChild::ConfigureThreadPerformanceHints(
     if (!mPerformanceHintSession && canUsePerformanceHintSession) {
       nsTArray<PlatformThreadHandle> threads;
       Servo_ThreadPool_GetThreadHandles(&threads);
-#ifdef XP_WIN
-      threads.AppendElement(GetCurrentThread());
-#else
       threads.AppendElement(pthread_self());
-#endif
 
       mPerformanceHintSession = hal::CreatePerformanceHintSession(
           threads, GetPerformanceHintTarget(TimeDuration::FromMilliseconds(
@@ -4884,69 +4680,6 @@ void ContentChild::ConfigureThreadPerformanceHints(
       canUsePerformanceHintSession = mPerformanceHintSession != nullptr;
     }
 
-#ifdef MOZ_WIDGET_ANDROID
-    // On Android if we are unable to use PerformanceHintManager then fall back
-    // to setting the stylo threads' affinities to the performant cores. Android
-    // automatically sets each thread's affinity to all cores when a process is
-    // foregrounded, and to a subset of cores when the process is backgrounded.
-    // We must therefore override this each time the process is foregrounded,
-    // but we don't have to do anything when backgrounded.
-    if (!mPerformanceHintSession) {
-      if (const auto& cpuInfo = hal::GetHeterogeneousCpuInfo()) {
-        // If CPUs are homogeneous there is no point setting affinity.
-        if (cpuInfo->mBigCpus.Count() != cpuInfo->mTotalNumCpus) {
-          BitSet<hal::HeterogeneousCpuInfo::MAX_CPUS> cpus = cpuInfo->mBigCpus;
-          if (cpus.Count() < 2) {
-            // From testing on a variety of devices it appears using only the
-            // big cores gives best performance when there are 2 or more big
-            // cores. If there are fewer than 2 big cores then additionally
-            // using the medium cores performs better.
-            cpus |= cpuInfo->mMediumCpus;
-          }
-
-          static_assert(
-              hal::HeterogeneousCpuInfo::MAX_CPUS <= CPU_SETSIZE,
-              "HeterogeneousCpuInfo::MAX_CPUS is too large for CPU_SETSIZE");
-
-          cpu_set_t cpuset;
-          CPU_ZERO(&cpuset);
-          for (size_t i = 0; i < cpuInfo->mTotalNumCpus; i++) {
-            if (cpus.test(i)) {
-              CPU_SET(i, &cpuset);
-            }
-          }
-
-          // Only set the affinity for the stylo threads, not the main thread.
-          // Testing showed no difference in performance between the two
-          // options, and as newly spawned threads automatically inherit their
-          // parent's affinity mask there may be unintended consequences to
-          // setting the main thread affinity.
-          nsTArray<PlatformThreadHandle> threads;
-          Servo_ThreadPool_GetThreadHandles(&threads);
-          for (pthread_t thread : threads) {
-            int ret = sched_setaffinity(pthread_gettid_np(thread),
-                                        sizeof(cpu_set_t), &cpuset);
-            // Occasionally sched_setaffinity fails, presumably due to a race
-            // between us receiving the process foreground signal and whatever
-            // is responsible for restricting which processes can use certain
-            // cores. Trying again in a runnable seems to do the trick, but if
-            // that still fails it's not the end of the world.
-            if (ret < 0) {
-              NS_DispatchToCurrentThread(NS_NewRunnableFunction(
-                  "ContentChild::ConfigureThreadPerformanceHints",
-                  [threads = std::move(threads), cpuset] {
-                    for (pthread_t thread : threads) {
-                      sched_setaffinity(pthread_gettid_np(thread),
-                                        sizeof(cpu_set_t), &cpuset);
-                    }
-                  }));
-              break;
-            }
-          }
-        }
-      }
-    }
-#endif
   } else {
     mPerformanceHintSession = nullptr;
   }
@@ -4962,295 +4695,6 @@ mozilla::ipc::IPCResult ContentChild::RecvUpdateMFCDMOriginEntries(
 
 }  // namespace dom
 
-#if defined(__OpenBSD__) && defined(MOZ_SANDBOX)
-
-static LazyLogModule sPledgeLog("OpenBSDSandbox");
-
-NS_IMETHODIMP
-OpenBSDFindPledgeUnveilFilePath(const char* file, nsACString& result) {
-  struct stat st;
-
-  // Allow overriding files in /etc/$MOZ_APP_NAME
-  result.Assign(nsPrintfCString("/etc/%s/%s", MOZ_APP_NAME, file));
-  if (stat(PromiseFlatCString(result).get(), &st) == 0) {
-    return NS_OK;
-  }
-
-  // Or look in the system default directory
-  result.Assign(nsPrintfCString(
-      "/usr/local/lib/%s/browser/defaults/preferences/%s", MOZ_APP_NAME, file));
-  if (stat(PromiseFlatCString(result).get(), &st) == 0) {
-    return NS_OK;
-  }
-
-  errx(1, "can't locate %s", file);
-}
-
-NS_IMETHODIMP
-OpenBSDPledgePromises(const nsACString& aPath) {
-  // Using NS_LOCAL_FILE_CONTRACTID/NS_LOCALFILEINPUTSTREAM_CONTRACTID requires
-  // a lot of setup before they are supported and we want to pledge early on
-  // before all of that, so read the file directly
-  std::ifstream input(PromiseFlatCString(aPath).get());
-
-  // Build up one line of pledge promises without comments
-  nsAutoCString promises;
-  bool disabled = false;
-  int linenum = 0;
-  for (std::string tLine; std::getline(input, tLine);) {
-    nsAutoCString line(tLine.c_str());
-    linenum++;
-
-    // Cut off any comments at the end of the line, also catches lines
-    // that are entirely a comment
-    int32_t hash = line.FindChar('#');
-    if (hash >= 0) {
-      line = Substring(line, 0, hash);
-    }
-    line.CompressWhitespace(true, true);
-    if (line.IsEmpty()) {
-      continue;
-    }
-
-    if (linenum == 1 && line.EqualsLiteral("disable")) {
-      disabled = true;
-      break;
-    }
-
-    if (!promises.IsEmpty()) {
-      promises.Append(" ");
-    }
-    promises.Append(line);
-  }
-  input.close();
-
-  if (disabled) {
-    warnx("%s: disabled", PromiseFlatCString(aPath).get());
-  } else {
-    MOZ_LOG(
-        sPledgeLog, LogLevel::Debug,
-        ("%s: pledge(%s)\n", PromiseFlatCString(aPath).get(), promises.get()));
-    if (pledge(promises.get(), nullptr) != 0) {
-      err(1, "%s: pledge(%s) failed", PromiseFlatCString(aPath).get(),
-          promises.get());
-    }
-  }
-
-  return NS_OK;
-}
-
-void ExpandUnveilPath(nsAutoCString& path) {
-  // Expand $XDG_RUNTIME_DIR to the environment variable, or ~/.cache
-  nsCString xdgRuntimeDir(PR_GetEnv("XDG_RUNTIME_DIR"));
-  if (xdgRuntimeDir.IsEmpty()) {
-    xdgRuntimeDir = "~/.cache";
-  }
-  path.ReplaceSubstring("$XDG_RUNTIME_DIR", xdgRuntimeDir.get());
-
-  // Expand $XDG_CONFIG_HOME to the environment variable, or ~/.config
-  nsCString xdgConfigHome(PR_GetEnv("XDG_CONFIG_HOME"));
-  if (xdgConfigHome.IsEmpty()) {
-    xdgConfigHome = "~/.config";
-  }
-  path.ReplaceSubstring("$XDG_CONFIG_HOME", xdgConfigHome.get());
-
-  // Expand $XDG_CACHE_HOME to the environment variable, or ~/.cache
-  nsCString xdgCacheHome(PR_GetEnv("XDG_CACHE_HOME"));
-  if (xdgCacheHome.IsEmpty()) {
-    xdgCacheHome = "~/.cache";
-  }
-  path.ReplaceSubstring("$XDG_CACHE_HOME", xdgCacheHome.get());
-
-  // Expand $XDG_DATA_HOME to the environment variable, or ~/.local/share
-  nsCString xdgDataHome(PR_GetEnv("XDG_DATA_HOME"));
-  if (xdgDataHome.IsEmpty()) {
-    xdgDataHome = "~/.local/share";
-  }
-  path.ReplaceSubstring("$XDG_DATA_HOME", xdgDataHome.get());
-
-  // Expand leading ~ to the user's home directory
-  nsCOMPtr<nsIFile> homeDir;
-  nsresult rv =
-      GetSpecialSystemDirectory(Unix_HomeDirectory, getter_AddRefs(homeDir));
-  if (NS_FAILED(rv)) {
-    errx(1, "failed getting home directory");
-  }
-  if (path.FindChar('~') == 0) {
-    nsCString tHome(homeDir->NativePath());
-    tHome.Append(Substring(path, 1, path.Length() - 1));
-    path = tHome.get();
-  }
-}
-
-void MkdirP(nsAutoCString& path) {
-  // nsLocalFile::CreateAllAncestors would be nice to use
-
-  nsAutoCString tPath("");
-  for (const nsACString& dir : path.Split('/')) {
-    struct stat st;
-
-    if (dir.IsEmpty()) {
-      continue;
-    }
-
-    tPath.Append("/");
-    tPath.Append(dir);
-
-    if (stat(tPath.get(), &st) == -1) {
-      if (mkdir(tPath.get(), 0700) == -1) {
-        err(1, "failed mkdir(%s) while MkdirP(%s)",
-            PromiseFlatCString(tPath).get(), PromiseFlatCString(path).get());
-      }
-    }
-  }
-}
-
-NS_IMETHODIMP
-OpenBSDUnveilPaths(const nsACString& uPath, const nsACString& pledgePath) {
-  // Using NS_LOCAL_FILE_CONTRACTID/NS_LOCALFILEINPUTSTREAM_CONTRACTID requires
-  // a lot of setup before they are allowed/supported and we want to pledge and
-  // unveil early on before all of that is setup
-  std::ifstream input(PromiseFlatCString(uPath).get());
-
-  bool disabled = false;
-  int linenum = 0;
-  for (std::string tLine; std::getline(input, tLine);) {
-    nsAutoCString line(tLine.c_str());
-    linenum++;
-
-    // Cut off any comments at the end of the line, also catches lines
-    // that are entirely a comment
-    int32_t hash = line.FindChar('#');
-    if (hash >= 0) {
-      line = Substring(line, 0, hash);
-    }
-    line.CompressWhitespace(true, true);
-    if (line.IsEmpty()) {
-      continue;
-    }
-
-    if (linenum == 1 && line.EqualsLiteral("disable")) {
-      disabled = true;
-      break;
-    }
-
-    int32_t space = line.FindChar(' ');
-    if (space <= 0) {
-      errx(1, "%s: line %d: invalid format", PromiseFlatCString(uPath).get(),
-           linenum);
-    }
-
-    nsAutoCString uPath(Substring(line, 0, space));
-    ExpandUnveilPath(uPath);
-
-    nsAutoCString perms(Substring(line, space + 1, line.Length() - space - 1));
-
-    MOZ_LOG(sPledgeLog, LogLevel::Debug,
-            ("%s: unveil(%s, %s)\n", PromiseFlatCString(uPath).get(),
-             uPath.get(), perms.get()));
-    if (unveil(uPath.get(), perms.get()) == -1 && errno != ENOENT) {
-      err(1, "%s: unveil(%s, %s) failed", PromiseFlatCString(uPath).get(),
-          uPath.get(), perms.get());
-    }
-  }
-  input.close();
-
-  if (disabled) {
-    warnx("%s: disabled", PromiseFlatCString(uPath).get());
-  } else {
-    struct stat st;
-
-    // Only unveil the pledgePath file if it's not already unveiled, otherwise
-    // some containing directory will lose visibility.
-    if (stat(PromiseFlatCString(pledgePath).get(), &st) == -1) {
-      if (errno == ENOENT) {
-        if (unveil(PromiseFlatCString(pledgePath).get(), "r") == -1) {
-          err(1, "unveil(%s, r) failed", PromiseFlatCString(pledgePath).get());
-        }
-      } else {
-        err(1, "stat(%s)", PromiseFlatCString(pledgePath).get());
-      }
-    }
-  }
-
-  return NS_OK;
-}
-
-bool StartOpenBSDSandbox(GeckoProcessType type, ipc::SandboxingKind kind) {
-  nsAutoCString pledgeFile;
-  nsAutoCString unveilFile;
-  char binaryPath[MAXPATHLEN];
-
-  switch (type) {
-    case GeckoProcessType_Default: {
-      OpenBSDFindPledgeUnveilFilePath("pledge.main", pledgeFile);
-      OpenBSDFindPledgeUnveilFilePath("unveil.main", unveilFile);
-
-      // Ensure dconf dir exists before we veil the filesystem
-      nsAutoCString dConf("$XDG_RUNTIME_DIR/dconf");
-      ExpandUnveilPath(dConf);
-      MkdirP(dConf);
-      break;
-    }
-
-    case GeckoProcessType_Content:
-      OpenBSDFindPledgeUnveilFilePath("pledge.content", pledgeFile);
-      OpenBSDFindPledgeUnveilFilePath("unveil.content", unveilFile);
-      break;
-
-    case GeckoProcessType_GPU:
-      OpenBSDFindPledgeUnveilFilePath("pledge.gpu", pledgeFile);
-      OpenBSDFindPledgeUnveilFilePath("unveil.gpu", unveilFile);
-      break;
-
-    case GeckoProcessType_Socket:
-      OpenBSDFindPledgeUnveilFilePath("pledge.socket", pledgeFile);
-      OpenBSDFindPledgeUnveilFilePath("unveil.socket", unveilFile);
-      break;
-
-    case GeckoProcessType_RDD:
-      OpenBSDFindPledgeUnveilFilePath("pledge.rdd", pledgeFile);
-      OpenBSDFindPledgeUnveilFilePath("unveil.rdd", unveilFile);
-      break;
-
-    case GeckoProcessType_Utility: {
-      MOZ_RELEASE_ASSERT(kind <= SandboxingKind::COUNT,
-                         "Should define a sandbox");
-      switch (kind) {
-        case ipc::SandboxingKind::GENERIC_UTILITY:
-        default:
-          OpenBSDFindPledgeUnveilFilePath("pledge.utility", pledgeFile);
-          OpenBSDFindPledgeUnveilFilePath("unveil.utility", unveilFile);
-          break;
-      }
-    } break;
-
-    default:
-      MOZ_ASSERT(false, "unknown process type");
-      return false;
-  }
-
-  nsresult rv = mozilla::BinaryPath::Get(binaryPath);
-  if (NS_FAILED(rv)) {
-    errx(1, "failed to cache binary path ?");
-  }
-
-  if (NS_WARN_IF(NS_FAILED(OpenBSDUnveilPaths(unveilFile, pledgeFile)))) {
-    errx(1, "failed reading/parsing %s", unveilFile.get());
-  }
-
-  if (NS_WARN_IF(NS_FAILED(OpenBSDPledgePromises(pledgeFile)))) {
-    errx(1, "failed reading/parsing %s", pledgeFile.get());
-  }
-
-  // Don't overwrite an existing session dbus address, but ensure it is set
-  if (!PR_GetEnv("DBUS_SESSION_BUS_ADDRESS")) {
-    PR_SetEnv("DBUS_SESSION_BUS_ADDRESS=");
-  }
-
-  return true;
-}
-#endif
 
 }  // namespace mozilla
 

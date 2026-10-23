@@ -16,28 +16,18 @@
 #include "nsIObserverService.h"
 #include "nsNetUtil.h"
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxBroker.h"
-#  include "mozilla/SandboxBrokerPolicyFactory.h"
-#  include "mozilla/SandboxSettings.h"
-#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
 #  include "mozilla/Sandbox.h"
 #endif
 
-#if defined(XP_WIN)
-#  include "mozilla/WinDllServices.h"
-#endif
 
 using namespace mozilla::ipc;
 
 namespace mozilla {
 namespace net {
 
-#if defined(XP_MACOSX) || defined(XP_IOS)
 static bool sAppleFastDatapathProbeAllowed = true;
-#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
 bool SocketProcessHost::sLaunchWithMacSandbox = false;
@@ -132,33 +122,9 @@ void SocketProcessHost::InitAfterConnect(bool aSucceeded) {
 
   attributes.mInitSandbox() = false;
 
-#if defined(XP_WIN)
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  attributes.mIsReadyForBackgroundProcessing() =
-      dllSvc->IsReadyForBackgroundProcessing();
-#endif
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  if (GetEffectiveSocketProcessSandboxLevel() > 0) {
-    auto policy = SandboxBrokerPolicyFactory::GetSocketProcessPolicy(
-        GetActor()->OtherPid());
-    if (policy != nullptr) {
-      attributes.mSandboxBroker() = Some(FileDescriptor());
-      mSandboxBroker =
-          SandboxBroker::Create(std::move(policy), GetActor()->OtherPid(),
-                                attributes.mSandboxBroker().ref());
-      // This is unlikely to fail and probably indicates OS resource
-      // exhaustion.
-      (void)NS_WARN_IF(mSandboxBroker == nullptr);
-      MOZ_ASSERT(attributes.mSandboxBroker().ref().IsValid());
-    }
-    attributes.mInitSandbox() = true;
-  }
-#endif  // XP_LINUX && MOZ_SANDBOX
 
-#if defined(XP_MACOSX) || defined(XP_IOS)
   attributes.mAppleFastDatapathProbeAllowed() = sAppleFastDatapathProbeAllowed;
-#endif
 
   (void)GetActor()->SendInit(attributes);
 
@@ -189,11 +155,9 @@ void SocketProcessHost::Shutdown() {
 void SocketProcessHost::OnChannelClosed() {
   MOZ_ASSERT(NS_IsMainThread());
 
-#if defined(XP_MACOSX) || defined(XP_IOS)
   if (!mShutdownRequested && !mAppleFastDatapathProbeResultReceived) {
     sAppleFastDatapathProbeAllowed = false;
   }
-#endif
 
   mChannelClosed = true;
 

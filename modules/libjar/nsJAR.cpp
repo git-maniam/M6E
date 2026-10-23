@@ -10,11 +10,7 @@
 #include "mozilla/Logging.h"
 #include "mozilla/Omnijar.h"
 
-#ifdef XP_UNIX
 #  include <sys/stat.h>
-#elif defined(XP_WIN)
-#  include <io.h>
-#endif
 
 using namespace mozilla;
 
@@ -723,10 +719,6 @@ nsZipReaderCache::GetInnerZip(nsIFile* zipFile, const nsACString& entry,
 
 NS_IMETHODIMP
 nsZipReaderCache::GetFd(nsIFile* zipFile, PRFileDesc** aRetVal) {
-#if defined(XP_WIN)
-  MOZ_CRASH("Not implemented");
-  return NS_ERROR_NOT_IMPLEMENTED;
-#else
   if (!zipFile) {
     return NS_ERROR_FAILURE;
   }
@@ -754,7 +746,6 @@ nsZipReaderCache::GetFd(nsIFile* zipFile, PRFileDesc** aRetVal) {
     zip = nullptr;
   }
   return rv;
-#endif /* XP_WIN */
 }
 
 nsresult nsZipReaderCache::ReleaseZip(nsJAR* zip) {

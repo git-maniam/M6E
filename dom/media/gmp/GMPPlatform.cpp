@@ -17,9 +17,6 @@
 #include "mozilla/StaticMutex.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include "mozilla/UntrustedModulesProcessor.h"
-#endif
 
 #include <ctime>
 
@@ -249,16 +246,6 @@ void SendFOGData(ipc::ByteBuf&& buf) {
   }
 }
 
-#ifdef XP_WIN
-RefPtr<PGMPChild::GetModulesTrustPromise> SendGetModulesTrust(
-    ModuleIdentifiers&& aModules, bool aRunAtNormalPriority) {
-  if (!sChild) {
-    return PGMPChild::GetModulesTrustPromise::CreateAndReject(
-        ipc::ResponseRejectReason::SendError, __func__);
-  }
-  return sChild->SendGetModulesTrust(std::move(aModules), aRunAtNormalPriority);
-}
-#endif
 
 GMPThreadImpl::GMPThreadImpl() { MOZ_COUNT_CTOR(GMPThread); }
 

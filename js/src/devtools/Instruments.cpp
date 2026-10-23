@@ -6,7 +6,6 @@
 
 #include "mozilla/Attributes.h"
 
-#ifdef __APPLE__
 
 #  include <CoreFoundation/CoreFoundation.h>
 #  include <dlfcn.h>
@@ -209,4 +208,3 @@ void Stop(const char* profileName) {
 
 }  // namespace Instruments
 
-#endif /* __APPLE__ */

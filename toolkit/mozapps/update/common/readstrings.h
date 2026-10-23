@@ -10,12 +10,7 @@
 
 #include <vector>
 
-#ifdef XP_WIN
-#  include <windows.h>
-typedef WCHAR NS_tchar;
-#else
 typedef char NS_tchar;
-#endif
 
 struct StringTable {
   mozilla::UniquePtr<char[]> title;
@@ -76,9 +71,6 @@ class IniReader {
   // If IniReader::Read() has already been invoked, these functions do nothing.
   // The given key must not be the empty string.
   void AddKey(const char* key, mozilla::UniquePtr<char[]>* outputPtr);
-#ifdef XP_WIN
-  void AddKey(const char* key, mozilla::UniquePtr<wchar_t[]>* outputPtr);
-#endif
   bool HasRead() { return mMaybeStatusCode.isSome(); }
   // Performs the actual reading and assigns values to the requested locations.
   // Returns the same possible values that `ReadStrings` returns.
@@ -102,9 +94,6 @@ class IniReader {
   // Stores associations between keys and the buffers where their values will
   // be stored.
   std::vector<ValueOutput<mozilla::UniquePtr<char[]>>> mNarrowOutputs;
-#ifdef XP_WIN
-  std::vector<ValueOutput<mozilla::UniquePtr<wchar_t[]>>> mWideOutputs;
-#endif
   // If we have attempted to read the INI, this will store the resulting
   // status code.
   mozilla::Maybe<int> mMaybeStatusCode;

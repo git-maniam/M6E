@@ -2,11 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef XP_WIN
-#  include "WMF.h"
-#  include "WMFDecoderModule.h"
-#  include "WMFEncoderModule.h"
-#endif
 #include "FFVPXRuntimeLinker.h"
 #include "GLContextProvider.h"
 #include "GPUParent.h"
@@ -70,31 +65,7 @@
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
 #  include "mozilla/SandboxSettings.h"
 #endif
-#if defined(XP_WIN)
-#  include <dwrite.h>
-#  include <process.h>
-#  include <windows.h>
-
-#  include "WMFDecoderModule.h"
-#  include "gfxDWriteFonts.h"
-#  include "gfxWindowsPlatform.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/layers/GpuProcessD3D11TextureMap.h"
-#  include "mozilla/layers/TextureD3D11.h"
-#  include "mozilla/widget/WinCompositorWindowThread.h"
-#else
 #  include <unistd.h>
-#endif
-#ifdef MOZ_WIDGET_GTK
-#  include <gtk/gtk.h>
-
-#  include "skia/include/ports/SkTypeface_cairo.h"
-#endif
-#ifdef ANDROID
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#  include "mozilla/layers/AndroidImageReader.h"
-#  include "skia/include/ports/SkTypeface_cairo.h"
-#endif
 #include "ChildProfilerController.h"
 #include "nsAppRunner.h"
 
@@ -120,39 +91,7 @@ GPUParent* GPUParent::GetSingleton() {
 }
 
 /* static */ bool GPUParent::MaybeFlushMemory() {
-#if defined(XP_WIN) && !defined(HAVE_64BIT_BUILD)
-  MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
-  if (!XRE_IsGPUProcess()) {
-    return false;
-  }
-
-  MEMORYSTATUSEX stat;
-  stat.dwLength = sizeof(stat);
-  if (!GlobalMemoryStatusEx(&stat)) {
-    return false;
-  }
-
-  // We only care about virtual process memory space in the GPU process because
-  // the UI process is already watching total memory usage.
-  static const size_t kLowVirtualMemoryThreshold = 384 * 1024 * 1024;
-  bool lowMemory = stat.ullAvailVirtual < kLowVirtualMemoryThreshold;
-
-  // We suppress more than one low memory notification until we exit the
-  // condition. The UI process goes through more effort, reporting on-going
-  // memory pressure, but rather than try to manage a shared state, we just
-  // send one notification here to try to resolve it.
-  static bool sLowMemory = false;
-  if (lowMemory && !sLowMemory) {
-    NS_DispatchToMainThread(
-        NS_NewRunnableFunction("gfx::GPUParent::FlushMemory", []() -> void {
-          (void)GPUParent::GetSingleton()->SendFlushMemory(u"low-memory"_ns);
-        }));
-  }
-  sLowMemory = lowMemory;
-  return lowMemory;
-#else
   return false;
-#endif
 }
 
 bool GPUParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
@@ -195,19 +134,8 @@ bool GPUParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
   gfxPlatform::InitNullMetadata();
   // Ensure our Factory is initialised, mainly for gfx logging to work.
   gfxPlatform::InitMoz2DLogging();
-#if defined(XP_WIN)
-  gfxWindowsPlatform::InitMemoryReportersForGPUProcess();
-  DeviceManagerDx::Init();
-  GpuProcessD3D11TextureMap::Init();
-  auto rv = wmf::MediaFoundationInitializer::HasInitialized();
-  if (!rv) {
-    NS_WARNING("Failed to init Media Foundation in the GPU process");
-  }
-#endif
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
   CompositeProcessFencesHolderMap::Init();
-#endif
 
   CompositorThreadHolder::Start();
   RemoteTextureMap::Init();
@@ -225,11 +153,9 @@ bool GPUParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
   if (!IsGPUSandboxEnabled()) {
     mozilla::ipc::SetThisProcessName("");
   }
-#elif defined(XP_MACOSX)
-  mozilla::ipc::SetThisProcessName("");
 #else
-  mozilla::ipc::SetThisProcessName("GPU Process");
-#endif  // XP_MACOSX && MOZ_SANDBOX
+  mozilla::ipc::SetThisProcessName("");
+#endif
 
   return true;
 }
@@ -326,84 +252,8 @@ mozilla::ipc::IPCResult GPUParent::RecvInit(
     gfxGradientCache::Init();
   }
 
-#if defined(XP_WIN)
-  if (gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING)) {
-    if (DeviceManagerDx::Get()->CreateCompositorDevices() && useRemoteCanvas) {
-      if (DeviceManagerDx::Get()->CreateCanvasDevice()) {
-        gfxDWriteFont::InitDWriteSupport();
-      } else {
-        gfxWarning() << "Failed to create canvas device.";
-      }
-    }
-  }
-  DeviceManagerDx::Get()->CreateDirectCompositionDevice();
-  // Ensure to initialize GfxInfo
-  nsCOMPtr<nsIGfxInfo> gfxInfo = components::GfxInfo::Service();
-  (void)gfxInfo;
 
-  Factory::EnsureDWriteFactory();
-#endif
 
-#if defined(MOZ_WIDGET_GTK)
-  char* display_name = PR_GetEnv("MOZ_GDK_DISPLAY");
-  if (!display_name) {
-    bool waylandEnabled = false;
-#  ifdef MOZ_WAYLAND
-    waylandEnabled = IsWaylandEnabled();
-#  endif
-    if (!waylandEnabled) {
-      display_name = PR_GetEnv("DISPLAY");
-    }
-  }
-  if (display_name) {
-    int argc = 3;
-    char option_name[] = "--display";
-    char* argv[] = {// argv0 is unused because g_set_prgname() was called in
-                    // XRE_InitChildProcess().
-                    nullptr, option_name, display_name, nullptr};
-    char** argvp = argv;
-    gtk_init(&argc, &argvp);
-  } else {
-    gtk_init(nullptr, nullptr);
-  }
-
-  // Ensure we have an FT library for font instantiation.
-  // This would normally be set by gfxPlatform::Init().
-  // Since we bypass that, we must do it here instead.
-  FT_Library library = Factory::NewFTLibrary();
-  MOZ_ASSERT(library);
-  Factory::SetFTLibrary(library);
-
-  // true to match gfxPlatform::FontHintingEnabled(). We must hardcode
-  // this value because we do not have a gfxPlatform instance.
-  SkInitCairoFT(true);
-
-  // Ensure that GfxInfo::Init is called on the main thread.
-  nsCOMPtr<nsIGfxInfo> gfxInfo = components::GfxInfo::Service();
-  (void)gfxInfo;
-#endif
-
-#ifdef ANDROID
-  // Ensure we have an FT library for font instantiation.
-  // This would normally be set by gfxPlatform::Init().
-  // Since we bypass that, we must do it here instead.
-  FT_Library library = Factory::NewFTLibrary();
-  MOZ_ASSERT(library);
-  Factory::SetFTLibrary(library);
-
-  // false to match gfxAndroidPlatform::FontHintingEnabled(). We must
-  // hardcode this value because we do not have a gfxPlatform instance.
-  SkInitCairoFT(false);
-
-  if (gfxVars::UseAHardwareBufferSharedSurfaceWebglOop()) {
-    layers::AndroidHardwareBufferManager::Init();
-  }
-
-  if (gfxVars::ForceAImageReaderAndroid()) {
-    layers::GpuProcessAndroidImageReaderMap::Init();
-  }
-
-#endif
 
   // Make sure to do this *after* we update gfxVars above.
   wr::RenderThread::Start(aWrNamespace);
@@ -520,10 +370,6 @@ mozilla::ipc::IPCResult GPUParent::RecvUpdateVar(
       NS_NewRunnableFunction(
           "GPUParent::RecvUpdateVar",
           []() {
-#ifdef XP_WIN
-            WMFDecoderModule::Init();
-            WMFEncoderModule::ClearCache();
-#endif
             if (StaticPrefs::media_ffvpx_hw_enabled()) {
               FFVPXRuntimeLinker::Init();
             }
@@ -546,9 +392,6 @@ mozilla::ipc::IPCResult GPUParent::RecvPreferenceUpdate(const Pref& aPref) {
 }
 
 mozilla::ipc::IPCResult GPUParent::RecvScreenInformationChanged() {
-#if defined(XP_WIN)
-  DeviceManagerDx::Get()->PostUpdateMonitorInfo();
-#endif
   return IPC_OK();
 }
 
@@ -584,24 +427,12 @@ mozilla::ipc::IPCResult GPUParent::RecvGetDeviceStatus(GPUDeviceData* aOut) {
   CopyFeatureChange(Feature::D3D11_COMPOSITING, &aOut->d3d11Compositing());
   CopyFeatureChange(Feature::OPENGL_COMPOSITING, &aOut->oglCompositing());
 
-#if defined(XP_WIN)
-  if (DeviceManagerDx* dm = DeviceManagerDx::Get()) {
-    D3D11DeviceStatus deviceStatus;
-    dm->ExportDeviceInfo(&deviceStatus);
-    aOut->gpuDevice() = Some(deviceStatus);
-  }
-#else
   aOut->gpuDevice() = Nothing();
-#endif
 
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult GPUParent::RecvSimulateDeviceReset() {
-#if defined(XP_WIN)
-  DeviceManagerDx::Get()->ForceDeviceReset(
-      ForcedDeviceResetReason::COMPOSITOR_UPDATED);
-#endif
   wr::RenderThread::Get()->SimulateDeviceReset();
   return IPC_OK();
 }
@@ -772,33 +603,23 @@ void GPUParent::ActorDestroy(ActorDestroyReason aWhy) {
         CanvasRenderThread::Shutdown();
         CompositorThreadHolder::Shutdown();
         RemoteTextureMap::Shutdown();
-#ifdef ANDROID
-        layers::GpuProcessAndroidImageReaderMap::Shutdown();
-#endif
         // There is a case that RenderThread exists when gfxVars::UseWebRender()
         // is false. This could happen when WebRender was fallbacked to
         // compositor.
         if (wr::RenderThread::Get()) {
           wr::RenderThread::ShutDown();
         }
-#ifdef XP_WIN
-        if (widget::WinCompositorWindowThread::Get()) {
-          widget::WinCompositorWindowThread::ShutDown();
-        }
-#endif
 
         image::ImageMemoryReporter::ShutdownForWebRender();
 
         // Shut down the default GL context provider.
         gl::GLContextProvider::Shutdown();
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
         // The above shutdown call shuts down the default context provider,
         // which is the only context provider on most platforms. Windows and
         // Mac, however, may initialize EGL for ANGLE in addition to their
         // respective defaults.
         gl::GLContextProviderEGL::Shutdown();
-#endif
 
         Factory::ShutDown();
 
@@ -809,14 +630,8 @@ void GPUParent::ActorDestroy(ActorDestroyReason aWhy) {
         cairo_debug_reset_static_data();
 #endif
 
-#if defined(XP_WIN)
-        GpuProcessD3D11TextureMap::Shutdown();
-        DeviceManagerDx::Shutdown();
-#endif
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
         CompositeProcessFencesHolderMap::Shutdown();
-#endif
 
         LayerTreeOwnerTracker::Shutdown();
         gfxVars::Shutdown();

@@ -43,10 +43,6 @@
 #include "TextLeafAccessible.h"
 #include "xpcAccessibleApplication.h"
 
-#ifdef XP_WIN
-#  include "mozilla/StaticPtr.h"
-#  include "mozilla/a11y/Compatibility.h"
-#endif
 
 #ifdef A11Y_LOG
 #  include "Logging.h"
@@ -1676,20 +1672,6 @@ LocalAccessible* nsAccessibilityService::CreateAccessible(
   return newAcc;
 }
 
-#if defined(ANDROID)
-#  include "mozilla/Maybe.h"
-#  include "mozilla/Monitor.h"
-
-constinit static Maybe<Monitor> sAndroidMonitor;
-
-mozilla::Monitor& nsAccessibilityService::GetAndroidMonitor() {
-  if (!sAndroidMonitor.isSome()) {
-    sAndroidMonitor.emplace("nsAccessibility::sAndroidMonitor");
-  }
-
-  return *sAndroidMonitor;
-}
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsAccessibilityService private
@@ -1830,11 +1812,6 @@ void nsAccessibilityService::Shutdown() {
   gApplicationAccessible = nullptr;
   gXPCApplicationAccessible = nullptr;
 
-#if defined(ANDROID)
-  // Don't allow the service to shut down while an a11y request is being handled
-  // in the UI thread, as the request may depend on state from the service.
-  MonitorAutoLock mal(GetAndroidMonitor());
-#endif
   gAccessibilityService = nullptr;
 
   if (observerService) {

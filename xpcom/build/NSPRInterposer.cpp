@@ -11,13 +11,7 @@
 #include "nscore.h"
 #include "prio.h"
 #include "private/pprio.h"
-#ifdef XP_MACOSX
 #  include <fcntl.h>
-#else
-#  include <unistd.h>
-
-#  include "prprf.h"
-#endif
 
 namespace {
 
@@ -30,25 +24,10 @@ PRFileInfoFN sFileInfoFn = nullptr;
 PRFileInfo64FN sFileInfo64Fn = nullptr;
 
 static int32_t GetPathFromFd(int32_t aFd, char* aBuf, size_t aBufSize) {
-#ifdef XP_MACOSX
   NS_ASSERTION(aBufSize >= MAXPATHLEN,
                "aBufSize should be a least MAXPATHLEN long");
 
   return fcntl(aFd, F_GETPATH, aBuf);
-#else
-  char procPath[32];
-  if (PR_snprintf(procPath, sizeof(procPath), "/proc/self/fd/%i", aFd) ==
-      (PRUint32)-1) {
-    return -1;
-  }
-
-  int32_t ret = readlink(procPath, aBuf, aBufSize - 1);
-  if (ret > -1) {
-    aBuf[ret] = '\0';
-  }
-
-  return ret;
-#endif
 }
 
 /**

@@ -23,21 +23,10 @@
 #include "nsXPCOM.h"
 #include "nsXPCOMCID.h"
 
-#if defined(XP_WIN)
-#  include "WinWifiScanner.h"
-#endif
 
-#if defined(XP_MACOSX)
 #  include "MacWifiScanner.h"
-#endif
 
-#if defined(__DragonFly__) || defined(__FreeBSD__)
-#  include "FreeBsdWifiScanner.h"
-#endif
 
-#if defined(XP_SOLARIS)
-#  include "SolarisWifiScanner.h"
-#endif
 
 #if defined(NECKO_WIFI_DBUS)
 #  include "DbusWifiScanner.h"
@@ -248,9 +237,6 @@ nsresult nsWifiMonitor::DispatchScanToBackgroundThread(uint64_t aPollingId,
   if (!mThread) {
     MOZ_ASSERT(NS_IsMainThread());
 
-#ifndef XP_MACOSX
-    nsIThreadManager::ThreadCreationOptions options = {};
-#else
     // If this ASSERT fails, we've increased our default stack size and
     // may no longer need to special-case the stack size on macOS.
     static_assert(kMacOSWifiMonitorStackSize >
@@ -259,7 +245,6 @@ nsresult nsWifiMonitor::DispatchScanToBackgroundThread(uint64_t aPollingId,
     // Mac needs a stack size larger than the default for CoreWLAN.
     nsIThreadManager::ThreadCreationOptions options = {
         .stackSize = kMacOSWifiMonitorStackSize};
-#endif
 
     nsresult rv = NS_NewNamedThread("Wifi Monitor", getter_AddRefs(mThread),
                                     nullptr, options);
@@ -411,13 +396,7 @@ nsresult nsWifiMonitor::PassErrorToWifiListeners(nsresult rv) {
 }
 
 bool nsWifiMonitor::GetHasWifiAdapter() {
-#ifdef XP_WIN
-  EnsureWifiScanner();
-  MOZ_ASSERT(mWifiScanner);
-  return static_cast<WifiScannerImpl*>(mWifiScanner.get())->HasWifiAdapter();
-#else
   MOZ_ASSERT_UNREACHABLE(
       "nsWifiMonitor::HasWifiAdapter is not available on this platform");
   return false;
-#endif
 }

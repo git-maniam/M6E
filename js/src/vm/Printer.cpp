@@ -457,16 +457,6 @@ void Fprinter::put(const char* s, size_t len) {
     setPendingOutOfMemory();
     return;
   }
-#ifdef XP_WIN
-  if ((file_ == stderr) && (IsDebuggerPresent())) {
-    UniqueChars buf = DuplicateString(s, len);
-    if (!buf) {
-      setPendingOutOfMemory();
-      return;
-    }
-    OutputDebugStringA(buf.get());
-  }
-#endif
 }
 
 LSprinter::LSprinter(LifoAlloc* lifoAlloc)

@@ -17,15 +17,8 @@
 #  undef LOG
 #endif
 
-#ifdef ANDROID
-#  include "android/log.h"
-#  define LOG(...) \
-    __android_log_print(ANDROID_LOG_INFO, "Gecko:DumpUtils", ##__VA_ARGS__)
-#else
 #  define LOG(...)
-#endif
 
-#if defined(XP_UNIX) && !defined(XP_IOS)  // {
 
 /**
  * Abstract base class for something which watches an fd and takes action when
@@ -162,7 +155,6 @@ class SignalPipeWatcher : public FdWatcher {
   SignalInfoArray mSignalInfo MOZ_GUARDED_BY(mSignalInfoLock);
 };
 
-#endif  // XP_UNIX && !XP_IOS }
 
 class nsDumpUtils {
  public:

@@ -57,42 +57,19 @@
 #  include "prtime.h"
 #endif
 
-#ifdef XP_LINUX
-#  ifdef __GLIBC__
-#    include <gnu/libc-version.h>
-#  endif
-#  include <sched.h>
-#  include <stdio.h>
-#  include <sys/mman.h>
-#  include <sys/resource.h>
-#  include <sys/time.h>
-#endif
 
-#ifdef XP_WIN
-#  include <winbase.h>
-
-#  include "mozilla/DynamicallyLinkedFunctionPtr.h"
-
-using GetCurrentThreadStackLimitsFn = void(WINAPI*)(PULONG_PTR LowLimit,
-                                                    PULONG_PTR HighLimit);
-#endif
 
 #define HAVE_UALARM                                                        \
   _BSD_SOURCE ||                                                           \
       (_XOPEN_SOURCE >= 500 || _XOPEN_SOURCE && _XOPEN_SOURCE_EXTENDED) && \
           !(_POSIX_C_SOURCE >= 200809L || _XOPEN_SOURCE >= 700)
 
-#if defined(XP_LINUX) && !defined(ANDROID) && defined(_GNU_SOURCE)
-#  define HAVE_SCHED_SETAFFINITY
-#endif
 
-#ifdef XP_MACOSX
 #  include <mach/mach.h>
 #  include <mach/thread_policy.h>
 #  include <sys/qos.h>
 
 #  include "nsCocoaFeatures.h"
-#endif
 
 #ifdef MOZ_CANARY
 #  include <execinfo.h>
@@ -311,7 +288,7 @@ static void SetThreadAffinity(unsigned int cpu) {
   sched_setaffinity(0, sizeof(cpus), &cpus);
   // Don't assert sched_setaffinity's return value because it intermittently (?)
   // fails with EINVAL on Linux x64 try runs.
-#elif defined(XP_MACOSX)
+#else
   // OS X does not provide APIs to pin threads to specific processors, but you
   // can tag threads as belonging to the same "affinity set" and the OS will try
   // to run them on the same processor. To run threads on different processors,
@@ -323,9 +300,6 @@ static void SetThreadAffinity(unsigned int cpu) {
       mach_thread_self(), THREAD_AFFINITY_POLICY, &policy.affinity_tag, 1);
   // Setting the thread affinity is not supported on ARM.
   MOZ_ALWAYS_TRUE(kr == KERN_SUCCESS || kr == KERN_NOT_SUPPORTED);
-#elif defined(XP_WIN)
-  MOZ_ALWAYS_TRUE(SetThreadIdealProcessor(GetCurrentThread(), cpu) !=
-                  (DWORD)-1);
 #endif
 }
 
@@ -334,26 +308,10 @@ static void SetupCurrentThreadForChaosMode() {
     return;
   }
 
-#ifdef XP_LINUX
-  // PR_SetThreadPriority doesn't really work since priorities >
-  // PR_PRIORITY_NORMAL can't be set by non-root users. Instead we'll just use
-  // setpriority(2) to set random 'nice values'. In regular Linux this is only
-  // a dynamic adjustment so it still doesn't really do what we want, but tools
-  // like 'rr' can be more aggressive about honoring these values.
-  // Some of these calls may fail due to trying to lower the priority
-  // (e.g. something may have already called setpriority() for this thread).
-  // This makes it hard to have non-main threads with higher priority than the
-  // main thread, but that's hard to fix. Tools like rr can choose to honor the
-  // requested values anyway.
-  // Use just 4 priorities so there's a reasonable chance of any two threads
-  // having equal priority.
-  setpriority(PRIO_PROCESS, 0, ChaosMode::randomUint32LessThan(4));
-#else
   // We should set the affinity here but NSPR doesn't provide a way to expose
   // it.
   uint32_t priority = ChaosMode::randomUint32LessThan(PR_PRIORITY_LAST + 1);
   PR_SetThreadPriority(PR_GetCurrentThread(), PRThreadPriority(priority));
-#endif
 
   // Force half the threads to CPU 0 so they compete for CPU
   if (ChaosMode::randomUint32LessThan(2)) {
@@ -400,13 +358,11 @@ void nsThread::ThreadFunc(void* aArg) {
 
   self->InitCommon();
 
-#ifdef XP_MACOSX
   if (nsCocoaFeatures::OnTahoeOrLater()) {
     // On macOS 26+, use "User Initiated" as the default quality of service.
     // It may make sense to do this on all versions of macOS.
     pthread_set_qos_class_self_np(QOS_CLASS_USER_INITIATED, 0);
   }
-#endif
 
   // Inform the ThreadManager
   nsThreadManager::get().RegisterCurrentThread(*self);
@@ -424,12 +380,8 @@ void nsThread::ThreadFunc(void* aArg) {
   {
     // Scope for MessageLoop.
     MessageLoop loop(
-#if defined(XP_WIN) || defined(XP_MACOSX)
         self->mIsUiThread ? MessageLoop::TYPE_MOZILLA_NONMAINUITHREAD
                           : MessageLoop::TYPE_MOZILLA_NONMAINTHREAD,
-#else
-        MessageLoop::TYPE_MOZILLA_NONMAINTHREAD,
-#endif
         self);
 
     // Now, process incoming events...
@@ -520,75 +472,6 @@ void nsThread::InitCommon() {
   mThreadId = uint32_t(PlatformThread::CurrentId());
 
   {
-#if defined(XP_LINUX)
-    pthread_attr_t attr;
-    int res = pthread_attr_init(&attr);
-    MOZ_RELEASE_ASSERT(!res);
-    res = pthread_getattr_np(pthread_self(), &attr);
-    MOZ_RELEASE_ASSERT(!res);
-
-    size_t stackSize;
-    res = pthread_attr_getstack(&attr, &mStackBase, &stackSize);
-    MOZ_RELEASE_ASSERT(!res);
-
-    // Glibc prior to 2.27 reports the stack size and base including the guard
-    // region, so we need to compensate for it to get accurate accounting.
-    // Also, this behavior difference isn't guarded by a versioned symbol, so we
-    // actually need to check the runtime glibc version, not the version we were
-    // compiled against.
-    static bool sAdjustForGuardSize = ({
-#  ifdef __GLIBC__
-      unsigned major, minor;
-      sscanf(gnu_get_libc_version(), "%u.%u", &major, &minor) < 2 ||
-          major < 2 || (major == 2 && minor < 27);
-#  else
-      false;
-#  endif
-    });
-    if (sAdjustForGuardSize) {
-      size_t guardSize;
-      res = pthread_attr_getguardsize(&attr, &guardSize);
-      MOZ_RELEASE_ASSERT(!res);
-
-      // Note: This assumes that the stack grows down, as is the case on all of
-      // our tier 1 platforms. On platforms where the stack grows up, the
-      // mStackBase adjustment is unnecessary, but doesn't cause any harm other
-      // than under-counting stack memory usage by one page.
-      mStackBase = reinterpret_cast<char*>(mStackBase) + guardSize;
-      stackSize -= guardSize;
-    }
-
-    mStackSize = stackSize;
-
-    // This is a bit of a hack.
-    //
-    // We really do want the NOHUGEPAGE flag on our thread stacks, since we
-    // don't expect any of them to need anywhere near 2MB of space. But setting
-    // it here is too late to have an effect, since the first stack page has
-    // already been faulted in existence, and NSPR doesn't give us a way to set
-    // it beforehand.
-    //
-    // What this does get us, however, is a different set of VM flags on our
-    // thread stacks compared to normal heap memory. Which makes the Linux
-    // kernel report them as separate regions, even when they are adjacent to
-    // heap memory. This allows us to accurately track the actual memory
-    // consumption of our allocated stacks.
-    madvise(mStackBase, stackSize, MADV_NOHUGEPAGE);
-
-    res = pthread_attr_destroy(&attr);
-    MOZ_RELEASE_ASSERT(!res);
-#elif defined(XP_WIN)
-    static const StaticDynamicallyLinkedFunctionPtr<
-        GetCurrentThreadStackLimitsFn>
-        sGetStackLimits(L"kernel32.dll", "GetCurrentThreadStackLimits");
-
-    if (sGetStackLimits) {
-      ULONG_PTR stackBottom, stackTop;
-      sGetStackLimits(&stackBottom, &stackTop);
-      mStackBase = reinterpret_cast<void*>(stackBottom);
-      mStackSize = stackTop - stackBottom;
-    }
-#endif
   }
 
   InitThreadLocalVariables();
@@ -621,10 +504,6 @@ nsThread::nsThread(NotNull<SynchronizedEventQueue*> aQueue,
       mCanInvokeJS(false),
       mPerformanceCounterState(mNestedEventLoopDepth, mIsMainThread,
                                aOptions.longTaskLength) {
-#if !(defined(XP_WIN) || defined(XP_MACOSX))
-  MOZ_ASSERT(!mIsUiThread,
-             "Non-main UI threads are only supported on Windows and macOS");
-#endif
   if (mIsMainThread) {
     MOZ_ASSERT(!mIsUiThread,
                "Setting isUIThread is not supported for main threads");
@@ -1118,7 +997,6 @@ NS_IMETHODIMP nsThread::SetThreadQoS(nsIThread::QoSPriority aPriority) {
   // so we assert if we aren't on the current thread.
   MOZ_ASSERT(IsOnCurrentThread(), "Can only change the current thread's QoS");
 
-#if defined(XP_MACOSX)
   // Only arm64 macs may possess heterogeneous cores. On these, we can tell
   // a thread to set its own QoS status. On intel macs things should behave
   // normally, and the OS will ignore the QoS state of the thread.
@@ -1132,7 +1010,6 @@ NS_IMETHODIMP nsThread::SetThreadQoS(nsIThread::QoSPriority aPriority) {
   } else {
     pthread_set_qos_class_self_np(QOS_CLASS_DEFAULT, 0);
   }
-#endif
   // Do nothing if an OS-specific implementation is unavailable.
   return NS_OK;
 }

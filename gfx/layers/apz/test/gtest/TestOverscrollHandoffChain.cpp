@@ -623,9 +623,7 @@ class APZOverscrollTargetTester : public APZFindScrollTargetTester {
   APZOverscrollTargetTester() { CreateMockHitTester(); }
 
  protected:
-#ifndef MOZ_WIDGET_ANDROID
   static constexpr float kPanDelta = 50;
-#endif
 
   void PanOverInnerFrame(PanGestureInput::PanGestureType aType, float aDeltaY) {
     QueueMockHitResult(ScrollableLayerGuid::START_SCROLL_ID + 2);
@@ -639,7 +637,6 @@ class APZOverscrollTargetTester : public APZFindScrollTargetTester {
   }
 };
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 TEST_F(APZOverscrollTargetTester, ReversalAfterRootTakesOverscroll) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
   CreateThreeLevelChain();
@@ -698,6 +695,5 @@ TEST_F(APZOverscrollTargetTester, ReversalAfterNonRootTakesOverscroll) {
   EXPECT_LT(ScrollOffsetY(mMiddle), kScrollRange);
   EXPECT_EQ(ScrollOffsetY(mInner), kScrollRange);
 }
-#endif  // MOZ_WIDGET_ANDROID
 
 }  // namespace

@@ -12,14 +12,9 @@
 
 #include "base/logging.h"
 
-#if defined(OS_WIN)
-#include <windows.h>
-#endif
 
-#if defined(OS_POSIX)
 #include <errno.h>
 #include <string.h>
-#endif
 
 #include <algorithm>
 
@@ -112,13 +107,7 @@ LogMessageFatal::~LogMessageFatal() {
 }
 
 SystemErrorCode GetLastSystemErrorCode() {
-#if defined(OS_WIN)
-  return ::GetLastError();
-#elif defined(OS_POSIX)
   return errno;
-#else
-#error Not implemented
-#endif
 }
 
 #if BUILDFLAG(IS_WIN)

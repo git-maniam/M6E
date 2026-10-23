@@ -49,15 +49,6 @@
 #include "nsRect.h"                 // for mozilla::gfx::IntRect
 #include "nsServiceManagerUtils.h"  // for do_GetService
 #include "nsString.h"               // for nsString, nsAutoCString, etc
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/widget/GtkCompositorWidget.h"
-#endif
-#if MOZ_WIDGET_ANDROID
-#  include "GLContextEGL.h"
-#  include "GLLibraryEGL.h"
-#  include "mozilla/java/GeckoSurfaceTextureWrappers.h"
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#endif
 
 namespace mozilla {
 
@@ -212,13 +203,6 @@ already_AddRefed<mozilla::gl::GLContext> CompositorOGL::CreateContext() {
     return already_AddRefed<GLContext>(alreadyRefed);
   }
 
-#ifdef XP_WIN
-  if (gfxEnv::MOZ_LAYERS_PREFER_EGL()) {
-    printf_stderr("Trying GL layers...\n");
-    context = gl::GLContextProviderEGL::CreateForCompositorWidget(
-        mWidget, /* aHardwareWebRender */ false, /* aForceAccelerated */ false);
-  }
-#endif
 
   // Allow to create offscreen GL context for main Layer Manager
   if (!context && gfxEnv::MOZ_LAYERS_PREFER_OFFSCREEN()) {
@@ -288,15 +272,6 @@ void CompositorOGL::CleanupResources() {
   mNativeLayersReferenceRT = nullptr;
   mFullWindowRenderTarget = nullptr;
 
-#ifdef MOZ_WIDGET_GTK
-  // TextureSources might hold RefPtr<gl::GLContext>.
-  // All of them needs to be released to destroy GLContext.
-  // GLContextGLX has to be destroyed before related gtk window is destroyed.
-  for (auto textureSource : mRegisteredTextureSources) {
-    textureSource->DeallocateDeviceData();
-  }
-  mRegisteredTextureSources.clear();
-#endif
 
   ctx->fBindFramebuffer(LOCAL_GL_FRAMEBUFFER, 0);
 
@@ -359,12 +334,6 @@ bool CompositorOGL::Initialize(nsCString* const out_failureReason) {
     mGLContext = CreateContext();
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (!mGLContext) {
-    *out_failureReason = "FEATURE_FAILURE_OPENGL_NO_ANDROID_CONTEXT";
-    MOZ_CRASH("We need a context on Android");
-  }
-#endif
 
   if (!mGLContext) {
     *out_failureReason = "FEATURE_FAILURE_OPENGL_CREATE_CONTEXT";
@@ -737,20 +706,10 @@ Maybe<IntRect> CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
     MakeCurrent(ForceMakeCurrent);
 
     mWidgetSize = LayoutDeviceIntSize::FromUnknownSize(rect.Size());
-#ifdef MOZ_WAYLAND
-    if (mWidget && mWidget->AsGTK()) {
-      // Set correct window size to avoid rendering artifacts.
-      mWidget->AsGTK()->SetEGLNativeWindowSize(mWidgetSize);
-    }
-#endif
   } else {
     MakeCurrent();
   }
 
-#ifdef MOZ_WIDGET_ANDROID
-  java::GeckoSurfaceTexture::DestroyUnused((int64_t)mGLContext.get());
-  mGLContext->MakeCurrent();  // DestroyUnused can change the current context!
-#endif
 
   // Default blend function implements "OVER"
   mGLContext->fBlendFuncSeparate(LOCAL_GL_ONE, LOCAL_GL_ONE_MINUS_SRC_ALPHA,
@@ -791,21 +750,8 @@ Maybe<IntRect> CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
     clearBits |= LOCAL_GL_COLOR_BUFFER_BIT;
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if ((mSurfaceOrigin.x > 0) || (mSurfaceOrigin.y > 0)) {
-    mGLContext->fClearColor(
-        StaticPrefs::gfx_compositor_override_clear_color_r(),
-        StaticPrefs::gfx_compositor_override_clear_color_g(),
-        StaticPrefs::gfx_compositor_override_clear_color_b(),
-        StaticPrefs::gfx_compositor_override_clear_color_a());
-  } else {
-    mGLContext->fClearColor(mClearColor.r, mClearColor.g, mClearColor.b,
-                            mClearColor.a);
-  }
-#else
   mGLContext->fClearColor(mClearColor.r, mClearColor.g, mClearColor.b,
                           mClearColor.a);
-#endif  // defined(MOZ_WIDGET_ANDROID)
   mGLContext->fClear(clearBits);
 
   return Some(rect);
@@ -1466,7 +1412,6 @@ void CompositorOGL::EndFrame() {
 }
 
 void CompositorOGL::InsertFrameDoneSync() {
-#ifdef XP_MACOSX
   // Only do this on macOS.
   // On other platforms, SwapBuffers automatically applies back-pressure.
   if (mThisFrameDoneSync) {
@@ -1474,23 +1419,6 @@ void CompositorOGL::InsertFrameDoneSync() {
   }
   mThisFrameDoneSync =
       mGLContext->fFenceSync(LOCAL_GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-#elif defined(MOZ_WIDGET_ANDROID)
-  const auto& gle = gl::GLContextEGL::Cast(mGLContext);
-  const auto& egl = gle->mEgl;
-
-  EGLSync sync = nullptr;
-  if (AndroidHardwareBufferManager::Get()) {
-    sync = egl->fCreateSyncKHR(LOCAL_EGL_SYNC_NATIVE_FENCE_ANDROID, nullptr);
-  }
-  if (sync) {
-    int fenceFd = egl->fDupNativeFenceFDANDROID(sync);
-    if (fenceFd >= 0) {
-      mReleaseFenceFd = ipc::FileDescriptor(UniqueFileHandle(fenceFd));
-    }
-    egl->fDestroySync(sync);
-    sync = nullptr;
-  }
-#endif
 }
 
 ipc::FileDescriptor CompositorOGL::GetReleaseFence() { return mReleaseFenceFd; }
@@ -1555,14 +1483,6 @@ void CompositorOGL::CopyToTarget(DrawTarget* aTarget,
 }
 
 void CompositorOGL::Pause() {
-#ifdef MOZ_WIDGET_ANDROID
-  if (!gl() || gl()->IsDestroyed()) return;
-  // ReleaseSurface internally calls MakeCurrent
-  gl()->ReleaseSurface();
-#elif defined(MOZ_WIDGET_GTK)
-  // ReleaseSurface internally calls MakeCurrent
-  gl()->ReleaseSurface();
-#endif
 }
 
 bool CompositorOGL::Resume() {
@@ -1649,21 +1569,9 @@ void PerUnitTexturePoolOGL::DestroyTextures() {
 }
 
 void CompositorOGL::RegisterTextureSource(TextureSource* aTextureSource) {
-#ifdef MOZ_WIDGET_GTK
-  if (mDestroyed) {
-    return;
-  }
-  mRegisteredTextureSources.insert(aTextureSource);
-#endif
 }
 
 void CompositorOGL::UnregisterTextureSource(TextureSource* aTextureSource) {
-#ifdef MOZ_WIDGET_GTK
-  if (mDestroyed) {
-    return;
-  }
-  mRegisteredTextureSources.erase(aTextureSource);
-#endif
 }
 
 }  // namespace layers

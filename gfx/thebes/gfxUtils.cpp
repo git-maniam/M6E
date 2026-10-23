@@ -56,9 +56,6 @@
 #include "nsRegion.h"
 #include "nsServiceManagerUtils.h"
 
-#ifdef XP_WIN
-#  include "gfxWindowsPlatform.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::image;
@@ -336,7 +333,6 @@ static SamplingFilter ReduceResamplingFilter(SamplingFilter aSamplingFilter,
 }
 #endif
 
-#ifdef MOZ_WIDGET_COCOA
 // Only prescale a temporary surface if we're going to repeat it often.
 // Scaling is expensive on OS X and without prescaling, we'd scale
 // every tile of the repeated rect. However, using a temp surface also
@@ -431,7 +427,6 @@ static bool PrescaleAndTileDrawable(gfxDrawable* aDrawable,
   }
   return true;
 }
-#endif  // MOZ_WIDGET_COCOA
 
 /* static */
 void gfxUtils::DrawPixelSnapped(gfxContext* aContext, gfxDrawable* aDrawable,
@@ -468,13 +463,11 @@ void gfxUtils::DrawPixelSnapped(gfxContext* aContext, gfxDrawable* aDrawable,
         return;
       }
 
-#ifdef MOZ_WIDGET_COCOA
       if (PrescaleAndTileDrawable(aDrawable, aContext, aRegion,
                                   ToRect(imageRect), aSamplingFilter, aFormat,
                                   aOpacity, extendMode)) {
         return;
       }
-#endif
     }
   }
 
@@ -1179,19 +1172,6 @@ nsresult gfxUtils::EncodeSourceSurface(SourceSurface* aSurface,
 
   if (aFile) {
     nsPromiseFlatCString flatURI(dataURI);
-#ifdef ANDROID
-    if (aFile == stdout || aFile == stderr) {
-      // ADB logcat cuts off long strings so we will break it down
-      const char* cStr = flatURI.get();
-      size_t len = strlen(cStr);
-      while (true) {
-        printf_stderr("IMG: %.140s\n", cStr);
-        if (len <= 140) break;
-        len -= 140;
-        cStr += 140;
-      }
-    }
-#endif
     fprintf(aFile, "%s", flatURI.get());
   } else if (!aStrOut) {
     nsCOMPtr<nsIClipboardHelper> clipboard(

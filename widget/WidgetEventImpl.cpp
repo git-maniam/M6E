@@ -32,16 +32,8 @@
 #include "nsMathUtils.h"
 #include "nsPrintfCString.h"
 
-#if defined(XP_WIN)
-#  include "WinUtils.h"
-#  include "npapi.h"
-#  include "windef.h"
-#  include "winnetwk.h"
-#endif  // #if defined (XP_WIN)
 
-#if defined(MOZ_WIDGET_GTK) || defined(XP_MACOSX)
 #  include "NativeKeyBindings.h"
-#endif  // #if defined(MOZ_WIDGET_GTK) || defined(XP_MACOSX)
 
 namespace mozilla {
 
@@ -807,11 +799,7 @@ Modifier WidgetInputEvent::AccelModifier() {
         sAccelModifier = MODIFIER_CONTROL;
         break;
       default:
-#ifdef XP_MACOSX
         sAccelModifier = MODIFIER_META;
-#else
-        sAccelModifier = MODIFIER_CONTROL;
-#endif
         break;
     }
   }
@@ -1155,22 +1143,10 @@ void WidgetDragEvent::InitDropEffectForTests() {
 
   uint32_t effectAllowed = session->GetEffectAllowedForTests();
   uint32_t desiredDropEffect = nsIDragService::DRAGDROP_ACTION_NONE;
-#ifdef XP_MACOSX
   if (IsAlt()) {
     desiredDropEffect = IsMeta() ? nsIDragService::DRAGDROP_ACTION_LINK
                                  : nsIDragService::DRAGDROP_ACTION_COPY;
   }
-#else
-  // On Linux, we know user's intention from API, but we should use
-  // same modifiers as Windows for tests because GNOME on Ubuntu use
-  // them and that makes each test simpler.
-  if (IsControl()) {
-    desiredDropEffect = IsShift() ? nsIDragService::DRAGDROP_ACTION_LINK
-                                  : nsIDragService::DRAGDROP_ACTION_COPY;
-  } else if (IsShift()) {
-    desiredDropEffect = nsIDragService::DRAGDROP_ACTION_MOVE;
-  }
-#endif  // #ifdef XP_MACOSX #else
   // First, use modifier state for preferring action which is explicitly
   // specified by the synthesizer.
   if (!(desiredDropEffect &= effectAllowed)) {
@@ -1307,12 +1283,10 @@ bool WidgetKeyboardEvent::InitEditCommandsFor(
   // always trusted.
   if (mFlags.mIsSynthesizedForTests) {
     MOZ_DIAGNOSTIC_ASSERT(IsTrusted());
-#if defined(MOZ_WIDGET_GTK) || defined(XP_MACOSX)
     // TODO: We should implement `NativeKeyBindings` for Windows and Android
     //       too in bug 1301497 for getting rid of the #if.
     widget::NativeKeyBindings::GetEditCommandsForTests(aType, *this,
                                                        aWritingMode, commands);
-#endif
     initialized = true;
     return true;
   }
@@ -1976,11 +1950,7 @@ uint32_t WidgetKeyboardEvent::ComputeKeyCodeFromKeyNameIndex(
     case KEY_NAME_INDEX_AudioVolumeUp:
       return dom::KeyboardEvent_Binding::DOM_VK_VOLUME_UP;
     case KEY_NAME_INDEX_Meta:
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-      return dom::KeyboardEvent_Binding::DOM_VK_WIN;
-#else
       return dom::KeyboardEvent_Binding::DOM_VK_META;
-#endif
     case KEY_NAME_INDEX_AltGraph:
       return dom::KeyboardEvent_Binding::DOM_VK_ALTGR;
     case KEY_NAME_INDEX_Process:
@@ -2013,31 +1983,6 @@ CodeNameIndex WidgetKeyboardEvent::ComputeCodeNameIndexFromKeyNameIndex(
     // On macOS, NumLock is not supported.  Therefore, this handles
     // control key values except "Enter" only on non-macOS platforms.
     switch (aKeyNameIndex) {
-#ifndef XP_MACOSX
-      case KEY_NAME_INDEX_Insert:
-        return CODE_NAME_INDEX_Numpad0;
-      case KEY_NAME_INDEX_End:
-        return CODE_NAME_INDEX_Numpad1;
-      case KEY_NAME_INDEX_ArrowDown:
-        return CODE_NAME_INDEX_Numpad2;
-      case KEY_NAME_INDEX_PageDown:
-        return CODE_NAME_INDEX_Numpad3;
-      case KEY_NAME_INDEX_ArrowLeft:
-        return CODE_NAME_INDEX_Numpad4;
-      case KEY_NAME_INDEX_Clear:
-        // FYI: "Clear" on macOS should be DOM_KEY_LOCATION_STANDARD.
-        return CODE_NAME_INDEX_Numpad5;
-      case KEY_NAME_INDEX_ArrowRight:
-        return CODE_NAME_INDEX_Numpad6;
-      case KEY_NAME_INDEX_Home:
-        return CODE_NAME_INDEX_Numpad7;
-      case KEY_NAME_INDEX_ArrowUp:
-        return CODE_NAME_INDEX_Numpad8;
-      case KEY_NAME_INDEX_PageUp:
-        return CODE_NAME_INDEX_Numpad9;
-      case KEY_NAME_INDEX_Delete:
-        return CODE_NAME_INDEX_NumpadDecimal;
-#endif  // #ifndef XP_MACOSX
       case KEY_NAME_INDEX_Enter:
         return CODE_NAME_INDEX_NumpadEnter;
       default:
@@ -2091,12 +2036,10 @@ CodeNameIndex WidgetKeyboardEvent::ComputeCodeNameIndexFromKeyNameIndex(
       return CODE_NAME_INDEX_Backspace;
     case KEY_NAME_INDEX_Enter:
       return CODE_NAME_INDEX_Enter;
-#ifdef XP_MACOSX
     // Although, macOS does not fire native key event of "Fn" key, we support
     // Fn key event if it's sent by other apps directly.
     case KEY_NAME_INDEX_Fn:
       return CODE_NAME_INDEX_Fn;
-#endif  // #ifdef
 
     // Arrow Pad section:
     case KEY_NAME_INDEX_ArrowLeft:
@@ -2109,13 +2052,8 @@ CodeNameIndex WidgetKeyboardEvent::ComputeCodeNameIndexFromKeyNameIndex(
       return CODE_NAME_INDEX_ArrowRight;
 
       // Control Pad section:
-#ifndef XP_MACOSX
-    case KEY_NAME_INDEX_Insert:
-      return CODE_NAME_INDEX_Insert;
-#else
     case KEY_NAME_INDEX_Help:
       return CODE_NAME_INDEX_Help;
-#endif  // #ifndef XP_MACOSX #else
     case KEY_NAME_INDEX_Delete:
       return CODE_NAME_INDEX_Delete;
     case KEY_NAME_INDEX_Home:
@@ -2168,31 +2106,10 @@ CodeNameIndex WidgetKeyboardEvent::ComputeCodeNameIndexFromKeyNameIndex(
       return CODE_NAME_INDEX_F19;
     case KEY_NAME_INDEX_F20:
       return CODE_NAME_INDEX_F20;
-#ifndef XP_MACOSX
-    case KEY_NAME_INDEX_F21:
-      return CODE_NAME_INDEX_F21;
-    case KEY_NAME_INDEX_F22:
-      return CODE_NAME_INDEX_F22;
-    case KEY_NAME_INDEX_F23:
-      return CODE_NAME_INDEX_F23;
-    case KEY_NAME_INDEX_F24:
-      return CODE_NAME_INDEX_F24;
-    case KEY_NAME_INDEX_Pause:
-      return CODE_NAME_INDEX_Pause;
-    case KEY_NAME_INDEX_PrintScreen:
-      return CODE_NAME_INDEX_PrintScreen;
-    case KEY_NAME_INDEX_ScrollLock:
-      return CODE_NAME_INDEX_ScrollLock;
-#endif  // #ifndef XP_MACOSX
 
       // NumLock key:
-#ifndef XP_MACOSX
-    case KEY_NAME_INDEX_NumLock:
-      return CODE_NAME_INDEX_NumLock;
-#else
     case KEY_NAME_INDEX_Clear:
       return CODE_NAME_INDEX_NumLock;
-#endif  // #ifndef XP_MACOSX #else
 
     // Media keys:
     case KEY_NAME_INDEX_AudioVolumeDown:
@@ -2201,110 +2118,21 @@ CodeNameIndex WidgetKeyboardEvent::ComputeCodeNameIndexFromKeyNameIndex(
       return CODE_NAME_INDEX_VolumeMute;
     case KEY_NAME_INDEX_AudioVolumeUp:
       return CODE_NAME_INDEX_VolumeUp;
-#ifndef XP_MACOSX
-    case KEY_NAME_INDEX_BrowserBack:
-      return CODE_NAME_INDEX_BrowserBack;
-    case KEY_NAME_INDEX_BrowserFavorites:
-      return CODE_NAME_INDEX_BrowserFavorites;
-    case KEY_NAME_INDEX_BrowserForward:
-      return CODE_NAME_INDEX_BrowserForward;
-    case KEY_NAME_INDEX_BrowserRefresh:
-      return CODE_NAME_INDEX_BrowserRefresh;
-    case KEY_NAME_INDEX_BrowserSearch:
-      return CODE_NAME_INDEX_BrowserSearch;
-    case KEY_NAME_INDEX_BrowserStop:
-      return CODE_NAME_INDEX_BrowserStop;
-    case KEY_NAME_INDEX_MediaPlayPause:
-      return CODE_NAME_INDEX_MediaPlayPause;
-    case KEY_NAME_INDEX_MediaStop:
-      return CODE_NAME_INDEX_MediaStop;
-    case KEY_NAME_INDEX_MediaTrackNext:
-      return CODE_NAME_INDEX_MediaTrackNext;
-    case KEY_NAME_INDEX_MediaTrackPrevious:
-      return CODE_NAME_INDEX_MediaTrackPrevious;
-    case KEY_NAME_INDEX_LaunchApplication1:
-      return CODE_NAME_INDEX_LaunchApp1;
-#endif  // #ifndef XP_MACOSX
 
       // Only Windows and GTK supports the following multimedia keys.
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-    case KEY_NAME_INDEX_BrowserHome:
-      return CODE_NAME_INDEX_BrowserHome;
-    case KEY_NAME_INDEX_LaunchApplication2:
-      return CODE_NAME_INDEX_LaunchApp2;
-#endif  // #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
 
       // Only GTK and Android supports the following multimedia keys.
-#if defined(MOZ_WIDGET_GTK) || defined(ANDROID)
-    case KEY_NAME_INDEX_Eject:
-      return CODE_NAME_INDEX_Eject;
-    case KEY_NAME_INDEX_WakeUp:
-      return CODE_NAME_INDEX_WakeUp;
-#endif  // #if defined(MOZ_WIDGET_GTK) || defined(ANDROID)
 
       // Only Windows does not support Help key (and macOS handled above).
-#if !defined(XP_WIN) && !defined(XP_MACOSX)
-    case KEY_NAME_INDEX_Help:
-      return CODE_NAME_INDEX_Help;
-#endif  // #if !defined(XP_WIN) && !defined(XP_MACOSX)
 
       // IME specific keys:
-#ifdef XP_WIN
-    case KEY_NAME_INDEX_Convert:
-      return CODE_NAME_INDEX_Convert;
-    case KEY_NAME_INDEX_NonConvert:
-      return CODE_NAME_INDEX_NonConvert;
-    case KEY_NAME_INDEX_Alphanumeric:
-      return CODE_NAME_INDEX_CapsLock;
-    case KEY_NAME_INDEX_KanaMode:
-    case KEY_NAME_INDEX_Romaji:
-    case KEY_NAME_INDEX_Katakana:
-    case KEY_NAME_INDEX_Hiragana:
-      return CODE_NAME_INDEX_KanaMode;
-    case KEY_NAME_INDEX_Hankaku:
-    case KEY_NAME_INDEX_Zenkaku:
-    case KEY_NAME_INDEX_KanjiMode:
-      return CODE_NAME_INDEX_Backquote;
-    case KEY_NAME_INDEX_HanjaMode:
-      return CODE_NAME_INDEX_Lang2;
-    case KEY_NAME_INDEX_HangulMode:
-      return CODE_NAME_INDEX_Lang1;
-#endif  // #ifdef XP_WIN
 
-#ifdef MOZ_WIDGET_GTK
-    case KEY_NAME_INDEX_Convert:
-      return CODE_NAME_INDEX_Convert;
-    case KEY_NAME_INDEX_NonConvert:
-      return CODE_NAME_INDEX_NonConvert;
-    case KEY_NAME_INDEX_Alphanumeric:
-      return CODE_NAME_INDEX_CapsLock;
-    case KEY_NAME_INDEX_HiraganaKatakana:
-      return CODE_NAME_INDEX_KanaMode;
-    case KEY_NAME_INDEX_ZenkakuHankaku:
-      return CODE_NAME_INDEX_Backquote;
-#endif  // #ifdef MOZ_WIDGET_GTK
 
-#ifdef ANDROID
-    case KEY_NAME_INDEX_Convert:
-      return CODE_NAME_INDEX_Convert;
-    case KEY_NAME_INDEX_NonConvert:
-      return CODE_NAME_INDEX_NonConvert;
-    case KEY_NAME_INDEX_HiraganaKatakana:
-      return CODE_NAME_INDEX_KanaMode;
-    case KEY_NAME_INDEX_ZenkakuHankaku:
-      return CODE_NAME_INDEX_Backquote;
+
     case KEY_NAME_INDEX_Eisu:
       return CODE_NAME_INDEX_Lang2;
     case KEY_NAME_INDEX_KanjiMode:
       return CODE_NAME_INDEX_Lang1;
-#endif  // #ifdef ANDROID
-
-#ifdef XP_MACOSX
-    case KEY_NAME_INDEX_Eisu:
-      return CODE_NAME_INDEX_Lang2;
-    case KEY_NAME_INDEX_KanjiMode:
-      return CODE_NAME_INDEX_Lang1;
-#endif  // #ifdef XP_MACOSX
 
     default:
       return CODE_NAME_INDEX_UNKNOWN;

@@ -17,17 +17,10 @@
 #include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#  include "mozilla/widget/AndroidUiThread.h"
-
-static RefPtr<nsThread> GetUiThread() { return mozilla::GetAndroidUiThread(); }
-#else
 static RefPtr<nsThread> GetUiThread() {
   MOZ_CRASH("Platform does not support UiCompositorController");
   return nullptr;
 }
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
 namespace mozilla {
 namespace layers {
@@ -128,50 +121,6 @@ bool UiCompositorControllerChild::SetDefaultClearColor(const uint32_t& aColor) {
   return SendDefaultClearColor(aColor);
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-RefPtr<UiCompositorControllerChild::ScreenPixelsPromise>
-UiCompositorControllerChild::RequestScreenPixels(gfx::IntRect aSourceRect,
-                                                 gfx::IntSize aDestSize) {
-  if (!mIsOpen) {
-    return ScreenPixelsPromise::CreateAndReject(NS_ERROR_NOT_AVAILABLE,
-                                                __func__);
-  }
-
-  // We only support one request at a time. If an old request is still
-  // outstanding when a new request is made, just reject the old request.
-  if (mScreenPixelsRequest) {
-    mScreenPixelsRequest.extract().mPromise->Reject(NS_ERROR_ABORT, __func__);
-  }
-
-  RefPtr<layers::AndroidHardwareBuffer> hardwareBuffer =
-      layers::AndroidHardwareBuffer::Create(aDestSize,
-                                            gfx::SurfaceFormat::R8G8B8A8);
-  if (!hardwareBuffer) {
-    return ScreenPixelsPromise::CreateAndReject(NS_ERROR_OUT_OF_MEMORY,
-                                                __func__);
-  }
-
-  UniqueFileHandle bufferFd = hardwareBuffer->SerializeToFileDescriptor();
-  if (!bufferFd) {
-    return ScreenPixelsPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
-  }
-
-  static uint64_t nextRequestId = 0;
-  const uint64_t requestId = nextRequestId++;
-  auto promise = MakeRefPtr<ScreenPixelsPromise::Private>(__func__);
-  mScreenPixelsRequest.emplace(ScreenPixelsRequest{
-      .mRequestId = requestId,
-      .mHardwareBuffer = hardwareBuffer,
-      .mPromise = promise,
-  });
-  if (!SendRequestScreenPixels(requestId, aSourceRect,
-                               ipc::FileDescriptor(std::move(bufferFd)))) {
-    mScreenPixelsRequest.extract().mPromise->Reject(NS_ERROR_NOT_AVAILABLE,
-                                                    __func__);
-  }
-  return promise;
-}
-#endif
 
 bool UiCompositorControllerChild::EnableLayerUpdateNotifications(
     const bool& aEnable) {
@@ -220,11 +169,6 @@ void UiCompositorControllerChild::ActorDestroy(ActorDestroyReason aWhy) {
   mIsOpen = false;
   mParent = nullptr;
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (mScreenPixelsRequest) {
-    mScreenPixelsRequest->mPromise->Reject(NS_ERROR_ABORT, __func__);
-  }
-#endif
   if (mProcessToken) {
     gfx::GPUProcessManager::Get()->NotifyRemoteActorDestroyed(mProcessToken);
     mProcessToken = 0;
@@ -246,11 +190,6 @@ void UiCompositorControllerChild::HandleFatalError(const char* aMsg) {
 mozilla::ipc::IPCResult
 UiCompositorControllerChild::RecvToolbarAnimatorMessageFromCompositor(
     const int32_t& aMessage) {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (mWidget) {
-    mWidget->RecvToolbarAnimatorMessageFromCompositor(aMessage);
-  }
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   return IPC_OK();
 }
@@ -268,25 +207,6 @@ UiCompositorControllerChild::RecvNotifyCompositorScrollUpdates(
 mozilla::ipc::IPCResult UiCompositorControllerChild::RecvScreenPixels(
     uint64_t aRequestId, bool aSuccess,
     Maybe<ipc::FileDescriptor>&& aAcquireFence) {
-#if defined(MOZ_WIDGET_ANDROID)
-  if (!mScreenPixelsRequest || mScreenPixelsRequest->mRequestId != aRequestId) {
-    // Response is for an outdated request whose promise will have already been
-    // rejected. Just ignore it.
-    return IPC_OK();
-  }
-
-  auto request = mScreenPixelsRequest.extract();
-  if (!aSuccess) {
-    request.mPromise->Reject(NS_ERROR_FAILURE, __func__);
-    return IPC_OK();
-  }
-
-  if (aAcquireFence) {
-    request.mHardwareBuffer->SetAcquireFence(
-        aAcquireFence->TakePlatformHandle());
-  }
-  request.mPromise->Resolve(std::move(request.mHardwareBuffer), __func__);
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   return IPC_OK();
 }
@@ -355,34 +275,6 @@ void UiCompositorControllerChild::SendCachedValues() {
   }
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-void UiCompositorControllerChild::SetCompositorSurfaceManager(
-    java::CompositorSurfaceManager::Param aCompositorSurfaceManager) {
-  MOZ_ASSERT(!mCompositorSurfaceManager,
-             "SetCompositorSurfaceManager must only be called once.");
-  mCompositorSurfaceManager = aCompositorSurfaceManager;
-};
-
-void UiCompositorControllerChild::OnCompositorSurfaceChanged(
-    int32_t aWidgetId, java::sdk::Surface::Param aSurface) {
-  // If mCompositorSurfaceManager is not set then there is no GPU process and
-  // we do not need to do anything.
-  if (mCompositorSurfaceManager == nullptr) {
-    return;
-  }
-
-  nsresult result =
-      mCompositorSurfaceManager->OnSurfaceChanged(aWidgetId, aSurface);
-
-  // If our remote binder has died then notify the GPU process manager.
-  if (NS_FAILED(result)) {
-    if (mProcessToken) {
-      gfx::GPUProcessManager::Get()->NotifyRemoteActorDestroyed(mProcessToken);
-      mProcessToken = 0;
-    }
-  }
-}
-#endif
 
 void UiCompositorControllerChild::SetReplyTimeout() {
 #ifndef DEBUG

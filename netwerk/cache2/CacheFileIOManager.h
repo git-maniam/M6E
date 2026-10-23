@@ -23,9 +23,7 @@
 #include "prio.h"
 
 // #define DEBUG_HANDLES 1
-#if !defined(MOZ_WIDGET_ANDROID)
 #  define MOZ_CACHE_ASYNC_IO 1
-#endif
 
 class nsIFile;
 class nsITimer;
@@ -363,9 +361,6 @@ class CacheFileIOManager final : public nsITimerCallback, public nsINamed {
   enum EEnumerateMode { ENTRIES, DOOMED };
 
   static void GetCacheDirectory(nsIFile** result);
-#if defined(MOZ_WIDGET_ANDROID)
-  static void GetProfilelessCacheDirectory(nsIFile** result);
-#endif
 
   // Calls synchronously OnEntryInfo for an entry with the given hash.
   // Tries to find an existing entry in the service hashtables first, if not
@@ -492,13 +487,6 @@ class CacheFileIOManager final : public nsITimerCallback, public nsINamed {
   bool mShuttingDown{false};
   RefPtr<CacheIOThread> mIOThread;
   nsCOMPtr<nsIFile> mCacheDirectory;
-#if defined(MOZ_WIDGET_ANDROID)
-  // On Android we add the active profile directory name between the path
-  // and the 'cache2' leaf name.  However, to delete any leftover data from
-  // times before we were doing it, we still need to access the directory
-  // w/o the profile name in the path.  Here it is stored.
-  nsCOMPtr<nsIFile> mCacheProfilelessDirectory;
-#endif
   bool mTreeCreated{false};
   bool mTreeCreationFailed{false};
   CacheFileHandles mHandles;

@@ -19,11 +19,7 @@ namespace mozilla {
  * the mapping.
  */
 
-#ifndef MOZ_WIDGET_COCOA
-#  define MODIFIER_ACCEL MODIFIER_CONTROL
-#else
 #  define MODIFIER_ACCEL MODIFIER_META
-#endif
 
 struct ShortcutKeyMap final {
   uint32_t const mKeyCode;
@@ -36,17 +32,7 @@ struct ShortcutKeyMap final {
   const char16ptr_t mCommandEmacs;
 };
 
-#if defined(XP_WIN)
-#  define GetCommandForPlatform(aMap) aMap.mCommandWin
-#elif defined(MOZ_WIDGET_COCOA)
 #  define GetCommandForPlatform(aMap) aMap.mCommandMac
-#elif defined(MOZ_WIDGET_GTK)
-#  define GetCommandForPlatform(aMap) aMap.mCommandLinux
-#elif defined(MOZ_WIDGET_ANDROID)
-#  define GetCommandForPlatform(aMap) aMap.mCommandAndroid
-#else
-#  define GetCommandForPlatform(aMap) aMap.mCommandEmacs
-#endif
 
 static bool GetCommandFor(KeyEventHandler* aFirstHandler,
                           dom::KeyboardEvent* aDOMEvent, nsAString& aCommand) {
@@ -95,10 +81,6 @@ static const KeyCodeAndStr kKeyCodes[] = {
     {NS_VK_UP, KEY_NAME_INDEX_ArrowUp, "ArrowUp"},
     {NS_VK_RIGHT, KEY_NAME_INDEX_ArrowRight, "ArrowRight"},
     {NS_VK_DOWN, KEY_NAME_INDEX_ArrowDown, "ArrowDown"},
-#ifndef MOZ_WIDGET_COCOA
-    // No Insert key on macOS
-    {NS_VK_INSERT, KEY_NAME_INDEX_Insert, "Insert"},
-#endif
     {NS_VK_DELETE, KEY_NAME_INDEX_Delete, "Delete"},
     {NS_VK_F1, KEY_NAME_INDEX_F1, "F1"},
     {NS_VK_F2, KEY_NAME_INDEX_F2, "F2"},
@@ -112,22 +94,6 @@ static const KeyCodeAndStr kKeyCodes[] = {
     {NS_VK_F10, KEY_NAME_INDEX_F10, "F10"},
     {NS_VK_F11, KEY_NAME_INDEX_F11, "F11"},
     {NS_VK_F12, KEY_NAME_INDEX_F12, "F12"},
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK) || defined(MOZ_WIDGET_ANDROID)
-    {NS_VK_F13, KEY_NAME_INDEX_F13, "F13"},
-    {NS_VK_F14, KEY_NAME_INDEX_F14, "F14"},
-    {NS_VK_F15, KEY_NAME_INDEX_F15, "F15"},
-    {NS_VK_F16, KEY_NAME_INDEX_F16, "F16"},
-    {NS_VK_F17, KEY_NAME_INDEX_F17, "F17"},
-    {NS_VK_F18, KEY_NAME_INDEX_F18, "F18"},
-    {NS_VK_F19, KEY_NAME_INDEX_F19, "F19"},
-#endif
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-    {NS_VK_F20, KEY_NAME_INDEX_F20, "F20"},
-    {NS_VK_F21, KEY_NAME_INDEX_F21, "F21"},
-    {NS_VK_F22, KEY_NAME_INDEX_F22, "F22"},
-    {NS_VK_F23, KEY_NAME_INDEX_F23, "F23"},
-    {NS_VK_F24, KEY_NAME_INDEX_F24, "F24"},
-#endif
 };
 
 static const unsigned char kCharCodes[] = {

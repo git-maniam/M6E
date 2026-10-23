@@ -291,11 +291,6 @@ void TelemetryProbesReporter::OnFirstFrameLoaded(
   extraData.isHardwareDecoding =
       Some(aFlags.contains(FirstFrameLoadedFlag::IsHardwareDecoding));
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (aFlags.contains(FirstFrameLoadedFlag::IsHLS)) {
-    extraData.hlsDecoder = Some(true);
-  }
-#endif
 
   extraData.decoderName = Some(aVideoDecoderName);
   extraData.isHdr = Some(static_cast<bool>(

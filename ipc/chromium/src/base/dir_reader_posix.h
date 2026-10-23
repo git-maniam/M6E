@@ -16,9 +16,7 @@
 // seems worse than falling back to enumerating all file descriptors so we will
 // probably never implement this on the Mac.
 
-#if defined(XP_LINUX)
-#  include "base/dir_reader_linux.h"
-#elif (defined(__DragonFly__) || defined(XP_FREEBSD) || defined(XP_NETBSD) || \
+#if   (defined(__DragonFly__) || defined(XP_FREEBSD) || defined(XP_NETBSD) || \
        defined(XP_OPENBSD)) &&                                                \
     !defined(__GLIBC__)
 #  include "base/dir_reader_bsd.h"
@@ -28,9 +26,7 @@
 
 namespace base {
 
-#if defined(XP_LINUX)
-typedef DirReaderLinux DirReaderPosix;
-#elif (defined(__DragonFly__) || defined(XP_FREEBSD) || defined(XP_NETBSD) || \
+#if   (defined(__DragonFly__) || defined(XP_FREEBSD) || defined(XP_NETBSD) || \
        defined(XP_OPENBSD)) &&                                                \
     !defined(__GLIBC__)
 typedef DirReaderBSD DirReaderPosix;

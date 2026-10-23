@@ -40,22 +40,6 @@ static T get_real_symbol(const char* aName, T aReplacementSymbol) {
   // Find the corresponding function in the linked libraries
   T real_symbol = dlsym_wrapper<T>(RTLD_NEXT, aName);
 
-#if defined(ANDROID)
-  if ((real_symbol == nullptr) || (real_symbol == aReplacementSymbol)) {
-    // On old versions of Android the application runtime links in libc before
-    // we get a chance to link libmozglue, so its symbols don't appear when
-    // resolving them with RTLD_NEXT. This behavior differs between the
-    // different versions of Android so we'll just look for them directly into
-    // libc.so. Note that this won't work if we're trying to interpose
-    // functions that are in other libraries, but hopefully we'll never have
-    // to do that.
-    void* handle = dlopen_wrapper("libc.so", RTLD_LAZY);
-
-    if (handle) {
-      real_symbol = dlsym_wrapper<T>(handle, aName);
-    }
-  }
-#endif
 
   if (real_symbol == nullptr) {
     MOZ_CRASH_UNSAFE_PRINTF(

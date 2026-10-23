@@ -66,7 +66,6 @@ enum class PrefType : uint8_t {
 
 #endif
 
-#ifdef XP_UNIX
 // We need to send two shared memory descriptors to every child process:
 //
 // 1) A read-only/write-protected snapshot of the initial state of the
@@ -83,7 +82,6 @@ enum class PrefType : uint8_t {
 // XXX: bug 1440207 is about improving how fixed fds such as this are used.
 static const int kPrefsFileDescriptor = 8;
 static const int kPrefMapFileDescriptor = 9;
-#endif
 
 // Keep this in sync with PrefType in parser/src/lib.rs.
 enum class PrefValueKind : uint8_t { Default, User };

@@ -20,30 +20,15 @@
 #include "nsPrintfCString.h"
 #include "nsServiceManagerUtils.h"
 
-#ifdef XP_WIN
-#  include <process.h>
-#  ifndef getpid
-#    define getpid _getpid
-#  endif
-#else
 #  include <unistd.h>
-#endif
 
-#if defined(XP_UNIX) && !defined(XP_IOS)
 #  define MOZ_SUPPORTS_FIFO 1
-#endif
 
 // Some Android devices seem to send RT signals to Firefox so we want to avoid
 // consuming those as they're not user triggered.
-#if !defined(ANDROID) && (defined(XP_LINUX) || defined(__FreeBSD__))
-#  define MOZ_SUPPORTS_RT_SIGNALS 1
-#endif
 
 #if defined(MOZ_SUPPORTS_RT_SIGNALS)
 #  include <fcntl.h>
-#  if defined(__FreeBSD__)
-#    include <signal.h>
-#  endif
 #  include <sys/stat.h>
 #  include <sys/types.h>
 #endif
@@ -506,12 +491,6 @@ class TempDirFinishCallback final : public nsIFinishDumpingCallback {
       return rv;
     }
 
-#ifdef ANDROID
-    rv = reportsFinalFile->AppendNative("memory-reports"_ns);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-#endif
 
     rv = reportsFinalFile->AppendNative(mReportsFilename);
     if (NS_WARN_IF(NS_FAILED(rv))) {

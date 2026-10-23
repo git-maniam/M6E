@@ -91,15 +91,6 @@ void FlushICache(void* code, size_t size) {
 #if defined(JS_SIMULATOR)
   js::jit::SimulatorProcess::FlushICache(code, size);
 
-#elif defined(__linux__) || defined(__OpenBSD__)
-#  if defined(__GNUC__)
-  intptr_t end = reinterpret_cast<intptr_t>(code) + size;
-  __builtin___clear_cache(reinterpret_cast<char*>(code),
-                          reinterpret_cast<char*>(end));
-
-#  else
-  _flush_cache(reinterpret_cast<char*>(code), size, BCACHE);
-#  endif
 #else
 #  error "Unsupported platform"
 #endif

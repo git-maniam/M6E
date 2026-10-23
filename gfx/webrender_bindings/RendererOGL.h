@@ -92,14 +92,6 @@ class RendererOGL {
 
   Maybe<layers::FrameRecording> EndRecording();
 
-#ifdef MOZ_WIDGET_ANDROID
-  using ScreenPixelsPromise = MozPromise<Ok, nsresult, true>;
-  // Captures the pixels for the next rendered frame. Returns a promise that
-  // resolves once the pixels are captured.
-  RefPtr<ScreenPixelsPromise> RequestScreenPixels(
-      gfx::IntRect aSourceRect,
-      RefPtr<layers::AndroidHardwareBuffer> aHardwareBuffer);
-#endif
 
   /// This can be called on the render thread only.
   ~RendererOGL();
@@ -155,13 +147,6 @@ class RendererOGL {
    */
   bool DidPaintContent(const wr::WebRenderPipelineInfo* aFrameEpochs);
 
-#ifdef MOZ_WIDGET_ANDROID
-  // If mPendingScreenPixelsRequest is set, captures the pixels of the frame
-  // that has just been rendered and resolves the request. Must be called after
-  // the frame has been rendered but before RenderCompositor::EndFrame() (which
-  // swaps buffers).
-  void MaybeCaptureScreenPixels();
-#endif
 
   RefPtr<RenderThread> mThread;
   UniquePtr<RenderCompositor> mCompositor;
@@ -175,14 +160,6 @@ class RendererOGL {
   // separately so paused-window resource trimming is platform-independent.
   bool mPausedForResourceTrimming = false;
 
-#ifdef MOZ_WIDGET_ANDROID
-  struct ScreenPixelsRequest {
-    gfx::IntRect mSourceRect;
-    RefPtr<layers::AndroidHardwareBuffer> mHardwareBuffer;
-    RefPtr<ScreenPixelsPromise::Private> mPromise;
-  };
-  Maybe<ScreenPixelsRequest> mPendingScreenPixelsRequest;
-#endif
 
   RendererScreenshotGrabber mScreenshotGrabber;
 

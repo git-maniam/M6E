@@ -21,7 +21,6 @@
     return inst.forget();                                              \
   }
 
-#ifdef MOZ_WIDGET_COCOA
 // This should be `do_GetService`, but test_bug466599.xhtml erroneously uses
 // `createInstance` rather than `getService`, and passes only because doing so
 // bypasses the clipboard contents cache, which does not have the expected
@@ -30,11 +29,6 @@ MAKE_COMPONENT_CHOOSER(nsClipboardSelector,
                        "@mozilla.org/widget/parent/clipboard;1",
                        "@mozilla.org/widget/content/clipboard;1",
                        do_CreateInstance)
-#else
-MAKE_COMPONENT_CHOOSER(nsClipboardSelector,
-                       "@mozilla.org/widget/parent/clipboard;1",
-                       "@mozilla.org/widget/content/clipboard;1", do_GetService)
-#endif
 MAKE_COMPONENT_CHOOSER(nsColorPickerSelector,
                        "@mozilla.org/parent/colorpicker;1",
                        "@mozilla.org/content/colorpicker;1", do_CreateInstance)

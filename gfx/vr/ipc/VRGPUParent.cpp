@@ -23,12 +23,10 @@ VRGPUParent::VRGPUParent(EndpointProcInfo aChildProcess) : mClosed(false) {
 VRGPUParent::~VRGPUParent() = default;
 
 void VRGPUParent::ActorDestroy(ActorDestroyReason aWhy) {
-#if !defined(MOZ_WIDGET_ANDROID)
   if (mVRService) {
     mVRService->Stop();
     mVRService = nullptr;
   }
-#endif
 
   mClosed = true;
 }
@@ -56,48 +54,38 @@ void VRGPUParent::Bind(Endpoint<PVRGPUParent>&& aEndpoint) {
 }
 
 mozilla::ipc::IPCResult VRGPUParent::RecvStartVRService() {
-#if !defined(MOZ_WIDGET_ANDROID)
   mVRService = VRService::Create();
   MOZ_ASSERT(mVRService);
 
   mVRService->Start();
-#endif
 
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult VRGPUParent::RecvStopVRService() {
-#if !defined(MOZ_WIDGET_ANDROID)
   if (mVRService) {
     mVRService->Stop();
     mVRService = nullptr;
   }
-#endif
 
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult VRGPUParent::RecvPuppetReset() {
-#if !defined(MOZ_WIDGET_ANDROID)
   VRPuppetCommandBuffer::Get().Reset();
-#endif
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult VRGPUParent::RecvPuppetSubmit(
     const nsTArray<uint64_t>& aBuffer) {
-#if !defined(MOZ_WIDGET_ANDROID)
   VRPuppetCommandBuffer::Get().Submit(aBuffer);
-#endif
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult VRGPUParent::RecvPuppetCheckForCompletion() {
-#if !defined(MOZ_WIDGET_ANDROID)
   if (VRPuppetCommandBuffer::Get().HasEnded()) {
     (void)SendNotifyPuppetComplete();
   }
-#endif
   return IPC_OK();
 }
 

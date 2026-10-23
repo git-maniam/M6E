@@ -100,9 +100,7 @@
 #include "nsStringStream.h"
 #include "nsSyncStreamListener.h"
 #include "nsViewSourceHandler.h"
-#ifndef XP_IOS
 #  include "nsIconURI.h"
-#endif
 #include "DecoderTraits.h"
 #include "MediaContainerType.h"
 #include "imgLoader.h"
@@ -2016,22 +2014,12 @@ nsresult NS_NewURI(nsIURI** aURI, const nsACString& aSpec,
         .Finalize(aURI);
   }
 
-#ifndef XP_IOS
   if (scheme.EqualsLiteral("moz-icon")) {
     return NS_MutateURI(new nsMozIconURI::Mutator())
         .SetSpec(aSpec)
         .Finalize(aURI);
   }
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-  if (scheme.EqualsLiteral("smb") || scheme.EqualsLiteral("sftp")) {
-    return NS_MutateURI(new nsStandardURL::Mutator())
-        .Apply(&nsIStandardURLMutator::Init, nsIStandardURL::URLTYPE_STANDARD,
-               -1, aSpec, aCharset, aBaseURI, nullptr)
-        .Finalize(aURI);
-  }
-#endif
 
   if (scheme.EqualsLiteral("android")) {
     return NS_MutateURI(NS_STANDARDURLMUTATOR_CONTRACTID)
@@ -4247,31 +4235,6 @@ void CheckForBrokenChromeURL(nsILoadInfo* aLoadInfo, nsIURI* aURI) {
   nsCString spec;
   aURI->GetSpec(spec);
 
-#ifdef ANDROID
-  // Various toolkit files use this and are shipped on android, but
-  // info-pages.css and aboutLicense.css are not - bug 1808987
-  if (StringEndsWith(spec, "info-pages.css"_ns) ||
-      StringEndsWith(spec, "aboutLicense.css"_ns) ||
-      // about:certificates is missing styles: bug 2055889
-      StringEndsWith(spec, "in-content/common.css"_ns) ||
-      StringEndsWith(spec, "text-and-typography.css"_ns) ||
-      // Error page CSS is also missing: bug 1810039
-      StringEndsWith(spec, "aboutNetError.css"_ns) ||
-      StringEndsWith(spec, "aboutHttpsOnlyError.css"_ns) ||
-      StringEndsWith(spec, "error-pages.css"_ns) ||
-      // popup.css is used in a single mochitest: bug 1810577
-      StringEndsWith(spec, "/popup.css"_ns) ||
-      // Used by an extension installation test - bug 1809650
-      StringBeginsWith(spec, "resource://android/assets/web_extensions/"_ns)) {
-    return;
-  }
-
-  // browser/ is not built for GeckoView, so toolkit code that references it
-  // can never resolve these here.
-  if (StringBeginsWith(spec, "moz-src:///browser/"_ns)) {
-    return;
-  }
-#endif
 
   // DTD files from gre may not exist when requested by tests.
   if (StringBeginsWith(spec, "resource://gre/res/dtd/"_ns)) {

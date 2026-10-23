@@ -34,9 +34,6 @@ class SandboxTest : public mozISandboxTest {
   virtual ~SandboxTest() = default;
   nsTArray<RefPtr<SandboxTestingParent>> mSandboxTestingParents;
   RefPtr<gmp::GMPContentParentCloseBlocker> mGMPContentParentWrapper;
-#if defined(XP_WIN)
-  bool mChromeDirExisted = false;
-#endif
 };
 
 }  // namespace mozilla

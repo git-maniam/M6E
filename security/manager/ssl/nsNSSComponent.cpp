@@ -66,10 +66,6 @@
 #include "sslerr.h"
 #include "sslproto.h"
 
-#if defined(XP_LINUX) && !defined(ANDROID)
-#  include <linux/magic.h>
-#  include <sys/vfs.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -103,16 +99,7 @@ class MOZ_RAII AutoGleanTimer {
 // third-party or legacy libraries that cannot handle `nsIFile`s (such as NSS).
 // |result| is encoded in UTF-8.
 nsresult FileToCString(const nsCOMPtr<nsIFile>& file, nsACString& result) {
-#ifdef XP_WIN
-  nsAutoString path;
-  nsresult rv = file->GetPath(path);
-  if (NS_SUCCEEDED(rv)) {
-    CopyUTF16toUTF8(path, result);
-  }
-  return rv;
-#else
   return file->GetNativePath(result);
-#endif
 }
 
 void TruncateFromLastDirectorySeparator(nsCString& path) {
@@ -1189,54 +1176,6 @@ nsresult nsNSSComponent::SetEnabledTLSVersions() {
   return NS_OK;
 }
 
-#if defined(XP_WIN) || (defined(XP_LINUX) && !defined(ANDROID))
-// If the profile directory is on a networked drive, we want to set the
-// environment variable NSS_SDB_USE_CACHE to yes (as long as it hasn't been set
-// before).
-static void SetNSSDatabaseCacheModeAsAppropriate() {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  nsCOMPtr<nsIFile> profileFile;
-  nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
-                                       getter_AddRefs(profileFile));
-  if (NS_FAILED(rv)) {
-    // We're probably running without a profile directory, so this is
-    // irrelevant.
-    return;
-  }
-
-  static const char sNSS_SDB_USE_CACHE[] = "NSS_SDB_USE_CACHE";
-  static const char sNSS_SDB_USE_CACHE_WITH_VALUE[] = "NSS_SDB_USE_CACHE=yes";
-  auto profilePath = profileFile->NativePath();
-
-#  if defined(XP_LINUX) && !defined(ANDROID)
-  struct statfs statfs_s;
-  if (statfs(profilePath.get(), &statfs_s) == 0 &&
-      statfs_s.f_type == NFS_SUPER_MAGIC && !PR_GetEnv(sNSS_SDB_USE_CACHE)) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-            ("profile is remote (and NSS_SDB_USE_CACHE wasn't set): "
-             "setting NSS_SDB_USE_CACHE"));
-    PR_SetEnv(sNSS_SDB_USE_CACHE_WITH_VALUE);
-  } else {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("not setting NSS_SDB_USE_CACHE"));
-  }
-#  endif  // defined(XP_LINUX) && !defined(ANDROID)
-
-#  ifdef XP_WIN
-  wchar_t volPath[MAX_PATH];
-  if (::GetVolumePathNameW(profilePath.get(), volPath, MAX_PATH) &&
-      ::GetDriveTypeW(volPath) == DRIVE_REMOTE &&
-      !PR_GetEnv(sNSS_SDB_USE_CACHE)) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-            ("profile is remote (and NSS_SDB_USE_CACHE wasn't set): "
-             "setting NSS_SDB_USE_CACHE"));
-    PR_SetEnv(sNSS_SDB_USE_CACHE_WITH_VALUE);
-  } else {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("not setting NSS_SDB_USE_CACHE"));
-  }
-#  endif  // XP_WIN
-}
-#endif  // defined(XP_WIN) || (defined(XP_LINUX) && !defined(ANDROID))
 
 nsresult GetNSSProfilePath(nsAutoCString& aProfilePath) {
   aProfilePath.Truncate();
@@ -1250,15 +1189,7 @@ nsresult GetNSSProfilePath(nsAutoCString& aProfilePath) {
     return NS_OK;
   }
 
-#if defined(XP_WIN)
-  // SQLite always takes UTF-8 file paths regardless of the current system
-  // code page.
-  nsAutoString u16ProfilePath;
-  rv = profileFile->GetPath(u16ProfilePath);
-  CopyUTF16toUTF8(u16ProfilePath, aProfilePath);
-#else
   rv = profileFile->GetNativePath(aProfilePath);
-#endif
   if (NS_FAILED(rv)) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Error,
             ("Could not get native path for profile directory.\n"));
@@ -1270,7 +1201,6 @@ nsresult GetNSSProfilePath(nsAutoCString& aProfilePath) {
   return NS_OK;
 }
 
-#ifndef ANDROID
 // Given a profile path, attempt to rename the PKCS#11 module DB to
 // "pkcs11.txt.fips". In the case of a catastrophic failure (e.g. out of
 // memory), returns a failing nsresult. If execution could conceivably proceed,
@@ -1335,7 +1265,6 @@ static nsresult AttemptToRenamePKCS11ModuleDB(const nsACString& profilePath) {
   (void)dbFile->MoveToNative(profileDir, destModuleDBFilename);
   return NS_OK;
 }
-#endif  // ifndef ANDROID
 
 // Given a profile directory, attempt to initialize NSS. If nocertdb is true,
 // (or if we don't have a profile directory) simply initialize NSS in no DB mode
@@ -1364,9 +1293,7 @@ static nsresult InitializeNSSWithFallbacks(const nsACString& profilePath,
   }
 
   // Try read/write mode. If we're in safeMode, we won't load PKCS#11 modules.
-#ifndef ANDROID
   PRErrorCode savedPRErrorCode1;
-#endif  // ifndef ANDROID
   PKCS11DBConfig safeModeDBConfig =
       safeMode ? PKCS11DBConfig::DoNotLoadModules : PKCS11DBConfig::LoadModules;
   SECStatus srv = ::mozilla::psm::InitializeNSS(
@@ -1375,10 +1302,8 @@ static nsresult InitializeNSSWithFallbacks(const nsACString& profilePath,
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("initialized NSS in r/w mode"));
     return NS_OK;
   }
-#ifndef ANDROID
   savedPRErrorCode1 = PR_GetError();
   PRErrorCode savedPRErrorCode2;
-#endif  // ifndef ANDROID
   // That failed. Try read-only mode.
   srv = ::mozilla::psm::InitializeNSS(profilePath, NSSDBConfig::ReadOnly,
                                       safeModeDBConfig);
@@ -1387,15 +1312,12 @@ static nsresult InitializeNSSWithFallbacks(const nsACString& profilePath,
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("initialized NSS in r-o mode"));
     return NS_OK;
   }
-#ifndef ANDROID
   savedPRErrorCode2 = PR_GetError();
 
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
           ("failed to initialize NSS with codes %d %d", savedPRErrorCode1,
            savedPRErrorCode2));
-#endif  // ifndef ANDROID
 
-#ifndef ANDROID
   // That failed as well. Maybe we're trying to load a PKCS#11 module DB that is
   // in FIPS mode, but we don't support FIPS? Test load NSS without PKCS#11
   // modules. If that succeeds, that's probably what's going on.
@@ -1455,7 +1377,6 @@ static nsresult InitializeNSSWithFallbacks(const nsACString& profilePath,
       }
     }
   }
-#endif
 
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("last-resort NSS_NoDB_Init"));
   srv = NSS_NoDB_Init(nullptr);
@@ -1559,9 +1480,6 @@ nsresult nsNSSComponent::InitializeNSS() {
   }
 #endif
 
-#if defined(XP_WIN) || (defined(XP_LINUX) && !defined(ANDROID))
-  SetNSSDatabaseCacheModeAsAppropriate();
-#endif
 
   bool nocertdb = StaticPrefs::security_nocertdb();
   bool inSafeMode = GetInSafeMode();

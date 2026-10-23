@@ -19,11 +19,9 @@ NS_IMETHODIMP nsNetAddr::GetFamily(uint16_t* aFamily) {
     case AF_INET6:
       *aFamily = nsINetAddr::FAMILY_INET6;
       break;
-#if defined(XP_UNIX)
     case AF_LOCAL:
       *aFamily = nsINetAddr::FAMILY_LOCAL;
       break;
-#endif
     default:
       return NS_ERROR_UNEXPECTED;
   }
@@ -47,11 +45,9 @@ NS_IMETHODIMP nsNetAddr::GetPort(uint16_t* aPort) {
     case AF_INET6:
       *aPort = ntohs(mAddr.inet6.port);
       break;
-#if defined(XP_UNIX)
     case AF_LOCAL:
       // There is no port number for local / connections.
       return NS_ERROR_NOT_AVAILABLE;
-#endif
     default:
       return NS_ERROR_UNEXPECTED;
   }
@@ -65,9 +61,7 @@ NS_IMETHODIMP nsNetAddr::GetFlow(uint32_t* aFlow) {
       *aFlow = ntohl(mAddr.inet6.flowinfo);
       break;
     case AF_INET:
-#if defined(XP_UNIX)
     case AF_LOCAL:
-#endif
       // only for IPv6
       return NS_ERROR_NOT_AVAILABLE;
     default:
@@ -83,9 +77,7 @@ NS_IMETHODIMP nsNetAddr::GetScope(uint32_t* aScope) {
       *aScope = ntohl(mAddr.inet6.scope_id);
       break;
     case AF_INET:
-#if defined(XP_UNIX)
     case AF_LOCAL:
-#endif
       // only for IPv6
       return NS_ERROR_NOT_AVAILABLE;
     default:
@@ -101,9 +93,7 @@ NS_IMETHODIMP nsNetAddr::GetIsV4Mapped(bool* aIsV4Mapped) {
       *aIsV4Mapped = IPv6ADDR_IS_V4MAPPED(&mAddr.inet6.ip);
       break;
     case AF_INET:
-#if defined(XP_UNIX)
     case AF_LOCAL:
-#endif
       // only for IPv6
       return NS_ERROR_NOT_AVAILABLE;
     default:

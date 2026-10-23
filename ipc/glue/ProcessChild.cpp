@@ -7,15 +7,10 @@
 #include "Endpoint.h"
 #include "nsDebug.h"
 
-#ifdef XP_WIN
-#  include <stdlib.h>  // for _exit()
-#  include <synchapi.h>
-#else
 #  include <unistd.h>  // for _exit()
 #  include <time.h>
 #  include "base/eintr_wrapper.h"
 #  include "prenv.h"
-#endif
 
 #include "nsAppRunner.h"
 #include "nsExceptionHandler.h"
@@ -71,14 +66,10 @@ bool ProcessChild::InitPrefs(int aArgc, char* aArgv[]) {
 #ifdef ENABLE_TESTS
 // Allow tests to cause a synthetic delay/"hang" during child process
 // shutdown by setting environment variables.
-#  ifdef XP_UNIX
 static void ReallySleep(int aSeconds) {
   struct ::timespec snooze = {aSeconds, 0};
   HANDLE_EINTR(nanosleep(&snooze, &snooze));
 }
-#  else
-static void ReallySleep(int aSeconds) { ::Sleep(aSeconds * 1000); }
-#  endif  // Unix/Win
 static void SleepIfEnv(const char* aName) {
   if (auto* value = PR_GetEnv(aName)) {
     CrashReporter::RecordAnnotationBool(

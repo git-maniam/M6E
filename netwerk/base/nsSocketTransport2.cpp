@@ -50,24 +50,12 @@
 #  include "mozilla/StaticPrefs_fuzzing.h"
 #endif
 
-#if defined(XP_WIN)
-#  include "ShutdownLayer.h"
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "AndroidLocalNetworkPermission.h"
-#  include "AndroidNetworkBlockedReason.h"
-#endif
 
 /* Following inclusions required for keepalive config not supported by NSPR. */
 #include "private/pprio.h"
-#if defined(XP_WIN)
-#  include <mstcpip.h>
-#  include <winsock2.h>
-#elif defined(XP_UNIX)
 #  include <errno.h>
 #  include <netinet/tcp.h>
-#endif
 /* End keepalive config inclusions. */
 
 #define SUCCESSFUL_CONNECTING_TO_IPV4_ADDRESS 0
@@ -838,7 +826,6 @@ nsresult nsSocketTransport::Init(const nsTArray<nsCString>& types,
   return NS_OK;
 }
 
-#if defined(XP_UNIX)
 nsresult nsSocketTransport::InitWithFilename(const char* filename) {
   return InitWithName(filename, strlen(filename));
 }
@@ -850,11 +837,7 @@ nsresult nsSocketTransport::InitWithName(const char* name, size_t length) {
 
   if (!name[0] && length > 1) {
     // name is abstract address name that is supported on Linux only
-#  if defined(XP_LINUX)
-    mHost.Assign(name + 1, length - 1);
-#  else
     return NS_ERROR_SOCKET_ADDRESS_NOT_SUPPORTED;
-#  endif
   } else {
     // The name isn't abstract socket address.  So this is Unix domain
     // socket that has file path.
@@ -869,7 +852,6 @@ nsresult nsSocketTransport::InitWithName(const char* name, size_t length) {
 
   return NS_OK;
 }
-#endif
 
 nsresult nsSocketTransport::InitWithConnectedSocket(PRFileDesc* fd,
                                                     const NetAddr* addr) {
@@ -989,10 +971,8 @@ nsresult nsSocketTransport::ResolveHost() {
 
   if (!mProxyHost.IsEmpty()) {
     if (!mProxyTransparent || mProxyTransparentResolvesHost) {
-#if defined(XP_UNIX)
       MOZ_ASSERT(!mNetAddrIsSet || mNetAddr.raw.family != AF_LOCAL,
                  "Unix domain sockets can't be used with proxies");
-#endif
       // When not resolving mHost locally, we still want to ensure that
       // it only contains valid characters.  See bug 304904 for details.
       // Sometimes the end host is not yet known and mHost is *
@@ -1116,10 +1096,8 @@ nsresult nsSocketTransport::BuildSocket(PRFileDesc*& fd, bool& proxyTransparent,
     return NS_OK;
   }
 
-#if defined(XP_UNIX)
   MOZ_ASSERT(!mNetAddrIsSet || mNetAddr.raw.family != AF_LOCAL,
              "Unix domain sockets can't be used with socket types");
-#endif
 
   fd = nullptr;
 
@@ -1525,19 +1503,6 @@ nsresult nsSocketTransport::InitiateSocket() {
     PR_SetSocketOption(fd, &opt);
   }
 
-#if defined(XP_WIN)
-  // The linger is turned off by default. This is not a hard close, but
-  // closesocket should return immediately and operating system tries to send
-  // remaining data for certain, implementation specific, amount of time.
-  // https://msdn.microsoft.com/en-us/library/ms739165.aspx
-  //
-  // Turn the linger option on an set the interval to 0. This will cause hard
-  // close of the socket.
-  opt.option = PR_SockOpt_Linger;
-  opt.value.linger.polarity = 1;
-  opt.value.linger.linger = 0;
-  PR_SetSocketOption(fd, &opt);
-#endif
 
 #if defined(TCP_USER_TIMEOUT)
   {
@@ -1618,19 +1583,6 @@ nsresult nsSocketTransport::InitiateSocket() {
 
   NetAddrToPRNetAddr(&mNetAddr, &prAddr);
 
-#ifdef XP_WIN
-  // Find the real tcp socket and set non-blocking once again!
-  // Bug 1158189.
-  PRFileDesc* bottom = PR_GetIdentitiesLayer(fd, PR_NSPR_IO_LAYER);
-  if (bottom) {
-    PROsfd osfd = PR_FileDesc2NativeHandle(bottom);
-    u_long nonblocking = 1;
-    if (ioctlsocket(osfd, FIONBIO, &nonblocking) != 0) {
-      NS_WARNING("Socket could not be set non-blocking!");
-      return NS_ERROR_FAILURE;
-    }
-  }
-#endif
 
   if (mTLSSocketControl) {
     nsCString echConfig;
@@ -1668,14 +1620,6 @@ nsresult nsSocketTransport::InitiateSocket() {
     }
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // Android 17+ refuses connections to the local network unless the app holds
-  // ACCESS_LOCAL_NETWORK. Ask for it here, as the connection is made, rather
-  // than after a 30 second connect timeout.
-  if (mNetAddr.GetIpAddressSpace() == nsILoadInfo::IPAddressSpace::Private) {
-    RequestAndroidLocalNetworkPermission();
-  }
-#endif
 
   status = PR_Connect(fd, &prAddr, NS_SOCKET_CONNECT_TIMEOUT);
   PRErrorCode code = PR_GetError();
@@ -1766,11 +1710,9 @@ bool nsSocketTransport::RecoverFromError() {
     return false;
   }
 
-#if defined(XP_UNIX)
   // Unix domain connections don't have multiple addresses to try,
   // so the recovery techniques here don't apply.
   if (mNetAddrIsSet && mNetAddr.raw.family == AF_LOCAL) return false;
-#endif
 
   if ((mConnectionFlags & nsSocketTransport::USE_IP_HINT_ADDRESS) &&
       mCondition == NS_ERROR_UNKNOWN_HOST &&
@@ -2137,13 +2079,9 @@ void nsSocketTransport::OnSocketEvent(uint32_t type, nsresult status,
         // Unix domain sockets are ready to connect; mNetAddr is all we
         // need. Internet address families require a DNS lookup (or possibly
         // several) before we can connect.
-#if defined(XP_UNIX)
         if (mNetAddrIsSet && mNetAddr.raw.family == AF_LOCAL) {
           mCondition = InitiateSocket();
         } else {
-#else
-        {
-#endif
           mCondition = ResolveHost();
         }
 
@@ -2254,17 +2192,6 @@ void nsSocketTransport::OnSocketReady(PRFileDesc* fd, int16_t outFlags) {
   if (outFlags == -1) {
     SOCKET_LOG(("socket timeout expired\n"));
     mCondition = NS_ERROR_NET_TIMEOUT;
-#if defined(MOZ_WIDGET_ANDROID)
-    // A TCP connect blocked by Android's Local Network Protection reaches
-    // us as a plain timeout, with no distinguishing errno, so we must ask
-    // the OS directly whether that's what happened. Only applies while
-    // still connecting -- a read/write timeout on an already-established
-    // socket can't be an LNP block. See bug 2053432.
-    if (mState == STATE_CONNECTING &&
-        IsConnectBlockedByAndroidLocalNetworkPermission(fd)) {
-      mCondition = NS_ERROR_OS_LOCAL_NETWORK_ACCESS_DENIED;
-    }
-#endif
     return;
   }
 
@@ -2346,15 +2273,6 @@ void nsSocketTransport::OnSocketReady(PRFileDesc* fd, int16_t outFlags) {
             !mProxyHost.IsEmpty()) {
           mCondition = NS_ERROR_PROXY_CONNECTION_REFUSED;
         }
-#if defined(MOZ_WIDGET_ANDROID)
-        // Defensive: per Android's docs a blocked TCP connect should only
-        // ever manifest as a timeout (handled above), but some OEMs/API
-        // levels may surface a synchronous failure instead. See bug
-        // 2053432.
-        else if (IsConnectBlockedByAndroidLocalNetworkPermission(fd)) {
-          mCondition = NS_ERROR_OS_LOCAL_NETWORK_ACCESS_DENIED;
-        }
-#endif
         SOCKET_LOG(("  connection failed! [reason=%" PRIx32 "]\n",
                     static_cast<uint32_t>(mCondition)));
       }
@@ -2467,13 +2385,11 @@ void nsSocketTransport::IsLocal(bool* aIsLocal) {
   {
     MutexAutoLock lock(mLock);
 
-#if defined(XP_UNIX)
     // Unix-domain sockets are always local.
     if (mNetAddr.raw.family == PR_AF_LOCAL) {
       *aIsLocal = true;
       return;
     }
-#endif
 
     *aIsLocal = mNetAddr.IsLoopbackAddr();
   }
@@ -3128,7 +3044,6 @@ nsresult nsSocketTransport::EnsureKeepaliveValsAreInitialized() {
 
 NS_IMETHODIMP
 nsSocketTransport::SetKeepaliveEnabled(bool aEnable) {
-#if defined(XP_WIN) || defined(XP_UNIX) || defined(XP_MACOSX)
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
   if (aEnable == mKeepaliveEnabled) {
@@ -3169,15 +3084,10 @@ nsSocketTransport::SetKeepaliveEnabled(bool aEnable) {
   }
 
   return NS_OK;
-#else /* !(defined(XP_WIN) || defined(XP_UNIX) || defined(XP_MACOSX)) */
-  SOCKET_LOG(("nsSocketTransport::SetKeepaliveEnabled unsupported platform"));
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 NS_IMETHODIMP
 nsSocketTransport::SetKeepaliveVals(int32_t aIdleTime, int32_t aRetryInterval) {
-#if defined(XP_WIN) || defined(XP_UNIX) || defined(XP_MACOSX)
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
   if (NS_WARN_IF(aIdleTime <= 0 || kMaxTCPKeepIdle < aIdleTime)) {
     return NS_ERROR_INVALID_ARG;
@@ -3225,10 +3135,6 @@ nsSocketTransport::SetKeepaliveVals(int32_t aIdleTime, int32_t aRetryInterval) {
     return rv;
   }
   return NS_OK;
-#else
-  SOCKET_LOG(("nsSocketTransport::SetKeepaliveVals unsupported platform"));
-  return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 #ifdef ENABLE_SOCKET_TRACING
@@ -3341,20 +3247,6 @@ static void LogOSError(const char* aPrefix, const void* aObjPtr) {
 #if defined(DEBUG)
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
-#  ifdef XP_WIN
-  DWORD errCode = WSAGetLastError();
-  char* errMessage;
-  FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                     FORMAT_MESSAGE_IGNORE_INSERTS,
-                 NULL, errCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                 (LPSTR)&errMessage, 0, NULL);
-  NS_WARNING(nsPrintfCString("%s [%p] OS error[0x%lx] %s",
-                             aPrefix ? aPrefix : "nsSocketTransport", aObjPtr,
-                             errCode,
-                             errMessage ? errMessage : "<no error text>")
-                 .get());
-  LocalFree(errMessage);
-#  else
   int errCode = errno;
   char* errMessage = strerror(errno);
   NS_WARNING(nsPrintfCString("%s [%p] OS error[0x%x] %s",
@@ -3362,7 +3254,6 @@ static void LogOSError(const char* aPrefix, const void* aObjPtr) {
                              errCode,
                              errMessage ? errMessage : "<no error text>")
                  .get());
-#  endif
 #endif
 }
 
@@ -3373,7 +3264,6 @@ static void LogOSError(const char* aPrefix, const void* aObjPtr) {
 
 nsresult nsSocketTransport::PRFileDescAutoLock::SetKeepaliveVals(
     bool aEnabled, int aIdleTime, int aRetryInterval, int aProbeCount) {
-#if defined(XP_WIN) || defined(XP_UNIX) || defined(XP_MACOSX)
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
   if (NS_WARN_IF(aIdleTime <= 0 || kMaxTCPKeepIdle < aIdleTime)) {
     return NS_ERROR_INVALID_ARG;
@@ -3391,25 +3281,7 @@ nsresult nsSocketTransport::PRFileDescAutoLock::SetKeepaliveVals(
                  mSocketTransport);
     return ErrorAccordingToNSPR(PR_GetError());
   }
-#endif
 
-#if defined(XP_WIN)
-  // Windows allows idle time and retry interval to be set; NOT ping count.
-  struct tcp_keepalive keepalive_vals = {(u_long)aEnabled,
-                                         // Windows uses msec.
-                                         (u_long)(aIdleTime * 1000UL),
-                                         (u_long)(aRetryInterval * 1000UL)};
-  DWORD bytes_returned;
-  int err =
-      WSAIoctl(sock, SIO_KEEPALIVE_VALS, &keepalive_vals,
-               sizeof(keepalive_vals), NULL, 0, &bytes_returned, NULL, NULL);
-  if (NS_WARN_IF(err)) {
-    LogOSError("nsSocketTransport WSAIoctl failed", mSocketTransport);
-    return NS_ERROR_UNEXPECTED;
-  }
-  return NS_OK;
-
-#elif defined(XP_DARWIN)
   // Darwin uses sec; only supports idle time being set.
   int err = setsockopt(sock, IPPROTO_TCP, TCP_KEEPALIVE, &aIdleTime,
                        sizeof(aIdleTime));
@@ -3420,57 +3292,9 @@ nsresult nsSocketTransport::PRFileDescAutoLock::SetKeepaliveVals(
   }
   return NS_OK;
 
-#elif defined(XP_UNIX)
-  // Not all *nix OSes support the following setsockopt() options
-  // ... but we assume they are supported in the Android kernel;
-  // build errors will tell us if they are not.
-#  if defined(ANDROID) || defined(TCP_KEEPIDLE)
-  // Idle time until first keepalive probe; interval between ack'd probes;
-  // seconds.
-  int err = setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &aIdleTime,
-                       sizeof(aIdleTime));
-  if (NS_WARN_IF(err)) {
-    LogOSError("nsSocketTransport Failed setting TCP_KEEPIDLE",
-               mSocketTransport);
-    return NS_ERROR_UNEXPECTED;
-  }
-
-#  endif
-#  if defined(ANDROID) || defined(TCP_KEEPINTVL)
-  // Interval between unack'd keepalive probes; seconds.
-  err = setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &aRetryInterval,
-                   sizeof(aRetryInterval));
-  if (NS_WARN_IF(err)) {
-    LogOSError("nsSocketTransport Failed setting TCP_KEEPINTVL",
-               mSocketTransport);
-    return NS_ERROR_UNEXPECTED;
-  }
-
-#  endif
-#  if defined(ANDROID) || defined(TCP_KEEPCNT)
-  // Number of unack'd keepalive probes before connection times out.
-  err = setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &aProbeCount,
-                   sizeof(aProbeCount));
-  if (NS_WARN_IF(err)) {
-    LogOSError("nsSocketTransport Failed setting TCP_KEEPCNT",
-               mSocketTransport);
-    return NS_ERROR_UNEXPECTED;
-  }
-
-#  endif
-  return NS_OK;
-#else
-  MOZ_ASSERT(false,
-             "nsSocketTransport::PRFileDescAutoLock::SetKeepaliveVals "
-             "called on unsupported platform!");
-  return NS_ERROR_UNEXPECTED;
-#endif
 }
 
 void nsSocketTransport::CloseSocket(PRFileDesc* aFd) {
-#if defined(XP_WIN)
-  AttachShutdownLayer(aFd);
-#endif
 
   PR_Close(aFd);
 }

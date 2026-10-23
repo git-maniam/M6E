@@ -40,29 +40,9 @@ FFVPXRuntimeLinker::LinkStatus FFVPXRuntimeLinker::sLinkStatus =
 static PRLibrary* MozAVLink(nsIFile* aFile) {
   PRLibSpec lspec;
   PathString path = aFile->NativePath();
-#ifdef XP_WIN
-  lspec.type = PR_LibSpec_PathnameU;
-  lspec.value.pathname_u = path.get();
-#else
-#  if defined(XP_OPENBSD)
-  /* on OpenBSD, libmozavcodec.so and libmozavutil.so are preloaded before
-   * sandboxing so make sure only the filename is passed to
-   * PR_LoadLibraryWithFlags(), dlopen() will return the preloaded library
-   * handle instead of failing to find it due to sandboxing */
-  nsAutoCString leaf;
-  nsresult rv = aFile->GetNativeLeafName(leaf);
-  if (NS_SUCCEEDED(rv)) {
-    path = PathString(leaf);
-  }
-#  endif  // defined(XP_OPENBSD)
   lspec.type = PR_LibSpec_Pathname;
   lspec.value.pathname = path.get();
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-  PRLibrary* lib = PR_LoadLibraryWithFlags(lspec, PR_LD_NOW | PR_LD_GLOBAL);
-#else
   PRLibrary* lib = PR_LoadLibraryWithFlags(lspec, PR_LD_NOW | PR_LD_LOCAL);
-#endif
   if (!lib) {
     FFMPEGV_LOG("unable to load library {}", aFile->HumanReadablePath().get());
   }
@@ -89,19 +69,8 @@ bool FFVPXRuntimeLinker::Init() {
 
   sLinkStatus = LinkStatus_FAILED;
 
-#ifdef XP_WIN
-  PathString path =
-      GetLibraryFilePathname(LXUL_DLL, (PRFuncPtr)&FFVPXRuntimeLinker::Init);
-#elif defined(ANDROID)
-  // On Android, libxul is either pulled from the APK or from a temporary folder
-  // for gtests/fuzzing. libmozavutil and libmozavcodec are always in the APK,
-  // so let's use libmozglue instead to find the base pathname.
-  PathString path = GetLibraryFilePathname(
-      MOZ_DLL_PREFIX "mozglue" MOZ_DLL_SUFFIX, (PRFuncPtr)&malloc);
-#else
   PathString path =
       GetLibraryFilePathname(XUL_DLL, (PRFuncPtr)&FFVPXRuntimeLinker::Init);
-#endif
   if (path.IsEmpty()) {
     return false;
   }
@@ -110,7 +79,6 @@ bool FFVPXRuntimeLinker::Init() {
     return false;
   }
 
-#ifndef ANDROID
   if (getenv("MOZ_RUN_GTEST")
 #  ifdef FUZZING
       || getenv("FUZZER")
@@ -127,7 +95,6 @@ bool FFVPXRuntimeLinker::Init() {
     }
     libFile = parent;
   }
-#endif
 
   if (NS_FAILED(libFile->SetNativeLeafName(MOZ_DLL_PREFIX
                                            "mozavutil" MOZ_DLL_SUFFIX ""_ns))) {

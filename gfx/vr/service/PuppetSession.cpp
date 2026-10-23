@@ -8,13 +8,7 @@
 #include "mozilla/StaticPrefs_dom.h"
 #include "nsString.h"
 
-#if defined(XP_WIN)
-#  include <d3d11.h>
-
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#elif defined(XP_MACOSX)
 #  include "mozilla/gfx/MacIOSurface.h"
-#endif
 
 using namespace mozilla::gfx;
 
@@ -44,29 +38,11 @@ bool PuppetSession::Initialize(mozilla::gfx::VRSystemState& aSystemState,
   if (!aSystemState.displayState.isConnected) {
     return false;
   }
-#if defined(XP_WIN)
-  if (!CreateD3DObjects()) {
-    Shutdown();
-    return false;
-  }
-#endif
 
   // Succeeded
   return true;
 }
 
-#if defined(XP_WIN)
-bool PuppetSession::CreateD3DObjects() {
-  RefPtr<ID3D11Device> device = gfx::DeviceManagerDx::Get()->GetVRDevice();
-  if (!device) {
-    return false;
-  }
-  if (!CreateD3DContext(device)) {
-    return false;
-  }
-  return true;
-}
-#endif
 
 void PuppetSession::Shutdown() {}
 
@@ -82,19 +58,11 @@ void PuppetSession::ProcessEvents(mozilla::gfx::VRSystemState& aSystemState) {
   }
 }
 
-#if defined(XP_WIN)
-bool PuppetSession::SubmitFrame(
-    const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
-    ID3D11Texture2D* aTexture) {
-  return VRPuppetCommandBuffer::Get().SubmitFrame();
-}
-#elif defined(XP_MACOSX)
 bool PuppetSession::SubmitFrame(
     const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
     const VRLayerTextureHandle& aTexture) {
   return VRPuppetCommandBuffer::Get().SubmitFrame();
 }
-#endif
 
 void PuppetSession::StopPresentation() {
   VRPuppetCommandBuffer::Get().StopPresentation();

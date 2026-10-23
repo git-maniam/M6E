@@ -29,17 +29,6 @@ already_AddRefed<nsIAuthModule> nsIAuthModule::CreateInstance(
     auth = new nsAuthSSPI(PACKAGE_TYPE_KERBEROS);
   } else if (!nsCRT::strcmp(aType, "sys-ntlm")) {
     auth = new nsAuthSSPI(PACKAGE_TYPE_NTLM);
-#elif !defined(XP_MACOSX)
-  } else if (!nsCRT::strcmp(aType, "sys-ntlm")) {
-    RefPtr<nsAuthSambaNTLM> sambaAuth = new nsAuthSambaNTLM();
-
-    nsresult rv = sambaAuth->SpawnNTLMAuthHelper();
-    if (NS_FAILED(rv)) {
-      // Failure here probably means that cached credentials were not available
-      return nullptr;
-    }
-
-    auth = std::move(sambaAuth);
 #endif
   } else if (!nsCRT::strcmp(aType, "sasl-gssapi")) {
     auth = new nsAuthSASL();

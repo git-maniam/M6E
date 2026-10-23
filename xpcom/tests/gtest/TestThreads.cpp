@@ -17,10 +17,6 @@
 #include "nsXPCOM.h"
 #include "nspr.h"
 
-#ifdef XP_WIN
-#  include <windef.h>
-#  include <winuser.h>
-#endif
 
 using namespace mozilla;
 
@@ -101,11 +97,7 @@ int32_t nsStressRunner::gNum = 0;
 
 TEST(Threads, Stress)
 {
-#if defined(XP_WIN) && defined(MOZ_ASAN)  // Easily hits OOM
-  const int loops = 250;
-#else
   const int loops = 1000;
-#endif
 
   const int threads = 50;
 
@@ -241,11 +233,7 @@ static void threadProc(void* arg) {
 
 TEST(Threads, StressNSPR)
 {
-#if defined(XP_WIN) && defined(MOZ_ASAN)  // Easily hits OOM
-  const int loops = 250;
-#else
   const int loops = 1000;
-#endif
 
   const int threads = 50;
 
@@ -381,33 +369,3 @@ TEST(Threads, UnregisteredShutdownTask)
   thread->Shutdown();
 }
 
-#if (defined(XP_WIN) || !defined(DEBUG)) && !defined(XP_MACOSX)
-TEST(Threads, OptionsIsUiThread)
-{
-  // On Windows, test that the isUiThread flag results in a GUI thread.
-  // In non-Windows non-debug builds, test that the isUiThread flag is ignored.
-
-  nsCOMPtr<nsIThread> thread;
-  nsIThreadManager::ThreadCreationOptions options;
-  options.isUiThread = true;
-  MOZ_ALWAYS_SUCCEEDS(NS_NewNamedThread(
-      "Testing Thread", getter_AddRefs(thread), nullptr, options));
-
-  bool isGuiThread = false;
-  auto syncRunnable =
-      MakeRefPtr<SyncRunnable>(NS_NewRunnableFunction(__func__, [&] {
-#  ifdef XP_WIN
-        isGuiThread = ::IsGUIThread(false);
-#  endif
-      }));
-  MOZ_ALWAYS_SUCCEEDS(syncRunnable->DispatchToThread(thread));
-
-  bool expectGuiThread = false;
-#  ifdef XP_WIN
-  expectGuiThread = true;
-#  endif
-  EXPECT_EQ(expectGuiThread, isGuiThread);
-
-  thread->Shutdown();
-}
-#endif

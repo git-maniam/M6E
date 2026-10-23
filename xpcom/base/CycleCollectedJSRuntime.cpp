@@ -95,9 +95,7 @@
 #include "nsWrapperCache.h"
 #include "prenv.h"
 
-#if defined(XP_MACOSX)
 #  include "nsMacUtilsImpl.h"
-#endif
 
 #include "nsThread.h"
 #include "nsThreadUtils.h"
@@ -860,11 +858,9 @@ CycleCollectedJSRuntime::CycleCollectedJSRuntime(JSContext* aCx)
   MOZ_ASSERT(aCx);
   MOZ_ASSERT(mJSRuntime);
 
-#if defined(XP_MACOSX)
   if (!XRE_IsParentProcess()) {
     nsMacUtilsImpl::EnableTCSMIfAvailable();
   }
-#endif
 
   if (!JS_AddExtraGCRootsTracer(aCx, TraceBlackJS, this)) {
     MOZ_CRASH("JS_AddExtraGCRootsTracer failed");
@@ -1784,14 +1780,12 @@ void CycleCollectedJSRuntime::CheckGrayBits() const {
   MOZ_ASSERT(!JS::IsIncrementalGCInProgress(mJSRuntime),
              "Don't call CheckGrayBits during a GC.");
 
-#ifndef ANDROID
   // Bug 1346874 - The gray state check is expensive. Android tests are already
   // slow enough that this check can easily push them over the threshold to a
   // timeout.
 
   MOZ_ASSERT(js::CheckGrayMarkingState(mJSRuntime));
   MOZ_ASSERT(CheckWeakMappingGrayBitsTracer::Check(mJSRuntime));
-#endif
 }
 
 bool CycleCollectedJSRuntime::AreGCGrayBitsValid() const {

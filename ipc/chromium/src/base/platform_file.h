@@ -5,21 +5,13 @@
 #ifndef BASE_PLATFORM_FILE_H_
 #define BASE_PLATFORM_FILE_H_
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
 #include <string>
 
 namespace base {
 
-#if defined(XP_WIN)
-typedef HANDLE PlatformFile;
-const PlatformFile kInvalidPlatformFileValue = INVALID_HANDLE_VALUE;
-#else
 typedef int PlatformFile;
 const PlatformFile kInvalidPlatformFileValue = -1;
-#endif
 
 enum PlatformFileFlags {
   PLATFORM_FILE_OPEN = 1,

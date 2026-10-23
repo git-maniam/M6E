@@ -24,9 +24,6 @@
 #include "nsThreadUtils.h"
 #include "source-repo.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#endif
 
 static mozilla::LazyLogModule sWrDLLog("wr.dl");
 #define WRDL_LOG(...) \
@@ -292,11 +289,6 @@ RefPtr<WebRenderAPI::CreatePromise> WebRenderAPI::Create(
         }
 
         bool limitSdrYuvExternalComposites = false;
-#ifdef XP_WIN
-        // Limit SDR YUV external compositing on non-Intel hardware adapters.
-        limitSdrYuvExternalComposites =
-            !swgl && !gfx::gfxVars::AdapterVendorID().EqualsLiteral("0x8086");
-#endif
 
         if (!wr_window_new(
                 aWindowId, aSize.width, aSize.height,
@@ -365,13 +357,11 @@ RefPtr<WebRenderAPI::CreatePromise> WebRenderAPI::Create(
         // which block on the WebRenderAPI work can proceed immediately.
         renderThread->BeginShaderWarmupIfNeeded();
 
-#ifdef XP_DARWIN
         wr::ImageBufferKind ioSurfaceImageKind = wr::ImageBufferKind::Texture2D;
         if (gl && gl->GetPreferredMacIOSurfaceTextureTarget() ==
                       LOCAL_GL_TEXTURE_RECTANGLE) {
           ioSurfaceImageKind = wr::ImageBufferKind::TextureRect;
         }
-#endif
 
         const WebRenderCapabilities capabilities{
             .mBackendType = backend,
@@ -382,9 +372,7 @@ RefPtr<WebRenderAPI::CreatePromise> WebRenderAPI::Create(
             .mUseLayerCompositor = useLayerCompositor,
             .mUseTripleBuffering = useTripleBuffering,
             .mSupportsExternalBufferTextures = supportsExternalBufferTextures,
-#ifdef XP_DARWIN
             .mIOSurfaceImageKind = ioSurfaceImageKind,
-#endif
         };
         RefPtr<WebRenderAPI> api =
             new WebRenderAPI(docHandle, aWindowId, capabilities, syncHandle);
@@ -1004,50 +992,6 @@ RefPtr<WebRenderAPI::EndRecordingPromise> WebRenderAPI::EndRecording() {
   return promise;
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-RefPtr<WebRenderAPI::ScreenPixelsPromise> WebRenderAPI::RequestScreenPixels(
-    gfx::IntRect aSourceRect,
-    RefPtr<layers::AndroidHardwareBuffer> aHardwareBuffer) {
-  class ScreenshotEvent final : public RendererEvent {
-   public:
-    explicit ScreenshotEvent(
-        gfx::IntRect aSourceRect,
-        RefPtr<layers::AndroidHardwareBuffer> aHardwareBuffer,
-        RefPtr<ScreenPixelsPromise::Private> aPromise)
-        : mSourceRect(aSourceRect),
-          mHardwareBuffer(std::move(aHardwareBuffer)),
-          mPromise(aPromise) {
-      MOZ_COUNT_CTOR(ScreenshotEvent);
-    }
-
-    MOZ_COUNTED_DTOR(ScreenshotEvent);
-
-    void Run(RenderThread& aRenderThread, WindowId aWindowId) override {
-      RendererOGL* const renderer = aRenderThread.GetRenderer(aWindowId);
-      if (!renderer) {
-        mPromise->Reject(NS_ERROR_FAILURE, __func__);
-        return;
-      }
-      renderer->RequestScreenPixels(mSourceRect, std::move(mHardwareBuffer))
-          ->ChainTo(mPromise.forget(), __func__);
-    }
-
-    const char* Name() override { return "ScreenshotEvent"; }
-
-   private:
-    const gfx::IntRect mSourceRect;
-    RefPtr<layers::AndroidHardwareBuffer> mHardwareBuffer;
-    RefPtr<ScreenPixelsPromise::Private> mPromise;
-  };
-
-  auto promise = MakeRefPtr<ScreenPixelsPromise::Private>(__func__);
-  auto event = MakeUnique<ScreenshotEvent>(aSourceRect,
-                                           std::move(aHardwareBuffer), promise);
-
-  RenderThread::Get()->PostEvent(mId, std::move(event));
-  return promise;
-}
-#endif
 
 void TransactionBuilder::Clear() { wr_resource_updates_clear(mTxn); }
 

@@ -4,11 +4,7 @@
 
 #include "RenderMacIOSurfaceTextureHost.h"
 
-#ifdef XP_MACOSX
 #  include "GLContextCGL.h"
-#else
-#  include "GLContextEAGL.h"
-#endif
 
 #include "ScopedGLHelpers.h"
 #include "mozilla/ProfilerLabels.h"
@@ -112,13 +108,9 @@ wr::WrExternalImage RenderMacIOSurfaceTextureHost::Lock(uint8_t aChannelIndex,
   }
 
   if (!mTextureHandles[0]) {
-#ifdef XP_MACOSX
     if (mGL->GetContextType() == gl::GLContextType::CGL) {
       MOZ_ASSERT(gl::GLContextCGL::Cast(mGL.get())->GetCGLContext());
     }
-#else
-    MOZ_ASSERT(gl::GLContextEAGL::Cast(mGL.get())->GetEAGLContext());
-#endif
 
     // The result of GetPlaneCount() is 0 for single plane format, but it will
     // be 2 if the format has 2 planar data.

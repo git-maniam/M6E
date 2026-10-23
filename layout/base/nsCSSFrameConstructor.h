@@ -907,14 +907,7 @@ class nsCSSFrameConstructor final : public nsFrameManager {
     // Not allocated from the heap!
     void* operator new(size_t) = delete;
     void* operator new[](size_t) = delete;
-#ifdef _MSC_VER /* Visual Studio */
-   private:
-    void operator delete(void*) { MOZ_CRASH("FrameConstructionItemList::del"); }
-
-   public:
-#else
     void operator delete(void*) = delete;
-#endif
     void operator delete[](void*) = delete;
 
     class Iterator {
@@ -1131,14 +1124,7 @@ class nsCSSFrameConstructor final : public nsFrameManager {
     // that take a nsCSSFrameConstructor* (which manages our arena allocation).
     void* operator new(size_t) = delete;
     void* operator new[](size_t) = delete;
-#ifdef _MSC_VER /* Visual Studio */
-   private:
-    void operator delete(void*) { MOZ_CRASH("FrameConstructionItem::delete"); }
-
-   public:
-#else
     void operator delete(void*) = delete;
-#endif
     void operator delete[](void*) = delete;
     FrameConstructionItem(const FrameConstructionItem& aOther) = delete;
 

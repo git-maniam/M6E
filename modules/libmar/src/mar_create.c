@@ -11,12 +11,8 @@
 #include "mar_cmdline.h"
 #include "mar.h"
 
-#ifdef XP_WIN
-#  include <winsock2.h>
-#else
 #  include <netinet/in.h>
 #  include <unistd.h>
-#endif
 
 struct MarItemStack {
   void* head;

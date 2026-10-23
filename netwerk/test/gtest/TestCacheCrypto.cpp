@@ -160,7 +160,6 @@ TEST(CacheCrypto, FreshNoncePerEncryption)
 
 // The LockstoreService gtests are skipped on Android because they hang on the
 // emulator (bug 1892964); skip this one for the same reason.
-#ifndef MOZ_WIDGET_ANDROID
 
 TEST(CacheCrypto, KeyIsRecoveredFromTheKeystore)
 {
@@ -217,4 +216,3 @@ TEST(CacheCrypto, KeyIsRecoveredFromTheKeystore)
   EXPECT_EQ(0, memcmp(out.Elements(), msg, len));
 }
 
-#endif  // MOZ_WIDGET_ANDROID

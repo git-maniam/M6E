@@ -210,15 +210,6 @@ enum TouchPointerState : uint8_t {
 // XP code should use nsIWidget::GetNativeIMEContext() instead of using this.
 #define NS_RAW_NATIVE_IME_CONTEXT 14
 #define NS_NATIVE_WINDOW_WEBRTC_DEVICE_ID 15
-#ifdef XP_WIN
-#  define NS_NATIVE_ICOREWINDOW 103  // winrt specific
-#endif
-#if defined(MOZ_WIDGET_GTK)
-#  define NS_NATIVE_EGL_WINDOW 106
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-#  define NS_JAVA_SURFACE 100
-#endif
 
 #define MOZ_WIDGET_MAX_SIZE 16384
 
@@ -2315,20 +2306,6 @@ class nsIWidget : public nsSupportsWeakReference {
   virtual void NotifyCompositorScrollUpdates(
       const nsTArray<mozilla::layers::CompositorScrollUpdate>& aUpdates) {}
 
-#if defined(MOZ_WIDGET_ANDROID)
-  /**
-   * RecvToolbarAnimatorMessageFromCompositor receive message from compositor
-   * thread.
-   *
-   * @param aMessage message being sent to Android UI thread.
-   */
-  virtual void RecvToolbarAnimatorMessageFromCompositor(int32_t aMessage) {}
-
-  virtual void UpdateDynamicToolbarMaxHeight(mozilla::ScreenIntCoord aHeight) {}
-  virtual mozilla::ScreenIntCoord GetDynamicToolbarMaxHeight() const {
-    return 0;
-  }
-#endif
 
   void EnsureLocalesChangedObserver();
   virtual void LocalesChanged() {}

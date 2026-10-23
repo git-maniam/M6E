@@ -19,23 +19,14 @@ enum SandboxingKind : uint64_t {
 #ifdef MOZ_APPLEMEDIA
   UTILITY_AUDIO_DECODING_APPLE_MEDIA,
 #endif
-#ifdef XP_WIN
-  UTILITY_AUDIO_DECODING_WMF,
-#endif
 #ifdef MOZ_WMF_MEDIA_ENGINE
   MF_MEDIA_ENGINE_CDM,
-#endif
-#ifdef XP_WIN
-  WINDOWS_UTILS,
-  WINDOWS_FILE_DIALOG,
 #endif
 #if defined(NIGHTLY_BUILD) && !defined(MOZ_NO_SMART_CARDS)
   PKCS11_MODULE,
 #endif  // NIGHTLY_BUILD && !MOZ_NO_SMART_CARDS
 
-#ifndef ANDROID
   HW_INFERENCE,
-#endif  // !ANDROID
 
   // Add new kinds directly above this one: the gtests, and the
   // MOZ_DISABLE_CONTENT_SANDBOX "utility:N" syntax, refer to the pre-existing

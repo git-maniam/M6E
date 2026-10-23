@@ -37,22 +37,9 @@
 #include "nsAString.h"
 #include "nsPrintfCString.h"  // for nsPrintfCString
 
-#ifdef XP_MACOSX
 #  include "../opengl/MacIOSurfaceTextureHostOGL.h"
-#endif
 
-#ifdef XP_WIN
-#  include "../d3d11/CompositorD3D11.h"
-#  include "mozilla/layers/TextureD3D11.h"
-#  ifdef MOZ_WMF_MEDIA_ENGINE
-#    include "mozilla/layers/DcompSurfaceImage.h"
-#  endif
-#endif
 
-#ifdef MOZ_WAYLAND
-#  include "mozilla/WidgetUtilsGtk.h"
-#  include "mozilla/webrender/RenderWaylandTextureHost.h"
-#endif
 
 #if 0
 #  define RECYCLE_LOG(...) printf_stderr(__VA_ARGS__)
@@ -227,18 +214,6 @@ already_AddRefed<TextureHost> TextureHost::Create(
       result = CreateTextureHostOGL(aDesc, aDeallocator, aBackend, aFlags);
       break;
 
-#ifdef XP_WIN
-    case SurfaceDescriptor::TSurfaceDescriptorD3D10:
-    case SurfaceDescriptor::TSurfaceDescriptorDXGIYCbCr:
-      result = CreateTextureHostD3D11(aDesc, aDeallocator, aBackend, aFlags);
-      break;
-#  ifdef MOZ_WMF_MEDIA_ENGINE
-    case SurfaceDescriptor::TSurfaceDescriptorDcompSurface:
-      result =
-          CreateTextureHostDcompSurface(aDesc, aDeallocator, aBackend, aFlags);
-      break;
-#  endif
-#endif
     default:
       MOZ_CRASH("GFX: Unsupported Surface type host");
   }
@@ -499,12 +474,7 @@ BufferTextureHost::BufferTextureHost(const BufferDescriptor& aDesc,
       MOZ_CRASH("GFX: Bad descriptor");
   }
 
-#ifdef MOZ_WAYLAND
-  mUseExternalTextures =
-      widget::GdkIsWaylandDisplay() && gfx::gfxVars::UseWebRenderCompositor();
-#else
   mUseExternalTextures = false;
-#endif
 }
 
 BufferTextureHost::~BufferTextureHost() = default;
@@ -520,12 +490,6 @@ void BufferTextureHost::CreateRenderTexture(
   MOZ_ASSERT(mExternalImageId.isSome());
 
   RefPtr<wr::RenderTextureHost> texture;
-#ifdef MOZ_WAYLAND
-  if (UseExternalTextures()) {
-    texture = MakeRefPtr<wr::RenderWaylandTextureHost>(GetBuffer(),
-                                                       GetBufferDescriptor());
-  } else
-#endif
   {
     texture = MakeRefPtr<wr::RenderBufferTextureHost>(GetBuffer(),
                                                       GetBufferDescriptor());

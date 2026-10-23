@@ -25,10 +25,8 @@
 
 #include "ClearKeyUtils.h"
 
-#ifndef __MINGW32__
 #  pragma comment(lib, "mfuuid.lib")
 #  pragma comment(lib, "wmcodecdspuuid")
-#endif
 
 void LOG(const char* format, ...) {
 #ifdef WMF_DECODER_LOG

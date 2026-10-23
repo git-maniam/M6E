@@ -40,11 +40,6 @@ class UtilityProcessParent final
 
   mozilla::ipc::IPCResult RecvGeckoTraceExport(ByteBuf&& aBuf);
 
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvGetModulesTrust(
-      ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-      GetModulesTrustResolver&& aResolver);
-#endif  // defined(XP_WIN)
 
   mozilla::ipc::IPCResult RecvAccumulateChildHistograms(
       nsTArray<HistogramAccumulation>&& aAccumulations);

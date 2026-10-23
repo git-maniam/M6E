@@ -107,18 +107,7 @@ namespace mozilla {
 namespace safebrowsing {
 
 static PlatformType GetPlatformType() {
-#if defined(ANDROID)
-  return ANDROID_PLATFORM;
-#elif defined(XP_MACOSX)
   return OSX_PLATFORM;
-#elif defined(XP_LINUX)
-  return LINUX_PLATFORM;
-#elif defined(XP_WIN)
-  return WINDOWS_PLATFORM;
-#else
-  // Default to Linux for other platforms (see bug 1362501).
-  return LINUX_PLATFORM;
-#endif
 }
 
 typedef FetchThreatListUpdatesRequest_ListUpdateRequest ListUpdateRequest;
@@ -129,13 +118,6 @@ static void InitListUpdateRequest(ThreatType aThreatType,
                                   ListUpdateRequest* aListUpdateRequest) {
   aListUpdateRequest->set_threat_type(aThreatType);
   PlatformType platform = GetPlatformType();
-#if defined(ANDROID)
-  // Temporary hack to fix bug 1441345.
-  if ((aThreatType == SOCIAL_ENGINEERING_PUBLIC) ||
-      (aThreatType == SOCIAL_ENGINEERING)) {
-    platform = LINUX_PLATFORM;
-  }
-#endif
   aListUpdateRequest->set_platform_type(platform);
   aListUpdateRequest->set_threat_entry_type(URL);
 
@@ -353,11 +335,7 @@ static const struct {
 #endif
 // Map the goog-unwanted-proto to different V5 list name on Android because
 // SafeBrowsing V5 provides a different unwanted list for Android.
-#ifndef MOZ_WIDGET_ANDROID
     {"goog-unwanted-proto", "uws-4b"},
-#else
-    {"goog-unwanted-proto", "uwsa-4b"},
-#endif
     {"goog-harmful-proto", "pha-4b"},
     {"goog-badbinurl-proto", "mwb-4b"},
     {"goog-downloadwhite-proto", "csdda-32b"},
@@ -631,13 +609,6 @@ nsUrlClassifierUtils::MakeFindFullHashRequestV4(
     }
     threatInfo->add_threat_types((ThreatType)threatType);
 
-#if defined(ANDROID)
-    // Temporary hack to fix bug 1441345.
-    if (((ThreatType)threatType == SOCIAL_ENGINEERING_PUBLIC) ||
-        ((ThreatType)threatType == SOCIAL_ENGINEERING)) {
-      platform = LINUX_PLATFORM;
-    }
-#endif
 
     // Add client states for index 'i' only when the threat type is available
     // on current platform.

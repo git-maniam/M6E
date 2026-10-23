@@ -90,13 +90,8 @@ int nr_debug(int class,char *format,...)
     va_list ap;
 
     va_start(ap,format);
-#ifdef WIN32
-    vprintf(format,ap);
-    printf("\n");
-#else
     vfprintf(stderr,format,ap);
     fprintf(stderr,"\n");
-#endif
     return(0);
   }
 

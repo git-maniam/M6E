@@ -20,9 +20,6 @@
 #include "jsapi.h"
 #include "jstypes.h"
 
-#if defined(ANDROID) && (defined(__arm__) || defined(__aarch64__))
-#  include <android/api-level.h>
-#endif
 
 #include "jit/InlinableNatives.h"
 #include "js/Class.h"
@@ -64,20 +61,6 @@ static inline bool UseFdlibmForSinCosTan(const CallArgs& args) {
 }
 
 static MOZ_ALWAYS_INLINE double pow_libm_or_fdlibm(double x, double y) {
-#if defined(ANDROID) && (defined(__arm__) || defined(__aarch64__))
-  // ARM Android API <= 28 ships bionic's old FreeBSD e_pow.c on devices
-  // whose OEM didn't backport arm-optimized-routines, returning a 1-ULP
-  // off result for Math.pow(PI, -100) (1.9275814160560204e-50 vs the
-  // modern-libm consensus 1.9275814160560206e-50). Use fdlibm_pow on
-  // those devices to pin the consensus value; let API >= 29 (which
-  // AOSP moved to arm-optimized-routines) keep the fast bionic path.
-  // android_get_device_api_level() result is cached in a function-local
-  // static, so the cost after the first call is one branch.
-  static const int sApiLevel = android_get_device_api_level();
-  if (sApiLevel <= 28) {
-    return fdlibm_pow(x, y);
-  }
-#endif
   // Every other platform's libm pow already produces the consensus value
   // for the inputs the math fingerprint samples, so we keep the faster
   // platform path.

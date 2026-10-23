@@ -9,14 +9,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Maybe.h"
 
-#if defined(XP_WIN) || defined(XP_DARWIN)
 #  include "mozilla/UniquePtrExtensions.h"
-#else
-#  include <pthread.h>
-#  include <semaphore.h>
-#  include "mozilla/ipc/SharedMemoryMapping.h"
-#  include "mozilla/Atomics.h"
-#endif
 
 namespace IPC {
 template <typename T>
@@ -34,13 +27,7 @@ inline bool IsHandleValid(const T& handle) {
   return bool(handle);
 }
 
-#if defined(XP_WIN)
-typedef mozilla::UniqueFileHandle CrossProcessSemaphoreHandle;
-#elif defined(XP_DARWIN)
 typedef mozilla::UniqueMachSendRight CrossProcessSemaphoreHandle;
-#else
-typedef mozilla::ipc::MutableSharedMemoryHandle CrossProcessSemaphoreHandle;
-#endif
 
 class CrossProcessSemaphore {
  public:
@@ -95,20 +82,9 @@ class CrossProcessSemaphore {
   CrossProcessSemaphore& operator=(const CrossProcessSemaphore&);
   // NOLINTEND(modernize-use-equals-delete)
 
-#if defined(XP_WIN)
-  explicit CrossProcessSemaphore(HANDLE aSemaphore);
-
-  HANDLE mSemaphore;
-#elif defined(XP_DARWIN)
   explicit CrossProcessSemaphore(CrossProcessSemaphoreHandle aSemaphore);
 
   CrossProcessSemaphoreHandle mSemaphore;
-#else
-  mozilla::ipc::MutableSharedMemoryHandle mHandle;
-  mozilla::ipc::SharedMemoryMapping mSharedBuffer;
-  sem_t* mSemaphore;
-  mozilla::Atomic<int32_t>* mRefCount;
-#endif
 };
 
 }  // namespace mozilla

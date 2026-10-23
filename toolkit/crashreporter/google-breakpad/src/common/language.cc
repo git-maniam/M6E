@@ -36,9 +36,7 @@
 
 #include <stdlib.h>
 
-#if !defined(__ANDROID__)
 #include <cxxabi.h>
-#endif
 
 #if defined(HAVE_RUST_DEMANGLE)
 #include <rust_demangle.h>
@@ -74,11 +72,6 @@ class CPPLanguage: public Language {
 
   virtual DemangleResult DemangleName(const string& mangled,
                                       string* demangled) const {
-#if defined(__ANDROID__)
-    // Android NDK doesn't provide abi::__cxa_demangle.
-    demangled->clear();
-    return kDontDemangle;
-#else
     int status;
     char* demangled_c =
         abi::__cxa_demangle(mangled.c_str(), NULL, NULL, &status);
@@ -97,7 +90,6 @@ class CPPLanguage: public Language {
     }
 
     return result;
-#endif
   }
 };
 

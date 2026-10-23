@@ -389,20 +389,8 @@ mozilla::ipc::IPCResult GPUChild::RecvUpdateMediaCodecsSupported(
     mozilla::TelemetryProbesReporter::ReportDeviceMediaCodecSupported(
         aSupported);
   }
-#if defined(XP_WIN)
-  // Do not propagate HEVC support if the pref is off
-  media::MediaCodecsSupported trimedSupported = aSupported;
-  if (aSupported.contains(
-          mozilla::media::MediaCodecsSupport::HEVCHardwareDecode) &&
-      !StaticPrefs::media_hevc_enabled()) {
-    trimedSupported -= mozilla::media::MediaCodecsSupport::HEVCHardwareDecode;
-  }
-  dom::ContentParent::BroadcastMediaCodecsSupportedUpdate(
-      RemoteMediaIn::GpuProcess, trimedSupported);
-#else
   dom::ContentParent::BroadcastMediaCodecsSupportedUpdate(
       RemoteMediaIn::GpuProcess, aSupported);
-#endif
   return IPC_OK();
 }
 

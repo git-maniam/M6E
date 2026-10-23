@@ -15,11 +15,7 @@ class CrashReporterInitArgs;
 
 namespace mozilla::ipc {
 
-#if defined(XP_DARWIN)
 typedef mozilla::UniqueMachSendRight ChildThreadId;
-#else
-typedef CrashReporter::ThreadId ChildThreadId;
-#endif  // defined(XP_DARWIN)
 
 // This is the newer replacement for CrashReporterParent. It is created in
 // response to a InitCrashReporter message on a top-level actor. When the
@@ -84,11 +80,7 @@ class CrashReporterHost {
 
  private:
   CrashReporter::ThreadId GetRawThreadId() const {
-#if defined(XP_DARWIN)
     return mThreadId.get();
-#else
-    return mThreadId;
-#endif  // defined(XP_DARWIN)
   }
 
   static void RecordCrashWithTelemetry(GeckoProcessType aProcessType,

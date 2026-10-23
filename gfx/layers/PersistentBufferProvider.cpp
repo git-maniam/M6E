@@ -125,16 +125,7 @@ PersistentBufferProviderAccelerated::Create(gfx::IntSize aSize,
   }
 
   if (!DrawTargetWebgl::CanCreate(aSize, aFormat)) {
-#ifdef XP_WIN
-    // Direct2D acceleration does not require DrawTargetWebgl, but still
-    // requires PersistentBufferProviderAccelerated.
-    if (!TextureData::IsRemote(aKnowsCompositor, BackendSelector::Canvas,
-                               aFormat, aSize)) {
-      return nullptr;
-    }
-#else
     return nullptr;
-#endif
   }
 
   RefPtr<TextureClient> texture = CreateTexture(
@@ -278,11 +269,6 @@ PersistentBufferProviderShared::Create(gfx::IntSize aSize,
     return nullptr;
   }
 
-#ifdef XP_WIN
-  // Bug 1285271 - Disable shared buffer provider on Windows with D2D due to
-  // instability.
-  aWillReadFrequently = true;
-#endif
 
   RefPtr<TextureClient> texture =
       CreateTexture(aKnowsCompositor, aFormat, aSize, aWillReadFrequently);

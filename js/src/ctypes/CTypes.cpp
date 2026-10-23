@@ -13,12 +13,7 @@
 
 #include "js/experimental/CTypes.h"  // JS::CTypesActivity{Callback,Type}, JS::InitCTypesClass, JS::SetCTypesActivityCallback, JS::SetCTypesCallbacks
 
-#if defined(XP_UNIX)
 #  include <errno.h>
-#endif
-#if defined(XP_WIN)
-#  include <float.h>
-#endif
 #if defined(SOLARIS)
 #  include <ieeefp.h>
 #endif
@@ -279,9 +274,6 @@ static JSString* GetSourceString(JSContext* cx, HandleObject typeObj,
 
 bool ErrnoGetter(JSContext* cx, const JS::CallArgs& args);
 
-#if defined(XP_WIN)
-bool LastErrorGetter(JSContext* cx, const JS::CallArgs& args);
-#endif  // defined(XP_WIN)
 }  // namespace CData
 
 namespace CDataFinalizer {
@@ -762,11 +754,6 @@ static const JSFunctionSpec sUInt64Functions[] = {
 static const JSPropertySpec sModuleProps[] = {
     JS_PSG("errno", (Property<IsCTypesGlobal, CData::ErrnoGetter>::Fun),
            JSPROP_PERMANENT),
-#if defined(XP_WIN)
-    JS_PSG("winLastError",
-           (Property<IsCTypesGlobal, CData::LastErrorGetter>::Fun),
-           JSPROP_PERMANENT),
-#endif  // defined(XP_WIN)
     JS_PS_END,
 };
 
@@ -6536,36 +6523,11 @@ static bool GetABI(JSContext* cx, HandleValue abiType, ffi_abi* result) {
       *result = FFI_DEFAULT_ABI;
       return true;
     case ABI_THISCALL:
-#if defined(_WIN64)
-#  if defined(_M_X64)
-      *result = FFI_WIN64;
-#  elif defined(_M_ARM64)
-      *result = FFI_SYSV;
-#  else
-#    error unknown 64-bit Windows platform
-#  endif
-      return true;
-#elif defined(_WIN32)
-      *result = FFI_THISCALL;
-      return true;
-#else
       break;
-#endif
     case ABI_STDCALL:
     case ABI_WINAPI:
 #if (defined(_WIN32) && !defined(_WIN64)) || defined(_OS2)
       *result = FFI_STDCALL;
-      return true;
-#elif (defined(_WIN64))
-      // We'd like the same code to work across Win32 and Win64, so stdcall_api
-      // and winapi_abi become aliases to the lone Win64 ABI.
-#  if defined(_M_X64)
-      *result = FFI_WIN64;
-#  elif defined(_M_ARM64)
-      *result = FFI_SYSV;
-#  else
-#    error unknown 64-bit Windows platform
-#  endif
       return true;
 #endif
     case INVALID_ABI:
@@ -6729,10 +6691,6 @@ void FunctionType::BuildSymbolName(JSContext* cx, JSString* name,
       }
 
       IntegerToString(size, 10, result);
-#elif defined(_WIN64)
-      // On Win64, stdcall is an alias to the default ABI for compatibility, so
-      // no mangling is done.
-      AppendString(cx, result, name);
 #endif
       break;
     }
@@ -7141,11 +7099,6 @@ bool FunctionType::Call(JSContext* cx, unsigned argc, Value* vp) {
 
   uintptr_t fn = *reinterpret_cast<uintptr_t*>(CData::GetData(obj));
 
-#if defined(XP_WIN)
-  int32_t lastErrorStatus;  // The status as defined by |GetLastError|
-  int32_t savedLastError = GetLastError();
-  SetLastError(0);
-#endif              // defined(XP_WIN)
   int errnoStatus;  // The status as defined by |errno|
   int savedErrno = errno;
   errno = 0;
@@ -7178,10 +7131,6 @@ bool FunctionType::Call(JSContext* cx, unsigned argc, Value* vp) {
   // (see bug 684017).
 
   errnoStatus = errno;
-#if defined(XP_WIN)
-  lastErrorStatus = GetLastError();
-  SetLastError(savedLastError);
-#endif  // defined(XP_WIN)
 
   errno = savedErrno;
 
@@ -7195,9 +7144,6 @@ bool FunctionType::Call(JSContext* cx, unsigned argc, Value* vp) {
   }
 
   JS_SetReservedSlot(objCTypes, SLOT_ERRNO, Int32Value(errnoStatus));
-#if defined(XP_WIN)
-  JS_SetReservedSlot(objCTypes, SLOT_LASTERROR, Int32Value(lastErrorStatus));
-#endif  // defined(XP_WIN)
 
   // Small integer types get returned as a word-sized ffi_arg. Coerce it back
   // into the correct size for ConvertToJS.
@@ -8194,13 +8140,6 @@ bool CData::ErrnoGetter(JSContext* cx, const JS::CallArgs& args) {
   return true;
 }
 
-#if defined(XP_WIN)
-bool CData::LastErrorGetter(JSContext* cx, const JS::CallArgs& args) {
-  args.rval().set(
-      JS::GetReservedSlot(&args.thisv().toObject(), SLOT_LASTERROR));
-  return true;
-}
-#endif  // defined(XP_WIN)
 
 bool CDataFinalizer::Methods::ToSource(JSContext* cx, unsigned argc,
                                        Value* vp) {
@@ -8540,10 +8479,6 @@ void CDataFinalizer::CallFinalizer(CDataFinalizer::Private* p, int* errnoStatus,
                                    int32_t* lastErrorStatus) {
   int savedErrno = errno;
   errno = 0;
-#if defined(XP_WIN)
-  int32_t savedLastError = GetLastError();
-  SetLastError(0);
-#endif  // defined(XP_WIN)
 
   void* args[1] = {p->cargs};
   ffi_call(&p->CIF, FFI_FN(p->code), p->rvalue, args);
@@ -8552,12 +8487,6 @@ void CDataFinalizer::CallFinalizer(CDataFinalizer::Private* p, int* errnoStatus,
     *errnoStatus = errno;
   }
   errno = savedErrno;
-#if defined(XP_WIN)
-  if (lastErrorStatus) {
-    *lastErrorStatus = GetLastError();
-  }
-  SetLastError(savedLastError);
-#endif  // defined(XP_WIN)
 }
 
 /*
@@ -8660,17 +8589,9 @@ bool CDataFinalizer::Methods::Dispose(JSContext* cx, unsigned argc, Value* vp) {
   RootedValue result(cx);
 
   int errnoStatus;
-#if defined(XP_WIN)
-  int32_t lastErrorStatus;
-  CDataFinalizer::CallFinalizer(p, &errnoStatus, &lastErrorStatus);
-#else
   CDataFinalizer::CallFinalizer(p, &errnoStatus, nullptr);
-#endif  // defined(XP_WIN)
 
   JS_SetReservedSlot(objCTypes, SLOT_ERRNO, Int32Value(errnoStatus));
-#if defined(XP_WIN)
-  JS_SetReservedSlot(objCTypes, SLOT_LASTERROR, Int32Value(lastErrorStatus));
-#endif  // defined(XP_WIN)
 
   if (ConvertToJS(cx, resultType, nullptr, p->rvalue, false, true, &result)) {
     CDataFinalizer::Cleanup(p, obj);

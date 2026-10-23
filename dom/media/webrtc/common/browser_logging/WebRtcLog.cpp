@@ -15,9 +15,6 @@
 #include "nscore.h"
 #include "rtc_base/logging.h"
 
-#ifdef XP_WIN
-#  include "nsNativeCharsetUtils.h"
-#endif
 
 using mozilla::LogLevel;
 
@@ -150,23 +147,11 @@ nsCString ConfigAecLog() {
   if (webrtc::LogMessage::aec_debug()) {
     return ""_ns;
   }
-#if defined(ANDROID)
-  const char* default_tmp_dir = "/dev/null";
-  aecLogDir.Assign(default_tmp_dir);
-#else
   nsCOMPtr<nsIFile> tempDir;
   nsresult rv = NS_GetSpecialDirectory(NS_OS_TEMP_DIR, getter_AddRefs(tempDir));
   if (NS_SUCCEEDED(rv)) {
-#  ifdef XP_WIN
-    // WebRTC wants a path encoded in the native charset, not UTF-8.
-    nsAutoString temp;
-    tempDir->GetPath(temp);
-    NS_CopyUnicodeToNative(temp, aecLogDir);
-#  else
     tempDir->GetNativePath(aecLogDir);
-#  endif
   }
-#endif
   webrtc::LogMessage::set_aec_debug_filename(aecLogDir.get());
 
   return aecLogDir;

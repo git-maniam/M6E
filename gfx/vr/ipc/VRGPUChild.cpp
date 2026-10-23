@@ -30,7 +30,6 @@ bool VRGPUChild::InitForGPUProcess(Endpoint<PVRGPUChild>&& aEndpoint) {
   }
   sVRGPUChildSingleton = child;
 
-#if !defined(MOZ_WIDGET_ANDROID)
   RefPtr<Runnable> task = NS_NewRunnableFunction(
       "VRServiceHost::NotifyVRProcessStarted", []() -> void {
         VRServiceHost* host = VRServiceHost::Get();
@@ -38,7 +37,6 @@ bool VRGPUChild::InitForGPUProcess(Endpoint<PVRGPUChild>&& aEndpoint) {
       });
 
   NS_DispatchToMainThread(task.forget());
-#endif
 
   return true;
 }
@@ -70,11 +68,9 @@ void VRGPUChild::ActorDestroy(ActorDestroyReason aWhy) {
 }
 
 mozilla::ipc::IPCResult VRGPUChild::RecvNotifyPuppetComplete() {
-#if !defined(MOZ_WIDGET_ANDROID)
   VRManager* vm = VRManager::Get();
   mozilla::layers::CompositorThread()->Dispatch(NewRunnableMethod(
       "VRManager::NotifyPuppetComplete", vm, &VRManager::NotifyPuppetComplete));
-#endif
   return IPC_OK();
 }
 

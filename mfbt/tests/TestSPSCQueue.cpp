@@ -13,9 +13,6 @@
 #include "mozilla/PodOperations.h"
 #include "mozilla/SPSCQueue.h"
 
-#ifdef _WIN32
-#  include <windows.h>
-#endif
 
 using namespace mozilla;
 
@@ -83,13 +80,7 @@ void Delay() {
   // On Windows and x86 Android, the timer resolution is so bad that, even if
   // we used `timeBeginPeriod(1)`, any nonzero sleep from the test's inner loops
   // would make this program take far too long.
-#ifdef _WIN32
-  Sleep(0);
-#elif defined(ANDROID)
-  std::this_thread::sleep_for(std::chrono::microseconds(0));
-#else
   std::this_thread::sleep_for(std::chrono::microseconds(10));
-#endif
 }
 
 template <typename T>

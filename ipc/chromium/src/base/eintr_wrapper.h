@@ -14,7 +14,6 @@
 #ifndef BASE_EINTR_WRAPPER_H_
 #define BASE_EINTR_WRAPPER_H_
 
-#if defined(XP_UNIX)
 
 #  include <errno.h>
 
@@ -48,12 +47,5 @@
       eintr_wrapper_result;                    \
     })
 
-#else
-
-#  define HANDLE_EINTR(x) (x)
-#  define IGNORE_EINTR(x) (x)
-#  define HANDLE_RV_EINTR(x) (x)
-
-#endif  // XP_UNIX
 
 #endif  // !BASE_EINTR_WRAPPER_H_

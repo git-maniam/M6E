@@ -11,11 +11,7 @@
 #include "GLBlitHelper.h"
 #include "gfxPlatform.h"
 #include "gfxUtils.h"
-#ifdef XP_MACOSX
 #  include "GLContextCGL.h"
-#else
-#  include "GLContextEAGL.h"
-#endif
 #include "GLContextProvider.h"
 #include "MozFramebuffer.h"
 #include "NativeLayerCA.h"

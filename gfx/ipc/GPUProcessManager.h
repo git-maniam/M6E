@@ -331,14 +331,7 @@ class GPUProcessManager final : public GPUProcessHost::Listener {
   bool EnsureImageBridgeChild();
   bool EnsureVRManager();
 
-#if defined(XP_WIN)
-  void SetProcessIsForeground();
-#endif
 
-#if defined(MOZ_WIDGET_ANDROID)
-  RefPtr<UiCompositorControllerChild> CreateUiCompositorController(
-      nsIWidget* aWidget, const LayersId aId);
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   RefPtr<CompositorSession> CreateRemoteSession(
       nsIWidget* aWidget, const LayersId& aRootLayerTreeId,

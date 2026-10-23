@@ -216,29 +216,18 @@ mozilla::ipc::IPCResult VRManagerParent::RecvControllerListenerRemoved() {
 
 mozilla::ipc::IPCResult VRManagerParent::RecvRunPuppet(
     const nsTArray<uint64_t>& aBuffer) {
-#if defined(MOZ_WIDGET_ANDROID)
-  // Not yet implemented for Android / GeckoView
-  // See Bug 1555192
-  (void)SendNotifyPuppetCommandBufferCompleted(false);
-#else
   VRManager* vm = VRManager::Get();
   if (!vm->RunPuppet(aBuffer, this)) {
     // We have immediately failed, need to resolve the
     // promise right away
     (void)SendNotifyPuppetCommandBufferCompleted(false);
   }
-#endif  // defined(MOZ_WIDGET_ANDROID)
   return IPC_OK();
 }
 
 mozilla::ipc::IPCResult VRManagerParent::RecvResetPuppet() {
-#if defined(MOZ_WIDGET_ANDROID)
-  // Not yet implemented for Android / GeckoView
-  // See Bug 1555192
-#else
   VRManager* vm = VRManager::Get();
   vm->ResetPuppet(this);
-#endif  // defined(MOZ_WIDGET_ANDROID)
   return IPC_OK();
 }
 

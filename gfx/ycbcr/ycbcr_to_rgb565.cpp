@@ -64,19 +64,6 @@ typedef void (*yuv2rgb565_row_scale_nearest_func)(
 
 
 //TODO: fix NEON asm for iOS
-# if defined(MOZILLA_MAY_SUPPORT_NEON) && !defined(__APPLE__)
-
-extern "C" void ScaleYCbCr42xToRGB565_BilinearY_Row_NEON(
- const yuv2rgb565_row_scale_bilinear_ctx *ctx, int dither);
-
-void __attribute((noinline)) yuv42x_to_rgb565_row_neon(uint16_t *dst,
-                                                       const uint8_t *y,
-                                                       const uint8_t *u,
-                                                       const uint8_t *v,
-                                                       int n,
-                                                       int oddflag);
-
-#endif
 
 
 
@@ -480,9 +467,6 @@ void ScaleYCbCrToRGB565(const uint8_t *y_buf,
       if (yuv_type != YV24) {
         scale_row =
 //TODO: fix NEON asm for iOS
-#  if defined(MOZILLA_MAY_SUPPORT_NEON) && !defined(__APPLE__)
-         supports_neon() ? ScaleYCbCr42xToRGB565_BilinearY_Row_NEON :
-#  endif
          ScaleYCbCr42xToRGB565_BilinearY_Row_C;
       }
       else
@@ -624,24 +608,6 @@ void ConvertYCbCrToRGB565(const uint8_t* y_buf,
   x_shift = yuv_type != YV24;
   y_shift = yuv_type == YV12;
 //TODO: fix NEON asm for iOS
-#  if defined(MOZILLA_MAY_SUPPORT_NEON) && !defined(__APPLE__)
-  if (yuv_type != YV24 && supports_neon())
-  {
-    for (int i = 0; i < pic_height; i++) {
-      int yoffs;
-      int uvoffs;
-      yoffs = y_pitch * (pic_y+i) + pic_x;
-      uvoffs = uv_pitch * ((pic_y+i)>>y_shift) + (pic_x>>x_shift);
-      yuv42x_to_rgb565_row_neon((uint16_t*)(rgb_buf + rgb_pitch * i),
-                                y_buf + yoffs,
-                                u_buf + uvoffs,
-                                v_buf + uvoffs,
-                                pic_width,
-                                pic_x&x_shift);
-    }
-  }
-  else
-#  endif
   {
     for (int i = 0; i < pic_height; i++) {
       int yoffs;

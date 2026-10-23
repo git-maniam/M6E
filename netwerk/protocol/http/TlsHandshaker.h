@@ -46,10 +46,8 @@ class TlsHandshaker : public nsITlsHandshakeCallbackListener {
   }
   void EarlyDataDone();
 
-#ifndef ANDROID
   void EarlyDataTelemetry(int16_t tlsVersion, bool earlyDataAccepted,
                           int64_t aContentBytesWritten0RTT);
-#endif
 
   bool NPNComplete() const { return mNPNComplete; }
   bool SetupSSLCalled() const { return mSetupSSLCalled; }

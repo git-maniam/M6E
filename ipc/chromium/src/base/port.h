@@ -7,13 +7,8 @@
 
 #include <stdarg.h>
 
-#ifdef _MSC_VER
-#  define GG_LONGLONG(x) x##I64
-#  define GG_ULONGLONG(x) x##UI64
-#else
 #  define GG_LONGLONG(x) x##LL
 #  define GG_ULONGLONG(x) x##ULL
-#endif
 
 // Per C99 7.8.14, define __STDC_CONSTANT_MACROS before including <stdint.h>
 // to get the INTn_C and UINTn_C macros for integer constants.  It's difficult
@@ -44,8 +39,6 @@ namespace base {
 // use va_list as ref args to a function, as above, breaks some machines.
 #if defined(__GNUC__)
 #  define base_va_copy(_a, _b) ::va_copy(_a, _b)
-#elif defined(_MSC_VER)
-#  define base_va_copy(_a, _b) (_a = _b)
 #else
 #  error No va_copy for your compiler
 #endif
@@ -53,10 +46,6 @@ namespace base {
 }  // namespace base
 
 // Define an OS-neutral wrapper for shared library entry points
-#if defined(XP_WIN)
-#  define API_CALL __stdcall
-#elif defined(XP_LINUX) || defined(XP_DARWIN)
 #  define API_CALL
-#endif
 
 #endif  // BASE_PORT_H_

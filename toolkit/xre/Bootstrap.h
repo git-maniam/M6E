@@ -18,25 +18,13 @@
 #include "nscore.h"
 #include "nsXULAppAPI.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "jni.h"
-#endif
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-namespace sandbox {
-class BrokerServices;
-}
-#endif
 
 namespace mozilla {
 
 struct StaticXREAppData;
 
 struct BootstrapConfig {
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  /* Chromium sandbox BrokerServices. */
-  sandbox::BrokerServices* sandboxBrokerServices;
-#endif
   /* Pointer to static XRE AppData from application.ini.h */
   const StaticXREAppData* appData;
   /* When the pointer above is null, points to the (string) path of an
@@ -44,12 +32,6 @@ struct BootstrapConfig {
    * When the pointer above is non-null, may indicate the directory where
    * application files are, relative to the XRE. */
   const char* appDataPath;
-#if defined(MOZ_WIDGET_ANDROID)
-  /* Crash notification socket used by Breakpad. */
-  int crashChildNotificationSocket;
-  /* Crash socket used to communicate with the crash helper. */
-  int crashHelperSocket;
-#endif
 };
 
 /**
@@ -102,14 +84,6 @@ class Bootstrap {
 
   virtual void XRE_EnableSameExecutableForContentProc() = 0;
 
-#ifdef MOZ_WIDGET_ANDROID
-  virtual void XRE_SetGeckoThreadEnv(JNIEnv* aEnv) = 0;
-
-  virtual void XRE_SetAndroidChildFds(JNIEnv* aEnv, jintArray aFds) = 0;
-#  ifdef MOZ_PROFILE_GENERATE
-  virtual void XRE_WriteLLVMProfData() = 0;
-#  endif
-#endif
 
 #ifdef LIBFUZZER
   virtual void XRE_LibFuzzerSetDriver(LibFuzzerDriver aDriver) = 0;
@@ -125,11 +99,7 @@ enum class LibLoadingStrategy {
   ReadAhead,
 };
 
-#if defined(XP_WIN)
-using DLErrorType = unsigned long;  // (DWORD)
-#else
 using DLErrorType = UniqueFreePtr<char>;
-#endif
 
 using BootstrapError = Variant<nsresult, DLErrorType>;
 
@@ -160,9 +130,6 @@ inline BootstrapResult GetBootstrap(
 }
 #endif
 
-#if defined(XP_WIN) && defined(_M_X64) && defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
-extern "C" NS_EXPORT bool XRE_CheckBlockScopeStaticVarInit(uint32_t* aTlsIndex);
-#endif  // XP_WIN && _M_X64 && MOZ_DIAGNOSTIC_ASSERT_ENABLED
 
 }  // namespace mozilla
 

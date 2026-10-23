@@ -728,7 +728,6 @@ int wmain(int argc, wchar_t* argv[]) {
     return 1;
   }
 
-#ifndef WIN32  // failure on windows10x32
   if (stricmp(debugInfo->pdbFileName, "kernel32.pdb")) {
     printf(
         "TEST-FAILED | NativeNt | Unexpected PDB filename "
@@ -736,7 +735,6 @@ int wmain(int argc, wchar_t* argv[]) {
         debugInfo->pdbFileName);
     return 1;
   }
-#endif
 
   PEHeaders ntdllheaders(::GetModuleHandleW(L"ntdll.dll"));
 

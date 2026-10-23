@@ -22,9 +22,6 @@
 #  include "mozilla/gfx/fontations_glue_generated.h"
 #endif
 
-#if defined(MOZ_SANDBOX) && defined(XP_LINUX)
-#  include "mozilla/SandboxBroker.h"
-#endif
 
 namespace mozilla {
 namespace dom {
@@ -321,12 +318,8 @@ class gfxFcPlatformFontList final : public gfxPlatformFontList {
   nsTArray<std::pair<const char**, uint32_t>> GetFilteredPlatformFontLists()
       override;
 
-#if defined(MOZ_SANDBOX) && defined(XP_LINUX)
-  typedef mozilla::SandboxBroker::Policy SandboxPolicy;
-#else
   // Dummy type just so we can still have a SandboxPolicy* parameter.
   struct SandboxPolicy {};
-#endif
 
   // Add all the font families found in a font set.
   // aAppFonts indicates whether this is the system or application fontset.
@@ -389,28 +382,6 @@ class gfxFcPlatformFontList final : public gfxPlatformFontList {
   RefPtr<FcConfig> mLastConfig;
 
   // The current system font options in effect.
-#ifdef MOZ_WIDGET_GTK
-  // NOTE(emilio): This is a *system cairo* cairo_font_options_t object. As
-  // such, it can't be used outside of the few functions defined here.
-  cairo_font_options_t* mSystemFontOptions = nullptr;
-  int32_t mFreetypeLcdSetting = -1;  // -1 for not set
-
-  void ClearSystemFontOptions();
-
-  // Returns whether options actually changed.
-  // TODO(emilio): We could call this when gsettings change or such, but
-  // historically we haven't reacted to these settings changes, so keeping it
-  // simple for now.
-  bool UpdateSystemFontOptions();
-
-  void UpdateSystemFontOptionsFromIpc(const mozilla::dom::SystemFontOptions&);
-  void SystemFontOptionsToIpc(mozilla::dom::SystemFontOptions&);
-
- public:
-  void SubstituteSystemFontOptions(FcPattern*);
-
- private:
-#endif
 
   // Cache for most recently used language code in FindAndAddFamiliesLocked,
   // and the result of checking whether to use lang-specific lookups.

@@ -10,12 +10,6 @@
 #include "mozilla/Utf8.h"    // mozilla::Utf8Unit
 
 #include "ScriptLoadRequest.h"
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/AutoEntryScript.h"
@@ -113,18 +107,6 @@ static bool Dump(JSContext* cx, unsigned argc, Value* vp) {
 
   MOZ_LOG(nsContentUtils::DOMDumpLog(), mozilla::LogLevel::Debug,
           ("[SystemGlobal.Dump] %s", utf8str.get()));
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", utf8str.get());
-#endif
-#ifdef XP_WIN
-  if (IsDebuggerPresent()) {
-    nsAutoJSString wstr;
-    if (!wstr.init(cx, str)) {
-      return false;
-    }
-    OutputDebugStringW(wstr.get());
-  }
-#endif
   fputs(utf8str.get(), stdout);
   fflush(stdout);
   return true;

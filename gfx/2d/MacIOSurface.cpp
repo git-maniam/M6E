@@ -3,19 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "MacIOSurface.h"
-#ifdef XP_MACOSX
 #  include <OpenGL/CGLIOSurface.h>
 #  include <OpenGL/gl.h>
-#endif
 #include <QuartzCore/QuartzCore.h>
 
 #include "GLConsts.h"
-#ifdef XP_MACOSX
 #  include "GLContextCGL.h"
 #  include "GLContextEGL.h"
-#else
-#  include "GLContextEAGL.h"
-#endif
 #include "gfxMacUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/RefPtr.h"
@@ -165,7 +159,6 @@ static void SetIOSurfaceCommonProperties(
       surfaceRef.get(), CFSTR("IOSurfaceTransferFunction"),
       gfxMacUtils::CFStringForTransferFunction(aTransferFunction));
 
-#ifdef XP_MACOSX
   // Override the color space to be the same as the main display, so that
   // CoreAnimation won't try to do any color correction (from the IOSurface
   // space, to the display). In the future we may want to try specifying this
@@ -177,7 +170,6 @@ static void SetIOSurfaceCommonProperties(
       CGColorSpaceCopyICCData(colorSpace.get()));
   IOSurfaceSetValue(surfaceRef.get(), CFSTR("IOSurfaceColorSpace"),
                     colorData.get());
-#endif
 }
 
 /* static */
@@ -592,7 +584,6 @@ ColorDepth MacIOSurface::GetColorDepth() const {
 
 bool MacIOSurface::BindTexImage(mozilla::gl::GLContext* aGL, size_t aPlane,
                                 mozilla::gfx::SurfaceFormat* aOutReadFormat) {
-#ifdef XP_MACOSX
   MOZ_ASSERT(aPlane >= 0);
   bool isCompatibilityProfile = aGL->IsCompatibilityProfile();
   OSType pixelFormat = GetPixelFormat();
@@ -761,9 +752,6 @@ bool MacIOSurface::BindTexImage(mozilla::gl::GLContext* aGL, size_t aPlane,
     default:
       MOZ_CRASH("unimplemented");
   }
-#else
-  MOZ_CRASH("unimplemented");
-#endif
 }
 
 void MacIOSurface::SetColorSpace(const mozilla::gfx::ColorSpace2 cs) const {

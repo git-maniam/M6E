@@ -27,28 +27,6 @@ BaseProfilerThreadId profiler_current_thread_id() {
 }  // namespace mozilla::baseprofiler
 
 // --------------------------------------------- Windows process & thread ids
-#elif defined(XP_WIN)
-
-#  include <process.h>
-#  include <processthreadsapi.h>
-
-namespace mozilla::baseprofiler {
-
-BaseProfilerProcessId profiler_current_process_id() {
-  return BaseProfilerProcessId::FromNativeId(_getpid());
-}
-
-BaseProfilerThreadId profiler_current_thread_id() {
-  static_assert(std::is_same_v<BaseProfilerThreadId::NativeType,
-                               decltype(GetCurrentThreadId())>,
-                "BaseProfilerThreadId::NativeType must be exactly the type "
-                "returned by GetCurrentThreadId()");
-  return BaseProfilerThreadId::FromNativeId(GetCurrentThreadId());
-}
-
-}  // namespace mozilla::baseprofiler
-
-// --------------------------------------------- Non-Windows process id
 #else
 // All non-Windows platforms are assumed to be POSIX, which has getpid().
 
@@ -64,7 +42,6 @@ BaseProfilerProcessId profiler_current_process_id() {
 
 // --------------------------------------------- Non-Windows thread id
 // ------------------------------------------------------- macOS
-#  if defined(XP_MACOSX)
 
 #    include <pthread.h>
 
@@ -82,63 +59,6 @@ BaseProfilerThreadId profiler_current_thread_id() {
 
 // ------------------------------------------------------- Android
 // Test Android before Linux, because Linux includes Android.
-#  elif defined(__ANDROID__) || defined(ANDROID)
-
-namespace mozilla::baseprofiler {
-
-BaseProfilerThreadId profiler_current_thread_id() {
-  return BaseProfilerThreadId::FromNativeId(gettid());
-}
-
-}  // namespace mozilla::baseprofiler
-
-// ------------------------------------------------------- Linux
-#  elif defined(XP_LINUX)
-
-#    include <sys/syscall.h>
-
-namespace mozilla::baseprofiler {
-
-BaseProfilerThreadId profiler_current_thread_id() {
-  static thread_local pid_t tid;
-  if (!tid) {
-    // glibc doesn't provide a wrapper for gettid() until 2.30
-    tid = static_cast<pid_t>(syscall(SYS_gettid));
-  }
-  return BaseProfilerThreadId::FromNativeId(tid);
-}
-
-}  // namespace mozilla::baseprofiler
-
-// ------------------------------------------------------- FreeBSD
-#  elif defined(XP_FREEBSD)
-
-#    include <sys/thr.h>
-
-namespace mozilla::baseprofiler {
-
-BaseProfilerThreadId profiler_current_thread_id() {
-  long id;
-  if (thr_self(&id) != 0) {
-    return BaseProfilerThreadId{};
-  }
-  return BaseProfilerThreadId::FromNativeId(id);
-}
-
-}  // namespace mozilla::baseprofiler
-
-// ------------------------------------------------------- Others
-#  else
-
-namespace mozilla::baseprofiler {
-
-BaseProfilerThreadId profiler_current_thread_id() {
-  return BaseProfilerThreadId::FromNativeId(std::this_thread::get_id());
-}
-
-}  // namespace mozilla::baseprofiler
-
-#  endif
 #endif  // End of non-XP_WIN.
 
 // --------------------------------------------- Platform-agnostic definitions

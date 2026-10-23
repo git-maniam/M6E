@@ -9,9 +9,6 @@
 #include "moz_external_vr.h"
 #include "mozilla/TimeStamp.h"
 
-#if defined(XP_WIN)
-#  include <d3d11_1.h>
-#endif
 class nsITimer;
 
 namespace mozilla {
@@ -35,18 +32,10 @@ class PuppetSession : public VRSession {
   void StopAllHaptics() override;
 
  protected:
-#if defined(XP_WIN)
-  bool SubmitFrame(const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
-                   ID3D11Texture2D* aTexture) override;
-#elif defined(XP_MACOSX)
   bool SubmitFrame(const mozilla::gfx::VRLayer_Stereo_Immersive& aLayer,
                    const VRLayerTextureHandle& aTexture) override;
-#endif
 
  private:
-#if defined(XP_WIN)
-  bool CreateD3DObjects();
-#endif
 };
 
 }  // namespace gfx

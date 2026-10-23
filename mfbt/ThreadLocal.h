@@ -20,13 +20,11 @@ namespace mozilla {
 
 namespace detail {
 
-#ifdef XP_MACOSX
 #  if defined(__has_feature)
 #    if __has_feature(cxx_thread_local)
 #      define MACOSX_HAS_THREAD_LOCAL
 #    endif
 #  endif
-#endif
 
 /*
  * Thread Local Storage helpers.
@@ -82,43 +80,7 @@ struct Helper<S*> {
   typedef S* Type;
 };
 
-#if defined(XP_WIN)
-/*
- * ThreadLocalKeyStorage uses Thread Local APIs that are declared in
- * processthreadsapi.h. To use this class on Windows, include that file
- * (or windows.h) before including ThreadLocal.h.
- *
- * TLS_OUT_OF_INDEXES is a #define that is used to detect whether
- * an appropriate header has been included prior to this file
- */
-#  if defined(TLS_OUT_OF_INDEXES)
-/* Despite not being used for MOZ_THREAD_LOCAL, we expose an implementation for
- * Windows for cases where it's not desirable to use thread_local */
-template <typename T>
-class ThreadLocalKeyStorage {
- public:
-  ThreadLocalKeyStorage() : mKey(TLS_OUT_OF_INDEXES) {}
-
-  inline bool initialized() const { return mKey != TLS_OUT_OF_INDEXES; }
-
-  inline void init() { mKey = TlsAlloc(); }
-
-  inline T get() const {
-    void* h = TlsGetValue(mKey);
-    return static_cast<T>(reinterpret_cast<typename Helper<T>::Type>(h));
-  }
-
-  inline bool set(const T aValue) {
-    void* h = const_cast<void*>(reinterpret_cast<const void*>(
-        static_cast<typename Helper<T>::Type>(aValue)));
-    return TlsSetValue(mKey, h);
-  }
-
- private:
-  unsigned long mKey;
-};
-#  endif
-#elif defined(__wasi__)
+#if   defined(__wasi__)
 // There are no threads on WASI, so we just use a global variable.
 template <typename T>
 class ThreadLocalKeyStorage {

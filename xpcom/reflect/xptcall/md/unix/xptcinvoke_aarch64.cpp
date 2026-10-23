@@ -75,11 +75,7 @@ static inline void alloc_arg(uint64_t* &reg_args,
         // partially true on Apple platforms, where types smaller than 8
         // bytes occupy only the space they require on the stack and
         // their stack slot must be properly aligned.
-#ifdef __APPLE__
         const size_t aligned_size = sizeof(T);
-#else
-        const size_t aligned_size = 8;
-#endif
         // Ensure the pointer is aligned for the type
         uintptr_t addr = (reinterpret_cast<uintptr_t>(stack_args) + aligned_size - 1) & ~(aligned_size - 1);
         memcpy(reinterpret_cast<void*>(addr), data, sizeof(T));

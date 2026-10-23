@@ -13,10 +13,6 @@
 #include "mozilla/layers/TextureClientOGL.h"
 #include "mozilla/layers/TextureClientRecycleAllocator.h"
 #include "mozilla/mozalloc.h"  // for operator delete, etc
-#ifdef XP_WIN
-#  include "gfxWindowsPlatform.h"  // for gfxWindowsPlatform
-#  include "mozilla/layers/TextureD3D11.h"
-#endif
 #include "gfxUtils.h"
 
 namespace mozilla {

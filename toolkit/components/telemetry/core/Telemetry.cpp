@@ -6,11 +6,7 @@
 
 #include <prio.h>
 #include <prproces.h>
-#if defined(XP_UNIX) && !defined(XP_DARWIN)
-#  include <time.h>
-#else
 #  include <chrono>
-#endif
 #include "base/pickle.h"
 #include "base/process_util.h"
 #include "ipc/TelemetryIPCAccumulator.h"
@@ -41,9 +37,6 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/StartupTimeline.h"
 #include "mozilla/StaticPtr.h"
-#if defined(XP_WIN)
-#  include "mozilla/WinDllServices.h"
-#endif
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsBaseHashtable.h"
 #include "nsClassHashtable.h"
@@ -59,9 +52,6 @@
 #include "nsIObserverService.h"
 #include "nsISeekableStream.h"
 #include "nsITelemetry.h"
-#if defined(XP_WIN)
-#  include "other/UntrustedModules.h"
-#endif
 #include "nsCRTGlue.h"
 #include "nsJSUtils.h"
 #include "nsNativeCharsetUtils.h"
@@ -72,9 +62,6 @@
 #include "nsString.h"
 #include "nsTHashtable.h"
 #include "nsThreadUtils.h"
-#if defined(XP_WIN)
-#  include "nsUnicharUtils.h"
-#endif
 #include "nsVersionComparator.h"
 #include "nsXPCOMCIDInternal.h"
 #include "other/CombinedStacks.h"
@@ -639,31 +626,18 @@ TelemetryImpl::GetDebugSlowSQL(JSContext* cx,
 NS_IMETHODIMP
 TelemetryImpl::SubmitAndGetUntrustedModulePayload(JSContext* aCx,
                                                   Promise** aPromise) {
-#if defined(XP_WIN)
-  return Telemetry::SubmitAndGetUntrustedModulePayload(aCx, aPromise);
-#else
   return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 NS_IMETHODIMP
 TelemetryImpl::GetUntrustedModuleLoadEvents(uint32_t aFlags, JSContext* cx,
                                             Promise** aPromise) {
-#if defined(XP_WIN)
-  return Telemetry::GetUntrustedModuleLoadEvents(aFlags, cx, aPromise);
-#else
   return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 NS_IMETHODIMP
 TelemetryImpl::GetAreUntrustedModuleLoadEventsReady(bool* ret) {
-#if defined(XP_WIN)
-  *ret = DllServices::Get()->IsReadyForBackgroundProcessing();
-  return NS_OK;
-#else
   return NS_ERROR_NOT_IMPLEMENTED;
-#endif
 }
 
 NS_IMETHODIMP
@@ -1152,16 +1126,10 @@ TelemetryImpl::MsSinceProcessStartExcludingSuspend(double* aResult) {
 
 NS_IMETHODIMP
 TelemetryImpl::MsSystemNow(double* aResult) {
-#if defined(XP_UNIX) && !defined(XP_DARWIN)
-  timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-  *aResult = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-#else
   using namespace std::chrono;
   milliseconds ms =
       duration_cast<milliseconds>(system_clock::now().time_since_epoch());
   *aResult = static_cast<double>(ms.count());
-#endif  // XP_UNIX && !XP_DARWIN
 
   return NS_OK;
 }

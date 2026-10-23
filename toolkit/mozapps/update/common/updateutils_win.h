@@ -12,9 +12,7 @@
  *       will have effects reaching beyond application update.
  */
 
-#ifndef XP_WIN
 #  error This library should only be used on Windows
-#endif
 
 #include <windows.h>
 

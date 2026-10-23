@@ -380,7 +380,6 @@ size_t GetNumAvailable() {
   return stats.mSlotsFreed + stats.mSlotsUnused;
 }
 
-#ifndef ANDROID
 static void TestExhaustion(std::vector<uint8_t*>& aAllocs) {
   // Disable the reuse delay to make the test more reliable.  At the same
   // time lower the other probabilities to speed up this test, but much
@@ -468,7 +467,6 @@ TEST(PHC, TestBounds)
 
   ReleaseVector(allocations);
 }
-#endif
 
 size_t GetNumSlotsTotal() {
   mozilla::phc::PHCStats stats;
@@ -476,7 +474,6 @@ size_t GetNumSlotsTotal() {
   return stats.mSlotsAllocated + stats.mSlotsFreed + stats.mSlotsUnused;
 }
 
-#ifndef ANDROID
 TEST(PHC, TestPHCGrow)
 {
   size_t batch_1_num = GetNumAvailable();
@@ -502,7 +499,6 @@ TEST(PHC, TestPHCGrow)
   ReleaseVector(batch_1);
   ReleaseVector(batch_2);
 }
-#endif
 
 TEST(PHC, TestPHCLimit)
 {

@@ -22,12 +22,10 @@
 #include "pk11pub.h"
 #include "sechash.h"
 
-#ifdef XP_MACOSX
 #  include <CoreFoundation/CoreFoundation.h>
 #  include <Security/Security.h>
 
 #  include "KeychainSecret.h"  // for ScopedCFType
-#endif
 
 using namespace mozilla;
 using namespace mozilla::psm;
@@ -267,7 +265,6 @@ nsClientAuthRememberService::RememberDecision(
                         nsClientAuthRemember::SentinelValue, aDuration);
 }
 
-#ifdef XP_MACOSX
 // On macOS, users can add "identity preference" items in the keychain. These
 // can be added via the Keychain Access tool. These specify mappings from
 // URLs/wildcards like "*.mozilla.org" to specific client certificates. This
@@ -315,7 +312,6 @@ nsresult CheckForPreferredCertificate(const nsACString& aHostName,
   nsCOMPtr<nsIX509Cert> cert(new nsNSSCertificate(std::move(derArray)));
   return cert->GetDbKey(aCertDBKey);
 }
-#endif
 
 void nsClientAuthRememberService::Migrate() {
   auto migrated = mMigrated.Lock();
@@ -408,7 +404,6 @@ nsClientAuthRememberService::HasRememberedDecision(
     }
   }
 
-#ifdef XP_MACOSX
   rv = CheckForPreferredCertificate(aHostName, aCertDBKey);
   if (NS_FAILED(rv)) {
     return rv;
@@ -417,7 +412,6 @@ nsClientAuthRememberService::HasRememberedDecision(
     *aRetVal = true;
     return NS_OK;
   }
-#endif
 
   return NS_OK;
 }

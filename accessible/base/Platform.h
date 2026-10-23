@@ -10,14 +10,9 @@
 #include "Units.h"
 #include "nsStringFwd.h"
 
-#if defined(ANDROID)
-#  include "nsTArray.h"
-#endif
 
-#ifdef MOZ_WIDGET_COCOA
 #  include "mozilla/a11y/Role.h"
 #  include "nsTArray.h"
-#endif
 
 namespace mozilla {
 namespace a11y {
@@ -57,21 +52,12 @@ void MaybeStartForceEnabled(bool aAsync = false);
 void PreInit();
 #endif
 
-#if defined(MOZ_ACCESSIBILITY_ATK) || defined(XP_DARWIN)
 /**
  * Is platform accessibility enabled.
  * Only used on Linux, MacOS and iOS for now.
  */
 bool ShouldA11yBeEnabled();
-#endif
 
-#if defined(XP_WIN)
-/*
- * Name of platform service that instantiated accessibility
- */
-void SetInstantiator(const uint32_t aInstantiatorPid);
-bool GetInstantiator(nsIFile** aOutInstantiator);
-#endif
 
 /**
  * Return a string describing the platform a11y instantiators.
@@ -127,15 +113,7 @@ void PlatformAnnouncementEvent(Accessible* aTarget,
                                const nsAString& aAnnouncement,
                                uint16_t aPriority);
 
-#if defined(ANDROID)
-void PlatformScrollingEvent(Accessible* aTarget, uint32_t aEventType,
-                            uint32_t aScrollX, uint32_t aScrollY,
-                            uint32_t aMaxScrollX, uint32_t aMaxScrollY);
 
-bool LocalizeString(const nsAString& aToken, nsAString& aLocalized);
-#endif
-
-#ifdef MOZ_WIDGET_COCOA
 class TextRange;
 void PlatformTextSelectionChangeEvent(Accessible* aTarget,
                                       const nsTArray<TextRange>& aSelection);
@@ -146,7 +124,6 @@ void PlatformRoleChangedEvent(Accessible* aTarget, const a11y::role& aRole,
 void PlatformFocusedAccLocationChanged(Accessible* aFocusedAcc);
 
 bool PlatformShouldTrackFocusedAccLocation();
-#endif
 
 // Get the cache domains needed by any known clients interacting with Gecko. If
 // any known clients are found, the return value is aCacheDomains bitwise OR'd

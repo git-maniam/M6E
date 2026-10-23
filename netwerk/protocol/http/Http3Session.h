@@ -383,9 +383,7 @@ class Http3Session final : public Http3SessionBase,
   void CallCertVerification(Maybe<nsCString> aEchPublicName);
   void SetSecInfo();
 
-#ifndef ANDROID
   void EchOutcomeTelemetry();
-#endif
 
   void StreamReadyToWrite(Http3StreamBase* aStream);
   void MaybeResumeSend();

@@ -50,20 +50,9 @@ static_assert(sizeof(BLOCKSIZE) < (SIGNATURE_BLOCK_OFFSET + sizeof(uint32_t)),
 /* The mar program is compiled as a host bin so we don't have access to NSPR at
    runtime.  For that reason we use ntohl, htonl, and define HOST_TO_NETWORK64
    instead of the NSPR equivalents. */
-#ifdef XP_WIN
-#  include <winsock2.h>
-#  ifdef __MINGW32__
-/*   Include stdio.h before redefining ftello and fseeko to avoid clobbering
-     the ftello() and fseeko() function declarations in MinGW's stdio.h. */
-#    include <stdio.h>
-#  endif
-#  define ftello _ftelli64
-#  define fseeko _fseeki64
-#else
 #  define _FILE_OFFSET_BITS 64
 #  include <netinet/in.h>
 #  include <unistd.h>
-#endif
 
 #define HOST_TO_NETWORK64(x)                                               \
   (((((uint64_t)x) & 0xFF) << 56) | ((((uint64_t)x) >> 8) & 0xFF) << 48) | \

@@ -17,9 +17,6 @@
 
 #include <utility>
 
-#if defined(_MSC_VER)
-extern "C" IMAGE_DOS_HEADER __ImageBase;
-#endif
 
 namespace mozilla {
 namespace mscom {
@@ -117,16 +114,12 @@ bool IsValidGUID(REFGUID aCheckGuid) {
 
 uintptr_t GetContainingModuleHandle() {
   HMODULE thisModule = nullptr;
-#if defined(_MSC_VER)
-  thisModule = reinterpret_cast<HMODULE>(&__ImageBase);
-#else
   if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                              GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                          reinterpret_cast<LPCTSTR>(&GetContainingModuleHandle),
                          &thisModule)) {
     return 0;
   }
-#endif
   return reinterpret_cast<uintptr_t>(thisModule);
 }
 

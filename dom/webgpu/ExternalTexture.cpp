@@ -24,15 +24,8 @@
 #include "mozilla/webgpu/WebGPUParent.h"
 #include "nsLayoutUtils.h"
 
-#ifdef XP_WIN
-#  include "mozilla/layers/FenceD3D11.h"
-#  include "mozilla/layers/GpuProcessD3D11TextureMap.h"
-#  include "mozilla/layers/TextureD3D11.h"
-#endif
-#ifdef XP_MACOSX
 #  include "mozilla/gfx/MacIOSurface.h"
 #  include "mozilla/layers/MacIOSurfaceTextureHostOGL.h"
-#endif
 
 namespace mozilla::webgpu {
 
@@ -644,117 +637,7 @@ ExternalTextureSourceHost::CreateFromDXGITextureHost(
     WebGPUParent* aParent, RawId aDeviceId, RawId aQueueId,
     const ExternalTextureSourceDescriptor& aDesc,
     const layers::DXGITextureHostD3D11* aTextureHost) {
-#ifdef XP_WIN
-  RefPtr<gfx::FileHandleWrapper> handle;
-  if (aTextureHost->mDescriptor.gpuProcessTextureId()) {
-    auto* textureMap = layers::GpuProcessD3D11TextureMap::Get();
-    if (textureMap) {
-      handle = textureMap->GetSharedHandle(
-          aTextureHost->mDescriptor.gpuProcessTextureId().ref());
-    }
-  } else if (aTextureHost->mDescriptor.handle()) {
-    handle = aTextureHost->mDescriptor.handle();
-  }
-
-  if (!handle) {
-    gfxCriticalErrorOnce() << "Failed to obtain D3D texture handle";
-    return CreateError();
-  }
-
-  const gfx::YUVRangedColorSpace colorSpace = gfx::ToYUVRangedColorSpace(
-      gfx::ToYUVColorSpace(aTextureHost->mDescriptor.colorSpace()),
-      aTextureHost->mDescriptor.colorRange(),
-      aTextureHost->mDescriptor.transferFunction());
-
-  ffi::WGPUTextureFormat textureFormat;
-  AutoTArray<std::pair<ffi::WGPUTextureFormat, ffi::WGPUTextureAspect>, 2>
-      viewFormatAndAspects;
-  switch (aTextureHost->mFormat) {
-    case gfx::SurfaceFormat::R8G8B8A8:
-    case gfx::SurfaceFormat::R8G8B8X8:
-      textureFormat = {ffi::WGPUTextureFormat_Rgba8Unorm};
-      viewFormatAndAspects.AppendElement(
-          std::make_pair(textureFormat, ffi::WGPUTextureAspect_All));
-      break;
-    case gfx::SurfaceFormat::B8G8R8A8:
-    case gfx::SurfaceFormat::B8G8R8X8:
-      textureFormat = {ffi::WGPUTextureFormat_Bgra8Unorm};
-      viewFormatAndAspects.AppendElement(
-          std::make_pair(textureFormat, ffi::WGPUTextureAspect_All));
-      break;
-    case gfx::SurfaceFormat::NV12:
-      textureFormat = {ffi::WGPUTextureFormat_NV12};
-      viewFormatAndAspects.AppendElement(
-          std::make_pair(ffi::WGPUTextureFormat{ffi::WGPUTextureFormat_R8Unorm},
-                         ffi::WGPUTextureAspect_Plane0));
-      viewFormatAndAspects.AppendElement(std::make_pair(
-          ffi::WGPUTextureFormat{ffi::WGPUTextureFormat_Rg8Unorm},
-          ffi::WGPUTextureAspect_Plane1));
-      break;
-    case gfx::SurfaceFormat::P010:
-      textureFormat = {ffi::WGPUTextureFormat_P010};
-      viewFormatAndAspects.AppendElement(std::make_pair(
-          ffi::WGPUTextureFormat{ffi::WGPUTextureFormat_R16Unorm},
-          ffi::WGPUTextureAspect_Plane0));
-      viewFormatAndAspects.AppendElement(std::make_pair(
-          ffi::WGPUTextureFormat{ffi::WGPUTextureFormat_Rg16Unorm},
-          ffi::WGPUTextureAspect_Plane1));
-      break;
-    default:
-      gfxCriticalNoteOnce << "Unsupported surface format: "
-                          << aTextureHost->mFormat;
-      return CreateError();
-  }
-
-  AutoTArray<RawId, 1> usedTextureIds = {aDesc.mTextureIds[0]};
-  AutoTArray<RawId, 2> usedViewIds;
-
-  const ffi::WGPUFfiTextureDescriptor textureDesc{
-      .size =
-          ffi::WGPUExtent3d{
-              .width = static_cast<uint32_t>(aTextureHost->mSize.width),
-              .height = static_cast<uint32_t>(aTextureHost->mSize.height),
-              .depth_or_array_layers = 1,
-          },
-      .mip_level_count = 1,
-      .sample_count = 1,
-      .dimension = ffi::WGPUTextureDimension_D2,
-      .format = textureFormat,
-      .usage = WGPUTextureUsages_TEXTURE_BINDING,
-      .view_formats = {},
-  };
-  {
-    ffi::wgpu_server_device_import_texture_from_shared_handle(
-        aParent->GetContext(), aDeviceId, usedTextureIds[0], &textureDesc,
-        handle->GetHandle());
-    // From here on there's no need to return early with `CreateError()` in
-    // case of an error, as an error creating a texture or view will be
-    // propagated to any views or external textures created from them.
-    // Since we have full control over the creation of this texture, any
-    // validation error we encounter should be treated as an internal error.
-  }
-
-  for (size_t i = 0; i < viewFormatAndAspects.Length(); i++) {
-    auto [format, aspect] = viewFormatAndAspects[i];
-    ffi::WGPUFfiTextureViewDescriptor viewDesc{
-        .format = &format,
-        .aspect = aspect,
-    };
-    {
-      ffi::wgpu_server_texture_create_view(aParent->GetContext(), aDeviceId,
-                                           usedTextureIds[0], aDesc.mViewIds[i],
-                                           &viewDesc);
-    }
-    usedViewIds.AppendElement(aDesc.mViewIds[i]);
-  }
-  ExternalTextureSourceHost source(
-      usedTextureIds, usedViewIds, aDesc.mSize, aTextureHost->mFormat,
-      colorSpace, aDesc.mSampleTransform, aDesc.mLoadTransform);
-  source.mFenceId = aTextureHost->mDescriptor.fencesHolderId();
-  return source;
-#else
   MOZ_CRASH();
-#endif
 }
 
 /* static */ ExternalTextureSourceHost
@@ -762,68 +645,7 @@ ExternalTextureSourceHost::CreateFromDXGIYCbCrTextureHost(
     WebGPUParent* aParent, RawId aDeviceId, RawId aQueueId,
     const ExternalTextureSourceDescriptor& aDesc,
     const layers::DXGIYCbCrTextureHostD3D11* aTextureHost) {
-#ifdef XP_WIN
-  const gfx::YUVRangedColorSpace colorSpace =
-      gfx::ToYUVRangedColorSpace(aTextureHost->mDescriptor.yUVColorSpace(),
-                                 aTextureHost->mDescriptor.colorRange(),
-                                 aTextureHost->mDescriptor.transferFunction());
-
-  ffi::WGPUTextureFormat planeFormat;
-  switch (aTextureHost->mDescriptor.colorDepth()) {
-    case gfx::ColorDepth::COLOR_8:
-      planeFormat = {ffi::WGPUTextureFormat_R8Unorm};
-      break;
-    case gfx::ColorDepth::COLOR_10:
-    case gfx::ColorDepth::COLOR_12:
-    case gfx::ColorDepth::COLOR_16:
-      gfxCriticalNoteOnce << "Unsupported color depth: "
-                          << aTextureHost->mDescriptor.colorDepth();
-      return CreateError();
-  }
-
-  for (int i = 0; i < 3; i++) {
-    {
-      const auto size = i == 0 ? aTextureHost->mDescriptor.sizeY()
-                               : aTextureHost->mDescriptor.sizeCbCr();
-      const ffi::WGPUFfiTextureDescriptor textureDesc{
-          .size =
-              ffi::WGPUExtent3d{
-                  .width = static_cast<uint32_t>(size.width),
-                  .height = static_cast<uint32_t>(size.height),
-                  .depth_or_array_layers = 1,
-              },
-          .mip_level_count = 1,
-          .sample_count = 1,
-          .dimension = ffi::WGPUTextureDimension_D2,
-          .format = planeFormat,
-          .usage = WGPUTextureUsages_TEXTURE_BINDING,
-          .view_formats = {},
-      };
-      ffi::wgpu_server_device_import_texture_from_shared_handle(
-          aParent->GetContext(), aDeviceId, aDesc.mTextureIds[i], &textureDesc,
-          aTextureHost->mHandles[i]->GetHandle());
-      // From here on there's no need to return early with `CreateError()` in
-      // case of an error, as an error creating a texture or view will be
-      // propagated to any views or external textures created from them.
-      // Since we have full control over the creation of this texture, any
-      // validation error we encounter should be treated as an internal error.
-    }
-    {
-      ffi::WGPUFfiTextureViewDescriptor viewDesc{};
-      ffi::wgpu_server_texture_create_view(aParent->GetContext(), aDeviceId,
-                                           aDesc.mTextureIds[i],
-                                           aDesc.mViewIds[i], &viewDesc);
-    }
-  }
-
-  ExternalTextureSourceHost source(
-      aDesc.mTextureIds, aDesc.mViewIds, aDesc.mSize, aTextureHost->GetFormat(),
-      colorSpace, aDesc.mSampleTransform, aDesc.mLoadTransform);
-  source.mFenceId = Some(aTextureHost->mDescriptor.fencesHolderId());
-  return source;
-#else
   MOZ_CRASH();
-#endif
 }
 
 /* static */ ExternalTextureSourceHost
@@ -831,7 +653,6 @@ ExternalTextureSourceHost::CreateFromMacIOSurfaceTextureHost(
     WebGPUParent* aParent, RawId aDeviceId,
     const ExternalTextureSourceDescriptor& aDesc,
     const layers::MacIOSurfaceTextureHostOGL* aTextureHost) {
-#ifdef XP_MACOSX
   const RefPtr<MacIOSurface> ioSurface = aTextureHost->mSurface;
   if (!ioSurface) {
     gfxCriticalErrorOnce() << "Failed to lookup MacIOSurface";
@@ -960,9 +781,6 @@ ExternalTextureSourceHost::CreateFromMacIOSurfaceTextureHost(
   return ExternalTextureSourceHost(usedTextureIds, usedViewIds, aDesc.mSize,
                                    format, colorSpace, aDesc.mSampleTransform,
                                    aDesc.mLoadTransform);
-#else
-  MOZ_CRASH();
-#endif
 }
 
 static color::ColorspaceTransform GetColorSpaceTransform(
@@ -1205,40 +1023,7 @@ ExternalTextureSourceHost::GetExternalTextureDescriptor(
 
 bool ExternalTextureSourceHost::OnBeforeQueueSubmit(WebGPUParent* aParent,
                                                     RawId aQueueId) {
-#if defined(XP_WIN)
-  // Wait on the write fence provided by the decoder, if any, to ensure we don't
-  // read from the texture before writes have completed.
-  if (mFenceId) {
-    auto* fencesMap = layers::CompositeProcessFencesHolderMap::Get();
-    if (!fencesMap) {
-      gfxCriticalErrorOnce()
-          << "CompositeProcessFencesHolderMap is not initialized";
-      return false;
-    }
-
-    auto fence = fencesMap->GetWriteFence(*mFenceId);
-    auto* fenceD3D11 = fence ? fence->AsFenceD3D11() : nullptr;
-
-    auto fenceHandle = fenceD3D11 ? fenceD3D11->mHandle : nullptr;
-    auto fenceValue = fenceD3D11 ? fenceD3D11->GetFenceValue() : 0;
-    if (fenceHandle) {
-      const bool success =
-          ffi::wgpu_server_device_wait_fence_from_shared_handle(
-              aParent->GetContext(), aQueueId, fenceHandle->GetHandle(),
-              fenceValue);
-      if (success) {
-        // No need to wait next time
-        mFenceId.reset();
-      } else {
-        gfxCriticalErrorOnce() << "Failed to wait on write fence";
-        return false;
-      }
-    }
-  }
   return true;
-#else
-  return true;
-#endif
 }
 
 }  // namespace mozilla::webgpu

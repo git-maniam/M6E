@@ -9,22 +9,6 @@
  * Need to support conditionals that are defined in both the top-level build
  * system as well as NSS' build system for now.
  */
-#if defined(XP_DARWIN) || defined(DARWIN)
 #  include "md/_darwin.cfg"
-#elif defined(XP_WIN) || defined(_WINDOWS)
-#  include "md/_win95.cfg"
-#elif defined(__FreeBSD__)
-#  include "md/_freebsd.cfg"
-#elif defined(__NetBSD__)
-#  include "md/_netbsd.cfg"
-#elif defined(__OpenBSD__)
-#  include "md/_openbsd.cfg"
-#elif defined(__linux__)
-#  include "md/_linux.cfg"
-#elif defined(__sun__)
-#  include "md/_solaris.cfg"
-#else
-#  error "Unsupported platform!"
-#endif
 
 #endif /* NSPR_PRCPUCFG_H_ */

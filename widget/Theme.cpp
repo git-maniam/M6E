@@ -35,9 +35,6 @@
 #include "nsRangeFrame.h"
 #include "nsScrollbarFrame.h"
 
-#ifdef XP_WIN
-#  include "mozilla/WindowsVersion.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -114,21 +111,11 @@ static StaticRefPtr<Theme> gRDMInstance;
 
 }  // namespace
 
-#ifdef ANDROID
-already_AddRefed<Theme> do_CreateNativeThemeDoNotUseDirectly() {
-  // Android doesn't have a native theme.
-  return do_AddRef(new Theme(Theme::ScrollbarStyle()));
-}
-#endif
 
 already_AddRefed<nsITheme> do_GetBasicNativeThemeDoNotUseDirectly() {
   if (MOZ_UNLIKELY(!gNonNativeInstance)) {
     UniquePtr<ScrollbarDrawing> scrollbarDrawing = Theme::ScrollbarStyle();
-#ifdef MOZ_WIDGET_COCOA
     gNonNativeInstance = new ThemeCocoa(std::move(scrollbarDrawing));
-#else
-    gNonNativeInstance = new Theme(std::move(scrollbarDrawing));
-#endif
     ClearOnShutdown(&gNonNativeInstance);
   }
   return do_AddRef(gNonNativeInstance);
@@ -1495,20 +1482,7 @@ UniquePtr<ScrollbarDrawing> Theme::ScrollbarStyle() {
       break;
   }
     // Default to native scrollbar style for each platform.
-#ifdef XP_WIN
-  if (IsWin11OrLater()) {
-    return MakeUnique<ScrollbarDrawingWin11>();
-  }
-  return MakeUnique<ScrollbarDrawingWin>();
-#elif defined(MOZ_WIDGET_COCOA) || defined(MOZ_WIDGET_UIKIT)
   return MakeUnique<ScrollbarDrawingCocoa>();
-#elif MOZ_WIDGET_GTK
-  return MakeUnique<ScrollbarDrawingGTK>();
-#elif ANDROID
-  return MakeUnique<ScrollbarDrawingAndroid>();
-#else
-#  error "Unknown platform, need scrollbar implementation."
-#endif
 }
 
 LayoutDeviceIntSize Theme::GetMinimumWidgetSize(nsPresContext* aPresContext,

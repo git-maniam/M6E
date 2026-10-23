@@ -8,16 +8,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#ifdef XP_WIN
-#  include <io.h>
-#  include <windows.h>
-#endif
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
-#ifndef ANDROID
 static void vprintf_stderr_buffered(const char* aFmt, va_list aArgs) {
   // Avoid interleaving by writing to an on-stack buffer and then writing in one
   // go with fputs, as long as the output fits into the buffer.
@@ -36,34 +28,8 @@ static void vprintf_stderr_buffered(const char* aFmt, va_list aArgs) {
   va_end(argsCpy);
   fflush(stderr);
 }
-#endif
 
-#if defined(XP_WIN)
-MFBT_API void vprintf_stderr(const char* aFmt, va_list aArgs) {
-  if (IsDebuggerPresent()) {
-    int lengthNeeded = _vscprintf(aFmt, aArgs);
-    if (lengthNeeded) {
-      lengthNeeded++;
-      auto buf = mozilla::MakeUnique<char[]>(lengthNeeded);
-      if (buf) {
-        va_list argsCpy;
-        va_copy(argsCpy, aArgs);
-        vsnprintf(buf.get(), lengthNeeded, aFmt, argsCpy);
-        buf[lengthNeeded - 1] = '\0';
-        va_end(argsCpy);
-        OutputDebugStringA(buf.get());
-      }
-    }
-  }
-
-  vprintf_stderr_buffered(aFmt, aArgs);
-}
-
-#elif defined(ANDROID)
-MFBT_API void vprintf_stderr(const char* aFmt, va_list aArgs) {
-  __android_log_vprint(ANDROID_LOG_INFO, "Gecko", aFmt, aArgs);
-}
-#elif defined(FUZZING_SNAPSHOT)
+#if   defined(FUZZING_SNAPSHOT)
 MFBT_API void vprintf_stderr(const char* aFmt, va_list aArgs) {
   if (nyx_puts) {
     auto msgbuf = mozilla::Vsmprintf(aFmt, aArgs);
@@ -105,18 +71,7 @@ MFBT_API void fprint_stderr(FILE* aFile, const std::string& aStr) {
 }
 
 MFBT_API void print_stderr(std::stringstream& aStr) {
-#if defined(ANDROID)
-  // On Android logcat output is truncated to 1024 chars per line, and
-  // we usually use std::stringstream to build up giant multi-line gobs
-  // of output. So to avoid the truncation we find the newlines and
-  // print the lines individually.
-  std::string line;
-  while (std::getline(aStr, line)) {
-    printf_stderr("%s\n", line.c_str());
-  }
-#else
   print_stderr(aStr.str());
-#endif
 }
 
 MFBT_API void fprint_stderr(FILE* aFile, std::stringstream& aStr) {

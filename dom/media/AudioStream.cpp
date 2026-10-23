@@ -20,9 +20,6 @@
 #include "nsNativeCharsetUtils.h"
 #include "nsPrintfCString.h"
 #include "prdtoa.h"
-#if defined(XP_WIN)
-#  include "nsXULAppAPI.h"
-#endif
 #include "CallbackThreadRegistry.h"
 #include "RLBoxSoundTouch.h"
 #include "Tracing.h"
@@ -516,9 +513,6 @@ void AudioStream::RebaseLive() {
   TRACE("AudioStream::RebaseLive");
   int64_t rawFrames;
   {
-#ifndef XP_MACOSX
-    MonitorAutoLock mon(mMonitor);
-#endif
     rawFrames = GetPositionInFramesUnlocked();
   }
   // The engine counter keeps climbing across the seek while media time
@@ -557,18 +551,12 @@ RefPtr<MediaSink::EndedPromise> AudioStream::ReinitEndedPromise() {
 
 int64_t AudioStream::GetPosition() {
   TRACE("AudioStream::GetPosition");
-#ifndef XP_MACOSX
-  MonitorAutoLock mon(mMonitor);
-#endif
   int64_t frames = GetPositionInFramesUnlocked();
   return frames >= 0 ? mAudioClock.GetPosition(frames) : -1;
 }
 
 int64_t AudioStream::GetPositionInFrames() {
   TRACE("AudioStream::GetPositionInFrames");
-#ifndef XP_MACOSX
-  MonitorAutoLock mon(mMonitor);
-#endif
   int64_t frames = GetPositionInFramesUnlocked();
 
   return frames >= 0 ? mAudioClock.GetPositionInFrames(frames) : -1;
@@ -576,9 +564,6 @@ int64_t AudioStream::GetPositionInFrames() {
 
 int64_t AudioStream::GetPositionInFramesUnlocked() {
   TRACE("AudioStream::GetPositionInFramesUnlocked");
-#ifndef XP_MACOSX
-  mMonitor.AssertCurrentThreadOwns();
-#endif
 
   if (mState == ERRORED) {
     return -1;
@@ -587,11 +572,7 @@ int64_t AudioStream::GetPositionInFramesUnlocked() {
   uint64_t position = 0;
   int rv;
 
-#ifndef XP_MACOSX
-  rv = InvokeCubeb(cubeb_stream_get_position, &position);
-#else
   rv = cubeb_stream_get_position(mCubebStream.get(), &position);
-#endif
 
   if (rv != CUBEB_OK) {
     return -1;
@@ -772,9 +753,6 @@ long AudioStream::DataCallback(void* aBuffer, long aFrames) {
   // Always send audible frames first, and silent frames later.
   // Otherwise it will break the assumption of FrameHistory.
   if (!mDataSource.Ended()) {
-#ifndef XP_MACOSX
-    MonitorAutoLock mon(mMonitor);
-#endif
     mAudioClock.UpdateFrameHistory(aFrames - writer.Available(),
                                    writer.Available(), mAudioThreadChanged);
     if (writer.Available() > 0) {
@@ -792,9 +770,6 @@ long AudioStream::DataCallback(void* aBuffer, long aFrames) {
       delete mTimeStretcher;
       mTimeStretcher = nullptr;
     }
-#ifndef XP_MACOSX
-    MonitorAutoLock mon(mMonitor);
-#endif
     mAudioClock.UpdateFrameHistory(aFrames - writer.Available(), 0,
                                    mAudioThreadChanged);
   }
@@ -840,7 +815,6 @@ AudioClock::~AudioClock() = default;
 // Audio thread only
 void AudioClock::UpdateFrameHistory(uint32_t aServiced, uint32_t aUnderrun,
                                     bool aAudioThreadChanged) {
-#ifdef XP_MACOSX
   mHandoff.mTotal += aServiced + aUnderrun;
   if (aAudioThreadChanged) {
     mCallbackInfoQueue.ResetProducerThreadId();
@@ -862,23 +836,12 @@ void AudioClock::UpdateFrameHistory(uint32_t aServiced, uint32_t aUnderrun,
         "mCallbackInfoQueue full, storing the values in the audio thread.");
     mAudioThreadCallbackInfo.AppendElement(info);
   }
-#else
-  // Publish the counter and the history together, so a write cursor read under
-  // mMutex always matches the history it will be compared against.
-  MutexAutoLock lock(mMutex);
-  mHandoff.mTotal += aServiced + aUnderrun;
-  mFrameHistory->Append(aServiced, aUnderrun, mOutRate);
-#endif
 }
 
 void AudioClock::Rebase(int64_t aBaseOffset, CarryUnplayed aCarry) {
-#ifdef XP_MACOSX
   // Draining here only bounds the queue. What keeps pre-seek items out of the
   // post-rebase history is mRebasedThrough, set below.
   ApplyQueuedCallbackInfo();
-#else
-  MutexAutoLock lock(mMutex);
-#endif
 
   // Read after synchronising with the audio thread: an earlier read misses a
   // racing callback and leaves the position leading the audio.
@@ -910,13 +873,11 @@ void AudioClock::Rebase(int64_t aBaseOffset, CarryUnplayed aCarry) {
     unplayed = static_cast<uint32_t>(gap);
   }
 
-#ifdef XP_MACOSX
   // Everything at or below the write cursor is either carried above or
   // deliberately discarded, so a queued or audio-thread-stranded item at or
   // below it must be dropped rather than appended after the rebase. This has to
   // hold on both branches: the history is cleared either way.
   mHandoff.mRebasedThrough = writeCursor;
-#endif
 
   LOG("Rebase: play cursor {}, write cursor {}, carrying {} unplayed frames",
       aBaseOffset, writeCursor, unplayed);
@@ -928,7 +889,6 @@ int64_t AudioClock::GetPositionInFrames(int64_t aFrames) {
   return v.isValid() ? v.value() : -1;
 }
 
-#ifdef XP_MACOSX
 void AudioClock::ApplyQueuedCallbackInfo() {
   CallbackInfo info;
   while (mCallbackInfoQueue.Dequeue(&info, 1)) {
@@ -945,14 +905,9 @@ void AudioClock::ApplyQueuedCallbackInfo() {
     mFrameHistory->Append(info.mServiced, info.mUnderrun, info.mOutputRate);
   }
 }
-#endif
 
 int64_t AudioClock::GetPosition(int64_t frames) {
-#ifdef XP_MACOSX
   ApplyQueuedCallbackInfo();
-#else
-  MutexAutoLock lock(mMutex);
-#endif
   return mFrameHistory->GetPosition(frames);
 }
 

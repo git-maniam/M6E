@@ -88,34 +88,17 @@ ThreadId ThreadId::ThisThreadId() {
 void ThisThread::SetName(const char* name) {
   MOZ_RELEASE_ASSERT(name);
 
-#if (defined(__APPLE__) && defined(__MACH__)) || defined(__linux__)
-#  if defined(XP_DARWIN)
   // Mac OS X has a length limit of 63 characters, but there is no API
   // exposing it.
 #    define SETNAME_LENGTH_CONSTRAINT 63
-#  else
-  // On linux the name may not be longer than 16 bytes, including
-  // the null terminator. Truncate the name to 15 characters.
-#    define SETNAME_LENGTH_CONSTRAINT 15
-#  endif
   char nameBuf[SETNAME_LENGTH_CONSTRAINT + 1];
 
   strncpy(nameBuf, name, sizeof nameBuf - 1);
   nameBuf[sizeof nameBuf - 1] = '\0';
   name = nameBuf;
-#endif
 
   int rv;
-#ifdef XP_DARWIN
   rv = pthread_setname_np(name);
-#elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__OpenBSD__)
-  pthread_set_name_np(pthread_self(), name);
-  rv = 0;
-#elif defined(__NetBSD__)
-  rv = pthread_setname_np(pthread_self(), "%s", (void*)name);
-#else
-  rv = pthread_setname_np(pthread_self(), name);
-#endif
   MOZ_RELEASE_ASSERT(!rv);
 }
 
@@ -128,8 +111,6 @@ void ThisThread::GetName(char* nameBuffer, size_t len) {
 #elif defined(HAVE_PTHREAD_GET_NAME_NP)
   pthread_get_name_np(pthread_self(), nameBuffer, len);
   rv = 0;
-#elif defined(__linux__)
-  rv = prctl(PR_GET_NAME, reinterpret_cast<unsigned long>(nameBuffer));
 #endif
 
   if (rv) {

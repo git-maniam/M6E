@@ -16,11 +16,7 @@ namespace filesystem {
  */
 class Path {
  public:
-#ifdef XP_WIN
-  using value_type = char16_t;
-#else
   using value_type = char;
-#endif
 };
 
 } /* namespace filesystem */

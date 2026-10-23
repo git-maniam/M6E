@@ -32,12 +32,6 @@
 #include "nsString.h"
 #include "nsThreadUtils.h"
 #include "prdtoa.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#endif
-#ifdef XP_WIN
-#  include "mozilla/mscom/EnsureMTA.h"
-#endif
 #include <cmath>
 #include <thread>
 
@@ -71,9 +65,7 @@
 #define PREF_AUDIOIPC_STACK_SIZE "media.audioipc.stack_size"
 #define PREF_AUDIOIPC_SHM_AREA_SIZE "media.audioipc.shm_area_size"
 
-#if defined(XP_LINUX) || defined(XP_MACOSX) || defined(XP_WIN)
 #  define MOZ_CUBEB_REMOTING
-#endif
 
 namespace mozilla {
 
@@ -121,14 +113,6 @@ size_t sAudioIPCShmAreaSize;
 StaticAutoPtr<char> sBrandName;
 StaticAutoPtr<char> sCubebBackendName;
 StaticAutoPtr<char> sCubebOutputDeviceName;
-#ifdef MOZ_WIDGET_ANDROID
-// Counts the number of time a request for switching to global "communication
-// mode" has been received. If this is > 0, global communication mode is to be
-// enabled. If it is 0, the global communication mode is to be disabled.
-// This allows to correctly track the global behaviour to adopt accross
-// asynchronous GraphDriver changes, on Android.
-int sInCommunicationCount = 0;
-#endif
 
 const char kBrandBundleURL[] = "chrome://branding/locale/brand.properties";
 
@@ -448,21 +432,6 @@ void ForceUnsetCubebContext() {
 #endif
 
 void SetInCommunication(bool aInCommunication) {
-#ifdef MOZ_WIDGET_ANDROID
-  StaticMutexAutoLock lock(sMutex);
-  if (aInCommunication) {
-    sInCommunicationCount++;
-  } else {
-    MOZ_ASSERT(sInCommunicationCount > 0);
-    sInCommunicationCount--;
-  }
-
-  if (sInCommunicationCount == 1) {
-    java::GeckoAppShell::SetCommunicationAudioModeOn(true);
-  } else if (sInCommunicationCount == 0) {
-    java::GeckoAppShell::SetCommunicationAudioModeOn(false);
-  }
-#endif
 }
 
 bool InitPreferredSampleRate() MOZ_REQUIRES(sMutex) {
@@ -611,11 +580,7 @@ ipc::FileDescriptor CreateAudioIPCConnectionUnlocked(uint32_t aRemotePid) {
   }
   // Close rawFD since FileDescriptor's ctor cloned it.
   // TODO: Find cleaner cross-platform way to close rawFD.
-#  ifdef XP_WIN
-  CloseHandle(rawFD);
-#  else
   close(rawFD);
-#  endif
   return fd;
 }
 #endif
@@ -692,17 +657,11 @@ RefPtr<CubebHandle> GetCubebUnlocked() {
     if (!sBrandName && NS_IsMainThread()) {
       InitBrandName();
     }
-#ifdef XP_WIN
-    mozilla::mscom::EnsureMTA([&]() -> void {
-#endif
       cubeb* temp = nullptr;
       rv = cubeb_init(&temp, sBrandName, sCubebBackendName);
       if (temp) {
         sCubebHandle = new CubebHandle(temp);
       }
-#ifdef XP_WIN
-    });
-#endif
 #ifdef MOZ_CUBEB_REMOTING
   }
   sIPCConnection = nullptr;
@@ -824,7 +783,6 @@ void InitLibrary() {
     cubeb_set_log_callback(CUBEB_LOG_NORMAL, CubebLogCallback);
   }
 
-#ifndef MOZ_WIDGET_ANDROID
   if (XRE_IsParentProcess()
 #  ifdef MOZ_CUBEB_REMOTING
       || !sCubebSandbox
@@ -833,16 +791,8 @@ void InitLibrary() {
     NS_DispatchToMainThread(
         NS_NewRunnableFunction("CubebUtils::InitLibrary", &InitBrandName));
   }
-#endif
 #ifdef MOZ_CUBEB_REMOTING
   if (sCubebSandbox && XRE_IsContentProcess()) {
-#  if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-    if (atp_set_real_time_limit(0, 48000)) {
-      MOZ_LOG_FMT(gCubebLog, LogLevel::Warning,
-                  "could not set real-time limit in CubebUtils::InitLibrary");
-    }
-    InstallSoftRealTimeLimitHandler();
-#  endif
     InitAudioIPCConnection();
   }
 #endif
@@ -926,11 +876,6 @@ char* GetForcedOutputDevice() {
 
 cubeb_stream_prefs GetDefaultStreamPrefs(cubeb_device_type aType) {
   cubeb_stream_prefs prefs = CUBEB_STREAM_PREF_NONE;
-#ifdef XP_WIN
-  if (StaticPrefs::media_cubeb_wasapi_raw() & static_cast<uint32_t>(aType)) {
-    prefs |= CUBEB_STREAM_PREF_RAW;
-  }
-#endif
   return prefs;
 }
 

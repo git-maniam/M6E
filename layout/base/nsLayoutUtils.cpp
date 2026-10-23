@@ -166,12 +166,7 @@
 #include "prenv.h"
 
 // Make sure getpid() works.
-#ifdef XP_WIN
-#  include <process.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -523,9 +518,6 @@ bool nsLayoutUtils::AreAsyncAnimationsEnabled() {
 }
 
 bool nsLayoutUtils::AreRetainedDisplayListsEnabled() {
-#ifdef MOZ_WIDGET_ANDROID
-  return StaticPrefs::layout_display_list_retain();
-#else
   if (XRE_IsContentProcess()) {
     return StaticPrefs::layout_display_list_retain();
   }
@@ -536,7 +528,6 @@ bool nsLayoutUtils::AreRetainedDisplayListsEnabled() {
 
   // Retained display lists require e10s.
   return false;
-#endif
 }
 
 bool nsLayoutUtils::DisplayRootHasRetainedDisplayListBuilder(nsIFrame* aFrame) {
@@ -673,12 +664,7 @@ ViewID nsLayoutUtils::FindIDForScrollContainerFrame(
 }
 
 bool nsLayoutUtils::UsesAsyncScrolling(nsIFrame* aFrame) {
-#ifdef MOZ_WIDGET_ANDROID
-  // We always have async scrolling for Android.
-  return true;
-#else
   return AsyncPanZoomEnabled(aFrame);
-#endif
 }
 
 bool nsLayoutUtils::AsyncPanZoomEnabled(const nsIFrame* aFrame) {
@@ -9841,7 +9827,6 @@ already_AddRefed<nsFontMetrics> nsLayoutUtils::GetMetricsFor(
 
 static void GetSpoofedSystemFontForRFP(LookAndFeel::FontID aFontID,
                                        gfxFontStyle& aStyle, nsAString& aName) {
-#if defined(XP_MACOSX) || defined(MOZ_WIDGET_UIKIT)
   aName = u"-apple-system"_ns;
   // Values taken from a macOS 10.15 system.
   switch (aFontID) {
@@ -9861,30 +9846,6 @@ static void GetSpoofedSystemFontForRFP(LookAndFeel::FontID aFontID,
       aStyle.size = 12;
       break;
   }
-#elif defined(XP_WIN)
-  // Windows uses Segoe UI for Latin alphabets, but other fonts for some RTL
-  // languages, so we fallback to sans-serif to fall back to the user's
-  // default sans-serif. Size is 12px for all system fonts (tried in an en-US
-  // system).
-  aName = u"sans-serif"_ns;
-  aStyle.size = 12;
-#elif defined(MOZ_WIDGET_ANDROID)
-  // Keep consistency with nsLookAndFeel::NativeGetFont.
-  aName = u"Roboto"_ns;
-  aStyle.size = 12;
-#elif defined(MOZ_WIDGET_GTK)
-  // On Linux, there is not a default. For example, GNOME on Debian uses
-  // Cantarell, 14.667px. Ubuntu Mate uses the Ubuntu font, but also 14.667px.
-  // Fedora with KDE uses Noto Sans, 13.3333px, but it uses Noto Sans on
-  // GNOME, too.
-  // In general, Linux uses some sans-serif, but its size can vary between
-  // 12px and 16px. We chose 15px because it is what Firefox is doing for the
-  // UI font-size.
-  aName = u"sans-serif"_ns;
-  aStyle.size = 15;
-#else
-#  error "Unknown platform"
-#endif
   aStyle.systemFont = true;
 }
 

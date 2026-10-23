@@ -82,26 +82,11 @@ UrlClassifierFeatureTrackingProtection::MaybeCreate(nsIChannel* aChannel) {
       ("UrlClassifierFeatureTrackingProtection::MaybeCreate - channel %p",
        aChannel));
 
-#ifdef ANDROID  // TODO(Bug 2005278): keep behavior between platforms consistent
-  nsCOMPtr<nsILoadContext> loadContext;
-  NS_QueryNotificationCallbacks(aChannel, loadContext);
-  if (!loadContext) {
-    // Some channels don't have a loadcontext, check the global tracking
-    // protection preference with potential scoped overrides
-    if (!ScopedPrefs::BoolPrefScoped(
-            ScopedPrefs::PRIVACY_TRACKINGPROTECTION_ENABLED, aChannel)) {
-      return nullptr;
-    }
-  } else if (!loadContext->UseTrackingProtection()) {
-    return nullptr;
-  }
-#else   // !ANDROID
   // Always check tracking protection pref on desktop
   if (!ScopedPrefs::BoolPrefScoped(
           ScopedPrefs::PRIVACY_TRACKINGPROTECTION_ENABLED, aChannel)) {
     return nullptr;
   }
-#endif  // ANDROID
 
   RefPtr<nsILoadInfo> loadInfo = aChannel->LoadInfo();
   bool isThirdParty = loadInfo->GetIsThirdPartyContextToTopWindow();

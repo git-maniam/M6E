@@ -920,11 +920,6 @@ void wasm::HandleExceptionWasm(JSContext* cx, JitFrameIter& iter,
           rfe->baseHandlers = wasmStack->findBaseHandlers();
           MOZ_ASSERT(rfe->baseHandlers);
         } else {
-#  ifdef _WIN32
-          // wasm::GenerateJumpToCatchHandler will switch the stack limit
-          // fields and needs the WIN32 TIB fields to have the latest values.
-          cx->wasm().updateWin32TibFields();
-#  endif  // _WIN32
           rfe->stackTarget = &cx->wasm().mainStackTarget();
           rfe->baseHandlers = nullptr;
         }

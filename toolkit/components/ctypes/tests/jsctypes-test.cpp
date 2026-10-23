@@ -76,20 +76,6 @@ CTYPES_FOR_EACH_TYPE(DEFINE_CDECL_FUNCTIONS)
 #undef DEFINE_CDECL_FUNCTIONS
 #undef ABI
 
-#if defined(_WIN32)
-
-void NS_STDCALL test_void_t_stdcall() {
-  // do nothing
-  return;
-}
-
-#  define ABI NS_STDCALL
-#  define DEFINE_STDCALL_FUNCTIONS(x, y, z) FUNCTION_TESTS(x##_, y, z, stdcall)
-CTYPES_FOR_EACH_TYPE(DEFINE_STDCALL_FUNCTIONS)
-#  undef DEFINE_STDCALL_FUNCTIONS
-#  undef ABI
-
-#endif /* defined(_WIN32) */
 
 #define DEFINE_CDECL_TYPE_STATS(name, type, ffiType)                   \
   struct align_##name {                                                \
@@ -241,9 +227,6 @@ void* test_fnptr() { return (void*)(uintptr_t)test_ansi_len; }
 
 int32_t test_closure_cdecl(int8_t i, test_func_ptr f) { return f(i); }
 
-#if defined(_WIN32)
-int32_t test_closure_stdcall(int8_t i, test_func_ptr_stdcall f) { return f(i); }
-#endif /* defined(_WIN32) */
 
 template <typename T>
 struct PromotedTraits {

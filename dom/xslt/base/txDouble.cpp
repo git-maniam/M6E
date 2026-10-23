@@ -10,9 +10,6 @@
 #include "nsString.h"
 #include "txCore.h"
 #include "txXMLUtils.h"
-#ifdef WIN32
-#  include <float.h>
-#endif
 #include "prdtoa.h"
 
 /*

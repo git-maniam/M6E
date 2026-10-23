@@ -8,9 +8,6 @@
 
 #include "mozilla/webrender/WebRenderAPI.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include "nsIconChannel.h"
-#endif
 #include "ImageOps.h"
 #include "ImageRegion.h"
 #include "gfxContext.h"
@@ -103,10 +100,6 @@ static already_AddRefed<imgIContainer> GetSymbolicIconImage(nsAtom* aName,
     return do_AddRef(lookup.Data().mImage);
   }
   RefPtr<gfx::DataSourceSurface> surface;
-#ifdef MOZ_WIDGET_GTK
-  surface =
-      nsIconChannel::GetSymbolicIcon(nsAtomCString(aName), 16, aScale, fg);
-#endif
   if (NS_WARN_IF(!surface)) {
     return nullptr;
   }

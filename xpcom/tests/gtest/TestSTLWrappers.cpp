@@ -12,16 +12,8 @@
 
 // gcc errors out if we |try ... catch| with -fno-exceptions, but we
 // can still test on windows
-#ifdef _MSC_VER
-// C4530 will be generated whenever try...catch is used without
-// enabling exceptions. We know we don't enbale exceptions.
-#  pragma warning(disable : 4530)
-#  define TRY try
-#  define CATCH(e) catch (e)
-#else
 #  define TRY
 #  define CATCH(e) if (0)
-#endif
 
 #include "gtest/gtest.h"
 #include "mozilla/gtest/MozHelpers.h"

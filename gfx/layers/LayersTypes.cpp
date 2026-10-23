@@ -9,10 +9,6 @@
 #include "mozilla/gfx/gfxVars.h"
 #include "nsPrintfCString.h"
 
-#ifdef XP_WIN
-#  include "gfxConfig.h"
-#  include "mozilla/StaticPrefs_gfx.h"
-#endif
 
 namespace mozilla {
 namespace layers {
@@ -31,12 +27,6 @@ const char* GetLayersBackendName(LayersBackend aBackend) {
       return "none";
     case LayersBackend::LAYERS_WR:
       if (gfx::gfxVars::UseSoftwareWebRender()) {
-#ifdef XP_WIN
-        if (gfx::gfxVars::AllowSoftwareWebRenderD3D11() &&
-            gfx::gfxConfig::IsEnabled(gfx::Feature::D3D11_COMPOSITING)) {
-          return "webrender_software_d3d11";
-        }
-#endif
         return "webrender_software";
       }
       return "webrender";

@@ -143,24 +143,6 @@ void CanvasContext::Configure(const dom::GPUCanvasConfiguration& aConfig,
            "`dom.webgpu.allow-present-without-readback` pref is false";
     mUseSharedTextureInSwapChain = false;
   }
-#ifdef XP_WIN
-  // When WebRender does not use hardware acceleration, disable shared texture
-  // in swap chain. Since compositor device might not exist.
-  if (gfx::gfxVars::UseSoftwareWebRender() &&
-      !gfx::gfxVars::AllowSoftwareWebRenderD3D11()) {
-    gfxCriticalNote << "WebGPU: disabling SharedTexture swapchain: \n"
-                       "WebRender is not using hardware acceleration";
-    mUseSharedTextureInSwapChain = false;
-  }
-#elif defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-  // When DMABufDevice is not enabled, disable shared texture in swap chain.
-  const auto& modifiers = gfx::gfxVars::DMABufModifiersARGB();
-  if (modifiers.IsEmpty()) {
-    gfxCriticalNote << "WebGPU: disabling SharedTexture swapchain: \n"
-                       "missing GBM_FORMAT_ARGB8888 dmabuf format";
-    mUseSharedTextureInSwapChain = false;
-  }
-#endif
 
   mCurrentTexture = aConfig.mDevice->InitSwapChain(
       mConfiguration.get(), mRemoteTextureOwnerId.ref(),

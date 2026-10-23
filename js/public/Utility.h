@@ -110,14 +110,7 @@ inline uint32_t GetInterruptCheckThreadType(void) { return 0; }
 #  if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
 
 #    ifdef JS_OOM_BREAKPOINT
-#      if defined(_MSC_VER)
-static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() {
-  __asm {}
-  ;
-}
-#      else
 static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() { asm(""); }
-#      endif
 #      define JS_OOM_CALL_BP_FUNC() js_failedAllocBreakpoint()
 #    else
 #      define JS_OOM_CALL_BP_FUNC() \

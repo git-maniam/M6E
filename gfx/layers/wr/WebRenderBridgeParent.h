@@ -339,15 +339,6 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
 
   void BeginRecording(const TimeStamp& aRecordingStart);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  using ScreenPixelsPromise = MozPromise<Ok, nsresult, true>;
-  /**
-   * Request a screengrab for android
-   */
-  RefPtr<ScreenPixelsPromise> RequestScreenPixels(
-      gfx::IntRect aSourceRect,
-      RefPtr<layers::AndroidHardwareBuffer> aHardwareBuffer);
-#endif
 
   /**
    * Stop recording and the frames collected since the call to BeginRecording
@@ -468,12 +459,6 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
   void MaybeGenerateFrame(VsyncId aId, bool aForceGenerateFrame,
                           wr::RenderReasons aReasons);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // If screen pixels have been requested via RequestScreenPixels(), sends the
-  // request to the renderer. Should be called immediately prior to generating
-  // the frame for which we want the pixels to be captured.
-  void MaybeCaptureScreenPixels();
-#endif
 
   VsyncId GetVsyncIdForEpoch(const wr::Epoch& aEpoch) {
     for (auto& id : mPendingTransactionIds) {
@@ -559,14 +544,6 @@ class WebRenderBridgeParent final : public PWebRenderBridgeParent,
 
   RefPtr<WebRenderBridgeParentRef> mWebRenderBridgeRef;
 
-#if defined(MOZ_WIDGET_ANDROID)
-  struct ScreenPixelsRequest {
-    gfx::IntRect mSourceRect;
-    RefPtr<layers::AndroidHardwareBuffer> mHardwareBuffer;
-    RefPtr<ScreenPixelsPromise::Private> mPromise;
-  };
-  Maybe<ScreenPixelsRequest> mScreenPixelsRequest;
-#endif
 
   uint32_t mBoolParameterBits = 0;
   uint16_t mBlobTileSize = 256;

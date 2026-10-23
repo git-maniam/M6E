@@ -12,14 +12,6 @@
 #include "mozilla/dom/Promise.h"
 #include "nsPrintfCString.h"
 
-#ifdef XP_WIN
-#  include "PDMFactory.h"
-#  include "WMFDecoderModule.h"
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-#  include "MediaCodecsSupport.h"
-#  include "mozilla/gfx/gfxVars.h"
-#endif
 
 #ifdef MOZ_WMF_CDM
 #  include "mediafoundation/WMFCDMImpl.h"
@@ -29,18 +21,6 @@ namespace mozilla {
 
 /* static */
 bool KeySystemConfig::Supports(const nsAString& aKeySystem) {
-#ifdef MOZ_WIDGET_ANDROID
-  // Check if we can use MediaDrm for this keysystem.
-  if (IsWidevineKeySystem(aKeySystem) &&
-      gfx::gfxVars::WidevineSupport() == media::DrmSchemeSupport::Supported) {
-    return true;
-  }
-  // Check if we can use our bundled Clearkey plugin.
-  if (IsClearkeyKeySystem(aKeySystem)) {
-    return HaveGMPFor(nsCString(CHROMIUM_CDM_API),
-                      {NS_ConvertUTF16toUTF8(aKeySystem)});
-  }
-#else
 #  ifdef MOZ_WMF_CDM
   // Test only, pretend we have already installed CDMs.
   if (StaticPrefs::media_eme_wmf_use_mock_cdm_for_external_cdms()) {
@@ -52,7 +32,6 @@ bool KeySystemConfig::Supports(const nsAString& aKeySystem) {
     return HaveGMPFor(nsCString(CHROMIUM_CDM_API),
                       {NS_ConvertUTF16toUTF8(aKeySystem)});
   }
-#endif
 
 #if MOZ_WMF_CDM
   // Check if Widevine L1 has been downloaded via GMP downloader.
@@ -86,17 +65,7 @@ bool KeySystemConfig::Supports(const nsAString& aKeySystem) {
   if (StaticPrefs::media_clearkey_persistent_license_enabled()) {
     config->mSessionTypes.AppendElement(SessionType::PersistentLicense);
   }
-#if defined(XP_WIN)
-  // Clearkey CDM uses WMF's H.264 decoder on Windows.
-  auto pdmFactory = MakeRefPtr<PDMFactory>();
-  if (!pdmFactory->SupportsMimeType("video/avc"_ns).isEmpty()) {
-    config->mMP4.SetCanDecryptAndDecode(EME_CODEC_H264);
-  } else {
-    config->mMP4.SetCanDecrypt(EME_CODEC_H264);
-  }
-#else
   config->mMP4.SetCanDecrypt(EME_CODEC_H264);
-#endif
   config->mMP4.SetCanDecrypt(EME_CODEC_AAC);
   config->mMP4.SetCanDecrypt(EME_CODEC_FLAC);
   config->mMP4.SetCanDecrypt(EME_CODEC_OPUS);
@@ -129,56 +98,11 @@ bool KeySystemConfig::Supports(const nsAString& aKeySystem) {
   config->mPersistentState = Requirement::Optional;
   config->mDistinctiveIdentifier = Requirement::NotAllowed;
   config->mSessionTypes.AppendElement(SessionType::Temporary);
-#ifdef MOZ_WIDGET_ANDROID
-  config->mSessionTypes.AppendElement(SessionType::PersistentLicense);
-#endif
   config->mAudioRobustness.AppendElement(u"SW_SECURE_CRYPTO"_ns);
   config->mVideoRobustness.AppendElement(u"SW_SECURE_CRYPTO"_ns);
   config->mVideoRobustness.AppendElement(u"SW_SECURE_DECODE"_ns);
 
-#if defined(MOZ_WIDGET_ANDROID)
-  if (gfx::gfxVars::WidevineSupport() != media::DrmSchemeSupport::Supported) {
-    return;
-  }
-
-  struct {
-    const nsLiteralCString& mEMECodecType;
-    media::MediaCodec mCodec;
-    KeySystemConfig::ContainerSupport* mSupportType;
-  } validationList[] = {
-      {EME_CODEC_H264, media::MediaCodec::H264, &config->mMP4},
-      {EME_CODEC_VP9, media::MediaCodec::VP9, &config->mMP4},
-      {EME_CODEC_AV1, media::MediaCodec::AV1, &config->mMP4},
-      {EME_CODEC_AAC, media::MediaCodec::AAC, &config->mMP4},
-      {EME_CODEC_FLAC, media::MediaCodec::FLAC, &config->mMP4},
-      {EME_CODEC_OPUS, media::MediaCodec::Opus, &config->mMP4},
-      {EME_CODEC_VP8, media::MediaCodec::VP8, &config->mWebM},
-      {EME_CODEC_VP9, media::MediaCodec::VP9, &config->mWebM},
-      {EME_CODEC_AV1, media::MediaCodec::AV1, &config->mWebM},
-      {EME_CODEC_VORBIS, media::MediaCodec::Vorbis, &config->mWebM},
-      {EME_CODEC_OPUS, media::MediaCodec::Opus, &config->mWebM},
-  };
-
-  const auto supported = gfx::gfxVars::PlatformMediaCodecsSupported();
-  for (const auto& data : validationList) {
-    if (media::MCSInfo::SupportsSoftwareDecode(supported, data.mCodec) ||
-        media::MCSInfo::SupportsHardwareDecode(supported, data.mCodec)) {
-      data.mSupportType->SetCanDecryptAndDecode(data.mEMECodecType);
-    }
-  }
-#else
-#  if defined(XP_WIN)
-  // Widevine CDM doesn't include an AAC decoder. So if WMF can't
-  // decode AAC, and a codec wasn't specified, be conservative
-  // and reject the MediaKeys request, since we assume Widevine
-  // will be used with AAC.
-  auto pdmFactory = MakeRefPtr<PDMFactory>();
-  if (!pdmFactory->SupportsMimeType("audio/mp4a-latm"_ns).isEmpty()) {
-    config->mMP4.SetCanDecrypt(EME_CODEC_AAC);
-  }
-#  else
   config->mMP4.SetCanDecrypt(EME_CODEC_AAC);
-#  endif
   config->mMP4.SetCanDecrypt(EME_CODEC_FLAC);
   config->mMP4.SetCanDecrypt(EME_CODEC_OPUS);
   config->mMP4.SetCanDecryptAndDecode(EME_CODEC_H264);
@@ -189,7 +113,6 @@ bool KeySystemConfig::Supports(const nsAString& aKeySystem) {
   config->mWebM.SetCanDecryptAndDecode(EME_CODEC_VP8);
   config->mWebM.SetCanDecryptAndDecode(EME_CODEC_VP9);
   config->mWebM.SetCanDecryptAndDecode(EME_CODEC_AV1);
-#endif
 }
 
 /* static */

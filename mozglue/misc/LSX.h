@@ -23,11 +23,6 @@
 #    define MOZILLA_PRESUME_LASX 1
 #  endif
 
-#  if defined(XP_LINUX)
-#    if __has_include(<asm/hwcap.h>) && __has_include(<sys/auxv.h>)
-#      define MOZILLA_LSX_HAVE_HWCAP_DETECTION
-#    endif
-#  endif
 
 #endif
 

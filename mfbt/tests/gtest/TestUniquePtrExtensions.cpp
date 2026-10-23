@@ -4,29 +4,13 @@
 
 #include "gtest/gtest.h"
 #include "mozilla/UniquePtrExtensions.h"
-#ifdef XP_UNIX
 #  include "fcntl.h"
 #  include "unistd.h"
-#endif
-#ifdef XP_WIN
-#  include "namedpipeapi.h"
-#endif
 
 using namespace mozilla;
 
 static UniqueFileHandle CreateArbitraryFileHandle() {
-#ifdef XP_UNIX
   return UniqueFileHandle(dup(0));
-#endif
-#ifdef XP_WIN
-  UniqueFileHandle hnd0, hnd1;
-  if (::CreatePipe(getter_Transfers(hnd0), getter_Transfers(hnd1),
-                   /* lpPipeAttributes = */ nullptr,
-                   /* nSize = */ 0)) {
-    return hnd0;
-  }
-  return nullptr;
-#endif
 }
 
 // Test duplicating a null UniqueFileHandle
@@ -49,7 +33,6 @@ TEST(MFBT_UniquePtrExtensions, UFH_DupBasic)
   EXPECT_NE(fd0.get(), fd1.get());
 }
 
-#ifdef XP_UNIX
 
 // Test that SetCloseOnExec works
 TEST(MFBT_UniquePtrExtensions, UFH_SetCloExec)
@@ -83,4 +66,3 @@ TEST(MFBT_UniquePtrExtensions, UFH_DupCloExec)
   EXPECT_TRUE(rv1 & FD_CLOEXEC);
 }
 
-#endif  // XP_UNIX

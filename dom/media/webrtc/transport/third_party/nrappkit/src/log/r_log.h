@@ -40,9 +40,7 @@
 #ifndef _r_log_h
 #define _r_log_h
 
-#ifndef WIN32
 #include <syslog.h>
-#endif
 #include <stdarg.h>
 #include <r_common.h>
 

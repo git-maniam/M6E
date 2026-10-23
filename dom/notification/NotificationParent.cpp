@@ -119,22 +119,8 @@ class NotificationCallbacks final : public NotificationCallbacksCommon {
 
 nsresult NotificationParent::OnAlertShow() {
   if (!mResolver) {
-#ifdef ANDROID
-    // XXX: This can happen as alertshow happens asynchronously on Android as
-    // we go through GeckoView.
-    //
-    // For example, if two same-tagged notifications are requested at the same
-    // time, the first one will be canceled but can still fire alertshow,
-    // while the second one will also fire one, and the handler for the second
-    // one would get both.
-    //
-    // We may want to reintroduce UUID for such asynchronous case, but for now
-    // it's very edge case and can be ignored.
-    return NS_OK;
-#else
     MOZ_ASSERT_UNREACHABLE("Are we getting double show events?");
     return NS_ERROR_FAILURE;
-#endif
   }
   mResolver.take().value()(CopyableErrorResult());
   return NS_OK;

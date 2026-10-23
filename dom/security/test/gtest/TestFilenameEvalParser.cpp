@@ -20,10 +20,6 @@ static constexpr auto kSingleString = "singlestring"_ns;
 static constexpr auto kMozillaExtensionFile = "mozillaextension_file"_ns;
 static constexpr auto kExtensionURI = "extension_uri"_ns;
 static constexpr auto kSuspectedUserChromeJS = "suspectedUserChromeJS"_ns;
-#if defined(XP_WIN)
-static constexpr auto kSanitizedWindowsURL = "sanitizedWindowsURL"_ns;
-static constexpr auto kSanitizedWindowsPath = "sanitizedWindowsPath"_ns;
-#endif
 static constexpr auto kOther = "other"_ns;
 
 #define ASSERT_AND_PRINT(first, second, condition)                      \
@@ -249,100 +245,55 @@ TEST(FilenameEvalParser, Other)
     constexpr auto str = "gallop://thing/fire"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsURL &&
-                ret.second.value() == "gallop"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "gallop://fire"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsURL &&
-                ret.second.value() == "gallop"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "firegestures/content"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsPath &&
-                ret.second.value() == "content"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "firegestures\\content"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsPath &&
-                ret.second.value() == "content"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "/home/tom/files/thing"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsPath &&
-                ret.second.value() == "thing"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "file://c/uers/tom/file.txt"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsURL &&
-                ret.second.value() == "file://.../file.txt"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "c:/uers/tom/file.txt"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsPath &&
-                ret.second.value() == "file.txt"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "http://example.com/"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsURL &&
-                ret.second.value() == "http"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
   {
     constexpr auto str = "http://example.com/thing.html"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
-#if defined(XP_WIN)
-    ASSERT_TRUE(ret.first == kSanitizedWindowsURL &&
-                ret.second.value() == "http"_ns);
-#else
     ASSERT_TRUE(ret.first == kOther && !ret.second.isSome());
-#endif
   }
 }
 

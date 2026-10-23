@@ -18,10 +18,6 @@
 #include "nsITransferable.h"
 #include "nsString.h"
 
-#ifdef XP_WIN
-#  define SECURITY_WIN32 1
-#  include <security.h>
-#endif
 
 namespace mozilla::contentanalysis {
 
@@ -183,18 +179,6 @@ nsresult ContentAnalysisBackend::ConvertRequestToProtobuf(
     requestData->set_digest(sha256Digest.get());
   }
 
-#ifdef XP_WIN
-  ULONG userLen = 0;
-  GetUserNameExW(NameSamCompatible, nullptr, &userLen);
-  if (GetLastError() == ERROR_MORE_DATA && userLen > 0) {
-    auto user = mozilla::MakeUnique<wchar_t[]>(userLen);
-    if (GetUserNameExW(NameSamCompatible, user.get(), &userLen)) {
-      auto* clientMetadata = aOut->mutable_client_metadata();
-      auto* browser = clientMetadata->mutable_browser();
-      browser->set_machine_user(NS_ConvertUTF16toUTF8(user.get()).get());
-    }
-  }
-#endif
 
   nsTArray<RefPtr<nsIClientDownloadResource>> resources;
   rv = aIn->GetResources(resources);

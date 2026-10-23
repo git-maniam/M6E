@@ -32,27 +32,6 @@ struct EnterJITStackEntry {
 
   void* result;
 
-#if defined(_WIN64)
-  struct XMM {
-    using XMM128 = char[16];
-    XMM128 xmm6;
-    XMM128 xmm7;
-    XMM128 xmm8;
-    XMM128 xmm9;
-    XMM128 xmm10;
-    XMM128 xmm11;
-    XMM128 xmm12;
-    XMM128 xmm13;
-    XMM128 xmm14;
-    XMM128 xmm15;
-  } xmm;
-
-  // 16-byte aligment for xmm registers above.
-  uint64_t xmmPadding;
-
-  void* rsi;
-  void* rdi;
-#endif
 
   void* r15;
   void* r14;
@@ -92,17 +71,10 @@ void JitRuntime::generateEnterJIT(JSContext* cx, MacroAssembler& masm,
   const Register reg_argv = IntArgReg2;
   static_assert(OsrFrameReg == IntArgReg3);
 
-#if defined(_WIN64)
-  const Operand token = Operand(rbp, 16 + ShadowStackSpace);
-  const Operand scopeChain = Operand(rbp, 24 + ShadowStackSpace);
-  const Operand numStackValuesAddr = Operand(rbp, 32 + ShadowStackSpace);
-  const Operand result = Operand(rbp, 40 + ShadowStackSpace);
-#else
   const Register token = IntArgReg4;
   const Register scopeChain = IntArgReg5;
   const Operand numStackValuesAddr = Operand(rbp, 16 + ShadowStackSpace);
   const Operand result = Operand(rbp, 24 + ShadowStackSpace);
-#endif
 
   // Note: the stack pushes below must match the fields in EnterJITStackEntry.
 
@@ -114,23 +86,6 @@ void JitRuntime::generateEnterJIT(JSContext* cx, MacroAssembler& masm,
   // than by the JIT'd code, because they are scanned by the conservative
   // scanner.
   masm.pushRegs(rbx, r12, r13, r14, r15);
-#if defined(_WIN64)
-  masm.pushRegs(rdi, rsi);
-
-  // 16-byte aligment for vmovdqa
-  masm.subq(Imm32(sizeof(EnterJITStackEntry::XMM) + 8), rsp);
-
-  masm.vmovdqa(xmm6, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm6)));
-  masm.vmovdqa(xmm7, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm7)));
-  masm.vmovdqa(xmm8, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm8)));
-  masm.vmovdqa(xmm9, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm9)));
-  masm.vmovdqa(xmm10, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm10)));
-  masm.vmovdqa(xmm11, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm11)));
-  masm.vmovdqa(xmm12, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm12)));
-  masm.vmovdqa(xmm13, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm13)));
-  masm.vmovdqa(xmm14, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm14)));
-  masm.vmovdqa(xmm15, Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm15)));
-#endif
 
   // Push address of return value.
   masm.push(result);
@@ -264,22 +219,6 @@ void JitRuntime::generateEnterJIT(JSContext* cx, MacroAssembler& masm,
   masm.storeValue(JSReturnOperand, Operand(r12, 0));
 
   // Restore non-volatile registers.
-#if defined(_WIN64)
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm6)), xmm6);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm7)), xmm7);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm8)), xmm8);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm9)), xmm9);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm10)), xmm10);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm11)), xmm11);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm12)), xmm12);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm13)), xmm13);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm14)), xmm14);
-  masm.vmovdqa(Operand(rsp, offsetof(EnterJITStackEntry::XMM, xmm15)), xmm15);
-
-  masm.addq(Imm32(sizeof(EnterJITStackEntry::XMM) + 8), rsp);
-
-  masm.popRegs(rsi, rdi);
-#endif
   masm.popRegs(r15, r14, r13, r12, rbx);
 
   // Restore frame pointer and return.

@@ -81,7 +81,6 @@ class ArenaAvailRunsSize {
     unsigned bits = CategoriseRun(aElem);
     if (bits & CHUNK_MAP_DIRTY) {
       mRuns.pushFront(aElem);
-#ifndef XP_LINUX
     } else if (bits & CHUNK_MAP_MADVISED_OR_DECOMMITTED) {
       mRuns.pushBack(aElem);
       if (!mFirstFreshRun) {
@@ -94,11 +93,6 @@ class ArenaAvailRunsSize {
       mRuns.insertBefore(RunList::Iterator(mFirstFreshRun), aElem);
       mFirstFreshRun = aElem;
     }
-#else
-    } else {
-      mRuns.pushBack(aElem);
-    }
-#endif
   }
 
   void Remove(arena_chunk_map_t* aElem) {

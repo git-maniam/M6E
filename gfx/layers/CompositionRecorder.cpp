@@ -14,13 +14,9 @@
 #include "nsIObjectOutputStream.h"
 #include "prtime.h"
 #include "stdio.h"
-#ifdef XP_WIN
-#  include "direct.h"
-#else
 #  include <sys/types.h>
 
 #  include "sys/stat.h"
-#endif
 
 using namespace mozilla::gfx;
 

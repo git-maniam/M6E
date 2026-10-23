@@ -14,9 +14,6 @@ extern "C" {
 
 /* all of the platforms that we use _MSC_VER on are little endian
  * so this is sufficient for now */
-#ifdef _MSC_VER
-#define IS_LITTLE_ENDIAN
-#endif
 
 #ifdef __OS2__
 #define IS_LITTLE_ENDIAN
@@ -29,21 +26,6 @@ extern "C" {
 
 #if defined (_SVR4) || defined (SVR4) || defined (__OpenBSD__) || defined (_sgi) || defined (__sun) || defined (sun) || defined (__digital__)
 #  include <inttypes.h>
-#elif defined (_MSC_VER) && _MSC_VER < 1600
-typedef __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#ifdef _WIN64
-typedef unsigned __int64 uintptr_t;
-#else
-typedef unsigned long uintptr_t;
-#endif
-
 #elif defined (_AIX)
 #  include <sys/inttypes.h>
 #else

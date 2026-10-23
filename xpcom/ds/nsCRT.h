@@ -11,17 +11,9 @@
 #include "nscore.h"
 #include "plstr.h"
 
-#if defined(XP_WIN)
-#  define NS_LINEBREAK "\015\012"
-#  define NS_ULINEBREAK u"\015\012"
-#  define NS_LINEBREAK_LEN 2
-#else
-#  ifdef XP_UNIX
 #    define NS_LINEBREAK "\012"
 #    define NS_ULINEBREAK u"\012"
 #    define NS_LINEBREAK_LEN 1
-#  endif /* XP_UNIX */
-#endif   /* XP_WIN */
 
 /// This is a wrapper class around all the C runtime functions.
 

@@ -14,12 +14,6 @@
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/TextureHost.h"
-#ifdef XP_WIN
-#  include "IMFYCbCrImage.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/layers/D3D11YCbCrImage.h"
-#  include "mozilla/layers/TextureD3D11.h"
-#endif
 
 namespace mozilla {
 namespace layers {

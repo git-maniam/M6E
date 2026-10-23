@@ -35,9 +35,7 @@
    briank@networkresonance.com  Wed May 16 16:46:00 PDT 2007
  */
 
-#ifndef WIN32
 #include <arpa/inet.h>
-#endif
 #include <csi_platform.h>
 #include "r_types.h"
 #include "byteorder.h"

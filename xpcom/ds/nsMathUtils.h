@@ -11,9 +11,6 @@
 
 #include "nscore.h"
 
-#if defined(XP_SOLARIS)
-#  include <ieeefp.h>
-#endif
 
 /*
  * round
@@ -40,8 +37,6 @@ inline int32_t NS_lroundf(float aNum) {
 inline double NS_hypot(double aNum1, double aNum2) {
 #ifdef __GNUC__
   return __builtin_hypot(aNum1, aNum2);
-#elif defined _WIN32
-  return _hypot(aNum1, aNum2);
 #else
   return hypot(aNum1, aNum2);
 #endif

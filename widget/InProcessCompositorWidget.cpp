@@ -16,7 +16,6 @@ namespace widget {
 // macOS doesn't have a platform-specific in process compositor,
 // so it uses this implementation to create a generic in process
 // compositor, when requested.
-#if !defined(MOZ_WIDGET_SUPPORTS_OOP_COMPOSITING) || defined(XP_MACOSX)
 /* static */
 RefPtr<CompositorWidget> CompositorWidget::CreateLocal(
     const CompositorWidgetInitData& aInitData,
@@ -29,7 +28,6 @@ RefPtr<CompositorWidget> CompositorWidget::CreateLocal(
   MOZ_RELEASE_ASSERT(widget);
   return new InProcessCompositorWidget(aOptions, widget);
 }
-#endif
 
 InProcessCompositorWidget::InProcessCompositorWidget(
     const layers::CompositorOptions& aOptions, nsIWidget* aWidget)

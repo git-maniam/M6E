@@ -52,14 +52,6 @@ AsyncImagePipelineManager::AsyncImagePipelineManager(
       mAsyncImageEpoch{0},
       mWillGenerateFrame(false),
       mDestroyed(false),
-#ifdef XP_WIN
-      mUseWebRenderDCompVideoHwOverlayWin(
-          gfx::gfxVars::UseWebRenderDCompVideoHwOverlayWin()),
-      mUseWebRenderDCompVideoSwOverlayWin(
-          gfx::gfxVars::UseWebRenderDCompVideoSwOverlayWin()),
-      mUseWebRenderDCompositionTextureOverlayWin(
-          gfx::gfxVars::UseWebRenderDCompositionTextureOverlayWin()),
-#endif
       mRenderSubmittedUpdatesLock("SubmittedUpdatesLock"),
       mLastCompletedFrameId(0) {
   MOZ_COUNT_CTOR(AsyncImagePipelineManager);
@@ -375,27 +367,6 @@ void AsyncImagePipelineManager::ApplyAsyncImagesOfImageBridge(
     return;
   }
 
-#ifdef XP_WIN
-  // UseWebRenderDCompVideoHwOverlayWin(), UseWebRenderDCompVideoSwOverlayWin()
-  // and gfxVars::UseWebRenderDCompositionTextureOverlayWin() could be changed
-  // from true to false, when overlay task is failed. In this case, DisplayItems
-  // need to be re-pushed to WebRender for disabling video overlay.
-  bool isChanged = (mUseWebRenderDCompVideoHwOverlayWin !=
-                    gfx::gfxVars::UseWebRenderDCompVideoHwOverlayWin()) ||
-                   (mUseWebRenderDCompVideoSwOverlayWin !=
-                    gfx::gfxVars::UseWebRenderDCompVideoSwOverlayWin()) ||
-                   (mUseWebRenderDCompositionTextureOverlayWin !=
-                    gfx::gfxVars::UseWebRenderDCompositionTextureOverlayWin());
-
-  if (isChanged) {
-    mUseWebRenderDCompVideoHwOverlayWin =
-        gfx::gfxVars::UseWebRenderDCompVideoHwOverlayWin();
-    mUseWebRenderDCompVideoSwOverlayWin =
-        gfx::gfxVars::UseWebRenderDCompVideoSwOverlayWin();
-    mUseWebRenderDCompositionTextureOverlayWin =
-        gfx::gfxVars::UseWebRenderDCompositionTextureOverlayWin();
-  }
-#endif
 
   wr::Epoch epoch = GetNextImageEpoch();
 
@@ -405,11 +376,6 @@ void AsyncImagePipelineManager::ApplyAsyncImagesOfImageBridge(
     wr::PipelineId pipelineId = wr::AsPipelineId(entry.GetKey());
     AsyncImagePipeline* pipeline = entry.GetWeak();
 
-#ifdef XP_WIN
-    if (isChanged) {
-      pipeline->mIsChanged = true;
-    }
-#endif
 
     // If aync image pipeline does not use ImageBridge, do not need to apply.
     if (!pipeline->mImageHost->GetAsyncRef()) {

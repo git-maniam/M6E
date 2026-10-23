@@ -96,15 +96,6 @@ bool XULButtonElement::IsMenuActive() const {
 
 void XULButtonElement::HandleEnterKeyPress(WidgetEvent& aEvent) {
   if (IsDisabled()) {
-#ifdef XP_WIN
-    if (XULPopupElement* popup = GetContainingPopupElement()) {
-      if (nsXULPopupManager* pm = nsXULPopupManager::GetInstance()) {
-        pm->HidePopup(
-            popup, {HidePopupOption::HideChain, HidePopupOption::DeselectMenu,
-                    HidePopupOption::Async});
-      }
-    }
-#endif
     return;
   }
   if (IsMenuPopupOpen()) {
@@ -373,7 +364,6 @@ void XULButtonElement::PostHandleEventForMenus(
   if (event->mMessage == eKeyPress && !IsDisabled()) {
     WidgetKeyboardEvent* keyEvent = event->AsKeyboardEvent();
     uint32_t keyCode = keyEvent->mKeyCode;
-#ifdef XP_MACOSX
     // On mac, open menulist on either up/down arrow or space (w/o Cmd pressed)
     if (!IsMenuPopupOpen() &&
         ((keyEvent->mCharCode == ' ' && !keyEvent->IsMeta()) ||
@@ -386,21 +376,11 @@ void XULButtonElement::PostHandleEventForMenus(
         OpenMenuPopup(false);
       }
     }
-#else
-    // On other platforms, toggle menulist on unmodified F4 or Alt arrow
-    if ((keyCode == NS_VK_F4 && !keyEvent->IsAlt()) ||
-        ((keyCode == NS_VK_UP || keyCode == NS_VK_DOWN) && keyEvent->IsAlt())) {
-      aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
-      ToggleMenuState();
-    }
-#endif
   } else if (event->mMessage == eMouseDown &&
              event->AsMouseEvent()->mButton == MouseButton::ePrimary &&
-#ifdef XP_MACOSX
              // On mac, ctrl-click will send a context menu event from the
              // widget, so we don't want to bring up the menu.
              !event->AsMouseEvent()->IsControl() &&
-#endif
              !IsDisabled() && !IsMenuItem()) {
     // The menu item was selected. Bring up the menu.
     // We have children.
@@ -418,10 +398,8 @@ void XULButtonElement::PostHandleEventForMenus(
     // right-clicking on an item in a context menu cannot open another context
     // menu.
     bool isMacCtrlClick = false;
-#ifdef XP_MACOSX
     isMacCtrlClick = event->AsMouseEvent()->mButton == MouseButton::ePrimary &&
                      event->AsMouseEvent()->IsControl();
-#endif
     bool clickMightOpenContextMenu =
         event->AsMouseEvent()->mButton == MouseButton::eSecondary ||
         isMacCtrlClick;
@@ -571,15 +549,6 @@ nsresult XULButtonElement::PostHandleEvent(EventChainPostVisitor& aVisitor) {
         break;
       }
 // On mac, Return fires the default button, not the focused one.
-#ifndef XP_MACOSX
-      if (NS_VK_RETURN == keyEvent->mKeyCode) {
-        if (RefPtr<nsIDOMXULButtonElement> button = AsXULButton()) {
-          if (OnPointerClicked(*keyEvent)) {
-            aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;
-          }
-        }
-      }
-#endif
       if (keyEvent->ShouldWorkAsSpaceKey() && mIsHandlingKeyEvent) {
         // Prevent scrolling.
         aVisitor.mEventStatus = nsEventStatus_eConsumeNoDefault;

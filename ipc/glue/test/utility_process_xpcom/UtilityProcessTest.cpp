@@ -10,15 +10,6 @@
 #  include "mozilla/ProcInfo.h"
 #  include "mozilla/IntentionalCrash.h"
 
-#  ifdef XP_WIN
-#    include <handleapi.h>
-#    include <processthreadsapi.h>
-#    include <tlhelp32.h>
-
-#    include "mozilla/WinHandleWatcher.h"
-#    include "nsISupports.h"
-#    include "nsWindowsHelpers.h"
-#  endif
 
 namespace mozilla::ipc {
 
@@ -60,50 +51,6 @@ static SandboxingKind FindUtilityProcessWithActor(
   return SandboxingKind::COUNT;
 }
 
-#  ifdef XP_WIN
-namespace {
-// Promise implementation for `UntilChildProcessDead`.
-//
-// Resolves the provided JS promise when the provided Windows HANDLE becomes
-// signaled.
-class WinHandlePromiseImpl final {
- public:
-  NS_INLINE_DECL_REFCOUNTING(WinHandlePromiseImpl)
-
-  using HandlePtr = mozilla::UniqueFileHandle;
-
-  // Takes ownership of aHandle.
-  static void Create(mozilla::UniqueFileHandle handle,
-                     RefPtr<mozilla::dom::Promise> promise) {
-    MOZ_ASSERT(handle);
-    MOZ_ASSERT(promise);
-
-    RefPtr obj{new WinHandlePromiseImpl(std::move(handle), std::move(promise))};
-
-    // WARNING: This creates an owning-reference cycle: (self -> HandleWatcher
-    //    -> Runnable -> self). `obj` will therefore only be destroyed when and
-    //    if the HANDLE is signaled.
-    obj->watcher.Watch(obj->handle.get(), GetCurrentSerialEventTarget(),
-                       NewRunnableMethod("WinHandlePromiseImpl::Resolve", obj,
-                                         &WinHandlePromiseImpl::Resolve));
-  }
-
- private:
-  WinHandlePromiseImpl(mozilla::UniqueFileHandle handle,
-                       RefPtr<mozilla::dom::Promise> promise)
-      : handle(std::move(handle)), promise(std::move(promise)) {}
-
-  ~WinHandlePromiseImpl() { watcher.Stop(); }
-
-  void Resolve() { promise->MaybeResolveWithUndefined(); }
-
-  mozilla::UniqueFileHandle handle;
-  HandleWatcher watcher;
-  RefPtr<mozilla::dom::Promise> promise;
-};
-
-}  // namespace
-#  endif
 
 NS_IMETHODIMP
 UtilityProcessTest::StartProcess(const nsTArray<nsCString>& aActorsToRegister,
@@ -171,53 +118,7 @@ UtilityProcessTest::UntilChildProcessDead(
   NS_ENSURE_ARG(aOutPromise);
   *aOutPromise = nullptr;
 
-#  ifdef XP_WIN
-  if (pid == 0) {
-    return NS_ERROR_INVALID_ARG;
-  }
-
-  nsIGlobalObject* global = xpc::CurrentNativeGlobal(cx);
-  if (NS_WARN_IF(!global)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  ErrorResult erv;
-  RefPtr<dom::Promise> promise = dom::Promise::Create(global, erv);
-  if (NS_WARN_IF(erv.Failed())) {
-    return erv.StealNSResult();
-  }
-
-  // Get a fresh handle to the child process with the specified PID.
-  mozilla::UniqueFileHandle handle;
-  for (auto& proc : GeckoChildProcessHost::GetAll()) {
-    if (proc->GetChildProcessId() != pid) {
-      continue;
-    }
-
-    HANDLE handle_ = nullptr;
-    if (!::DuplicateHandle(::GetCurrentProcess(), proc->GetChildProcessHandle(),
-                           ::GetCurrentProcess(), &handle_, SYNCHRONIZE, FALSE,
-                           0)) {
-      return NS_ERROR_FAILURE;
-    } else {
-      handle.reset(handle_);
-      break;
-    }
-  }
-  if (!handle) {
-    return NS_ERROR_FAILURE;
-  }
-
-  // Create and attach the resolver for the promise, giving the handle over to
-  // it.
-  WinHandlePromiseImpl::Create(std::move(handle), promise);
-
-  promise.forget(aOutPromise);
-
-  return NS_OK;
-#  else  // !defined(XP_WIN)
   return NS_ERROR_NOT_IMPLEMENTED;
-#  endif
 }
 
 NS_IMETHODIMP

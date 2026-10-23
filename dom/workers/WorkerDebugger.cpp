@@ -20,11 +20,7 @@
 #include "nsQueryObject.h"
 #include "nsThreadUtils.h"
 
-#if defined(XP_WIN)
-#  include <processthreadsapi.h>  // for GetCurrentProcessId()
-#else
 #  include <unistd.h>  // for getpid()
-#endif                 // defined(XP_WIN)
 
 namespace mozilla::dom {
 

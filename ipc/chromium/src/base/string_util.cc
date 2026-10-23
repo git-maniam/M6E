@@ -39,11 +39,7 @@ struct ToUnsigned<signed char> {
 };
 template <>
 struct ToUnsigned<wchar_t> {
-#if defined(XP_WIN)
-  typedef unsigned short Unsigned;
-#else
   typedef uint32_t Unsigned;
-#endif
 };
 template <>
 struct ToUnsigned<short> {
@@ -107,9 +103,6 @@ class String16ToLongTraits {
   static const int kBase = 10;
   static inline value_type convert_func(const string_type::value_type* str,
                                         string_type::value_type** endptr) {
-#if defined(XP_WIN)
-    return wcstol(str, endptr, kBase);
-#else
     std::string ascii_string = UTF16ToASCII(string16(str));
     char* ascii_end = nullptr;
     value_type ret = strtol(ascii_string.c_str(), &ascii_end, kBase);
@@ -118,7 +111,6 @@ class String16ToLongTraits {
           const_cast<string_type::value_type*>(str) + ascii_string.length();
     }
     return ret;
-#endif
   }
   static inline bool valid_func(const string_type& str) {
     return !str.empty() && !iswspace(str[0]);
@@ -132,11 +124,7 @@ class StringToInt64Traits {
   static const int kBase = 10;
   static inline value_type convert_func(const string_type::value_type* str,
                                         string_type::value_type** endptr) {
-#ifdef XP_WIN
-    return _strtoi64(str, endptr, kBase);
-#else  // assume XP_UNIX
     return strtoll(str, endptr, kBase);
-#endif
   }
   static inline bool valid_func(const string_type& str) {
     return !str.empty() && !isspace(str[0]);
@@ -150,9 +138,6 @@ class String16ToInt64Traits {
   static const int kBase = 10;
   static inline value_type convert_func(const string_type::value_type* str,
                                         string_type::value_type** endptr) {
-#ifdef XP_WIN
-    return _wcstoi64(str, endptr, kBase);
-#else  // assume XP_UNIX
     std::string ascii_string = UTF16ToASCII(string16(str));
     char* ascii_end = nullptr;
     value_type ret = strtoll(ascii_string.c_str(), &ascii_end, kBase);
@@ -161,7 +146,6 @@ class String16ToInt64Traits {
           const_cast<string_type::value_type*>(str) + ascii_string.length();
     }
     return ret;
-#endif
   }
   static inline bool valid_func(const string_type& str) {
     return !str.empty() && !iswspace(str[0]);
@@ -313,9 +297,7 @@ static bool DoIsStringASCII(const STR& str) {
 
 bool IsStringASCII(const std::wstring& str) { return DoIsStringASCII(str); }
 
-#if !defined(XP_WIN)
 bool IsStringASCII(const string16& str) { return DoIsStringASCII(str); }
-#endif
 
 bool IsStringASCII(const std::string& str) { return DoIsStringASCII(str); }
 
@@ -349,9 +331,7 @@ static void StringAppendVT(StringType* dst,
   va_list backup_ap;
   base_va_copy(backup_ap, ap);
 
-#if !defined(XP_WIN)
   errno = 0;
-#endif
   int result = vsnprintfT(stack_buf, arraysize(stack_buf), format, backup_ap);
   va_end(backup_ap);
 
@@ -365,12 +345,10 @@ static void StringAppendVT(StringType* dst,
   int mem_length = arraysize(stack_buf);
   while (true) {
     if (result < 0) {
-#if !defined(XP_WIN)
       // On Windows, vsnprintfT always returns the number of characters in a
       // fully-formatted string, so if we reach this point, something else is
       // wrong and no amount of buffer-doubling is going to fix it.
       if (errno != 0 && errno != EOVERFLOW)
-#endif
       {
         // If an error other than overflow occurred, it's never going to work.
         DLOG(WARNING) << "Unable to printf the requested string due to error.";

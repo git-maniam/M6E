@@ -20,9 +20,6 @@
 #include "nsMenuPopupFrame.h"
 #include "nsNameSpaceManager.h"
 #include "nsStringFwd.h"
-#ifdef MOZ_WAYLAND
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
 namespace mozilla::dom {
 
@@ -337,20 +334,11 @@ void XULPopupElement::SetConstraintRect(dom::DOMRectReadOnly& aRect) {
 }
 
 bool XULPopupElement::IsWaylandDragSource() const {
-#ifdef MOZ_WAYLAND
-  nsMenuPopupFrame* f = do_QueryFrame(GetPrimaryFrame());
-  return f && f->IsDragSource();
-#else
   return false;
-#endif
 }
 
 bool XULPopupElement::IsWaylandPopup() const {
-#ifdef MOZ_WAYLAND
-  return widget::GdkIsWaylandDisplay() || widget::IsXWaylandProtocol();
-#else
   return false;
-#endif
 }
 
 bool XULPopupElement::IsNativeMenu() const {

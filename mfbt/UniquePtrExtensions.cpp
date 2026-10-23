@@ -7,13 +7,9 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#else
 #  include <errno.h>
 #  include <fcntl.h>
 #  include <unistd.h>
-#endif
 
 namespace mozilla {
 namespace detail {
@@ -21,18 +17,13 @@ namespace detail {
 void FileHandleDeleter::operator()(FileHandleHelper aHelper) {
   if (aHelper != nullptr) {
     DebugOnly<bool> ok;
-#ifdef XP_WIN
-    ok = CloseHandle(aHelper);
-#else
     ok = close(aHelper) == 0 || errno == EINTR;
-#endif
     MOZ_ASSERT(ok, "failed to close file handle");
   }
 }
 
 }  // namespace detail
 
-#ifdef XP_UNIX
 void SetCloseOnExec(detail::FileHandleType aFile) {
   // The fcntl calls shouldn't fail if aFile is valid.
   if (aFile >= 0) {
@@ -44,19 +35,10 @@ void SetCloseOnExec(detail::FileHandleType aFile) {
     }
   }
 }
-#endif
 
 #ifndef __wasm__
 UniqueFileHandle DuplicateFileHandle(detail::FileHandleType aFile) {
   if (FileHandleIsValid(aFile)) {
-#  ifdef XP_WIN
-    HANDLE handle;
-    HANDLE currentProcess = ::GetCurrentProcess();
-    if (::DuplicateHandle(currentProcess, aFile, currentProcess, &handle, 0,
-                          false, DUPLICATE_SAME_ACCESS)) {
-      return UniqueFileHandle{handle};
-    }
-#  else
     int fd;
     // Set cloexec atomically if supported; otherwise fall back to non-atomic.
 #    ifdef F_DUPFD_CLOEXEC
@@ -66,7 +48,6 @@ UniqueFileHandle DuplicateFileHandle(detail::FileHandleType aFile) {
     SetCloseOnExec(fd);
 #    endif
     return UniqueFileHandle{fd};
-#  endif
   }
   return nullptr;
 }

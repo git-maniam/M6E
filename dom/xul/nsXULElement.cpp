@@ -333,7 +333,6 @@ static bool IsNonList(mozilla::dom::NodeInfo* aNodeInfo) {
 
 nsXULElement::XULFocusability nsXULElement::GetXULFocusability(
     IsFocusableFlags aFlags) {
-#ifdef XP_MACOSX
   // On Mac, mouse interactions only focus the element if it's a list,
   // or if it's a remote target, since the remote target must handle
   // the focus.
@@ -341,7 +340,6 @@ nsXULElement::XULFocusability nsXULElement::GetXULFocusability(
       !EventStateManager::IsTopLevelRemoteTarget(this)) {
     return XULFocusability::NeverFocusable();
   }
-#endif
 
   XULFocusability result;
   nsCOMPtr<nsIDOMXULControlElement> xulControl = AsXULControl();

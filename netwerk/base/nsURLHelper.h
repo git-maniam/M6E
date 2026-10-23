@@ -92,22 +92,6 @@ nsresult net_FilterAndEscapeURI(const nsACString& aInput, uint32_t aFlags,
                                 const ASCIIMaskArray& aFilterMask,
                                 nsACString& aResult);
 
-#if defined(XP_WIN)
-/**
- * On Win32 and OS/2 system's a back-slash in a file:// URL is equivalent to a
- * forward-slash.  This function maps any back-slashes to forward-slashes.
- *
- * @param aURL
- *        The URL string to normalize (UTF-8 encoded).  This can be a
- *        relative URL segment.
- * @param aResultBuf
- *        The resulting string is appended to this string.  If the input URL
- *        is already normalized, then aResultBuf is unchanged.
- *
- * @returns false if aURL is already normalized.  Otherwise, returns true.
- */
-bool net_NormalizeFileURL(const nsACString& aURL, nsCString& aResultBuf);
-#endif
 
 /*****************************************************************************
  * generic string routines follow (XXX move to someplace more generic).

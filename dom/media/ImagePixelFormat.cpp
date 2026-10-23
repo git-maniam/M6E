@@ -8,12 +8,7 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/gfx/Types.h"
 
-#ifdef XP_MACOSX
 #  include "MacIOSurfaceImage.h"
-#elif MOZ_WAYLAND
-#  include "mozilla/layers/DMABUFSurfaceImage.h"
-#  include "mozilla/widget/DMABufSurface.h"
-#endif
 
 namespace mozilla {
 
@@ -149,20 +144,11 @@ Maybe<ImagePixelFormat> ImageToPixelFormat(Image* aImage) {
       return surface ? SurfaceFormatToPixelFormat(surface->GetFormat())
                      : Nothing();
     }
-#ifdef XP_MACOSX
     case ImageFormat::MAC_IOSURFACE: {
       MacIOSurface* surface = aImage->AsMacIOSurfaceImage()->GetSurface();
       return surface ? SurfaceFormatToPixelFormat(surface->GetFormat())
                      : Nothing();
     }
-#endif
-#ifdef MOZ_WAYLAND
-    case ImageFormat::DMABUF: {
-      auto* surface = aImage->AsDMABUFSurfaceImage()->GetSurface();
-      return surface ? SurfaceFormatToPixelFormat(surface->GetFormat())
-                     : Nothing();
-    }
-#endif
     default:
       return Nothing();
   }

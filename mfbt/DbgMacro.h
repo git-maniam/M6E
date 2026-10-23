@@ -18,9 +18,6 @@
 template <typename T>
 class nsTSubstring;
 
-#ifdef ANDROID
-#  include <android/log.h>
-#endif
 
 namespace mozilla {
 
@@ -79,11 +76,7 @@ auto&& MozDbg(const char* aFile, int aLine, const char* aExpression,
   std::ostringstream s;
   s << "[MozDbg] [" << aFile << ':' << aLine << "] " << aExpression << " = ";
   mozilla::DebugValue(s, std::forward<T>(aValue)) << '\n';
-#ifdef ANDROID
-  __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", s.str().c_str());
-#else
   fputs(s.str().c_str(), stderr);
-#endif
   return std::forward<T>(aValue);
 }
 

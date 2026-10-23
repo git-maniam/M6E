@@ -73,12 +73,6 @@
 #include "nsObjectLoadingContent.h"
 #include "nsWidgetsCID.h"
 
-#ifdef XP_WIN
-// Thanks so much, Microsoft! :(
-#  ifdef CreateEvent
-#    undef CreateEvent
-#  endif
-#endif  // XP_WIN
 
 static const char kPrefYoutubeRewrite[] = "plugins.rewrite_youtube_embeds";
 

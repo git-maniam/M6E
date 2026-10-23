@@ -50,16 +50,6 @@
 #include "mozmemory.h"
 #include "nsExceptionHandler.h"
 
-#ifdef XP_WIN
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#  include "mozilla/widget/WinCompositorWidget.h"
-#endif
-#if defined(MOZ_WIDGET_GTK)
-#  include "mozilla/widget/GtkCompositorWidget.h"
-#endif
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/layers/AndroidHardwareBuffer.h"
-#endif
 
 bool is_in_main_thread() { return NS_IsMainThread(); }
 
@@ -464,12 +454,6 @@ void WebRenderBridgeParent::FinishInitializationError(nsCString&& aError) {
   mWidget = nullptr;
   mDestroyed = true;
   mInitError = std::move(aError);
-#ifdef MOZ_WIDGET_ANDROID
-  if (mScreenPixelsRequest) {
-    mScreenPixelsRequest->mPromise->Reject(NS_ERROR_ABORT, __func__);
-    mScreenPixelsRequest.reset();
-  }
-#endif
 }
 
 already_AddRefed<wr::WebRenderAPI> WebRenderBridgeParent::GetWebRenderAPI() {
@@ -559,12 +543,6 @@ void WebRenderBridgeParent::Destroy() {
   }
   mCompositables.clear();
   ClearResources();
-#ifdef MOZ_WIDGET_ANDROID
-  if (mScreenPixelsRequest) {
-    mScreenPixelsRequest->mPromise->Reject(NS_ERROR_ABORT, __func__);
-    mScreenPixelsRequest.reset();
-  }
-#endif
 }
 
 struct WROTSAlloc {
@@ -2083,51 +2061,6 @@ void WebRenderBridgeParent::UpdateBoolParameters() {
   }
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-RefPtr<WebRenderBridgeParent::ScreenPixelsPromise>
-WebRenderBridgeParent::RequestScreenPixels(
-    gfx::IntRect aSourceRect, RefPtr<AndroidHardwareBuffer> aHardwareBuffer) {
-  if (mDestroyed) {
-    return ScreenPixelsPromise::CreateAndReject(NS_ERROR_ABORT, __func__);
-  }
-  if (!IsRootWebRenderBridgeParent()) {
-    return ScreenPixelsPromise::CreateAndReject(NS_ERROR_ILLEGAL_VALUE,
-                                                __func__);
-  }
-
-  // If a new request is made we no longer care about the result of the previous
-  // one, so just reject it if it exists.
-  if (mScreenPixelsRequest) {
-    mScreenPixelsRequest.extract().mPromise->Reject(NS_ERROR_ABORT, __func__);
-  }
-  mScreenPixelsRequest.emplace(ScreenPixelsRequest{
-      .mSourceRect = aSourceRect,
-      .mHardwareBuffer = std::move(aHardwareBuffer),
-      .mPromise = new ScreenPixelsPromise::Private(__func__),
-  });
-  return mScreenPixelsRequest->mPromise;
-}
-
-void WebRenderBridgeParent::MaybeCaptureScreenPixels() {
-  // This function should only get called in the root WRBP.
-  MOZ_ASSERT(IsRootWebRenderBridgeParent());
-
-  if (!mScreenPixelsRequest) {
-    return;
-  }
-  auto request = mScreenPixelsRequest.extract();
-
-#  ifdef DEBUG
-  CompositorBridgeParent* cbp = GetRootCompositorBridgeParent();
-  MOZ_ASSERT(cbp && !cbp->IsPaused());
-#  endif
-
-  mLateInit->mApi
-      ->RequestScreenPixels(request.mSourceRect,
-                            std::move(request.mHardwareBuffer))
-      ->ChainTo(request.mPromise.forget(), __func__);
-}
-#endif
 
 mozilla::ipc::IPCResult WebRenderBridgeParent::RecvGetSnapshot(
     NotNull<PTextureParent*> aTexture, bool* aNeedsYFlip) {
@@ -2860,11 +2793,6 @@ void WebRenderBridgeParent::MaybeGenerateFrame(VsyncId aId,
     }
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  // Ensure the rendered pixels get captured for the frame we are about to
-  // generate. Must be called before we generate the frame.
-  MaybeCaptureScreenPixels();
-#endif
 
   SetOMTASampleTime();
   SetAPZSampleTime();
@@ -3304,11 +3232,7 @@ mozilla::ipc::IPCResult WebRenderBridgeParent::RecvReleaseCompositable(
 TextureFactoryIdentifier WebRenderBridgeParent::GetTextureFactoryIdentifier() {
   MOZ_ASSERT(mLateInit->mApi);
 
-#ifdef XP_WIN
-  const bool supportsD3D11NV12 = gfx::DeviceManagerDx::Get()->CanUseNV12();
-#else
   const bool supportsD3D11NV12 = false;
-#endif
 
   const auto& capabilities = mLateInit->mApi->GetCapabilities();
   TextureFactoryIdentifier ident(

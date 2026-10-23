@@ -68,11 +68,6 @@ class UiCompositorControllerParent final
 
   LayersId mRootLayerTreeId;
 
-#if defined(MOZ_WIDGET_ANDROID)
-  bool mCompositorLayersUpdateEnabled;  // Flag set to true when the UI thread
-                                        // is expecting to be notified when a
-                                        // layer has been updated
-#endif                                  // defined(MOZ_WIDGET_ANDROID)
 };
 
 }  // namespace layers

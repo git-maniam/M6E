@@ -37,11 +37,7 @@
 #include "platform.h"
 #include "zlib.h"
 
-#ifndef ANDROID
 #  include <cstdio>
-#else
-#  include <android/log.h>
-#endif
 
 using namespace mozilla;
 
@@ -1463,12 +1459,7 @@ void nsProfiler::FinishGathering() {
   mWriter->End();
 
   if (const char* failure = mWriter->GetFailure(); failure) {
-#ifndef ANDROID
     fprintf(stderr, "JSON generation failure: %s", failure);
-#else
-    __android_log_print(ANDROID_LOG_INFO, "GeckoProfiler",
-                        "JSON generation failure: %s", failure);
-#endif
     NS_WARNING("Error during JSON generation, probably OOM.");
     ResetGathering(NS_ERROR_OUT_OF_MEMORY);
     return;

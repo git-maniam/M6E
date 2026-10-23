@@ -6,9 +6,6 @@
 
 #include "mozilla/Logging.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "GLImages.h"  // for SurfaceTextureImage
-#endif
 #include "MediaDecoderOwner.h"
 #include "mozilla/AbstractThread.h"
 #include "mozilla/gfx/BuildConstants.h"
@@ -64,15 +61,6 @@ void VideoFrameContainer::UpdatePrincipalHandleForFrameIDLocked(
   mFrameIDForPendingPrincipalHandle = aFrameID;
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-static void NotifySetCurrent(Image* aImage) {
-  if (aImage) {
-    MOZ_LOG_FMT(gVideoFrameContainer, LogLevel::Debug,
-                "NotifySetCurrent, serial={}", aImage->GetSerial());
-    aImage->OnSetCurrent();
-  }
-}
-#endif
 
 void VideoFrameContainer::SetCurrentFrame(
     const gfx::IntSize& aIntrinsicSize, Image* aImage,
@@ -83,9 +71,6 @@ void VideoFrameContainer::SetCurrentFrame(
       "SetCurrentFrame, processing duration={}us,pts={}",
       aProcessingDuration.IsValid() ? aProcessingDuration.ToMicroseconds() : -1,
       aMediaTime.ToString());
-#ifdef MOZ_WIDGET_ANDROID
-  NotifySetCurrent(aImage);
-#endif
   AutoTArray<ImageContainer::NonOwningImage, 1> imageList;
   if (aImage) {
     imageList.AppendElement(ImageContainer::NonOwningImage(
@@ -100,15 +85,6 @@ void VideoFrameContainer::SetCurrentFrames(
     const nsTArray<ImageContainer::NonOwningImage>& aImages) {
   MOZ_LOG_FMT(gVideoFrameContainer, LogLevel::Debug,
               "SetCurrentFrames ({} images)", aImages.Length());
-#ifdef MOZ_WIDGET_ANDROID
-  // When there are multiple frames, only the last one is effective
-  // (see bug 1299068 comment 4). Here I just count on VideoSink and VideoOutput
-  // to send one frame at a time and warn if not.
-  (void)NS_WARN_IF(aImages.Length() > 1);
-  for (auto& image : aImages) {
-    NotifySetCurrent(image.mImage);
-  }
-#endif
   MutexAutoLock lock(mMutex);
   SetCurrentFramesLocked(aIntrinsicSize, aImages);
 }

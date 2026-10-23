@@ -109,7 +109,6 @@ class AudioClock {
   uint32_t GetOutputRate() const { return mOutRate; }
 
  private:
-#  ifdef XP_MACOSX
   // Apply the callback info the audio thread has queued to the frame history.
   // Claims the single-consumer role on the queue, so owner thread only, which
   // Dequeue asserts. A callback that found the queue full keeps its frames
@@ -117,7 +116,6 @@ class AudioClock {
   // cursor by an unbounded amount while nothing drains the queue, and an item
   // can arrive after a rebase has already accounted for its frames.
   void ApplyQueuedCallbackInfo();
-#  endif
 
   // Three positions on one axis, the count of frames handed to the backend.
   // Comparing them is how a callback item that arrives after a rebase is
@@ -129,7 +127,6 @@ class AudioClock {
     // so mSeen can trail this by an unbounded amount. Bumped on the audio
     // thread, read on the owner thread.
     Atomic<uint64_t> mTotal{0};
-#  ifdef XP_MACOSX
     // How far the reader has got, counting every item it takes off the queue,
     // including the ones it drops: the count is only comparable to mTotal if
     // nothing is missed. Owner thread only.
@@ -139,7 +136,6 @@ class AudioClock {
     // was handed over earlier, so appending it would put frames the anchor has
     // passed in front of it. Owner thread only.
     uint64_t mRebasedThrough = 0;
-#  endif
   };
   FrameHandoff mHandoff;
 
@@ -155,11 +151,7 @@ class AudioClock {
   // Only accessed from non-audio threads on macOS, accessed on both threads and
   // protected by the AudioStream monitor on other platforms.
   const UniquePtr<FrameHistory> mFrameHistory
-#  ifndef XP_MACOSX
-      MOZ_GUARDED_BY(mMutex)
-#  endif
           ;
-#  ifdef XP_MACOSX
   // Enqueued on the audio thread, dequeued from the other thread. The maximum
   // size of this queue has been chosen empirically.
   SPSCQueue<CallbackInfo> mCallbackInfoQueue{100};
@@ -168,9 +160,6 @@ class AudioClock {
   // fallback path. The size of this array has been chosen empirically. Only
   // ever accessed on the audio thread.
   AutoTArray<CallbackInfo, 5> mAudioThreadCallbackInfo;
-#  else
-  Mutex mMutex{"AudioClock"};
-#  endif
 };
 
 /*

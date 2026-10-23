@@ -303,9 +303,6 @@ nsPrintJob::GetSeqFrameAndCountSheets() const {
 
 // Foward decl for Debug Helper Functions
 #ifdef EXTENDED_DEBUG_PRINTING
-#  ifdef XP_WIN
-static int RemoveFilesInDir(const char* aDir);
-#  endif
 static void GetDocTitleAndURL(const UniquePtr<nsPrintObject>& aPO,
                               nsACString& aDocStr, nsACString& aURLStr);
 static void DumpPrintObjectsTree(nsPrintObject* aPO, int aLevel, FILE* aFD);
@@ -666,15 +663,6 @@ nsresult nsPrintJob::ReconstructAndReflow() {
     return NS_ERROR_FAILURE;
   }
 
-#if defined(XP_WIN) && defined(EXTENDED_DEBUG_PRINTING)
-  // We need to clear all the output files here
-  // because they will be re-created with second reflow of the docs
-  if (MOZ_LOG_TEST(gPrintingLog, DUMP_LAYOUT_LEVEL)) {
-    RemoveFilesInDir(".\\");
-    gDumpFileNameCnt = 0;
-    gDumpLOFileNameCnt = 0;
-  }
-#endif
 
   // In this loop, it's conceivable that one of our helpers might clear mPrt,
   // while we're using it & its members!  So we capture it in an owning local
@@ -2054,56 +2042,6 @@ void nsPrintJob::DisconnectPagePrintTimer() {
 //-- Debug helper routines
 //---------------------------------------------------------------
 //---------------------------------------------------------------
-#if defined(XP_WIN) && defined(EXTENDED_DEBUG_PRINTING)
-#  include <direct.h>
-#  include <process.h>
-#  include <windows.h>
-
-#  define MY_FINDFIRST(a, b) FindFirstFile(a, b)
-#  define MY_FINDNEXT(a, b) FindNextFile(a, b)
-#  define ISDIR(a) (a.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-#  define MY_FINDCLOSE(a) FindClose(a)
-#  define MY_FILENAME(a) a.cFileName
-#  define MY_FILESIZE(a) (a.nFileSizeHigh * MAXDWORD) + a.nFileSizeLow
-
-int RemoveFilesInDir(const char* aDir) {
-  WIN32_FIND_DATA data_ptr;
-  HANDLE find_handle;
-
-  char path[MAX_PATH];
-
-  strcpy(path, aDir);
-
-  // Append slash to the end of the directory names if not there
-  if (path[strlen(path) - 1] != '\\') strcat(path, "\\");
-
-  char findPath[MAX_PATH];
-  strcpy(findPath, path);
-  strcat(findPath, "*.*");
-
-  find_handle = MY_FINDFIRST(findPath, &data_ptr);
-
-  if (find_handle != INVALID_HANDLE_VALUE) {
-    do {
-      if (ISDIR(data_ptr) && (stricmp(MY_FILENAME(data_ptr), ".")) &&
-          (stricmp(MY_FILENAME(data_ptr), ".."))) {
-        // skip
-      } else if (!ISDIR(data_ptr)) {
-        if (!strncmp(MY_FILENAME(data_ptr), "print_dump", 10)) {
-          char fileName[MAX_PATH];
-          strcpy(fileName, aDir);
-          strcat(fileName, "\\");
-          strcat(fileName, MY_FILENAME(data_ptr));
-          printf("Removing %s\n", fileName);
-          remove(fileName);
-        }
-      }
-    } while (MY_FINDNEXT(find_handle, &data_ptr));
-    MY_FINDCLOSE(find_handle);
-  }
-  return TRUE;
-}
-#endif
 
 #ifdef EXTENDED_DEBUG_PRINTING
 

@@ -103,7 +103,6 @@ void NodeChannel::SetOtherPid(base::ProcessId aNewPid) {
   mChannel->SetOtherPid(aNewPid);
 }
 
-#ifdef XP_DARWIN
 void NodeChannel::SetMachTaskPort(task_t aTask) {
   AssertIOThread();
 
@@ -111,7 +110,6 @@ void NodeChannel::SetMachTaskPort(task_t aTask) {
     mChannel->SetOtherMachTask(aTask);
   }
 }
-#endif
 
 void NodeChannel::SendEventMessage(UniquePtr<IPC::Message> aMessage) {
   // Make sure we're not sending a message with one of our special internal

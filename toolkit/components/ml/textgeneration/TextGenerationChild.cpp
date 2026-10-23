@@ -25,10 +25,6 @@
 #include "mozilla/ml/MLProfilerMarkers.h"
 #include "nsThreadUtils.h"
 
-#ifdef XP_WIN
-#  include <fcntl.h>
-#  include <io.h>
-#endif
 
 namespace mozilla::hwinference {
 
@@ -453,18 +449,7 @@ LoadResult TextGenerationChild::LoadOnThread() {
     return fail("TextGenerator: DuplicateFileHandle failed");
   }
 
-#ifdef XP_WIN
-  int fd = _open_osfhandle(dupHandle.release(), _O_RDONLY);
-  if (fd == -1) {
-    return fail("TextGenerator: _open_osfhandle failed");
-  }
-  FILE* fp = fdopen(fd, "rb");
-  if (!fp) {
-    _close(fd);
-  }
-#else
   FILE* fp = fdopen(dupHandle.release(), "r");
-#endif
   if (!fp) {
     return fail("TextGenerator: fdopen failed");
   }

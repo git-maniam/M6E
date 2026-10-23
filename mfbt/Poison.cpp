@@ -10,9 +10,7 @@
 #include "mozilla/Poison.h"
 
 #include "mozilla/Assertions.h"
-#ifdef _WIN32
-#  include <windows.h>
-#elif !defined(__OS2__)
+#if   !defined(__OS2__)
 #  include <unistd.h>
 #  ifndef __wasi__
 #    include <sys/mman.h>
@@ -34,35 +32,7 @@
 // from here to 'class FreeList' needs to be kept in sync with that
 // file.
 
-#ifdef _WIN32
-static void* ReserveRegion(uintptr_t aRegion, uintptr_t aSize) {
-  return VirtualAlloc((void*)aRegion, aSize, MEM_RESERVE, PAGE_NOACCESS);
-}
-
-static void ReleaseRegion(void* aRegion, uintptr_t aSize) {
-  VirtualFree(aRegion, aSize, MEM_RELEASE);
-}
-
-static bool ProbeRegion(uintptr_t aRegion, uintptr_t aSize) {
-  SYSTEM_INFO sinfo;
-  GetSystemInfo(&sinfo);
-  if (aRegion >= (uintptr_t)sinfo.lpMaximumApplicationAddress &&
-      aRegion + aSize >= (uintptr_t)sinfo.lpMaximumApplicationAddress) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-static uintptr_t GetDesiredRegionSize() {
-  SYSTEM_INFO sinfo;
-  GetSystemInfo(&sinfo);
-  return sinfo.dwAllocationGranularity;
-}
-
-#  define RESERVE_FAILED 0
-
-#elif defined(__OS2__)
+#if   defined(__OS2__)
 static void* ReserveRegion(uintptr_t aRegion, uintptr_t aSize) {
   // OS/2 doesn't support allocation at an arbitrary address,
   // so return an address that is known to be invalid.
@@ -118,12 +88,7 @@ static void ReleaseRegion(void* aRegion, uintptr_t aSize) {
 }
 
 static bool ProbeRegion(uintptr_t aRegion, uintptr_t aSize) {
-#  ifdef XP_SOLARIS
-  if (posix_madvise(reinterpret_cast<void*>(aRegion), aSize,
-                    POSIX_MADV_NORMAL)) {
-#  else
   if (madvise(reinterpret_cast<void*>(aRegion), aSize, MADV_NORMAL)) {
-#  endif
     return true;
   }
   return false;

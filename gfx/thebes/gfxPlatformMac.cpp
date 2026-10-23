@@ -17,10 +17,8 @@
 #include "mozilla/VsyncDispatcher.h"
 #include "mozilla/gfx/2D.h"
 #include "nsTArray.h"
-#ifdef MOZ_WIDGET_COCOA
 #  include "mozilla/MacAutoreleasePool.h"
 #  include "nsCocoaFeatures.h"
-#endif
 #include "GeckoProfiler.h"
 #include "gfx2DGlue.h"
 #include "nsComponentManagerUtils.h"
@@ -47,13 +45,8 @@ using namespace mozilla::unicode;
 
 using mozilla::dom::SystemFontList;
 
-#ifdef MOZ_WIDGET_COCOA
 #  include "gfxMacPlatformFontList.h"
 using PlatformFontListClass = gfxMacPlatformFontList;
-#else
-#  include "IOSPlatformFontList.h"
-using PlatformFontListClass = IOSPlatformFontList;
-#endif
 
 // A bunch of fonts for "additional language support" are shipped in a
 // "Language Support" directory, and don't show up in the standard font
@@ -68,12 +61,10 @@ void gfxPlatformMac::FontRegistrationCallback(void* aUnused) {
   AUTO_PROFILER_REGISTER_THREAD("RegisterFonts");
   PR_SetCurrentThreadName("RegisterFonts");
 
-#ifdef MOZ_WIDGET_COCOA
   // ActivateFontsFromDir calls Apple font code that autoreleases many
   // Objective-C objects. There needs to be an autorelease pool in place for
   // these objects otherwise we'll leak them.
   mozilla::MacAutoreleasePool pool;
-#endif
 
   for (const auto& dir : kLangFontsDirs) {
     PlatformFontListClass::ActivateFontsFromDir(dir);
@@ -733,7 +724,6 @@ uint32_t gfxPlatformMac::ReadAntiAliasingThreshold() {
 
 bool gfxPlatformMac::AccelerateLayersByDefault() { return true; }
 
-#ifdef MOZ_WIDGET_COCOA
 // This is the renderer output callback function, called on the vsync thread
 static CVReturn VsyncCallback(CVDisplayLinkRef aDisplayLink,
                               const CVTimeStamp* aNow,
@@ -1018,11 +1008,9 @@ static CVReturn VsyncCallback(CVDisplayLinkRef aDisplayLink,
   vsyncSource->NotifyVsync(previousVsync, outputTime);
   return kCVReturnSuccess;
 }
-#endif
 
 already_AddRefed<mozilla::gfx::VsyncSource>
 gfxPlatformMac::CreateGlobalHardwareVsyncSource() {
-#ifdef MOZ_WIDGET_COCOA
   RefPtr<VsyncSource> osxVsyncSource = new OSXVsyncSource();
   osxVsyncSource->EnableVsync();
   if (!osxVsyncSource->IsVsyncEnabled()) {
@@ -1033,10 +1021,6 @@ gfxPlatformMac::CreateGlobalHardwareVsyncSource() {
 
   osxVsyncSource->DisableVsync();
   return osxVsyncSource.forget();
-#else
-  // TODO: CADisplayLink
-  return GetSoftwareVsyncSource();
-#endif
 }
 
 nsTArray<uint8_t> gfxPlatformMac::GetPlatformCMSOutputProfileData() {
@@ -1046,9 +1030,7 @@ nsTArray<uint8_t> gfxPlatformMac::GetPlatformCMSOutputProfileData() {
   }
 
   CGColorSpaceRef cspace = nil;
-#ifdef MOZ_WIDGET_COCOA
   cspace = ::CGDisplayCopyColorSpace(::CGMainDisplayID());
-#endif
   if (!cspace) {
     cspace = ::CGColorSpaceCreateDeviceRGB();
   }

@@ -27,9 +27,6 @@
 #include "nsISupports.h"
 #include "nsWeakReference.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 class nsAtom;
 class nsISerialEventTarget;

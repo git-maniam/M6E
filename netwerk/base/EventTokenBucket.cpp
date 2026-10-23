@@ -16,10 +16,6 @@
 #  include "MainThreadUtils.h"
 #endif
 
-#ifdef XP_WIN
-#  include <mmsystem.h>
-#  include <windows.h>
-#endif
 
 namespace mozilla {
 namespace net {
@@ -77,11 +73,6 @@ EventTokenBucket::EventTokenBucket(uint32_t eventsPerSecond, uint32_t burstSize)
       mPaused(false),
       mStopped(false),
       mTimerArmed(false)
-#ifdef XP_WIN
-      ,
-      mFineGrainTimerInUse(false),
-      mFineGrainResetTimerArmed(false)
-#endif
 {
   mLastUpdate = TimeStamp::Now();
 
@@ -117,14 +108,6 @@ void EventTokenBucket::CleanupTimers() {
   mTimer = nullptr;
   mTimerArmed = false;
 
-#ifdef XP_WIN
-  NormalTimers();
-  if (mFineGrainResetTimer && mFineGrainResetTimerArmed) {
-    mFineGrainResetTimer->Cancel();
-  }
-  mFineGrainResetTimer = nullptr;
-  mFineGrainResetTimerArmed = false;
-#endif
 }
 
 void EventTokenBucket::SetRate(uint32_t eventsPerSecond, uint32_t burstSize) {
@@ -255,9 +238,6 @@ void EventTokenBucket::DispatchEvents() {
     }
   }
 
-#ifdef XP_WIN
-  if (!mEvents.GetSize()) WantNormalTimers();
-#endif
 }
 
 void EventTokenBucket::UpdateTimer() {
@@ -281,9 +261,6 @@ void EventTokenBucket::UpdateTimer() {
     msecWait = 60000;
   }
 
-#ifdef XP_WIN
-  FineGrainTimers();
-#endif
 
   SOCKET_LOG(
       ("EventTokenBucket::UpdateTimer %p for %" PRIu64 "ms\n", this, msecWait));
@@ -296,12 +273,6 @@ NS_IMETHODIMP
 EventTokenBucket::Notify(nsITimer* timer) {
   MOZ_ASSERT(OnSocketThread(), "not on socket thread");
 
-#ifdef XP_WIN
-  if (timer == mFineGrainResetTimer) {
-    FineGrainResetTimerNotify();
-    return NS_OK;
-  }
-#endif
 
   SOCKET_LOG(("EventTokenBucket::Notify() %p\n", this));
   mTimerArmed = false;
@@ -334,77 +305,6 @@ void EventTokenBucket::UpdateCredits() {
               this, mCredit, mUnitCost, (double)mCredit / mUnitCost));
 }
 
-#ifdef XP_WIN
-void EventTokenBucket::FineGrainTimers() {
-  SOCKET_LOG(("EventTokenBucket::FineGrainTimers %p mFineGrainTimerInUse=%d\n",
-              this, mFineGrainTimerInUse));
-
-  mLastFineGrainTimerUse = TimeStamp::Now();
-
-  if (mFineGrainTimerInUse) return;
-
-  if (mUnitCost > kCostFineGrainThreshold) return;
-
-  SOCKET_LOG(
-      ("EventTokenBucket::FineGrainTimers %p timeBeginPeriod()\n", this));
-
-  mFineGrainTimerInUse = true;
-  timeBeginPeriod(1);
-}
-
-void EventTokenBucket::NormalTimers() {
-  if (!mFineGrainTimerInUse) return;
-  mFineGrainTimerInUse = false;
-
-  SOCKET_LOG(("EventTokenBucket::NormalTimers %p timeEndPeriod()\n", this));
-  timeEndPeriod(1);
-}
-
-void EventTokenBucket::WantNormalTimers() {
-  if (!mFineGrainTimerInUse) return;
-  if (mFineGrainResetTimerArmed) return;
-
-  TimeDuration elapsed(TimeStamp::Now() - mLastFineGrainTimerUse);
-  static const TimeDuration fiveSeconds = TimeDuration::FromSeconds(5);
-
-  if (elapsed >= fiveSeconds) {
-    NormalTimers();
-    return;
-  }
-
-  if (!mFineGrainResetTimer) mFineGrainResetTimer = NS_NewTimer();
-
-  // if we can't delay the reset, just do it now
-  if (!mFineGrainResetTimer) {
-    NormalTimers();
-    return;
-  }
-
-  // pad the callback out 100ms to avoid having to round trip this again if the
-  // timer calls back just a tad early.
-  SOCKET_LOG(
-      ("EventTokenBucket::WantNormalTimers %p "
-       "Will reset timer granularity after delay",
-       this));
-
-  mFineGrainResetTimer->InitWithCallback(
-      this,
-      static_cast<uint32_t>((fiveSeconds - elapsed).ToMilliseconds()) + 100,
-      nsITimer::TYPE_ONE_SHOT);
-  mFineGrainResetTimerArmed = true;
-}
-
-void EventTokenBucket::FineGrainResetTimerNotify() {
-  SOCKET_LOG(("EventTokenBucket::FineGrainResetTimerNotify(%p) events = %zd\n",
-              this, mEvents.GetSize()));
-  mFineGrainResetTimerArmed = false;
-
-  // If we are currently processing events then wait for the queue to drain
-  // before trying to reset back to normal timers again
-  if (!mEvents.GetSize()) WantNormalTimers();
-}
-
-#endif
 
 }  // namespace net
 }  // namespace mozilla

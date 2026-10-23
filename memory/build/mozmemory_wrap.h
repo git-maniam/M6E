@@ -105,14 +105,7 @@
 #ifdef MOZ_MEMORY_IMPL
 #  define MOZ_JEMALLOC_API MOZ_EXTERN_C MFBT_API
 #  define MOZ_JEMALLOC_API_NODISCARD MOZ_EXTERN_C [[nodiscard]] MFBT_API
-#  if defined(XP_WIN)
-#    define mozmem_malloc_impl(a) je_##a
-#  else
 #    define MOZ_MEMORY_API MOZ_EXTERN_C MFBT_API
-#  endif
-#endif
-#ifdef XP_WIN
-#  define mozmem_dup_impl(a) wrap_##a
 #endif
 
 #if !defined(MOZ_MEMORY_IMPL)
@@ -151,17 +144,7 @@
 // Duplication functions
 #define strndup_impl mozmem_dup_impl(strndup)
 #define strdup_impl mozmem_dup_impl(strdup)
-#ifdef XP_WIN
-#  define wcsdup_impl mozmem_dup_impl(wcsdup)
-#  define _aligned_malloc_impl mozmem_dup_impl(_aligned_malloc)
-#endif
 
 // String functions
-#ifdef ANDROID
-// Bug 801571 and Bug 879668, libstagefright uses vasprintf, causing malloc()/
-// free() to be mismatched between bionic and mozglue implementation.
-#  define vasprintf_impl mozmem_dup_impl(vasprintf)
-#  define asprintf_impl mozmem_dup_impl(asprintf)
-#endif
 
 #endif  // mozmemory_wrap_h

@@ -9,9 +9,6 @@
 #include "mozilla/gfx/Logging.h"
 #include "nsDebug.h"
 
-#ifdef WIN32
-#  include <windows.h>
-#endif
 
 namespace mozilla {
 namespace gl {

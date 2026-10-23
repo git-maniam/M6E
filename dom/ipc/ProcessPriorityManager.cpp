@@ -39,13 +39,7 @@ using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::hal;
 
-#ifdef XP_WIN
-#  include <process.h>
-#  include <windows.h>
-#  define getpid _getpid
-#else
 #  include <unistd.h>
-#endif
 
 #ifdef LOG
 #  undef LOG
@@ -59,18 +53,7 @@ using namespace mozilla::hal;
 
 // #define ENABLE_LOGGING 1
 
-#if defined(ANDROID) && defined(ENABLE_LOGGING)
-#  include <android/log.h>
-#  define LOG(fmt, ...)                                                        \
-    __android_log_print(ANDROID_LOG_INFO, "Gecko:ProcessPriorityManager", fmt, \
-                        ##__VA_ARGS__)
-#  define LOGP(fmt, ...)                                                \
-    __android_log_print(                                                \
-        ANDROID_LOG_INFO, "Gecko:ProcessPriorityManager",               \
-        "[%schild-id=%" PRIu64 ", pid=%d] " fmt, NameWithComma().get(), \
-        static_cast<uint64_t>(ChildID()), Pid(), ##__VA_ARGS__)
-
-#elif defined(ENABLE_LOGGING)
+#if   defined(ENABLE_LOGGING)
 #  define LOG(fmt, ...) \
     printf("ProcessPriorityManager - " fmt "\n", ##__VA_ARGS__)
 #  define LOGP(fmt, ...)                                                   \
@@ -418,12 +401,6 @@ void ProcessPriorityManagerImpl::Init() {
   // priority manager.
   SetProcessPriorityIfEnabled(getpid(), PROCESS_PRIORITY_PARENT_PROCESS);
 
-#ifdef XP_WIN
-  if (StaticPrefs::
-          dom_ipc_processPriorityManager_foregroundRaisesMainThreadPriority()) {
-    ::SetThreadPriority(::GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
-  }
-#endif
 
   nsCOMPtr<nsIObserverService> os = services::GetObserverService();
   if (os) {
@@ -757,7 +734,6 @@ ProcessPriority ParticularProcessPriorityManager::ComputePriority() {
   return PROCESS_PRIORITY_BACKGROUND;
 }
 
-#ifdef XP_MACOSX
 // Method used for setting QoS levels on background main threads.
 static bool PriorityUsesLowPowerMainThread(
     const hal::ProcessPriority& aPriority) {
@@ -770,7 +746,6 @@ static bool PrefsUseLowPriorityThreads() {
   return StaticPrefs::threads_use_low_power_enabled() &&
          StaticPrefs::threads_lower_mainthread_priority_in_background_enabled();
 }
-#endif
 
 void ParticularProcessPriorityManager::SetPriorityNow(
     ProcessPriority aPriority) {
@@ -815,7 +790,6 @@ void ParticularProcessPriorityManager::SetPriorityNow(
     ProcessPriorityManagerImpl::GetSingleton()->NotifyProcessPriorityChanged(
         this, oldPriority);
 
-#ifdef XP_MACOSX
     // In cases where we have low-power threads enabled (such as on MacOS) we
     // can go ahead and put the main thread in the background here. If the new
     // priority is the background priority, we can tell the OS to put the main
@@ -842,7 +816,6 @@ void ParticularProcessPriorityManager::SetPriorityNow(
             nsIThread::QOS_PRIORITY_NORMAL);
       }
     }
-#endif
 
     (void)mContentParent->SendNotifyProcessPriorityChanged(mPriority);
   }

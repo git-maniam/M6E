@@ -5,11 +5,6 @@
 #include "mozilla/GeckoTrace.h"
 #include "mozilla/ipc/UtilityProcessManager.h"
 
-#if defined(XP_WIN)
-#  include <dwrite.h>
-#  include <process.h>
-#  include "mozilla/WinDllServices.h"
-#endif
 
 #include "mozilla/ipc/ProcessChild.h"
 #include "mozilla/FOGIPC.h"
@@ -73,21 +68,6 @@ mozilla::ipc::IPCResult UtilityProcessParent::RecvGeckoTraceExport(
   return IPC_OK();
 }
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult UtilityProcessParent::RecvGetModulesTrust(
-    ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-    GetModulesTrustResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetModulesTrust(std::move(aModIdents), aRunAtNormalPriority)
-      ->Then(
-          GetMainThreadSerialEventTarget(), __func__,
-          [aResolver](ModulesMapResult&& aResult) {
-            aResolver(Some(ModulesMapResult(std::move(aResult))));
-          },
-          [aResolver](nsresult aRv) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 mozilla::ipc::IPCResult UtilityProcessParent::RecvAccumulateChildHistograms(
     nsTArray<HistogramAccumulation>&& aAccumulations) {

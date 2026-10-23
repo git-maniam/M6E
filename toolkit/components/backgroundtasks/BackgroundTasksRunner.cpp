@@ -10,9 +10,6 @@
 #include "mozilla/StaticPrefs_toolkit.h"
 #include "nsIFile.h"
 
-#ifdef XP_WIN
-#  include "mozilla/AssembleCmdLine.h"
-#endif
 
 namespace mozilla {
 
@@ -25,34 +22,11 @@ NS_IMETHODIMP BackgroundTasksRunner::RunInDetachedProcess(
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsAutoCString exePath;
-#if !defined(XP_WIN)
   rv = lf->GetNativePath(exePath);
-#else
-  rv = lf->GetNativeTarget(exePath);
-#endif
   NS_ENSURE_SUCCESS(rv, rv);
 
   base::LaunchOptions options;
   nsPromiseFlatCString flatTaskName(aTaskName);
-#ifdef XP_WIN
-  options.start_independent = true;
-
-  nsTArray<const char*> argv = {exePath.get(), "--backgroundtask",
-                                flatTaskName.get()};
-  for (const nsCString& str : aArgs) {
-    argv.AppendElement(str.get());
-  }
-  argv.AppendElement(nullptr);
-
-  wchar_t* assembledCmdLine = nullptr;
-  if (assembleCmdLine(argv.Elements(), &assembledCmdLine, CP_UTF8) == -1) {
-    return NS_ERROR_FAILURE;
-  }
-
-  if (base::LaunchApp(assembledCmdLine, options, nullptr).isErr()) {
-    return NS_ERROR_FAILURE;
-  }
-#else
   std::vector<std::string> argv = {exePath.get(), "--backgroundtask",
                                    flatTaskName.get()};
   for (const nsCString& str : aArgs) {
@@ -62,7 +36,6 @@ NS_IMETHODIMP BackgroundTasksRunner::RunInDetachedProcess(
   if (base::LaunchApp(argv, std::move(options), nullptr).isErr()) {
     return NS_ERROR_FAILURE;
   }
-#endif
 
   return NS_OK;
 }

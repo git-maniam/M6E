@@ -24,12 +24,6 @@
 #include "nsIURI.h"
 #include "nsNetUtil.h"
 #include "nsSandboxFlags.h"
-#if defined(XP_WIN)
-#  include <wininet.h>
-
-#  include "WinUtils.h"
-#  include "mozilla/WinHeaderOnlyUtils.h"
-#endif
 
 #include "FramingChecker.h"
 #include "LoadInfo.h"
@@ -333,10 +327,6 @@ FilenameTypeAndDetails nsContentSecurityUtils::FilenameToFilenameType(
   static constexpr auto kOtherExtensionFile = "otherextension_file"_ns;
   static constexpr auto kExtensionURI = "extension_uri"_ns;
   static constexpr auto kSuspectedUserChromeJS = "suspectedUserChromeJS"_ns;
-#if defined(XP_WIN)
-  static constexpr auto kSanitizedWindowsURL = "sanitizedWindowsURL"_ns;
-  static constexpr auto kSanitizedWindowsPath = "sanitizedWindowsPath"_ns;
-#endif
   static constexpr auto kOther = "other"_ns;
   static constexpr auto kOtherWorker = "other-on-worker"_ns;
   static constexpr auto kRegexFailure = "regexfailure"_ns;
@@ -502,33 +492,6 @@ FilenameTypeAndDetails nsContentSecurityUtils::FilenameToFilenameType(
     return FilenameTypeAndDetails(kExtensionURI, Some(sanitizedPathAndScheme));
   }
 
-#if defined(XP_WIN)
-  auto flags = mozilla::widget::WinUtils::PathTransformFlags::Default |
-               mozilla::widget::WinUtils::PathTransformFlags::RequireFilePath;
-  const NS_ConvertUTF8toUTF16 fileNameA(fileName);
-  nsAutoString strSanitizedPath(fileNameA);
-  if (widget::WinUtils::PreparePathForTelemetry(strSanitizedPath, flags)) {
-    DWORD cchDecodedUrl = INTERNET_MAX_URL_LENGTH;
-    WCHAR szOut[INTERNET_MAX_URL_LENGTH];
-    HRESULT hr;
-    SAFECALL_URLMON_FUNC(CoInternetParseUrl, fileNameA.get(), PARSE_SCHEMA, 0,
-                         szOut, INTERNET_MAX_URL_LENGTH, &cchDecodedUrl, 0);
-    if (hr == S_OK && cchDecodedUrl) {
-      nsAutoString sanitizedPathAndScheme;
-      sanitizedPathAndScheme.Append(szOut);
-      if (sanitizedPathAndScheme == u"file"_ns) {
-        sanitizedPathAndScheme.Append(u"://.../"_ns);
-        sanitizedPathAndScheme.Append(strSanitizedPath);
-      }
-      return FilenameTypeAndDetails(
-          kSanitizedWindowsURL,
-          Some(NS_ConvertUTF16toUTF8(sanitizedPathAndScheme)));
-    } else {
-      return FilenameTypeAndDetails(
-          kSanitizedWindowsPath, Some(NS_ConvertUTF16toUTF8(strSanitizedPath)));
-    }
-  }
-#endif
 
   if (!NS_IsMainThread()) {
     return FilenameTypeAndDetails(kOtherWorker, Nothing());
@@ -774,11 +737,7 @@ bool nsContentSecurityUtils::IsEvalAllowed(JSContext* cx,
   MOZ_CRASH_UNSAFE_PRINTF("%s", crashString.get());
 #endif
 
-#if defined(ANDROID) && !defined(NIGHTLY_BUILD)
-  return true;
-#else
   return false;
-#endif
 }
 
 /* static */
@@ -1872,9 +1831,6 @@ void nsContentSecurityUtils::AssertAboutPageHasCSP(Document* aDocument) {
       // ->
       // no CSP
       "about:sync"_ns,
-#  if defined(ANDROID)
-      "about:config"_ns,
-#  endif
   };
 
   for (const nsLiteralCString& allowlistEntry : sAllowedAboutPagesWithNoCSP) {

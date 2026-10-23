@@ -43,9 +43,6 @@
 #include "nsQueryObject.h"
 #include "private/pprio.h"
 
-#ifdef XP_WIN
-#  include <fcntl.h>
-#endif
 
 mozilla::LazyLogModule gLlamaRunnerLog("GeckoMLLlamaRunnerNative");
 
@@ -790,19 +787,8 @@ void LlamaRunner::OnMetadataReceived() {
     return;
   }
 
-#ifdef XP_WIN
-  // _open_osfhandle() takes ownership of the duplicated handle.
-  // FileHandleHelper implicitly converts to intptr_t on Windows.
-  int fd = _open_osfhandle(dupHandle.release(), _O_RDONLY);
-  if (fd == -1) {
-    LOGE_RUNNER("Convertion to integer fd failed");
-    return;
-  }
-  FILE* fp = fdopen(fd, "rb");
-#else
   // fdopen() takes ownership of the duplicated fd.
   FILE* fp = fdopen(dupHandle.release(), "r");
-#endif
   if (!fp) {
     LOGE_RUNNER("Conversion to FILE* failed");
     return;

@@ -84,9 +84,6 @@
 #include "WebGLValidateStrings.h"
 #include "WebGLVertexArray.h"
 
-#ifdef XP_WIN
-#  include "WGLLibrary.h"
-#endif
 
 // Generated
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
@@ -343,20 +340,6 @@ bool WebGLContext::CreateAndInitGL(
   bool tryNativeGL = true;
   bool tryANGLE = false;
 
-#ifdef XP_WIN
-  tryNativeGL = false;
-  tryANGLE = true;
-
-  if (StaticPrefs::webgl_disable_wgl()) {
-    tryNativeGL = false;
-  }
-
-  if (StaticPrefs::webgl_disable_angle() ||
-      PR_GetEnv("MOZ_WEBGL_FORCE_OPENGL") || useEGL) {
-    tryNativeGL = true;
-    tryANGLE = false;
-  }
-#elif defined(XP_MACOSX)
   if (gfx::gfxVars::AllowMetalAngleWebGL() &&
       !StaticPrefs::webgl_disable_angle() &&
       // Metal does not expose a software renderer. Fall back to native (CGL) if
@@ -365,7 +348,6 @@ bool WebGLContext::CreateAndInitGL(
     tryNativeGL = false;
     tryANGLE = true;
   }
-#endif
 
   if (tryNativeGL && !forceEnabled) {
     FailureReason reason;
@@ -582,13 +564,6 @@ RefPtr<WebGLContext> WebGLContext::Create(HostWebGLContext* host,
             " hardware-accelerated.");
       }
 
-#ifdef XP_WIN
-      if (webgl->gl->GetContextType() == gl::GLContextType::WGL &&
-          !gl::sWGLLib.HasDXInterop2()) {
-        failureId = "FEATURE_FAILURE_WEBGL_DXGL_INTEROP2"_ns;
-        return Err("failIfMajorPerformanceCaveat: WGL without DXGLInterop2.");
-      }
-#endif
     }
 
     const FuncScope funcScope(*webgl, "getContext/restoreContext");

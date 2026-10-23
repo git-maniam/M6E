@@ -743,11 +743,9 @@ void nsXULPopupManager::ShowMenu(nsIContent* aMenu, bool aSelectFirstItem) {
 
   nsAutoString position;
 
-#ifdef XP_MACOSX
   if (aMenu->IsXULElement(nsGkAtoms::menulist)) {
     position.AssignLiteral("selection");
   } else
-#endif
 
       if (onMenuBar || !onmenu) {
     position.AssignLiteral("after_start");
@@ -855,7 +853,6 @@ void nsXULPopupManager::ShowPopup(Element* aPopup, nsIContent* aAnchorContent,
     return;
   }
 
-#ifdef XP_MACOSX
   if (aAnchorContent) {
     if (ShowPopupAtAnchorAsNativeMenu(aAnchorContent, aPopup, aPosition,
                                       aAttributesOverride, aTriggerEvent)) {
@@ -871,7 +868,6 @@ void nsXULPopupManager::ShowPopup(Element* aPopup, nsIContent* aAnchorContent,
       return;
     }
   }
-#endif
 
   PendingPopup pendingPopup(aPopup, aTriggerEvent);
   nsCOMPtr<nsIContent> triggerContent = pendingPopup.GetTriggerContent();
@@ -887,11 +883,9 @@ bool nsXULPopupManager::ShowPopupAtAnchorAsNativeMenu(
     nsIContent* aAnchorContent, Element* aPopup, const nsAString& aPosition,
     bool aAttributesOverride, Event* aTriggerEvent) {
   if (!ShouldUseNativeAnchoredMenus()) {
-#ifdef XP_MACOSX
     // When native menus are disabled, add the nonnative attribute so that
     // CSS can be conditionally applied where necessary.
     aPopup->SetBoolAttr(nsGkAtoms::nonnative, true);
-#endif
     return false;
   }
 
@@ -2106,14 +2100,12 @@ bool nsXULPopupManager::MayShowPopup(nsMenuPopupFrame* aPopup) {
     return false;
   }
 
-#ifdef XP_MACOSX
   if (rootWin) {
     auto globalWin = nsGlobalWindowOuter::Cast(rootWin.get());
     if (globalWin->IsInModalState()) {
       return false;
     }
   }
-#endif
 
   // cannot open a popup that is a submenu of a menupopup that isn't open.
   if (auto* menu = aPopup->PopupElement().GetContainingMenu()) {
@@ -2364,12 +2356,6 @@ void nsXULPopupManager::CancelMenuTimer(nsMenuPopupFrame* aMenu) {
 bool nsXULPopupManager::HandleShortcutNavigation(KeyboardEvent& aKeyEvent,
                                                  nsMenuPopupFrame* aFrame) {
   // On Windows, don't check shortcuts when the accelerator key is down.
-#ifdef XP_WIN
-  WidgetInputEvent* evt = aKeyEvent.WidgetEventPtr()->AsInputEvent();
-  if (evt && evt->IsAccel()) {
-    return false;
-  }
-#endif
 
   if (!aFrame) {
     if (nsMenuChainItem* item = GetTopVisibleMenu()) {
@@ -2399,16 +2385,6 @@ bool nsXULPopupManager::HandleShortcutNavigation(KeyboardEvent& aKeyEvent,
       result->OpenMenuPopup(true);
       return true;
     }
-#ifdef XP_WIN
-    // Behavior on Windows - this item is on the menu bar, beep and deactivate
-    // the menu bar.
-    // TODO(emilio): This is rather odd, and I cannot get the beep to work,
-    // but this matches what old code was doing...
-    if (nsCOMPtr<nsISound> sound = do_GetService("@mozilla.org/sound;1")) {
-      sound->Beep();
-    }
-    menubar->SetActive(false);
-#endif
   }
   return false;
 }
@@ -2464,21 +2440,6 @@ bool nsXULPopupManager::HandleKeyboardNavigation(uint32_t aKeyCode) {
   theDirection = NS_DIRECTION_FROM_KEY_CODE(itemFrame, aKeyCode);
 
   bool selectFirstItem = true;
-#ifdef MOZ_WIDGET_GTK
-  {
-    XULButtonElement* currentItem = nullptr;
-    if (item && mActiveMenuBar && NS_DIRECTION_IS_INLINE(theDirection)) {
-      currentItem = item->Frame()->PopupElement().GetActiveMenuChild();
-      // If nothing is selected in the menu and we have a menubar, let it
-      // handle the movement not to steal focus from it.
-      if (!currentItem) {
-        item = nullptr;
-      }
-    }
-    // On menu change, only select first item if an item is already selected.
-    selectFirstItem = !!currentItem;
-  }
-#endif
 
   // if a popup is open, first check for navigation within the popup
   if (item && HandleKeyboardNavigationInPopup(item, theDirection)) {
@@ -2560,13 +2521,7 @@ bool nsXULPopupManager::HandleKeyboardNavigationInPopup(
         aDir == eNavigationDirection_After) {
       // Cursor navigation does not wrap on Mac or for menulists on Windows.
       auto wrap =
-#ifdef XP_WIN
-          aFrame->IsMenuList() ? Wrap::No : Wrap::Yes;
-#elif defined XP_MACOSX
           Wrap::No;
-#else
-          Wrap::Yes;
-#endif
 
       if (aDir == eNavigationDirection_Before) {
         nextItem = menu->GetPrevMenuItem(wrap);
@@ -2615,15 +2570,6 @@ bool nsXULPopupManager::HandleKeyboardEventWithKeyCode(
   switch (keyCode) {
     case KeyboardEvent_Binding::DOM_VK_UP:
     case KeyboardEvent_Binding::DOM_VK_DOWN:
-#ifndef XP_MACOSX
-      // roll up the popup when alt+up/down are pressed within a menulist.
-      if (aKeyEvent->AltKey() && aTopVisibleMenuItem &&
-          aTopVisibleMenuItem->Frame()->IsMenuList()) {
-        Rollup({});
-        break;
-      }
-      [[fallthrough]];
-#endif
 
     case KeyboardEvent_Binding::DOM_VK_LEFT:
     case KeyboardEvent_Binding::DOM_VK_RIGHT:
@@ -2654,9 +2600,6 @@ bool nsXULPopupManager::HandleKeyboardEventWithKeyCode(
       break;
 
     case KeyboardEvent_Binding::DOM_VK_TAB:
-#ifndef XP_MACOSX
-    case KeyboardEvent_Binding::DOM_VK_F10:
-#endif
       if (aTopVisibleMenuItem &&
           !aTopVisibleMenuItem->Frame()->PopupElement().AttrValueIs(
               kNameSpaceID_None, nsGkAtoms::activateontab, nsGkAtoms::_true,

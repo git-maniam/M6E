@@ -10,11 +10,9 @@
 #include <queue>
 #include <set>
 
-#ifdef XP_MACOSX
 // ensure that Apple Security kit enum goes before "sslproto.h"
 #  include <CoreFoundation/CFAvailability.h>
 #  include <Security/CipherSuite.h>
-#endif
 
 #include "ScopedNSSTypes.h"
 #include "dtlsidentity.h"

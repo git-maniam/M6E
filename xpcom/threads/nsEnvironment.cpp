@@ -39,7 +39,6 @@ nsEnvironment::Exists(const nsAString& aName, bool* aOutValue) {
   }
 
   nsAutoCString nativeVal;
-#if defined(XP_UNIX)
   /* For Unix/Linux platforms we follow the Unix definition:
    * An environment variable exists when |getenv()| returns a non-nullptr
    * value. An environment variable does not exist when |getenv()| returns
@@ -47,16 +46,6 @@ nsEnvironment::Exists(const nsAString& aName, bool* aOutValue) {
    */
   const char* value = PR_GetEnv(nativeName.get());
   *aOutValue = value && *value;
-#else
-  /* For non-Unix/Linux platforms we have to fall back to a
-   * "portable" definition (which is incorrect for Unix/Linux!!!!)
-   * which simply checks whether the string returned by |Get()| is empty
-   * or not.
-   */
-  nsAutoString value;
-  Get(aName, value);
-  *aOutValue = !value.IsEmpty();
-#endif /* XP_UNIX */
 
   return NS_OK;
 }

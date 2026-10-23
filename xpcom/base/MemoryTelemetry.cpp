@@ -56,12 +56,6 @@ static constexpr unsigned kPokeWindowSeconds = 1;
 namespace {
 
 enum class PrevValue : uint32_t {
-#ifdef XP_WIN
-  low_memory_events_physical,
-#endif
-#if defined(XP_LINUX) && !defined(ANDROID)
-  page_faults_hard,
-#endif
   SIZE_,
 };
 
@@ -310,12 +304,6 @@ nsresult MemoryTelemetry::GatherReports(
   RECORD_COUNT(js_realms_user, JSMainRuntimeRealmsUser);
   RECORD_BYTES(images_content_used_uncompressed, ImagesContentUsedUncompressed);
   RECORD_BYTES(storage_sqlite, StorageSQLite);
-#ifdef XP_WIN
-  RECORD_COUNT_CUMULATIVE(low_memory_events_physical, LowMemoryEventsPhysical);
-#endif
-#if defined(XP_LINUX) && !defined(ANDROID)
-  RECORD_COUNT_CUMULATIVE(page_faults_hard, PageFaultsHard);
-#endif
 
 #ifdef HAVE_JEMALLOC_STATS
   jemalloc_stats_t stats;
@@ -345,16 +333,11 @@ nsresult MemoryTelemetry::GatherReports(
 #if !defined(HAVE_64BIT_BUILD)
         RECORD_BYTES(vsize, Vsize);
 #endif
-#if !defined(HAVE_64BIT_BUILD) || !defined(XP_WIN)
         RECORD_BYTES(vsize_max_contiguous, VsizeMaxContiguous);
-#endif
         RECORD_BYTES_PER_PROCESS(resident_fast, ResidentFast);
         RECORD_BYTES_PER_PROCESS(resident_peak, ResidentPeak);
 // Although we can measure unique memory on MacOS we choose not to, because
 // doing so is too slow for telemetry.
-#ifndef XP_MACOSX
-        RECORD_BYTES_PER_PROCESS(unique, ResidentUnique);
-#endif
 
         if (completionRunnable) {
           NS_DispatchToMainThread(completionRunnable.forget(),
@@ -375,13 +358,7 @@ nsresult MemoryTelemetry::GatherReports(
 namespace {
 struct ChildProcessInfo {
   GeckoProcessType mType;
-#if defined(XP_WIN)
-  HANDLE mHandle;
-#elif defined(XP_MACOSX)
   task_t mHandle;
-#else
-  pid_t mHandle;
-#endif
 };
 }  // namespace
 
@@ -409,22 +386,11 @@ void MemoryTelemetry::GatherTotalMemory() {
       continue;
     }
 
-#if defined(XP_WIN)
-    if (!::DuplicateHandle(::GetCurrentProcess(),
-                           geckoProcess->GetChildProcessHandle(),
-                           ::GetCurrentProcess(), &info.mHandle, 0, false,
-                           DUPLICATE_SAME_ACCESS)) {
-      continue;
-    }
-#elif defined(XP_MACOSX)
     info.mHandle = geckoProcess->GetChildTask();
     if (mach_port_mod_refs(mach_task_self(), info.mHandle, MACH_PORT_RIGHT_SEND,
                            1) != KERN_SUCCESS) {
       continue;
     }
-#else
-    info.mHandle = geckoProcess->GetChildProcessId();
-#endif
 
     infos.AppendElement(info);
   }
@@ -444,13 +410,8 @@ void MemoryTelemetry::GatherTotalMemory() {
         // size information for that process.
         bool success = true;
         for (const auto& info : infos) {
-#ifdef XP_MACOSX
           int64_t memory =
               nsMemoryReporterManager::PhysicalFootprint(info.mHandle);
-#else
-          int64_t memory =
-              nsMemoryReporterManager::ResidentUnique(info.mHandle);
-#endif
           if (memory > 0) {
             childSizes.AppendElement(memory);
             totalMemory += memory;
@@ -460,11 +421,7 @@ void MemoryTelemetry::GatherTotalMemory() {
             success = false;
           }
 
-#if defined(XP_WIN)
-          ::CloseHandle(info.mHandle);
-#elif defined(XP_MACOSX)
           mach_port_deallocate(mach_task_self(), info.mHandle);
-#endif
         }
 
         Maybe<int64_t> mbTotal;

@@ -26,9 +26,6 @@
 #  include "jit/arm64/vixl/Cpu-vixl.h"
 #endif
 
-#if defined(ANDROID)
-#  include <sys/system_properties.h>
-#endif
 
 using namespace js;
 using namespace js::jit;

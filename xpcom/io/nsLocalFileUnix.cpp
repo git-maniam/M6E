@@ -23,9 +23,7 @@
 #include "nsLocalFile.h"
 #include "prtime.h"
 
-#if defined(XP_MACOSX)
 #  include <sys/xattr.h>
-#endif
 
 #if defined(USE_LINUX_QUOTACTL)
 #  include <sys/mount.h>
@@ -46,28 +44,13 @@
 #include "private/pprio.h"
 #include "prlink.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include "nsIGIOService.h"
-#  ifdef MOZ_ENABLE_DBUS
-#    include "mozilla/WidgetUtilsGtk.h"
-#    include "mozilla/widget/AsyncDBus.h"
-#  endif
-#endif
 
-#ifdef MOZ_WIDGET_COCOA
 #  include <Carbon/Carbon.h>
 
 #  include "CocoaFileUtils.h"
 
 static nsresult MacErrorMapper(OSErr inErr);
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include <linux/magic.h>
-
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#  include "nsIMIMEService.h"
-#endif
 
 #include "nsNativeCharsetUtils.h"
 #include "nsTraceRefcnt.h"
@@ -107,20 +90,9 @@ extern "C" int statvfs(const char*, struct statvfs*);
 
 // Check for fast file copy functions:
 //
-#if defined(XP_DARWIN)
 // For macOS and iOS, use copyfile:
 // https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/copyfile.3.html
 #  include <copyfile.h>
-#elif defined(XP_LINUX)
-// Fox Linux, use sendfile.
-// It's faster than the previous naive implementation we had because it avoids
-// memory copies between the kernel and the userspace.
-// Note copy_file_range could be used instead, but requires glibc >= 2.27 (our
-// minimal requirement is glibc 2.17 currently). It provides similar performance
-// to sendfile on ext4 filesystems, but should provide better performance on
-// filesystems with reflink (Btrfs, XFS).
-#  include <sys/sendfile.h>
-#endif
 
 using namespace mozilla;
 
@@ -131,20 +103,6 @@ using namespace mozilla;
       return NS_ERROR_FILE_ACCESS_DENIED;                 \
   } while (0)
 
-#if defined(MOZ_ENABLE_DBUS) && defined(MOZ_WIDGET_GTK)
-// Prefix for files exported through document portal when we are
-// in a sandboxed environment (Flatpak).
-static const nsCString& GetDocumentStorePath() {
-  static const nsDependentCString sDocumentStorePath = [] {
-    nsCString storePath = nsPrintfCString("/run/user/%d/doc/", getuid());
-    // Intentionally put into a ToNewCString copy, rather than just making a
-    // static nsCString to avoid leakchecking errors, since we really want to
-    // leak this string.
-    return nsDependentCString(ToNewCString(storePath), storePath.Length());
-  }();
-  return sDocumentStorePath;
-}
-#endif
 
 static PRTime TimespecToMillis(const struct timespec& aTimeSpec) {
   return PRTime(aTimeSpec.tv_sec) * PR_MSEC_PER_SEC +
@@ -290,11 +248,7 @@ nsLocalFile::nsLocalFile() = default;
 
 nsLocalFile::nsLocalFile(const nsLocalFile& aOther) : mPath(aOther.mPath) {}
 
-#ifdef MOZ_WIDGET_COCOA
 NS_IMPL_ISUPPORTS(nsLocalFile, nsILocalFileMac, nsIFile)
-#else
-NS_IMPL_ISUPPORTS(nsLocalFile, nsIFile)
-#endif
 
 nsresult nsLocalFile::nsLocalFileConstructor(const nsIID& aIID,
                                              void** aInstancePtr) {
@@ -360,11 +314,7 @@ nsLocalFile::InitWithNativePath(const nsACString& aFilePath) {
       // filesystem I/O while creating an `nsIFile`.
 
       mPath =
-#ifdef XP_MACOSX
           "/Users/"_ns
-#else
-          "/home/"_ns
-#endif
           + Substring(aFilePath, 1);
     }
   } else {
@@ -717,126 +667,7 @@ nsLocalFile::HostPath(JSContext* aCx, dom::Promise** aPromise) {
     return result.StealNSResult();
   }
 
-#if defined(MOZ_ENABLE_DBUS) && defined(MOZ_WIDGET_GTK)
-  if (!widget::IsRunningUnderFlatpak() ||
-      !StringBeginsWith(mPath, GetDocumentStorePath())) {
-    retPromise->MaybeResolve(mPath);
-    retPromise.forget(aPromise);
-    return NS_OK;
-  }
-
-  nsCString docId = [this] {
-    auto subPath = Substring(mPath, GetDocumentStorePath().Length());
-    if (auto idx = subPath.Find("/"); idx > 0) {
-      subPath.Truncate(idx);
-    }
-    return nsCString(subPath);
-  }();
-
-  const char kServiceName[] = "org.freedesktop.portal.Documents";
-  const char kDBusPath[] = "/org/freedesktop/portal/documents";
-  const char kInterfaceName[] = "org.freedesktop.portal.Documents";
-
-  widget::CreateDBusProxyForBus(G_BUS_TYPE_SESSION, G_DBUS_PROXY_FLAGS_NONE,
-                                /* aInterfaceInfo = */ nullptr, kServiceName,
-                                kDBusPath, kInterfaceName)
-      ->Then(
-          GetCurrentSerialEventTarget(), __func__,
-          [this, self = RefPtr(this), docId,
-           retPromise](RefPtr<GDBusProxy>&& aProxy) {
-            RefPtr<GVariant> version = dont_AddRef(
-                g_dbus_proxy_get_cached_property(aProxy, "version"));
-            if (!version ||
-                !g_variant_is_of_type(version, G_VARIANT_TYPE_UINT32)) {
-              g_printerr(
-                  "nsIFile: failed to get host path for %s: Invalid value.\n",
-                  mPath.get());
-              retPromise->MaybeReject(NS_ERROR_FAILURE);
-              return;
-            }
-
-            if (g_variant_get_uint32(version) < 5) {
-              g_printerr(
-                  "nsIFile: failed to get host path for %s: Document "
-                  "portal in version 5 is required.\n",
-                  mPath.get());
-              retPromise->MaybeReject(NS_ERROR_NOT_AVAILABLE);
-              return;
-            }
-
-            GVariantBuilder builder;
-            g_variant_builder_init(&builder, G_VARIANT_TYPE("(as)"));
-            g_variant_builder_open(&builder, G_VARIANT_TYPE("as"));
-            g_variant_builder_add(&builder, "s", docId.get());
-            g_variant_builder_close(&builder);
-
-            RefPtr<GVariant> args = dont_AddRef(
-                g_variant_ref_sink(g_variant_builder_end(&builder)));
-
-            if (!args) {
-              g_printerr(
-                  "nsIFile: failed to get host path for %s: "
-                  "Invalid value.\n",
-                  mPath.get());
-              retPromise->MaybeReject(NS_ERROR_FAILURE);
-              return;
-            }
-
-            widget::DBusProxyCall(aProxy, "GetHostPaths", args,
-                                  G_DBUS_CALL_FLAGS_NONE, -1,
-                                  /* cancellable */ nullptr)
-                ->Then(
-                    GetCurrentSerialEventTarget(), __func__,
-                    [this, self = RefPtr(this), docId,
-                     retPromise](RefPtr<GVariant>&& aResult) {
-                      RefPtr<GVariant> result = dont_AddRef(
-                          g_variant_get_child_value(aResult.get(), 0));
-                      if (!g_variant_is_of_type(result,
-                                                G_VARIANT_TYPE("a{say}"))) {
-                        g_printerr(
-                            "nsIFile: failed to get host path for %s: "
-                            "Invalid value.\n",
-                            mPath.get());
-                        retPromise->MaybeReject(NS_ERROR_FAILURE);
-                        return;
-                      }
-
-                      const gchar* key = nullptr;
-                      const gchar* path = nullptr;
-                      GVariantIter* iter = g_variant_iter_new(result);
-
-                      while (
-                          g_variant_iter_loop(iter, "{&s^&ay}", &key, &path)) {
-                        if (g_strcmp0(key, docId.get()) == 0) {
-                          retPromise->MaybeResolve(nsDependentCString(path));
-                          g_variant_iter_free(iter);
-                          return;
-                        }
-                      }
-
-                      g_variant_iter_free(iter);
-                      g_printerr(
-                          "nsIFile: failed to get host path for %s: "
-                          "Invalid value.\n",
-                          mPath.get());
-                      retPromise->MaybeReject(NS_ERROR_FAILURE);
-                    },
-                    [this, self = RefPtr(this),
-                     retPromise](GUniquePtr<GError>&& aError) {
-                      g_printerr(
-                          "nsIFile: failed to get host path for %s: %s.\n",
-                          mPath.get(), aError->message);
-                      retPromise->MaybeReject(NS_ERROR_FAILURE);
-                    });
-          },
-          [this, self = RefPtr(this), retPromise](GUniquePtr<GError>&& aError) {
-            g_printerr("nsIFile: failed to get host path for %s: %s.\n",
-                       mPath.get(), aError->message);
-            retPromise->MaybeReject(NS_ERROR_NOT_AVAILABLE);
-          });
-#else
   retPromise->MaybeResolve(mPath);
-#endif
   retPromise.forget(aPromise);
   return NS_OK;
 }
@@ -1049,32 +880,12 @@ nsresult CopyToFallback(PRFileDesc* oldFD, PRFileDesc* newFD) {
   return NS_OK;
 }
 
-#ifdef XP_DARWIN
 nsresult CopyFastDarwin(int aSrcFd, int aDstFd) {
   return fcopyfile(aSrcFd, aDstFd, nullptr, COPYFILE_DATA) == 0
              ? NS_OK
              : NSRESULT_FOR_ERRNO();
 }
-#endif  // XP_DARWIN
 
-#ifdef XP_LINUX
-nsresult CopyFastLinux(int aSrcFd, int aDstFd) {
-  // sendfile() does not return 0 once the input is fully drained: a further
-  // call instead fails with EINVAL. So track the number of bytes written.
-  struct stat srcStat;
-  if (fstat(aSrcFd, &srcStat) != 0) return NSRESULT_FOR_ERRNO();
-  off_t remaining = srcStat.st_size;
-  while (remaining > 0) {
-    ssize_t n = sendfile(aDstFd, aSrcFd, nullptr, SSIZE_MAX);
-    if (n > 0) {
-      remaining -= n;
-    } else if (!(n < 0 && errno == EINTR)) {
-      return NSRESULT_FOR_ERRNO();
-    }
-  }
-  return NS_OK;
-}
-#endif  // XP_LINUX
 
 // Native, fast implementation of file copy.
 // Returns NS_OK in case of success, an NS_ERROR otherwise, which could indicate
@@ -1082,7 +893,6 @@ nsresult CopyFastLinux(int aSrcFd, int aDstFd) {
 // or, if there is one, that it failed.
 nsresult CopyToFast(int aSrcFd, int aDstFd) {
   nsresult result = NS_ERROR_FAILURE;
-#if defined(XP_LINUX) || defined(XP_DARWIN)
   // Only attempt in the parent process. Content-process sandboxes prohibit
   // these calls and crash rather than returning an error:
   // - Linux: sendfile is not in the seccomp-bpf allowlist; an unrecognised
@@ -1091,13 +901,8 @@ nsresult CopyToFast(int aSrcFd, int aDstFd) {
   // - macOS: fcopyfile is not allowed by Seatbelt; violations abort the
   //   process (security/sandbox/mac/SandboxPolicyContent.h).
   if (XRE_IsParentProcess()) [[likely]] {
-#  if defined(XP_LINUX)
-    result = CopyFastLinux(aSrcFd, aDstFd);
-#  elif defined(XP_DARWIN)
     result = CopyFastDarwin(aSrcFd, aDstFd);
-#  endif
   }
-#endif
   return result;
 }
 
@@ -1199,10 +1004,8 @@ nsLocalFile::CopyToNative(nsIFile* aNewParent, const nsACString& aNewName) {
       return NS_OK;
     }
 
-#if defined(XP_MACOSX)
     bool quarantined = true;
     (void)HasXAttr("com.apple.quarantine"_ns, &quarantined);
-#endif
 
     PRFileDesc* oldFD;
     rv = OpenNSPRFileDesc(PR_RDONLY, myPerms, &oldFD);
@@ -1256,13 +1059,11 @@ nsLocalFile::CopyToNative(nsIFile* aNewParent, const nsACString& aNewName) {
               errno);
 #endif
     }
-#if defined(XP_MACOSX)
     else if (!quarantined) {
       // If the original file was not in quarantine, lift the quarantine that
       // file creation added because of LSFileQuarantineEnabled.
       (void)newFile->DelXAttr("com.apple.quarantine"_ns);
     }
-#endif  // defined(XP_MACOSX)
 
     if (PR_Close(oldFD) < 0) {
       saved_read_close_error = NSRESULT_FOR_ERRNO();
@@ -1406,19 +1207,11 @@ nsresult nsLocalFile::GetTimeImpl(PRTime* aTime,
   struct timespec* timespec;
   switch (aTimeField) {
     case TimeField::AccessedTime:
-#if (defined(__APPLE__) && defined(__MACH__))
       timespec = &fileStats.st_atimespec;
-#else
-      timespec = &fileStats.st_atim;
-#endif
       break;
 
     case TimeField::ModifiedTime:
-#if (defined(__APPLE__) && defined(__MACH__))
       timespec = &fileStats.st_mtimespec;
-#else
-      timespec = &fileStats.st_mtim;
-#endif
       break;
 
     default:
@@ -1469,14 +1262,9 @@ nsresult nsLocalFile::SetTimeImpl(PRTime aTime,
     return rv;
   }
 
-#if (defined(__APPLE__) && defined(__MACH__))
   auto* copyFrom = aTimeField == TimeField::AccessedTime
                        ? &statInfo.st_mtimespec
                        : &statInfo.st_atimespec;
-#else
-  auto* copyFrom = aTimeField == TimeField::AccessedTime ? &statInfo.st_mtim
-                                                         : &statInfo.st_atim;
-#endif
 
   times[copyIndex].tv_sec = copyFrom->tv_sec;
   times[copyIndex].tv_usec = copyFrom->tv_nsec / 1000;
@@ -1618,19 +1406,6 @@ nsLocalFile::SetPermissions(uint32_t aPermissions) {
   if (chmod(mPath.get(), aPermissions) >= 0) {
     return NS_OK;
   }
-#if defined(ANDROID) && defined(STATFS)
-  // For the time being, this is restricted for use by Android, but we
-  // will figure out what to do for all platforms in bug 638503
-  struct STATFS sfs;
-  if (STATFS(mPath.get(), &sfs) < 0) {
-    return NSRESULT_FOR_ERRNO();
-  }
-
-  // if this is a FAT file system we can't set file permissions
-  if (sfs.f_type == MSDOS_SUPER_MAGIC) {
-    return NS_OK;
-  }
-#endif
   return NSRESULT_FOR_ERRNO();
 }
 
@@ -1664,20 +1439,7 @@ NS_IMETHODIMP
 nsLocalFile::SetFileSize(int64_t aFileSize) {
   CHECK_mPath();
 
-#if defined(ANDROID)
-  /* no truncate on bionic */
-  int fd = open(mPath.get(), O_WRONLY);
-  if (fd == -1) {
-    return NSRESULT_FOR_ERRNO();
-  }
-
-  int ret = ftruncate(fd, (off_t)aFileSize);
-  close(fd);
-
-  if (ret == -1) {
-    return NSRESULT_FOR_ERRNO();
-  }
-#elif defined(HAVE_TRUNCATE64)
+#if   defined(HAVE_TRUNCATE64)
   if (truncate64(mPath.get(), (off64_t)aFileSize) == -1) {
     return NSRESULT_FOR_ERRNO();
   }
@@ -2029,11 +1791,8 @@ nsLocalFile::IsExecutable(bool* aResult) {
   if (dotIdx != kNotFound) {
     // Search for any of the set of executable extensions.
     static const char* const executableExts[] = {
-#ifdef MOZ_WIDGET_COCOA
         ".afploc",  // Can point to other files.
-#endif
         ".air",  // Adobe AIR installer
-#ifdef MOZ_WIDGET_COCOA
         ".atloc",     // Can point to other files.
         ".command",   // Mac script
         ".fileloc",   // File location files can be used to point to other
@@ -2042,7 +1801,6 @@ nsLocalFile::IsExecutable(bool* aResult) {
         ".inetloc",   // Shouldn't be able to do the same, but can, due to
                       // macOS vulnerabilities.
         ".terminal",  // macOS Terminal app configuration files
-#endif
         ".jar"  // java application bundle
     };
     nsDependentSubstring ext = Substring(path, dotIdx);
@@ -2055,7 +1813,6 @@ nsLocalFile::IsExecutable(bool* aResult) {
     }
   }
 
-#ifdef MOZ_WIDGET_COCOA
   // Certain Mac applications, such as Classic applications, which
   // run under Rosetta, might not have the +x mode bit but are still
   // considered to be executable by Launch Services (bug 646748).
@@ -2075,7 +1832,6 @@ nsLocalFile::IsExecutable(bool* aResult) {
   if (*aResult) {
     return NS_OK;
   }
-#endif
 
   // Then check the execute bit.
   *aResult = (access(mPath.get(), X_OK) == 0);
@@ -2401,13 +2157,6 @@ nsLocalFile::Reveal() {
     return NS_ERROR_FILE_ACCESS_DENIED;
   }
 
-#ifdef MOZ_WIDGET_GTK
-  nsCOMPtr<nsIGIOService> giovfs = do_GetService(NS_GIOSERVICE_CONTRACTID);
-  if (!giovfs) {
-    return NS_ERROR_FAILURE;
-  }
-  return giovfs->RevealFile(this);
-#elif defined(MOZ_WIDGET_COCOA)
   CFURLRef url;
   if (NS_SUCCEEDED(GetCFURL(&url))) {
     nsresult rv = CocoaFileUtils::RevealFileInFinder(url);
@@ -2415,9 +2164,6 @@ nsLocalFile::Reveal() {
     return rv;
   }
   return NS_ERROR_FAILURE;
-#else
-  return NS_ERROR_FAILURE;
-#endif
 }
 
 NS_IMETHODIMP
@@ -2426,17 +2172,6 @@ nsLocalFile::Launch() {
     return NS_ERROR_FILE_ACCESS_DENIED;
   }
 
-#ifdef MOZ_WIDGET_GTK
-  nsCOMPtr<nsIGIOService> giovfs = do_GetService(NS_GIOSERVICE_CONTRACTID);
-  if (!giovfs) {
-    return NS_ERROR_FAILURE;
-  }
-
-  return giovfs->LaunchFile(mPath);
-#elif defined(MOZ_WIDGET_ANDROID)
-  // Not supported on GeckoView
-  return NS_ERROR_NOT_IMPLEMENTED;
-#elif defined(MOZ_WIDGET_COCOA)
   CFURLRef url;
   if (NS_SUCCEEDED(GetCFURL(&url))) {
     nsresult rv = CocoaFileUtils::OpenURL(url);
@@ -2444,9 +2179,6 @@ nsLocalFile::Launch() {
     return rv;
   }
   return NS_ERROR_FAILURE;
-#else
-  return NS_ERROR_FAILURE;
-#endif
 }
 
 nsresult NS_NewNativeLocalFile(const nsACString& aPath, nsIFile** aResult) {
@@ -2588,7 +2320,6 @@ nsresult NS_NewLocalFile(const nsAString& aPath, nsIFile** aResult) {
 
 // nsILocalFileMac
 
-#ifdef MOZ_WIDGET_COCOA
 
 NS_IMETHODIMP
 nsLocalFile::HasXAttr(const nsACString& aAttrName, bool* aHasAttr) {
@@ -2948,4 +2679,3 @@ nsresult NS_NewLocalFileWithCFURL(const CFURLRef aURL,
   return NS_OK;
 }
 
-#endif

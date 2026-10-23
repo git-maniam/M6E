@@ -6,9 +6,6 @@
 #include "AOMDecoder.h"
 #include "DAV1DDecoder.h"
 #include "mozilla/layers/ImageDataSerializer.h"
-#ifdef XP_WIN
-#  include "WMFDecoderModule.h"
-#endif
 #include "GPUVideoImage.h"
 #include "ImageContainer.h"  // for PlanarYCbCrData and BufferRecycleBin
 #include "MediaDataDecoderProxy.h"
@@ -24,9 +21,6 @@
 #include "mozilla/layers/ImageClient.h"
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/VideoBridgeChild.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/layers/VideoBridgeParent.h"
-#endif
 
 namespace mozilla {
 

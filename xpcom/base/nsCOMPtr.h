@@ -36,15 +36,6 @@
  * are subject to change without notice.
  */
 
-#ifdef _MSC_VER
-// Under VC++, we win by inlining StartAssignment.
-#  define NSCAP_FEATURE_INLINE_STARTASSIGNMENT
-
-// Also under VC++, at the highest warning level, we are overwhelmed with
-// warnings about (unused) inline functions being removed. This is to be
-// expected with templates, so we disable the warning.
-#  pragma warning(disable : 4514)
-#endif
 
 #ifdef DEBUG
 #  define NSCAP_FEATURE_TEST_DONTQUERY_CASES

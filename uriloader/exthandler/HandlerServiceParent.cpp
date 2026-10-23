@@ -15,9 +15,6 @@
 #include "nsCExternalHandlerService.h"
 #include "nsComponentManagerUtils.h"
 #include "nsServiceManagerUtils.h"
-#ifdef MOZ_WIDGET_GTK
-#  include "unix/nsGNOMERegistry.h"
-#endif
 
 using mozilla::dom::ContentHandlerService;
 using mozilla::dom::HandlerApp;
@@ -310,13 +307,7 @@ mozilla::ipc::IPCResult HandlerServiceParent::RecvExistsForProtocolOS(
     *aHandlerExists = false;
     return IPC_OK();
   }
-#ifdef MOZ_WIDGET_GTK
-  // Check the GNOME registry for a protocol handler
-  *aHandlerExists =
-      nsGNOMERegistry::HandlerExists(PromiseFlatCString(aProtocolScheme).get());
-#else
   *aHandlerExists = false;
-#endif
   return IPC_OK();
 }
 

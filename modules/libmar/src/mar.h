@@ -92,9 +92,6 @@ typedef enum MarReadResult_ MarReadResult;
  */
 MarReadResult mar_open(const char* path, MarFile** out_mar);
 
-#ifdef XP_WIN
-MarReadResult mar_wopen(const wchar_t* path, MarFile** out_mar);
-#endif
 
 /**
  * Close a MAR file that was opened using mar_open.

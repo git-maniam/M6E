@@ -36,9 +36,6 @@
 #include "nsStyleUtil.h"
 #include "nsUnicodeProperties.h"
 
-#ifdef XP_WIN
-#  include "gfxWindowsPlatform.h"
-#endif
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -586,11 +583,9 @@ static bool HasSyntheticBoldOrColor(gfxFont* aFont) {
   if (fe->TryGetSVGData(aFont) || fe->TryGetColorGlyphs()) {
     return true;
   }
-#if defined(XP_MACOSX)  // sbix fonts only supported via Core Text
   if (fe->HasFontTable(TRUETYPE_TAG('s', 'b', 'i', 'x'))) {
     return true;
   }
-#endif
   return false;
 }
 
@@ -2330,13 +2325,6 @@ already_AddRefed<gfxFont> gfxFontGroup::GetDefaultFont() {
     nsAutoCString fontInitInfo;
     fontInitInfo.AppendPrintf("no fonts - init: %d fonts: %d loader: %d",
                               numInits, numFonts, loaderState);
-#ifdef XP_WIN
-    bool dwriteEnabled = gfxWindowsPlatform::GetPlatform()->DWriteEnabled();
-    double upTime = (double)GetTickCount();
-    fontInitInfo.AppendPrintf(" backend: %s system-uptime: %9.3f sec",
-                              dwriteEnabled ? "directwrite" : "gdi",
-                              upTime / 1000);
-#endif
     gfxCriticalError() << fontInitInfo.get();
 
     char msg[256];  // CHECK buffer length if revising message below

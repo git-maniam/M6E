@@ -53,9 +53,6 @@
 #include <fcntl.h>      // open
 #include <unistd.h>     // sysconf
 #include <semaphore.h>
-#ifdef __GLIBC__
-#  include <execinfo.h>  // backtrace, backtrace_symbols
-#endif                   // def __GLIBC__
 #include <strings.h>     // index
 #include <errno.h>
 

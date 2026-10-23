@@ -558,11 +558,9 @@ TEST_F(TestNrSocketTest, DISABLED_AddressRestrictedCone) {
   // going as far as substituting localhost for a packet sent from a real IP
   // address when the destination is localhost. The only way to make this test
   // work on linux is to have two real IP addresses.
-#ifndef __linux__
   // Verify that an address on a different host can't use the pinhole
   ASSERT_FALSE(CheckConnectivityVia(public_addrs_[2], private_addrs_[0],
                                     sender_external_address));
-#endif
 
   // Send traffic to other public IP, verify that it uses the same pinhole
   nr_transport_addr sender_external_address2;

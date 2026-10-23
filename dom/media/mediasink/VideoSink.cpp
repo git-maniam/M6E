@@ -2,13 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef XP_WIN
-// Include Windows headers required for enabling high precision timers.
-// clang-format off
-#  include <windows.h>
-#  include <mmsystem.h>
-// clang-format on
-#endif
 
 #include "VideoSink.h"
 
@@ -70,10 +63,6 @@ VideoSink::VideoSink(AbstractThread* aThread, MediaSink* aAudioSink,
       mHasVideo(false),
       mUpdateScheduler(aThread),
       mVideoQueueSendToCompositorSize(aVQueueSentToCompositerSize)
-#ifdef XP_WIN
-      ,
-      mHiResTimersRequested(false)
-#endif
 {
   MOZ_ASSERT(mAudioSink, "AudioSink should exist.");
 
@@ -85,9 +74,6 @@ VideoSink::VideoSink(AbstractThread* aThread, MediaSink* aAudioSink,
 }
 
 VideoSink::~VideoSink() {
-#ifdef XP_WIN
-  MOZ_ASSERT(!mHiResTimersRequested);
-#endif
 }
 
 RefPtr<VideoSink::EndedPromise> VideoSink::OnEnded(TrackType aType) {
@@ -171,25 +157,6 @@ double VideoSink::PlaybackRate() const {
 }
 
 void VideoSink::EnsureHighResTimersOnOnlyIfPlaying() {
-#ifdef XP_WIN
-  const bool needed = IsPlaying();
-  if (needed == mHiResTimersRequested) {
-    return;
-  }
-  if (needed) {
-    // Ensure high precision timers are enabled on Windows, otherwise the
-    // VideoSink isn't woken up at reliable intervals to set the next frame, and
-    // we drop frames while painting. Note that each call must be matched by a
-    // corresponding timeEndPeriod() call. Enabling high precision timers causes
-    // the CPU to wake up more frequently on Windows 7 and earlier, which causes
-    // more CPU load and battery use. So we only enable high precision timers
-    // when we're actually playing.
-    timeBeginPeriod(1);
-  } else {
-    timeEndPeriod(1);
-  }
-  mHiResTimersRequested = needed;
-#endif
 }
 
 void VideoSink::SetPlaying(bool aPlaying, StopReason aReason) {

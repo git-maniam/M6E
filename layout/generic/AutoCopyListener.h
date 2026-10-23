@@ -29,23 +29,13 @@ class AutoCopyListener final {
    * IsEnabled() returns true if the auto-copy feature is enabled.
    */
   static bool IsEnabled() {
-#ifdef XP_MACOSX
     return true;
-#else
-    return StaticPrefs::clipboard_autocopy();
-#endif
   }
 
  private:
-#ifdef XP_MACOSX
   // On macOS, cache the current selection to send to service menu of macOS.
   static const nsIClipboard::ClipboardType sClipboardID =
       nsIClipboard::kSelectionCache;
-#else
-  // Make the normal Selection notifies auto-copy listener of its changes.
-  static const nsIClipboard::ClipboardType sClipboardID =
-      nsIClipboard::kSelectionClipboard;
-#endif
 };
 
 }  // namespace mozilla

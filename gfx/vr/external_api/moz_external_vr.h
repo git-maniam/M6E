@@ -30,9 +30,6 @@ static_assert(__STDC_WANT_LIB_EXT1__ == 1,
 #  include "mozilla/gfx/2D.h"
 #endif  // MOZILLA_INTERNAL_API
 
-#if defined(__ANDROID__)
-#  include <pthread.h>
-#endif  // defined(__ANDROID__)
 
 #include <array>
 #include <cstdint>
@@ -76,13 +73,7 @@ static const int kVRControllerMaxAxis = 16;
 static const int kVRLayerMaxCount = 8;
 static const int kVRHapticsMaxCount = 32;
 
-#if defined(__ANDROID__)
-typedef uint64_t VRLayerTextureHandle;
-#elif defined(XP_MACOSX)
 typedef uint32_t VRLayerTextureHandle;
-#else
-typedef void* VRLayerTextureHandle;
-#endif
 
 struct Point3D_POD {
   float x;
@@ -600,9 +591,6 @@ struct VRHapticState {
 };
 
 struct VRBrowserState {
-#if defined(__ANDROID__)
-  bool shutdown;
-#endif  // defined(__ANDROID__)
   /**
    * In order to support WebXR's navigator.xr.IsSessionSupported call without
    * displaying any permission dialogue, it is necessary to have a safe way to
@@ -716,32 +704,15 @@ struct VRTelemetryState {
 struct VRExternalShmem {
   int32_t version;
   int32_t size;
-#if defined(__ANDROID__)
-  pthread_mutex_t systemMutex;
-  pthread_mutex_t geckoMutex;
-  pthread_mutex_t servoMutex;
-  pthread_cond_t systemCond;
-  pthread_cond_t geckoCond;
-  pthread_cond_t servoCond;
-#else
   int64_t generationA;
-#endif  // defined(__ANDROID__)
   VRSystemState state;
-#if !defined(__ANDROID__)
   int64_t generationB;
   int64_t geckoGenerationA;
   int64_t servoGenerationA;
-#endif  // !defined(__ANDROID__)
   VRBrowserState geckoState;
   VRBrowserState servoState;
-#if !defined(__ANDROID__)
   int64_t geckoGenerationB;
   int64_t servoGenerationB;
-#endif  // !defined(__ANDROID__)
-#if defined(XP_WIN)
-  VRWindowState windowState;
-  VRTelemetryState telemetryState;
-#endif
 #ifdef MOZILLA_INTERNAL_API
   void Clear() volatile {
 /**

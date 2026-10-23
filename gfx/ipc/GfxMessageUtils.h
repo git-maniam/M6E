@@ -36,9 +36,6 @@
 #include "nsRect.h"
 #include "nsRegion.h"
 
-#ifdef _MSC_VER
-#  pragma warning(disable : 4800)
-#endif
 
 namespace mozilla {
 

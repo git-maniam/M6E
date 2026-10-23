@@ -3629,27 +3629,7 @@ static mozilla::Result<bool, nsresult> BuildIDMismatchMemoryAndDisk() {
     }
   }
 
-#if defined(ANDROID)
-  // Android packages on installation will stop existing instance, so we
-  // cannot run into this problem.
-  return false;
-#else
 
-#  if defined(XP_WIN)
-  {
-    // Windows Store packages cannot run into this problem.
-    nsCOMPtr<nsIPropertyBag2> infoService =
-        do_GetService("@mozilla.org/system-info;1");
-    MOZ_ASSERT(infoService, "Could not find a system info service");
-    bool isMSIX;
-    nsresult rv = infoService->GetPropertyAsBool(u"isPackagedApp"_ns, &isMSIX);
-    if (NS_SUCCEEDED(rv)) {
-      if (isMSIX) {
-        return false;
-      }
-    }
-  }
-#  endif  // XP_WIN
 
   nsresult rv;
   nsCOMPtr<nsIFile> file;
@@ -3670,7 +3650,6 @@ static mozilla::Result<bool, nsresult> BuildIDMismatchMemoryAndDisk() {
   MOZ_TRY(rv);
 
   return (installedBuildID != PlatformBuildID());
-#endif    // !ANDROID
 }
 
 void nsFrameLoader::MaybeNotifyCrashed(BrowsingContext* aBrowsingContext,

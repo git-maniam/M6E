@@ -25,15 +25,11 @@
 
 #include "nsAuthGSSAPI.h"
 
-#ifdef XP_MACOSX
 #  include <Kerberos/Kerberos.h>
-#endif
 
-#ifdef XP_MACOSX
 typedef KLStatus (*KLCacheHasValidTickets_type)(KLPrincipal, KLKerberosVersion,
                                                 KLBoolean*, KLPrincipal*,
                                                 char**);
-#endif
 
 #if defined(HAVE_RES_NINIT)
 #  include <sys/types.h>
@@ -84,59 +80,20 @@ static PRLibrary* gssLibrary = nullptr;
 #define gss_wrap_ptr ((gss_wrap_type) * gssFuncs[8].func)
 #define gss_unwrap_ptr ((gss_unwrap_type) * gssFuncs[9].func)
 
-#ifdef XP_MACOSX
 static PRFuncPtr KLCacheHasValidTicketsPtr;
 #  define KLCacheHasValidTickets_ptr \
     ((KLCacheHasValidTickets_type) * KLCacheHasValidTicketsPtr)
-#endif
 
 static nsresult gssInit() {
-#ifdef XP_WIN
-  nsAutoString libPathU;
-  Preferences::GetString(kNegotiateAuthGssLib, libPathU);
-  NS_ConvertUTF16toUTF8 libPath(libPathU);
-#else
   nsAutoCString libPath;
   Preferences::GetCString(kNegotiateAuthGssLib, libPath);
-#endif
 
   PRLibrary* lib = nullptr;
 
   if (!libPath.IsEmpty()) {
     LOG(("Attempting to load user specified library [%s]\n", libPath.get()));
-#ifdef XP_WIN
-    lib = LoadLibraryWithFlags(libPathU.get());
-#else
     lib = LoadLibraryWithFlags(libPath.get());
-#endif
   } else {
-#ifdef XP_WIN
-#  ifdef _WIN64
-    constexpr auto kLibName = u"gssapi64.dll"_ns;
-#  else
-    constexpr auto kLibName = u"gssapi32.dll"_ns;
-#  endif
-
-    lib = LoadLibraryWithFlags(kLibName.get());
-#elif defined(__OpenBSD__)
-    /* OpenBSD doesn't register inter-library dependencies in basesystem
-     * libs therefor we need to load all the libraries gssapi depends on,
-     * in the correct order and with LD_GLOBAL for GSSAPI auth to work
-     * fine.
-     */
-
-    const char* const verLibNames[] = {
-        "libasn1.so",    "libcrypto.so", "libroken.so", "libheimbase.so",
-        "libcom_err.so", "libkrb5.so",   "libgssapi.so"};
-
-    PRLibSpec libSpec;
-    for (size_t i = 0; i < std::size(verLibNames); ++i) {
-      libSpec.type = PR_LibSpec_Pathname;
-      libSpec.value.pathname = verLibNames[i];
-      lib = PR_LoadLibraryWithFlags(libSpec, PR_LD_GLOBAL);
-    }
-
-#else
 
     const char* const libNames[] = {"gss", "gssapi_krb5", "gssapi"};
 
@@ -177,7 +134,6 @@ static nsresult gssInit() {
         }
       }
     }
-#endif
   }
 
   if (!lib) {
@@ -195,7 +151,6 @@ static nsresult gssInit() {
       return NS_ERROR_FAILURE;
     }
   }
-#ifdef XP_MACOSX
   if (libPath.IsEmpty() &&
       StaticPrefs::network_negotiate_auth_using_native_gsslib() &&
       !(KLCacheHasValidTicketsPtr =
@@ -204,7 +159,6 @@ static nsresult gssInit() {
     PR_UnloadLibrary(lib);
     return NS_ERROR_FAILURE;
   }
-#endif
 
   gssLibrary = lib;
   return NS_OK;
@@ -411,7 +365,6 @@ nsAuthGSSAPI::GetNextToken(const void* inToken, uint32_t inTokenLen,
     return NS_ERROR_UNEXPECTED;
   }
 
-#if defined(XP_MACOSX)
   // Suppress Kerberos prompts to get credentials.  See bug 240643.
   // We can only use Mac OS X specific kerb functions if we are using
   // the native lib
@@ -428,7 +381,6 @@ nsAuthGSSAPI::GetNextToken(const void* inToken, uint32_t inTokenLen,
     major_status = GSS_S_FAILURE;
     minor_status = 0;
   } else
-#endif /* XP_MACOSX */
     major_status = gss_init_sec_context_ptr(
         &minor_status, GSS_C_NO_CREDENTIAL, &mCtx, server, mMechOID, req_flags,
         GSS_C_INDEFINITE, GSS_C_NO_CHANNEL_BINDINGS, in_token_ptr, nullptr,

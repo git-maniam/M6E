@@ -250,24 +250,8 @@ StyleDisplayMode Gecko_MediaFeatures_GetDisplayMode(const Document* aDocument) {
 
 bool Gecko_MediaFeatures_MatchesPlatform(StylePlatform aPlatform) {
   switch (aPlatform) {
-#if defined(XP_WIN)
-    case StylePlatform::Windows:
-      return true;
-#elif defined(ANDROID)
-    case StylePlatform::Android:
-      return true;
-#elif defined(MOZ_WIDGET_GTK)
-    case StylePlatform::Linux:
-      return true;
-#elif defined(XP_MACOSX)
     case StylePlatform::Macos:
       return true;
-#elif defined(XP_IOS)
-    case StylePlatform::Ios:
-      return true;
-#else
-#  error "Unknown platform?"
-#endif
     default:
       return false;
   }
@@ -432,11 +416,7 @@ static PointerCapabilities GetPointerCapabilities(const Document* aDocument,
   // The default value for Desktop is mouse-type pointer, and for Android
   // a coarse pointer.
   const PointerCapabilities kDefaultCapabilities =
-#ifdef ANDROID
-      PointerCapabilities::Coarse;
-#else
       PointerCapabilities::Fine | PointerCapabilities::Hover;
-#endif
   if (aDocument->ShouldResistFingerprinting(
           RFPTarget::CSSPointerCapabilities)) {
     return kDefaultCapabilities;

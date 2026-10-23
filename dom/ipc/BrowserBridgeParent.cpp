@@ -286,9 +286,6 @@ a11y::DocAccessibleParent* BrowserBridgeParent::GetDocAccessibleParent() {
 }
 
 IPCResult BrowserBridgeParent::RecvSetEmbedderAccessible(uint64_t aID) {
-#  if defined(ANDROID)
-  MonitorAutoLock mal(nsAccessibilityService::GetAndroidMonitor());
-#  endif
   if (!aID && !mEmbedderAccessibleID) {
     return IPC_FAIL(this,
                     "Embedder accessible shouldn't be cleared if it wasn't "

@@ -9,9 +9,6 @@
 #include "city.h"
 #include "mar_private.h"
 #include "mar.h"
-#ifdef XP_WIN
-#  define strdup _strdup
-#endif
 
 /* This block must be at most 104 bytes.
    MAR channel name < 64 bytes, and product version < 32 bytes + 3 NULL
@@ -287,24 +284,6 @@ MarReadResult mar_open(const char* path, MarFile** out_mar) {
   return result;
 }
 
-#ifdef XP_WIN
-MarReadResult mar_wopen(const wchar_t* path, MarFile** out_mar) {
-  *out_mar = NULL;
-
-  FILE* fp;
-
-  _wfopen_s(&fp, path, L"rb");
-  if (!fp) {
-    fprintf(stderr, "ERROR: could not open file in mar_wopen()\n");
-    _wperror(path);
-    return MAR_IO_ERROR;
-  }
-
-  MarReadResult result = mar_fpopen(fp, out_mar);
-  fclose(fp);
-  return result;
-}
-#endif
 
 void mar_close(MarFile* mar) {
   MarItem* item;

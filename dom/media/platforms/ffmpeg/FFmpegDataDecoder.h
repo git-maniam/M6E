@@ -8,18 +8,11 @@
 #include "FFmpegLibWrapper.h"
 #include "PlatformDecoderModule.h"
 #include "mozilla/StaticMutex.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "nsITimer.h"
-#endif
 
 // This must be the last header included
 #include "FFmpegLibs.h"
 
 namespace mozilla {
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-class MediaDrmCrypto;
-class MediaDrmRemoteCDMParent;
-#endif
 
 template <int V>
 class FFmpegDataDecoder : public MediaDataDecoder {};
@@ -69,13 +62,6 @@ class FFmpegDataDecoder<LIBAV_VER>
   MediaResult DoDecode(MediaRawData* aSample, bool* aGotFrame,
                        DecodedData& aResults);
 
-#if defined(MOZ_WIDGET_ANDROID) && defined(USING_MOZFFVPX)
-  static void CryptoInfoAddRef(void* aCryptoInfo);
-  static void CryptoInfoRelease(void* aCryptoInfo);
-  MediaResult MaybeAttachCryptoInfo(MediaRawData* aSample, AVPacket* aPacket);
-  MediaResult MaybeAttachCDM();
-  void MaybeDetachCDM();
-#endif
 
   const FFmpegLibWrapper* mLib;  // set in constructor
 
@@ -84,10 +70,6 @@ class FFmpegDataDecoder<LIBAV_VER>
   AVCodecParserContext* mCodecParser;
   AVFrame* mFrame;
   RefPtr<MediaByteBuffer> mExtraData;
-#if defined(MOZ_WIDGET_ANDROID) && defined(FFVPX_VERSION)
-  RefPtr<MediaDrmCrypto> mCrypto;
-  RefPtr<MediaDrmRemoteCDMParent> mCDM;
-#endif
   AVCodecID mCodecID;  // set in constructor
   bool mVideoCodec;
 
@@ -101,24 +83,8 @@ class FFmpegDataDecoder<LIBAV_VER>
   RefPtr<DecodePromise> ProcessDrain();
   MozPromiseHolder<DecodePromise> mDrainPromise;
 
-#ifdef MOZ_WIDGET_ANDROID
-  // MediaCodec may be slow to produce frames, if there is resource pressure on
-  // the output buffers. We arm a timer up to a fixed number of attempts until
-  // we either produce new frames, resetting the attempt counter, or we get the
-  // end of stream indicator, ending the drain immediately.
-  bool MaybeDeferDrain(const DecodedData& aResults);
-  virtual void ResumeDrain();
-#endif
 
  private:
-#ifdef MOZ_WIDGET_ANDROID
-  void OnDrainTimer();
-  void CancelDrainTimer();
-
-  nsCOMPtr<nsITimer> mDrainTimer;
-  uint32_t mDrainAttempts = 0;
-  bool mDrainTimedOut = false;
-#endif
 
   RefPtr<DecodePromise> ProcessDecode(MediaRawData* aSample);
   virtual MediaResult DoDecode(MediaRawData* aSample, uint8_t* aData, int aSize,

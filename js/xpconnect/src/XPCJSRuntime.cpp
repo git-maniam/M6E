@@ -80,9 +80,6 @@
 #include "js/UbiNodeUtils.h"
 #include "js/Utility.h"  // JS::UniqueTwoByteChars
 
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 using namespace mozilla;
 using namespace mozilla::dom;

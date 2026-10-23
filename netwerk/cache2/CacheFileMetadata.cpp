@@ -802,7 +802,6 @@ nsresult CacheFileMetadata::OnDataRead(CacheFileHandle* aHandle, char* aBuf,
     return NS_OK;
   }
 
-#ifndef ANDROID
   mozilla::TimeStamp readEnd = mozilla::TimeStamp::Now();
   if (mFirstRead) {
     mozilla::glean::networking::cache_metadata_first_read_time
@@ -811,7 +810,6 @@ nsresult CacheFileMetadata::OnDataRead(CacheFileHandle* aHandle, char* aBuf,
     mozilla::glean::networking::cache_metadata_second_read_time
         .AccumulateRawDuration(readEnd - mReadStart);
   }
-#endif
 
   // Decode the trailer (always within this first tail read). The version word
   // is absent in old single-offset-word entries; pass 0 when the buffer is too
@@ -906,9 +904,7 @@ nsresult CacheFileMetadata::OnDataRead(CacheFileHandle* aHandle, char* aBuf,
     return NS_OK;
   }
 
-#ifndef ANDROID
   mozilla::glean::networking::cache_metadata_size.Accumulate(size - realOffset);
-#endif
 
   // We have all data according to offset information at the end of the entry.
   // Strip the trailer (and decrypt, if needed) so mBuf holds plaintext content,

@@ -419,7 +419,6 @@ TEST(MP4Metadata, test_case_mp4_subsets) {
 }
 #endif
 
-#if !defined(XP_WIN) || !defined(MOZ_ASAN)  // OOMs on Windows ASan
 TEST(MoofParser, test_case_mp4)
 {
   const TestFileData* tests = nullptr;
@@ -514,7 +513,6 @@ TEST(MoofParser, test_case_sample_description_entries)
     }
   }
 }
-#endif  // !defined(XP_WIN) || !defined(MOZ_ASAN)
 
 // We should gracefully handle track_id 0 since Bug 1519617. We'd previously
 // used id 0 to trigger special handling in the MoofParser to read multiple

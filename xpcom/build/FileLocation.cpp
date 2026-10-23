@@ -55,19 +55,7 @@ FileLocation::FileLocation(const FileLocation& aFile, const nsACString& aPath) {
       nsCOMPtr<nsIFile> cfile;
       aFile.mBaseFile->GetParent(getter_AddRefs(cfile));
 
-#if defined(XP_WIN)
-      nsAutoCString pathStr(aPath);
-      char* p;
-      uint32_t len = pathStr.GetMutableData(&p);
-      for (; len; ++p, --len) {
-        if ('/' == *p) {
-          *p = '\\';
-        }
-      }
-      cfile->AppendRelativeNativePath(pathStr);
-#else
       cfile->AppendRelativeNativePath(aPath);
-#endif
       Init(cfile);
     } else {
       Init(aFile.mBaseFile);

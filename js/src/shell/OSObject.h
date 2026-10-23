@@ -17,11 +17,7 @@ class JSLinearString;
 namespace js {
 namespace shell {
 
-#ifdef XP_WIN
-constexpr char PathSeparator = '\\';
-#else
 constexpr char PathSeparator = '/';
-#endif
 
 struct RCFile;
 

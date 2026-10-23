@@ -106,9 +106,7 @@
 #include "nsUnicharUtils.h"
 #include "nsXULElement.h"
 
-#ifdef XP_MACOSX
 #  include "nsIDocShell.h"
-#endif
 
 #ifdef ACCESSIBILITY
 #  include "nsAccessibilityService.h"

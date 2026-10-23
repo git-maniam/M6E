@@ -7,9 +7,6 @@
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/widget/CompositorWidget.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/WidgetUtilsGtk.h"
-#endif
 
 namespace mozilla {
 using namespace gfx;
@@ -56,12 +53,6 @@ bool RenderCompositorSWGL::MakeCurrent() {
 
 bool RenderCompositorSWGL::BeginFrame() {
   mRenderWidgetSize = Some(mWidget->GetClientSize());
-#ifdef MOZ_WIDGET_GTK
-  if (mLastRenderWidgetSize != mRenderWidgetSize.value()) {
-    mLastRenderWidgetSize = mRenderWidgetSize.value();
-    mRequestFullRender = true;
-  }
-#endif
   // Set up a temporary region representing the entire window surface in case a
   // dirty region is not supplied.
   ClearMappedBuffer();
@@ -261,27 +252,12 @@ RenderedFrameId RenderCompositorSWGL::EndFrame(
 }
 
 bool RenderCompositorSWGL::RequestFullRender() {
-#if defined(MOZ_WIDGET_ANDROID)
-  // XXX Add partial present support.
-  return true;
-#elif defined(MOZ_WIDGET_GTK)
-  // We're requested to do full render after Resume() on Wayland.
-  if (mRequestFullRender) {
-    mRequestFullRender = false;
-    return true;
-  }
   return false;
-#else
-  return false;
-#endif
 }
 
 void RenderCompositorSWGL::Pause() {}
 
 bool RenderCompositorSWGL::Resume() {
-#ifdef MOZ_WIDGET_GTK
-  mRequestFullRender = true;
-#endif
   return true;
 }
 
@@ -301,11 +277,7 @@ void RenderCompositorSWGL::GetCompositorCapabilities(
   // On uncomposited desktops such as X11 without compositor or Window 7 with
   // Aero disabled we need to force a full redraw when the window contents may
   // be damaged.
-#ifdef MOZ_WIDGET_GTK
-  aCaps->redraw_on_invalidation = widget::GdkIsX11Display();
-#else
   aCaps->redraw_on_invalidation = true;
-#endif
 }
 
 }  // namespace wr

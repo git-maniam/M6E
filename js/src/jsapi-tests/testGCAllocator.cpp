@@ -18,12 +18,7 @@
 
 #include "gc/BufferAllocator-inl.h"
 
-#if defined(XP_WIN)
-// clang-format off
-#  include "util/WindowsWrapper.h"
-#  include <psapi.h>
-// clang-format on
-#elif defined(__wasi__)
+#if   defined(__wasi__)
 // Nothing.
 #else
 #  include <algorithm>
@@ -299,23 +294,7 @@ bool positionIsCorrect(const char* str, void* base, void** chunkPool,
   return result == desired;
 }
 
-#if defined(XP_WIN)
-
-void* mapMemoryAt(void* desired, size_t length) {
-  return VirtualAlloc(desired, length, MEM_COMMIT | MEM_RESERVE,
-                      PAGE_READWRITE);
-}
-
-void* mapMemory(size_t length) {
-  return VirtualAlloc(nullptr, length, MEM_COMMIT | MEM_RESERVE,
-                      PAGE_READWRITE);
-}
-
-void unmapPages(void* p, size_t size) {
-  MOZ_ALWAYS_TRUE(VirtualFree(p, 0, MEM_RELEASE));
-}
-
-#elif defined(__wasi__)
+#if   defined(__wasi__)
 
 void* mapMemoryAt(void* desired, size_t length) { return nullptr; }
 
@@ -712,11 +691,7 @@ BEGIN_TEST(testBufferAllocator_reallocInPlace) {
   CHECK(TestRealloc(bytes, 2 * bytes, false));
 
   // Shrink large -> large: supported on non-Windows platforms
-#ifdef XP_WIN
-  CHECK(TestRealloc(2 * bytes, bytes, false));
-#else
   CHECK(TestRealloc(2 * bytes, bytes, true));
-#endif
 
   JS_GC(cx);
   CHECK(zone->gcHeapSize.bytes() == initialGCHeapSize);

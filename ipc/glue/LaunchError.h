@@ -8,10 +8,6 @@
 #include "mozilla/StaticString.h"
 #include "nsError.h"  // for nsresult
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#  include <winerror.h>
-#endif
 
 namespace mozilla::ipc {
 
@@ -38,18 +34,6 @@ class LaunchError {
   explicit LaunchError(StaticString aFunction, ErrorType aError = 0)
       : mFunction(aFunction), mError(aError) {}
 
-#ifdef WIN32
-  // The error code returned by ::GetLastError() is (usually) not an HRESULT.
-  // This convenience-function maps its return values to the segment of
-  // HRESULT's namespace reserved for that.
-  //
-  // This is not formally necessary -- the error location should suffice to
-  // disambiguate -- but it's nice to have it converted when reading through
-  // error-values: `0x80070005` is marginally more human-meaningful than `5`.
-  static LaunchError FromWin32Error(StaticString aFunction, DWORD aError) {
-    return LaunchError(aFunction, HRESULT_FROM_WIN32(aError));
-  }
-#endif
 
   // By design, `nsresult` does not implicitly coerce to an integer.
   LaunchError(StaticString aFunction, nsresult aError)

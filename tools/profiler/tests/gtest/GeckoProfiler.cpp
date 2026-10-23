@@ -4750,7 +4750,6 @@ TEST(GeckoProfiler, BaseProfilerHandOff)
 
 // Bug 1953108: Windows ASan builds frequently time out on
 // GeckoProfiler.FeatureCombinations.
-#if !defined(XP_WIN) || !defined(MOZ_ASAN)
 
 static std::string_view GetFeatureName(uint32_t feature) {
   switch (feature) {
@@ -4835,7 +4834,6 @@ TEST(GeckoProfiler, FeatureCombinations)
   }
 }
 
-#endif  // if !defined(XP_WIN) || !defined(MOZ_ASAN)
 
 static void CountCPUDeltas(const Json::Value& aThread, size_t& aOutSamplings,
                            uint64_t& aOutCPUDeltaSum) {

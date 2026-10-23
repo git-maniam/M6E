@@ -152,9 +152,6 @@
 #define LS_LOG_TEST() MOZ_LOG_TEST(GetLocalStorageLogger(), LogLevel::Info)
 #define LS_LOG(_args) MOZ_LOG(GetLocalStorageLogger(), LogLevel::Info, _args)
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  define LS_MOBILE
-#endif
 
 namespace mozilla::dom {
 

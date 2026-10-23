@@ -71,22 +71,6 @@ media::DecodeSupportSet RemoteDecoderModule::Supports(
     support = {};
   }
 #endif
-#ifdef ANDROID
-  if ((aParams.mCDM && mLocation != RemoteMediaIn::RddProcess) ||
-      (!aParams.mCDM && aParams.mConfig.IsAudio() &&
-       mLocation != RemoteMediaIn::UtilityProcess_Generic)) {
-    support = {};
-  }
-  if (const auto* videoInfo = aParams.mConfig.GetAsVideoInfo()) {
-    const media::MediaCodec codec =
-        media::MCSInfo::GetMediaCodecFromMimeType(aParams.MimeType());
-    support = media::MCSInfo::GetMediaCodecDecodeSupportForSize(
-        codec,
-        media::MCSInfo::GetMediaCodecDecodeSupportForColorDepth(
-            codec, support, videoInfo->mColorDepth),
-        videoInfo->mImage);
-  }
-#endif
   MOZ_LOG_FMT(
       sPDMLog, LogLevel::Debug, "Sandbox {} decoder {} requested type {}",
       RemoteMediaInToStr(mLocation), support.isEmpty() ? "rejects" : "supports",

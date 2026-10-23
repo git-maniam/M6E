@@ -171,9 +171,6 @@ struct Face {
     nsCString mDescriptor;  // descriptor that can be used to instantiate a
                             // platform font reference
     uint16_t mIndex;        // an index used with descriptor (on some platforms)
-#ifdef MOZ_WIDGET_GTK
-    uint16_t mSize;  // pixel size if bitmap; zero indicates scalable
-#endif
     bool mFixedPitch;                  // is the face fixed-pitch (monospaced)?
     mozilla::WeightRange mWeight;      // CSS font-weight value
     mozilla::WidthRange mWidth;        // CSS font-width value
@@ -186,9 +183,6 @@ struct Face {
   Face(FontList* aList, const InitData& aData)
       : mDescriptor(aList, aData.mDescriptor),
         mIndex(aData.mIndex),
-#ifdef MOZ_WIDGET_GTK
-        mSize(aData.mSize),
-#endif
         mFixedPitch(aData.mFixedPitch),
         mWeight(aData.mWeight),
         mWidth(aData.mWidth),
@@ -205,9 +199,6 @@ struct Face {
 
   String mDescriptor;
   uint16_t mIndex;
-#ifdef MOZ_WIDGET_GTK
-  uint16_t mSize;
-#endif
   bool mFixedPitch;
   mozilla::WeightRange mWeight;
   mozilla::WidthRange mWidth;

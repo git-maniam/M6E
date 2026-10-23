@@ -5,35 +5,14 @@
 #ifndef MOZILLA_GFX_CRITICALSECTION_H_
 #define MOZILLA_GFX_CRITICALSECTION_H_
 
-#ifdef WIN32
-#  include <windows.h>
-#else
 #  include <pthread.h>
 
 #  include "mozilla/Assertions.h"
 #  include "mozilla/DebugOnly.h"
-#endif
 
 namespace mozilla {
 namespace gfx {
 
-#ifdef WIN32
-
-class CriticalSection {
- public:
-  CriticalSection() { ::InitializeCriticalSection(&mCriticalSection); }
-
-  ~CriticalSection() { ::DeleteCriticalSection(&mCriticalSection); }
-
-  void Enter() { ::EnterCriticalSection(&mCriticalSection); }
-
-  void Leave() { ::LeaveCriticalSection(&mCriticalSection); }
-
- protected:
-  CRITICAL_SECTION mCriticalSection;
-};
-
-#else
 // posix
 
 class PosixCondvar;
@@ -64,7 +43,6 @@ class CriticalSection {
   friend class PosixCondVar;
 };
 
-#endif
 
 /// RAII helper.
 struct CriticalSectionAutoEnter final {

@@ -25,18 +25,14 @@
 #include "nsIMutationObserver.h"
 #include "nsPresContext.h"
 
-#ifdef XP_MACOSX
 // Some defiens will be conflict with OSX SDK
 #  define TextRange _TextRange
 #  define TextRangeArray _TextRangeArray
 #  define Comment _Comment
-#endif
 
-#ifdef XP_MACOSX
 #  undef TextRange
 #  undef TextRangeArray
 #  undef Comment
-#endif
 
 using namespace mozilla::widget;
 

@@ -28,27 +28,10 @@
 #include "nsString.h"
 #include "nsTString.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
 
-#  include "mozilla/RefPtr.h"
-#  include "mozilla/ipc/IPCTypes.h"
-struct ID3D11Device;
-struct ID3D11Texture2D;
-#endif
-
-#ifdef XP_MACOSX
 class MacIOSurface;
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoSurfaceTextureWrappers.h"
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-class BufferSurface;
-class DMABufSurface;
-#endif
 
 namespace mozilla {
 
@@ -60,26 +43,10 @@ class PlanarYCbCrImage;
 class SurfaceDescriptor;
 class SurfaceDescriptorBuffer;
 
-#ifdef XP_WIN
-class D3D11ShareHandleImage;
-class D3D11ZeroCopyTextureImage;
-class SurfaceDescriptorD3D10;
-class SurfaceDescriptorDXGIYCbCr;
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-class AndroidHardwareBuffer;
-class AndroidImageReader;
-class SurfaceTextureDescriptor;
-#endif
 
-#ifdef XP_MACOSX
 class MacIOSurfaceImage;
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-class DMABUFSurfaceImage;
-#endif
 }  // namespace layers
 
 namespace gl {
@@ -236,11 +203,6 @@ class GLBlitHelper final {
  public:
   std::shared_ptr<gl::Texture> GetColorLutTex(const ColorLutKey& key) const;
 
-#ifdef XP_WIN
-  mutable RefPtr<ID3D11Device> mD3D11;
-
-  ID3D11Device* GetD3D11() const;
-#endif
 
   const DrawBlitProg& GetDrawBlitProg(const DrawBlitProg::Key& key) const;
 
@@ -255,32 +217,6 @@ class GLBlitHelper final {
                        const gfx::IntRect& destRect, OriginPos destOrigin,
                        const gfx::IntSize& fbSize = gfx::IntSize(),
                        Maybe<gfxAlphaType> convertAlpha = {});
-#ifdef MOZ_WIDGET_ANDROID
-  bool Blit(layers::AndroidHardwareBuffer* buffer, const gfx::IntRect& destRect,
-            OriginPos destOrigin, const gfx::IntSize& fbSize = gfx::IntSize(),
-            Maybe<gfxAlphaType> convertAlpha = {}) const;
-  bool Blit(layers::AndroidImageReader* imageReader,
-            const layers::AndroidMediaCodecFrameId frameId,
-            const gfx::IntSize& texSize, const gfx::IntRect& destRect,
-            OriginPos destOrigin, const gfx::IntSize& fbSize = gfx::IntSize(),
-            Maybe<gfxAlphaType> convertAlpha = {}) const;
-  bool Blit(const java::GeckoSurfaceTexture::Ref& surfaceTexture,
-            const gfx::IntSize& texSize, const gfx::IntRect& destRect,
-            const OriginPos destOrigin,
-            const gfx::IntSize& fbSize = gfx::IntSize(),
-            Maybe<gfxAlphaType> convertAlpha = {}) const;
-  bool Blit(EGLImage image, EGLSync fence, const gfx::IntSize& texSize,
-            const gfx::IntRect& destRect, const OriginPos destOrigin,
-            const gfx::IntSize& fbSize = gfx::IntSize(),
-            Maybe<gfxAlphaType> convertAlpha = {}) const;
-#endif
-#ifdef MOZ_WIDGET_GTK
-  bool Blit(DMABufSurface* surface, const gfx::IntRect& destRect,
-            OriginPos destOrigin, const gfx::IntSize& fbSize = gfx::IntSize(),
-            Maybe<gfxAlphaType> convertAlpha = {},
-            gfx::SurfaceFormat aDestFormat = gfx::SurfaceFormat::UNKNOWN) const;
-  bool BlitYCbCrTexturesToDMABuf(BufferSurface* aSource, DMABufSurface* aDest);
-#endif
 
   explicit GLBlitHelper(GLContext* gl);
 
@@ -318,30 +254,10 @@ class GLBlitHelper final {
       gfx::SurfaceFormat aDestFormat = gfx::SurfaceFormat::UNKNOWN);
 
  private:
-#ifdef XP_MACOSX
   bool BlitImage(MacIOSurface* const iosurf, const gfx::IntRect& destRect,
                  OriginPos destOrigin,
                  const gfx::IntSize& fbSize = gfx::IntSize(),
                  Maybe<gfxAlphaType> convertAlpha = {}) const;
-#endif
-#ifdef XP_WIN
-  // GLBlitHelperD3D.cpp:
-  bool BlitDescriptor(const layers::SurfaceDescriptorD3D10& desc,
-                      const gfx::IntRect& destRect, OriginPos destOrigin,
-                      const gfx::IntSize& fbSize = gfx::IntSize(),
-                      Maybe<gfxAlphaType> convertAlpha = {}) const;
-  bool BlitDescriptor(const layers::SurfaceDescriptorDXGIYCbCr& desc,
-                      const gfx::IntRect& destRect, const OriginPos destOrigin,
-                      const gfx::IntSize& fbSize = gfx::IntSize(),
-                      Maybe<gfxAlphaType> convertAlpha = {}) const;
-  bool BlitAngleYCbCr(const WindowsHandle (&handleList)[3],
-                      const gfx::IntRect& clipRect, const gfx::IntSize& ySize,
-                      const gfx::IntSize& uvSize,
-                      const gfx::YUVColorSpace colorSpace,
-                      const gfx::IntRect& destRect, OriginPos destOrigin,
-                      const gfx::IntSize& fbSize = gfx::IntSize(),
-                      Maybe<gfxAlphaType> convertAlpha = {}) const;
-#endif
 };
 
 // -
@@ -358,9 +274,6 @@ extern const char* const kFragSample_ThreePlane;
 extern const char* const kFragConvert_None;
 extern const char* const kFragConvert_BGR;
 extern const char* const kFragConvert_ColorMatrix;
-#ifdef MOZ_WIDGET_GTK
-extern const char* const kFragConvert_ColorMatrixBGR;
-#endif
 extern const char* const kFragConvert_ColorLut3d;
 extern const char* const kFragConvert_ColorLut2d;
 

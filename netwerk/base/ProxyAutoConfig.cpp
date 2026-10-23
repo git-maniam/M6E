@@ -37,9 +37,7 @@
 #include "nsThreadUtils.h"
 #include "prnetdb.h"
 
-#if defined(XP_MACOSX)
 #  include "nsMacUtilsImpl.h"
-#endif
 
 #include "XPCSelfHostedShmem.h"
 
@@ -530,9 +528,7 @@ nsresult ProxyAutoConfig::SetupJS() {
     return NS_ERROR_ALREADY_INITIALIZED;
   }
 
-#if defined(XP_MACOSX)
   nsMacUtilsImpl::EnableTCSMIfAvailable();
-#endif
 
   delete mJSContext;
   mJSContext = nullptr;

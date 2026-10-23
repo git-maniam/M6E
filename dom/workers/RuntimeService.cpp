@@ -72,9 +72,7 @@
 #include "nsXPCOMPrivate.h"
 #include "xpcpublic.h"
 
-#if defined(XP_MACOSX)
 #  include "nsMacUtilsImpl.h"
-#endif
 
 #include "WorkerDebuggerManager.h"
 #include "WorkerError.h"
@@ -2106,11 +2104,7 @@ uint32_t RuntimeService::ClampedHardwareConcurrency(bool aRFPHardcoded,
   // so spoof navigator.hardwareConcurrency = 4 to reduce user uniqueness. On
   // OSX, the majority of Macs have 8 cores.
   if (MOZ_UNLIKELY(aRFPHardcoded)) {
-#ifdef XP_MACOSX
     return 8;
-#else
-    return 4;
-#endif
   }
 
   // This needs to be atomic, because multiple workers, and even mainthread,
@@ -2121,13 +2115,11 @@ uint32_t RuntimeService::ClampedHardwareConcurrency(bool aRFPHardcoded,
   // other worker has initialized numberOfProcessors, so we're good to go.
   if (!unclampedHardwareConcurrency) {
     int32_t numberOfProcessors = 0;
-#if defined(XP_MACOSX)
     if (nsMacUtilsImpl::IsTCSMAvailable()) {
       // On failure, zero is returned from GetPhysicalCPUCount()
       // and we fallback to PR_GetNumberOfProcessors below.
       numberOfProcessors = nsMacUtilsImpl::GetPhysicalCPUCount();
     }
-#endif
     if (numberOfProcessors == 0) {
       numberOfProcessors = PR_GetNumberOfProcessors();
     }

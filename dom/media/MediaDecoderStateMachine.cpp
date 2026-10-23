@@ -2729,13 +2729,11 @@ class MediaDecoderStateMachine::CompletedState
   void Enter() {
     // On Android, the life cycle of graphic buffer is equal to Android's codec,
     // we couldn't release it if we still need to render the frame.
-#ifndef MOZ_WIDGET_ANDROID
     if (!mMaster->mLooping) {
       // We've decoded all samples.
       // We don't need decoders anymore if not looping.
       Reader()->ReleaseResources();
     }
-#endif
     bool hasNextFrame = (!mMaster->HasAudio() || !mMaster->mAudioCompleted) &&
                         (!mMaster->HasVideo() || !mMaster->mVideoCompleted);
 
@@ -4337,11 +4335,7 @@ media::TimeUnit MediaDecoderStateMachine::GetClock(
   MOZ_ASSERT(OnTaskQueue());
   auto clockTime = mMediaSink->GetPosition(aTimeStamp);
   // This fails on Windows some times, see 1765563
-#if defined(XP_WIN)
-  NS_ASSERTION(GetMediaTime() <= clockTime, "Clock should go forwards.");
-#else
   MOZ_ASSERT(GetMediaTime() <= clockTime, "Clock should go forwards.");
-#endif
   return clockTime;
 }
 

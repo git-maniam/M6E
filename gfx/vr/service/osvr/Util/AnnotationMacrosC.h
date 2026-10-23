@@ -34,31 +34,7 @@
 
 #ifndef OSVR_DISABLE_ANALYSIS
 
-#  if defined(_MSC_VER) && (_MSC_VER >= 1700)
-/* Visual C++ (2012 and newer) */
-/* Using SAL attribute format:
- * http://msdn.microsoft.com/en-us/library/ms182032(v=vs.120).aspx */
-
-#    include <sal.h>
-
-#    define OSVR_IN _In_
-#    define OSVR_IN_PTR _In_
-#    define OSVR_IN_OPT _In_opt_
-#    define OSVR_IN_STRZ _In_z_
-#    define OSVR_IN_READS(NUM_ELEMENTS) _In_reads_(NUM_ELEMENTS)
-
-#    define OSVR_OUT _Out_
-#    define OSVR_OUT_PTR _Outptr_
-#    define OSVR_OUT_OPT _Out_opt_
-
-#    define OSVR_INOUT _Inout_
-#    define OSVR_INOUT_PTR _Inout_
-
-#    define OSVR_RETURN_WARN_UNUSED _Must_inspect_result_
-#    define OSVR_RETURN_SUCCESS_CONDITION(X) _Return_type_success_(X)
-
-/* end of msvc section */
-#  elif defined(__GNUC__) && (__GNUC__ >= 4)
+#  if   defined(__GNUC__) && (__GNUC__ >= 4)
 /* section for GCC and GCC-alikes */
 
 #    if defined(__clang__)

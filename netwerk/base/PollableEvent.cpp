@@ -14,12 +14,8 @@
 #include "private/pprio.h"
 #include "prnetdb.h"
 
-#ifdef XP_WIN
-#  include "ShutdownLayer.h"
-#else
 #  include <fcntl.h>
 #  define USEPIPE 1
-#endif
 
 // PRFilePrivate is defined in a private header of NSPR (primpl.h) we can't
 // include. We need this to be able to set nonblocking=true which PR_CreatePipe
@@ -259,15 +255,9 @@ PollableEvent::PollableEvent()
 PollableEvent::~PollableEvent() {
   MOZ_COUNT_DTOR(PollableEvent);
   if (mWriteFD) {
-#if defined(XP_WIN)
-    AttachShutdownLayer(mWriteFD);
-#endif
     PR_Close(mWriteFD);
   }
   if (mReadFD) {
-#if defined(XP_WIN)
-    AttachShutdownLayer(mReadFD);
-#endif
     PR_Close(mReadFD);
   }
 }
@@ -332,27 +322,6 @@ bool PollableEvent::Clear() {
 
   char buf[2048];
   int32_t status;
-#ifdef XP_WIN
-  // On Windows we are writing to the socket for each event, to be sure that we
-  // do not have any deadlock read from the socket as much as we can.
-  while (true) {
-    status = PR_Read(mReadFD, buf, 2048);
-    SOCKET_LOG(("PollableEvent::Clear PR_Read %d\n", status));
-    if (status == 0) {
-      SOCKET_LOG(("PollableEvent::Clear EOF!\n"));
-      return false;
-    }
-    if (status < 0) {
-      PRErrorCode code = PR_GetError();
-      if (code == PR_WOULD_BLOCK_ERROR) {
-        return true;
-      } else {
-        SOCKET_LOG(("PollableEvent::Clear unexpected error %d\n", code));
-        return false;
-      }
-    }
-  }
-#else
   status = PR_Read(mReadFD, buf, 2048);
   SOCKET_LOG(("PollableEvent::Clear PR_Read %d\n", status));
 
@@ -375,7 +344,6 @@ bool PollableEvent::Clear() {
   }
   SOCKET_LOG(("PollableEvent::Clear unexpected error %d\n", code));
   return false;
-#endif  // XP_WIN
 }
 
 void PollableEvent::MarkFirstSignalTimestamp() {

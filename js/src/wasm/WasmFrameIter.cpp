@@ -35,14 +35,6 @@
 #include "jit/MacroAssembler-inl.h"
 #include "wasm/WasmInstance-inl.h"
 
-#ifdef XP_WIN
-// We only need the `windows.h` header, but this file can get unified built
-// with WasmSignalHandlers.cpp, which requires `winternal.h` to be included
-// before the `windows.h` header, and so we must include it here for that case.
-#  include <winternl.h>  // must include before util/WindowsWrapper.h's `#undef`s
-
-#  include "util/WindowsWrapper.h"
-#endif
 
 using namespace js;
 using namespace js::jit;
@@ -1239,22 +1231,6 @@ void wasm::GenerateExitPrologueMainStackSwitch(
 
   // Update the Win32 TIB StackBase and StackLimit fields last. We clobber
   // scratch2 and scratch3 here.
-#  ifdef _WIN32
-  masm.loadPtr(Address(scratch1, JSContext::offsetOfWasm() +
-                                     wasm::Context::offsetOfTib()),
-               scratch2);
-  masm.loadPtr(Address(scratch1, JSContext::offsetOfWasm() +
-                                     wasm::Context::offsetOfMainStackTarget() +
-                                     offsetof(wasm::StackTarget, tibStackBase)),
-               scratch3);
-  masm.storePtr(scratch3, Address(scratch2, offsetof(_NT_TIB, StackBase)));
-  masm.loadPtr(
-      Address(scratch1, JSContext::offsetOfWasm() +
-                            wasm::Context::offsetOfMainStackTarget() +
-                            offsetof(wasm::StackTarget, tibStackLimit)),
-      scratch3);
-  masm.storePtr(scratch3, Address(scratch2, offsetof(_NT_TIB, StackLimit)));
-#  endif
 
   masm.bind(&alreadyOnSystemStack);
 }
@@ -1311,31 +1287,6 @@ void wasm::GenerateExitEpilogueMainStackReturn(MacroAssembler& masm,
                                       wasm::Context::offsetOfCurrentStack()));
 
   // Refresh the Win32 TIB limits on wasm::Context with the latest values.
-#  ifdef _WIN32
-  masm.loadPtr(Address(scratch1, JSContext::offsetOfWasm() +
-                                     wasm::Context::offsetOfTib()),
-               scratch2);
-  masm.loadPtr(Address(scratch2, offsetof(_NT_TIB, StackBase)), scratch2);
-  masm.storePtr(
-      scratch2,
-      Address(scratch1, JSContext::offsetOfWasm() +
-                            wasm::Context::offsetOfMainStackTarget() +
-                            offsetof(wasm::StackTarget, tibStackBase)));
-  masm.loadPtr(Address(scratch1, JSContext::offsetOfWasm() +
-                                     wasm::Context::offsetOfTib()),
-               scratch2);
-  masm.loadPtr(Address(scratch2, offsetof(_NT_TIB, StackLimit)), scratch2);
-  masm.storePtr(
-      scratch2,
-      Address(scratch1, JSContext::offsetOfWasm() +
-                            wasm::Context::offsetOfMainStackTarget() +
-                            offsetof(wasm::StackTarget, tibStackLimit)));
-
-  // Reload wasm::Context::currentStack_ for below after we clobbered it.
-  masm.loadPtr(Address(scratch1, JSContext::offsetOfWasm() +
-                                     wasm::Context::offsetOfCurrentStack()),
-               scratch2);
-#  endif
 
   // Switch the stack limits. This clobbers all registers.
   {

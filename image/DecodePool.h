@@ -87,12 +87,6 @@ class DecodePool final : public nsIObserver {
    */
   already_AddRefed<nsISerialEventTarget> GetIOEventTarget();
 
-#ifdef XP_WIN
-  /// Bracket Windows Shell calls made on the I/O thread, so that a call still
-  /// in flight at shutdown can be reported.
-  static void NoteShellCallStarted();
-  static void NoteShellCallFinished();
-#endif
 
  private:
   friend class DecodePoolWorker;
@@ -107,11 +101,6 @@ class DecodePool final : public nsIObserver {
   // mMutex protects mIOThread and the shell call state.
   Mutex mMutex;
   nsCOMPtr<nsIThread> mIOThread MOZ_GUARDED_BY(mMutex);
-#ifdef XP_WIN
-  // Start time of the in-flight Windows Shell call, if any.
-  Maybe<AwakeTimeStamp> mShellCallStart MOZ_GUARDED_BY(mMutex);
-  bool mShellCallStartedInShutdown MOZ_GUARDED_BY(mMutex) = false;
-#endif
 };
 
 }  // namespace image

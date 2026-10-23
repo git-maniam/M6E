@@ -134,9 +134,6 @@ class nsIOService final : public nsIIOService,
 
   static bool TooManySocketProcessCrash();
   static void IncreaseSocketProcessCrashCount();
-#ifdef MOZ_WIDGET_ANDROID
-  static bool ShouldAddAdditionalSearchHeaders(nsIURI* aURI, bool* val);
-#endif
 
   // Returns true if this is an essential domain and a fallback domain
   // mapping exists.

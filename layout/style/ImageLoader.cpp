@@ -562,7 +562,6 @@ static void InvalidateImages(nsIFrame* aFrame, imgIRequest* aRequest,
       }
     }
   }
-#ifdef XP_MACOSX
   else if (aFrame->HasAnyStateBits(NS_FRAME_IN_POPUP)) {
     // On macOS popups are painted with fallback rendering so they don't have
     // webrender user data to tell us if the frame was painted last time, so we
@@ -571,7 +570,6 @@ static void InvalidateImages(nsIFrame* aFrame, imgIRequest* aRequest,
     // rendered with fallback, but we don't expect them to have images.)
     invalidateFrame = true;
   }
-#endif
 
   // Update ancestor rendering observers (-moz-element etc)
   //

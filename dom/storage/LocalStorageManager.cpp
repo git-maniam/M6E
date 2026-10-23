@@ -197,7 +197,6 @@ nsresult LocalStorageManager::GetStorageInternal(
       }
     }
 
-#if !defined(MOZ_WIDGET_ANDROID)
     ::mozilla::ipc::PBackgroundChild* backgroundActor =
         ::mozilla::ipc::BackgroundChild::GetOrCreateForCurrentThread();
     if (NS_WARN_IF(!backgroundActor)) {
@@ -220,13 +219,11 @@ nsresult LocalStorageManager::GetStorageInternal(
     if (!backgroundActor->CanSend()) {
       return NS_ERROR_FAILURE;
     }
-#endif
 
     // There is always a single instance of a cache per scope
     // in a single instance of a DOM storage manager.
     cache = PutCache(originAttrSuffix, originKey, quotaKey, aStoragePrincipal);
 
-#if !defined(MOZ_WIDGET_ANDROID)
     LocalStorageCacheChild* actor = new LocalStorageCacheChild(cache);
 
     MOZ_ALWAYS_TRUE(
@@ -234,7 +231,6 @@ nsresult LocalStorageManager::GetStorageInternal(
             actor, principalInfo, originKey, privateBrowsingId));
 
     cache->SetActor(actor);
-#endif
   }
 
   if (aRetval) {

@@ -76,9 +76,7 @@ class CompositorWidgetChild;
 
 class WidgetRenderingContext {
  public:
-#if defined(XP_MACOSX)
   gl::GLContext* mGL = nullptr;
-#endif
 };
 
 /**

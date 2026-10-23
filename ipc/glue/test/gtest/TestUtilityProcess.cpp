@@ -15,22 +15,11 @@
 #include "nsIProcessToolsService.h"
 #include "nsServiceManagerUtils.h"
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(XP_MACOSX)
 #  include "nsIAppShellService.h"
-#endif  // defined(MOZ_WIDGET_ANDROID) || defined(XP_MACOSX)
 
-#if defined(XP_WIN)
-#  include "mozilla/gtest/MozHelpers.h"
-#  include "mozilla/ipc/UtilityProcessImpl.h"
-#endif  // defined(XP_WIN)
 
-#ifdef MOZ_WIDGET_ANDROID
-#  define NS_APPSHELLSERVICE_CONTRACTID "@mozilla.org/widget/appshell/android;1"
-#endif  // MOZ_WIDGET_ANDROID
 
-#ifdef XP_MACOSX
 #  define NS_APPSHELLSERVICE_CONTRACTID "@mozilla.org/widget/appshell/mac;1"
-#endif  // XP_MACOSX
 
 using namespace mozilla;
 using namespace mozilla::gtest::ipc;
@@ -39,20 +28,10 @@ using namespace mozilla::ipc;
 // Note that some test suites inherit TestUtilityProcess, so any change here
 // will propagate there. Please ensure compatibility.
 /* static */ void TestUtilityProcess::SetUpTestSuite() {
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  // Ensure only one execution even with GTEST_REPEAT>1
-  static bool sOnce = false;
-  if (!sOnce) {
-    mozilla::SandboxBroker::GeckoDependentInitialize();
-    sOnce = true;
-  }
-#endif  // defined(XP_WIN) && defined(MOZ_SANDBOX)
 
-#if defined(MOZ_WIDGET_ANDROID) || defined(XP_MACOSX)
   // Ensure that the app shell service is running
   nsCOMPtr<nsIAppShellService> appShell =
       do_GetService(NS_APPSHELLSERVICE_CONTRACTID);
-#endif  // defined(MOZ_WIDGET_ANDROID) || defined(XP_MACOSX)
 }
 
 TEST_F(TestUtilityProcess, LaunchAllKinds) {
@@ -117,7 +96,6 @@ TEST_F(TestUtilityProcess, LaunchAllKinds) {
 
 // Android declares a single `utility` service, so it cannot keep several
 // utility processes alive at once.
-#ifndef ANDROID
 
 // A keep-alive whose process crashed turns inert: letting go of it must not
 // touch anything else.
@@ -216,17 +194,4 @@ TEST_F(TestUtilityProcess, IndependentProcesses) {
   NS_ProcessPendingEvents(nullptr);
 }
 
-#endif  // !ANDROID
 
-#if defined(XP_WIN)
-static void LoadLibraryCrash_Test() {
-  mozilla::gtest::DisableCrashReporter();
-  // Just a uuidgen name to have something random
-  UtilityProcessImpl::LoadLibraryOrCrash(
-      L"2b49036e-6ba3-400c-a297-38fa1f6c5255.dll");
-}
-
-TEST_F(TestUtilityProcess, LoadLibraryCrash) {
-  ASSERT_DEATH_IF_SUPPORTED(LoadLibraryCrash_Test(), "");
-}
-#endif  // defined(XP_WIN)

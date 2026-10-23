@@ -2,11 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef XP_WIN
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -17,9 +12,7 @@
 #include "mar_cmdline.h"
 #include "mar.h"
 #include "cryptox.h"
-#ifndef XP_WIN
 #  include <unistd.h>
-#endif
 
 #include "nss_secutil.h"
 #include "base64.h"

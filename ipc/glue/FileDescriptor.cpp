@@ -7,12 +7,7 @@
 #include "mozilla/ipc/ProtocolMessageUtils.h"
 #include "nsDebug.h"
 
-#ifdef XP_WIN
-#  include <windows.h>
-#  include "ProtocolUtils.h"
-#else  // XP_WIN
 #  include <unistd.h>
-#endif  // XP_WIN
 
 namespace mozilla {
 namespace ipc {

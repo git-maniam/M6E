@@ -242,37 +242,7 @@ uint16_t PointerEvent::ResistantInputSource(CallerType aCallerType) const {
   // Bug 1953665: Pen events are inconsistent between platforms.
   // They might emit touch events on Windows and Android, but only mouse events
   // in other platforms. In particular, touch is always disabled on macOS.
-#if defined(XP_WIN)
-  if (inputSource == MouseEvent_Binding::MOZ_SOURCE_TOUCH ||
-      inputSource == MouseEvent_Binding::MOZ_SOURCE_MOUSE) {
-    return inputSource;
-  }
-  // Similar to nsWindow::DispatchTouchEventFromWMPointer.
-  switch (mEvent->mMessage) {
-    case ePointerMove:
-      return mEvent->AsPointerEvent()->mPressure == 0
-                 ? MouseEvent_Binding::MOZ_SOURCE_MOUSE  // hover
-                 : MouseEvent_Binding::MOZ_SOURCE_TOUCH;
-    case ePointerUp:
-    case ePointerDown:
-    case ePointerCancel:
-      return MouseEvent_Binding::MOZ_SOURCE_TOUCH;
-    default:
-      return MouseEvent_Binding::MOZ_SOURCE_MOUSE;
-  }
-#elif defined(MOZ_WIDGET_ANDROID)
-  return inputSource == MouseEvent_Binding::MOZ_SOURCE_MOUSE
-             ? MouseEvent_Binding::MOZ_SOURCE_MOUSE
-             : MouseEvent_Binding::MOZ_SOURCE_TOUCH;
-#elif defined(MOZ_WIDGET_GTK)
-  return inputSource == MouseEvent_Binding::MOZ_SOURCE_TOUCH
-             ? MouseEvent_Binding::MOZ_SOURCE_TOUCH
-             : MouseEvent_Binding::MOZ_SOURCE_MOUSE;
-#elif defined(MOZ_WIDGET_COCOA)
   return MouseEvent_Binding::MOZ_SOURCE_MOUSE;
-#else
-  return inputSource;
-#endif
 }
 
 void PointerEvent::GetPointerType(nsAString& aPointerType,
@@ -285,11 +255,9 @@ void PointerEvent::GetPointerType(nsAString& aPointerType,
 }
 
 int32_t PointerEvent::PointerId(CallerType aCallerType) const {
-#ifdef MOZ_WIDGET_COCOA
   if (ShouldResistFingerprinting(aCallerType)) {
     return PointerEventHandler::GetSpoofedPointerIdForRFP();
   }
-#endif
   return mEvent->AsPointerEvent()->pointerId;
 }
 

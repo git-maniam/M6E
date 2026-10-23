@@ -26,11 +26,7 @@ static const int32_t NUNBOX32_TYPE_OFFSET = 4;
 static const int32_t NUNBOX32_PAYLOAD_OFFSET = 0;
 #endif
 
-#if defined(JS_CODEGEN_X64) && defined(_WIN64)
-static constexpr uint32_t ShadowStackSpace = 32;
-#else
 static constexpr uint32_t ShadowStackSpace = 0;
-#endif
 
 static const uint32_t JumpImmediateRange = INT32_MAX;
 
@@ -119,9 +115,7 @@ class Registers {
 
 #elif defined(JS_CODEGEN_X64)
   static const SetType ArgRegMask =
-#  if !defined(_WIN64)
       (1 << X86Encoding::rdi) | (1 << X86Encoding::rsi) |
-#  endif
       (1 << X86Encoding::rdx) | (1 << X86Encoding::rcx) |
       (1 << X86Encoding::r8) | (1 << X86Encoding::r9);
 
@@ -236,15 +230,7 @@ class FloatRegisters {
       Spread * (1 << X86Encoding::xmm15);  // This is ScratchDoubleReg.
 #endif
 
-#if defined(JS_CODEGEN_X64) && defined(_WIN64)
-  static const SetType VolatileMask =
-      ((1 << X86Encoding::xmm0) | (1 << X86Encoding::xmm1) |
-       (1 << X86Encoding::xmm2) | (1 << X86Encoding::xmm3) |
-       (1 << X86Encoding::xmm4) | (1 << X86Encoding::xmm5)) *
-      Spread;
-#else
   static const SetType VolatileMask = AllMask;
-#endif
 
   static const SetType NonVolatileMask = AllMask & ~VolatileMask;
   static const SetType WrapperMask = VolatileMask;

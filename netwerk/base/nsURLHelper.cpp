@@ -501,34 +501,6 @@ nsresult net_FilterAndEscapeURI(const nsACString& aInput, uint32_t aFlags,
                                &aFilterMask, aResult, fallible);
 }
 
-#if defined(XP_WIN)
-bool net_NormalizeFileURL(const nsACString& aURL, nsCString& aResultBuf) {
-  bool writing = false;
-
-  nsACString::const_iterator beginIter, endIter;
-  aURL.BeginReading(beginIter);
-  aURL.EndReading(endIter);
-
-  const char *s, *begin = beginIter.get();
-
-  for (s = begin; s != endIter.get(); ++s) {
-    if (*s == '\\') {
-      writing = true;
-      if (s > begin) aResultBuf.Append(begin, s - begin);
-      aResultBuf += '/';
-      begin = s + 1;
-    }
-    if (*s == '#') {
-      // Don't normalize any backslashes following the hash.
-      s = endIter.get();
-      break;
-    }
-  }
-  if (writing && s > begin) aResultBuf.Append(begin, s - begin);
-
-  return writing;
-}
-#endif
 
 //----------------------------------------------------------------------------
 // miscellaneous (i.e., stuff that should really be elsewhere)

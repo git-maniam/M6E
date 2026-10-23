@@ -5,7 +5,6 @@
 #ifndef mozilla_MemoryPressureLevelMac_h
 #define mozilla_MemoryPressureLevelMac_h
 
-#ifdef XP_DARWIN
 #  include "mozilla/Attributes.h"
 
 namespace mozilla {
@@ -71,5 +70,4 @@ class MacMemoryPressureLevel {
 
 }  // namespace mozilla
 
-#endif
 #endif  // mozilla_MemoryPressureLevelMac_h

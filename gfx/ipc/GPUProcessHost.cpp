@@ -14,14 +14,8 @@
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/ipc/ProcessUtils.h"
 #include "mozilla/layers/SynchronousTask.h"
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/GeckoProcessManagerWrappers.h"
-#endif
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
 #  include "mozilla/SandboxSettings.h"
-#endif
-#ifdef XP_WIN
-#  include <windows.h>
 #endif
 
 namespace mozilla {
@@ -65,9 +59,6 @@ bool GPUProcessHost::Launch(geckoargs::ChildProcessArgs aExtraOpts) {
   }
   mPrefSerializer->AddSharedPrefCmdLineArgs(*this, aExtraOpts);
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  mSandboxLevel = Preferences::GetInt("security.sandbox.gpu.level");
-#endif
 
   mLaunchPhase = LaunchPhase::Waiting;
   mLaunchTime = TimeStamp::Now();
@@ -118,27 +109,6 @@ bool GPUProcessHost::WaitForLaunch() {
 
 void GPUProcessHost::OnProcessLaunchError(const base::LaunchError aError) {
   bool oom = false;
-#ifdef XP_WIN
-  static const size_t kLowMemoryThreshold = 1024 * 1024 * 1024;
-
-  MEMORYSTATUSEX stat;
-  switch (aError.ErrorCode()) {
-    case ERROR_NOT_ENOUGH_MEMORY:
-    case ERROR_OUTOFMEMORY:
-    case ERROR_DEVICE_NO_RESOURCES:
-    case ERROR_COMMITMENT_LIMIT:
-      oom = true;
-      break;
-    default:
-      // It could fail for many reasons but if it isn't an explicit memory
-      // failure, but we are low on memory, it is probably due to OOM.
-      stat.dwLength = sizeof(stat);
-      oom = GlobalMemoryStatusEx(&stat) &&
-            (stat.ullAvailVirtual < kLowMemoryThreshold ||
-             stat.ullAvailPhys < kLowMemoryThreshold);
-      break;
-  }
-#endif
 
   gfxCriticalNote << "GPU proc launch error " << aError.FunctionName().get()
                   << (oom ? " OOM " : " ") << gfx::hexa(aError.ErrorCode());
@@ -181,28 +151,6 @@ void GPUProcessHost::InitAfterConnect(bool aSucceeded) {
     nsTArray<RefPtr<GPUChild::InitPromiseType>> initPromises;
     initPromises.AppendElement(mGPUChild->Init());
 
-#ifdef MOZ_WIDGET_ANDROID
-    nsCOMPtr<nsISerialEventTarget> launcherThread(GetIPCLauncher());
-    MOZ_ASSERT(launcherThread);
-    RefPtr<GPUChild::InitPromiseType> csmPromise =
-        InvokeAsync(
-            launcherThread, __func__,
-            [] {
-              java::CompositorSurfaceManager::LocalRef csm =
-                  java::GeckoProcessManager::GetCompositorSurfaceManager();
-              return MozPromise<java::CompositorSurfaceManager::GlobalRef, Ok,
-                                true>::CreateAndResolve(csm, __func__);
-            })
-            ->Map(GetCurrentSerialEventTarget(), __func__,
-                  [self = RefPtr{this}](
-                      java::CompositorSurfaceManager::GlobalRef&& aCsm) {
-                    if (!self->mShutdownRequested) {
-                      self->mCompositorSurfaceManager = aCsm;
-                    }
-                    return Ok{};
-                  });
-    initPromises.AppendElement(csmPromise);
-#endif
 
     GPUChild::InitPromiseType::All(GetCurrentSerialEventTarget(), initPromises)
         ->Then(GetCurrentSerialEventTarget(), __func__,
@@ -230,23 +178,6 @@ bool GPUProcessHost::CompleteInitSynchronously() {
 
   const bool result = mGPUChild->EnsureGPUReady();
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (!mCompositorSurfaceManager) {
-    layers::SynchronousTask task(
-        "GeckoProcessManager::GetCompositorSurfaceManager");
-
-    nsCOMPtr<nsIEventTarget> launcherThread(GetIPCLauncher());
-    MOZ_ASSERT(launcherThread);
-    launcherThread->Dispatch(NS_NewRunnableFunction(
-        "GeckoProcessManager::GetCompositorSurfaceManager", [&]() {
-          layers::AutoCompleteTask complete(&task);
-          mCompositorSurfaceManager =
-              java::GeckoProcessManager::GetCompositorSurfaceManager();
-        }));
-
-    task.Wait();
-  }
-#endif
 
   mLaunchPhase = LaunchPhase::Complete;
   if (mListener) {
@@ -334,12 +265,6 @@ bool GPUProcessHost::FillMacSandboxInfo(MacSandboxInfo& aInfo) {
 }
 #endif
 
-#ifdef MOZ_WIDGET_ANDROID
-java::CompositorSurfaceManager::Param
-GPUProcessHost::GetCompositorSurfaceManager() {
-  return mCompositorSurfaceManager;
-}
-#endif
 
 }  // namespace gfx
 }  // namespace mozilla

@@ -48,10 +48,6 @@
 #include "mozilla/SharedLibraries.h"
 #include "mozilla/Span.h"
 #include "mozilla/StackWalk.h"
-#ifdef XP_WIN
-#  include "mozilla/StackWalkThread.h"
-#  include "mozilla/WindowsStackWalkInitialization.h"
-#endif
 #include "mozilla/StaticPtr.h"
 #include "mozilla/ThreadLocal.h"
 #include "mozilla/TimeStamp.h"
@@ -134,11 +130,7 @@ bool LogTest(int aLevelToTest) {
 void PrintToConsole(const char* aFmt, ...) {
   va_list args;
   va_start(args, aFmt);
-#if defined(ANDROID)
-  __android_log_vprint(ANDROID_LOG_INFO, "Gecko", aFmt, args);
-#else
   vfprintf(stderr, aFmt, args);
-#endif
   va_end(args);
 }
 
@@ -1586,23 +1578,11 @@ static int64_t MicrosecondsSince1970();
 
 static void MaybeWriteRawStartTimeValue(SpliceableJSONWriter& aWriter,
                                         const TimeStamp& aStartTime) {
-#ifdef XP_LINUX
-  aWriter.DoubleProperty(
-      "startTimeAsClockMonotonicNanosecondsSinceBoot",
-      static_cast<double>(aStartTime.RawClockMonotonicNanosecondsSinceBoot()));
-#endif
 
-#ifdef XP_DARWIN
   aWriter.DoubleProperty(
       "startTimeAsMachAbsoluteTimeNanoseconds",
       static_cast<double>(aStartTime.RawMachAbsoluteTimeNanoseconds()));
-#endif
 
-#ifdef XP_WIN
-  uint64_t startTimeQPC = aStartTime.RawQueryPerformanceCounterValue();
-  aWriter.DoubleProperty("startTimeAsQueryPerformanceCounterValue",
-                         static_cast<double>(startTimeQPC));
-#endif
 }
 
 static void StreamMetaJSCustomObject(PSLockRef aLock,

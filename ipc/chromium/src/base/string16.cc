@@ -4,14 +4,6 @@
 
 #include "base/string16.h"
 
-#if defined(XP_WIN)
-
-#  error This file should not be used on 2-byte wchar_t systems
-// If this winds up being needed on 2-byte wchar_t systems, either the
-// definitions below can be used, or the host system's wide character
-// functions like wmemcmp can be wrapped.
-
-#else
 
 #  include "base/string_util.h"
 
@@ -69,4 +61,3 @@ char16* c16memset(char16* s, char16 c, size_t n) {
 
 template class std::basic_string<char16, base::string16_char_traits>;
 
-#endif

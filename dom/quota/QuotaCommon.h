@@ -1326,9 +1326,6 @@ inline auto AnonymizedOriginString(const nsACString& aOriginString) {
   return result;
 }
 
-#ifdef XP_WIN
-void CacheUseDOSDevicePathSyntaxPrefValue();
-#endif
 
 Result<nsCOMPtr<nsIFile>, nsresult> QM_NewLocalFile(const nsAString& aPath);
 

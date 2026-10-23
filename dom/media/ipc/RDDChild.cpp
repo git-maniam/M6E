@@ -13,17 +13,10 @@
 #include "mozilla/gfx/gfxVars.h"
 #include "mozilla/ipc/Endpoint.h"
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/SandboxBroker.h"
-#  include "mozilla/SandboxBrokerPolicyFactory.h"
-#endif
 
 #include "mozilla/Telemetry.h"
 #include "mozilla/TelemetryIPC.h"
 
-#if defined(XP_WIN)
-#  include "mozilla/WinDllServices.h"
-#endif
 
 #include "ProfilerParent.h"
 #include "RDDProcessHost.h"
@@ -40,28 +33,10 @@ RDDChild::~RDDChild() = default;
 bool RDDChild::Init() {
   Maybe<FileDescriptor> brokerFd;
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  auto policy = SandboxBrokerPolicyFactory::GetRDDPolicy(OtherPid());
-  if (policy != nullptr) {
-    brokerFd = Some(FileDescriptor());
-    mSandboxBroker =
-        SandboxBroker::Create(std::move(policy), OtherPid(), brokerFd.ref());
-    // This is unlikely to fail and probably indicates OS resource
-    // exhaustion, but we can at least try to recover.
-    if (NS_WARN_IF(mSandboxBroker == nullptr)) {
-      return false;
-    }
-    MOZ_ASSERT(brokerFd.ref().IsValid());
-  }
-#endif  // XP_LINUX && MOZ_SANDBOX
 
   nsTArray<GfxVarUpdate> updates = gfxVars::FetchNonDefaultVars();
 
   bool isReadyForBackgroundProcessing = false;
-#if defined(XP_WIN)
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  isReadyForBackgroundProcessing = dllSvc->IsReadyForBackgroundProcessing();
-#endif
 
   SendInit(updates, brokerFd, Telemetry::CanRecordReleaseData(),
            isReadyForBackgroundProcessing);
@@ -128,31 +103,14 @@ mozilla::ipc::IPCResult RDDChild::RecvAddMemoryReport(
   return IPC_OK();
 }
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult RDDChild::RecvGetModulesTrust(
-    ModuleIdentifiers&& aModIdents, bool aRunAtNormalPriority,
-    GetModulesTrustResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetModulesTrust(std::move(aModIdents), aRunAtNormalPriority)
-      ->Then(
-          GetMainThreadSerialEventTarget(), __func__,
-          [aResolver](ModulesMapResult&& aResult) {
-            aResolver(Some(ModulesMapResult(std::move(aResult))));
-          },
-          [aResolver](nsresult aRv) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 mozilla::ipc::IPCResult RDDChild::RecvUpdateMediaCodecsSupported(
     const media::MediaCodecsSupported& aSupported) {
-#if defined(XP_MACOSX) || defined(XP_LINUX)
   // We report this on GPUChild on Windows and Android
   if (ContainHardwareCodecsSupported(aSupported)) {
     mozilla::TelemetryProbesReporter::ReportDeviceMediaCodecSupported(
         aSupported);
   }
-#endif
   dom::ContentParent::BroadcastMediaCodecsSupportedUpdate(
       RemoteMediaIn::RddProcess, aSupported);
   return IPC_OK();

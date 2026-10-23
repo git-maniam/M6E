@@ -8,10 +8,6 @@
 #include "x86_operand_list.h"
 
 
-#ifdef _MSC_VER
-        #define snprintf        _snprintf
-        #define inline          __inline
-#endif
 
 unsigned int x86_disasm( unsigned char *buf, unsigned int buf_len,
                 uint32_t buf_rva, unsigned int offset,

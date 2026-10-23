@@ -49,30 +49,5 @@ nsresult GLImage::BuildSurfaceDescriptorBuffer(
   return ReadIntoBuffer(buffer, stride, size, format);
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-SurfaceTextureImage::SurfaceTextureImage(
-    AndroidSurfaceTextureHandle aHandle, const gfx::IntSize& aSize,
-    bool aContinuous, gl::OriginPos aOriginPos, bool aHasAlpha,
-    bool aForceBT709ColorSpace, Maybe<gfx::Matrix4x4> aTransformOverride)
-    : GLImage(ImageFormat::SURFACE_TEXTURE),
-      mHandle(aHandle),
-      mSize(aSize),
-      mContinuous(aContinuous),
-      mOriginPos(aOriginPos),
-      mHasAlpha(aHasAlpha),
-      mForceBT709ColorSpace(aForceBT709ColorSpace),
-      mTransformOverride(aTransformOverride) {
-  MOZ_ASSERT(mHandle);
-  MOZ_ASSERT(!gfx::gfxVars::ForceAImageReaderAndroid());
-}
-
-Maybe<SurfaceDescriptor> SurfaceTextureImage::GetDesc() {
-  SurfaceDescriptor sd = SurfaceTextureDescriptor(
-      mHandle, mSize,
-      mHasAlpha ? gfx::SurfaceFormat::R8G8B8A8 : gfx::SurfaceFormat::R8G8B8X8,
-      mForceBT709ColorSpace, false /* NOT continuous */, mTransformOverride);
-  return Some(sd);
-}
-#endif
 
 }  // namespace mozilla::layers

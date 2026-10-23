@@ -90,11 +90,6 @@
 #include "mozilla/StackWalk.h"
 #include "mozilla/SyncRunnable.h"
 #include "mozilla/Try.h"
-#ifdef XP_WIN
-#  include "mozilla/NativeNt.h"
-#  include "mozilla/StackWalkThread.h"
-#  include "mozilla/WindowsStackWalkInitialization.h"
-#endif
 #include "mozilla/StaticPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtr.h"
@@ -136,9 +131,7 @@
 // used to control the code coverage tool. Therefore, if coverage is enabled,
 // we need to disable our own signal handling mechanisms.
 #ifndef MOZ_CODE_COVERAGE
-#  ifdef XP_WIN
-// TODO: Add support for windows "signal"-like behaviour. See Bug 1867328.
-#  elif defined(GP_OS_darwin) || defined(GP_OS_linux) || \
+#  if   defined(GP_OS_darwin) || defined(GP_OS_linux) || \
       defined(GP_OS_android) || defined(GP_OS_freebsd)
 // Specify the specific platforms that we want to support
 #    define GECKO_PROFILER_ASYNC_POSIX_SIGNAL_CONTROL 1
@@ -162,9 +155,7 @@
 #  include "mozilla/jni/Refs.h"
 #endif
 
-#if defined(XP_MACOSX)
 #  include "nsCocoaFeatures.h"
-#endif
 
 #if defined(GP_PLAT_amd64_darwin)
 #  include <cpuid.h>
@@ -1032,9 +1023,7 @@ class CorePS {
 
   PS_GET_AND_SET(const nsACString&, ProcessName)
   PS_GET_AND_SET(const nsACString&, ETLDplus1)
-#if !defined(XP_WIN)
   PS_GET_AND_SET(const Maybe<nsCOMPtr<nsIFile>>&, AsyncSignalDumpDirectory)
-#endif
 
   // The scheduled off-main-thread profile dump deadline
   // (profiler_schedule_dump_to_file). A null deadline means none is scheduled.
@@ -1142,9 +1131,7 @@ class CorePS {
   JsFrameBuffer mJsFrames;
 
   // Cached download directory for when we need to dump profiles to disk.
-#if !defined(XP_WIN)
   Maybe<nsCOMPtr<nsIFile>> mAsyncSignalDumpDirectory;
-#endif
 };
 
 CorePS* CorePS::sInstance = nullptr;
@@ -3387,7 +3374,6 @@ static PreRecordedMetaInformation PreRecordMetaInformation(
       !NS_FAILED(res) && http) {
     (void)http->GetPlatform(info.mHttpPlatform);
 
-#if defined(XP_MACOSX)
     // On Mac, the http "oscpu" is capped at 10.15, so we need to get the real
     // OS version directly.
     int major = 0;
@@ -3402,7 +3388,6 @@ static PreRecordedMetaInformation PreRecordMetaInformation(
       info.mHttpOscpu.AppendLiteral(".");
       info.mHttpOscpu.AppendInt(bugfix);
     } else
-#endif
 #if defined(GP_OS_windows)
       // On Windows, the http "oscpu" is capped at Windows 10, so we need to get
       // the real OS version directly.
@@ -3464,23 +3449,11 @@ static void StreamMetaPlatformSampleUnits(PSLockRef aLock,
 
 static void MaybeWriteRawStartTimeValue(SpliceableJSONWriter& aWriter,
                                         const TimeStamp& aStartTime) {
-#ifdef XP_LINUX
-  aWriter.DoubleProperty(
-      "startTimeAsClockMonotonicNanosecondsSinceBoot",
-      static_cast<double>(aStartTime.RawClockMonotonicNanosecondsSinceBoot()));
-#endif
 
-#ifdef XP_DARWIN
   aWriter.DoubleProperty(
       "startTimeAsMachAbsoluteTimeNanoseconds",
       static_cast<double>(aStartTime.RawMachAbsoluteTimeNanoseconds()));
-#endif
 
-#ifdef XP_WIN
-  uint64_t startTimeQPC = aStartTime.RawQueryPerformanceCounterValue();
-  aWriter.DoubleProperty("startTimeAsQueryPerformanceCounterValue",
-                         static_cast<double>(startTimeQPC));
-#endif
 }
 
 static void StreamMetaJSCustomObject(
@@ -5569,10 +5542,8 @@ void SamplerThread::SpyOnUnregisteredThreads() {
       /* aWindowInfo = */ nsTArray<WindowInfo>{},
       /* aUtilityInfo = */ nsTArray<UtilityInfo>{},
       /* aChild = */ 0
-#ifdef XP_MACOSX
       ,
       /* aChildTask = */ MACH_PORT_NULL
-#endif  // XP_DARWIN
   );
 
   const ProcInfoPromise::ResolveOrRejectValue procInfoOrError =
@@ -6004,9 +5975,6 @@ static void profiler_stop_signal_handler(int signal, siginfo_t* info,
 Maybe<nsAutoCString> profiler_find_dump_path() {
 // Note, this is currently a posix-only implementation, as we currently have
 // issues with fetching the download directory on Windows. See Bug 1890154.
-#if defined(XP_WIN)
-  return Nothing();
-#else
   Maybe<nsCOMPtr<nsIFile>> directory = Nothing();
   nsAutoCString path;
 
@@ -6052,7 +6020,6 @@ Maybe<nsAutoCString> profiler_find_dump_path() {
   }
 
   return Nothing();
-#endif
 }
 
 void profiler_start_from_signal() {
@@ -7396,7 +7363,6 @@ void profiler_lookup_async_signal_dump_directory() {
 // This implementation is causing issues on Windows (see Bug 1890154) but as it
 // only exists to support the posix signal handling (on non-windows platforms)
 // we can remove it for now.
-#if !defined(XP_WIN)
   LOG("profiler_lookup_async_signal_dump_directory");
 
   MOZ_ASSERT(XRE_IsParentProcess() && NS_IsMainThread(),
@@ -7459,7 +7425,6 @@ void profiler_lookup_async_signal_dump_directory() {
     }
     CorePS::SetAsyncSignalDumpDirectory(lock, Some(tDownloadDir));
   }
-#endif
 }
 
 RefPtr<GenericPromise> profiler_pause() {
@@ -8011,11 +7976,9 @@ void profiler_thread_sleep() {
 }
 
 #if defined(GP_OS_windows)
-#  if !defined(__MINGW32__)
 enum {
   ThreadBasicInformation,
 };
-#  endif
 
 struct THREAD_BASIC_INFORMATION {
   NTSTATUS ExitStatus;

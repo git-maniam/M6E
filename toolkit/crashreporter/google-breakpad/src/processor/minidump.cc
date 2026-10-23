@@ -41,11 +41,7 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef _WIN32
-#include <io.h>
-#else  // _WIN32
 #include <unistd.h>
-#endif  // _WIN32
 
 #include <algorithm>
 #include <fstream>
@@ -372,11 +368,7 @@ void PrintValueOrInvalid(bool valid,
 // Converts a time_t to a string showing the time in UTC.
 string TimeTToUTCString(time_t tt) {
   struct tm timestruct;
-#ifdef _WIN32
-  gmtime_s(&timestruct, &tt);
-#else
   gmtime_r(&tt, &timestruct);
-#endif
 
   char timestr[20];
   size_t rv = strftime(timestr, 20, "%Y-%m-%d %H:%M:%S", &timestruct);

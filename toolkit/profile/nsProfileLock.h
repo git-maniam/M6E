@@ -9,19 +9,12 @@
 
 class nsIProfileUnlocker;
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
-#if defined(XP_UNIX)
 #  include <signal.h>
 #  include "prclist.h"
-#endif
 
 class nsProfileLock
-#if defined(XP_UNIX)
     : public PRCList
-#endif
 {
  public:
   nsProfileLock();
@@ -70,9 +63,6 @@ class nsProfileLock
   PRTime mReplacedLockTime;
   nsCOMPtr<nsIFile> mLockFile;
 
-#if defined(XP_WIN)
-  HANDLE mLockFileHandle;
-#elif defined(XP_UNIX)
 
   struct RemovePidLockFilesExiting {
     RemovePidLockFilesExiting() = default;
@@ -99,7 +89,6 @@ class nsProfileLock
 
   char* mPidLockFileName;
   int mLockFileDesc;
-#endif
 };
 
 #endif /* _nsProfileLock_h_ */

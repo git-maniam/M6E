@@ -17,12 +17,8 @@ struct PRLibrary;
 
 namespace mozilla::llama {
 
-#ifdef XP_MACOSX
 #  define MOZINFERENCE_METAL_FUNCTION_LIST(X) \
     X(void, ggml_backend_metal_disable, (void))
-#else
-#  define MOZINFERENCE_METAL_FUNCTION_LIST(X)
-#endif
 
 #ifdef MOZ_WEBSPEECH
 // mudler/parakeet.cpp cache-aware streaming C-API

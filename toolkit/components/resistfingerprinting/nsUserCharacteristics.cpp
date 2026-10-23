@@ -59,27 +59,12 @@
 #include "gfxTextRun.h"
 #include "nsGkAtoms.h"
 #include "prsystem.h"
-#if defined(XP_WIN)
-#  include "WinUtils.h"
-#  include "mozilla/gfx/DisplayConfigWindows.h"
-#  include "gfxWindowsPlatform.h"
-#elif defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/java/GeckoAppShellWrappers.h"
-#elif defined(XP_MACOSX)
 #  include "nsMacUtilsImpl.h"
 #  include <CoreFoundation/CoreFoundation.h>
 #  include "CFTypeRefPtr.h"
-#endif
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/widget/GSettings.h"
-#endif
 
 // For FPU control state detection
 #include <cfenv>
-#if defined(_MSC_VER)
-#  include <float.h>
-#  include <intrin.h>
-#endif
 
 using namespace mozilla;
 
@@ -120,13 +105,7 @@ namespace testing {
 extern "C" {
 
 int MaxTouchPoints() {
-#if defined(XP_WIN)
-  return widget::WinUtils::GetMaxTouchPoints();
-#elif defined(MOZ_WIDGET_ANDROID)
-  return java::GeckoAppShell::GetMaxTouchPoints();
-#else
   return 0;
-#endif
 }
 
 void PopulateMathMLPrefs() { CollectMathMLPrefs(); }
@@ -897,13 +876,6 @@ void PopulateTextAntiAliasing() {
   nsCString output = "["_ns;
   nsTArray<int32_t> levels;
 
-#if defined(XP_WIN)
-  nsTArray<ClearTypeParameterInfo> params;
-  gfxWindowsPlatform::GetCleartypeParams(params);
-  for (const auto& param : params) {
-    levels.AppendElement(param.clearTypeLevel);
-  }
-#elif defined(XP_MACOSX)
   uint32_t value = 2;  // default = medium
   auto prefValue = CFTypeRefPtr<CFPropertyListRef>::WrapUnderCreateRule(
       CFPreferencesCopyAppValue(CFSTR("AppleFontSmoothing"),
@@ -922,7 +894,6 @@ void PopulateTextAntiAliasing() {
   levels.AppendElement(value);
   // Linux/GTK exposes no smoothing *level*; its smoothing *type* (subpixel /
   // grayscale / none) is collected separately in PopulateFontSmoothingType.
-#endif
 
   for (const auto& level : levels) {
     output.Append(std::to_string(level));
@@ -946,46 +917,6 @@ void PopulateTextAntiAliasing() {
 void PopulateFontSmoothingType() {
   int32_t type = -1;  // -1 = not applicable / undetermined on this platform
 
-#if defined(XP_WIN)
-  // SPI_GETFONTSMOOTHINGTYPE / FE_FONTSMOOTHINGCLEARTYPE are not always exposed
-  // by the SDK headers in use (cf. gfx/thebes/gfxDWriteFonts.cpp).
-#  ifndef SPI_GETFONTSMOOTHINGTYPE
-#    define SPI_GETFONTSMOOTHINGTYPE 0x200a
-#  endif
-#  ifndef FE_FONTSMOOTHINGCLEARTYPE
-#    define FE_FONTSMOOTHINGCLEARTYPE 2
-#  endif
-
-  BOOL fontSmoothing = FALSE;
-  if (SystemParametersInfo(SPI_GETFONTSMOOTHING, 0, &fontSmoothing, 0)) {
-    if (!fontSmoothing) {
-      type = 0;  // disabled
-    } else {
-      UINT smoothingType = 0;
-      if (SystemParametersInfo(SPI_GETFONTSMOOTHINGTYPE, 0, &smoothingType,
-                               0) &&
-          smoothingType == FE_FONTSMOOTHINGCLEARTYPE) {
-        type = 2;  // subpixel (ClearType)
-      } else {
-        type = 1;  // grayscale (standard)
-      }
-    }
-  }
-#elif defined(MOZ_WIDGET_GTK)
-  // GNOME org.gnome.desktop.interface font-antialiasing: rgba = subpixel,
-  // grayscale = standard, none = disabled. (Previously reported, as this same
-  // type, in text_anti_aliasing.)
-  nsAutoCString antialiasing;
-  mozilla::widget::GSettings::GetString("org.gnome.desktop.interface"_ns,
-                                        "font-antialiasing"_ns, antialiasing);
-  if (antialiasing == "rgba") {
-    type = 2;  // subpixel
-  } else if (antialiasing == "grayscale") {
-    type = 1;  // standard
-  } else if (antialiasing == "none") {
-    type = 0;  // disabled
-  }
-#endif
 
   if (type >= 0) {
     glean::characteristics::font_smoothing_type.Set(type);
@@ -1003,36 +934,8 @@ void PopulateFontSmoothingType() {
 // the ClearType orientation (SPI_GETFONTSMOOTHINGORIENTATION), so it is
 // collected there too, normalized to the same "rgb"/"bgr" nicks Linux uses.
 void PopulateFontRenderingSettings() {
-#if defined(MOZ_WIDGET_GTK)
-  nsAutoCString hinting;
-  if (mozilla::widget::GSettings::GetString("org.gnome.desktop.interface"_ns,
-                                            "font-hinting"_ns, hinting) &&
-      !hinting.IsEmpty()) {
-    glean::characteristics::font_hinting.Set(hinting);
-  }
-#endif
 
   nsAutoCString rgbaOrder;
-#if defined(MOZ_WIDGET_GTK)
-  mozilla::widget::GSettings::GetString("org.gnome.desktop.interface"_ns,
-                                        "font-rgba-order"_ns, rgbaOrder);
-#elif defined(XP_WIN)
-  // SPI_GETFONTSMOOTHINGORIENTATION / FE_FONTSMOOTHINGORIENTATIONRGB are not
-  // always exposed by the SDK headers in use.
-#  ifndef SPI_GETFONTSMOOTHINGORIENTATION
-#    define SPI_GETFONTSMOOTHINGORIENTATION 0x2012
-#  endif
-#  ifndef FE_FONTSMOOTHINGORIENTATIONRGB
-#    define FE_FONTSMOOTHINGORIENTATIONRGB 0x0001
-#  endif
-  UINT orientation = 0;
-  if (SystemParametersInfo(SPI_GETFONTSMOOTHINGORIENTATION, 0, &orientation,
-                           0)) {
-    // Windows exposes only horizontal RGB/BGR (no vertical variants).
-    rgbaOrder.Assign(orientation == FE_FONTSMOOTHINGORIENTATIONRGB ? "rgb"
-                                                                   : "bgr");
-  }
-#endif
   if (!rgbaOrder.IsEmpty()) {
     glean::characteristics::font_rgba_order.Set(rgbaOrder);
   }
@@ -1068,13 +971,11 @@ void PopulateErrors(
 
 void PopulateProcessorCount() {
   int32_t processorCount = 0;
-#if defined(XP_MACOSX)
   if (nsMacUtilsImpl::IsTCSMAvailable()) {
     // On failure, zero is returned from GetPhysicalCPUCount()
     // and we fallback to PR_GetNumberOfProcessors below.
     processorCount = nsMacUtilsImpl::GetPhysicalCPUCount();
   }
-#endif
   if (processorCount == 0) {
     processorCount = PR_GetNumberOfProcessors();
   }
@@ -1117,11 +1018,7 @@ static nsCString GetFPUControlState() {
 
   // Read x87 control word
   uint16_t x87_cw = 0;
-#  ifdef _MSC_VER
-  x87_cw = static_cast<uint16_t>(_control87(0, 0));
-#  else
   __asm__ __volatile__("fstcw %0" : "=m"(x87_cw));
-#  endif
 
   // Extract rounding mode (bits 10-11)
   int x87_round = (x87_cw >> 10) & 0x3;
@@ -1149,11 +1046,7 @@ static nsCString GetFPUControlState() {
     // Read SSE MXCSR register (64-bit only, or 32-bit with SSE support)
 #  if defined(__x86_64__) || defined(_M_X64) || defined(__SSE__)
   uint32_t mxcsr = 0;
-#    ifdef _MSC_VER
-  mxcsr = _mm_getcsr();
-#    else
   __asm__ __volatile__("stmxcsr %0" : "=m"(mxcsr));
-#    endif
 
   // Extract rounding mode (bits 13-14)
   int sse_round = (mxcsr >> 13) & 0x3;
@@ -1249,22 +1142,7 @@ void PopulateModelName() {
       do_GetService("@mozilla.org/system-info;1");
   NS_ENSURE_TRUE_VOID(sysInfo);
 
-#if defined(XP_MACOSX)
   sysInfo->GetPropertyAsACString(u"appleModelId"_ns, modelName);
-#elif defined(MOZ_WIDGET_ANDROID)
-  sysInfo->GetPropertyAsACString(u"manufacturer"_ns, modelName);
-  modelName.AppendLiteral(" ");
-  nsCString temp;
-  sysInfo->GetPropertyAsACString(u"device"_ns, temp);
-  modelName.Append(temp);
-#elif defined(XP_WIN)
-  sysInfo->GetPropertyAsACString(u"winModelId"_ns, modelName);
-#elif defined(XP_LINUX)
-  sysInfo->GetPropertyAsACString(u"linuxProductSku"_ns, modelName);
-  if (modelName.IsEmpty()) {
-    sysInfo->GetPropertyAsACString(u"linuxProductName"_ns, modelName);
-  }
-#endif
 
   glean::characteristics::machine_model_name.Set(modelName);
 }

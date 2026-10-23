@@ -450,11 +450,6 @@ void QuotaManagerService::PerformIdleMaintenance() {
   // would otherwise be doing lots of disk I/O.
   BatteryInformation batteryInfo;
 
-#ifdef MOZ_WIDGET_ANDROID
-  // Android XPCShell doesn't load the AndroidBridge that is needed to make
-  // GetCurrentBatteryInformation work...
-  if (!QuotaManager::IsRunningXPCShellTests())
-#endif
   {
     // In order to give the correct battery level, hal must have registered
     // battery observers.

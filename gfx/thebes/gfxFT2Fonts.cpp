@@ -2,16 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#if defined(MOZ_WIDGET_GTK)
-#  include "gfxPlatformGtk.h"
-#  define gfxToolkitPlatform gfxPlatformGtk
-#elif defined(XP_WIN)
-#  include "gfxWindowsPlatform.h"
-#  define gfxToolkitPlatform gfxWindowsPlatform
-#elif defined(ANDROID)
-#  include "gfxAndroidPlatform.h"
-#  define gfxToolkitPlatform gfxAndroidPlatform
-#endif
 
 #include "gfxFT2FontBase.h"
 #include "gfxFT2FontList.h"

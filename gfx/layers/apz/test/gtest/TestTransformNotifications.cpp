@@ -429,7 +429,6 @@ TEST_F(APZCTransformNotificationTester,
   check.Call("Done");
 }
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZCTransformNotificationTester, PanOverscrollTransformNotifications) {
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
 
@@ -491,7 +490,6 @@ TEST_F(APZCTransformNotificationTester, PanOverscrollTransformNotifications) {
 
   check.Call("Done");
 }
-#endif
 
 TEST_F(APZCTransformNotificationTester, ScrollableTouchStateChange) {
   // Create a scroll frame with available space for a scroll.

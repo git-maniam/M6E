@@ -69,9 +69,6 @@
 struct JSContext;
 class JSObject;
 
-#if defined(MOZ_WIDGET_ANDROID)
-#  define IDB_MOBILE
-#endif
 
 namespace mozilla::dom::indexedDB {
 

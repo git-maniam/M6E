@@ -5,8 +5,6 @@
 #ifndef IPC_SurfaceDescriptor_h
 #define IPC_SurfaceDescriptor_h
 
-#if defined(XP_MACOSX)
 #  define MOZ_HAVE_PLATFORM_SPECIFIC_LAYER_BUFFERS
-#endif
 
 #endif  // IPC_SurfaceDescriptor_h

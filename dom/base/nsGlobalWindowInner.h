@@ -497,10 +497,6 @@ class nsGlobalWindowInner final : public mozilla::dom::EventTarget,
   virtual void EnableDeviceSensor(uint32_t aType) override;
   virtual void DisableDeviceSensor(uint32_t aType) override;
 
-#if defined(MOZ_WIDGET_ANDROID)
-  virtual void EnableOrientationChangeListener() override;
-  virtual void DisableOrientationChangeListener() override;
-#endif
 
   void AddSizeOfIncludingThis(nsWindowSizes& aWindowSizes) const;
 

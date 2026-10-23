@@ -107,13 +107,7 @@ TEST_F(TelemetryTestFixture, UnexpectedPrivilegedLoadsTelemetryTest) {
        nsContentPolicyType::TYPE_SCRIPT,
        "web"_ns,
        {
-#if defined(XP_WIN)
-           "sanitizedWindowsURL"_ns, "TYPE_SCRIPT"_ns, "web"_ns,
-           "file://.../file.txt"_ns, ""_ns
-
-#else
            "other"_ns, "TYPE_SCRIPT"_ns, "web"_ns, "unknown"_ns, ""_ns
-#endif
        }},
       {// test for one redirect
        "moz-extension://abcdefab-1234-4321-0000-abcdefabcdef/js/assets.js"_ns,

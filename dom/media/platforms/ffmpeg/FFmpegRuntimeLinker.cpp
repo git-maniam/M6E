@@ -36,7 +36,6 @@ static FFmpegLibWrapper sLibAV;
 
 static const char* sLibs[] = {
 // clang-format off
-#if defined(XP_DARWIN)
   "libavcodec." FFMPEG_MAX_MAJOR_VERSION_STR(FFMPEG_MAX_MAJOR_VERSION) ".dylib",
   "libavcodec.62.dylib",
   "libavcodec.61.dylib",
@@ -48,25 +47,6 @@ static const char* sLibs[] = {
   "libavcodec.55.dylib",
   "libavcodec.54.dylib",
   "libavcodec.53.dylib",
-#elif defined(XP_OPENBSD)
-  "libavcodec.so", // OpenBSD port controls the major/minor library version
-                   // of ffmpeg and update it regulary on ABI/API changes
-#else
-  "libavcodec.so." FFMPEG_MAX_MAJOR_VERSION_STR(FFMPEG_MAX_MAJOR_VERSION),
-  "libavcodec.so.62",
-  "libavcodec.so.61",
-  "libavcodec.so.60",
-  "libavcodec.so.59",
-  "libavcodec.so.58",
-  "libavcodec-ffmpeg.so.58",
-  "libavcodec-ffmpeg.so.57",
-  "libavcodec-ffmpeg.so.56",
-  "libavcodec.so.57",
-  "libavcodec.so.56",
-  "libavcodec.so.55",
-  "libavcodec.so.54",
-  "libavcodec.so.53",
-#endif
     // clang-format on
 };
 

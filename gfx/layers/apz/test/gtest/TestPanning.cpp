@@ -261,7 +261,6 @@ TEST_F(APZCPanningTester, DuplicatePanEndEvents_Bug1833950) {
              /*aSimulateMomentum=*/true);
 }
 
-#ifndef MOZ_WIDGET_ANDROID  // Only applies to GenericOverscrollEffect
 // When content preventDefaults a pan gesture block, the block is marked
 // interrupted and the pan-end that follows can no longer be added to it. If the
 // gesture had already scrolled the APZC into overscroll, that pan-end is the
@@ -336,7 +335,6 @@ TEST_F(APZCPanningTester, StrayPanEndSnapsBackOverscroll_Bug1931090) {
   apzc->AdvanceAnimationsUntilEnd();
   EXPECT_FALSE(apzc->IsOverscrolled());
 }
-#endif
 
 // A zero-delta pan-end that arrives without an active pan gesture block is
 // turned into a synthesized block by InputQueue::ReceivePanGestureInput. Such a
@@ -484,14 +482,6 @@ TEST_F(APZCPanningTesterMock, HoldGesture_ActiveWheelListener) {
   PanGesture(PanGestureInput::PANGESTURE_MAYSTART, manager, panPoint,
              ScreenPoint(0, 0), mcc->Time());
 
-#ifdef MOZ_WIDGET_GTK
-  // On Linux, send a CANCELLED. This signifies the end of the hold gesture.
-  // (On Mac the widget code goes directly to sending START.)
-  mcc->AdvanceByMillis(5);
-  QueueMockHitResult(scrollId, dispatchToContent);
-  PanGesture(PanGestureInput::PANGESTURE_CANCELLED, manager, panPoint,
-             ScreenPoint(0, 0), mcc->Time());
-#endif
 
   // Send a START. This does result in an event sent to web
   // content if there is a nonzero delta.
@@ -557,13 +547,6 @@ TEST_F(APZCPanningTesterMock, HoldGesture_PreventDefaultAfterLongHold) {
   // Allow enough time to pass for the content response timeout to be reached.
   mcc->AdvanceByMillis(30);
 
-#ifdef MOZ_WIDGET_GTK
-  // On Linux, send a CANCELLED. This signifies the end of the hold gesture.
-  // (On Mac the widget code goes directly to sending START.)
-  QueueMockHitResult(scrollId, dispatchToContent);
-  PanGesture(PanGestureInput::PANGESTURE_CANCELLED, manager, panPoint,
-             ScreenPoint(0, 0), mcc->Time());
-#endif
 
   // Send a START. This does result in an event sent to web
   // content if there is a nonzero delta.
@@ -638,15 +621,6 @@ TEST_F(APZCPanningTesterMock, HoldGesture_SubframeTargeting) {
   PanGesture(PanGestureInput::PANGESTURE_MAYSTART, manager, panPoint,
              ScreenPoint(0, 0), mcc->Time());
 
-#ifdef MOZ_WIDGET_GTK
-  // On Linux, send a CANCELLED. This signifies the end of the hold gesture.
-  // (On Mac the widget code goes directly to sending START.)
-  mcc->AdvanceByMillis(5);
-  QueueMockHitResult(subframeScrollId,
-                     CompositorHitTestFlags::eVisibleToHitTest);
-  PanGesture(PanGestureInput::PANGESTURE_CANCELLED, manager, panPoint,
-             ScreenPoint(0, 0), mcc->Time());
-#endif
 
   // Send a START. In the buggy scenario, this gets added to the same input
   // block as the MAYSTART, which has been marked as having empty

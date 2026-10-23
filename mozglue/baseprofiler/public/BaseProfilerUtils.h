@@ -17,14 +17,6 @@ using ThreadIdType = unsigned;
 }  // namespace mozilla::baseprofiler::detail
 
 // --------------------------------------------- Windows process & thread ids
-#elif defined(XP_WIN)
-
-namespace mozilla::baseprofiler::detail {
-using ProcessIdType = int;
-using ThreadIdType = unsigned long;
-}  // namespace mozilla::baseprofiler::detail
-
-// --------------------------------------------- Non-Windows process id
 #else
 // All non-Windows platforms are assumed to be POSIX, which has getpid().
 
@@ -35,7 +27,6 @@ using ProcessIdType = decltype(getpid());
 
 // --------------------------------------------- Non-Windows thread id
 // ------------------------------------------------------- macOS
-#  if defined(XP_MACOSX)
 
 namespace mozilla::baseprofiler::detail {
 using ThreadIdType = uint64_t;
@@ -43,37 +34,6 @@ using ThreadIdType = uint64_t;
 
 // ------------------------------------------------------- Android
 // Test Android before Linux, because Linux includes Android.
-#  elif defined(__ANDROID__) || defined(ANDROID)
-
-#    include <sys/types.h>
-namespace mozilla::baseprofiler::detail {
-using ThreadIdType = decltype(gettid());
-}  // namespace mozilla::baseprofiler::detail
-
-// ------------------------------------------------------- Linux
-#  elif defined(XP_LINUX)
-
-namespace mozilla::baseprofiler::detail {
-using ThreadIdType = long;
-}  // namespace mozilla::baseprofiler::detail
-
-// ------------------------------------------------------- FreeBSD
-#  elif defined(XP_FREEBSD)
-
-namespace mozilla::baseprofiler::detail {
-using ThreadIdType = long;
-}  // namespace mozilla::baseprofiler::detail
-
-// ------------------------------------------------------- Others
-#  else
-
-#    include <thread>
-
-namespace mozilla::baseprofiler::detail {
-using ThreadIdType = std::thread::id;
-}  // namespace mozilla::baseprofiler::detail
-
-#  endif
 #endif  // End of non-XP_WIN.
 
 #include <stdint.h>

@@ -42,23 +42,12 @@
  */
 
 #ifndef GSS_CALLCONV
-#  if defined(_WIN32)
-#    define GSS_CALLCONV __stdcall
-#    define GSS_CALLCONV_C __cdecl
-#  else
 #    define GSS_CALLCONV
 #    define GSS_CALLCONV_C
-#  endif
 #endif /* GSS_CALLCONV */
 
 #ifdef GSS_USE_FUNCTION_POINTERS
-#  ifdef _WIN32
-#    undef GSS_CALLCONV
-#    define GSS_CALLCONV
-#    define GSS_FUNC(f) (__stdcall * f##_type)
-#  else
 #    define GSS_FUNC(f) (*f##_type)
-#  endif
 #  define GSS_MAKE_TYPEDEF typedef
 #else
 #  define GSS_FUNC(f) f

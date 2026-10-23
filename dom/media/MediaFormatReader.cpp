@@ -2648,25 +2648,6 @@ void MediaFormatReader::Update(TrackType aTrack) {
       decoder.mError.reset();
       return;
     }
-#ifdef XP_LINUX
-    // We failed to decode on Linux with HW decoder,
-    // give it another try without HW decoder.
-    if (decoder.mError.ref() == NS_ERROR_DOM_MEDIA_DECODE_ERR &&
-        !decoder.mHardwareDecodingDisabled &&
-        decoder.mDecoder->IsHardwareAccelerated(error)) {
-      LOG("Error: {} decode error, disable HW acceleration",
-          TrackTypeToStr(aTrack));
-      needsNewDecoder = true;
-      decoder.mHardwareDecodingDisabled = true;
-    }
-    // RDD process crashed on Linux, give it another try without HW decoder.
-    if (decoder.mError.ref() ==
-        NS_ERROR_DOM_MEDIA_REMOTE_CRASHED_RDD_OR_GPU_ERR) {
-      LOG("Error: {} remote decoder crashed, disable HW acceleration",
-          TrackTypeToStr(aTrack));
-      decoder.mHardwareDecodingDisabled = true;
-    }
-#endif
     // We don't want to expose crash error so switch to
     // NS_ERROR_DOM_MEDIA_DECODE_ERR.
     if (decoder.mError.ref() ==

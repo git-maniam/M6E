@@ -51,23 +51,7 @@ static constexpr uint64_t kNecessaryStateDomains =
     CacheDomain::State | CacheDomain::Viewport;
 
 void RemoteAccessible::AssertActiveThread() const {
-#ifdef ANDROID
-  // The RemoteAccessible tree is touched from both the main thread and the
-  // Android UI thread, but never concurrently. Whichever of those threads is
-  // currently doing so holds nsAccessibilityService::GetAndroidMonitor().
-  //
-  // DocAccessibleParent is exempted from this on the main thread because its
-  // refcount is also touched by generic IPDL actor lifecycle code which can't
-  // be made to acquire this lock; it isn't specific to accessibility. That code
-  // only runs before the doc is reachable from the tree (and thus before it is
-  // reachable from the Android UI thread) or after it has already been removed
-  // from the tree, so it can't race with the Android UI thread.
-  if (!(NS_IsMainThread() && IsDoc())) {
-    nsAccessibilityService::GetAndroidMonitor().AssertCurrentThreadOwns();
-  }
-#else
   MOZ_ASSERT(NS_IsMainThread());
-#endif
 }
 
 NS_IMETHODIMP_(MozExternalRefCountType) RemoteAccessible::AddRef(void) {
@@ -269,7 +253,6 @@ bool RemoteAccessible::ApplyCache(CacheUpdateType aUpdateType,
     for (auto id : *maybeViewportCache) {
       AsDoc()->mOnScreenAccessibles.Insert(id);
     }
-#ifdef MOZ_WIDGET_COCOA
     // If our viewport cache has updated, we've seen at least one of the
     // following:
     // - bounds changed for an accessible
@@ -294,7 +277,6 @@ bool RemoteAccessible::ApplyCache(CacheUpdateType aUpdateType,
         }
       }
     }
-#endif
   }
 
   if (aUpdateType == CacheUpdateType::Initial) {
@@ -1183,7 +1165,6 @@ LayoutDeviceIntRect RemoteAccessible::BoundsWithOffset(
       }
     }
 
-#if !defined(ANDROID)
     // This block is not thread safe because it queries a LocalAccessible.
     // It is also not needed in Android since the only local accessible is
     // the outer doc browser that has an offset of 0.
@@ -1201,7 +1182,6 @@ LayoutDeviceIntRect RemoteAccessible::BoundsWithOffset(
       // that.
       devPxBounds.MoveBy(localBounds.X(), localBounds.Y());
     }
-#endif
 
     return devPxBounds;
   }

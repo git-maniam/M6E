@@ -34,13 +34,7 @@
 
 #  include "mozilla/Types.h"
 
-#  ifdef _MSC_VER
-// In clang-cl based ASAN, we link against the memory poisoning functions
-// statically.
-#    define MOZ_ASAN_VISIBILITY
-#  else
 #    define MOZ_ASAN_VISIBILITY MOZ_EXPORT
-#  endif
 
 extern "C" {
 /* These definitions are usually provided through the

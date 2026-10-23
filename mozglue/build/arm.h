@@ -69,9 +69,6 @@
 #  endif
 
 // Currently we only have CPU detection for Linux via /proc/cpuinfo
-#  if defined(__linux__) || defined(ANDROID)
-#    define MOZILLA_ARM_HAVE_CPUID_DETECTION 1
-#  endif
 
 #endif
 

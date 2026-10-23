@@ -20,11 +20,7 @@
 
 #define ORIGVFS(p) ((sqlite3_vfs*)((p)->pAppData))
 
-#if defined(XP_WIN)
-#  define BASE_VFS "win32-none"
-#else
 #  define BASE_VFS "unix-none"
-#endif
 
 #define VFS_NAME "readonly-immutable-nolock"
 

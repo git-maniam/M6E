@@ -854,9 +854,6 @@ TEST(MozPromise, RequireTailDispatchWithDirectTaskDispatch)
 
 TEST(MozPromise, RequireTailDispatchWithoutSupportDeathTest)
 {
-#ifdef ANDROID
-  GTEST_SKIP() << "Death tests cannot re-execute the test binary on Android";
-#endif
   SAVE_GDB_SLEEP_LOCAL();
   EXPECT_DEBUG_DEATH_WRAP(
       {

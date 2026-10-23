@@ -10,11 +10,7 @@
 
 #include "jstypes.h"
 
-#ifdef _MSC_VER
-typedef int pid_t;
-#else
 #  include <unistd.h>
-#endif
 
 /**
  * Start any profilers that are available and have been configured on for this
@@ -75,12 +71,5 @@ JS_PUBLIC_API const char* JS_UnsafeGetLastProfilingError();
 
 #endif /* MOZ_CALLGRIND */
 
-#ifdef __linux__
-
-[[nodiscard]] extern JS_PUBLIC_API bool js_StartPerf(const char* outfile);
-
-[[nodiscard]] extern JS_PUBLIC_API bool js_StopPerf();
-
-#endif /* __linux__ */
 
 #endif /* builtin_Profilers_h */

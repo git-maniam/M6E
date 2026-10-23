@@ -403,7 +403,6 @@ void DetailedCacheHitTelemetry::AddRecord(ERecType aType,
     rangeIdx = kNumOfRanges - 1;
   }
 
-#ifndef ANDROID
   nsAutoCString hitMissValue;
   if (aType == HIT) {
     hitMissValue.AppendLiteral("Hit ");
@@ -422,7 +421,6 @@ void DetailedCacheHitTelemetry::AddRecord(ERecType aType,
     hitMissValue.AppendInt(lowerBound);
     hitMissValue.AppendLiteral("+");
   }
-#endif
 
   StaticMutexAutoLock lock(sLock);
 
@@ -433,10 +431,8 @@ void DetailedCacheHitTelemetry::AddRecord(ERecType aType,
     mozilla::glean::network::cache_hit_time.AccumulateRawDuration(
         TimeStamp::Now() - aLoadStart);
   }
-#ifndef ANDROID
   mozilla::glean::network::cache_hit_miss_stat_per_cache_size.Get(hitMissValue)
       .Add(1);
-#endif
 
   sHRStats[rangeIdx].AddRecord(aType);
   ++sRecordCnt;
@@ -449,14 +445,12 @@ void DetailedCacheHitTelemetry::AddRecord(ERecType aType,
 
   for (uint32_t i = 0; i < kNumOfRanges; ++i) {
     if (sHRStats[i].Count() >= kHitRateSamplesReportLimit) {
-#ifndef ANDROID
       nsAutoCString cacheSizeIdx;
       cacheSizeIdx.AppendInt(i);
       uint32_t hitRateBucket = sHRStats[i].GetHitRateBucket();
 
       mozilla::glean::network::cache_hit_rate_per_cache_size.Get(cacheSizeIdx)
           .AccumulateSingleSample(hitRateBucket);
-#endif
       sHRStats[i].Reset();
     }
   }

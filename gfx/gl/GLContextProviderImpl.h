@@ -9,9 +9,6 @@
 #ifndef GL_CONTEXT_PROVIDER_NAME
 #  error GL_CONTEXT_PROVIDER_NAME not defined
 #endif
-#if defined(MOZ_WIDGET_ANDROID)
-#  include "GLTypes.h"  // for EGLSurface and EGLConfig
-#endif                  // defined(MOZ_WIDGET_ANDROID)
 
 class GL_CONTEXT_PROVIDER_NAME {
  public:

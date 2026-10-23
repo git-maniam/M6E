@@ -184,7 +184,6 @@ already_AddRefed<Element> TextControlElement::CreateButton() const {
       }
       break;
     }
-#ifndef ANDROID
     case FormControlType::InputNumber: {
       RefPtr button = MakeAnonElement(doc, PseudoStyleType::MozNumberSpinBox);
       for (auto pseudo : {PseudoStyleType::MozNumberSpinUp,
@@ -194,7 +193,6 @@ already_AddRefed<Element> TextControlElement::CreateButton() const {
       }
       return button.forget();
     }
-#endif
     default:
       break;
   }

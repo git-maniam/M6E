@@ -12,10 +12,6 @@
 #include "mozilla/gfx/gfxVars.h"
 #include "nsICanvasRenderingContextInternal.h"
 
-#ifdef MOZ_WIDGET_GTK
-#  include "mozilla/widget/DMABufDevice.h"
-#  include "mozilla/widget/DMABufSurface.h"
-#endif
 
 namespace mozilla {
 namespace layers {
@@ -110,14 +106,6 @@ TextureType TexTypeForWebgl(KnowsCompositor* const knowsCompositor,
     return TextureType::MacIOSurface;
   }
 
-#ifdef MOZ_WIDGET_GTK
-  if (kIsLinux) {
-    if (!knowsCompositor->UsingSoftwareWebRender() &&
-        widget::DMABufDevice::IsDMABufWebGLEnabled()) {
-      return TextureType::DMABUF;
-    }
-  }
-#endif
 
   if (kIsAndroid) {
     if (gfx::gfxVars::UseAHardwareBufferSharedSurfaceWebglOop()) {

@@ -8,17 +8,9 @@
 #include "mozilla/layers/TextureHost.h"
 #include "mozilla/webgpu/WebGPUParent.h"
 
-#ifdef XP_WIN
-#  include "mozilla/webgpu/SharedTextureD3D11.h"
-#endif
 
-#if defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-#  include "mozilla/webgpu/SharedTextureDMABuf.h"
-#endif
 
-#ifdef XP_MACOSX
 #  include "mozilla/webgpu/SharedTextureMacIOSurface.h"
-#endif
 
 namespace mozilla::webgpu {
 
@@ -31,16 +23,8 @@ UniquePtr<SharedTexture> SharedTexture::Create(
   MOZ_ASSERT(aParent);
 
   UniquePtr<SharedTexture> texture;
-#ifdef XP_WIN
-  texture = SharedTextureD3D11::Create(aParent, aDeviceId, aWidth, aHeight,
-                                       aFormat, aUsage);
-#elif defined(XP_LINUX) && !defined(MOZ_WIDGET_ANDROID)
-  texture = SharedTextureDMABuf::Create(aParent, aDeviceId, aWidth, aHeight,
-                                        aFormat, aUsage);
-#elif defined(XP_MACOSX)
   texture = SharedTextureMacIOSurface::Create(aParent, aDeviceId, aWidth,
                                               aHeight, aFormat, aUsage);
-#endif
   return texture;
 }
 

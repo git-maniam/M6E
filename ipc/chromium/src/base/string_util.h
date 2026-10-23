@@ -99,11 +99,7 @@ bool IsWprintfFormatPortable(const wchar_t* format);
 
 }  // namespace base
 
-#if defined(XP_WIN)
-#  include "base/string_util_win.h"
-#else
 #  include "base/string_util_posix.h"
-#endif
 
 // Trims any whitespace from either end of the input string.  Returns where
 // whitespace was found.

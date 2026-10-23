@@ -127,9 +127,7 @@
 #include "nsTreeBodyFrame.h"
 #include "nsUnicharUtils.h"
 
-#ifdef XP_MACOSX
 #  import <ApplicationServices/ApplicationServices.h>
-#endif
 
 namespace mozilla {
 
@@ -2517,14 +2515,12 @@ void EventStateManager::FireContextClick() {
     return;
   }
 
-#ifdef XP_MACOSX
   // Hack to ensure that we don't show a context menu when the user
   // let go of the mouse after a long cpu-hogging operation prevented
   // us from handling any OS events. See bug 117589.
   if (!CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState,
                                 kCGMouseButtonLeft))
     return;
-#endif
 
   nsEventStatus status = nsEventStatus_eIgnore;
 
@@ -3948,7 +3944,6 @@ void EventStateManager::DecideGestureEvent(WidgetGestureNotifyEvent* aEvent,
   aEvent->mPanDirection = panDirection;
 }
 
-#ifdef XP_MACOSX
 static nsINode* GetCrossDocParentNode(nsINode* aChild) {
   MOZ_ASSERT(aChild, "The child is null!");
   MOZ_ASSERT(XRE_IsParentProcess());
@@ -3977,7 +3972,6 @@ static bool NodeAllowsClickThrough(nsINode* aNode) {
   }
   return true;
 }
-#endif
 
 void EventStateManager::PostHandleKeyboardEvent(
     WidgetKeyboardEvent* aKeyboardEvent, nsIFrame* aTargetFrame,
@@ -4285,9 +4279,7 @@ nsresult EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
             EnsureDocument(mPresContext);
             if (mDocument) {
               nsCOMPtr<nsPIDOMWindowOuter> outerWindow = mDocument->GetWindow();
-#ifdef XP_MACOSX
               if (!activeContent || !activeContent->IsXULElement())
-#endif
                 fm->ClearFocus(outerWindow);
               // Prevent switch frame if we're already not in the foreground tab
               // and we're in a content process.
@@ -4785,7 +4777,6 @@ nsresult EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
           "Should've already been handled in PreHandleEvent()");
       break;
 
-#ifdef XP_MACOSX
     case eMouseActivate:
       if (mCurrentTarget) {
         nsCOMPtr<nsIContent> targetContent =
@@ -4795,7 +4786,6 @@ nsresult EventStateManager::PostHandleEvent(nsPresContext* aPresContext,
         }
       }
       break;
-#endif
 
     default:
       break;

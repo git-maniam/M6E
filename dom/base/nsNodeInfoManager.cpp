@@ -344,17 +344,6 @@ static bool IsSystemOrAddonOrAboutPrincipal(nsIPrincipal* aPrincipal) {
 }
 
 static bool IsAndroidResource(nsIURI* aURI) {
-#ifdef ANDROID
-  if (aURI->SchemeIs("resource")) {
-    nsAutoCString host, path;
-    aURI->GetHost(host);
-    aURI->GetFilePath(path);
-    if (host.EqualsLiteral("android") &&
-        StringBeginsWith(path, "/assets/"_ns)) {
-      return true;
-    }
-  }
-#endif
   return false;
 }
 

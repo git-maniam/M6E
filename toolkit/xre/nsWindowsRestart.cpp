@@ -19,9 +19,7 @@
 
 // Needed for CreateEnvironmentBlock
 #include <userenv.h>
-#ifndef __MINGW32__
 #  pragma comment(lib, "userenv.lib")
-#endif
 
 /**
  * Convert UTF8 to UTF16 without using the normal XPCOM goop, which we

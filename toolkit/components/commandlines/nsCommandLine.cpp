@@ -22,13 +22,8 @@
 #include "nsTextFormatter.h"
 #include "nsXPCOMCID.h"
 
-#ifdef MOZ_WIDGET_COCOA
 #  include <CoreFoundation/CoreFoundation.h>
 #  include "nsILocalFileMac.h"
-#elif defined(XP_WIN)
-#  include <windows.h>
-#  include <shlobj.h>
-#endif
 
 #ifdef DEBUG_bsmedberg
 #  define DEBUG_COMMANDLINE
@@ -178,17 +173,9 @@ nsCommandLine::ResolveFile(const nsAString& aArgument, nsIFile** aResult) {
   // First try to resolve as an absolute path if we can.
   // This will work even if we have no mWorkingDir, which happens if e.g.
   // the dir from which we were started was deleted before we started,
-#if defined(XP_UNIX)
   if (aArgument.First() == '/') {
     return NS_NewLocalFile(aArgument, aResult);
   }
-#elif defined(XP_WIN)
-  // Just try creating the file with the absolute path; if it fails,
-  // we'll keep going and try it as a relative path.
-  if (NS_SUCCEEDED(NS_NewLocalFile(aArgument, aResult))) {
-    return NS_OK;
-  }
-#endif
   // If that fails
   return ResolveRelativeFile(aArgument, aResult);
 }
@@ -206,7 +193,6 @@ nsresult nsCommandLine::ResolveRelativeFile(const nsAString& aArgument,
   // explicitly does not accept .. or . path parts, but that is exactly what we
   // need here. So we hack around it.
 
-#if defined(MOZ_WIDGET_COCOA)
   nsCOMPtr<nsILocalFileMac> lfm(do_QueryInterface(mWorkingDir));
   NS_ENSURE_TRUE(lfm, NS_ERROR_NO_INTERFACE);
 
@@ -230,46 +216,6 @@ nsresult nsCommandLine::ResolveRelativeFile(const nsAString& aArgument,
   newfile.forget(aResult);
   return NS_OK;
 
-#elif defined(XP_UNIX)
-  nsAutoCString nativeArg;
-  NS_CopyUnicodeToNative(aArgument, nativeArg);
-
-  nsAutoCString newpath;
-  mWorkingDir->GetNativePath(newpath);
-
-  newpath.Append('/');
-  newpath.Append(nativeArg);
-
-  nsCOMPtr<nsIFile> lf;
-  MOZ_TRY(NS_NewNativeLocalFile(newpath, getter_AddRefs(lf)));
-
-  rv = lf->Normalize();
-  if (NS_FAILED(rv)) return rv;
-
-  lf.forget(aResult);
-  return NS_OK;
-
-#elif defined(XP_WIN)
-  // This is a relative path. We use string magic
-  // and win32 _fullpath. Note that paths of the form "\Relative\To\CurDrive"
-  // are going to fail, and I haven't figured out a way to work around this
-  // without the PathCombine() function, which is not available before
-  // Windows 8; see https://bugzilla.mozilla.org/show_bug.cgi?id=1672814
-
-  nsAutoString fullPath;
-  mWorkingDir->GetPath(fullPath);
-
-  fullPath.Append('\\');
-  fullPath.Append(aArgument);
-
-  WCHAR pathBuf[MAX_PATH];
-  if (!_wfullpath(pathBuf, fullPath.get(), MAX_PATH)) return NS_ERROR_FAILURE;
-
-  return NS_NewLocalFile(nsDependentString(pathBuf), aResult);
-
-#else
-#  error Need platform-specific logic here.
-#endif
 }
 
 NS_IMETHODIMP
@@ -311,11 +257,7 @@ void nsCommandLine::appendArg(const char* arg) {
 #endif
 
   nsAutoString warg;
-#ifdef XP_WIN
-  CopyUTF8toUTF16(nsDependentCString(arg), warg);
-#else
   NS_CopyNativeToUnicode(nsDependentCString(arg), warg);
-#endif
 
   mArgs.AppendElement(warg);
 }
@@ -347,24 +289,6 @@ nsCommandLine::Init(int32_t argc, const char* const* argv, nsIFile* aWorkingDir,
 
 #ifdef DEBUG_COMMANDLINE
     printf("Testing native arg %i: '%s'\n", i, curarg);
-#endif
-#if defined(XP_WIN)
-    if (*curarg == '/') {
-      char* dup = strdup(curarg);
-      if (!dup) return NS_ERROR_OUT_OF_MEMORY;
-
-      *dup = '-';
-      char* colon = strchr(dup, ':');
-      if (colon) {
-        *colon = '\0';
-        appendArg(dup);
-        appendArg(colon + 1);
-      } else {
-        appendArg(dup);
-      }
-      free(dup);
-      continue;
-    }
 #endif
     if (*curarg == '-') {
       if (*(curarg + 1) == '-') ++curarg;

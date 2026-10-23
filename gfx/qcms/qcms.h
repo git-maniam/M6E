@@ -170,10 +170,6 @@ qcms_profile* qcms_profile_from_path(const char *path);
 
 void qcms_data_from_path(const char *path, void **mem, size_t *size);
 
-#ifdef _WIN32
-qcms_profile* qcms_profile_from_unicode_path(const wchar_t *path);
-void qcms_data_from_unicode_path(const wchar_t *path, void **mem, size_t *size);
-#endif
 
 qcms_CIE_xyY qcms_white_point_sRGB(void);
 qcms_profile* qcms_profile_sRGB(void);

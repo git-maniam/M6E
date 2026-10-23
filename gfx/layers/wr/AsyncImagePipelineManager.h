@@ -264,11 +264,6 @@ class AsyncImagePipelineManager final {
   bool mWillGenerateFrame;
   bool mDestroyed;
 
-#ifdef XP_WIN
-  bool mUseWebRenderDCompVideoHwOverlayWin;
-  bool mUseWebRenderDCompVideoSwOverlayWin;
-  bool mUseWebRenderDCompositionTextureOverlayWin;
-#endif
 
   // Render time for the current composition.
   TimeStamp mCompositionTime;

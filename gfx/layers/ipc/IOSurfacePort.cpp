@@ -4,15 +4,12 @@
 
 #include "IOSurfacePort.h"
 
-#ifdef XP_DARWIN
 #  include <IOSurface/IOSurfaceRef.h>
 
 #  include "CFTypeRefPtr.h"
-#endif
 
 namespace mozilla::layers {
 
-#ifdef XP_DARWIN
 CFTypeRefPtr<IOSurfaceRef> IOSurfacePort::GetSurface() const {
   // Note that IOSurfaceLookupFromMachPort does *not* consume the port.
   if (IOSurfaceRef s = IOSurfaceLookupFromMachPort(mPort.get())) {
@@ -29,6 +26,5 @@ IOSurfacePort IOSurfacePort::FromSurface(
 bool IOSurfacePort::operator==(const IOSurfacePort& aOther) const {
   return mPort.get() == aOther.mPort.get();
 }
-#endif
 
 }  // namespace mozilla::layers

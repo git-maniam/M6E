@@ -83,9 +83,7 @@
 #include "nsIObserverService.h"  // so we can be a profile change observer
 #include "nsIPropertyBag2.h"     // for the 64-bit content length
 
-#ifdef XP_MACOSX
 #  include "nsILocalFileMac.h"
-#endif
 
 #include "nsEscape.h"
 
@@ -109,10 +107,6 @@
 
 #include "mozilla/dom/nsHTTPSOnlyUtils.h"
 
-#ifdef XP_WIN
-#  include "nsWindowsHelpers.h"
-#  include "nsLocalFile.h"
-#endif
 
 #include "mozilla/Components.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -191,77 +185,10 @@ static nsresult UnescapeFragment(const nsACString& aFragment, nsIURI* aURI,
   return rv;
 }
 
-#if !defined(ANDROID)
 static Result<nsCOMPtr<nsIFile>, nsresult> GetOsTmpDownloadDirectory() {
   nsCOMPtr<nsIFile> dir;
   MOZ_TRY(NS_GetSpecialDirectory(NS_OS_TEMP_DIR, getter_AddRefs(dir)));
 
-#  if !defined(XP_MACOSX) && defined(XP_UNIX)
-  // Ensuring that only the current user can read the file names we end up
-  // creating. Note that creating directories with a specified permission is
-  // only supported on Unix platform right now. That's why the above check
-  // exists.
-
-  uint32_t permissions;
-  MOZ_TRY(dir->GetPermissions(&permissions));
-
-  if (permissions != PR_IRWXU) {
-    const char* userName = PR_GetEnv("USERNAME");
-    if (!userName || !*userName) {
-      userName = PR_GetEnv("USER");
-    }
-    if (!userName || !*userName) {
-      userName = PR_GetEnv("LOGNAME");
-    }
-    if (!userName || !*userName) {
-      userName = "mozillaUser";
-    }
-
-    nsAutoString userDir;
-    userDir.AssignLiteral("mozilla_");
-    userDir.AppendASCII(userName);
-    userDir.ReplaceChar(u"" FILE_PATH_SEPARATOR FILE_ILLEGAL_CHARACTERS, '_');
-
-    int counter = 0;
-    bool pathExists;
-    nsCOMPtr<nsIFile> finalPath;
-
-    while (true) {
-      nsAutoString countedUserDir(userDir);
-      countedUserDir.AppendInt(counter, 10);
-      dir->Clone(getter_AddRefs(finalPath));
-      finalPath->Append(countedUserDir);
-
-      MOZ_TRY(finalPath->Exists(&pathExists));
-
-      if (pathExists) {
-        // If this path has the right permissions, use it.
-        MOZ_TRY(finalPath->GetPermissions(&permissions));
-
-        // Ensuring the path is writable by the current user.
-        bool isWritable;
-        MOZ_TRY(finalPath->IsWritable(&isWritable));
-
-        if (permissions == PR_IRWXU && isWritable) {
-          dir = finalPath;
-          break;
-        }
-      }
-
-      nsresult const rv = finalPath->Create(nsIFile::DIRECTORY_TYPE, PR_IRWXU);
-      if (NS_SUCCEEDED(rv)) {
-        dir = finalPath;
-        break;
-      }
-      if (rv != NS_ERROR_FILE_ALREADY_EXISTS) {
-        // Unexpected error.
-        return Err(rv);
-      }
-      counter++;
-    }
-  }
-
-#  endif
   NS_ASSERTION(dir, "Somehow we didn't get a download directory!");
   return dir;
 }
@@ -277,7 +204,6 @@ static nsresult EnsureDirectoryExists(nsIFile* aDir) {
   }
   return rv;
 };
-#endif  // ANDROID
 
 /**
  * Obtains the final directory to save downloads to. This tends to vary per
@@ -289,9 +215,6 @@ static nsresult EnsureDirectoryExists(nsIFile* aDir) {
  */
 static Result<nsCOMPtr<nsIFile>, nsresult> GetPreferredDownloadsDirectory(
     bool aSkipChecks = false) {
-#if defined(ANDROID)
-  return Err(NS_ERROR_FAILURE);
-#else
   nsresult rv;
   // Try to get the users download location, if it's set.
   switch (Preferences::GetInt(NS_PREF_DOWNLOAD_FOLDERLIST, -1)) {
@@ -381,7 +304,6 @@ static Result<nsCOMPtr<nsIFile>, nsresult> GetPreferredDownloadsDirectory(
   }
 
   return dir;
-#endif  // ANDROID
 }
 
 NS_IMETHODIMP nsExternalHelperAppService::GetPreferredDownloadsDirectory(
@@ -405,9 +327,6 @@ NS_IMETHODIMP nsExternalHelperAppService::GetPreferredDownloadsDirectory(
 static Result<nsCOMPtr<nsIFile>, nsresult> GetInitialDownloadDirectory(
     bool aSkipChecks = false,
     CanonicalBrowsingContext* aBrowsingContext = nullptr) {
-#if defined(ANDROID)
-  return Err(NS_ERROR_FAILURE);
-#else
 
   if (aBrowsingContext) {
     nsString folderPath;
@@ -426,7 +345,6 @@ static Result<nsCOMPtr<nsIFile>, nsresult> GetInitialDownloadDirectory(
   }
 
   return GetPreferredDownloadsDirectory(aSkipChecks);
-#endif
 }
 
 /**
@@ -538,12 +456,8 @@ struct nsExtraMimeTypeEntry {
  * types here, make sure they are lowercase, or you'll regret it.
  */
 static const nsExtraMimeTypeEntry extraMimeEntries[] = {
-#if defined(XP_MACOSX)  // don't define .bin on the mac...use internet config to
                         // look that up...
     {APPLICATION_OCTET_STREAM, "exe,com", "Binary File"},
-#else
-    {APPLICATION_OCTET_STREAM, "exe,com,bin", "Binary File"},
-#endif
     {APPLICATION_GZIP2, "gz", "gzip"},
     {"application/x-arj", "arj", "ARJ file"},
     {"application/rtf", "rtf", "Rich Text Format File"},
@@ -553,9 +467,6 @@ static const nsExtraMimeTypeEntry extraMimeEntries[] = {
     {APPLICATION_POSTSCRIPT, "ps,eps,ai", "Postscript File"},
     {APPLICATION_XJAVASCRIPT, "js", "Javascript Source File"},
     {APPLICATION_XJAVASCRIPT, "jsm,mjs", "Javascript Module Source File"},
-#ifdef MOZ_WIDGET_ANDROID
-    {"application/vnd.android.package-archive", "apk", "Android Package"},
-#endif
 
     // OpenDocument formats
     {"application/vnd.oasis.opendocument.text", "odt", "OpenDocument Text"},
@@ -1945,36 +1856,6 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
 
   // If adding new checks, make sure this is the last check before telemetry
   // and going ahead with opening the file!
-#ifdef XP_WIN
-  /* We need to see whether the file we've got here could be
-   * executable.  If it could, we had better not try to open it!
-   * We can skip this check, though, if we have a setting to open in a
-   * helper app.
-   */
-  if (!alwaysAsk && action != nsIMIMEInfo::saveToDisk &&
-      !shouldAutomaticallyHandleInternally) {
-    nsCOMPtr<nsIHandlerApp> prefApp;
-    mMimeInfo->GetPreferredApplicationHandler(getter_AddRefs(prefApp));
-    if (action != nsIMIMEInfo::useHelperApp || !prefApp) {
-      nsCOMPtr<nsIFile> fileToTest;
-      GetTargetFile(getter_AddRefs(fileToTest));
-      if (fileToTest) {
-        bool isExecutable;
-        rv = fileToTest->IsExecutable(&isExecutable);
-        if (NS_FAILED(rv) || mTempFileIsExecutable ||
-            isExecutable) {  // checking NS_FAILED, because paranoia is good
-          alwaysAsk = true;
-        }
-      } else {  // Paranoia is good here too, though this really should not
-                // happen
-        NS_WARNING(
-            "GetDownloadInfo returned a null file after the temp file has been "
-            "set up! ");
-        alwaysAsk = true;
-      }
-    }
-  }
-#endif
 
   if (alwaysAsk) {
     // Display the dialog
@@ -2087,13 +1968,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv,
     case NS_ERROR_FILE_ACCESS_DENIED:
       if (type == kWriteError) {
         // Attempt to write without sufficient permissions.
-#if defined(ANDROID)
-        // On Android this means the SD card is present but
-        // unavailable (read-only).
-        msgId = "SDAccessErrorCardReadOnly";
-#else
         msgId = "accessError";
-#endif
       } else {
         msgId = "launchError";
       }
@@ -2106,14 +1981,6 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv,
         msgId = "helperAppNotFound";
         break;
       }
-#if defined(ANDROID)
-      else if (type == kWriteError) {
-        // On Android this means the SD card is missing (not in
-        // SD slot).
-        msgId = "SDAccessErrorCardMissing";
-        break;
-      }
-#endif
       [[fallthrough]];
 
     default:
@@ -2662,27 +2529,6 @@ nsresult nsExternalAppHandler::ContinueSave(nsIFile* aNewFileLocation) {
 
         nsAutoString suffix = u"."_ns + NS_ConvertASCIItoUTF16(randomChars) +
                               extensions + u".part"_ns;
-#ifdef XP_WIN
-        // Deal with MAX_PATH on Windows. Worth noting that the original
-        // path for mFinalFileDestination must be valid for us to get
-        // here: either SetDownloadToLaunch or the caller of
-        // SaveDestinationAvailable has called CreateUnique or similar
-        // to ensure both a unique name and one that isn't too long.
-        // The only issue is we're making it longer to get the part
-        // file path...
-        nsAutoString path;
-        mFinalFileDestination->GetPath(path);
-        CheckedInt<uint16_t> fullPathLength =
-            CheckedInt<uint16_t>(path.Length()) + 1 + randomChars.Length() +
-            std::size(".part");
-        if (!fullPathLength.isValid()) {
-          leafName.Truncate();
-        } else if (fullPathLength.value() > MAX_PATH) {
-          int32_t leafNameRemaining =
-              (int32_t)leafName.Length() - (fullPathLength.value() - MAX_PATH);
-          leafName.Truncate(std::max(leafNameRemaining, 0));
-        }
-#endif
         leafName.Append(suffix);
         movedFile->SetLeafName(leafName);
 
@@ -2742,17 +2588,7 @@ NS_IMETHODIMP nsExternalAppHandler::SetDownloadToLaunch(
       mSuggestedFileName = mTempLeafName;
     }
 
-#ifdef XP_WIN
-    // Ensure we don't double-append the file extension if it matches:
-    if (StringEndsWith(mSuggestedFileName, mFileExtension,
-                       nsCaseInsensitiveStringComparator)) {
-      fileToUse->Append(mSuggestedFileName);
-    } else {
-      fileToUse->Append(mSuggestedFileName + mFileExtension);
-    }
-#else
     fileToUse->Append(mSuggestedFileName);
-#endif
   }
 
   nsresult rv = fileToUse->CreateUnique(nsIFile::NORMAL_FILE_TYPE, 0600);
@@ -3760,14 +3596,6 @@ void nsExternalHelperAppService::SanitizeFileName(nsAString& aFileName,
   // Filename finalization helper, applied once we have determined the
   // (possibly-truncated) sanitized base-name and extension components.
   auto finalizeName = MakeScopeExit([&]() {
-#ifdef XP_WIN
-    // If aFileName is one of the Windows reserved names, replace it with our
-    // default ("Untitled") name.
-    if (nsLocalFile::CheckForReservedFileName(aFileName)) {
-      aFileName.Truncate();
-      CheckDefaultFileName(aFileName, aFlags);
-    }
-#endif
     aFileName.Append(ext);
     aFileName.Append(downloadSuffix);
 #ifdef DEBUG

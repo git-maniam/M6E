@@ -6,9 +6,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#if defined(ANDROID) || defined(XP_UNIX)
 #  include <unistd.h>
-#endif
 
 #include "eintr_wrapper.h"
 #include "base/logging.h"

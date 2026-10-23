@@ -1240,16 +1240,8 @@ TEST_F(ImageDecoders, JXLParallelDecodeMatchesSerial) {
   {
     // Compare to the same image in another format to make sure it's the right
     // reference.
-#  if defined(XP_WIN) && !defined(HAVE_64BIT_BUILD)
-    const uint32_t kReferenceMaxDifferingPixels = 7;
-    const uint8_t kReferenceMaxChannelDiff = 1;
-#  elif defined(ANDROID)
-    const uint32_t kReferenceMaxDifferingPixels = 4;
-    const uint8_t kReferenceMaxChannelDiff = 1;
-#  else
     const uint32_t kReferenceMaxDifferingPixels = 0;
     const uint8_t kReferenceMaxChannelDiff = 0;
-#  endif
     ImageTestCase referenceCase = LargeJXLReferenceWebPTestCase();
     RefPtr<SourceSurface> webpReference;
     WithSingleChunkDecode(referenceCase, Nothing(), /* aUseDecodePool */ false,
@@ -1434,11 +1426,9 @@ TEST_F(ImageDecoders, CorruptICOWithBadBppSingleChunk) {
 // in the large allocation succeeding, but leaving so little memory left the
 // system falls over and it kills the test run, so we skip it instead.
 // See bug 1655846 for more details.
-#ifndef ANDROID
 TEST_F(ImageDecoders, CorruptAVIFSingleChunk) {
   CheckDecoderSingleChunk(CorruptAVIFTestCase());
 }
-#endif
 
 TEST_F(ImageDecoders, AnimatedGIFWithFRAME_FIRST) {
   CheckDecoderFrameFirst(GreenFirstFrameAnimatedGIFTestCase());

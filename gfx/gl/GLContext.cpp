@@ -12,14 +12,6 @@
 #include <regex>
 #include <string>
 #include <vector>
-#ifdef MOZ_WIDGET_ANDROID
-#  include <sys/mman.h>
-#endif
-#if defined(XP_LINUX) && !defined(ANDROID)
-// For MesaMemoryLeakWorkaround
-#  include <dlfcn.h>
-#  include <link.h>
-#endif
 
 #include "GLBlitHelper.h"
 #include "GLContextProvider.h"
@@ -48,13 +40,8 @@
 #include "prenv.h"
 #include "prlink.h"
 
-#ifdef XP_MACOSX
 #  include <CoreServices/CoreServices.h>
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/jni/Utils.h"
-#endif
 
 namespace mozilla {
 namespace gl {
@@ -912,31 +899,12 @@ bool GLContext::InitImpl() {
   if (mWorkAroundDriverBugs) {
     int maxTexSize = INT32_MAX;
     int maxCubeSize = INT32_MAX;
-#ifdef XP_MACOSX
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1544446
     // Mojave exposes 16k textures, but gives FRAMEBUFFER_UNSUPPORTED for any
     // 16k*16k FB except rgba8 without depth/stencil.
     // The max supported sizes changes based on involved formats.
     // (RGBA32F more restrictive than RGBA16F)
     maxTexSize = 8192;
-#endif
-#ifdef MOZ_X11
-    if (mVendor == GLVendor::Nouveau) {
-      // see bug 814716. Clamp MaxCubeMapTextureSize at 2K for Nouveau.
-      maxCubeSize = 2048;
-    } else if (mVendor == GLVendor::Intel) {
-      // Bug 1199923. Driver seems to report a larger max size than
-      // actually supported.
-      maxTexSize = mMaxTextureSize / 2;
-    }
-    // Bug 1367570. Explicitly set vertex attributes [1,3] to opaque
-    // black because Nvidia doesn't do it for us.
-    if (mVendor == GLVendor::NVIDIA) {
-      for (size_t i = 1; i <= 3; ++i) {
-        mSymbols.fVertexAttrib4f(i, 0, 0, 0, 1);
-      }
-    }
-#endif
     if (Renderer() == GLRenderer::AdrenoTM420) {
       // see bug 1194923. Calling glFlush before glDeleteFramebuffers
       // prevents occasional driver crash.
@@ -965,16 +933,6 @@ bool GLContext::InitImpl() {
 
   mMaxTexOrRbSize = std::min(mMaxTextureSize, mMaxRenderbufferSize);
 
-#ifdef MOZ_WIDGET_ANDROID
-  if (Renderer() == GLRenderer::SamsungXclipse && jni::GetAPIVersion() >= 35) {
-    // On Samsung Xclipse GPUs on Android 15 attribute values for the final
-    // vertex in a buffer may be incorrect. Padding the buffer to contain
-    // enough space for an additional vertex avoids the issue. See bug 1983036.
-    GLint maxVertexAttribStride;
-    raw_fGetIntegerv(LOCAL_GL_MAX_VERTEX_ATTRIB_STRIDE, &maxVertexAttribStride);
-    mVertexBufferExtraPadding = Some(maxVertexAttribStride);
-  }
-#endif
 
   ////////////////////////////////////////////////////////////////////////////
 
@@ -1819,14 +1777,12 @@ void GLContext::InitExtensions() {
       MarkExtensionUnsupported(ANGLE_texture_compression_dxt5);
     }
 
-#ifdef XP_MACOSX
     // OSX supports EXT_texture_sRGB in Legacy contexts, but not in Core
     // contexts. Though EXT_texture_sRGB was included into GL2.1, it *excludes*
     // the interactions with s3tc. Strictly speaking, you must advertize support
     // for EXT_texture_sRGB in order to allow for srgb+s3tc on desktop GL. The
     // omission of EXT_texture_sRGB in OSX Core contexts appears to be a bug.
     MarkExtensionSupported(EXT_texture_sRGB);
-#endif
   }
 
   if (shouldDumpExts) {
@@ -2058,7 +2014,6 @@ void GLContext::AssertNotPassingStackBufferToTheGL(const void* ptr) {
   // on the same page.
   bool isStackAddress = pageDistance <= 1;
 
-#  if !(defined(_WIN32) && !defined(_WIN64))
   // On 32-bit Windows, heap and stack are adjacent in the limited 2GB address
   // space, causing false positives where legitimate heap allocations appear
   // within 1 page of the stack. Disable this assertion there.
@@ -2066,9 +2021,6 @@ void GLContext::AssertNotPassingStackBufferToTheGL(const void* ptr) {
              "Please don't pass stack arrays to the GL. "
              "Consider using HeapCopyOfStackArray. "
              "See bug 1005658.");
-#  else
-  (void)isStackAddress;
-#  endif
 }
 
 void GLContext::CreatedProgram(GLContext* aOrigin, GLuint aName) {
@@ -2398,7 +2350,6 @@ void GLContext::fReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 
   // Check if GL is giving back 1.0 alpha for
   // RGBA reads to RGBA images from no-alpha buffers.
-#ifdef XP_MACOSX
   if (WorkAroundDriverBugs() && Vendor() == gl::GLVendor::NVIDIA &&
       format == LOCAL_GL_RGBA && type == LOCAL_GL_UNSIGNED_BYTE &&
       !IsCoreProfile() && width && height) {
@@ -2420,7 +2371,6 @@ void GLContext::fReadPixels(GLint x, GLint y, GLsizei width, GLsizei height,
       }
     }
   }
-#endif
 }
 
 void GLContext::fDeleteFramebuffers(GLsizei n, const GLuint* names) {
@@ -2437,27 +2387,6 @@ void GLContext::fDeleteFramebuffers(GLsizei n, const GLuint* names) {
   TRACKING_CONTEXT(DeletedFramebuffers(this, n, names));
 }
 
-#ifdef MOZ_WIDGET_ANDROID
-/**
- * Conservatively estimate whether there is enough available
- * contiguous virtual address space to map a newly allocated texture.
- */
-static bool WillTextureMapSucceed(GLsizei width, GLsizei height, GLenum format,
-                                  GLenum type) {
-  bool willSucceed = false;
-  // Some drivers leave large gaps between textures, so require
-  // there to be double the actual size of the texture available.
-  size_t size = width * height * GetBytesPerTexel(format, type) * 2;
-
-  void* p = mmap(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  if (p != MAP_FAILED) {
-    willSucceed = true;
-    munmap(p, size);
-  }
-
-  return willSucceed;
-}
-#endif  // MOZ_WIDGET_ANDROID
 
 void GLContext::fTexImage2D(GLenum target, GLint level, GLint internalformat,
                             GLsizei width, GLsizei height, GLint border,
@@ -2470,17 +2399,6 @@ void GLContext::fTexImage2D(GLenum target, GLint level, GLint internalformat,
     height = -1;
     border = -1;
   }
-#if MOZ_WIDGET_ANDROID
-  if (mTextureAllocCrashesOnMapFailure) {
-    // We have no way of knowing whether this texture already has
-    // storage allocated for it, and therefore whether this check
-    // is necessary. We must therefore assume it does not and
-    // always perform the check.
-    if (!WillTextureMapSucceed(width, height, internalformat, type)) {
-      return;
-    }
-  }
-#endif
   raw_fTexImage2D(target, level, internalformat, width, height, border, format,
                   type, pixels);
 }
@@ -2774,26 +2692,6 @@ bool GLContext::CreateOffscreenDefaultFb(const gfx::IntSize& size) {
 //
 // See bug 1702394 for more details.
 void MesaMemoryLeakWorkaround() {
-#if defined(XP_LINUX) && !defined(ANDROID)
-  Maybe<nsAutoCString> foundPath;
-
-  dl_iterate_phdr(
-      [](dl_phdr_info* info, size_t size, void* data) {
-        auto& foundPath = *reinterpret_cast<Maybe<nsAutoCString>*>(data);
-        nsDependentCString thisPath(info->dlpi_name);
-        if (StringEndsWith(thisPath, "/swrast_dri.so"_ns)) {
-          foundPath.emplace(thisPath);
-          return 1;
-        }
-        return 0;
-      },
-      &foundPath);
-
-  if (foundPath) {
-    // Deliberately leak to prevent unload
-    (void)dlopen(foundPath->get(), RTLD_LAZY);
-  }
-#endif  // XP_LINUX but not ANDROID
 }
 
 } /* namespace gl */

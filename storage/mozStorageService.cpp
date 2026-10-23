@@ -35,10 +35,6 @@
 #include "sqlite3.h"
 #include "mozilla/AutoSQLiteLifetime.h"
 
-#ifdef XP_WIN
-// "windows.h" was included and it can #define lots of things we care about...
-#  undef CompareString
-#endif
 
 using mozilla::intl::Collator;
 

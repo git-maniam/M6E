@@ -12,9 +12,6 @@
 #include "mozilla/gfx/RectAbsolute.h"
 #include "nsRect.h"
 #include "nsRectAbsolute.h"
-#ifdef XP_WIN
-#  include <windows.h>
-#endif
 
 using mozilla::CSSCoord;
 using mozilla::CSSIntCoord;

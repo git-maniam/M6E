@@ -21,10 +21,6 @@
 #include "nsDisplayList.h"
 #include "nsLayoutUtils.h"
 
-#ifdef XP_WIN
-#  include "gfxDWriteFonts.h"
-#  include "mozilla/WindowsProcessMitigations.h"
-#endif
 
 namespace mozilla {
 
@@ -529,11 +525,7 @@ void WebRenderLayerManager::MakeSnapshotIfRequired(LayoutDeviceIntSize aSize) {
   // The GLES spec only guarantees that RGBA can be used with glReadPixels,
   // so on Android we use RGBA.
   SurfaceFormat format =
-#ifdef MOZ_WIDGET_ANDROID
-      SurfaceFormat::R8G8B8A8;
-#else
       SurfaceFormat::B8G8R8A8;
-#endif
   RefPtr<TextureClient> texture = TextureClient::CreateForRawBufferAccess(
       WrBridge(), format, aSize.ToUnknownSize(), BackendType::SKIA,
       TextureFlags::SNAPSHOT);
@@ -745,9 +737,7 @@ void WebRenderLayerManager::WaitOnTransactionProcessed() {
 void WebRenderLayerManager::SendInvalidRegion(const nsIntRegion& aRegion) {
   // XXX Webrender does not support invalid region yet.
 
-#ifndef XP_WIN
   WrBridge()->SendInvalidateRenderedFrame();
-#endif
 }
 
 void WebRenderLayerManager::ScheduleComposite(wr::RenderReasons aReasons) {
@@ -762,17 +752,7 @@ WebRenderLayerManager::CreatePersistentBufferProvider(
   // Remoting moves hardware usage out-of-process, while will-read-frequently
   // avoids hardware acceleration entirely.
   if (!aWillReadFrequently && !gfxPlatform::UseRemoteCanvas()) {
-#ifdef XP_WIN
-    // Any kind of hardware acceleration is incompatible with Win32k Lockdown
-    // We don't initialize devices here so that PersistentBufferProviderShared
-    // will fall back to using a piece of shared memory as a backing for the
-    // canvas
-    if (!IsWin32kLockedDown()) {
-      gfxPlatform::GetPlatform()->EnsureDevicesInitialized();
-    }
-#else
     gfxPlatform::GetPlatform()->EnsureDevicesInitialized();
-#endif
   }
 
   RefPtr<PersistentBufferProvider> provider =

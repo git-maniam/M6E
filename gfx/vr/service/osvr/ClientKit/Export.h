@@ -56,41 +56,7 @@
 #endif
 
 /* Per-platform defines */
-#if defined(_MSC_VER)
-/* MSVC on Windows */
-
-#  ifndef OSVR_CLIENTKIT_EXPORT
-#    ifdef osvrClientKit_EXPORTS
-/* We are building this library */
-#      define OSVR_CLIENTKIT_EXPORT __declspec(dllexport)
-#    else
-/* We are using this library */
-#      define OSVR_CLIENTKIT_EXPORT __declspec(dllimport)
-#    endif
-#  endif
-
-#  ifndef OSVR_CLIENTKIT_DEPRECATED
-#    define OSVR_CLIENTKIT_DEPRECATED __declspec(deprecated)
-#  endif
-
-#elif defined(_WIN32) && defined(__GNUC__)
-/* GCC-compatible on Windows */
-
-#  ifndef OSVR_CLIENTKIT_EXPORT
-#    ifdef osvrClientKit_EXPORTS
-/* We are building this library */
-#      define OSVR_CLIENTKIT_EXPORT __attribute__((dllexport))
-#    else
-/* We are using this library */
-#      define OSVR_CLIENTKIT_EXPORT __attribute__((dllimport))
-#    endif
-#  endif
-
-#  ifndef OSVR_CLIENTKIT_DEPRECATED
-#    define OSVR_CLIENTKIT_DEPRECATED __attribute__((__deprecated__))
-#  endif
-
-#elif defined(OSVR_CLIENTKIT_EXPORT_HEADER_SUPPORTS_ATTRIBUTES) || \
+#if   defined(OSVR_CLIENTKIT_EXPORT_HEADER_SUPPORTS_ATTRIBUTES) || \
     (defined(__APPLE__) && defined(__MACH__))
 /* GCC4.2+ compatible (assuming something *nix-like) and Mac OS X */
 /* (The first macro is defined at the top of the file, if applicable) */

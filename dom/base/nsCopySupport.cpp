@@ -38,17 +38,6 @@
 #include "nsIImageLoadingContent.h"
 #include "nsIInterfaceRequestorUtils.h"
 
-#ifdef XP_WIN
-#  include "mozilla/StaticPrefs_clipboard.h"
-#  include "nsCExternalHandlerService.h"
-#  include "nsEscape.h"
-#  include "nsIMIMEInfo.h"
-#  include "nsIMIMEService.h"
-#  include "nsIURIMutator.h"
-#  include "nsIURL.h"
-#  include "nsReadableUtils.h"
-#  include "nsXULAppAPI.h"
-#endif
 
 #include "mozilla/ContentEvents.h"
 #include "mozilla/EventDispatcher.h"
@@ -75,12 +64,6 @@ static nsresult AppendString(nsITransferable* aTransferable,
 static nsresult AppendDOMNode(nsITransferable* aTransferable,
                               nsINode* aDOMNode);
 
-#ifdef XP_WIN
-// copy image as file promise onto the transferable
-static nsresult AppendImagePromise(nsITransferable* aTransferable,
-                                   imgIRequest* aImgRequest,
-                                   nsINode* aImageNode);
-#endif
 
 static nsresult EncodeForTextPlain(nsIDocumentEncoder& aEncoder,
                                    Document& aDocument, Selection* aSelection,
@@ -538,12 +521,6 @@ nsresult nsCopySupport::ImageCopy(
       trans->SetReferrerInfo(referrerInfo);
     }
 
-#ifdef XP_WIN
-    if (StaticPrefs::clipboard_imageAsFile_enabled()) {
-      rv = AppendImagePromise(trans, imgRequest, imageNode);
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
-#endif
 
     // copy the image data onto the transferable
     rv = trans->SetTransferData(kNativeImageMime, image);
@@ -627,64 +604,6 @@ static nsresult AppendDOMNode(nsITransferable* aTransferable,
   return AppendString(aTransferable, context, kHTMLContext);
 }
 
-#ifdef XP_WIN
-static nsresult AppendImagePromise(nsITransferable* aTransferable,
-                                   imgIRequest* aImgRequest,
-                                   nsINode* aImageNode) {
-  nsresult rv;
-
-  NS_ENSURE_TRUE(aImgRequest && aImageNode, NS_OK);
-
-  bool isMultipart;
-  rv = aImgRequest->GetMultipart(&isMultipart);
-  NS_ENSURE_SUCCESS(rv, rv);
-  if (isMultipart) {
-    return NS_OK;
-  }
-
-  nsCOMPtr<nsIMIMEService> mimeService = do_GetService("@mozilla.org/mime;1");
-  if (NS_WARN_IF(!mimeService)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsCOMPtr<nsIURI> imgUri;
-  rv = aImgRequest->GetFinalURI(getter_AddRefs(imgUri));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsAutoCString spec;
-  rv = imgUri->GetSpec(spec);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // pass out the image source string
-  nsString imageSourceString;
-  CopyUTF8toUTF16(spec, imageSourceString);
-
-  nsCString mimeType;
-  rv = aImgRequest->GetMimeType(getter_Copies(mimeType));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsAutoCString fileName;
-  rv = aImgRequest->GetFileName(fileName);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsAutoString validFileName = NS_ConvertUTF8toUTF16(fileName);
-  mimeService->ValidateFileNameForSaving(
-      validFileName, mimeType, nsIMIMEService::VALIDATE_DEFAULT, validFileName);
-
-  rv = AppendString(aTransferable, imageSourceString, kFilePromiseURLMime);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = AppendString(aTransferable, validFileName, kFilePromiseDestFilename);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  aTransferable->SetCookieJarSettings(
-      aImageNode->OwnerDoc()->CookieJarSettings());
-  aTransferable->SetContentPolicyType(nsIContentPolicy::TYPE_INTERNAL_IMAGE);
-
-  // add the dataless file promise flavor
-  return aTransferable->AddDataFlavor(kFilePromiseMime);
-}
-#endif  // XP_WIN
 
 already_AddRefed<Selection> nsCopySupport::GetSelectionForCopy(
     Document* aDocument) {

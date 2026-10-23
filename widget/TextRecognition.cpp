@@ -77,20 +77,9 @@ auto TextRecognition::FindText(gfx::DataSourceSurface& aSurface,
   return DoFindText(aSurface, aLanguages);
 }
 
-#ifndef XP_MACOSX
-auto TextRecognition::DoFindText(gfx::DataSourceSurface&,
-                                 const nsTArray<nsCString>&)
-    -> RefPtr<NativePromise> {
-  MOZ_CRASH("DoFindText is not implemented on this platform");
-}
-#endif
 
 bool TextRecognition::IsSupported() {
-#ifdef XP_MACOSX
   return true;
-#else
-  return false;
-#endif
 }
 
 }  // namespace mozilla::widget

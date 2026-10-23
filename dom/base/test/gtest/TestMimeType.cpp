@@ -222,10 +222,6 @@ TEST(MimeType, CString)
   << "Duplicate parameter #2";
 }
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable : 4819)
-#endif
 TEST(MimeType, NonAlphanumericParametersAreQuoted)
 {
   const auto in = u"text/html;test=\x00FF\\;charset=gbk"_ns;
@@ -237,9 +233,6 @@ TEST(MimeType, NonAlphanumericParametersAreQuoted)
   ASSERT_TRUE(out.Equals(u"text/html;test=\"\x00FF\\\\\";charset=gbk"_ns))
   << "Non-alphanumeric parameters are quoted";
 }
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
 TEST(MimeType, ParameterQuotedIfHasLeadingWhitespace1)
 {

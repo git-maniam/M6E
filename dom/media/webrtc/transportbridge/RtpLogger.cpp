@@ -11,12 +11,7 @@
 #include <sstream>
 
 #include "mozilla/Logging.h"
-#ifdef _WIN32
-#  include <sys/timeb.h>
-#  include <time.h>
-#else
 #  include <sys/time.h>
-#endif
 
 // Logging context
 using namespace mozilla;
@@ -45,15 +40,9 @@ void RtpLogger::LogPacket(const MediaPacket& packet, bool input,
       ss << buf;
     }
     ss << std::setfill('0');
-#ifdef _WIN32
-    struct timeb tb;
-    ftime(&tb);
-    ss << "." << (tb.millitm) << " ";
-#else
     struct timeval tv;
     gettimeofday(&tv, nullptr);
     ss << "." << (tv.tv_usec) << " ";
-#endif
     ss << " 000000";
     ss << std::hex << std::setfill('0');
     for (size_t i = 0; i < packet.len(); ++i) {

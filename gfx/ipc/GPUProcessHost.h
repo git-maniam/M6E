@@ -11,9 +11,6 @@
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/media/MediaUtils.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "mozilla/java/CompositorSurfaceManagerWrappers.h"
-#endif
 
 namespace mozilla {
 namespace ipc {
@@ -118,9 +115,6 @@ class GPUProcessHost final : public mozilla::ipc::GeckoChildProcessHost {
   // Causes the GPU process to crash. Used for tests and diagnostics
   void CrashProcess();
 
-#ifdef MOZ_WIDGET_ANDROID
-  java::CompositorSurfaceManager::Param GetCompositorSurfaceManager();
-#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
   static MacSandboxType GetMacSandboxType() { return MacSandboxType_GPU; };
@@ -173,12 +167,6 @@ class GPUProcessHost final : public mozilla::ipc::GeckoChildProcessHost {
 
   TimeStamp mLaunchTime;
 
-#ifdef MOZ_WIDGET_ANDROID
-  // Binder interface used to send compositor surfaces to GPU process. There is
-  // one instance per GPU process which gets initialized after launch, then
-  // multiple compositors can take a reference to it.
-  java::CompositorSurfaceManager::GlobalRef mCompositorSurfaceManager;
-#endif
 };
 
 }  // namespace gfx

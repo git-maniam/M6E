@@ -362,11 +362,7 @@ TEST(Layers, TextureYCbCrSerialization)
   while (!imageBridge->IPCOpen() && retry) {
     // IPDL connection takes time especially in slow testing environment, like
     // VM machines. Here we added retry mechanism to wait for IPDL connnection.
-#ifdef XP_WIN
-    Sleep(1);
-#else
     sleep(1);
-#endif
     retry--;
   }
 

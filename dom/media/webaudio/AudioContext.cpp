@@ -565,15 +565,7 @@ double AudioContext::OutputLatency() {
   // fixed, but plausible for the platform.
   double latency_s = 0.0;
   if (mShouldResistFingerprinting) {
-#ifdef XP_MACOSX
     latency_s = 512. / mSampleRate;
-#elif MOZ_WIDGET_ANDROID
-    latency_s = 0.020;
-#elif XP_WIN
-    latency_s = 0.04;
-#else  // Catchall for other OSes, including Linux.
-    latency_s = 0.025;
-#endif
   } else {
     return Graph()->AudioOutputLatency();
   }

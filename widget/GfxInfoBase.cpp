@@ -40,14 +40,8 @@
 #include "nsVersionComparator.h"
 #include "nsXULAppAPI.h"
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "AndroidBuild.h"
-#  include "nsContentUtils.h"
-#endif
 
-#if defined(XP_MACOSX)
 #  include "nsCocoaFeatures.h"
-#endif
 
 using namespace mozilla::widget;
 using namespace mozilla;
@@ -702,25 +696,11 @@ inline bool MatchingOperatingSystems(OperatingSystem aBlockedOS,
     return false;
   }
 
-#if defined(XP_WIN)
-  if (aBlockedOS == OperatingSystem::Windows) {
-    // We do want even "unknown" aSystemOS to fall under "all windows"
-    return true;
-  }
 
-  if (aBlockedOS == OperatingSystem::Windows10or11 &&
-      (aSystemOS == OperatingSystem::Windows10 ||
-       aSystemOS == OperatingSystem::Windows11)) {
-    return true;
-  }
-#endif
-
-#if defined(XP_MACOSX)
   if (aBlockedOS == OperatingSystem::MacOS) {
     // We do want even "unknown" aSystemOS to fall under "all OS X"
     return true;
   }
-#endif
 
   return aSystemOS == aBlockedOS;
 }
@@ -875,15 +855,6 @@ int32_t GfxInfoBase::FindBlocklistedDeviceInList(
     return 0;
   }
 
-#if defined(XP_WIN) || defined(ANDROID) || defined(MOZ_WIDGET_GTK)
-  uint64_t driverVersion[2] = {0, 0};
-  if (!adapterInfoFailed[0]) {
-    ParseDriverVersion(adapterDriverVersionString[0], &driverVersion[0]);
-  }
-  if (!adapterInfoFailed[1]) {
-    ParseDriverVersion(adapterDriverVersionString[1], &driverVersion[1]);
-  }
-#endif
 
   uint32_t i = 0;
   for (; i < info.Length(); i++) {
@@ -987,60 +958,9 @@ int32_t GfxInfoBase::FindBlocklistedDeviceInList(
         }
       }
 
-#if defined(XP_WIN) || defined(ANDROID) || defined(MOZ_WIDGET_GTK)
-      bool match = false;
-      switch (info[i]->mComparisonOp) {
-        case DRIVER_LESS_THAN:
-          match = driverVersion[aAdapterIndex] < info[i]->mDriverVersion;
-          break;
-        case DRIVER_BUILD_ID_LESS_THAN:
-          match =
-              (driverVersion[aAdapterIndex] & 0xFFFF) < info[i]->mDriverVersion;
-          break;
-        case DRIVER_LESS_THAN_OR_EQUAL:
-          match = driverVersion[aAdapterIndex] <= info[i]->mDriverVersion;
-          break;
-        case DRIVER_BUILD_ID_LESS_THAN_OR_EQUAL:
-          match = (driverVersion[aAdapterIndex] & 0xFFFF) <=
-                  info[i]->mDriverVersion;
-          break;
-        case DRIVER_GREATER_THAN:
-          match = driverVersion[aAdapterIndex] > info[i]->mDriverVersion;
-          break;
-        case DRIVER_GREATER_THAN_OR_EQUAL:
-          match = driverVersion[aAdapterIndex] >= info[i]->mDriverVersion;
-          break;
-        case DRIVER_EQUAL:
-          match = driverVersion[aAdapterIndex] == info[i]->mDriverVersion;
-          break;
-        case DRIVER_NOT_EQUAL:
-          match = driverVersion[aAdapterIndex] != info[i]->mDriverVersion;
-          break;
-        case DRIVER_BETWEEN_EXCLUSIVE:
-          match = driverVersion[aAdapterIndex] > info[i]->mDriverVersion &&
-                  driverVersion[aAdapterIndex] < info[i]->mDriverVersionMax;
-          break;
-        case DRIVER_BETWEEN_INCLUSIVE:
-          match = driverVersion[aAdapterIndex] >= info[i]->mDriverVersion &&
-                  driverVersion[aAdapterIndex] <= info[i]->mDriverVersionMax;
-          break;
-        case DRIVER_BETWEEN_INCLUSIVE_START:
-          match = driverVersion[aAdapterIndex] >= info[i]->mDriverVersion &&
-                  driverVersion[aAdapterIndex] < info[i]->mDriverVersionMax;
-          break;
-        case DRIVER_COMPARISON_IGNORED:
-          // We don't have a comparison op, so we match everything.
-          match = true;
-          break;
-        default:
-          NS_WARNING("Bogus op in GfxDriverInfo");
-          break;
-      }
-#else
       // We don't care what driver version it was. We only check OS version and
       // if the device matches.
       bool match = true;
-#endif
 
       if (match ||
           info[i]->mDriverVersion == GfxDriverInfo::allDriverVersions) {
@@ -1086,23 +1006,6 @@ int32_t GfxInfoBase::FindBlocklistedDeviceInList(
     }
   }
 
-#if defined(XP_WIN)
-  // Depends on Windows driver versioning. We don't pass a GfxDriverInfo object
-  // back to the Windows handler, so we must handle this here.
-  if (status == FEATURE_BLOCKED_DRIVER_VERSION) {
-    if (info[i]->mSuggestedVersion) {
-      aSuggestedVersion.AppendPrintf("%s", info[i]->mSuggestedVersion);
-    } else if (info[i]->mComparisonOp == DRIVER_LESS_THAN &&
-               info[i]->mDriverVersion != GfxDriverInfo::allDriverVersions) {
-      aSuggestedVersion.AppendPrintf(
-          "%lld.%lld.%lld.%lld",
-          (info[i]->mDriverVersion & 0xffff000000000000) >> 48,
-          (info[i]->mDriverVersion & 0x0000ffff00000000) >> 32,
-          (info[i]->mDriverVersion & 0x00000000ffff0000) >> 16,
-          (info[i]->mDriverVersion & 0x000000000000ffff));
-    }
-  }
-#endif
 
   return status;
 }
@@ -1469,15 +1372,6 @@ static void AppendMonitor(JSContext* aCx, widget::Screen& aScreen,
       aCx, JS::NumberValue(aScreen.GetContentsScaleFactor()));
   JS_SetProperty(aCx, obj, "contentsScaleFactor", contentsScaleFactor);
 
-#ifdef XP_WIN
-  JS::Rooted<JS::Value> refreshRate(aCx,
-                                    JS::Int32Value(aScreen.GetRefreshRate()));
-  JS_SetProperty(aCx, obj, "refreshRate", refreshRate);
-
-  JS::Rooted<JS::Value> pseudoDisplay(
-      aCx, JS::BooleanValue(aScreen.GetIsPseudoDisplay()));
-  JS_SetProperty(aCx, obj, "pseudoDisplay", pseudoDisplay);
-#endif
 
   JS::Rooted<JS::Value> element(aCx, JS::ObjectValue(*obj));
   JS_SetElement(aCx, aOutArray, aIndex, element);
@@ -1767,37 +1661,6 @@ GfxInfoBase::GetIsHeadless(bool* aIsHeadless) {
   return NS_OK;
 }
 
-#if defined(MOZ_WIDGET_ANDROID)
-
-const char* chromebookProductList[] = {
-    "asuka",    "asurada",   "atlas",    "auron",    "banjo",     "banon",
-    "bob",      "brask",     "brya",     "buddy",    "butterfly", "candy",
-    "caroline", "cave",      "celes",    "chell",    "cherry",    "clapper",
-    "coral",    "corsola",   "cyan",     "daisy",    "dedede",    "drallion",
-    "edgar",    "elm",       "enguarde", "eve",      "expresso",  "falco",
-    "fizz",     "gandof",    "glimmer",  "gnawty",   "grunt",     "guado",
-    "guybrush", "hana",      "hatch",    "heli",     "jacuzzi",   "kalista",
-    "kefka",    "kevin",     "kip",      "kukui",    "lars",      "leon",
-    "link",     "lulu",      "lumpy",    "mccloud",  "monroe",    "nami",
-    "nautilus", "ninja",     "nissa",    "nocturne", "nyan",      "octopus",
-    "orco",     "panther",   "parrot",   "peach",    "peppy",     "puff",
-    "pyro",     "quawks",    "rammus",   "reef",     "reks",      "relm",
-    "rikku",    "samus",     "sand",     "sarien",   "scarlet",   "sentry",
-    "setzer",   "skyrim",    "snappy",   "soraka",   "squawks",   "staryu",
-    "stout",    "strongbad", "stumpy",   "sumo",     "swanky",    "terra",
-    "tidus",    "tricky",    "trogdor",  "ultima",   "veyron",    "volteer",
-    "winky",    "wizpig",    "wolf",     "x86",      "zako",      "zork"};
-
-bool ProductIsChromebook(nsCString product) {
-  size_t result;
-  return BinarySearchIf(
-      chromebookProductList, 0, std::size(chromebookProductList),
-      [&](const char* const aValue) -> int {
-        return strcmp(product.get(), aValue);
-      },
-      &result);
-}
-#endif
 
 using Device = nsIGfxInfo::FontVisibilityDeviceDetermination;
 static StaticAutoPtr<std::pair<Device, nsString>> ret;
@@ -1814,136 +1677,6 @@ std::pair<Device, nsString>* GfxInfoBase::GetFontVisibilityDeterminationPair() {
     return ret;
   }
 
-#if defined(MOZ_WIDGET_ANDROID)
-  auto androidReleaseVersion = strtol(
-      java::sdk::Build::VERSION::RELEASE()->ToCString().get(), nullptr, 10);
-
-  auto androidManufacturer = java::sdk::Build::MANUFACTURER()->ToCString();
-  nsContentUtils::ASCIIToLower(androidManufacturer);
-
-  auto androidBrand = java::sdk::Build::BRAND()->ToCString();
-  nsContentUtils::ASCIIToLower(androidBrand);
-
-  auto androidModel = java::sdk::Build::MODEL()->ToCString();
-  nsContentUtils::ASCIIToLower(androidModel);
-
-  auto androidProduct = java::sdk::Build::PRODUCT()->ToCString();
-  nsContentUtils::ASCIIToLower(androidProduct);
-
-  auto androidProductIsChromebook = ProductIsChromebook(androidProduct);
-
-  if (androidReleaseVersion < 4 || androidReleaseVersion > 20) {
-    // Something is screwy, oh well.
-    ret->second.AppendASCII("Unknown Release Version - ");
-    ret->first = Device::Android_Unknown_Release_Version;
-  } else if (androidReleaseVersion <= 8) {
-    ret->second.AppendASCII("Android <9 - ");
-    ret->first = Device::Android_sub_9;
-  } else if (androidReleaseVersion <= 11) {
-    ret->second.AppendASCII("Android 9-11 - ");
-    ret->first = Device::Android_9_11;
-  } else if (androidReleaseVersion > 11) {
-    ret->second.AppendASCII("Android 12+ - ");
-    ret->first = Device::Android_12_plus;
-  } else {
-    MOZ_CRASH_UNSAFE_PRINTF(
-        "Somehow wound up in GetFontVisibilityDeterminationPair with a release "
-        "version of %li",
-        androidReleaseVersion);
-  }
-
-  if (androidManufacturer == "google" && androidModel == androidProduct &&
-      androidProductIsChromebook) {
-    // Chromebook font set coming later
-    ret->second.AppendASCII("Chromebook - ");
-    ret->first = Device::Android_Chromebook;
-  }
-  if (androidBrand == "amazon") {
-    // Amazon Fire font set coming later
-    ret->second.AppendASCII("Amazon - ");
-    ret->first = Device::Android_Amazon;
-  }
-  if (androidBrand == "peloton") {
-    // We don't know how to categorize fonts on this system
-    ret->second.AppendASCII("Peloton - ");
-    ret->first = Device::Android_Unknown_Peloton;
-  }
-  if (androidProduct == "vbox86p") {
-    ret->second.AppendASCII("vbox - ");
-    // We can't categorize fonts when running in an emulator on a Desktop
-    ret->first = Device::Android_Unknown_vbox;
-  }
-  if (androidModel.Find("mitv"_ns) != kNotFound && androidBrand == "xiaomi") {
-    // We don't know how to categorize fonts on this system
-    ret->second.AppendASCII("mitv - ");
-    ret->first = Device::Android_Unknown_mitv;
-  }
-
-  ret->second.AppendPrintf(
-      "release_version_str=%s, release_version=%li",
-      java::sdk::Build::VERSION::RELEASE()->ToCString().get(),
-      androidReleaseVersion);
-  ret->second.AppendPrintf(
-      ", manufacturer=%s, brand=%s, model=%s, product=%s, chromebook=%s",
-      androidManufacturer.get(), androidBrand.get(), androidModel.get(),
-      androidProduct.get(), androidProductIsChromebook ? "yes" : "no");
-
-#elif defined(XP_LINUX)
-  ret->first = Device::Linux_Unknown;
-
-  long versionMajor = 0;
-  FILE* fp = fopen("/etc/os-release", "r");
-  if (fp) {
-    char buf[512];
-    while (fgets(buf, sizeof(buf), fp)) {
-      if (strncmp(buf, "VERSION_ID=\"", 12) == 0) {
-        ret->second.AppendPrintf("VERSION_ID=%.11s", buf + 11);
-        versionMajor = strtol(buf + 12, nullptr, 10);
-        if (ret->first != Device::Linux_Unknown) {
-          break;
-        }
-      }
-
-      if (strncmp(buf, "ID=", 3) == 0) {
-        ret->second.AppendPrintf("ID=%.6s", buf + 3);
-        if (strncmp(buf + 3, "ubuntu", 6) == 0) {
-          ret->first = Device::Linux_Ubuntu_any;
-        } else if (strncmp(buf + 3, "fedora", 6) == 0) {
-          ret->first = Device::Linux_Fedora_any;
-        }
-
-        if (versionMajor) {
-          break;
-        }
-      }
-    }
-    fclose(fp);
-  }
-  if (ret->first == Device::Linux_Ubuntu_any) {
-    if (versionMajor == 20) {
-      ret->first = Device::Linux_Ubuntu_20;
-      ret->second.Insert(u"Ubuntu 20 - ", 0);
-    } else if (versionMajor == 22) {
-      ret->first = Device::Linux_Ubuntu_22;
-      ret->second.Insert(u"Ubuntu 22 - ", 0);
-    } else {
-      ret->second.Insert(u"Ubuntu Unknown - ", 0);
-    }
-  } else if (ret->first == Device::Linux_Fedora_any) {
-    if (versionMajor == 38) {
-      ret->first = Device::Linux_Fedora_38;
-      ret->second.Insert(u"Fedora 38 - ", 0);
-    } else if (versionMajor == 39) {
-      ret->first = Device::Linux_Fedora_39;
-      ret->second.Insert(u"Fedora 39 - ", 0);
-    } else {
-      ret->second.Insert(u"Fedora Unknown - ", 0);
-    }
-  } else {
-    ret->second.Insert(u"Linux Unknown - ", 0);
-  }
-
-#elif defined(XP_MACOSX)
   ret->first = Device::MacOS_Unknown;
   ret->second.AppendASCII("macOS Platform");
 
@@ -1957,13 +1690,6 @@ std::pair<Device, nsString>* GfxInfoBase::GetFontVisibilityDeterminationPair() {
 
   ret->first = major >= 13 ? Device::MacOS_13_plus : Device::MacOS_sub_13;
   ret->second.AppendPrintf("macOS %d.%d.%d", major, minor, bugfix);
-#elif defined(XP_WIN)
-  ret->first = Device::Windows_Platform;
-  ret->second.AppendASCII("Windows Platform");
-#else
-  ret->first = Device::Unknown_Platform;
-  ret->second.AppendASCII("Unknown Platform");
-#endif
 
   return ret;
 }

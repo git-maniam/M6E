@@ -16,17 +16,7 @@
 #include "nsPrintfCString.h"
 #include "prio.h"
 
-#ifdef XP_WIN
-#  define NS_SLASH "\\"
-#  include <fcntl.h>
-#  include <io.h>
-#  include <stdio.h>
-#  include <stdlib.h>
-#  include <sys/stat.h>
-#  include <windows.h>
-#else
 #  define NS_SLASH "/"
-#endif
 
 #include "LateWriteChecks.h"
 
@@ -134,33 +124,11 @@ void LateWriteObserver::Observe(
   // We want the sha1 of the entire file, so please don't write to fd
   // directly; use sha1Stream.
   FILE* stream;
-#ifdef XP_WIN
-  HANDLE hFile;
-  do {
-    // mkstemp isn't supported so keep trying until we get a file
-    _wmktemp_s(char16ptr_t(name), NS_strlen(name) + 1);
-    hFile = CreateFileW(char16ptr_t(name), GENERIC_WRITE, 0, nullptr,
-                        CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-  } while (GetLastError() == ERROR_FILE_EXISTS);
-
-  if (hFile == INVALID_HANDLE_VALUE) {
-    MOZ_CRASH("Um, how did we get here?");
-  }
-
-  // http://support.microsoft.com/kb/139640
-  int fd = _open_osfhandle((intptr_t)hFile, _O_APPEND);
-  if (fd == -1) {
-    MOZ_CRASH("Um, how did we get here?");
-  }
-
-  stream = _fdopen(fd, "w");
-#else
   int fd = mkstemp(name);
   if (fd == -1) {
     MOZ_CRASH("mkstemp failed");
   }
   stream = fdopen(fd, "w");
-#endif
 
   SHA1Stream sha1Stream(stream);
 

@@ -56,11 +56,6 @@ class RenderCompositorOGLSWGL : public RenderCompositorLayersSWGL {
                      const wr::ImageFormat& aReadbackFormat,
                      const Range<uint8_t>& aReadbackBuffer,
                      bool* aNeedsYFlip) override;
-#ifdef MOZ_WIDGET_ANDROID
-  bool MaybeCaptureScreenPixels(
-      const gfx::IntRect& aSourceRect,
-      layers::AndroidHardwareBuffer* aHardwareBuffer) override;
-#endif
 
  private:
   void HandleExternalImage(RenderTextureHost* aExternalImage,
@@ -74,12 +69,6 @@ class RenderCompositorOGLSWGL : public RenderCompositorLayersSWGL {
   EGLSurface mEGLSurface = EGL_NO_SURFACE;
   bool mFullRender = false;
 
-#ifdef MOZ_WIDGET_ANDROID
-  // Whether we are in the process of handling a NEW_SURFACE error. On Android
-  // this is used to allow the widget an opportunity to recover from the first
-  // instance, before raising a WebRenderError on subsequent occurences.
-  bool mHandlingNewSurfaceError = false;
-#endif
 
   class TileOGL : public RenderCompositorLayersSWGL::Tile {
    public:

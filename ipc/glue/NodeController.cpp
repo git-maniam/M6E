@@ -324,7 +324,6 @@ void NodeController::ContactRemotePeer(const NodeName& aNode,
   // On Windows and macOS, messages holding HANDLEs or mach ports must be
   // relayed via the broker process so it can transfer ownership.
   bool needsRelay = false;
-#if defined(XP_WIN) || defined(XP_DARWIN)
   if (aEvent && !IsBroker() && aNode != kBrokerNodeName &&
       aEvent->type() == Event::kUserMessage) {
     auto* userEvent = static_cast<UserMessageEvent*>(aEvent.get());
@@ -332,7 +331,6 @@ void NodeController::ContactRemotePeer(const NodeName& aNode,
                  mChannelKind->num_relayed_attachments(
                      *userEvent->GetMessage<IPC::Message>()) > 0;
   }
-#endif
 
   UniquePtr<IPC::Message> message;
   if (aEvent) {
@@ -474,7 +472,6 @@ void NodeController::OnEventMessage(const NodeName& aFromNode,
   }
 
   NodeName fromNode = aFromNode;
-#if defined(XP_WIN) || defined(XP_DARWIN)
   if (isRelay) {
     if (event->type() != Event::kUserMessage) {
       NODECONTROLLER_WARNING(
@@ -539,7 +536,6 @@ void NodeController::OnEventMessage(const NodeName& aFromNode,
     NODECONTROLLER_LOG(LogLevel::Info, "Got relayed message from peer %s",
                        ToString(fromNode).c_str());
   }
-#endif
 
   // If we're getting a requested port merge from another process, check to make
   // sure that we're expecting the request, and record that the merge has

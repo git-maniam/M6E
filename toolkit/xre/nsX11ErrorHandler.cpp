@@ -124,16 +124,6 @@ int X11Error(Display* display, XErrorEvent* event) {
   // context of other ids, but add it to the debug console output.
   notes.AppendLiteral("; id=0x");
   notes.AppendInt(uint32_t(event->resourceid), 16);
-#  ifdef MOZ_X11
-  // Actually, for requests where Xlib gets the reply synchronously,
-  // MOZ_X_SYNC=1 will not be necessary, but we don't have a table to tell us
-  // which requests get a synchronous reply.
-  if (!PR_GetEnv("MOZ_X_SYNC")) {
-    notes.AppendLiteral(
-        "\nRe-running with MOZ_X_SYNC=1 in the environment may give a more "
-        "helpful backtrace.");
-  }
-#  endif
 #endif
 
   NS_WARNING(notes.get());

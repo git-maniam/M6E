@@ -10,9 +10,6 @@
 #include "mozilla/dom/ServiceWorkerDescriptor.h"
 #include "mozilla/dom/ServiceWorkerUtils.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 class nsIGlobalObject;
 

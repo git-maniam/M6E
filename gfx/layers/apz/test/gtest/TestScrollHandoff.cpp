@@ -223,7 +223,6 @@ class APZCNestedFlingScrollHandoffTester : public APZCTreeManagerTester {
 
 // Android uses WidgetOverscrollEffect, which swallows residual deltas
 // instead of returning them to the handoff chain.
-#ifndef MOZ_WIDGET_ANDROID
 // Scenario from Bug 2046702 (mirrored vertically so the residual delta is
 // positive): The subframe sits at its top, the root near its bottom extent.
 // Panning down pins the subframe at its top and hands the delta off to the
@@ -417,9 +416,7 @@ TEST_F(APZScrollHandoffTesterMock, OverscrollDropsDelta_Bug2046702_Reproducer) {
   EXPECT_FALSE(subframe->IsOverscrolled());
   EXPECT_FALSE(rootApzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 // Here we test that if the processing of a touch block is deferred while we
 // wait for content to send a prevent-default message, overscroll is still
 // handed off correctly when the block is processed.
@@ -447,9 +444,7 @@ TEST_F(APZScrollHandoffTester, DeferredInputEventProcessing) {
   EXPECT_EQ(50, childApzc->GetFrameMetrics().GetVisualScrollOffset().y);
   EXPECT_EQ(10, rootApzc->GetFrameMetrics().GetVisualScrollOffset().y);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 // Here we test that if the layer structure changes in between two input
 // blocks being queued, and the first block is only processed after the second
 // one has been queued, overscroll handoff for the first block follows
@@ -502,9 +497,7 @@ TEST_F(APZScrollHandoffTester, LayerStructureChangesWhileEventsArePending) {
   EXPECT_EQ(10, rootApzc->GetFrameMetrics().GetVisualScrollOffset().y);
   EXPECT_EQ(-10, middleApzc->GetFrameMetrics().GetVisualScrollOffset().y);
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 // Test that putting a second finger down on an APZC while a down-chain APZC
 // is overscrolled doesn't result in being stuck in overscroll.
 TEST_F(APZScrollHandoffTesterMock, StuckInOverscroll_Bug1073250) {
@@ -546,9 +539,7 @@ TEST_F(APZScrollHandoffTesterMock, StuckInOverscroll_Bug1073250) {
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_FALSE(rootApzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 // This is almost exactly like StuckInOverscroll_Bug1073250, except the
 // APZC receiving the input events for the first touch block is the child
 // (and thus not the same APZC that overscrolls, which is the parent).
@@ -591,9 +582,7 @@ TEST_F(APZScrollHandoffTesterMock, StuckInOverscroll_Bug1231228) {
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_FALSE(rootApzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZScrollHandoffTester, StuckInOverscroll_Bug1240202a) {
   // Enable overscrolling.
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
@@ -626,9 +615,7 @@ TEST_F(APZScrollHandoffTester, StuckInOverscroll_Bug1240202a) {
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_FALSE(rootApzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZScrollHandoffTesterMock, StuckInOverscroll_Bug1240202b) {
   // Enable overscrolling.
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
@@ -681,9 +668,7 @@ TEST_F(APZScrollHandoffTesterMock, StuckInOverscroll_Bug1240202b) {
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_FALSE(rootApzc->IsOverscrolled());
 }
-#endif
 
-#ifndef MOZ_WIDGET_ANDROID  // Currently fails on Android
 TEST_F(APZScrollHandoffTester, OpposingConstrainedAxes_Bug1201098) {
   // Enable overscrolling.
   SCOPED_GFX_PREF_BOOL("apz.overscroll.enabled", true);
@@ -699,7 +684,6 @@ TEST_F(APZScrollHandoffTester, OpposingConstrainedAxes_Bug1201098) {
   EXPECT_TRUE(childApzc->IsOverscrolled());
   EXPECT_FALSE(rootApzc->IsOverscrolled());
 }
-#endif
 
 // Test the behaviour when flinging diagonally and there is room to scroll in
 // one direction but not the other. In the direction where there is room to

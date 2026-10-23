@@ -138,12 +138,10 @@ already_AddRefed<LibHandle> CustomElf::Load(Mappable* mappable,
       case PT_GNU_STACK:
         debug_phdr("PT_GNU_STACK", phdr);
 // Skip on Android until bug 706116 is fixed
-#ifndef ANDROID
         if (phdr->p_flags & PF_X) {
           ERROR("%s: Executable stack is not supported", elf->GetPath());
           return nullptr;
         }
-#endif
         break;
 #ifdef __ARM_EABI__
       case PT_ARM_EXIDX:

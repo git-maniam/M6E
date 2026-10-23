@@ -13,28 +13,14 @@
 
 #include <stddef.h>
 
-#if defined(XP_LINUX)
-#  include <signal.h>
-#  include <semaphore.h>
-#  include <sys/types.h>
-#elif defined(XP_WIN)
-#  include <windows.h>
-#elif defined(XP_MACOSX)
 #  include <mach/mach.h>
-#endif
 
 // Support profiling stack and native stack on these platforms.
-#if defined(XP_LINUX) || defined(XP_WIN) || defined(XP_MACOSX)
 #  define MOZ_THREADSTACKHELPER_PROFILING_STACK
 #  define MOZ_THREADSTACKHELPER_NATIVE_STACK
-#endif
 
 // There are frequent crashes on Android 32 bit ARM builds during EHABI
 // stackwalking. See bug 1969481.
-#if defined(__ANDROID__) && defined(__arm__)
-#  undef MOZ_THREADSTACKHELPER_PROFILING_STACK
-#  undef MOZ_THREADSTACKHELPER_NATIVE_STACK
-#endif
 
 namespace mozilla {
 

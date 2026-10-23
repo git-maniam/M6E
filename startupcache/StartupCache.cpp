@@ -40,9 +40,6 @@
 #  include "mozilla/BackgroundTasks.h"
 #endif
 
-#if defined(XP_WIN)
-#  include <windows.h>
-#endif
 
 #ifdef IS_BIG_ENDIAN
 #  define SC_ENDIAN "big"

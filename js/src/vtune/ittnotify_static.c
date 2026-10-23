@@ -91,39 +91,6 @@ static const char* ittnotify_lib_name = "libittnotify.dylib";
 #error Unsupported or unknown OS.
 #endif
 
-#ifdef __ANDROID__
-#include <android/log.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <linux/limits.h>
-
-#ifdef ITT_ANDROID_LOG
-    #define ITT_ANDROID_LOG_TAG   "INTEL_VTUNE_USERAPI"
-    #define ITT_ANDROID_LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, ITT_ANDROID_LOG_TAG, __VA_ARGS__))
-    #define ITT_ANDROID_LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, ITT_ANDROID_LOG_TAG, __VA_ARGS__))
-    #define ITT_ANDROID_LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR,ITT_ANDROID_LOG_TAG, __VA_ARGS__))
-    #define ITT_ANDROID_LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG,ITT_ANDROID_LOG_TAG, __VA_ARGS__))
-#else
-    #define ITT_ANDROID_LOGI(...)
-    #define ITT_ANDROID_LOGW(...)
-    #define ITT_ANDROID_LOGE(...)
-    #define ITT_ANDROID_LOGD(...)
-#endif
-
-/* default location of userapi collector on Android */
-#define ANDROID_ITTNOTIFY_DEFAULT_PATH_MASK(x)  "/data/data/com.intel.vtune/perfrun/lib" \
-                                                #x "/runtime/libittnotify.so"
-
-#if ITT_ARCH==ITT_ARCH_IA32 || ITT_ARCH==ITT_ARCH_ARM
-#define ANDROID_ITTNOTIFY_DEFAULT_PATH  ANDROID_ITTNOTIFY_DEFAULT_PATH_MASK(32)
-#else
-#define ANDROID_ITTNOTIFY_DEFAULT_PATH  ANDROID_ITTNOTIFY_DEFAULT_PATH_MASK(64)
-#endif
-
-#endif
 
 
 #ifndef LIB_VAR_NAME
@@ -728,13 +695,6 @@ static void ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(thr_ignore),_init))(void)
 
 static void ITTAPI ITT_VERSIONIZE(ITT_JOIN(_N_(enable_attach),_init))(void)
 {
-#ifdef __ANDROID__
-    /*
-     * if LIB_VAR_NAME env variable were set before then stay previous value
-     * else set default path
-    */
-    setenv(ITT_TO_STR(LIB_VAR_NAME), ANDROID_ITTNOTIFY_DEFAULT_PATH, 0);
-#endif
 }
 
 /* -------------------------------------------------------------------------- */
@@ -855,118 +815,6 @@ static const char* __itt_get_lib_name(void)
 {
     const char* lib_name = __itt_get_env_var(ITT_TO_STR(LIB_VAR_NAME));
 
-#ifdef __ANDROID__
-    if (lib_name == NULL)
-    {
-
-#if ITT_ARCH==ITT_ARCH_IA32 || ITT_ARCH==ITT_ARCH_ARM
-        const char* const marker_filename = "com.intel.itt.collector_lib_32";
-#else
-        const char* const marker_filename = "com.intel.itt.collector_lib_64";
-#endif
-
-        char system_wide_marker_filename[PATH_MAX] = {0};
-        int itt_marker_file_fd = -1;
-        ssize_t res = 0;
-
-        res = snprintf(system_wide_marker_filename, PATH_MAX - 1, "%s%s", "/data/local/tmp/", marker_filename);
-        if (res < 0)
-        {
-            ITT_ANDROID_LOGE("Unable to concatenate marker file string.");
-            return lib_name;
-        }
-        itt_marker_file_fd = open(system_wide_marker_filename, O_RDONLY);
-
-        if (itt_marker_file_fd == -1)
-        {
-            const pid_t my_pid = getpid();
-            char cmdline_path[PATH_MAX] = {0};
-            char package_name[PATH_MAX] = {0};
-            char app_sandbox_file[PATH_MAX] = {0};
-            int cmdline_fd = 0;
-
-            ITT_ANDROID_LOGI("Unable to open system-wide marker file.");
-            res = snprintf(cmdline_path, PATH_MAX - 1, "/proc/%d/cmdline", my_pid);
-            if (res < 0)
-            {
-                ITT_ANDROID_LOGE("Unable to get cmdline path string.");
-                return lib_name;
-            }
-
-            ITT_ANDROID_LOGI("CMD file: %s\n", cmdline_path);
-            cmdline_fd = open(cmdline_path, O_RDONLY);
-            if (cmdline_fd == -1)
-            {
-                ITT_ANDROID_LOGE("Unable to open %s file!", cmdline_path);
-                return lib_name;
-            }
-            res = read(cmdline_fd, package_name, PATH_MAX - 1);
-            if (res == -1)
-            {
-                ITT_ANDROID_LOGE("Unable to read %s file!", cmdline_path);
-                res = close(cmdline_fd);
-                if (res == -1)
-                {
-                    ITT_ANDROID_LOGE("Unable to close %s file!", cmdline_path);
-                }
-                return lib_name;
-            }
-            res = close(cmdline_fd);
-            if (res == -1)
-            {
-                ITT_ANDROID_LOGE("Unable to close %s file!", cmdline_path);
-                return lib_name;
-            }
-            ITT_ANDROID_LOGI("Package name: %s\n", package_name);
-            res = snprintf(app_sandbox_file, PATH_MAX - 1, "/data/data/%s/%s", package_name, marker_filename);
-            if (res < 0)
-            {
-                ITT_ANDROID_LOGE("Unable to concatenate marker file string.");
-                return lib_name;
-            }
-
-            ITT_ANDROID_LOGI("Lib marker file name: %s\n", app_sandbox_file);
-            itt_marker_file_fd = open(app_sandbox_file, O_RDONLY);
-            if (itt_marker_file_fd == -1)
-            {
-                ITT_ANDROID_LOGE("Unable to open app marker file!");
-                return lib_name;
-            }
-        }
-
-        {
-            char itt_lib_name[PATH_MAX] = {0};
-
-            res = read(itt_marker_file_fd, itt_lib_name, PATH_MAX - 1);
-            if (res == -1)
-            {
-                ITT_ANDROID_LOGE("Unable to read %s file!", itt_marker_file_fd);
-                res = close(itt_marker_file_fd);
-                if (res == -1)
-                {
-                    ITT_ANDROID_LOGE("Unable to close %s file!", itt_marker_file_fd);
-                }
-                return lib_name;
-            }
-            ITT_ANDROID_LOGI("ITT Lib path: %s", itt_lib_name);
-            res = close(itt_marker_file_fd);
-            if (res == -1)
-            {
-                ITT_ANDROID_LOGE("Unable to close %s file!", itt_marker_file_fd);
-                return lib_name;
-            }
-            ITT_ANDROID_LOGI("Set env %s to %s", ITT_TO_STR(LIB_VAR_NAME), itt_lib_name);
-            res = setenv(ITT_TO_STR(LIB_VAR_NAME), itt_lib_name, 0);
-            if (res == -1)
-            {
-                ITT_ANDROID_LOGE("Unable to set env var!");
-                return lib_name;
-            }
-            lib_name = __itt_get_env_var(ITT_TO_STR(LIB_VAR_NAME));
-            ITT_ANDROID_LOGI("ITT Lib path from env: %s", lib_name);
-        }
-    }
-#endif
 
     return lib_name;
 }

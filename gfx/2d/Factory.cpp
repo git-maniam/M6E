@@ -17,38 +17,12 @@
 #include "PathSkia.h"
 #include "ScaledFontBase.h"
 
-#ifdef XP_DARWIN
 #  include "NativeFontResourceMac.h"
 #  include "ScaledFontMac.h"
 #  include "UnscaledFontMac.h"
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-#  include "NativeFontResourceFreeType.h"
-#  include "ScaledFontFontconfig.h"
-#  include "UnscaledFontFreeType.h"
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-#  include "NativeFontResourceFreeType.h"
-#  include "ScaledFontFreeType.h"
-#  include "UnscaledFontFreeType.h"
-#endif
 
-#ifdef WIN32
-#  include <d3d10_1.h>
-#  include <stdlib.h>
-
-#  include "HelpersWin.h"
-#  include "ImageContainer.h"
-#  include "NativeFontResourceDWrite.h"
-#  include "ScaledFontDWrite.h"
-#  include "UnscaledFontDWrite.h"
-#  include "mozilla/layers/LayersSurfaces.h"
-#  include "mozilla/layers/TextureD3D11.h"
-#  include "mozilla/layers/VideoProcessorD3D11.h"
-#  include "nsWindowsHelpers.h"
-#endif
 
 #include "DrawTargetOffset.h"
 #include "DrawTargetRecording.h"
@@ -122,13 +96,6 @@ FT_Library Factory::mFTLibrary = nullptr;
 StaticMutex Factory::mFTLock;
 #endif
 
-#ifdef WIN32
-// Note: mDeviceLock must be held when mutating these values.
-StaticRefPtr<ID3D11Device> Factory::mD3D11Device;
-StaticRefPtr<IDWriteFactory> Factory::mDWriteFactory;
-StaticRefPtr<IDWriteFontCollection> Factory::mDWriteSystemFonts;
-StaticMutex Factory::mDeviceLock;
-#endif
 
 SubpixelOrder Factory::mSubpixelOrder = SubpixelOrder::UNKNOWN;
 
@@ -138,11 +105,7 @@ void Factory::Init(const Config& aConfig) {
   MOZ_ASSERT(!sConfig);
   sConfig = new Config(aConfig);
 
-#ifdef XP_DARWIN
   NativeFontResourceMac::RegisterMemoryReporter();
-#else
-  NativeFontResource::RegisterMemoryReporter();
-#endif
 
   SourceSurfaceAlignedRawData::RegisterMemoryReporter();
 }
@@ -386,19 +349,8 @@ already_AddRefed<NativeFontResource> Factory::CreateNativeFontResource(
     const uint8_t* aData, uint32_t aSize, FontType aFontType,
     void* aFontContext) {
   switch (aFontType) {
-#ifdef WIN32
-    case FontType::DWRITE:
-      return NativeFontResourceDWrite::Create(aData, aSize);
-#elif defined(XP_DARWIN)
     case FontType::MAC:
       return NativeFontResourceMac::Create(aData, aSize);
-#elif defined(MOZ_WIDGET_GTK)
-    case FontType::FONTCONFIG:
-      return NativeFontResourceFontconfig::Create(aData, aSize);
-#elif defined(MOZ_WIDGET_ANDROID)
-    case FontType::FREETYPE:
-      return NativeFontResourceFreeType::Create(aData, aSize);
-#endif
     default:
       gfxWarning()
           << "Unable to create requested font resource from truetype data";
@@ -410,30 +362,15 @@ already_AddRefed<UnscaledFont> Factory::CreateUnscaledFontFromFontDescriptor(
     FontType aType, const uint8_t* aData, uint32_t aDataLength,
     uint32_t aIndex) {
   switch (aType) {
-#ifdef WIN32
-    case FontType::DWRITE:
-      return UnscaledFontDWrite::CreateFromFontDescriptor(aData, aDataLength,
-                                                          aIndex);
-#elif defined(XP_DARWIN)
     case FontType::MAC:
       return UnscaledFontMac::CreateFromFontDescriptor(aData, aDataLength,
                                                        aIndex);
-#elif defined(MOZ_WIDGET_GTK)
-    case FontType::FONTCONFIG:
-      return UnscaledFontFontconfig::CreateFromFontDescriptor(
-          aData, aDataLength, aIndex);
-#elif defined(MOZ_WIDGET_ANDROID)
-    case FontType::FREETYPE:
-      return UnscaledFontFreeType::CreateFromFontDescriptor(aData, aDataLength,
-                                                            aIndex);
-#endif
     default:
       gfxWarning() << "Invalid type specified for UnscaledFont font descriptor";
       return nullptr;
   }
 }
 
-#ifdef XP_DARWIN
 already_AddRefed<ScaledFont> Factory::CreateScaledFontForMacFont(
     CGFontRef aCGFont, const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
     bool aUseFontSmoothing, bool aApplySyntheticBold, bool aHasColorGlyphs) {
@@ -441,25 +378,8 @@ already_AddRefed<ScaledFont> Factory::CreateScaledFontForMacFont(
                                       aUseFontSmoothing, aApplySyntheticBold,
                                       aHasColorGlyphs);
 }
-#endif
 
-#ifdef MOZ_WIDGET_GTK
-already_AddRefed<ScaledFont> Factory::CreateScaledFontForFontconfigFont(
-    const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
-    RefPtr<SharedFTFace> aFace, FcPattern* aPattern) {
-  return MakeAndAddRef<ScaledFontFontconfig>(std::move(aFace), aPattern,
-                                             aUnscaledFont, aSize);
-}
-#endif
 
-#ifdef MOZ_WIDGET_ANDROID
-already_AddRefed<ScaledFont> Factory::CreateScaledFontForFreeTypeFont(
-    const RefPtr<UnscaledFont>& aUnscaledFont, Float aSize,
-    RefPtr<SharedFTFace> aFace, bool aApplySyntheticBold) {
-  return MakeAndAddRef<ScaledFontFreeType>(std::move(aFace), aUnscaledFont,
-                                           aSize, aApplySyntheticBold);
-}
-#endif
 
 void Factory::SetSubpixelOrder(SubpixelOrder aOrder) {
   mSubpixelOrder = aOrder;
@@ -584,105 +504,6 @@ FT_Error Factory::LoadFTGlyph(FT_Face aFace, uint32_t aGlyphIndex,
 }
 #endif
 
-#ifdef WIN32
-bool Factory::SetDirect3D11Device(ID3D11Device* aDevice) {
-  MOZ_RELEASE_ASSERT(NS_IsMainThread());
-
-  StaticMutexAutoLock lock(mDeviceLock);
-
-  mD3D11Device = aDevice;
-  return true;
-}
-
-RefPtr<ID3D11Device> Factory::GetDirect3D11Device() {
-  StaticMutexAutoLock lock(mDeviceLock);
-  return mD3D11Device;
-}
-
-RefPtr<IDWriteFactory> Factory::GetDWriteFactory() {
-  StaticMutexAutoLock lock(mDeviceLock);
-  return mDWriteFactory;
-}
-
-RefPtr<IDWriteFactory> Factory::EnsureDWriteFactory() {
-  StaticMutexAutoLock lock(mDeviceLock);
-
-  if (mDWriteFactory) {
-    return mDWriteFactory;
-  }
-
-  HMODULE dwriteModule = LoadLibrarySystem32(L"dwrite.dll");
-  decltype(DWriteCreateFactory)* createDWriteFactory =
-      (decltype(DWriteCreateFactory)*)GetProcAddress(dwriteModule,
-                                                     "DWriteCreateFactory");
-
-  if (!createDWriteFactory) {
-    gfxWarning() << "Failed to locate DWriteCreateFactory function.";
-    return nullptr;
-  }
-
-  HRESULT hr =
-      createDWriteFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
-                          reinterpret_cast<IUnknown**>(&mDWriteFactory));
-
-  if (FAILED(hr)) {
-    gfxWarning() << "Failed to create DWrite Factory.";
-  }
-
-  return mDWriteFactory;
-}
-
-RefPtr<IDWriteFontCollection> Factory::GetDWriteSystemFonts(bool aUpdate) {
-  StaticMutexAutoLock lock(mDeviceLock);
-
-  if (mDWriteSystemFonts && !aUpdate) {
-    return mDWriteSystemFonts;
-  }
-
-  if (!mDWriteFactory) {
-    if ((rand() & 0x3f) == 0) {
-      gfxCriticalError(int(gfx::LogOptions::AssertOnCall))
-          << "Failed to create DWrite factory";
-    } else {
-      gfxWarning() << "Failed to create DWrite factory";
-    }
-
-    return nullptr;
-  }
-
-  RefPtr<IDWriteFontCollection> systemFonts;
-  HRESULT hr =
-      mDWriteFactory->GetSystemFontCollection(getter_AddRefs(systemFonts));
-  if (FAILED(hr) || !systemFonts) {
-    // only crash some of the time so those experiencing this problem
-    // don't stop using Firefox
-    if ((rand() & 0x3f) == 0) {
-      gfxCriticalError(int(gfx::LogOptions::AssertOnCall))
-          << "Failed to create DWrite system font collection";
-    } else {
-      gfxWarning() << "Failed to create DWrite system font collection";
-    }
-    return nullptr;
-  }
-  mDWriteSystemFonts = systemFonts;
-
-  return mDWriteSystemFonts;
-}
-
-BYTE sSystemTextQuality = CLEARTYPE_QUALITY;
-void Factory::SetSystemTextQuality(uint8_t aQuality) {
-  sSystemTextQuality = aQuality;
-}
-
-already_AddRefed<ScaledFont> Factory::CreateScaledFontForDWriteFont(
-    IDWriteFontFace* aFontFace, const gfxFontStyle* aStyle,
-    const RefPtr<UnscaledFont>& aUnscaledFont, float aSize,
-    bool aUseEmbeddedBitmap, bool aUseMultistrikeBold, bool aGDIForced) {
-  return MakeAndAddRef<ScaledFontDWrite>(
-      aFontFace, aUnscaledFont, aSize, aUseEmbeddedBitmap, aUseMultistrikeBold,
-      aGDIForced, aStyle);
-}
-#endif  // WIN32
 
 already_AddRefed<DrawTarget> Factory::CreateDrawTargetWithSkCanvas(
     SkCanvas* aCanvas, bool aSupportsGlyphSourceText) {
@@ -863,231 +684,6 @@ void Factory::CopyDataSourceSurface(DataSourceSurface* aSource,
   aDest->Unmap();
 }
 
-#ifdef WIN32
-
-/* static */
-already_AddRefed<DataSourceSurface>
-Factory::CreateBGRA8DataSourceSurfaceForD3D11Texture(
-    ID3D11Texture2D* aSrcTexture, uint32_t aArrayIndex,
-    gfx::ColorSpace2 aColorSpace, gfx::ColorRange aColorRange,
-    gfx::TransferFunction aTransferFunction) {
-  D3D11_TEXTURE2D_DESC srcDesc = {0};
-  aSrcTexture->GetDesc(&srcDesc);
-
-  RefPtr<gfx::DataSourceSurface> destTexture =
-      gfx::Factory::CreateDataSourceSurface(
-          IntSize(srcDesc.Width, srcDesc.Height), gfx::SurfaceFormat::B8G8R8A8);
-  if (NS_WARN_IF(!destTexture)) {
-    return nullptr;
-  }
-  if (!ReadbackTexture(destTexture, aSrcTexture, aArrayIndex, aColorSpace,
-                       aColorRange, aTransferFunction)) {
-    return nullptr;
-  }
-  return destTexture.forget();
-}
-
-/* static */ nsresult Factory::CreateSdbForD3D11Texture(
-    ID3D11Texture2D* aSrcTexture, const IntSize& aSrcSize,
-    layers::SurfaceDescriptorBuffer& aSdBuffer,
-    const std::function<layers::MemoryOrShmem(uint32_t)>& aAllocate) {
-  D3D11_TEXTURE2D_DESC srcDesc = {0};
-  aSrcTexture->GetDesc(&srcDesc);
-  if (srcDesc.Width != uint32_t(aSrcSize.width) ||
-      srcDesc.Height != uint32_t(aSrcSize.height) ||
-      srcDesc.Format != DXGI_FORMAT_B8G8R8A8_UNORM) {
-    return NS_ERROR_NOT_IMPLEMENTED;
-  }
-
-  const auto format = gfx::SurfaceFormat::B8G8R8A8;
-  uint8_t* buffer = nullptr;
-  int32_t stride = 0;
-  nsresult rv = layers::Image::AllocateSurfaceDescriptorBufferRgb(
-      aSrcSize, format, buffer, aSdBuffer, stride, aAllocate);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  if (!ReadbackTexture(buffer, stride, aSrcTexture)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_OK;
-}
-
-/* static */
-bool Factory::ConvertSourceAndRetryReadback(
-    DataSourceSurface* aDestCpuTexture, ID3D11Texture2D* aSrcTexture,
-    uint32_t aArrayIndex, gfx::ColorSpace2 aColorSpace,
-    gfx::ColorRange aColorRange, gfx::TransferFunction aTransferFunction) {
-  MOZ_ASSERT(aDestCpuTexture);
-  MOZ_ASSERT(aSrcTexture);
-
-  RefPtr<ID3D11Device> device;
-  aSrcTexture->GetDevice(getter_AddRefs(device));
-  if (!device) {
-    gfxWarning() << "Failed to get D3D11 device from source texture";
-    return false;
-  }
-
-  CD3D11_TEXTURE2D_DESC desc;
-  aSrcTexture->GetDesc(&desc);
-
-  if (desc.Format != DXGI_FORMAT_NV12 && desc.Format != DXGI_FORMAT_P010 &&
-      desc.Format != DXGI_FORMAT_P016) {
-    gfxWarning() << "Unexpected DXGI format";
-    return false;
-  }
-
-  desc = CD3D11_TEXTURE2D_DESC(
-      DXGI_FORMAT_B8G8R8A8_UNORM, desc.Width, desc.Height, 1, 1,
-      D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-
-  RefPtr<ID3D11Texture2D> newSrcTexture;
-  HRESULT hr =
-      device->CreateTexture2D(&desc, nullptr, getter_AddRefs(newSrcTexture));
-  if (FAILED(hr)) {
-    gfxWarning() << "Failed to create newSrcTexture: " << gfx::hexa(hr);
-    return false;
-  }
-
-  RefPtr<layers::VideoProcessorD3D11> videoProcessor =
-      layers::VideoProcessorD3D11::Create(device);
-  if (!videoProcessor) {
-    gfxWarning() << "Failed to create VideoProcessorD3D11";
-    return false;
-  }
-
-  hr = videoProcessor->Init(aDestCpuTexture->GetSize());
-  if (FAILED(hr)) {
-    gfxWarning() << "Failed to init VideoProcessorD3D11" << gfx::hexa(hr);
-    return false;
-  }
-
-  layers::VideoProcessorD3D11::InputTextureInfo info(
-      aColorSpace, aColorRange, aTransferFunction, aArrayIndex, aSrcTexture);
-  if (!videoProcessor->CallVideoProcessorBlt(info, newSrcTexture)) {
-    gfxWarning() << "CallVideoProcessorBlt failed";
-    return false;
-  }
-
-  return ReadbackTexture(aDestCpuTexture, newSrcTexture, 0, aColorSpace,
-                         aColorRange, aTransferFunction);
-}
-
-/* static */
-bool Factory::ReadbackTexture(DataSourceSurface* aDestCpuTexture,
-                              ID3D11Texture2D* aSrcTexture,
-                              uint32_t aArrayIndex,
-                              gfx::ColorSpace2 aColorSpace,
-                              gfx::ColorRange aColorRange,
-                              gfx::TransferFunction aTransferFunction) {
-  D3D11_TEXTURE2D_DESC srcDesc = {0};
-  aSrcTexture->GetDesc(&srcDesc);
-
-  // Special case: If the source and destination have different formats and the
-  // destination is B8G8R8A8 then convert the source to B8G8R8A8 and readback.
-  if ((srcDesc.Format != DXGIFormat(aDestCpuTexture->GetFormat())) &&
-      (aDestCpuTexture->GetFormat() == SurfaceFormat::B8G8R8A8)) {
-    return ConvertSourceAndRetryReadback(aDestCpuTexture, aSrcTexture,
-                                         aArrayIndex, aColorSpace, aColorRange,
-                                         aTransferFunction);
-  }
-
-  if ((IntSize(srcDesc.Width, srcDesc.Height) != aDestCpuTexture->GetSize()) ||
-      (srcDesc.Format != DXGIFormat(aDestCpuTexture->GetFormat()))) {
-    gfxWarning() << "Attempted readback between incompatible textures";
-    return false;
-  }
-
-  gfx::DataSourceSurface::MappedSurface mappedSurface;
-  if (!aDestCpuTexture->Map(gfx::DataSourceSurface::WRITE, &mappedSurface)) {
-    return false;
-  }
-
-  MOZ_ASSERT(aArrayIndex == 0);
-
-  bool ret =
-      ReadbackTexture(mappedSurface.mData, mappedSurface.mStride, aSrcTexture);
-  aDestCpuTexture->Unmap();
-  return ret;
-}
-
-/* static */
-bool Factory::ReadbackTexture(uint8_t* aDestData, int32_t aDestStride,
-                              ID3D11Texture2D* aSrcTexture) {
-  MOZ_ASSERT(aDestData && aDestStride && aSrcTexture);
-
-  RefPtr<ID3D11Device> device;
-  aSrcTexture->GetDevice(getter_AddRefs(device));
-  if (!device) {
-    gfxWarning() << "Failed to get D3D11 device from source texture";
-    return false;
-  }
-
-  RefPtr<ID3D11DeviceContext> context;
-  device->GetImmediateContext(getter_AddRefs(context));
-  if (!context) {
-    gfxWarning() << "Could not get an immediate D3D11 context";
-    return false;
-  }
-
-  RefPtr<IDXGIKeyedMutex> mutex;
-  HRESULT hr = aSrcTexture->QueryInterface(__uuidof(IDXGIKeyedMutex),
-                                           (void**)getter_AddRefs(mutex));
-  if (SUCCEEDED(hr) && mutex) {
-    hr = mutex->AcquireSync(0, 2000);
-    if (hr != S_OK) {
-      gfxWarning() << "Could not acquire DXGI surface lock in 2 seconds";
-      return false;
-    }
-  }
-
-  D3D11_TEXTURE2D_DESC srcDesc = {0};
-  aSrcTexture->GetDesc(&srcDesc);
-  srcDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-  srcDesc.Usage = D3D11_USAGE_STAGING;
-  srcDesc.BindFlags = 0;
-  srcDesc.MiscFlags = 0;
-  srcDesc.MipLevels = 1;
-  RefPtr<ID3D11Texture2D> srcCpuTexture;
-  hr =
-      device->CreateTexture2D(&srcDesc, nullptr, getter_AddRefs(srcCpuTexture));
-  if (FAILED(hr)) {
-    gfxWarning() << "Could not create source texture for mapping";
-    if (mutex) {
-      mutex->ReleaseSync(0);
-    }
-    return false;
-  }
-
-  context->CopyResource(srcCpuTexture, aSrcTexture);
-
-  if (mutex) {
-    mutex->ReleaseSync(0);
-    mutex = nullptr;
-  }
-
-  D3D11_MAPPED_SUBRESOURCE srcMap;
-  hr = context->Map(srcCpuTexture, 0, D3D11_MAP_READ, 0, &srcMap);
-  if (FAILED(hr)) {
-    gfxWarning() << "Could not map source texture";
-    return false;
-  }
-
-  uint32_t width = srcDesc.Width;
-  uint32_t height = srcDesc.Height;
-  int bpp = BytesPerPixel(gfx::ToPixelFormat(srcDesc.Format));
-  for (uint32_t y = 0; y < height; y++) {
-    memcpy(aDestData + aDestStride * y,
-           (unsigned char*)(srcMap.pData) + srcMap.RowPitch * y, width * bpp);
-  }
-
-  context->Unmap(srcCpuTexture, 0);
-  return true;
-}
-
-#endif  // WIN32
 
 // static
 void CriticalLogger::OutputMessage(const std::string& aString, int aLevel,
@@ -1105,16 +701,5 @@ void CriticalLogger::CrashAction(LogReason aReason) {
   }
 }
 
-#ifdef WIN32
-void LogWStr(const wchar_t* aWStr, std::stringstream& aOut) {
-  int n =
-      WideCharToMultiByte(CP_ACP, 0, aWStr, -1, nullptr, 0, nullptr, nullptr);
-  if (n > 1) {
-    std::vector<char> str(n);
-    WideCharToMultiByte(CP_ACP, 0, aWStr, -1, str.data(), n, nullptr, nullptr);
-    aOut << str.data();
-  }
-}
-#endif
 
 }  // namespace mozilla::gfx

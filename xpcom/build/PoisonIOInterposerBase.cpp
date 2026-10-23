@@ -16,22 +16,9 @@
 #endif
 
 // Auxiliary method to convert file descriptors to ids
-#if defined(XP_WIN)
-#  include <io.h>
-inline mozilla::Maybe<platform_handle_t> FileDescriptorToHandle(int aFd) {
-  intptr_t handle = _get_osfhandle(aFd);
-  if ((handle == -1) || (handle == -2)) {
-    // -1: Invalid handle. -2: stdin/out/err not associated with a stream.
-    return mozilla::Nothing();
-  }
-  return mozilla::Some<platform_handle_t>(
-      reinterpret_cast<platform_handle_t>(handle));
-}
-#else
 inline mozilla::Maybe<platform_handle_t> FileDescriptorToHandle(int aFd) {
   return mozilla::Some<platform_handle_t>(static_cast<platform_handle_t>(aFd));
 }
-#endif /* if not XP_WIN */
 
 namespace {
 

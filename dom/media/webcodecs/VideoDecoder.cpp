@@ -27,12 +27,7 @@
 #include "mozilla/dom/WebCodecsUtils.h"
 #include "nsPrintfCString.h"
 
-#ifdef XP_MACOSX
 #  include "MacIOSurfaceImage.h"
-#elif MOZ_WAYLAND
-#  include "mozilla/layers/DMABUFSurfaceImage.h"
-#  include "mozilla/widget/DMABufSurface.h"
-#endif
 
 extern mozilla::LazyLogModule gWebCodecsLog;
 
@@ -354,7 +349,6 @@ static VideoColorSpaceInternal GuessColorSpace(
   return colorSpace;
 }
 
-#ifdef XP_MACOSX
 static VideoColorSpaceInternal GuessColorSpace(const MacIOSurface* aSurface) {
   if (!aSurface) {
     return {};
@@ -384,23 +378,6 @@ static VideoColorSpaceInternal GuessColorSpace(const MacIOSurface* aSurface) {
 
   return colorSpace;
 }
-#endif
-#ifdef MOZ_WAYLAND
-// TODO: Set DMABufSurface::IsFullRange() to const so aSurface can be const.
-static VideoColorSpaceInternal GuessColorSpace(DMABufSurface* aSurface) {
-  if (!aSurface) {
-    return {};
-  }
-  VideoColorSpaceInternal colorSpace;
-  colorSpace.mFullRange = Some(aSurface->IsFullRange());
-  if (Maybe<dom::VideoMatrixCoefficients> m =
-          ToMatrixCoefficients(aSurface->GetYUVColorSpace())) {
-    colorSpace.mMatrix = Some(*m);
-  }
-  // No other color space information.
-  return colorSpace;
-}
-#endif
 
 static VideoColorSpaceInternal GuessColorSpace(layers::Image* aImage) {
   if (aImage) {
@@ -441,20 +418,11 @@ static VideoColorSpaceInternal GuessColorSpace(layers::Image* aImage) {
       }
       return colorSpace;
     }
-#ifdef XP_MACOSX
     // TODO: Make sure VideoFrame can interpret its internal data in different
     // formats.
     if (layers::MacIOSurfaceImage* image = aImage->AsMacIOSurfaceImage()) {
       return GuessColorSpace(image->GetSurface());
     }
-#endif
-#ifdef MOZ_WAYLAND
-    // TODO: Make sure VideoFrame can interpret its internal data in different
-    // formats.
-    if (layers::DMABUFSurfaceImage* image = aImage->AsDMABUFSurfaceImage()) {
-      return GuessColorSpace(image->GetSurface());
-    }
-#endif
   }
   LOGW("Failed to get color space from layers::Image");
   return {};

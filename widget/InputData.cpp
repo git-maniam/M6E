@@ -689,7 +689,6 @@ WidgetWheelEvent PinchGestureInput::ToWidgetEvent(nsIWidget* aWidget) const {
 }
 
 double PinchGestureInput::ComputeDeltaY(nsIWidget* aWidget) const {
-#if defined(XP_DARWIN)
   // This converts the pinch gesture value to a fake wheel event that has the
   // control key pressed so that pages can implement custom pinch gesture
   // handling. It may seem strange that this doesn't use a wheel event with
@@ -719,22 +718,6 @@ double PinchGestureInput::ComputeDeltaY(nsIWidget* aWidget) const {
   // deltaY.
   return (mPreviousSpan - 100.0) *
          (aWidget ? aWidget->GetDefaultScaleInternal() : 1.f);
-#else
-  // This calculation is based on what the Windows and Linux widget code does.
-  // Specifically, it creates a PinchGestureInput with |mCurrentSpan == 100.0 *
-  // currentScale| and |mPreviousSpan == 100.0 * lastScale| where currentScale
-  // is the scale from the current OS event and lastScale is the scale when the
-  // previous OS event happened. On macOS [event magnification] is a relative
-  // change in scale factor, ie if the scale factor changed from 1 to 1.1 it
-  // will be 0.1, similarly if it changed from 1 to 0.9 it will be -0.1. To
-  // calculate the relative scale change on Windows we would calculate |M =
-  // currentScale - lastScale = (mCurrentSpan-mPreviousSpan)/100| and use the
-  // same formula as the macOS code
-  // (|-100.0 * M * GetDefaultScaleInternal()|).
-
-  return (mPreviousSpan - mCurrentSpan) *
-         (aWidget ? aWidget->GetDefaultScaleInternal() : 1.f);
-#endif
 }
 
 bool PinchGestureInput::SetLineOrPageDeltaY(nsIWidget* aWidget) {
@@ -757,11 +740,7 @@ bool PinchGestureInput::SetLineOrPageDeltaY(nsIWidget* aWidget) {
     // mLineOrPageDeltaY to the smallest nonzero amount in the relevant
     // direction.
     if (mType == PINCHGESTURE_START) {
-#ifdef XP_WIN
-      return false;
-#else
       mLineOrPageDeltaY = (deltaY >= 0) ? 1 : -1;
-#endif
     }
     // For PINCHGESTURE_END events, not dispatching a DOMMouseScroll for them is
     // fine.

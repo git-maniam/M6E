@@ -91,9 +91,6 @@ class WebRenderImageHost : public CompositableHost, public ImageComposite {
 
   RefPtr<wr::RenderTextureHostUsageInfo> mRenderTextureHostUsageInfo;
 
-#if XP_WIN
-  RefPtr<TextureWrapperD3D11Allocator> mTextureAllocator;
-#endif
 };
 
 }  // namespace layers

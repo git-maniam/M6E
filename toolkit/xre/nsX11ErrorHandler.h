@@ -5,20 +5,5 @@
 #ifndef TOOLKIT_XRE_NSX11ERRORHANDLER_H_
 #define TOOLKIT_XRE_NSX11ERRORHANDLER_H_
 
-#ifdef MOZ_X11
-#  include <X11/Xlib.h>
-#  include "X11UndefineNone.h"  // Unset some macros defined by X.h included by Xlib.h
-
-/**
- * InstallX11ErrorHandler is not suitable for processes running with GTK3 as
- * GDK3 will replace the handler.  This is still used for the plugin process,
- * which runs with GTK2.
- **/
-void InstallX11ErrorHandler();
-
-void CleanupX11ErrorHandler();
-
-extern "C" int X11Error(Display* display, XErrorEvent* event);
-#endif
 
 #endif  // TOOLKIT_XRE_NSX11ERRORHANDLER_H_

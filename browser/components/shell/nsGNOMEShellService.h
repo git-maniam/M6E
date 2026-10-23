@@ -8,9 +8,6 @@
 #include "nsIGNOMEShellService.h"
 #include "nsShellService.h"
 #include "nsString.h"
-#ifdef MOZ_ENABLE_DBUS
-#  include "nsGNOMEShellSearchProvider.h"
-#endif
 
 class nsIGIOService;
 
@@ -33,9 +30,6 @@ class nsGNOMEShellService final : public nsShellService,
   bool IsDefaultForSchemeHelper(const nsACString& aScheme,
                                 nsIGIOService* giovfs) const;
 
-#ifdef MOZ_ENABLE_DBUS
-  nsGNOMEShellSearchProvider mSearchProvider;
-#endif
   bool GetAppPathFromLauncher();
   bool mUseLocaleFilenames;
   nsCString mAppPath;

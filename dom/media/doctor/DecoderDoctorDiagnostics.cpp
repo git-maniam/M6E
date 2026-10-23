@@ -325,15 +325,6 @@ static bool IsNotificationAllowedOnPlatform(
           dom::DecoderDoctorNotificationType::Decode_warning) {
     return true;
   }
-#if defined(XP_WIN)
-  if (aNotification.mNotificationType ==
-      dom::DecoderDoctorNotificationType::Platform_decoder_not_found) {
-    return strcmp(sMediaWMFNeeded.mReportStringId,
-                  aNotification.mReportStringId) == 0 ||
-           strcmp(sMediaWidevineNoWMF.mReportStringId,
-                  aNotification.mReportStringId) == 0;
-  }
-#endif
 #if defined(MOZ_FFMPEG)
   if (aNotification.mNotificationType ==
       dom::DecoderDoctorNotificationType::Platform_decoder_not_found) {

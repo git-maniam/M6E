@@ -356,12 +356,6 @@ class PresShell final : public nsStubDocumentObserver,
    */
   bool InRDMPane();
 
-#if defined(MOZ_WIDGET_ANDROID)
-  /**
-   * If the dynamic toolbar is not expanded, notify the app to do so.
-   */
-  void MaybeNotifyShowDynamicToolbar();
-#endif  // defined(MOZ_WIDGET_ANDROID)
 
   void RefreshZoomConstraintsForScreenSizeChange();
 

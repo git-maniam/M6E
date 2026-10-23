@@ -34,16 +34,12 @@
 
 #if AV_GCC_VERSION_AT_LEAST(3,1)
 #    define av_always_inline __attribute__((always_inline)) inline
-#elif defined(_MSC_VER)
-#    define av_always_inline __forceinline
 #else
 #    define av_always_inline inline
 #endif
 
 #if AV_GCC_VERSION_AT_LEAST(3,1)
 #    define av_noinline __attribute__((noinline))
-#elif defined(_MSC_VER)
-#    define av_noinline __declspec(noinline)
 #else
 #    define av_noinline
 #endif
@@ -74,8 +70,6 @@
 
 #if AV_GCC_VERSION_AT_LEAST(3,1)
 #    define attribute_deprecated __attribute__((deprecated))
-#elif defined(_MSC_VER)
-#    define attribute_deprecated __declspec(deprecated)
 #else
 #    define attribute_deprecated
 #endif

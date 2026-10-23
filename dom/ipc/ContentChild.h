@@ -511,11 +511,6 @@ class ContentChild final : public PContentChild,
                                           NotNull<nsIPrincipal*> aPrincipal,
                                           DecodeImageResolver&& aResolver);
 
-#if defined(XP_WIN)
-  mozilla::ipc::IPCResult RecvGetUntrustedModulesData(
-      GetUntrustedModulesDataResolver&& aResolver);
-  mozilla::ipc::IPCResult RecvUnblockUntrustedModulesThread();
-#endif  // defined(XP_WIN)
 
   mozilla::ipc::IPCResult RecvSetXPCOMProcessAttributes(
       XPCOMInitData&& aXPCOMInit, NotNull<StructuredCloneData*> aInitialData,
@@ -964,11 +959,6 @@ class ContentChild final : public PContentChild,
   // threads.) The work duration is reported by the RefreshDriverTimer.
   UniquePtr<hal::PerformanceHintSession> mPerformanceHintSession;
 
-#ifdef XP_WIN
-  // True when the main thread runs at THREAD_PRIORITY_ABOVE_NORMAL because
-  // the process is in the foreground.
-  bool mMainThreadPriorityRaised = false;
-#endif
 };
 
 inline nsISupports* ToSupports(mozilla::dom::ContentChild* aContentChild) {

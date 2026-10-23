@@ -35,11 +35,7 @@ void CrashReporterClient::InitSingleton() {
 }
 
 static dom::NativeThreadId CurrentNativeThreadId() {
-#if defined(XP_DARWIN)
   return mozilla::UniqueMachSendRight{CrashReporter::CurrentThreadId()};
-#else
-  return CrashReporter::CurrentThreadId();
-#endif  // defined(XP_DARWIN)
 }
 
 /*static*/

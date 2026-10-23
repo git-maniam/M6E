@@ -24,9 +24,6 @@
 #include "nsGlobalWindowInner.h"
 #include "nsPIDOMWindow.h"
 
-#ifdef XP_WIN
-#  undef PostMessage
-#endif
 
 using mozilla::ipc::BackgroundChild;
 using mozilla::ipc::PBackgroundChild;

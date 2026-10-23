@@ -31,10 +31,6 @@ struct StyleFontWeight;
 }  // namespace mozilla
 
 /* Bug 341128 - w32api defines min/max which causes problems with <bitset> */
-#ifdef __MINGW32__
-#  undef min
-#  undef max
-#endif
 
 #undef ERROR /* defined by Windows.h, conflicts with some generated bindings \
                 code when this gets indirectly included via shared font list \
@@ -541,11 +537,6 @@ class gfxFontUtils {
     return aCh >= 0x20 && aCh <= 0xff ? 0xf000 + aCh : 0;
   }
 
-#ifdef XP_WIN
-  // determine whether a font (which has already been sanitized, so is known
-  // to be a valid sfnt) is CFF format rather than TrueType
-  static bool IsCffFont(const uint8_t* aFontData);
-#endif
 
   // determine the format of font data
   static gfxUserFontType DetermineFontDataType(const uint8_t* aFontData,

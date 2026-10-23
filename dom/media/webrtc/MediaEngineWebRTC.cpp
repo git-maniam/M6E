@@ -88,25 +88,6 @@ void MediaEngineWebRTC::EnumerateVideoDevices(
    * for a given instance of the engine.
    */
   int num;
-#if defined(_ARM64_) && defined(XP_WIN)
-  // There are problems with using DirectShow on versions of Windows before
-  // 19H1 on arm64. This disables the camera on older versions of Windows.
-  if (aMediaSource == MediaSourceEnum::Camera) {
-    typedef ULONG (*RtlGetVersionFn)(LPOSVERSIONINFOEXW);
-    RtlGetVersionFn RtlGetVersion;
-    RtlGetVersion = (RtlGetVersionFn)GetProcAddress(GetModuleHandleA("ntdll"),
-                                                    "RtlGetVersion");
-    if (RtlGetVersion) {
-      OSVERSIONINFOEXW info;
-      info.dwOSVersionInfoSize = sizeof(info);
-      RtlGetVersion(&info);
-      // 19H1 is 18346
-      if (info.dwBuildNumber < 18346) {
-        return;
-      }
-    }
-  }
-#endif
   camera::CaptureEngine capEngine =
       MediaEngineRemoteVideoSource::CaptureEngine(aMediaSource);
   num = GetChildAndCall(&CamerasChild::NumberOfCaptureDevices, capEngine);
@@ -170,9 +151,7 @@ void MediaEngineWebRTC::EnumerateMicrophoneDevices(
   DebugOnly<bool> foundPreferredDevice = false;
 
   for (const auto& deviceInfo : *devices) {
-#ifndef ANDROID
     MOZ_ASSERT(deviceInfo->DeviceID());
-#endif
     LOG("Cubeb device: type 0x{:x}, state 0x{:x}, name {}, id {}",
         deviceInfo->Type(), deviceInfo->State(),
         NS_ConvertUTF16toUTF8(deviceInfo->Name()).get(),
@@ -190,11 +169,9 @@ void MediaEngineWebRTC::EnumerateMicrophoneDevices(
           // This is possible on windows, there is a default communication
           // device, and a default device:
           // See https://bugzilla.mozilla.org/show_bug.cgi?id=1542739
-#  ifndef XP_WIN
           MOZ_ASSERT(!foundPreferredDevice,
                      "Found more than one preferred audio input device"
                      "while enumerating");
-#  endif
         }
 #endif
         aDevices->InsertElementAt(0, std::move(device));
@@ -213,9 +190,7 @@ void MediaEngineWebRTC::EnumerateSpeakerDevices(
   RefPtr<const AudioDeviceSet> devices =
       enumerator->EnumerateAudioOutputDevices();
 
-#ifndef XP_WIN
   DebugOnly<bool> preferredDeviceFound = false;
-#endif
   for (const auto& deviceInfo : *devices) {
     LOG("Cubeb device: type 0x{:x}, state 0x{:x}, name {}, id {}",
         deviceInfo->Type(), deviceInfo->State(),

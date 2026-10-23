@@ -5,14 +5,8 @@
 #define MOZ_MEMORY_IMPL
 #include "mozmemory_wrap.h"
 
-#ifdef _WIN32
-#  include <windows.h>
-#  include <io.h>
-typedef intptr_t ssize_t;
-#else
 #  include <sys/mman.h>
 #  include <unistd.h>
-#endif
 #include <fcntl.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -33,9 +27,6 @@ static void die(const char* message) {
   exit(1);
 }
 
-#ifdef XP_LINUX
-MOZ_RUNINIT static size_t sPageSize = []() { return sysconf(_SC_PAGESIZE); }();
-#endif
 
 /* We don't want to be using malloc() to allocate our internal tracking
  * data, because that would change the parameters of what is being measured,
@@ -44,23 +35,11 @@ template <typename T, size_t Len>
 class MappedArray {
  public:
   MappedArray() : mPtr(nullptr) {
-#ifdef XP_LINUX
-    MOZ_RELEASE_ASSERT(!((sizeof(T) * Len) & (sPageSize - 1)),
-                       "MappedArray size must be a multiple of the page size");
-#endif
   }
 
   ~MappedArray() {
     if (mPtr) {
-#ifdef _WIN32
-      VirtualFree(mPtr, sizeof(T) * Len, MEM_RELEASE);
-#elif defined(XP_LINUX)
-      munmap(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(mPtr) -
-                                     sPageSize),
-             sizeof(T) * Len + sPageSize * 2);
-#else
       munmap(mPtr, sizeof(T) * Len);
-#endif
     }
   }
 
@@ -69,36 +48,13 @@ class MappedArray {
       return mPtr[aIndex];
     }
 
-#ifdef _WIN32
-    mPtr = reinterpret_cast<T*>(VirtualAlloc(
-        nullptr, sizeof(T) * Len, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-    if (mPtr == nullptr) {
-      die("VirtualAlloc error");
-    }
-#else
     size_t data_size = sizeof(T) * Len;
     size_t size = data_size;
-#  ifdef XP_LINUX
-    // See below
-    size += sPageSize * 2;
-#  endif
     mPtr = reinterpret_cast<T*>(mmap(nullptr, size, PROT_READ | PROT_WRITE,
                                      MAP_ANON | MAP_PRIVATE, -1, 0));
     if (mPtr == MAP_FAILED) {
       die("Mmap error");
     }
-#  ifdef XP_LINUX
-    // On Linux we request a page on either side of the allocation and
-    // mprotect them.  This prevents mappings in /proc/self/smaps from being
-    // merged and allows us to parse this file to calculate the allocator's RSS.
-    MOZ_ASSERT(0 == mprotect(mPtr, sPageSize, 0));
-    MOZ_ASSERT(0 == mprotect(reinterpret_cast<void*>(
-                                 reinterpret_cast<uintptr_t>(mPtr) + data_size +
-                                 sPageSize),
-                             sPageSize, 0));
-    mPtr = reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(mPtr) + sPageSize);
-#  endif
-#endif
     return mPtr[aIndex];
   }
 
@@ -497,133 +453,12 @@ class Distribution {
   size_t mRequests[MAX_NUM_BUCKETS];
 };
 
-#ifdef XP_LINUX
-struct MemoryMap {
-  uintptr_t mStart;
-  uintptr_t mEnd;
-  bool mReadable;
-  bool mPrivate;
-  bool mAnon;
-  bool mIsStack;
-  bool mIsSpecial;
-  size_t mRSS;
-
-  bool IsCandidate() const {
-    // Candidates mappings are:
-    //  * anonymous
-    //  * they are private (not shared),
-    //  * anonymous or "[heap]" (not another area such as stack),
-    //
-    // The only mappings we're falsely including are the .bss segments for
-    // shared libraries.
-    return mReadable && mPrivate && mAnon && !mIsStack && !mIsSpecial;
-  }
-};
-
-class SMapsReader : private FdReader {
- private:
-  explicit SMapsReader(FdReader&& reader) : FdReader(std::move(reader)) {}
-
- public:
-  static Maybe<SMapsReader> open() {
-    int fd = ::open(FILENAME, O_RDONLY);
-    if (fd < 0) {
-      perror(FILENAME);
-      return mozilla::Nothing();
-    }
-
-    return Some(SMapsReader(FdReader(fd, true)));
-  }
-
-  Maybe<MemoryMap> readMap(platform_handle_t aStdErr) {
-    // This is not very tolerant of format changes because things like
-    // parseNumber will crash if they get a bad value.  TODO: make this
-    // soft-fail.
-
-    Buffer line = ReadLine();
-    if (!line) {
-      return Nothing();
-    }
-
-    // We're going to be at the start of an entry, start tokenising the first
-    // line.
-
-    // Range
-    Buffer range = line.SplitChar(' ');
-    uintptr_t range_start = parseNumber<16>(range.SplitChar('-'));
-    uintptr_t range_end = parseNumber<16>(range);
-
-    // Mode.
-    Buffer mode = line.SplitChar(' ');
-    if (mode.Length() != 4) {
-      FdPrintf(aStdErr, "Couldn't parse SMAPS file\n");
-      return Nothing();
-    }
-    bool readable = mode[0] == 'r';
-    bool private_ = mode[3] == 'p';
-
-    // Offset, device and inode.
-    line.SkipWhitespace();
-    bool zero_offset = !parseNumber<16>(line.SplitChar(' '));
-    line.SkipWhitespace();
-    bool no_device = line.SplitChar(' ') == Buffer("00:00");
-    line.SkipWhitespace();
-    bool zero_inode = !parseNumber(line.SplitChar(' '));
-    bool is_anon = zero_offset && no_device && zero_inode;
-
-    // Filename, or empty for anon mappings.
-    line.SkipWhitespace();
-    Buffer filename = line.SplitChar(' ');
-
-    bool is_stack;
-    bool is_special;
-    if (filename && filename[0] == '[') {
-      is_stack = filename == Buffer("[stack]");
-      is_special = filename == Buffer("[vdso]") ||
-                   filename == Buffer("[vvar]") ||
-                   filename == Buffer("[vsyscall]");
-    } else {
-      is_stack = false;
-      is_special = false;
-    }
-
-    size_t rss = 0;
-    while ((line = ReadLine())) {
-      Buffer field = line.SplitChar(':');
-      if (field == Buffer("VmFlags")) {
-        // This is the last field, at least in the current format. Break this
-        // loop to read the next mapping.
-        break;
-      }
-
-      if (field == Buffer("Rss")) {
-        line.SkipWhitespace();
-        Buffer value = line.SplitChar(' ');
-        rss = parseNumber(value) * 1024;
-      }
-    }
-
-    return Some(MemoryMap({range_start, range_end, readable, private_, is_anon,
-                           is_stack, is_special, rss}));
-  }
-
-  static constexpr char FILENAME[] = "/proc/self/smaps";
-};
-#endif  // XP_LINUX
 
 /* Class to handle dispatching the replay function calls to replace-malloc. */
 class Replay {
  public:
   Replay() {
-#ifdef _WIN32
-    // See comment in FdPrintf.h as to why native win32 handles are used.
-    mStdErr = GetStdHandle(STD_ERROR_HANDLE);
-#else
     mStdErr = fileno(stderr);
-#endif
-#ifdef XP_LINUX
-    BuildInitialMapInfo();
-#endif
   }
 
   void enableSlopCalculation() { mCalculateSlop = true; }
@@ -782,9 +617,6 @@ class Replay {
     jemalloc_bin_stats_t bin_stats[MAX_NUM_BINS] = {{0}};
     ::jemalloc_stats_internal(&stats, bin_stats);
 
-#ifdef XP_LINUX
-    size_t rss = get_rss();
-#endif
 
     size_t num_objects = 0;
     size_t num_sloppy_objects = 0;
@@ -840,11 +672,6 @@ class Replay {
     FdPrintf(mStdErr, "Ops:              %9zu\n", mOps);
     FdPrintf(mStdErr, "mapped:           %9zu\n", stats.mapped);
     FdPrintf(mStdErr, "committed:        %9zu\n", committed);
-#ifdef XP_LINUX
-    if (rss) {
-      FdPrintf(mStdErr, "rss:              %9zu\n", rss);
-    }
-#endif
     FdPrintf(mStdErr, "allocated:        %9zu\n", stats.allocated);
     FdPrintf(mStdErr, "waste:            %9zu\n", stats.waste);
     FdPrintf(mStdErr, "dirty:            %9zu\n", stats.pages_dirty);
@@ -962,67 +789,6 @@ class Replay {
     }
   }
 
-#ifdef XP_LINUX
-  size_t get_rss() {
-    if (mGetRSSFailed) {
-      return 0;
-    }
-
-    // On Linux we can determine the RSS of the heap area by examining the
-    // smaps file.
-    mozilla::Maybe<SMapsReader> reader = SMapsReader::open();
-    if (!reader) {
-      mGetRSSFailed = true;
-      return 0;
-    }
-
-    size_t rss = 0;
-    while (Maybe<MemoryMap> map = reader->readMap(mStdErr)) {
-      if (map->IsCandidate() && !mSlots.ownsMapping(map->mStart) &&
-          !InitialMapsContains(map->mStart)) {
-        rss += map->mRSS;
-      }
-    }
-
-    return rss;
-  }
-
-  bool InitialMapsContains(uintptr_t aRangeStart) {
-    for (unsigned i = 0; i < mNumInitialMaps; i++) {
-      MOZ_ASSERT(i < MAX_INITIAL_MAPS);
-
-      if (mInitialMaps[i] == aRangeStart) {
-        return true;
-      }
-    }
-    return false;
-  }
-
- public:
-  void BuildInitialMapInfo() {
-    if (mGetRSSFailed) {
-      return;
-    }
-
-    Maybe<SMapsReader> reader = SMapsReader::open();
-    if (!reader) {
-      mGetRSSFailed = true;
-      return;
-    }
-
-    while (Maybe<MemoryMap> map = reader->readMap(mStdErr)) {
-      if (map->IsCandidate()) {
-        if (mNumInitialMaps >= MAX_INITIAL_MAPS) {
-          FdPrintf(mStdErr, "Too many initial mappings, can't compute RSS\n");
-          mGetRSSFailed = false;
-          return;
-        }
-
-        mInitialMaps[mNumInitialMaps++] = map->mStart;
-      }
-    }
-  }
-#endif
 
  private:
   MemSlot& SlotForResult(Buffer& aResult) {
@@ -1061,22 +827,6 @@ class Replay {
   bool mCalculateSlop = false;
   bool mDoMemset = false;
 
-#ifdef XP_LINUX
-  // If we have a failure reading smaps info then this is used to disable that
-  // feature.
-  bool mGetRSSFailed = false;
-
-  // The initial memory mappings are recorded here at start up.  We exclude
-  // memory in these mappings when computing RSS.  We assume they do not grow
-  // and that no regions are allocated near them, this is true because they'll
-  // only record the .bss and .data segments from our binary and shared objects
-  // or regions that logalloc-replay has created for MappedArrays.
-  //
-  // 64 should be enough for anybody.
-  static constexpr unsigned MAX_INITIAL_MAPS = 64;
-  uintptr_t mInitialMaps[MAX_INITIAL_MAPS];
-  unsigned mNumInitialMaps = 0;
-#endif  // XP_LINUX
 };
 
 MOZ_RUNINIT static Replay replay;
@@ -1104,11 +854,7 @@ int main(int argc, const char* argv[]) {
 
   FdReader reader(0);
   if (filename) {
-#ifdef XP_WIN
-    int fd = _open(filename, _O_RDONLY);
-#else
     int fd = open(filename, O_RDONLY);
-#endif
     if (fd < 0) {
       perror(filename);
       exit(1);

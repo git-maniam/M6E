@@ -583,9 +583,6 @@ MockCubeb* MockCubeb::AsMock(cubeb* aContext) {
 
 int MockCubeb::EnumerateDevices(cubeb_device_type aType,
                                 cubeb_device_collection* aCollection) {
-#ifdef ANDROID
-  MOZ_ASSERT_UNREACHABLE("This is not to be called on Android.");
-#endif
   size_t count = 0;
   if (aType & CUBEB_DEVICE_TYPE_INPUT) {
     count += mInputDevices.Length();

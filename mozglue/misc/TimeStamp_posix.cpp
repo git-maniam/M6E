@@ -22,28 +22,11 @@
 #  include <sys/sysctl.h>
 #endif
 
-#if defined(__DragonFly__) || defined(__FreeBSD__)
-#  include <sys/user.h>
-#endif
 
-#if defined(__NetBSD__)
-#  undef KERN_PROC
-#  define KERN_PROC KERN_PROC2
-#  define KINFO_PROC struct kinfo_proc2
-#else
 #  define KINFO_PROC struct kinfo_proc
-#endif
 
-#if defined(__DragonFly__)
-#  define KP_START_SEC kp_start.tv_sec
-#  define KP_START_USEC kp_start.tv_usec
-#elif defined(__FreeBSD__)
-#  define KP_START_SEC ki_start.tv_sec
-#  define KP_START_USEC ki_start.tv_usec
-#else
 #  define KP_START_SEC p_ustart_sec
 #  define KP_START_USEC p_ustart_usec
-#endif
 
 #include "mozilla/RoundedMulDiv.h"
 #include "mozilla/Sprintf.h"
@@ -153,99 +136,7 @@ TimeStamp TimeStamp::Now(bool aHighResolution) {
   return TimeStamp(ClockTimeNs(CLOCK_MONOTONIC));
 }
 
-#if defined(XP_LINUX) || defined(ANDROID)
-
-// Calculates the amount of jiffies that have elapsed since boot and up to the
-// starttime value of a specific process as found in its /proc/*/stat file.
-// Returns 0 if an error occurred.
-
-static uint64_t JiffiesSinceBoot(const char* aFile) {
-  char stat[512];
-
-  FILE* f = fopen(aFile, "r");
-  if (!f) {
-    return 0;
-  }
-
-  int n = fread(&stat, 1, sizeof(stat) - 1, f);
-
-  fclose(f);
-
-  if (n <= 0) {
-    return 0;
-  }
-
-  stat[n] = 0;
-
-  long long unsigned startTime = 0;  // instead of uint64_t to keep GCC quiet
-  char* s = strrchr(stat, ')');
-
-  if (!s) {
-    return 0;
-  }
-
-  int rv = sscanf(s + 2,
-                  "%*c %*d %*d %*d %*d %*d %*u %*u %*u %*u "
-                  "%*u %*u %*u %*d %*d %*d %*d %*d %*d %llu",
-                  &startTime);
-
-  if (rv != 1 || !startTime) {
-    return 0;
-  }
-
-  return startTime;
-}
-
-// Computes the interval that has elapsed between the thread creation and the
-// process creation by comparing the starttime fields in the respective
-// /proc/*/stat files. The resulting value will be a good approximation of the
-// process uptime. This value will be stored at the address pointed by aTime;
-// if an error occurred 0 will be stored instead.
-
-static void* ComputeProcessUptimeThread(void* aTime) {
-  uint64_t* uptime = static_cast<uint64_t*>(aTime);
-  long hz = sysconf(_SC_CLK_TCK);
-
-  *uptime = 0;
-
-  if (!hz) {
-    return nullptr;
-  }
-
-  char threadStat[40];
-  SprintfLiteral(threadStat, "/proc/self/task/%d/stat",
-                 (pid_t)syscall(__NR_gettid));
-
-  uint64_t threadJiffies = JiffiesSinceBoot(threadStat);
-  uint64_t selfJiffies = JiffiesSinceBoot("/proc/self/stat");
-
-  if (!threadJiffies || !selfJiffies) {
-    return nullptr;
-  }
-
-  *uptime = ((threadJiffies - selfJiffies) * kNsPerSec) / hz;
-  return nullptr;
-}
-
-// Computes and returns the process uptime in us on Linux & its derivatives.
-// Returns 0 if an error was encountered.
-
-uint64_t TimeStamp::ComputeProcessUptime() {
-  uint64_t uptime = 0;
-  pthread_t uptime_pthread;
-
-  if (pthread_create(&uptime_pthread, nullptr, ComputeProcessUptimeThread,
-                     &uptime)) {
-    MOZ_CRASH("Failed to create process uptime thread.");
-    return 0;
-  }
-
-  pthread_join(uptime_pthread, nullptr);
-
-  return uptime / kNsPerUs;
-}
-
-#elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
+#if   defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || \
     defined(__OpenBSD__)
 
 // Computes and returns the process uptime in us on various BSD flavors.
@@ -265,10 +156,6 @@ uint64_t TimeStamp::ComputeProcessUptime() {
       KERN_PROC,
       KERN_PROC_PID,
       getpid(),
-#  if defined(__NetBSD__) || defined(__OpenBSD__)
-      sizeof(KINFO_PROC),
-      1,
-#  endif
       // clang-format on
   };
   u_int mibLen = sizeof(mib) / sizeof(mib[0]);

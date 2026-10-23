@@ -24,10 +24,6 @@
 #  include "nsIFaviconService.h"
 #endif  // MOZ_PLACES
 
-#ifdef XP_WIN
-#  include <windows.h>
-#  include <shellapi.h>
-#endif
 
 using namespace mozilla;
 
@@ -169,16 +165,6 @@ nsAlertsService::~nsAlertsService() = default;
 bool nsAlertsService::ShouldShowAlert() {
   bool result = true;
 
-#ifdef XP_WIN
-  if (!xpc::IsInAutomation()) {
-    QUERY_USER_NOTIFICATION_STATE qstate;
-    if (SUCCEEDED(SHQueryUserNotificationState(&qstate))) {
-      if (qstate != QUNS_ACCEPTS_NOTIFICATIONS) {
-        result = false;
-      }
-    }
-  }
-#endif
 
   nsCOMPtr<nsIAlertsDoNotDisturb> alertsDND(GetDNDBackend());
   if (alertsDND) {
@@ -315,44 +301,28 @@ NS_IMETHODIMP nsAlertsService::GetHistory(nsTArray<nsString>& aResult) {
 
 // nsIAlertsDoNotDisturb
 NS_IMETHODIMP nsAlertsService::GetManualDoNotDisturb(bool* aRetVal) {
-#ifdef MOZ_WIDGET_ANDROID
-  return NS_ERROR_NOT_IMPLEMENTED;
-#else
   nsCOMPtr<nsIAlertsDoNotDisturb> alertsDND(GetDNDBackend());
   NS_ENSURE_TRUE(alertsDND, NS_ERROR_NOT_IMPLEMENTED);
   return alertsDND->GetManualDoNotDisturb(aRetVal);
-#endif
 }
 
 NS_IMETHODIMP nsAlertsService::SetManualDoNotDisturb(bool aDoNotDisturb) {
-#ifdef MOZ_WIDGET_ANDROID
-  return NS_ERROR_NOT_IMPLEMENTED;
-#else
   nsCOMPtr<nsIAlertsDoNotDisturb> alertsDND(GetDNDBackend());
   NS_ENSURE_TRUE(alertsDND, NS_ERROR_NOT_IMPLEMENTED);
 
   return alertsDND->SetManualDoNotDisturb(aDoNotDisturb);
-#endif
 }
 
 NS_IMETHODIMP nsAlertsService::GetSuppressForScreenSharing(bool* aRetVal) {
-#ifdef MOZ_WIDGET_ANDROID
-  return NS_ERROR_NOT_IMPLEMENTED;
-#else
   nsCOMPtr<nsIAlertsDoNotDisturb> alertsDND(GetDNDBackend());
   NS_ENSURE_TRUE(alertsDND, NS_ERROR_NOT_IMPLEMENTED);
   return alertsDND->GetSuppressForScreenSharing(aRetVal);
-#endif
 }
 
 NS_IMETHODIMP nsAlertsService::SetSuppressForScreenSharing(bool aSuppress) {
-#ifdef MOZ_WIDGET_ANDROID
-  return NS_ERROR_NOT_IMPLEMENTED;
-#else
   nsCOMPtr<nsIAlertsDoNotDisturb> alertsDND(GetDNDBackend());
   NS_ENSURE_TRUE(alertsDND, NS_ERROR_NOT_IMPLEMENTED);
   return alertsDND->SetSuppressForScreenSharing(aSuppress);
-#endif
 }
 
 already_AddRefed<nsIAlertsDoNotDisturb> nsAlertsService::GetDNDBackend() {

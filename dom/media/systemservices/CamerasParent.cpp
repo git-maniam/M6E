@@ -35,10 +35,6 @@
 #include "video_engine/desktop_capture_impl.h"
 #include "video_engine/video_capture_factory.h"
 
-#if defined(_WIN32)
-#  include <process.h>
-#  define getpid() _getpid()
-#endif
 
 mozilla::LazyLogModule gCamerasParentLog("CamerasParent");
 #define LOG(...) \
@@ -179,10 +175,6 @@ MakeAndAddRefVideoCaptureThreadAndSingletons() {
   if (!sVideoCaptureThread) {
     LOG("Spinning up WebRTC Cameras Thread");
     nsIThreadManager::ThreadCreationOptions options;
-#ifdef XP_WIN
-    // Windows desktop capture needs a UI thread
-    options.isUiThread = true;
-#endif
     nsCOMPtr<nsIThread> videoCaptureThread;
     if (NS_FAILED(NS_NewNamedThread("VideoCapture",
                                     getter_AddRefs(videoCaptureThread), nullptr,

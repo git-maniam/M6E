@@ -109,20 +109,9 @@ class MOZ_CAPABILITY("monitor") TimerThreadMonitor {
 
   Mutex mMutex;
 
-#if defined(XP_WIN)
-  // mHiResTimer is null on Windows versions that lack high-resolution timers,
-  // and unlike mLoResTimer it cannot be given a tolerance. mEvent is auto-reset
-  // and signalled by Notify().
-  UniqueFileHandle mHiResTimer;
-  UniqueFileHandle mLoResTimer;
-  UniqueFileHandle mEvent;
-#elif defined(XP_MACOSX)
   // A kqueue holding a persistent EVFILT_USER for Notify() and, while waiting,
   // a one-shot EVFILT_TIMER for the deadline.
   UniqueFileHandle mKq;
-#else
-  CondVar mCondVar;
-#endif
 
 #ifdef DEBUG
   PRThread* mWaiterThread MOZ_GUARDED_BY(this) = nullptr;

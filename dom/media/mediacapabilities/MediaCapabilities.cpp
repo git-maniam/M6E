@@ -566,16 +566,6 @@ static uint32_t Vp8EncoderThreads(const uint32_t aPixels,
                                   const uint32_t aCores) {
   // libvpx_vp8_encoder.cc NumberOfThreads
   // https://searchfox.org/firefox-main/rev/8352bcb6d75d53f3e2190221b71190e47afa0bfc/third_party/libwebrtc/modules/video_coding/codecs/vp8/libvpx_vp8_encoder.cc#821-872
-#if defined(MOZ_WIDGET_ANDROID)
-  if ((aPixels >= 320u * 180u)) {
-    if (aCores >= 4) {
-      return 3;
-    } else if (aCores >= 2) {
-      return 2;
-    }
-  }
-  return 1;
-#else
   if ((aPixels >= 1920u * 1080u) && (aCores > 8)) {
     return 8;
   } else if ((aPixels > 1280u * 960u) && (aCores >= 6)) {
@@ -584,7 +574,6 @@ static uint32_t Vp8EncoderThreads(const uint32_t aPixels,
     return (aCores >= 6 ? 3 : 2);
   }
   return 1;
-#endif
 }
 static bool IsSWEncodeSmooth(const CodecType aCodec,
                              const VideoConfiguration& aConfig) {

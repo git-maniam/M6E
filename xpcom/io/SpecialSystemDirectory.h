@@ -9,10 +9,8 @@
 #include "nsIFile.h"
 #include "nscore.h"
 
-#ifdef MOZ_WIDGET_COCOA
 #  include "nsILocalFileMac.h"
 #  include "prenv.h"
-#endif
 
 enum SystemDirectories {
   OS_TemporaryDirectory = 2,
@@ -63,9 +61,7 @@ nsresult GetSpecialSystemDirectoryList(
     SystemDirectoryLists aSystemDirectoryLists,
     nsCOMArray<nsIFile>& aDirectories);
 
-#ifdef MOZ_WIDGET_COCOA
 nsresult GetOSXFolderType(short aDomain, OSType aFolderType,
                           nsIFile** aLocalFile);
-#endif
 
 #endif

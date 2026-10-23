@@ -3,17 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "RDDParent.h"
 
-#if defined(XP_WIN)
-#  include <dwrite.h>
-#  include <process.h>
-
-#  include "WMF.h"
-#  include "WMFDecoderModule.h"
-#  include "mozilla/WinDllServices.h"
-#  include "mozilla/gfx/DeviceManagerDx.h"
-#else
 #  include <unistd.h>
-#endif
 
 #include "MediaCodecsSupport.h"
 #include "gfxConfig.h"
@@ -29,10 +19,6 @@
 #include "mozilla/ipc/CrashReporterClient.h"
 #include "mozilla/ipc/ProcessChild.h"
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-#  include "mozilla/Sandbox.h"
-#  include "mozilla/SandboxProfilerObserver.h"
-#endif
 
 #include "ChildProfilerController.h"
 
@@ -52,13 +38,8 @@
 #  include "mozilla/SandboxTestingChild.h"
 #endif
 
-#if defined(XP_MACOSX) || defined(XP_LINUX)
 #  include "VideoUtils.h"
-#endif
 
-#if defined(MOZ_WIDGET_GTK)
-#  include "mozilla/widget/DMABufSurface.h"
-#endif
 
 namespace TelemetryScalar {
 void Set(mozilla::Telemetry::ScalarID aId, uint32_t aValue);
@@ -115,13 +96,6 @@ bool RDDParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
 
   gfxConfig::Init();
   gfxVars::Initialize();
-#ifdef XP_WIN
-  DeviceManagerDx::Init();
-  auto rv = wmf::MediaFoundationInitializer::HasInitialized();
-  if (!rv) {
-    NS_WARNING("Failed to init Media Foundation in the RDD process");
-  }
-#endif
 
   mozilla::ipc::SetThisProcessName("RDD Process");
 
@@ -144,28 +118,13 @@ mozilla::ipc::IPCResult RDDParent::RecvInit(
   (void)SendUpdateMediaCodecsSupported(supported);
 
 #if defined(MOZ_SANDBOX)
-#  if defined(XP_MACOSX)
   // Close all current connections to the WindowServer. This ensures that the
   // Activity Monitor will not label the content process as "Not responding"
   // because it's not running a native event loop. See bug 1384336.
   CGSShutdownServerConnections();
 
-#  elif defined(XP_LINUX)
-  int fd = -1;
-  if (aBrokerFd.isSome()) {
-    fd = aBrokerFd.value().ClonePlatformHandle().release();
-  }
-  RegisterProfilerObserversForSandboxProfiler();
-  SetRemoteDataDecoderSandbox(fd);
-#  endif  // XP_MACOSX/XP_LINUX
 #endif    // MOZ_SANDBOX
 
-#if defined(XP_WIN)
-  if (aCanRecordReleaseTelemetry) {
-    RefPtr<DllServices> dllSvc(DllServices::Get());
-    dllSvc->StartUntrustedModulesProcessor(aIsReadyForBackgroundProcessing);
-  }
-#endif  // defined(XP_WIN)
   return IPC_OK();
 }
 
@@ -220,17 +179,6 @@ mozilla::ipc::IPCResult RDDParent::RecvInitVideoBridge(
           Feature::OPENGL_COMPOSITING,
       },
       aContentDeviceData.prefs());
-#ifdef XP_WIN
-  if (gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING)) {
-    auto* devmgr = DeviceManagerDx::Get();
-    if (devmgr) {
-      devmgr->ImportDeviceInfo(aContentDeviceData.d3d11());
-      if (aCreateHardwareDevice) {
-        devmgr->CreateContentDevices();
-      }
-    }
-  }
-#endif
 
   return IPC_OK();
 }
@@ -250,27 +198,6 @@ mozilla::ipc::IPCResult RDDParent::RecvRequestMemoryReport(
   return IPC_OK();
 }
 
-#if defined(XP_WIN)
-mozilla::ipc::IPCResult RDDParent::RecvGetUntrustedModulesData(
-    GetUntrustedModulesDataResolver&& aResolver) {
-  RefPtr<DllServices> dllSvc(DllServices::Get());
-  dllSvc->GetUntrustedModulesData()->Then(
-      GetMainThreadSerialEventTarget(), __func__,
-      [aResolver](Maybe<UntrustedModulesData>&& aData) {
-        aResolver(std::move(aData));
-      },
-      [aResolver](nsresult aReason) { aResolver(Nothing()); });
-  return IPC_OK();
-}
-
-mozilla::ipc::IPCResult RDDParent::RecvUnblockUntrustedModulesThread() {
-  if (nsCOMPtr<nsIObserverService> obs =
-          mozilla::services::GetObserverService()) {
-    obs->NotifyObservers(nullptr, "unblock-untrusted-modules-thread", nullptr);
-  }
-  return IPC_OK();
-}
-#endif  // defined(XP_WIN)
 
 mozilla::ipc::IPCResult RDDParent::RecvPreferenceUpdate(const Pref& aPref) {
   Preferences::SetPreference(aPref);
@@ -309,9 +236,6 @@ mozilla::ipc::IPCResult RDDParent::RecvTestTelemetryProbes() {
 }
 
 void RDDParent::ActorDestroy(ActorDestroyReason aWhy) {
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  DestroySandboxProfiler();
-#endif
 
   if (AbnormalShutdown == aWhy) {
     NS_WARNING("Shutting down RDD process early due to a crash!");
@@ -333,10 +257,6 @@ void RDDParent::ActorDestroy(ActorDestroyReason aWhy) {
   mShutdownBlockers.WaitUntilClear(10 * 1000 /* 10s timeout*/)
       ->Then(GetCurrentSerialEventTarget(), __func__, [&]() {
 
-#if defined(XP_WIN)
-        RefPtr<DllServices> dllSvc(DllServices::Get());
-        dllSvc->DisableFull();
-#endif  // defined(XP_WIN)
 
         if (mProfilerController) {
           mProfilerController->Shutdown();
@@ -345,15 +265,7 @@ void RDDParent::ActorDestroy(ActorDestroyReason aWhy) {
 
         RemoteMediaManagerParent::ShutdownVideoBridge();
 
-#if defined(MOZ_WIDGET_GTK)
-        // Linux runs VA-API decode on RDD process so we need to
-        // shutdown GL here.
-        DMABufSurface::ReleaseSnapshotGLContext();
-#endif
 
-#ifdef XP_WIN
-        DeviceManagerDx::Shutdown();
-#endif
         gfxVars::Shutdown();
         gfxConfig::Shutdown();
         CrashReporterClient::DestroySingleton();
