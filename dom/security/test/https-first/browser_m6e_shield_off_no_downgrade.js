@@ -17,9 +17,10 @@ add_setup(async function () {
       ["dom.security.https_first", true],
     ],
   });
-  registerCleanupFunction(() =>
-    Services.perms.removeByType("m6e-protect")
-  );
+  registerCleanupFunction(() => {
+    Services.perms.removeByType("m6e-protect");
+    Services.perms.removeByType("https-only-load-insecure");
+  });
 });
 
 add_task(async function test_unprotected_site_falls_back_to_http() {
@@ -36,6 +37,9 @@ add_task(async function test_unprotected_site_falls_back_to_http() {
 });
 
 add_task(async function test_protected_site_has_no_http_fallback() {
+  // Turning the Tracker Blocker on also clears the exception HTTPS-First
+  // added when it fell back to http above.
+  Services.perms.removeByType("https-only-load-insecure");
   for (let scheme of ["http", "https"]) {
     Services.perms.addFromPrincipal(
       Services.scriptSecurityManager.createContentPrincipalFromOrigin(

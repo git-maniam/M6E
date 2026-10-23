@@ -457,6 +457,11 @@ nsHTTPSOnlyUtils::PotentiallyDowngradeHttpsFirstRequest(
   if (!(httpsOnlyStatus & nsILoadInfo::HTTPS_ONLY_UPGRADED_HTTPS_FIRST)) {
     return nullptr;
   }
+  // Once loading is in progress we set that flag so that timeout counter
+  // measures do not kick in.
+  loadInfo->SetHttpsOnlyStatus(
+      httpsOnlyStatus | nsILoadInfo::HTTPS_ONLY_TOP_LEVEL_LOAD_IN_PROGRESS);
+
   // M6E: with the Privacy Shield off, sites the user turned the Tracker
   // Blocker on for keep HTTPS-Only behaviour: no plain http fallback (D20).
   if (!mozilla::Preferences::GetBool("m6e.privacyShield.enabled", true)) {
@@ -477,10 +482,6 @@ nsHTTPSOnlyUtils::PotentiallyDowngradeHttpsFirstRequest(
       }
     }
   }
-  // Once loading is in progress we set that flag so that timeout counter
-  // measures do not kick in.
-  loadInfo->SetHttpsOnlyStatus(
-      httpsOnlyStatus | nsILoadInfo::HTTPS_ONLY_TOP_LEVEL_LOAD_IN_PROGRESS);
 
   nsresult status = aStatus;
   // Since 4xx and 5xx errors return NS_OK instead of NS_ERROR_*, we need
