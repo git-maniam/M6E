@@ -441,3 +441,5 @@ __pycache__/
 obj-*/
 artifacts/
 .DS_Store
+# ThinLTO objects from links that run in the source directory
+/*.lto.o/
