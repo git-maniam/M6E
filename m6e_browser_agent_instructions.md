@@ -32,7 +32,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
 | 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | Done |
-| 4 | Performance | **Next.** Resume with "Resume from Phase 4"; see the plan's section 4. |
+| 4 | Performance | **In progress:** P4.1 done, P4.2 build flags next. Resume with "Resume from Phase 4"; see the plan's section 4. |
 | 5 | Packaging (`.dmg`) and acceptance | Not started |
 
 ## 3. Requirements

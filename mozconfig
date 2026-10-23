@@ -12,3 +12,7 @@ ac_add_options --disable-updater
 ac_add_options --with-branding=browser/branding/m6e
 ac_add_options --with-distribution-id=org.m6e
 export MOZ_APP_BASENAME=M6E
+export CC=/opt/homebrew/opt/llvm/bin/clang
+export CXX=/opt/homebrew/opt/llvm/bin/clang++
+export MOZ_LD64_KNOWN_GOOD=1
+ac_add_options --enable-lto=cross

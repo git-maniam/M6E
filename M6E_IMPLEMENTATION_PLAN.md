@@ -77,7 +77,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.2b | No AI buttons in the default toolbar layout | `46b2ba9b0b` |
 | P2.7 | Home page splash image above the search box | `a37d26869c` |
 | P2.8 | "No Internet Connection" picture on offline error pages | `bd0f0d48fe` |
-| P4.1 | Phase 3 build measured: 681 ms first paint, 449 MB, 8 hosts; `measure.py` defaults to 10 runs | this commit |
+| P4.1 | Phase 3 build measured: 681 ms first paint, 449 MB, 8 hosts; `measure.py` defaults to 10 runs | `bc97a8ada7` |
 
 ## 3. Results by phase (as built)
 
