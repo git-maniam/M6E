@@ -27,5 +27,4 @@ export RUSTC_OPT_LEVEL=3
 export STRIP=/usr/bin/strip
 export MOZ_PKG_FORMAT=DMG
 export LLVM_PROFDATA=/opt/homebrew/opt/llvm/bin/llvm-profdata
-# M6E: PGO is off during the P4.5 to P4.8 source work (D24).
-# ac_add_options MOZ_PGO=1
+ac_add_options MOZ_PGO=1
