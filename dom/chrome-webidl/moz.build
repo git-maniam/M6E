@@ -134,10 +134,9 @@ if CONFIG["MOZ_BUILD_APP"] != "mobile/android":
         "UniFFI.webidl",
     ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    WEBIDL_FILES += [
-        "TextGenerator.webidl",
-    ]
+WEBIDL_FILES += [
+    "TextGenerator.webidl",
+]
 
 if CONFIG["MOZ_PLACES"]:
     WEBIDL_FILES += [
@@ -145,10 +144,6 @@ if CONFIG["MOZ_PLACES"]:
         "PlacesObservers.webidl",
     ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    WEBIDL_FILES += [
-        "WindowsJumpListShortcutDescription.webidl",
-    ]
 
 if CONFIG["MOZ_WEBRTC"]:
     WEBIDL_FILES += [

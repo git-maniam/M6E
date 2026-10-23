@@ -6,13 +6,7 @@ TEST_DIRS += [
     "gtest",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    TEST_DIRS += ["windows"]
 
-if CONFIG["OS_TARGET"] == "Linux":
-    CppUnitTests([
-        "TestMemoryPressureWatcherLinux",
-    ])
 
 EXPORTS.testing += [
     "TestHarness.h",

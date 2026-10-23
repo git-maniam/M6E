@@ -4,11 +4,7 @@
 
 Library("crashreportertest")
 
-if CONFIG["OS_ARCH"] == "Linux":
-    UNIFIED_SOURCES = [
-        "TestElfSoVersion.cpp",
-    ]
-elif CONFIG["OS_ARCH"] == "Darwin" and CONFIG["MOZ_CRASHREPORTER"]:
+if CONFIG["OS_ARCH"] == "Darwin" and CONFIG["MOZ_CRASHREPORTER"]:
     UNIFIED_SOURCES = [
         "TestMacExceptionHandler.cpp",
         "TestMacExcResource.cpp",

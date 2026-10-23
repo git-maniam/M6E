@@ -20,49 +20,16 @@ if CONFIG["MOZ_VERIFY_MAR_SIGNATURE"]:
         "verifymar",
     ]
 
-    if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-        srcs += [
-            "macos-frameworks/UpdateSettingsUtil.mm",
-        ]
-        USE_LIBS += [
-            "UpdateSettings",
-        ]
-        LDFLAGS += [
-            "-Wl,-rpath,@executable_path/../Frameworks/UpdateSettings.framework"
-        ]
-
-if CONFIG["OS_ARCH"] == "WINNT":
-    have_progressui = 1
     srcs += [
-        "/toolkit/xre/WinTokenUtils.cpp",
-        "loaddlls.cpp",
-        "progressui_win.cpp",
+        "macos-frameworks/UpdateSettingsUtil.mm",
     ]
-    RCINCLUDE = "%supdater.rc" % updater_rel_path
-    DEFINES["UNICODE"] = True
-    DEFINES["_UNICODE"] = True
-    USE_STATIC_MSVCRT = True
-
-    # Pick up nsWindowsRestart.cpp
-    LOCAL_INCLUDES += [
-        "/toolkit/xre",
+    USE_LIBS += [
+        "UpdateSettings",
     ]
-    OS_LIBS += [
-        "comctl32",
-        "ws2_32",
-        "shell32",
-        "shlwapi",
-        "gdi32",
-        "user32",
-        "userenv",
-        "uuid",
+    LDFLAGS += [
+        "-Wl,-rpath,@executable_path/../Frameworks/UpdateSettings.framework"
     ]
 
-    if not link_with_nss:
-        OS_LIBS += [
-            "crypt32",
-            "advapi32",
-        ]
 
 USE_LIBS += [
     "mar",
@@ -87,34 +54,28 @@ if link_with_nss:
         "signmar",
     ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    have_progressui = 1
-    srcs += [
-        "progressui_gtk.cpp",
-    ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    have_progressui = 1
-    srcs += [
-        "launchchild_osx.mm",
-        "progressui_osx.mm",
-    ]
+have_progressui = 1
+srcs += [
+    "launchchild_osx.mm",
+    "progressui_osx.mm",
+]
+OS_LIBS += [
+    "-framework Cocoa",
+    "-framework SystemConfiguration",
+]
+if link_with_nss:
+    LDFLAGS += ["-Wl,-rpath,@executable_path/../../../"]
+else:
     OS_LIBS += [
-        "-framework Cocoa",
-        "-framework SystemConfiguration",
+        "-framework Security",
     ]
-    if link_with_nss:
-        LDFLAGS += ["-Wl,-rpath,@executable_path/../../../"]
-    else:
-        OS_LIBS += [
-            "-framework Security",
-        ]
-    UNIFIED_SOURCES += [
-        "/toolkit/xre/updaterfileutils_osx.mm",
-    ]
-    LOCAL_INCLUDES += [
-        "/toolkit/xre",
-    ]
+UNIFIED_SOURCES += [
+    "/toolkit/xre/updaterfileutils_osx.mm",
+]
+LOCAL_INCLUDES += [
+    "/toolkit/xre",
+]
 
 if have_progressui == 0:
     srcs += [
@@ -149,14 +110,5 @@ DELAYLOAD_DLLS += [
     "wsock32.dll",
 ]
 
-if CONFIG["CC_TYPE"] == "clang-cl":
-    WIN32_EXE_LDFLAGS += ["-ENTRY:wmainCRTStartup"]
-elif CONFIG["OS_ARCH"] == "WINNT":
-    WIN32_EXE_LDFLAGS += ["-municode"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
-    OS_LIBS += CONFIG["MOZ_GTK3_LIBS"]
 
-if CONFIG["CC_TYPE"] == "gcc":
-    CXXFLAGS += ["-Wno-format-truncation"]

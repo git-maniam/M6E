@@ -13,23 +13,6 @@ UNIFIED_SOURCES += [
     "TestContentAnalysisRuleParser.cpp",
 ]
 
-if CONFIG["OS_TARGET"] == "WINNT":
-    UNIFIED_SOURCES += [
-        "TestContentAnalysis.cpp",
-    ]
-    SOURCES += [
-        # Agent SDK usings conflicts with Gecko usings
-        "TestContentAnalysisAgent.cpp",
-        "TestContentAnalysisMisbehaving.cpp",
-        "TestContentAnalysisTelemetry.cpp",
-        "TestContentAnalysisUtils.cpp",
-    ]
-
-    SOURCE_HEADERS += [
-        "TestContentAnalysisUtils.h",
-    ]
-    DIRS += ["agent"]
-    OS_LIBS += ["pathcch"]
 
 TEST_HARNESS_FILES.gtest += [
     "allowedFile.txt",

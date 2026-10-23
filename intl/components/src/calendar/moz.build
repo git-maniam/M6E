@@ -27,10 +27,7 @@ UNIFIED_SOURCES += [
 ]
 
 # ICU requires RTTI
-if CONFIG["CC_TYPE"] in ("clang", "gcc"):
-    CXXFLAGS += ["-frtti"]
-elif CONFIG["OS_TARGET"] == "WINNT":
-    CXXFLAGS += ["-GR"]
+CXXFLAGS += ["-frtti"]
 
 LICENSED_UNDER += ["unicode"]
 LICENSED_UNDER["unicode"].paths = [

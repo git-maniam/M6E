@@ -10,8 +10,6 @@ DIRS += [
     "testshell",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    DIRS += ["mscom"]
 
 TEST_DIRS += [
     "gtest",

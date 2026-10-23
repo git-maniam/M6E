@@ -7,10 +7,9 @@ UNIFIED_SOURCES += [
     'string_conversion.cc',
 ]
 
-if CONFIG['OS_ARCH'] == 'Darwin':
-    UNIFIED_SOURCES += [
-        'md5.cc',
-    ]
+UNIFIED_SOURCES += [
+    'md5.cc',
+]
 
 Library('breakpad_common_s')
 

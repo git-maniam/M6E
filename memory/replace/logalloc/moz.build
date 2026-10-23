@@ -24,10 +24,6 @@ LOCAL_INCLUDES += [
 ]
 
 # Android doesn't have pthread_atfork, but we have our own in mozglue.
-if CONFIG["OS_TARGET"] == "Android" and FORCE_SHARED_LIB:
-    USE_LIBS += [
-        "mozglue",
-    ]
 
 DIRS += [
     "replay",

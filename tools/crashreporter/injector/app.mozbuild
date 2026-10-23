@@ -8,7 +8,3 @@ DIRS += [
     "/tools/crashreporter/injector",
 ]
 
-if CONFIG["OS_TARGET"] in ("Linux", "Android"):
-    DIRS += [
-        "/toolkit/crashreporter/google-breakpad/src/common/linux",
-    ]

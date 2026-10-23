@@ -13,10 +13,9 @@ UNIFIED_SOURCES += [
 
 # We expose NimbusFeatures to Android to make it easier to
 # import everywhere but the tests will fail to run
-if CONFIG["OS_TARGET"] != "Android":
-    TEST_DIRS += [
-        "test/gtest",
-    ]
+TEST_DIRS += [
+    "test/gtest",
+]
 
 BROWSER_CHROME_MANIFESTS += [
     "test/browser/browser.toml",

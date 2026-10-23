@@ -9,10 +9,7 @@ Library("icudata")
 LOCAL_INCLUDES += ["."]
 
 prefix = ""
-if (CONFIG["OS_ARCH"] == "WINNT" and CONFIG["TARGET_CPU"] == "x86") or CONFIG[
-    "OS_ARCH"
-] == "Darwin":
-    prefix = "_"
+prefix = "_"
 
 data_file = {
     "little": "icudt%sl.dat" % CONFIG["MOZ_ICU_VERSION"],
@@ -38,11 +35,6 @@ GeneratedFile(
     ],
 )
 
-if CONFIG["OS_ARCH"] == "WINNT" and CONFIG["CC_TYPE"] == "clang-cl":
-    USE_INTEGRATED_CLANGCL_AS = True
-    # Work around https://github.com/llvm/llvm-project/issues/92229
-    # We don't need debug flags on the command line for this file anyways.
-    ASM_FLAGS["DEBUG"] = []
 
 if CONFIG["TARGET_ENDIANNESS"] == "big":
     GeneratedFile(

@@ -108,13 +108,12 @@ BROWSER_CHROME_MANIFESTS += [
 ]
 XPCSHELL_TESTS_MANIFESTS += ["test/unit/xpcshell.toml"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    MOZ_SRC_FILES += [
-        "ASWebAuthSessionService.sys.mjs",
-    ]
-    XPCOM_MANIFESTS += [
-        "components.conf",
-    ]
+MOZ_SRC_FILES += [
+    "ASWebAuthSessionService.sys.mjs",
+]
+XPCOM_MANIFESTS += [
+    "components.conf",
+]
 
 EXTRA_JS_MODULES += [
     "AboutNewTab.sys.mjs",
@@ -159,14 +158,3 @@ MOZ_SRC_FILES += [
     "UIDensityTelemetry.sys.mjs",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXTRA_JS_MODULES += [
-        "FilePickerCrashed.sys.mjs",
-        "WindowsJumpLists.sys.mjs",
-        "WindowsPreviewPerTab.sys.mjs",
-    ]
-
-    EXTRA_JS_MODULES.backgroundtasks += [
-        "BackgroundTask_install.sys.mjs",
-        "BackgroundTask_uninstall.sys.mjs",
-    ]

@@ -21,10 +21,6 @@ TESTING_JS_MODULES += [
     "XPCShellContentUtils.sys.mjs",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    TESTING_JS_MODULES += [
-        "MockRegistry.sys.mjs",
-    ]
 
 
 TEST_HARNESS_FILES.testing.mochitest.tests.SimpleTest += ["StructuredLog.sys.mjs"]

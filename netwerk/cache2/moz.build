@@ -57,10 +57,9 @@ UNIFIED_SOURCES += [
     "Dictionary.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    UNIFIED_SOURCES += [
-        "CachePurgeLock.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "CachePurgeLock.cpp",
+]
 
 LOCAL_INCLUDES += [
     "/netwerk/base",

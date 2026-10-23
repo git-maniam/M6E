@@ -6,8 +6,7 @@ DIRS = ["synth"]
 
 # The speech recognition backend (mudler/parakeet.cpp, backends/llama) isn't
 # built on Android: ggml has no armv7-android CPU backend variant upstream.
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    DIRS += ["recognition"]
+DIRS += ["recognition"]
 
 with Files("**"):
     BUG_COMPONENT = ("Core", "Web Speech")

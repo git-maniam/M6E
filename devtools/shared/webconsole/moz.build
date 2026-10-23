@@ -2,10 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG["OS_TARGET"] != "Android":
-    MOCHITEST_CHROME_MANIFESTS += ["test/chrome/chrome.toml"]
-    XPCSHELL_TESTS_MANIFESTS += ["test/xpcshell/xpcshell.toml"]
-    BROWSER_CHROME_MANIFESTS += ["test/browser/browser.toml"]
+MOCHITEST_CHROME_MANIFESTS += ["test/chrome/chrome.toml"]
+XPCSHELL_TESTS_MANIFESTS += ["test/xpcshell/xpcshell.toml"]
+BROWSER_CHROME_MANIFESTS += ["test/browser/browser.toml"]
 
 # Compute where to put transpiled files into omni.ja package
 # All DevTools modules are used via resource://devtools/ URI

@@ -4,11 +4,6 @@
 
 RustLibrary("crash_helper_server")
 
-if CONFIG["OS_TARGET"] == "WINNT":
-    OS_LIBS += [
-        "ole32",
-        "shell32",
-    ]
 
 if CONFIG["COMPILE_ENVIRONMENT"]:
     # This tells mach to run cbindgen and that this header-file should be created

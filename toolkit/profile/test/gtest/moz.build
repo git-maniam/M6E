@@ -10,13 +10,5 @@ UNIFIED_SOURCES += [
     "TestProfileLock.cpp",
 ]
 
-if (
-    CONFIG["OS_ARCH"] == "Linux"
-    and CONFIG["OS_TARGET"] != "Android"
-    and not CONFIG["MOZ_TSAN"]  # Bug 1894417
-):
-    UNIFIED_SOURCES += [
-        "TestProfileLockRetry.cpp",
-    ]
 
 FINAL_LIBRARY = "xul-gtest"

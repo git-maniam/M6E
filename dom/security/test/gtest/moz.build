@@ -13,10 +13,9 @@ UNIFIED_SOURCES += [
     "TestWAICTManifestValidation.cpp",
 ]
 
-if CONFIG["OS_TARGET"] != "Android":
-    UNIFIED_SOURCES += [
-        "TestUnexpectedPrivilegedLoads.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "TestUnexpectedPrivilegedLoads.cpp",
+]
 
 FINAL_LIBRARY = "xul-gtest"
 

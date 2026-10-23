@@ -12,11 +12,6 @@ Library("xpcomglue")
 
 FORCE_STATIC_LIB = True
 
-if CONFIG["CC_TYPE"] == "clang-cl":
-    DEFINES["_USE_ANSI_CPP"] = True
-    # Don't include directives about which CRT to use
-    CFLAGS += ["-Zl"]
-    CXXFLAGS += ["-Zl"]
 
 DEFINES["XPCOM_GLUE"] = True
 
@@ -30,5 +25,3 @@ DisableStlWrapping()
 
 DIST_INSTALL = True
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["GLIB_CFLAGS"]

@@ -5,8 +5,6 @@
 libevent_path_prefix = '.'
 include(libevent_path_prefix + '/libeventcommon.mozbuild')
 
-if CONFIG["TARGET_KERNEL"] == "WINNT":
-    error('should not reach here on Windows')
 
 if CONFIG['MOZ_SYSTEM_LIBEVENT']:
     error('should not reach here if we are using a native libevent')
@@ -33,25 +31,11 @@ UNIFIED_SOURCES += [
     'libevent/strlcpy.c',
 ]
 
-if CONFIG["TARGET_KERNEL"] in ("Darwin", "DragonFly", "FreeBSD", "NetBSD", "OpenBSD"):
-    UNIFIED_SOURCES += [
-        'libevent/kqueue.c',
-    ]
+UNIFIED_SOURCES += [
+    'libevent/kqueue.c',
+]
 
-if CONFIG["TARGET_KERNEL"] == "Linux":
-    UNIFIED_SOURCES += [
-        'libevent/epoll.c',
-    ]
-    if CONFIG['OS_TARGET'] != 'Android':
-        UNIFIED_SOURCES += [
-            'libevent/epoll_sub.c',
-        ]
 
-if CONFIG["TARGET_KERNEL"] == "SunOS":
-    SOURCES += [
-        'libevent/devpoll.c',
-        'libevent/evport.c',
-    ]
 
 # We allow warnings for third-party code that can be updated from upstream.
 AllowCompilerWarnings()

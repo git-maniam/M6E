@@ -27,61 +27,15 @@ XPIDL_SOURCES += [
 
 XPIDL_MODULE = "toolkitremote"
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    SOURCES += [
-        "nsUnixRemoteServer.cpp",
-        "RemoteUtils.cpp",
-    ]
-    if CONFIG["MOZ_ENABLE_DBUS"]:
-        SOURCES += [
-            "nsDBusRemoteClient.cpp",
-            "nsDBusRemoteServer.cpp",
-        ]
 
-        SOURCE_HEADERS += [
-            "nsDBusRemoteClient.h",
-            "nsDBusRemoteServer.h",
-        ]
-
-        EXPORTS += [
-            "nsUnixRemoteServer.h",
-            "RemoteUtils.h",
-        ]
-        CXXFLAGS += CONFIG["MOZ_DBUS_CFLAGS"]
-    else:
-        SOURCES += [
-            "nsGTKRemoteServer.cpp",
-            "nsXRemoteClient.cpp",
-            "nsXRemoteServer.cpp",
-        ]
-
-        SOURCE_HEADERS += [
-            "nsGTKRemoteServer.h",
-            "nsXRemoteClient.h",
-            "nsXRemoteServer.h",
-        ]
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
-
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    SOURCES += [
-        "nsWinRemoteClient.cpp",
-        "nsWinRemoteServer.cpp",
-        "WinRemoteMessage.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "nsWinRemoteClient.h",
-        "nsWinRemoteServer.h",
-        "WinRemoteMessage.h",
-    ]
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    SOURCES += [
-        "nsMacRemoteClient.mm",
-        "nsMacRemoteServer.mm",
-    ]
-    SOURCE_HEADERS += [
-        "nsMacRemoteClient.h",
-        "nsMacRemoteServer.h",
-    ]
+SOURCES += [
+    "nsMacRemoteClient.mm",
+    "nsMacRemoteServer.mm",
+]
+SOURCE_HEADERS += [
+    "nsMacRemoteClient.h",
+    "nsMacRemoteServer.h",
+]
 
 LOCAL_INCLUDES += [
     "../../profile",

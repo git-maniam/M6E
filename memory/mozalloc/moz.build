@@ -11,13 +11,7 @@ EXPORTS.mozilla += [
 ]
 
 if CONFIG["WRAP_STL_INCLUDES"]:
-    if CONFIG["CC_TYPE"] in ("clang", "gcc"):
-        EXPORTS.mozilla += ["throw_gcc.h"]
-    elif CONFIG["CC_TYPE"] == "clang-cl":
-        DEFINES["_HAS_EXCEPTIONS"] = 0
-        SOURCES += [
-            "msvc_raise_wrappers.cpp",
-        ]
+    EXPORTS.mozilla += ["throw_gcc.h"]
 
 UNIFIED_SOURCES += [
     "mozalloc.cpp",
@@ -29,10 +23,9 @@ if CONFIG["MOZ_MEMORY"]:
     # In MinGW, we don't want to actually export these functions out of the library
     # as the functions in libc++ correctly forward to jemalloc and exporting them
     # produces duplicate symbol errors.
-    if not (CONFIG["CC_TYPE"] == "clang" and CONFIG["OS_TARGET"] == "WINNT"):
-        SOURCES += [
-            "cxxalloc.cpp",
-        ]
+    SOURCES += [
+        "cxxalloc.cpp",
+    ]
 
 FINAL_LIBRARY = "mozglue"
 

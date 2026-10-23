@@ -78,10 +78,6 @@ SOURCE_HEADERS += [
 
 Library("memory")
 
-if CONFIG["OS_TARGET"] == "Android" and CONFIG["CC_TYPE"] == "clang":
-    CXXFLAGS += [
-        "-Wno-tautological-pointer-compare",
-    ]
 
 if CONFIG["MOZ_BUILD_APP"] != "memory":
     FINAL_LIBRARY = "mozglue"
@@ -91,8 +87,6 @@ if CONFIG["MOZ_REPLACE_MALLOC_STATIC"]:
 
 DisableStlWrapping()
 
-if CONFIG["CC_TYPE"] == "clang-cl":
-    AllowCompilerWarnings()  # workaround for bug 1090497
 
 TEST_DIRS += ["test"]
 

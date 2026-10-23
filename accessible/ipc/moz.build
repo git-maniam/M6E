@@ -2,28 +2,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    LOCAL_INCLUDES += [
-        "/accessible/windows/ia2",
-        "/accessible/windows/msaa",
-    ]
-else:
-    if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-        LOCAL_INCLUDES += [
-            "/accessible/atk",
-        ]
-    elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-        LOCAL_INCLUDES += [
-            "/accessible/mac",
-        ]
-    elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "uikit":
-        LOCAL_INCLUDES += [
-            "/accessible/ios",
-        ]
-    else:
-        LOCAL_INCLUDES += [
-            "/accessible/other",
-        ]
+LOCAL_INCLUDES += [
+    "/accessible/mac",
+]
 
 if CONFIG["ACCESSIBILITY"]:
     IPDL_SOURCES += [

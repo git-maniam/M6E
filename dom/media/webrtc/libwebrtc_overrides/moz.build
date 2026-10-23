@@ -42,29 +42,12 @@ EXPORTS.libwebrtc_overrides.X11.extensions += [
     "X11/extensions/Xrandr.h",
 ]
 
-if CONFIG["OS_TARGET"] == "OpenBSD":
-    CXXFLAGS += CONFIG["MOZ_X11_CFLAGS"]
-    UNIFIED_SOURCES += [
-        "modules/desktop_capture/linux/x11/x_error_trap.cc",
-    ]
 
 if CONFIG["TARGET_CPU"] in ("loongarch64", "ppc64"):
     UNIFIED_SOURCES += [
         "modules/desktop_capture/linux/x11/x_error_trap.cc",
     ]
 
-if CONFIG["OS_TARGET"] == "Linux" and CONFIG["TARGET_CPU"] == "riscv64":
-    UNIFIED_SOURCES += [
-        "modules/desktop_capture/linux/x11/x_error_trap.cc",
-    ]
 
-if (
-    CONFIG["MOZ_X11"] == "1"
-    and CONFIG["OS_TARGET"] == "Linux"
-    and CONFIG["TARGET_CPU"] in ("aarch64", "arm", "mips32", "mips64", "x86", "x86_64")
-):
-    UNIFIED_SOURCES += [
-        "modules/desktop_capture/linux/x11/x_error_trap.cc",
-    ]
 
 FINAL_LIBRARY = "xul"

@@ -22,8 +22,3 @@ EXPORTS.mozilla += [
     "/mozglue/misc/Uptime.h",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    EXPORTS.mozilla += [
-        "/mozglue/misc/StackWalk_windows.h",
-        "/mozglue/misc/StackWalkThread.h",
-    ]

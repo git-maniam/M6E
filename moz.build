@@ -377,9 +377,6 @@ if CONFIG["MOZ_GENERATE_SBOM"]:
         "!/.cargo/config.toml",
         "/Cargo.lock",
     ]
-    if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-        # The Gradle export writes GeckoView's runtime dependencies.
-        sbom_deps += ["!/widget/android/generated_geckoview_files"]
     GeneratedFile(
         "sbom.json",
         script="/python/mozbuild/mozbuild/action/generate_sbom.py",

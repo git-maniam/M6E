@@ -10,6 +10,3 @@ USE_LIBS += [
     "zlib",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    # Don't build with CETCOMPAT, because JIT triggers a shadow stack violation
-    LINK_FLAGS["CETCOMPAT"] = []

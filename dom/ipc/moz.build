@@ -257,28 +257,16 @@ LOCAL_INCLUDES += [
     "/xpcom/threads",
 ]
 
-if CONFIG["MOZ_SANDBOX"] and CONFIG["OS_ARCH"] == "WINNT":
-    LOCAL_INCLUDES += [
-        "/security/sandbox/chromium",
-        "/security/sandbox/chromium-shim",
-    ]
 
-if CONFIG["MOZ_SANDBOX"] and CONFIG["OS_ARCH"] == "OpenBSD":
-    LOCAL_INCLUDES += [
-        "/xpcom/build",
-    ]
 
-if CONFIG["OS_ARCH"] != "WINNT":
-    LOCAL_INCLUDES += [
-        "/modules/libjar",
-    ]
+LOCAL_INCLUDES += [
+    "/modules/libjar",
+]
 
 DEFINES["BIN_SUFFIX"] = '"%s"' % CONFIG["BIN_SUFFIX"]
 
 DEFINES["MOZ_APP_NAME"] = '"%s"' % CONFIG["MOZ_APP_NAME"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    DEFINES["MOZ_ENABLE_FREETYPE"] = True
 
 BROWSER_CHROME_MANIFESTS += [
     "tests/browser.toml",
@@ -290,8 +278,6 @@ MOCHITEST_CHROME_MANIFESTS += ["tests/chrome.toml"]
 MOCHITEST_MANIFESTS += ["tests/mochitest.toml"]
 XPCSHELL_TESTS_MANIFESTS += ["tests/xpcshell.toml"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
 
 # Add libFuzzer configuration directives
 include("/tools/fuzzing/libfuzzer-config.mozbuild")

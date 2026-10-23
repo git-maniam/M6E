@@ -7,8 +7,6 @@ with Files("signaling/**"):
 
 if CONFIG["MOZ_WEBRTC_SIGNALING"]:
     # Avoid warnings from third-party code that we can not modify.
-    if CONFIG["CC_TYPE"] == "clang-cl":
-        CXXFLAGS += ["-Wno-invalid-source-encoding"]
 
     TEST_DIRS += [
         "signaling/gtest",

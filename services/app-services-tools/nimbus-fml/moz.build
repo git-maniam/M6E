@@ -8,13 +8,4 @@ with Files("**"):
     BUG_COMPONENT = ("Application Services", "General")
 
 # copy-pasta from other moz.build file.
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    OS_LIBS += ["-framework CoreFoundation"]
-elif CONFIG["OS_TARGET"] == "WINNT":
-    OS_LIBS += [
-        "advapi32",
-        "wsock32",
-        "ws2_32",
-        "mswsock",
-        "winmm",
-    ]
+OS_LIBS += ["-framework CoreFoundation"]

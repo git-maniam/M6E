@@ -60,12 +60,6 @@ SOURCES += [
     "TestTrivialDtor.cpp",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += [
-        "TestEmptyBases.cpp",
-        "TestFopenUsage.cpp",
-        "TestLoadLibraryUsage.cpp",
-    ]
 
 if CONFIG["MOZ_BUILD_APP"] != "js":
     SOURCES += [

@@ -5,7 +5,5 @@
 DIRS += ["dynamic-library"]
 
 # For some reason, plain linux builds need these flags.
-if CONFIG["OS_TARGET"] == "Linux":
-    OS_LIBS += CONFIG["DL_LIBS"]
 
 RustLibrary("pkcs11testmodule-static")

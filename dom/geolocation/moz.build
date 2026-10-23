@@ -34,16 +34,7 @@ UNIFIED_SOURCES += [
 
 # MinGW is missing the headers needed to build the Windows Geolocation System
 # Permission UI so it uses the platform-agnostic version.
-if (
-    CONFIG["OS_TARGET"] == "WINNT"
-    and (CONFIG["CC_TYPE"] == "clang-cl" or CONFIG["MOZ_ARTIFACT_BUILDS"])
-    and CONFIG["MOZ_BUILD_APP"] == "browser"
-    and CONFIG["NECKO_WIFI"]
-):
-    UNIFIED_SOURCES += [
-        "GeolocationSystemWin.cpp",
-    ]
-elif CONFIG["OS_TARGET"] == "Darwin" and CONFIG["MOZ_BUILD_APP"] == "browser":
+if CONFIG["OS_TARGET"] == "Darwin" and CONFIG["MOZ_BUILD_APP"] == "browser":
     UNIFIED_SOURCES += [
         "GeolocationSystemMac.mm",
     ]

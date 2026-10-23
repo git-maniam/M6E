@@ -83,11 +83,10 @@ MOZ_SRC_FILES += [
     "ViewSourcePageParent.sys.mjs",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    MOZ_SRC_FILES += [
-        "WebChannelChild.sys.mjs",
-        "WebChannelParent.sys.mjs",
-    ]
+MOZ_SRC_FILES += [
+    "WebChannelChild.sys.mjs",
+    "WebChannelParent.sys.mjs",
+]
 
 MOZ_SRC_FILES += [
     "ColorPickerChild.sys.mjs",

@@ -10,25 +10,15 @@ USE_LIBS += [
     'breakpad_common_s',
 ]
 
-if CONFIG['OS_ARCH'] == 'Darwin':
-    USE_LIBS += [
-        'breakpad_mac_common_s',
-    ]
-elif CONFIG['OS_ARCH'] == 'Linux':
-    UNIFIED_SOURCES += [
-        '../linux_utils.cc',
-    ]
-
-    USE_LIBS += [
-        'breakpad_linux_common_s',
-    ]
+USE_LIBS += [
+    'breakpad_mac_common_s',
+]
 
 LOCAL_INCLUDES += [
     '/toolkit/crashreporter/google-breakpad/src',
 ]
 
-if CONFIG['CC_TYPE'] in ('clang', 'gcc'):
-    CXXFLAGS += ['-Wno-error=stack-protector']
+CXXFLAGS += ['-Wno-error=stack-protector']
 
 LIBRARY_DEFINES["MOZ_HAS_MOZGLUE"] = True
 

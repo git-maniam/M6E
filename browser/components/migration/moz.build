@@ -34,36 +34,20 @@ MOZ_SRC_FILES += [
     "ProfileMigrator.sys.mjs",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    UNIFIED_SOURCES += [
-        "nsEdgeMigrationUtils.cpp",
-    ]
-    MOZ_SRC_FILES += [
-        "360seMigrationUtils.sys.mjs",
-        "ChromeWindowsLoginCrypto.sys.mjs",
-        "EdgeProfileMigrator.sys.mjs",
-        "ESEDBReader.sys.mjs",
-        "MSMigrationUtils.sys.mjs",
-    ]
 
-    SOURCE_HEADERS += [
-        "nsEdgeMigrationUtils.h",
-    ]
-
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    MOZ_SRC_FILES += [
-        "ChromeMacOSLoginCrypto.sys.mjs",
-        "SafariProfileMigrator.sys.mjs",
-    ]
-    UNIFIED_SOURCES += [
-        "nsKeychainMigrationUtils.mm",
-    ]
-    XPIDL_SOURCES += [
-        "nsIKeychainMigrationUtils.idl",
-    ]
-    SOURCE_HEADERS += [
-        "nsKeychainMigrationUtils.h",
-    ]
+MOZ_SRC_FILES += [
+    "ChromeMacOSLoginCrypto.sys.mjs",
+    "SafariProfileMigrator.sys.mjs",
+]
+UNIFIED_SOURCES += [
+    "nsKeychainMigrationUtils.mm",
+]
+XPIDL_SOURCES += [
+    "nsIKeychainMigrationUtils.idl",
+]
+SOURCE_HEADERS += [
+    "nsKeychainMigrationUtils.h",
+]
 
 
 XPCOM_MANIFESTS += [

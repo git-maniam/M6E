@@ -48,17 +48,7 @@ if CONFIG["OS_ARCH"] == "Darwin" and CONFIG["NIGHTLY_BUILD"]:
         "AppGroupPath.h",
     ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    UNIFIED_SOURCES += ["ProfileUnlockerWin.cpp"]
-    SOURCE_HEADERS += [
-        "ProfileUnlockerWin.h",
-    ]
 
-if CONFIG["OS_TARGET"] == "Android":
-    UNIFIED_SOURCES += ["ProfileUnlockerAndroid.cpp"]
-    SOURCE_HEADERS += [
-        "ProfileUnlockerAndroid.h",
-    ]
 
 LOCAL_INCLUDES += [
     "../xre",

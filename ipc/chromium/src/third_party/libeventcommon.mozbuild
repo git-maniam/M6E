@@ -2,16 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-if CONFIG['TARGET_KERNEL'] == 'Darwin':
-    libevent_include_suffix = 'mac'
-elif CONFIG['TARGET_KERNEL'] in ('DragonFly', 'FreeBSD', 'NetBSD', 'OpenBSD'):
-    libevent_include_suffix = 'bsd'
-elif CONFIG['TARGET_KERNEL'] == 'SunOS':
-    libevent_include_suffix = 'solaris'
-elif CONFIG['TARGET_OS'] == 'Android':
-    libevent_include_suffix = 'android'
-else:
-    libevent_include_suffix = 'linux'
+libevent_include_suffix = 'mac'
 
 if CONFIG["TARGET_KERNEL"] != "WINNT" and not CONFIG['MOZ_SYSTEM_LIBEVENT']:
     DEFINES['HAVE_CONFIG_H'] = True

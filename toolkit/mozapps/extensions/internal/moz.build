@@ -16,13 +16,12 @@ EXTRA_JS_MODULES.addons += [
     "XPIProvider.sys.mjs",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    EXTRA_JS_MODULES.addons += [
-        "GMPProvider.sys.mjs",
-        "ModelHubProvider.sys.mjs",
-        ## TODO consider extending it to mobile builds too (See Bug 1790084).
-        "SitePermsAddonProvider.sys.mjs",
-    ]
+EXTRA_JS_MODULES.addons += [
+    "GMPProvider.sys.mjs",
+    "ModelHubProvider.sys.mjs",
+    ## TODO consider extending it to mobile builds too (See Bug 1790084).
+    "SitePermsAddonProvider.sys.mjs",
+]
 
 TESTING_JS_MODULES += [
     "AboutAddonsTestUtils.sys.mjs",

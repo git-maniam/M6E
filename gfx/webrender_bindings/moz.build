@@ -49,68 +49,21 @@ UNIFIED_SOURCES += [
     "WebRenderTypes.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("cocoa", "uikit"):
-    EXPORTS.mozilla.webrender += [
-        "MetalDeviceManager.h",
-        "RenderCompositorNative.h",
-        "RenderMacIOSurfaceTextureHost.h",
-    ]
-    UNIFIED_SOURCES += [
-        "MetalDeviceManager.mm",
-        "RenderCompositorNative.cpp",
-        "RenderMacIOSurfaceTextureHost.cpp",
-    ]
+EXPORTS.mozilla.webrender += [
+    "MetalDeviceManager.h",
+    "RenderCompositorNative.h",
+    "RenderMacIOSurfaceTextureHost.h",
+]
+UNIFIED_SOURCES += [
+    "MetalDeviceManager.mm",
+    "RenderCompositorNative.cpp",
+    "RenderMacIOSurfaceTextureHost.cpp",
+]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    EXPORTS.mozilla.webrender += [
-        "RenderAndroidHardwareBufferTextureHost.h",
-        "RenderAndroidImageReaderImageTextureHost.h",
-        "RenderAndroidSurfaceTextureHost.h",
-    ]
-    UNIFIED_SOURCES += [
-        "RenderAndroidHardwareBufferTextureHost.cpp",
-        "RenderAndroidImageReaderImageTextureHost.cpp",
-        "RenderAndroidSurfaceTextureHost.cpp",
-    ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXPORTS.mozilla.webrender += [
-        "DCLayerTree.h",
-        "RenderCompositorANGLE.h",
-        "RenderCompositorD3D11SWGL.h",
-        "RenderD3D11TextureHost.h",
-        "RenderDcompSurfaceTextureHost.h",
-    ]
-    UNIFIED_SOURCES += [
-        "DCLayerTree.cpp",
-        "RenderCompositorANGLE.cpp",
-        "RenderCompositorD3D11SWGL.cpp",
-        "RenderD3D11TextureHost.cpp",
-    ]
-    SOURCES += [
-        "RenderDcompSurfaceTextureHost.cpp",
-    ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    EXPORTS.mozilla.webrender += [
-        "RenderDMABUFTextureHost.h",
-    ]
-    SOURCES += [
-        "RenderDMABUFTextureHost.cpp",
-    ]
 
-if CONFIG["MOZ_WAYLAND"]:
-    EXPORTS.mozilla.webrender += [
-        "RenderCompositorNative.h",
-        "RenderWaylandTextureHost.h",
-    ]
-    SOURCES += [
-        "RenderCompositorNative.cpp",
-        "RenderWaylandTextureHost.cpp",
-    ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android", "gtk"):
-    CXXFLAGS += CONFIG["CAIRO_FT_CFLAGS"]
 
 if CONFIG["COMPILE_ENVIRONMENT"]:
     EXPORTS.mozilla.webrender += [
@@ -134,8 +87,6 @@ FINAL_LIBRARY = "xul"
 LOCAL_INCLUDES += [
     "/gfx/cairo/cairo/src",
 ]
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
 
 COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += ["-Werror=switch"]
 

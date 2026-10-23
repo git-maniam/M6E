@@ -23,28 +23,16 @@ EXPORTS.mozilla += [
     "XREAppData.h",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    EXPORTS.mozilla += [
-        "perfprobe.h",
+UNIFIED_SOURCES += [
+    "PoisonIOInterposerBase.cpp",
+    "PoisonIOInterposerMac.cpp",
+]
+if CONFIG["TARGET_CPU"] != "aarch64":
+    SOURCES += ["mach_override.c"]
+    SOURCES["mach_override.c"].flags += ["-Wno-unused-function"]
+    SOURCE_HEADERS += [
+        "mach_override.h",
     ]
-    SOURCES += [
-        "perfprobe.cpp",
-        "PoisonIOInterposerBase.cpp",
-        "PoisonIOInterposerWin.cpp",
-    ]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    UNIFIED_SOURCES += [
-        "PoisonIOInterposerBase.cpp",
-        "PoisonIOInterposerMac.cpp",
-    ]
-    if CONFIG["TARGET_CPU"] != "aarch64":
-        SOURCES += ["mach_override.c"]
-        SOURCES["mach_override.c"].flags += ["-Wno-unused-function"]
-        SOURCE_HEADERS += [
-            "mach_override.h",
-        ]
-else:
-    SOURCES += ["PoisonIOInterposerStub.cpp"]
 
 include("../glue/objs.mozbuild")
 
@@ -64,13 +52,12 @@ UNIFIED_SOURCES += [
     "XPCOMInit.cpp",
 ]
 
-if CONFIG["OS_ARCH"] != "WINNT":
-    SOURCES += [
-        "NSPRInterposer.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "NSPRInterposer.h",
-    ]
+SOURCES += [
+    "NSPRInterposer.cpp",
+]
+SOURCE_HEADERS += [
+    "NSPRInterposer.h",
+]
 
 GeneratedFile(
     "GeckoProcessTypes.inc",

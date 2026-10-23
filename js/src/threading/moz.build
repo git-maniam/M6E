@@ -17,25 +17,10 @@ UNIFIED_SOURCES += [
     "Thread.cpp",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    OS_LIBS += [
-        "advapi32",
-    ]
-    UNIFIED_SOURCES += [
-        "windows/CpuCount.cpp",
-        "windows/WindowsThread.cpp",
-    ]
-# WASI hasn't supported thread yet so noop implementation is used.
-elif CONFIG["OS_ARCH"] == "WASI":
-    UNIFIED_SOURCES += [
-        "noop/CpuCount.cpp",
-        "noop/NoopThread.cpp",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "posix/CpuCount.cpp",
-        "posix/PosixThread.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "posix/CpuCount.cpp",
+    "posix/PosixThread.cpp",
+]
 
 if CONFIG["FUZZING_JS_FUZZILLI"]:
     include("/tools/fuzzing/libfuzzer-config.mozbuild")

@@ -93,10 +93,6 @@ LOCAL_INCLUDES += [
 CXXFLAGS += CONFIG["SQLITE_CFLAGS"]
 
 # Suppress warnings in third-party code.
-if CONFIG["CC_TYPE"] == "gcc":
-    CXXFLAGS += [
-        "-Wno-maybe-uninitialized",
-    ]
 
 include("/ipc/chromium/chromium-config.mozbuild")
 

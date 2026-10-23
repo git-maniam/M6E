@@ -11,10 +11,7 @@ SPHINX_TREES["buildsystem"] = "docs"
 with Files("docs/**"):
     SCHEDULES.exclusive = ["docs"]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    DIRS += ["win32"]
-else:
-    DIRS += ["unix"]
+DIRS += ["unix"]
 
 if CONFIG["MOZ_STDCXX_COMPAT"]:
     DIRS += ["unix/stdc++compat"]
@@ -46,18 +43,11 @@ OBJDIR_FILES.build += [".gdbinit.loader"]
 OBJDIR_FILES.build += [".gdbinit"]
 
 # Install the clang-cl runtime library for ASAN next to the binaries we produce.
-if CONFIG["MOZ_ASAN"] and CONFIG["CC_TYPE"] == "clang-cl":
-    FINAL_TARGET_FILES += ["%" + CONFIG["MOZ_CLANG_RT_ASAN_LIB_PATH"]]
-    FINAL_TARGET_FILES += [
-        "%" + CONFIG["MOZ_CLANG_RT_ASAN_LIB_PATH"].replace(".dll", ".pdb")
-    ]
 
 if CONFIG["MOZ_ASAN"] or CONFIG["MOZ_UBSAN"] or CONFIG["MOZ_TSAN"]:
     DIRS += ["sanitizers"]
 
 # Install the clang runtime library for ASAN next to the binaries we produce.
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android" and CONFIG["MOZ_ASAN"]:
-    FINAL_TARGET_FILES += ["%" + CONFIG["MOZ_CLANG_RT_ASAN_LIB_PATH"]]
 
 if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android" and CONFIG["LLVM_SYMBOLIZER"]:
     FINAL_TARGET_FILES += ["/" + CONFIG["LLVM_SYMBOLIZER"]]
@@ -113,11 +103,6 @@ if CONFIG["MOZ_APP_BASENAME"]:
     )
 
     FINAL_TARGET_FILES += ["!application.ini"]
-    if (
-        CONFIG["MOZ_WIDGET_TOOLKIT"] not in ("android", "cocoa")
-        and CONFIG["MOZ_UPDATER"]
-    ):
-        FINAL_TARGET_PP_FILES += ["update-settings.ini"]
 
     GeneratedFile(
         "application.ini.h", script="appini_header.py", inputs=["!application.ini"]

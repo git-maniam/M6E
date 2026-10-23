@@ -22,40 +22,31 @@ XPIDL_SOURCES += [
     "nsrootidl.idl",
 ]
 
-if CONFIG["OS_TARGET"] == "Linux":
-    XPIDL_SOURCES += [
-        "nsIAvailableMemoryWatcherTestingLinux.idl",
-    ]
-    EXPORTS += [
-        "nsIPSIProvider.h",
-    ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    XPIDL_SOURCES += [
-        "nsIMacPreferencesReader.idl",
-    ]
-    EXPORTS.mozilla += [
-        "MacHelpers.h",
-        "nsMacPreferencesReader.h",
-        "nsMacUtilsImpl.h",
-    ]
-    UNIFIED_SOURCES += [
-        "MacHelpers.mm",
-        "nsMacPreferencesReader.mm",
-    ]
-if CONFIG["OS_ARCH"] == "Darwin":
-    EXPORTS += [
-        "CFTypeRefPtr.h",
-        "nsObjCExceptions.h",
-    ]
-    EXPORTS.mozilla += [
-        "DarwinObjectPtr.h",
-        "MacStringHelpers.h",
-    ]
-    UNIFIED_SOURCES += [
-        "MacStringHelpers.mm",
-        "nsObjCExceptions.mm",
-    ]
+XPIDL_SOURCES += [
+    "nsIMacPreferencesReader.idl",
+]
+EXPORTS.mozilla += [
+    "MacHelpers.h",
+    "nsMacPreferencesReader.h",
+    "nsMacUtilsImpl.h",
+]
+UNIFIED_SOURCES += [
+    "MacHelpers.mm",
+    "nsMacPreferencesReader.mm",
+]
+EXPORTS += [
+    "CFTypeRefPtr.h",
+    "nsObjCExceptions.h",
+]
+EXPORTS.mozilla += [
+    "DarwinObjectPtr.h",
+    "MacStringHelpers.h",
+]
+UNIFIED_SOURCES += [
+    "MacStringHelpers.mm",
+    "nsObjCExceptions.mm",
+]
 
 XPIDL_MODULE = "xpcom_base"
 
@@ -104,14 +95,6 @@ EXPORTS += [
     "nsWeakReference.h",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    EXPORTS += [
-        "nsWindowsHelpers.h",
-    ]
-    if CONFIG["CC_TYPE"] not in ("gcc", "clang"):
-        OS_LIBS += [
-            "wscapi",
-        ]
 
 EXPORTS.mozilla += [
     "AppShutdown.h",
@@ -224,32 +207,15 @@ SOURCE_HEADERS += [
     "nsVersionComparatorImpl.h",
 ]
 
-if CONFIG["OS_TARGET"] in ("Linux", "Android"):
-    UNIFIED_SOURCES += [
-        "MemoryMapping.cpp",
-    ]
 
-if CONFIG["OS_TARGET"] == "WINNT":
-    UNIFIED_SOURCES += [
-        "AvailableMemoryWatcherWin.cpp",
-        "MemoryInfo.cpp",
-    ]
 
-if CONFIG["OS_TARGET"] == "Darwin":
-    UNIFIED_SOURCES += [
-        "AvailableMemoryWatcherMac.cpp",
-    ]
-    EXPORTS.mozilla += [
-        "MemoryPressureLevelMac.h",
-    ]
+UNIFIED_SOURCES += [
+    "AvailableMemoryWatcherMac.cpp",
+]
+EXPORTS.mozilla += [
+    "MemoryPressureLevelMac.h",
+]
 
-if CONFIG["OS_TARGET"] == "Linux":
-    UNIFIED_SOURCES += [
-        "AvailableMemoryWatcherLinux.cpp",
-    ]
-    EXPORTS.mozilla += [
-        "AvailableMemoryWatcherUtils.h",
-    ]
 
 if CONFIG["MOZ_PHC"]:
     DEFINES["MOZ_PHC"] = True
@@ -290,18 +256,9 @@ GeneratedFile(
     inputs=extra_errors,
 )
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    SOURCES += [
-        "nsMacUtilsImpl.cpp",
-    ]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    SOURCES += [
-        "nsCrashOnException.cpp",
-    ]
-
-    SOURCE_HEADERS += [
-        "nsCrashOnException.h",
-    ]
+SOURCES += [
+    "nsMacUtilsImpl.cpp",
+]
 
 if CONFIG["COMPILE_ENVIRONMENT"]:
     EXPORTS.mozilla += [
@@ -321,8 +278,6 @@ LOCAL_INCLUDES += [
     "/xpcom/ds",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
 
 if CONFIG["MOZ_PHC"]:
     EXPORTS.mozilla += [

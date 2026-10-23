@@ -34,8 +34,6 @@ if not CONFIG["MOZILLA_OFFICIAL"]:
 
 # GCC has a false-positive -Wstringop-overread warning at computing the
 # size of constexpr mozilla::Span.
-if CONFIG["CC_TYPE"] == "gcc":
-    CXXFLAGS += ["-Wno-stringop-overread"]
 
 FINAL_LIBRARY = "xul-gtest"
 

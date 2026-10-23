@@ -6,15 +6,6 @@ EXTRA_JS_MODULES += [
     "LaunchOnLogin.sys.mjs",
 ]
 
-if CONFIG["OS_TARGET"] == "WINNT":
-    EXTRA_JS_MODULES.launchonlogin = [
-        "WindowsLaunchOnLogin.sys.mjs",
-    ]
-elif CONFIG["OS_TARGET"] == "Darwin":
-    EXTRA_JS_MODULES.launchonlogin = [
-        "MacOSLaunchOnLogin.sys.mjs",
-    ]
-else:
-    EXTRA_JS_MODULES.launchonlogin = [
-        "UnsupportedLaunchOnLogin.sys.mjs",
-    ]
+EXTRA_JS_MODULES.launchonlogin = [
+    "MacOSLaunchOnLogin.sys.mjs",
+]

@@ -4,10 +4,9 @@
 
 Library("mp4_demuxer_gtest")
 
-if CONFIG["OS_TARGET"] != "Android":
-    SOURCES += [
-        "TestParser.cpp",
-    ]
+SOURCES += [
+    "TestParser.cpp",
+]
 
 SOURCES += [
     "TestInterval.cpp",

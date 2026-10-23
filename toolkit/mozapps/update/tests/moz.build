@@ -32,32 +32,23 @@ SimplePrograms([
     "TestAUSReadStrings",
 ])
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SimplePrograms(["test_file_change_mtime", "test_file_hold_open"])
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    MacOSBundle(
-        f"!/{FINAL_TARGET}/callback_app.app",
-        skeleton="macbuild/Contents",
-        binaries=[
-            (
-                f"!/{FINAL_TARGET}/TestAUSHelper",
-                "TestAUSHelper",
-            )
-        ],
-    )
+MacOSBundle(
+    f"!/{FINAL_TARGET}/callback_app.app",
+    skeleton="macbuild/Contents",
+    binaries=[
+        (
+            f"!/{FINAL_TARGET}/TestAUSHelper",
+            "TestAUSHelper",
+        )
+    ],
+)
 
 LOCAL_INCLUDES += [
     "/toolkit/mozapps/update",
     "/toolkit/mozapps/update/common",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    OS_LIBS += [
-        "shlwapi",
-        "user32",
-        "uuid",
-    ]
 
 USE_LIBS += [
     "updatecommon",
@@ -76,15 +67,7 @@ if CONFIG["MOZ_MAINTENANCE_SERVICE"]:
 if CONFIG["DISABLE_UPDATER_AUTHENTICODE_CHECK"]:
     DEFINES["DISABLE_UPDATER_AUTHENTICODE_CHECK"] = True
 
-if CONFIG["CC_TYPE"] == "clang-cl":
-    WIN32_EXE_LDFLAGS += ["-ENTRY:wmainCRTStartup"]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    DEFINES["UNICODE"] = True
-    DEFINES["_UNICODE"] = True
-    USE_STATIC_MSVCRT = True
-    if CONFIG["CC_TYPE"] in ("clang", "gcc"):
-        WIN32_EXE_LDFLAGS += ["-municode"]
 
 TEST_HARNESS_FILES.testing.mochitest.browser.toolkit.mozapps.update.tests.browser += [
     "data/simple.mar",

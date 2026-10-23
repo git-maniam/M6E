@@ -37,14 +37,9 @@ XPCOM_MANIFESTS += [
     "test/components.conf",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    DIRS += ["windows"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    DIRS += ["cocoa"]
+DIRS += ["cocoa"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    DIRS += ["android"]
 
 if CONFIG["MOZ_SYNTH_SPEECHD"]:
     DIRS += ["speechd"]

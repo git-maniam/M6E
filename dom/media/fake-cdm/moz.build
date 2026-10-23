@@ -18,11 +18,6 @@ DEFINES["CDM_IMPLEMENTATION"] = True
 
 SharedLibrary("fake")
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    OS_LIBS += [
-        "ole32",
-        "user32",
-    ]
 
 USE_STATIC_MSVCRT = True
 NoVisibilityFlags()

@@ -28,9 +28,8 @@ UNIFIED_SOURCES += [
     "ProfileKek.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    # For MacApplicationDelegate.h.
-    LOCAL_INCLUDES += ["/toolkit/xre"]
+# For MacApplicationDelegate.h.
+LOCAL_INCLUDES += ["/toolkit/xre"]
 
 FINAL_LIBRARY = "xul"
 
@@ -49,7 +48,6 @@ TEST_DIRS += ["gtest"]
 # first few `LockstoreServiceTest` cases (bug 1892964); the lower-level
 # Rust/FFI keystore gtests in `gtest/` still run there. The Service
 # layer is covered on every other config by the gtest + xpcshell tests.
-if CONFIG["OS_TARGET"] != "Android":
-    TEST_DIRS += ["tests/gtest"]
+TEST_DIRS += ["tests/gtest"]
 
 XPCSHELL_TESTS_MANIFESTS += ["tests/unit/xpcshell.toml"]

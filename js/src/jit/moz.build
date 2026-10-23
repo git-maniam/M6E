@@ -156,11 +156,10 @@ elif CONFIG["JS_CODEGEN_ARM"]:
     ]
     if CONFIG["JS_SIMULATOR_ARM"]:
         UNIFIED_SOURCES += ["arm/Simulator-arm.cpp"]
-    elif CONFIG["OS_ARCH"] == "Darwin":
-        SOURCES += [
-            "arm/llvm-compiler-rt/arm/aeabi_idivmod.S",
-            "arm/llvm-compiler-rt/arm/aeabi_uidivmod.S",
-        ]
+    SOURCES += [
+        "arm/llvm-compiler-rt/arm/aeabi_idivmod.S",
+        "arm/llvm-compiler-rt/arm/aeabi_uidivmod.S",
+    ]
 elif CONFIG["JS_CODEGEN_ARM64"]:
     UNIFIED_SOURCES += [
         "arm64/Architecture-arm64.cpp",
@@ -188,9 +187,6 @@ elif CONFIG["JS_CODEGEN_ARM64"]:
         "arm64/vixl/Instrument-vixl.cpp",
     ]
     SOURCES += vixl_werror_sources
-    if CONFIG["CC_TYPE"] == "clang-cl":
-        for f in vixl_werror_sources:
-            SOURCES[f].flags += ["-Wno-c++11-narrowing"]
     if CONFIG["JS_SIMULATOR_ARM64"]:
         UNIFIED_SOURCES += [
             "arm64/vixl/Debugger-vixl.cpp",

@@ -57,18 +57,13 @@ EXTRA_JS_MODULES.shared += [
     "shared/PasswordRulesParser.sys.mjs",
 ]
 
-if CONFIG["OS_TARGET"] != "Android":
-    EXTRA_JS_MODULES += [
-        "CSV.sys.mjs",
-        "LoginCSVImport.sys.mjs",
-        "LoginExport.sys.mjs",
-        "LoginStore.sys.mjs",
-    ]
+EXTRA_JS_MODULES += [
+    "CSV.sys.mjs",
+    "LoginCSVImport.sys.mjs",
+    "LoginExport.sys.mjs",
+    "LoginStore.sys.mjs",
+]
 
-if CONFIG["OS_TARGET"] == "WINNT":
-    EXTRA_JS_MODULES += [
-        "OSCrypto_win.sys.mjs",
-    ]
 
 if CONFIG["MOZ_BUILD_APP"] == "browser" or CONFIG["MOZ_SUITE"]:
     EXTRA_JS_MODULES += [

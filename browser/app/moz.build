@@ -34,75 +34,67 @@ DIRS += ["distribution"]
 # Neither channel-prefs.js nor firefox.exe want to end up in dist/bin/browser.
 DIST_SUBDIR = ""
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "cocoa":
-    GeneratedFile(
-        "channel-prefs.js",
-        script="generate_channel_prefs.py",
-        inputs=["profile/channel-prefs.js"],
-    )
-    FINAL_TARGET_FILES.defaults.pref += ["!channel-prefs.js"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    mac_app_name = CONFIG["MOZ_APP_DISPLAYNAME"]
-    if CONFIG["MOZ_DEBUG"]:
-        mac_app_name += "Debug"
-    GeneratedFile(
-        "Info.plist",
-        script="generate_info_plist.py",
-        inputs=["macbuild/Contents/Info.plist.in"],
-        flags=[mac_app_name],
-        extra_deps=["!/buildid.h"],
-    )
-    GeneratedFile(
-        "InfoPlist.strings",
-        script="/python/mozbuild/mozbuild/action/preprocessor.py",
-        entry_point="generate",
-        inputs=["macbuild/Contents/Resources/English.lproj/InfoPlist.strings.in"],
-        flags=[
-            "-Fsubstitution",
-            "--output-encoding",
-            "utf-16",
-            f"-DMAC_APP_NAME={mac_app_name}",
-        ],
-    )
-    ab_cd = CONFIG["MOZ_UI_LOCALE"]
-    if ab_cd == "zh-TW":
-        lproj_root = ab_cd.replace("-", "_")
-    else:
-        lproj_root = ab_cd.split("-")[0]
-    branding = f"/{CONFIG['MOZ_BRANDING_DIRECTORY']}"
-    extra_files = [
-        (f"{branding}/firefox.icns", "Resources/firefox.icns"),
-        (f"{branding}/document.icns", "Resources/document.icns"),
-        (f"{branding}/Assets.car", "Resources/Assets.car"),
-    ]
-    if CONFIG["MOZ_UPDATER"]:
-        extra_files.append((
-            f"!/{FINAL_TARGET}/org.mozilla.updater",
-            "Library/LaunchServices/org.mozilla.updater",
-        ))
-    MacOSBundle(
-        f"!/dist/{CONFIG['MOZ_MACBUNDLE_NAME']}",
-        skeleton="macbuild/Contents",
-        info_plist="!Info.plist",
-        strings="!InfoPlist.strings",
-        lproj=f"{lproj_root}.lproj",
-        stage=f"!/{FINAL_TARGET}",
-        macos_files="!macbuild/Contents/MacOS-files.txt",
-        macos_copy_files="macbuild/Contents/MacOS-files-copy.in",
-        binaries=[
-            (f"!/{FINAL_TARGET}/{CONFIG['MOZ_APP_NAME']}", CONFIG["MOZ_APP_NAME"])
-        ],
-        extra_files=extra_files,
-        moves=[
-            ("ChannelPrefs.framework", "Frameworks/ChannelPrefs.framework"),
-            (
-                "org.mozilla.dmgInstallHelper",
-                "Library/LaunchServices/org.mozilla.dmgInstallHelper",
-            ),
-        ],
-        pkginfo="APPLMOZB",
-    )
+mac_app_name = CONFIG["MOZ_APP_DISPLAYNAME"]
+if CONFIG["MOZ_DEBUG"]:
+    mac_app_name += "Debug"
+GeneratedFile(
+    "Info.plist",
+    script="generate_info_plist.py",
+    inputs=["macbuild/Contents/Info.plist.in"],
+    flags=[mac_app_name],
+    extra_deps=["!/buildid.h"],
+)
+GeneratedFile(
+    "InfoPlist.strings",
+    script="/python/mozbuild/mozbuild/action/preprocessor.py",
+    entry_point="generate",
+    inputs=["macbuild/Contents/Resources/English.lproj/InfoPlist.strings.in"],
+    flags=[
+        "-Fsubstitution",
+        "--output-encoding",
+        "utf-16",
+        f"-DMAC_APP_NAME={mac_app_name}",
+    ],
+)
+ab_cd = CONFIG["MOZ_UI_LOCALE"]
+if ab_cd == "zh-TW":
+    lproj_root = ab_cd.replace("-", "_")
+else:
+    lproj_root = ab_cd.split("-")[0]
+branding = f"/{CONFIG['MOZ_BRANDING_DIRECTORY']}"
+extra_files = [
+    (f"{branding}/firefox.icns", "Resources/firefox.icns"),
+    (f"{branding}/document.icns", "Resources/document.icns"),
+    (f"{branding}/Assets.car", "Resources/Assets.car"),
+]
+if CONFIG["MOZ_UPDATER"]:
+    extra_files.append((
+        f"!/{FINAL_TARGET}/org.mozilla.updater",
+        "Library/LaunchServices/org.mozilla.updater",
+    ))
+MacOSBundle(
+    f"!/dist/{CONFIG['MOZ_MACBUNDLE_NAME']}",
+    skeleton="macbuild/Contents",
+    info_plist="!Info.plist",
+    strings="!InfoPlist.strings",
+    lproj=f"{lproj_root}.lproj",
+    stage=f"!/{FINAL_TARGET}",
+    macos_files="!macbuild/Contents/MacOS-files.txt",
+    macos_copy_files="macbuild/Contents/MacOS-files-copy.in",
+    binaries=[
+        (f"!/{FINAL_TARGET}/{CONFIG['MOZ_APP_NAME']}", CONFIG["MOZ_APP_NAME"])
+    ],
+    extra_files=extra_files,
+    moves=[
+        ("ChannelPrefs.framework", "Frameworks/ChannelPrefs.framework"),
+        (
+            "org.mozilla.dmgInstallHelper",
+            "Library/LaunchServices/org.mozilla.dmgInstallHelper",
+        ),
+    ],
+    pkginfo="APPLMOZB",
+)
 
 if CONFIG["MOZ_MACBUNDLE_NAME"]:
     DIRS += ["macbuild/Contents"]
@@ -152,94 +144,28 @@ elif CONFIG["FUZZING_INTERFACES"]:
 if CONFIG["MOZ_GECKODRIVER"]:
     DEFINES["MOZ_GECKODRIVER"] = True
 
-if CONFIG["CC_TYPE"] == "clang-cl":
-    # Always enter a Windows program through wmain, whether or not we're
-    # a console application.
-    WIN32_EXE_LDFLAGS += ["-ENTRY:wmainCRTStartup"]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    RCINCLUDE = "splash.rc"
-    DIRS += [
-        "installation_dir_layout",
-        "pbproxy",
-        "winlauncher",
-    ]
-    USE_LIBS += [
-        "winlauncher",
-    ]
-    LOCAL_INCLUDES += [
-        "/browser/app/winlauncher",
-    ]
-    OS_LIBS += [
-        "advapi32",
-        "shell32",
-        "uuid",
-    ]
-    DELAYLOAD_DLLS += [
-        "advapi32.dll",
-        "oleaut32.dll",
-        "ole32.dll",
-        "rpcrt4.dll",
-        "shell32.dll",
-        "version.dll",
-    ]
-
-    if CONFIG["CC_TYPE"] == "clang-cl":
-        libpath_flag = "-LIBPATH:"
-    else:
-        libpath_flag = "-L"
-
-    WIN32_EXE_LDFLAGS += [
-        libpath_flag + OBJDIR + "/winlauncher/freestanding",
-    ]
-
-    # Don't build firefox.exe with CETCOMPAT, because we need to be able to
-    # only enable it for processes that are not using JIT in xul.dll.
-    LINK_FLAGS["CETCOMPAT"] = []
 
 if CONFIG["DESKTOP_LAUNCHER_ENABLED"]:
     DIRS += [
         "desktop-launcher",
     ]
 
-if CONFIG["OS_ARCH"] == "Darwin":
-    OS_LIBS += [
-        "-framework CoreFoundation",
-    ]
-    # Safari updates on older macOS versions install newer frameworks in this
-    # folder, among them the AuthenticationServices framework that the
-    # ASWebAuthenticationSession broker uses. On macOS 10.15 the system copy
-    # fails to decode the broker's messages. Safari loads its frameworks from
-    # this folder. Let dyld pick a framework from it when it is newer than the
-    # system copy.
-    LDFLAGS += [
-        "-Wl,-dyld_env,DYLD_VERSIONED_FRAMEWORK_PATH=/Library/Apple/System/Library/StagedFrameworks/Safari",
-    ]
+OS_LIBS += [
+    "-framework CoreFoundation",
+]
+# Safari updates on older macOS versions install newer frameworks in this
+# folder, among them the AuthenticationServices framework that the
+# ASWebAuthenticationSession broker uses. On macOS 10.15 the system copy
+# fails to decode the broker's messages. Safari loads its frameworks from
+# this folder. Let dyld pick a framework from it when it is newer than the
+# system copy.
+LDFLAGS += [
+    "-Wl,-dyld_env,DYLD_VERSIONED_FRAMEWORK_PATH=/Library/Apple/System/Library/StagedFrameworks/Safari",
+]
 
-if CONFIG["MOZ_SANDBOX"] and CONFIG["OS_ARCH"] == "WINNT":
-    # For sandbox includes and the include dependencies those have
-    LOCAL_INCLUDES += [
-        "/security/sandbox/chromium",
-        "/security/sandbox/chromium-shim",
-    ]
 
-    USE_LIBS += [
-        "sandbox_s",
-    ]
-
-    OS_LIBS += [
-        "shlwapi",
-        "winmm",
-    ]
-    DELAYLOAD_DLLS += [
-        "winmm.dll",
-        "user32.dll",
-        "userenv.dll",
-        "usp10.dll",
-    ]
-
-if CONFIG["TARGET_OS"] in ("WINNT", "OSX"):
-    DIRS += ["nmhproxy"]
+DIRS += ["nmhproxy"]
 
 # Control the default heap size.
 # This is the heap returned by GetProcessHeap().
@@ -249,8 +175,6 @@ if CONFIG["TARGET_OS"] in ("WINNT", "OSX"):
 # The heap will grow if need be.
 #
 # Set it to 256k.  See bug 127069.
-if CONFIG["OS_ARCH"] == "WINNT" and CONFIG["CC_TYPE"] not in ("clang", "gcc"):
-    LDFLAGS += ["/HEAP:0x40000"]
 
 DisableStlWrapping()
 

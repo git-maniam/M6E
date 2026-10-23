@@ -53,32 +53,10 @@ LOCAL_INCLUDES += [
     "/third_party/libsrtp/src/include",
 ]
 
-if CONFIG["OS_TARGET"] in ["Darwin", "DragonFly", "FreeBSD", "NetBSD", "OpenBSD"]:
-    if CONFIG["OS_TARGET"] == "Darwin":
-        DEFINES["DARWIN"] = True
-    else:
-        DEFINES["BSD"] = True
-    LOCAL_INCLUDES += [
-        "/dom/media/webrtc/transport/third_party/nrappkit/src/port/darwin/include",
-    ]
-elif CONFIG["OS_TARGET"] == "Linux":
-    DEFINES["LINUX"] = True
-    LOCAL_INCLUDES += [
-        "/dom/media/webrtc/transport/third_party/nrappkit/src/port/linux/include",
-    ]
-elif CONFIG["OS_TARGET"] == "Android":
-    DEFINES["LINUX"] = True
-    DEFINES["ANDROID"] = True
-    LOCAL_INCLUDES += [
-        "/dom/media/webrtc/transport/third_party/nrappkit/src/port/android/include",
-    ]
-elif CONFIG["OS_TARGET"] == "WINNT":
-    DEFINES["WIN"] = True
-    # for stun.h
-    DEFINES["WIN32"] = True
-    LOCAL_INCLUDES += [
-        "/dom/media/webrtc/transport/third_party/nrappkit/src/port/win32/include",
-    ]
+DEFINES["DARWIN"] = True
+LOCAL_INCLUDES += [
+    "/dom/media/webrtc/transport/third_party/nrappkit/src/port/darwin/include",
+]
 
 for var in ("HAVE_STRDUP", "NR_SOCKET_IS_VOID_PTR"):
     DEFINES[var] = True

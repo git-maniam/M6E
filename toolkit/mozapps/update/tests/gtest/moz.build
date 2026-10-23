@@ -22,19 +22,3 @@ USE_LIBS += [
     "updatecommon",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += [
-        "EnterprisePoliciesFlagFileTests.cpp",
-        "EnterprisePoliciesTests.cpp",
-        "TestDirHelpers.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "TestDirHelpers.h",
-    ]
-    USE_STATIC_MSVCRT = True
-    DEFINES["UNICODE"] = True
-    DEFINES["_UNICODE"] = True
-    OS_LIBS += [
-        "shlwapi",
-        "uuid",
-    ]

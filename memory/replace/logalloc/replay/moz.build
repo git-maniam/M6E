@@ -13,39 +13,15 @@ SOURCES += [
     "Replay.cpp",
 ]
 
-if CONFIG["OS_TARGET"] == "WINNT":
-    SOURCES += [
-        "/mozglue/misc/Futex_windows.cpp",
-        "/mozglue/misc/Mutex_futex.cpp",
-        "/mozglue/misc/ProcessType.cpp",
-    ]
-
-if CONFIG["OS_TARGET"] == "Linux":
-    LDFLAGS += ["-static-libstdc++"]
-
-if CONFIG["OS_TARGET"] == "Darwin":
-    # Work around "warning: 'aligned_alloc' is only available on macOS 10.15 or newer"
-    # when building with MACOSX_DEPLOYMENT_TARGET < 10.15 with >= 10.15 SDK.
-    # We have our own definition of the function, so it doesn't matter what the SDK says.
-    SOURCES["Replay.cpp"].flags += ["-Wno-unguarded-availability-new"]
-elif CONFIG["OS_TARGET"] == "Android":
-    # Work around "warning: 'aligned_alloc' is only available on Android 27 or
-    # lower. We have our own definition of the function, so it doesn't matter.
-    SOURCES["Replay.cpp"].flags += ["-Wno-unguarded-availability"]
 
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    OS_LIBS += [
-        "advapi32",
-        "dbghelp",
-        "synchronization",
-    ]
+# Work around "warning: 'aligned_alloc' is only available on macOS 10.15 or newer"
+# when building with MACOSX_DEPLOYMENT_TARGET < 10.15 with >= 10.15 SDK.
+# We have our own definition of the function, so it doesn't matter what the SDK says.
+SOURCES["Replay.cpp"].flags += ["-Wno-unguarded-availability-new"]
 
-if CONFIG["MOZ_LINKER"] and CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    LOCAL_INCLUDES += [
-        "/mozglue/linker",
-    ]
-    DEFINES["__wrap_dladdr"] = "dladdr"
+
+
 
 
 if CONFIG["MOZ_BUILD_APP"] == "memory":
@@ -90,12 +66,7 @@ include("/mozglue/misc/timestamp.mozbuild")
 
 if not CONFIG["MOZ_CODE_COVERAGE"] and not CONFIG["CROSS_COMPILE"]:
     if not CONFIG["MOZ_REPLACE_MALLOC_STATIC"]:
-        if CONFIG["OS_TARGET"] == "WINNT":
-            logalloc_var = "MOZ_REPLACE_MALLOC_LIB"
-        elif CONFIG["OS_TARGET"] == "Darwin":
-            logalloc_var = "DYLD_INSERT_LIBRARIES"
-        else:
-            logalloc_var = "LD_PRELOAD"
+        logalloc_var = "DYLD_INSERT_LIBRARIES"
         logalloc = f"--logalloc={logalloc_var}={OBJDIR}/../{CONFIG['DLL_PREFIX']}logalloc{CONFIG['DLL_SUFFIX']}"
     else:
         logalloc = "--logalloc="

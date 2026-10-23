@@ -65,23 +65,11 @@ UNIFIED_SOURCES += [
 ]
 
 # Android and iOS don't support Legacy Telemetry.
-if CONFIG["MOZ_WIDGET_TOOLKIT"] not in ("android", "uikit"):
-    UNIFIED_SOURCES += [
-        "core/ipc/TelemetryIPC.cpp",
-        "core/ipc/TelemetryIPCAccumulator.cpp",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "core/ipc/TelemetryIPCAccumulatorStub.cpp",
-        "core/ipc/TelemetryIPCStub.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "core/ipc/TelemetryIPC.cpp",
+    "core/ipc/TelemetryIPCAccumulator.cpp",
+]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    UNIFIED_SOURCES += [
-        "other/UntrustedModules.cpp",
-        "other/UntrustedModulesBackupService.cpp",
-        "other/UntrustedModulesDataSerializer.cpp",
-    ]
 
 XPCOM_MANIFESTS += [
     "components.conf",
@@ -116,10 +104,6 @@ EXTRA_JS_MODULES.backgroundtasks += [
     "pings/BackgroundTask_pingsender.sys.mjs",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    EXTRA_JS_MODULES += [
-        "pings/UninstallPing.sys.mjs",
-    ]
 
 TESTING_JS_MODULES += [
     "tests/unit/TelemetryArchiveTesting.sys.mjs",

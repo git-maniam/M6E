@@ -33,7 +33,5 @@ USE_LIBS += [
 DisableStlWrapping()
 
 # On Linux we override the guid_creator.h header and use our own instead
-if CONFIG["OS_TARGET"] in ("Linux", "Android"):
-    DEFINES["COMMON_LINUX_GUID_CREATOR_H__"] = 1
 
 include("/toolkit/crashreporter/crashreporter.mozbuild")

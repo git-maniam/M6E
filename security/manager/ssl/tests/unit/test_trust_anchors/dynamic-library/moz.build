@@ -11,27 +11,11 @@ USE_LIBS += ["test-trust-anchors-static"]
 # On Android, this needs to use the C version to avoid multiple definitions
 # of symbols caused by their presence in libgcc and trust-anchors-static.
 
-if CONFIG["OS_ARCH"] == "Linux" and CONFIG["OS_TARGET"] != "Android":
-    SOURCES += [
-        "stub.cpp",
-    ]
-else:
-    SOURCES += [
-        "stub.c",
-    ]
+SOURCES += [
+    "stub.c",
+]
 
-if CONFIG["OS_TARGET"] == "Android":
-    OS_LIBS += ["m"]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    OS_LIBS += [
-        "advapi32",
-        "bcrypt",
-        "ntdll",
-        "synchronization",
-        "userenv",
-        "ws2_32",
-    ]
 
 SharedLibrary("test_trust_anchors")
 

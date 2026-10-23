@@ -39,26 +39,15 @@ XPIDL_SOURCES += [
     "nsIUnicharOutputStream.idl",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    XPIDL_SOURCES += [
-        "nsILocalFileMac.idl",
-    ]
+XPIDL_SOURCES += [
+    "nsILocalFileMac.idl",
+]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXPORTS += ["nsLocalFileWin.h"]
-    EXPORTS.mozilla += [
-        "FileUtilsWin.h",
-    ]
-    UNIFIED_SOURCES += [
-        "FileUtilsWin.cpp",
-        "nsLocalFileWin.cpp",
-    ]
-else:
-    EXPORTS += ["nsLocalFileUnix.h"]
-    UNIFIED_SOURCES += [
-        "nsLocalFileUnix.cpp",
-    ]
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
+EXPORTS += ["nsLocalFileUnix.h"]
+UNIFIED_SOURCES += [
+    "nsLocalFileUnix.cpp",
+]
+CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
 
 XPIDL_MODULE = "xpcom_io"
 
@@ -146,30 +135,23 @@ UNIFIED_SOURCES += [
     "SpecialSystemDirectory.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    UNIFIED_SOURCES += [
-        "CocoaFileUtils.mm",
-    ]
-    SOURCE_HEADERS += [
-        "CocoaFileUtils.h",
-    ]
+UNIFIED_SOURCES += [
+    "CocoaFileUtils.mm",
+]
+SOURCE_HEADERS += [
+    "CocoaFileUtils.h",
+]
 
-if CONFIG["OS_ARCH"] == "Darwin":
-    UNIFIED_SOURCES += [
-        "DarwinFileUtils.mm",
-    ]
-    SOURCE_HEADERS += [
-        "DarwinFileUtils.h",
-    ]
+UNIFIED_SOURCES += [
+    "DarwinFileUtils.mm",
+]
+SOURCE_HEADERS += [
+    "DarwinFileUtils.h",
+]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    UNIFIED_SOURCES += [
-        "MemoryMappedFileWin32.cpp",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "MemoryMappedFileUnix.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "MemoryMappedFileUnix.cpp",
+]
 
 DEFINES["MOZ_APP_BASENAME"] = '"%s"' % CONFIG["MOZ_APP_BASENAME"]
 
@@ -177,8 +159,6 @@ include("/ipc/chromium/chromium-config.mozbuild")
 
 FINAL_LIBRARY = "xul"
 
-if CONFIG["OS_ARCH"] == "Linux" and "lib64" in CONFIG["libdir"]:
-    DEFINES["HAVE_USR_LIB64_DIR"] = True
 
 LOCAL_INCLUDES += [
     "!..",

@@ -123,14 +123,13 @@ if CONFIG["MOZ_WEBRTC"]:
         "TestWebrtcTaskQueueWrapper.cpp",
     ]
 
-if CONFIG["OS_TARGET"] != "Android":
-    UNIFIED_SOURCES += [
-        "TestCDMStorage.cpp",
-        "TestGMPCrossOrigin.cpp",
-        "TestGMPPluginScan.cpp",
-        "TestGMPRemoveAndDelete.cpp",
-        "TestSpeechModelMapping.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "TestCDMStorage.cpp",
+    "TestGMPCrossOrigin.cpp",
+    "TestGMPPluginScan.cpp",
+    "TestGMPRemoveAndDelete.cpp",
+    "TestSpeechModelMapping.cpp",
+]
 
 if CONFIG["MOZ_APPLEMEDIA"]:
     LOCAL_INCLUDES += [
@@ -144,15 +143,6 @@ if CONFIG["MOZ_APPLEMEDIA"]:
         "TestAppleVTColorSpace.cpp",
     ]
 
-if CONFIG["OS_TARGET"] == "WINNT":
-    LOCAL_INCLUDES += [
-        "/dom/media/platforms/wmf",
-    ]
-    # Not in UNIFIED_SOURCES: WMF.h pulls in <windows.h> which defines a
-    # StrCat macro that conflicts with absl::StrCat in WebRTC unified units.
-    SOURCES += [
-        "TestWMFDeadlock.cpp",
-    ]
 
 if CONFIG["MOZ_WEBRTC"] and CONFIG["OS_TARGET"] != "Android":
     UNIFIED_SOURCES += [
@@ -231,10 +221,9 @@ LOCAL_INCLUDES += [
 
 FINAL_LIBRARY = "xul-gtest"
 
-if CONFIG["CC_TYPE"] in ("clang", "clang-cl"):
-    CXXFLAGS += [
-        "-Wno-inconsistent-missing-override",
-    ]
+CXXFLAGS += [
+    "-Wno-inconsistent-missing-override",
+]
 
 SOURCE_HEADERS += [
     "GMPTestMonitor.h",

@@ -425,29 +425,11 @@ if CONFIG["MOZ_JXL"]:
         "third_party/rust/array-init",
     ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    LICENSES["mit"].paths += [
-        "CoreMessagingXP.dll",
-        "Microsoft.InputStateManager.dll",
-        "Microsoft.Internal.FrameworkUdk.dll",
-        "Microsoft.UI.Composition.OSSupport.dll",
-        "Microsoft.UI.Input.dll",
-        "Microsoft.UI.Windowing.Core.dll",
-        "Microsoft.UI.Windowing.dll",
-        "Microsoft.WindowsAppRuntime.Insights.Resource.dll",
-        "Microsoft.WindowsAppRuntime.dll",
-        "marshal.dll",
-    ]
 
 # The ONNX Runtime is a prebuilt library with no directory in the tree to hang a
 # LICENSED_UNDER off, so its shipped file name is named here per platform.
 if CONFIG["ONNX_RUNTIME"]:
-    if CONFIG["OS_ARCH"] == "WINNT":
-        LICENSES["mit"].paths += ["onnxruntime.dll"]
-    elif CONFIG["OS_ARCH"] == "Darwin":
-        LICENSES["mit"].paths += ["libonnxruntime.dylib"]
-    elif CONFIG["OS_ARCH"] == "Linux":
-        LICENSES["mit"].paths += ["libonnxruntime.so"]
+    LICENSES["mit"].paths += ["libonnxruntime.dylib"]
 
 LICENSES += ["nicer"]
 LICENSES["nicer"].title = "nICEr License"
@@ -629,13 +611,6 @@ LICENSES["superfasthash"].notice = """
 <p>This license applies to files in the directory <code>security/sandbox/chromium/base/third_party/superfasthash/</code>.</p>
 """
 
-if CONFIG["OS_ARCH"] in ("WINNT", "Linux"):
-    LICENSES += ["twemoji"]
-    LICENSES["twemoji"].title = "Twemoji License"
-    LICENSES["twemoji"].text = "twemoji.txt"
-    LICENSES["twemoji"].notice = """
-    <p>This license applies to the emoji art contained within the bundled emoji font file.</p>
-    """
 
 LICENSES += ["unicase"]
 LICENSES["unicase"].title = "unicase License"
@@ -745,11 +720,6 @@ if CONFIG["MOZ_DXCOMPILER"]:
     <p>These libraries are only bundled with Firefox on Windows.</p>
     <p>This license applies to the following dynamic libraries:</p>
     """
-    if CONFIG["OS_ARCH"] == "WINNT":
-        LICENSES["llvm"].paths += [
-            "dxcompiler.dll",
-            "dxil.dll",
-        ]
 
 if CONFIG["MOZ_DXCOMPILER"]:
     LICENSES += ["dxcompiler-deps"]
@@ -762,8 +732,3 @@ if CONFIG["MOZ_DXCOMPILER"]:
     DirectXShaderCompiler's upstream repository</a>.</p>
     <p>These licenses apply to various subsets of the code within the following dynamic libraries:</p>
     """
-    if CONFIG["OS_ARCH"] == "WINNT":
-        LICENSES["dxcompiler-deps"].paths += [
-            "dxcompiler.dll",
-            "dxil.dll",
-        ]

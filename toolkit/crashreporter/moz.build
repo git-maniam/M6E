@@ -29,53 +29,23 @@ FINAL_LIBRARY = "xul"
 DIRS += ["annotations"]
 
 if CONFIG["MOZ_CRASHREPORTER"]:
-    if CONFIG["OS_ARCH"] != "WINNT":
-        USE_LIBS += [
-            "breakpad_client",
-        ]
+    USE_LIBS += [
+        "breakpad_client",
+    ]
 
-    if CONFIG["OS_ARCH"] == "WINNT":
-        DIRS += [
-            "breakpad-windows-libxul",
-            "google-breakpad/src/common",
-            "google-breakpad/src/processor",
-            "mozwer",
-            "mozwer-rust",
-        ]
+    DIRS += [
+        "breakpad-client",
+        "breakpad-client/mac/crash_generation",
+        "breakpad-client/mac/handler",
+        "google-breakpad/src/common",
+        "google-breakpad/src/common/mac",
+        "google-breakpad/src/processor",
+    ]
 
-    elif CONFIG["OS_ARCH"] == "Darwin":
-        DIRS += [
-            "breakpad-client",
-            "breakpad-client/mac/crash_generation",
-            "breakpad-client/mac/handler",
-            "google-breakpad/src/common",
-            "google-breakpad/src/common/mac",
-            "google-breakpad/src/processor",
-        ]
-
-    elif CONFIG["OS_ARCH"] == "Linux":
-        DIRS += [
-            "breakpad-client",
-            "breakpad-client/linux/",
-            "google-breakpad/src/common",
-            "google-breakpad/src/common/linux",
-            "google-breakpad/src/processor",
-        ]
-
-        EXPORTS += [
-            "linux_utils.h",
-        ]
-
-        if CONFIG["MOZ_OXIDIZED_BREAKPAD"]:
-            DIRS += ["rust_minidump_writer_linux"]
-
-    if CONFIG["OS_TARGET"] != "Android":
-        DIRS += [
-            "client/app",
-            "networking",
-        ]
-    else:
-        DIRS += ["android"]
+    DIRS += [
+        "client/app",
+        "networking",
+    ]
 
     DIRS += [
         "breakpad_wrapper",
@@ -92,28 +62,18 @@ if CONFIG["MOZ_CRASHREPORTER"]:
         "nsExceptionHandler.cpp",
     ]
 
-    if CONFIG["OS_ARCH"] == "Darwin":
-        UNIFIED_SOURCES += [
-            "mac_utils.mm",
-        ]
-        SOURCE_HEADERS += [
-            "mac_utils.h",
-        ]
+    UNIFIED_SOURCES += [
+        "mac_utils.mm",
+    ]
+    SOURCE_HEADERS += [
+        "mac_utils.h",
+    ]
 
     MOZ_SRC_FILES += [
         "CrashReports.sys.mjs",
         "CrashSubmit.sys.mjs",
     ]
 
-    if CONFIG["OS_TARGET"] == "Android":
-        DEFINES["ANDROID_NDK_MAJOR_VERSION"] = CONFIG["ANDROID_NDK_MAJOR_VERSION"]
-        DEFINES["ANDROID_NDK_MINOR_VERSION"] = CONFIG["ANDROID_NDK_MINOR_VERSION"]
-        LOCAL_INCLUDES += [
-            "/toolkit/crashreporter/google-breakpad/src/common/android/include",
-        ]
-        UNIFIED_SOURCES += [
-            "bionic_missing_funcs.cpp",
-        ]
 
     DEFINES["UNICODE"] = True
     DEFINES["_UNICODE"] = True
@@ -136,8 +96,7 @@ if CONFIG["MOZ_CRASHREPORTER"]:
 
     include("/toolkit/crashreporter/crashreporter.mozbuild")
 
-    if CONFIG["CC_TYPE"] in ("clang", "gcc"):
-        CXXFLAGS += ["-Wno-error=stack-protector"]
+    CXXFLAGS += ["-Wno-error=stack-protector"]
 else:
     UNIFIED_SOURCES += [
         "nsDummyExceptionHandler.cpp",

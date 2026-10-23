@@ -31,8 +31,7 @@ if CONFIG["COMPILE_ENVIRONMENT"]:
         shared_library
     ]
 
-if CONFIG["CC_TYPE"] in ("clang", "clang-cl"):
-    CXXFLAGS += ["-Wno-varargs"]
+CXXFLAGS += ["-Wno-varargs"]
 
 SOURCE_HEADERS += [
     "jsctypes-test-errno.h",

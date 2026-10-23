@@ -38,18 +38,16 @@ SOURCES += [
     "SwizzleGeneric.cpp",
 ]
 
-if CONFIG["OS_TARGET"] != "Android":
-    UNIFIED_SOURCES += [
-        "TestRect.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "TestRect.cpp",
+]
 
-if CONFIG["OS_TARGET"] == "Darwin":
-    # Not in UNIFIED_SOURCES: MacIOSurface.h includes Carbon headers (MacTypes.h)
-    # which would make Rect/Point/Size ambiguous in all subsequent unified files.
-    SOURCES += [
-        "TestMacIOSurfaceHelpers.cpp",
-        "TestNativeLayerCA.mm",
-    ]
+# Not in UNIFIED_SOURCES: MacIOSurface.h includes Carbon headers (MacTypes.h)
+# which would make Rect/Point/Size ambiguous in all subsequent unified files.
+SOURCES += [
+    "TestMacIOSurfaceHelpers.cpp",
+    "TestNativeLayerCA.mm",
+]
 
 UNIFIED_SOURCES += [
     "/gfx/2d/unittest/%s" % p

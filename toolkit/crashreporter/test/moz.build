@@ -33,34 +33,14 @@ SOURCES += [
     "ExceptionThrower.cpp",
 ]
 
-if CONFIG["CC_TYPE"] == "gcc":
-    SOURCES += [
-        "nsTestCrasher.cpp",
-    ]
-    SOURCES["nsTestCrasher.cpp"].flags += [
-        "-Wno-array-bounds",
-        "-Wno-use-after-free",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "nsTestCrasher.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "nsTestCrasher.cpp",
+]
 
-if CONFIG["OS_TARGET"] == "WINNT" and CONFIG["TARGET_CPU"] == "x86_64":
-    if CONFIG["CC_TYPE"] not in ("gcc", "clang"):
-        SOURCES += [
-            "win64UnwindInfoTests.asm",
-        ]
 
-if CONFIG["CC_TYPE"] == "clang-cl":
-    SOURCES["ExceptionThrower.cpp"].flags += [
-        "-Xclang",
-        "-fcxx-exceptions",
-    ]
-else:
-    SOURCES["ExceptionThrower.cpp"].flags += [
-        "-fexceptions",
-    ]
+SOURCES["ExceptionThrower.cpp"].flags += [
+    "-fexceptions",
+]
 
 if CONFIG["MOZ_PHC"]:
     DEFINES["MOZ_PHC"] = True

@@ -13,14 +13,7 @@ USE_LIBS += ["gkrust"]
 Libxul("xul-real")
 
 if CONFIG["COMPILE_ENVIRONMENT"]:
-    if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("cocoa", "uikit"):
-        full_libname = SHARED_LIBRARY_NAME
-    else:
-        full_libname = "%s%s%s" % (
-            CONFIG["DLL_PREFIX"],
-            SHARED_LIBRARY_NAME,
-            CONFIG["DLL_SUFFIX"],
-        )
+    full_libname = SHARED_LIBRARY_NAME
     GeneratedFile(
         "dependentlibs.list",
         "dependentlibs.list.gtest",
@@ -33,10 +26,5 @@ if CONFIG["COMPILE_ENVIRONMENT"]:
 # Generate GDB pretty printer-autoload files only on Linux. OSX's GDB is
 # too old to support Python pretty-printers; if this changes, we could
 # make this 'ifdef __GNUC__'.
-if CONFIG["OS_ARCH"] == "Linux":
-    # Create a GDB Python auto-load file alongside the libxul shared library
-    # in the build directory.
-    DEFINES["topsrcdir"] = TOPSRCDIR
-    OBJDIR_FILES.dist.bin += ["../libxul.so-gdb.py"]
 
 DUMP_SYMBOLS_FLAGS += ["--count-ctors"]

@@ -37,38 +37,31 @@ if CONFIG["MOZ_DEBUG"]:
     DEFINES["U_DEBUG"] = 1
 
 # ICU requires RTTI
-if CONFIG["CC_TYPE"] in ("clang", "gcc"):
-    CXXFLAGS += ["-frtti"]
-elif CONFIG["OS_TARGET"] == "WINNT":
-    # Remove the -GR- flag so we don't get a bunch of warning spam.
-    COMPILE_FLAGS["OS_CXXFLAGS"] = [
-        f for f in COMPILE_FLAGS["OS_CXXFLAGS"] if f != "-GR-"
-    ] + ["-GR"]
+CXXFLAGS += ["-frtti"]
 
 DisableStlWrapping()
 AllowCompilerWarnings()
 
 # We allow compiler warnings, but we can at least cut down on spammy
 # warnings that get triggered for every file.
-if CONFIG["CC_TYPE"] in ("clang", "clang-cl"):
-    CFLAGS += [
-        "-Wno-comma",
-        "-Wno-implicit-const-int-float-conversion",
-        "-Wno-macro-redefined",
-        "-Wno-microsoft-include",
-        "-Wno-tautological-unsigned-enum-zero-compare",
-        "-Wno-unreachable-code-loop-increment",
-        "-Wno-unreachable-code-return",
-    ]
-    CXXFLAGS += [
-        "-Wno-comma",
-        "-Wno-implicit-const-int-float-conversion",
-        "-Wno-macro-redefined",
-        "-Wno-microsoft-include",
-        "-Wno-tautological-unsigned-enum-zero-compare",
-        "-Wno-unreachable-code-loop-increment",
-        "-Wno-unreachable-code-return",
-    ]
+CFLAGS += [
+    "-Wno-comma",
+    "-Wno-implicit-const-int-float-conversion",
+    "-Wno-macro-redefined",
+    "-Wno-microsoft-include",
+    "-Wno-tautological-unsigned-enum-zero-compare",
+    "-Wno-unreachable-code-loop-increment",
+    "-Wno-unreachable-code-return",
+]
+CXXFLAGS += [
+    "-Wno-comma",
+    "-Wno-implicit-const-int-float-conversion",
+    "-Wno-macro-redefined",
+    "-Wno-microsoft-include",
+    "-Wno-tautological-unsigned-enum-zero-compare",
+    "-Wno-unreachable-code-loop-increment",
+    "-Wno-unreachable-code-return",
+]
 
 for k, v in DEFINES.items():
     if k != "UCONFIG_NO_LEGACY_CONVERSION":

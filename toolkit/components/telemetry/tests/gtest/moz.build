@@ -13,13 +13,12 @@ UNIFIED_SOURCES = [
     "TelemetryTestHelpers.cpp",
 ]
 
-if CONFIG["OS_TARGET"] != "Android":
-    UNIFIED_SOURCES += [
-        "TestCombinedStacks.cpp",
-        "TestEvents.cpp",
-        "TestHistograms.cpp",
-        "TestScalars.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "TestCombinedStacks.cpp",
+    "TestEvents.cpp",
+    "TestHistograms.cpp",
+    "TestScalars.cpp",
+]
 
 FINAL_LIBRARY = "xul-gtest"
 

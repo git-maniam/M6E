@@ -61,71 +61,23 @@ EXPORTS.mozilla.gfx += [
     "UserData.h",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("cocoa", "uikit"):
-    EXPORTS.mozilla.gfx += [
-        "MacIOSurface.h",
-        "ScaledFontBase.h",
-        "ScaledFontMac.h",
-        "UnscaledFontMac.h",
-    ]
-    UNIFIED_SOURCES += [
-        "MacIOSurface.cpp",
-        "NativeFontResourceMac.cpp",
-        "ScaledFontMac.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "NativeFontResourceMac.h",
-    ]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXPORTS.mozilla.gfx += [
-        "DWriteSettings.h",
-        "SourceSurfaceD3D11.h",
-        "UnscaledFontDWrite.h",
-    ]
-    SOURCES += [
-        "DWriteSettings.cpp",
-        "NativeFontResourceDWrite.cpp",
-        "ScaledFontDWrite.cpp",
-        "SourceSurfaceD3D11.cpp",
-    ]
-    DEFINES["WIN32"] = True
-    SOURCE_HEADERS += [
-        "AutoHelpersWin.h",
-        "HelpersWin.h",
-        "HelpersWinFonts.h",
-        "NativeFontResourceDWrite.h",
-        "ScaledFontDWrite.h",
-    ]
+EXPORTS.mozilla.gfx += [
+    "MacIOSurface.h",
+    "ScaledFontBase.h",
+    "ScaledFontMac.h",
+    "UnscaledFontMac.h",
+]
+UNIFIED_SOURCES += [
+    "MacIOSurface.cpp",
+    "NativeFontResourceMac.cpp",
+    "ScaledFontMac.cpp",
+]
+SOURCE_HEADERS += [
+    "NativeFontResourceMac.h",
+]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android", "gtk"):
-    EXPORTS.mozilla.gfx += [
-        "UnscaledFontFreeType.h",
-    ]
-    SOURCES += [
-        "NativeFontResourceFreeType.cpp",
-        "UnscaledFontFreeType.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "NativeFontResourceFreeType.h",
-    ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    SOURCES += [
-        "ScaledFontFontconfig.cpp",
-    ]
 
-    SOURCE_HEADERS += [
-        "ScaledFontFontconfig.h",
-    ]
-
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    SOURCES += [
-        "ScaledFontFreeType.cpp",
-    ]
-
-    SOURCE_HEADERS += [
-        "ScaledFontFreeType.h",
-    ]
 
 EXPORTS.mozilla.gfx += [
     "ConvolutionFilter.h",
@@ -224,13 +176,9 @@ FINAL_LIBRARY = "xul"
 for var in ("USE_CAIRO", "MOZ2D_HAS_MOZ_CAIRO"):
     DEFINES[var] = True
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android", "gtk"):
-    DEFINES["MOZ_ENABLE_FREETYPE"] = True
 
 COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += ["-Werror=switch"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android", "gtk"):
-    CXXFLAGS += CONFIG["CAIRO_FT_CFLAGS"]
 
 LOCAL_INCLUDES += CONFIG["SKIA_INCLUDES"]
 LOCAL_INCLUDES += [

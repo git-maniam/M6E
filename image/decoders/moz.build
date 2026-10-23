@@ -9,8 +9,6 @@ toolkit = CONFIG["MOZ_WIDGET_TOOLKIT"]
 if toolkit == "gtk":
     DIRS += ["icon/gtk", "icon"]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    DIRS += ["icon/win", "icon"]
 
 if toolkit == "cocoa":
     DIRS += ["icon/mac", "icon"]

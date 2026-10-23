@@ -16,20 +16,6 @@ LOCAL_INCLUDES += [
     "../google-breakpad/src/",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    USE_LIBS += [
-        "google_breakpad_libxul_s",
-    ]
-
-    OS_LIBS += [
-        "advapi32",
-        "bcrypt",
-        "dbghelp",
-        "ntdll",
-        "userenv",
-        "ws2_32",
-    ]
-else:
-    USE_LIBS += [
-        "breakpad_client",
-    ]
+USE_LIBS += [
+    "breakpad_client",
+]

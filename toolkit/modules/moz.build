@@ -232,11 +232,10 @@ if CONFIG["MOZ_ASAN_REPORTER"]:
         "AsanReporter.sys.mjs",
     ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    EXTRA_JS_MODULES += [
-        "PropertyListUtils.sys.mjs",
-        "RosettaUtils.sys.mjs",
-    ]
+EXTRA_JS_MODULES += [
+    "PropertyListUtils.sys.mjs",
+    "RosettaUtils.sys.mjs",
+]
 
 EXTRA_JS_MODULES.third_party.jsesc += ["third_party/jsesc/jsesc.mjs"]
 EXTRA_JS_MODULES.sessionstore += [
@@ -248,10 +247,7 @@ EXTRA_JS_MODULES.sessionstore += [
 
 EXTRA_JS_MODULES.third_party.fathom += ["third_party/fathom/fathom.mjs"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("windows", "gtk", "cocoa"):
-    DEFINES["HAVE_SHELL_SERVICE_BOOL"] = "true"
-else:
-    DEFINES["HAVE_SHELL_SERVICE_BOOL"] = "false"
+DEFINES["HAVE_SHELL_SERVICE_BOOL"] = "true"
 
 EXTRA_PP_JS_MODULES += [
     "AppConstants.sys.mjs",
@@ -261,32 +257,26 @@ EXTRA_PP_JS_MODULES += [
 # build time so they must exist before the preprocess step runs.
 PP_FILES_EXTRA_DEPS += ["!/buildid.h", "!/source-repo.h"]
 
-if "Android" != CONFIG["OS_TARGET"]:
-    EXTRA_JS_MODULES += [
-        "ClipboardContextMenu.sys.mjs",
-        "GMPExtractor.worker.js",
-        "GMPInstallManager.sys.mjs",
-        "GMPUtils.sys.mjs",
-        "LightweightThemeConsumer.sys.mjs",
-        "ScheduledTask.sys.mjs",
-    ]
-    TESTING_JS_MODULES += [
-        "tests/modules/SystemDelay.sys.mjs",
-    ]
-    DIRS += [
-        "launchonlogin",
-        "subprocess",
-    ]
+EXTRA_JS_MODULES += [
+    "ClipboardContextMenu.sys.mjs",
+    "GMPExtractor.worker.js",
+    "GMPInstallManager.sys.mjs",
+    "GMPUtils.sys.mjs",
+    "LightweightThemeConsumer.sys.mjs",
+    "ScheduledTask.sys.mjs",
+]
+TESTING_JS_MODULES += [
+    "tests/modules/SystemDelay.sys.mjs",
+]
+DIRS += [
+    "launchonlogin",
+    "subprocess",
+]
 
-if CONFIG["OS_TARGET"] not in ("Android", "WINNT"):
-    DEFINES["MOZ_GOOGLE_LOCATION_SERVICE_API_KEY"] = (
-        CONFIG["MOZ_GOOGLE_LOCATION_SERVICE_API_KEY"] or ""
-    )
+DEFINES["MOZ_GOOGLE_LOCATION_SERVICE_API_KEY"] = (
+    CONFIG["MOZ_GOOGLE_LOCATION_SERVICE_API_KEY"] or ""
+)
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXTRA_JS_MODULES += [
-        "WindowsRegistry.sys.mjs",
-    ]
 
 for var in (
     "MOZ_APP_NAME",

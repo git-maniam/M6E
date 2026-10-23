@@ -44,8 +44,6 @@ LOCAL_INCLUDES += [
     "/xpcom/components",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
 
 with Files("**"):
     BUG_COMPONENT = ("Toolkit", "Startup and Profile System")

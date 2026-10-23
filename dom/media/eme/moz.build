@@ -41,9 +41,6 @@ UNIFIED_SOURCES += [
     "MediaKeySystemAccessPermissionRequest.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    DIRS += ["mediadrm"]
-    LOCAL_INCLUDES += ["/dom/media/platforms/android"]
 
 if CONFIG["MOZ_WMF_CDM"]:
     DIRS += ["mediafoundation"]

@@ -30,8 +30,6 @@ for var in ("OS_CPPFLAGS", "OS_CXXFLAGS", "DEBUG", "OPTIMIZE", "FRAMEPTR"):
 
 DEFINES["CXXFLAGS"] = " ".join(cxx_flags)
 
-if CONFIG["OS_TARGET"] == "Android":
-    DEFINES["MOZ_USE_LIBCXX"] = True
 
 if CONFIG["MOZ_INSTALL_TRACKING"]:
     DEFINES["MOZ_INSTALL_TRACKING"] = 1

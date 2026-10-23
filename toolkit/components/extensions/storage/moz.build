@@ -9,9 +9,8 @@ with Files("**"):
 # a delegate for consumers to use instead. Android Components can then provide
 # an implementation of the delegate that's backed by the Rust component. For
 # details, please see bug 1626506, comment 4.
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    EXTRA_JS_MODULES += [
-        "ExtensionStorageComponents.sys.mjs",
-    ]
+EXTRA_JS_MODULES += [
+    "ExtensionStorageComponents.sys.mjs",
+]
 
 FINAL_LIBRARY = "xul"

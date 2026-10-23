@@ -76,45 +76,29 @@ UNIFIED_SOURCES += [
     "ipc/WebGPUParent.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXPORTS.mozilla.webgpu += [
-        "SharedTextureD3D11.h",
-    ]
-    UNIFIED_SOURCES += [
-        "SharedTextureD3D11.cpp",
-    ]
-
-if CONFIG["OS_TARGET"] == "Linux":
-    EXPORTS.mozilla.webgpu += [
-        "SharedTextureDMABuf.h",
-    ]
-    UNIFIED_SOURCES += [
-        "SharedTextureDMABuf.cpp",
-    ]
 
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("cocoa", "uikit"):
-    EXPORTS.mozilla.webgpu += [
-        "SharedTextureMacIOSurface.h",
-    ]
-    UNIFIED_SOURCES += [
-        "SharedTextureMacIOSurface.cpp",
-    ]
+
+EXPORTS.mozilla.webgpu += [
+    "SharedTextureMacIOSurface.h",
+]
+UNIFIED_SOURCES += [
+    "SharedTextureMacIOSurface.cpp",
+]
 
 if CONFIG["MOZ_DXCOMPILER"] and not CONFIG["MOZ_ARTIFACT_BUILDS"]:
     FINAL_TARGET_FILES += [
         "%" + CONFIG["MOZ_DXC_DLL_PATH"],
     ]
 
-if CONFIG["CC_TYPE"] in ("clang", "clang-cl"):
-    # Errors on all implicit int conversion except 64-to-32.
-    COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += [
-        "-Werror=implicit-int-conversion",
-        "-Wno-shorten-64-to-32",
-    ]
-    COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += [
-        "-Werror=switch",
-    ]
+# Errors on all implicit int conversion except 64-to-32.
+COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += [
+    "-Werror=implicit-int-conversion",
+    "-Wno-shorten-64-to-32",
+]
+COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += [
+    "-Werror=switch",
+]
 
 include("/ipc/chromium/chromium-config.mozbuild")
 

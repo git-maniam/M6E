@@ -347,10 +347,7 @@ UNIFIED_SOURCES += [
     "XiphExtradata.cpp",
 ]
 
-if CONFIG["OS_TARGET"] == "Linux":
-    UNIFIED_SOURCES += ["UnderrunHandlerLinux.cpp"]
-else:
-    UNIFIED_SOURCES += ["UnderrunHandlerNoop.cpp"]
+UNIFIED_SOURCES += ["UnderrunHandlerNoop.cpp"]
 
 if CONFIG["ENABLE_TESTS"] or CONFIG["FUZZING"]:
     UNIFIED_SOURCES += ["MockCubeb.cpp"]
@@ -437,10 +434,9 @@ LOCAL_INCLUDES += CONFIG["SKIA_INCLUDES"]
 # Suppress some GCC warnings being treated as errors:
 #  - about attributes on forward declarations for types that are already
 #    defined, which complains about an important MOZ_EXPORT for android::AString
-if CONFIG["CC_TYPE"] in ("clang", "gcc"):
-    CXXFLAGS += [
-        "-Wno-error=attributes",
-    ]
+CXXFLAGS += [
+    "-Wno-error=attributes",
+]
 
 COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += ["-Werror=switch"]
 

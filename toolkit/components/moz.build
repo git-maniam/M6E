@@ -121,28 +121,22 @@ if CONFIG["BUILD_CTYPES"]:
 
 DIRS += ["autocomplete", "printingui", "satchel", "captivedetect"]
 
-if CONFIG["OS_TARGET"] != "Android":
-    DIRS += ["terminator"]
+DIRS += ["terminator"]
 
 if CONFIG["MOZ_BACKGROUNDTASKS"] and CONFIG["OS_TARGET"] in ("WINNT", "Darwin"):
     DIRS += ["taskscheduler"]
 
 DIRS += ["build"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    DIRS += ["aboutthirdparty", "aboutwindowsmessages", "gfx"]
 
-if CONFIG["TARGET_OS"] not in ("Android", "iOS"):
-    EXTRA_JS_MODULES += [
-        "DefaultCLH.sys.mjs",
-    ]
+EXTRA_JS_MODULES += [
+    "DefaultCLH.sys.mjs",
+]
+XPCOM_MANIFESTS += [
+    "components.conf",
+]
 
-    XPCOM_MANIFESTS += [
-        "components.conf",
-    ]
-
-if CONFIG["MOZ_WIDGET_TOOLKIT"] not in ("android", "windows"):
-    DIRS += ["aboutwebauthn"]
+DIRS += ["aboutwebauthn"]
 
 if CONFIG["MOZ_BUILD_APP"] == "browser":
     DIRS += ["messaging-system", "normandy"]
@@ -161,8 +155,6 @@ if CONFIG["MOZ_UNIFFI_FIXTURES"]:
 if CONFIG["NIGHTLY_BUILD"]:
     DIRS += ["aboutinference"]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    DIRS += ["push"]
 
 UNIFIED_SOURCES += [
     "/toolkit/components/antitracking/ContentBlockingAllowList.cpp",

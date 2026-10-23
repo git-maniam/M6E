@@ -75,110 +75,26 @@ EXPORTS.mozilla.gfx += [
     "ThebesRLBox.h",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    EXPORTS += [
-        "gfxAndroidPlatform.h",
-        "gfxFT2FontBase.h",
-        "gfxFT2Fonts.h",
-    ]
-    SOURCES += [
-        "gfxAndroidPlatform.cpp",
-        "gfxFT2FontBase.cpp",
-        "gfxFT2FontList.cpp",
-        "gfxFT2Fonts.cpp",
-        "gfxFT2Utils.cpp",
-    ]
-
-    SOURCE_HEADERS += [
-        "gfxFT2FontList.h",
-        "gfxFT2Utils.h",
-    ]
-
-    UNIFIED_SOURCES += [
-        "AndroidSystemFontIterator.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "AndroidSystemFontIterator.h",
-    ]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] in ("cocoa", "uikit"):
-    EXPORTS += [
-        "gfxMacUtils.h",
-        "gfxPlatformMac.h",
-        "gfxQuartzNativeDrawing.h",
-        "gfxQuartzSurface.h",
-    ]
-    SOURCES += [
-        "CoreTextFontList.cpp",
-        "gfxCoreTextShaper.cpp",
-        "gfxMacFont.cpp",
-        "gfxMacUtils.cpp",
-        "gfxPlatformMac.cpp",
-        "gfxQuartzNativeDrawing.cpp",
-        "gfxQuartzSurface.cpp",
-    ]
-
-    SOURCE_HEADERS += [
-        "CoreTextFontList.h",
-        "gfxCoreTextShaper.h",
-        "gfxMacFont.h",
-    ]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    EXPORTS += [
-        "gfxFT2FontBase.h",
-        "gfxPlatformGtk.h",
-    ]
-    SOURCES += [
-        "gfxFcPlatformFontList.cpp",
-        "gfxFT2FontBase.cpp",
-        "gfxFT2Utils.cpp",
-        "gfxPlatformGtk.cpp",
-    ]
-
-    SOURCE_HEADERS += [
-        "gfxFcPlatformFontList.h",
-        "gfxFT2FontList.h",
-        "gfxFT2Utils.h",
-    ]
-
-    if CONFIG["MOZ_X11"]:
-        EXPORTS += [
-            "gfxXlibSurface.h",
-        ]
-        EXPORTS.mozilla.gfx += [
-            "XlibDisplay.h",
-        ]
-        SOURCES += [
-            "gfxXlibSurface.cpp",
-            "XlibDisplay.cpp",
-        ]
-
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    EXPORTS += [
-        "gfxDWriteCommon.h",
-        "gfxDWriteFonts.h",
-        "gfxWindowsPlatform.h",
-        "gfxWindowsSurface.h",
-    ]
-    EXPORTS.mozilla.gfx += [
-        "DeviceManagerDx.h",
-        "DisplayConfigWindows.h",
-        "PrintTargetWindows.h",
-    ]
-    SOURCES += [
-        "DisplayConfigWindows.cpp",
-        "gfxDWriteCommon.cpp",
-        "gfxDWriteFonts.cpp",
-        "gfxWindowsPlatform.cpp",
-        "gfxWindowsSurface.cpp",
-        "PrintTargetWindows.cpp",
-    ]
-    UNIFIED_SOURCES += [
-        "gfxDWriteFontList.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "d3dkmtQueryStatistics.h",
-        "gfxDWriteFontList.h",
-    ]
+EXPORTS += [
+    "gfxMacUtils.h",
+    "gfxPlatformMac.h",
+    "gfxQuartzNativeDrawing.h",
+    "gfxQuartzSurface.h",
+]
+SOURCES += [
+    "CoreTextFontList.cpp",
+    "gfxCoreTextShaper.cpp",
+    "gfxMacFont.cpp",
+    "gfxMacUtils.cpp",
+    "gfxPlatformMac.cpp",
+    "gfxQuartzNativeDrawing.cpp",
+    "gfxQuartzSurface.cpp",
+]
+SOURCE_HEADERS += [
+    "CoreTextFontList.h",
+    "gfxCoreTextShaper.h",
+    "gfxMacFont.h",
+]
 
 SOURCES += [
     # Includes mac system header conflicting with point/size,
@@ -230,27 +146,12 @@ UNIFIED_SOURCES += [
     "VsyncSource.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    UNIFIED_SOURCES += [
-        "gfxMacPlatformFontList.mm",
-    ]
-
-    SOURCE_HEADERS += [
-        "gfxMacPlatformFontList.h",
-    ]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "uikit":
-    UNIFIED_SOURCES += [
-        "IOSPlatformFontList.mm",
-    ]
-
-    SOURCE_HEADERS += [
-        "IOSPlatformFontList.h",
-    ]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    UNIFIED_SOURCES += [
-        "D3D11Checks.cpp",
-        "DeviceManagerDx.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "gfxMacPlatformFontList.mm",
+]
+SOURCE_HEADERS += [
+    "gfxMacPlatformFontList.h",
+]
 
 # We use ICU for normalization functions:
 USE_LIBS += [
@@ -270,19 +171,11 @@ LOCAL_INCLUDES += [
     "/image/encoders/jpeg",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android", "gtk"):
-    DEFINES["MOZ_ENABLE_FREETYPE"] = True
 
 if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("android"):
     CXXFLAGS += CONFIG["CAIRO_FT_CFLAGS"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
-    CFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
-    CXXFLAGS += CONFIG["MOZ_PANGO_CFLAGS"]
 
-if CONFIG["MOZ_WAYLAND"]:
-    CXXFLAGS += CONFIG["MOZ_WAYLAND_CFLAGS"]
 
 LOCAL_INCLUDES += CONFIG["SKIA_INCLUDES"]
 

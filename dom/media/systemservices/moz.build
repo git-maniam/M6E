@@ -32,40 +32,29 @@ if CONFIG["MOZ_WEBRTC"]:
         "/tools/profiler/public",
     ]
 
-    if CONFIG["OS_TARGET"] == "Android":
-        UNIFIED_SOURCES += [
-            "android_video_capture/device_info_android.cc",
-            "android_video_capture/video_capture_android.cc",
-        ]
-    elif CONFIG["OS_TARGET"] == "Darwin":
-        UNIFIED_SOURCES += [
-            "objc_video_capture/device_info.mm",
-            "objc_video_capture/device_info_avfoundation.mm",
-            "objc_video_capture/device_info_objc.mm",
-            "objc_video_capture/rtc_video_capture_objc.mm",
-            "objc_video_capture/video_capture.mm",
-            "objc_video_capture/video_capture_avfoundation.mm",
-        ]
-        LOCAL_INCLUDES += [
-            "/third_party/libwebrtc/sdk/objc",
-            "/third_party/libwebrtc/sdk/objc/base",
-        ]
-        CMMFLAGS += [
-            "-fobjc-arc",
-        ]
+    UNIFIED_SOURCES += [
+        "objc_video_capture/device_info.mm",
+        "objc_video_capture/device_info_avfoundation.mm",
+        "objc_video_capture/device_info_objc.mm",
+        "objc_video_capture/rtc_video_capture_objc.mm",
+        "objc_video_capture/video_capture.mm",
+        "objc_video_capture/video_capture_avfoundation.mm",
+    ]
+    LOCAL_INCLUDES += [
+        "/third_party/libwebrtc/sdk/objc",
+        "/third_party/libwebrtc/sdk/objc/base",
+    ]
+    CMMFLAGS += [
+        "-fobjc-arc",
+    ]
 
-    if CONFIG["OS_TARGET"] == "Android":
-        UNIFIED_SOURCES += [
-            "EmptyDesktopCapturer.cpp",
-        ]
-    else:
-        SOURCES += [
-            "video_engine/desktop_capture_impl.cc",
-            "video_engine/tab_capturer.cc",
-        ]
-        UNIFIED_SOURCES += [
-            "video_engine/desktop_device_info.cc",
-        ]
+    SOURCES += [
+        "video_engine/desktop_capture_impl.cc",
+        "video_engine/tab_capturer.cc",
+    ]
+    UNIFIED_SOURCES += [
+        "video_engine/desktop_device_info.cc",
+    ]
 
     if "WEBRTC_USE_PIPEWIRE" in DEFINES:
         UNIFIED_SOURCES += [
@@ -73,12 +62,9 @@ if CONFIG["MOZ_WEBRTC"]:
         ]
         CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
 
-if CONFIG["OS_TARGET"] == "Android":
-    DEFINES["WEBRTC_ANDROID"] = True
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    UNIFIED_SOURCES += ["OSXRunLoopSingleton.cpp"]
-    EXPORTS += ["OSXRunLoopSingleton.h"]
+UNIFIED_SOURCES += ["OSXRunLoopSingleton.cpp"]
+EXPORTS += ["OSXRunLoopSingleton.h"]
 
 EXPORTS.mozilla += [
     "ShmemPool.h",

@@ -91,12 +91,7 @@ SOURCES += [
     "ThreadDelay.cpp",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += ["TimerThreadMonitor_windows.cpp"]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    SOURCES += ["TimerThreadMonitor_darwin.cpp"]
-else:
-    SOURCES += ["TimerThreadMonitor_posix.cpp"]
+SOURCES += ["TimerThreadMonitor_darwin.cpp"]
 
 UNIFIED_SOURCES += [
     "AbstractThread.cpp",
@@ -133,9 +128,6 @@ UNIFIED_SOURCES += [
     "VsyncTaskManager.cpp",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    EXPORTS.mozilla += ["WinHandleWatcher.h"]
-    UNIFIED_SOURCES += ["WinHandleWatcher.cpp"]
 
 # Should match the conditions in toolkit/components/backgroundhangmonitor/moz.build
 if (

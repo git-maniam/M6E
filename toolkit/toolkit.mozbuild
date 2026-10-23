@@ -143,11 +143,6 @@ DIRS += [
     "/other-licenses/snappy",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    DIRS += [
-        "/media/mozva",
-        "/toolkit/system/gnome",
-    ]
 
 if CONFIG["ENABLE_WEBDRIVER"]:
     DIRS += [

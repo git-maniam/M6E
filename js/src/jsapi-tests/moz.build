@@ -198,11 +198,6 @@ if CONFIG["NIGHTLY_BUILD"]:
         "testErrorInterceptorGC.cpp",
     ]
 
-if CONFIG["OS_ARCH"] not in ("WINNT", "Darwin") and CONFIG["OS_TARGET"] != "Android":
-    # open_memstream() not available on Windows, macOS, or Android
-    UNIFIED_SOURCES += [
-        "testPrintError.cpp",
-    ]
 
 if CONFIG["MOZ_DEBUG"] or CONFIG["NIGHTLY_BUILD"]:
     DEFINES["JS_CACHEIR_SPEW"] = True

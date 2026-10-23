@@ -12,22 +12,6 @@ EXPORTS += [
     "updatererrors.h",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    EXPORTS += [
-        "EnterprisePolicies.h",
-        "EnterprisePoliciesFlagFile.h",
-        "pathhash.h",
-        "uachelper.h",
-        "updatehelper.cpp",
-        "updatehelper.h",
-        "updateutils_win.h",
-    ]
-
-    if CONFIG["MOZ_MAINTENANCE_SERVICE"]:
-        EXPORTS += [
-            "certificatecheck.h",
-            "registrycertificates.h",
-        ]
 
 Library("updatecommon")
 
@@ -37,37 +21,9 @@ USE_STATIC_MSVCRT = True
 if CONFIG["DISABLE_UPDATER_AUTHENTICODE_CHECK"]:
     DEFINES["DISABLE_UPDATER_AUTHENTICODE_CHECK"] = True
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    # This forces the creation of updatecommon.lib, which the update agent needs
-    # in order to link to updatecommon library functions.
-    NO_EXPAND_LIBS = True
 
 DisableStlWrapping()
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += [
-        "EnterprisePolicies.cpp",
-        "EnterprisePoliciesFlagFile.cpp",
-        "pathhash.cpp",
-        "uachelper.cpp",
-        "updatehelper.cpp",
-        "updateutils_win.cpp",
-    ]
-    OS_LIBS += [
-        "advapi32",
-        "ole32",
-        "rpcrt4",
-        "shell32",
-    ]
-    if CONFIG["MOZ_MAINTENANCE_SERVICE"]:
-        SOURCES += [
-            "certificatecheck.cpp",
-            "registrycertificates.cpp",
-        ]
-        OS_LIBS += [
-            "crypt32",
-            "wintrust",
-        ]
 
 SOURCES += [
     "/other-licenses/nsis/Contrib/CityHash/cityhash/city.cpp",

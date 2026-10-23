@@ -4,10 +4,6 @@
 
 SOURCES += ["TestFmt.cpp"]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += [
-        "TestNativeNtGTest.cpp",
-    ]
 
 if not CONFIG["MOZ_TSAN"]:
     SOURCES += [

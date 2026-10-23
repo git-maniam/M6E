@@ -22,51 +22,6 @@ EXPORTS += [
     "opengl/OGLShaderProgram.h",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    SOURCES += [
-        "D3D11ShareHandleImage.cpp",
-        "D3D11YCbCrImage.cpp",
-        "D3D11ZeroCopyTextureImage.cpp",
-    ]
-    UNIFIED_SOURCES += [
-        "IMFYCbCrImage.cpp",
-    ]
-    EXPORTS += [
-        "IMFYCbCrImage.h",
-    ]
-    EXPORTS.mozilla.layers += [
-        "d3d11/CompositorD3D11.h",
-        "d3d11/DeviceAttachmentsD3D11.h",
-        "d3d11/FenceD3D11.h",
-        "d3d11/GpuProcessD3D11TextureMap.h",
-        "d3d11/HelpersD3D11.h",
-        "d3d11/ShaderDefinitionsD3D11.h",
-        "d3d11/TextureD3D11.h",
-        "d3d11/TextureHostWrapperD3D11.h",
-        "d3d11/VideoProcessorD3D11.h",
-        "D3D11ShareHandleImage.h",
-        "D3D11YCbCrImage.h",
-        "D3D11ZeroCopyTextureImage.h",
-    ]
-    UNIFIED_SOURCES += [
-        "d3d11/FenceD3D11.cpp",
-        "d3d11/GpuProcessD3D11TextureMap.cpp",
-        "d3d11/TextureD3D11.cpp",
-        "d3d11/TextureHostWrapperD3D11.cpp",
-        "d3d11/VideoProcessorD3D11.cpp",
-    ]
-    SOURCES += [
-        "d3d11/CompositorD3D11.cpp",
-        "d3d11/DeviceAttachmentsD3D11.cpp",
-    ]
-
-    if CONFIG["MOZ_WMF_MEDIA_ENGINE"]:
-        EXPORTS.mozilla.layers += [
-            "DcompSurfaceImage.h",
-        ]
-        UNIFIED_SOURCES += [
-            "DcompSurfaceImage.cpp",
-        ]
 
 EXPORTS.gfxipc += [
     "ipc/ShadowLayerUtils.h",
@@ -244,73 +199,38 @@ EXPORTS.mozilla.layers += [
     "ZoomConstraints.h",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    EXPORTS.mozilla.layers += [
-        "DMABUFSurfaceImage.h",
-        "opengl/DMABUFTextureClientOGL.h",
-        "opengl/DMABUFTextureHostOGL.h",
-    ]
-    SOURCES += [
-        "DMABUFSurfaceImage.cpp",
-        "opengl/DMABUFTextureClientOGL.cpp",
-        "opengl/DMABUFTextureHostOGL.cpp",
-    ]
 
-if CONFIG["MOZ_WAYLAND"]:
-    EXPORTS.mozilla.layers += [
-        "NativeLayerWayland.h",
-        "SurfacePoolWayland.h",
-    ]
-    UNIFIED_SOURCES += [
-        "NativeLayerWayland.cpp",
-        "SurfacePoolWayland.cpp",
-    ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("cocoa", "uikit"):
-    EXPORTS.mozilla.layers += [
-        "GpuFenceMTLSharedEvent.h",
-        "NativeLayerCA.h",
-        "NativeLayerMacSurfaceHandler.h",
-        "NativeLayerRemoteMac.h",
-        "NativeLayerRootRemoteMacChild.h",
-        "NativeLayerRootRemoteMacParent.h",
-        "SurfacePoolCA.h",
-    ]
-    EXPORTS += [
-        "MacIOSurfaceHelpers.h",
-        "MacIOSurfaceImage.h",
-    ]
-    UNIFIED_SOURCES += [
-        "NativeLayerCA.mm",
-        "NativeLayerMacSurfaceHandler.mm",
-        "NativeLayerRemoteMac.mm",
-        "NativeLayerRootRemoteMacChild.mm",
-        "NativeLayerRootRemoteMacParent.mm",
-        "SurfacePoolCA.mm",
-    ]
-    SOURCES += [
-        "GpuFenceMTLSharedEvent.mm",
-        "MacIOSurfaceHelpers.cpp",
-        "MacIOSurfaceImage.cpp",
-    ]
-    OS_LIBS += [
-        "-framework IOSurface",
-    ]
+EXPORTS.mozilla.layers += [
+    "GpuFenceMTLSharedEvent.h",
+    "NativeLayerCA.h",
+    "NativeLayerMacSurfaceHandler.h",
+    "NativeLayerRemoteMac.h",
+    "NativeLayerRootRemoteMacChild.h",
+    "NativeLayerRootRemoteMacParent.h",
+    "SurfacePoolCA.h",
+]
+EXPORTS += [
+    "MacIOSurfaceHelpers.h",
+    "MacIOSurfaceImage.h",
+]
+UNIFIED_SOURCES += [
+    "NativeLayerCA.mm",
+    "NativeLayerMacSurfaceHandler.mm",
+    "NativeLayerRemoteMac.mm",
+    "NativeLayerRootRemoteMacChild.mm",
+    "NativeLayerRootRemoteMacParent.mm",
+    "SurfacePoolCA.mm",
+]
+SOURCES += [
+    "GpuFenceMTLSharedEvent.mm",
+    "MacIOSurfaceHelpers.cpp",
+    "MacIOSurfaceImage.cpp",
+]
+OS_LIBS += [
+    "-framework IOSurface",
+]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    EXPORTS.mozilla.layers += [
-        "AndroidHardwareBuffer.h",
-        "AndroidImageConsumer.h",
-        "AndroidImageReader.h",
-    ]
-    UNIFIED_SOURCES += [
-        "AndroidHardwareBuffer.cpp",
-        "AndroidImageConsumer.cpp",
-        "AndroidImageReader.cpp",
-        "apz/src/AndroidAPZ.cpp",
-        "apz/src/AndroidFlingPhysics.cpp",
-        "apz/src/AndroidVelocityTracker.cpp",
-    ]
 
 UNIFIED_SOURCES += [
     "AnimationHelper.cpp",
@@ -477,11 +397,10 @@ DEFINES["GOOGLE_PROTOBUF_NO_RTTI"] = True
 DEFINES["GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER"] = True
 DEFINES["MOZ_APP_VERSION"] = CONFIG["MOZ_APP_VERSION"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] in ("cocoa", "uikit"):
-    SOURCES += [
-        "opengl/MacIOSurfaceTextureClientOGL.cpp",
-        "opengl/MacIOSurfaceTextureHostOGL.cpp",
-    ]
+SOURCES += [
+    "opengl/MacIOSurfaceTextureClientOGL.cpp",
+    "opengl/MacIOSurfaceTextureHostOGL.cpp",
+]
 
 IPDL_SOURCES += [
     "ipc/LayersMessages.ipdlh",
@@ -504,12 +423,6 @@ IPDL_SOURCES += [
 
 include("/ipc/chromium/chromium-config.mozbuild")
 
-if CONFIG["COMPILE_ENVIRONMENT"] and CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    GeneratedFile(
-        "CompositorD3D11Shaders.h",
-        script="d3d11/genshaders.py",
-        inputs=["d3d11/shaders.manifest"],
-    )
 
 LOCAL_INCLUDES += [
     "/docshell/base",  # for nsDocShell.h
@@ -533,22 +446,12 @@ BROWSER_CHROME_MANIFESTS += [
     "apz/test/mochitest/browserSidebarRevamp.toml",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    CXXFLAGS += CONFIG["MOZ_GTK3_CFLAGS"]
-    CXXFLAGS += CONFIG["MOZ_DRM_CFLAGS"]
-    if not CONFIG["MOZ_SYSTEM_LIBDRM"]:
-        LOCAL_INCLUDES += [
-            "/third_party/drm/drm/include",
-            "/third_party/drm/drm/include/libdrm",
-        ]
 
 COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += ["-Werror=switch"]
 
 LOCAL_INCLUDES += CONFIG["SKIA_INCLUDES"]
 
 # Suppress warnings in third-party code.
-if CONFIG["CC_TYPE"] == "gcc":
-    CXXFLAGS += ["-Wno-maybe-uninitialized"]
 
 UNIFIED_SOURCES += []
 

@@ -30,17 +30,6 @@ UNIFIED_SOURCES += [
     "nsUDPSocketProvider.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    XPIDL_SOURCES += [
-        "nsINamedPipeService.idl",
-    ]
-    EXPORTS += [
-        "nsNamedPipeService.h",
-    ]
-    UNIFIED_SOURCES += ["nsNamedPipeIOLayer.cpp", "nsNamedPipeService.cpp"]
-    SOURCE_HEADERS += [
-        "nsNamedPipeIOLayer.h",
-    ]
 
 # for socket
 OS_LIBS += CONFIG["SOCKET_LIBS"]

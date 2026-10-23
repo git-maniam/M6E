@@ -92,11 +92,6 @@ pref_groups = [
     "widget",
     "zoom",
 ]
-if CONFIG["OS_TARGET"] == "Android":
-    pref_groups += [
-        "android",
-        "consoleservice",
-    ]
 if CONFIG["FUZZING"]:
     pref_groups += ["fuzzing"]
 if CONFIG["MOZ_THUNDERBIRD"]:
@@ -168,20 +163,9 @@ if CONFIG["MOZ_WEBEXT_WEBIDL_ENABLED"]:
 if CONFIG["MOZ_ARTIFACT_BUILDS"]:
     DEFINES["MOZ_ARTIFACT_BUILDS"] = True
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    if not CONFIG["MOZ_ANDROID_FAT_AAR_ARCHITECTURES"]:
-        FINAL_TARGET_PP_FILES[CONFIG["ANDROID_CPU_ARCH"]] += [
-            "greprefs.js",
-        ]
-    else:
-        for arch in CONFIG["MOZ_ANDROID_FAT_AAR_ARCHITECTURES"]:
-            FINAL_TARGET_FILES[arch] += [
-                "!/dist/fat-aar/output/geckoview/{arch}/greprefs.js".format(arch=arch),
-            ]
-else:
-    FINAL_TARGET_PP_FILES += [
-        "greprefs.js",
-    ]
+FINAL_TARGET_PP_FILES += [
+    "greprefs.js",
+]
 
 SOURCE_HEADERS += [
     "SharedPrefMap.h",

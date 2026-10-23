@@ -17,7 +17,4 @@ NO_EXPAND_LIBS = True
 DIST_INSTALL = True
 
 # LTO can mess things up.
-if CONFIG["CC_TYPE"] == "clang-cl":
-    CFLAGS += ["-clang:-fno-lto"]
-else:
-    CFLAGS += ["-fno-lto"]
+CFLAGS += ["-fno-lto"]

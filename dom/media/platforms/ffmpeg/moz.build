@@ -21,17 +21,6 @@ DIRS += [
 
 UNIFIED_SOURCES += ["FFmpegRuntimeLinker.cpp"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "gtk":
-    include("/ipc/chromium/chromium-config.mozbuild")
-    UNIFIED_SOURCES += ["VALibWrapper.cpp"]
-    SOURCE_HEADERS += [
-        "VALibWrapper.h",
-    ]
-    if CONFIG["MOZ_ENABLE_VULKAN_VIDEO"]:
-        UNIFIED_SOURCES += ["VulkanDeviceHolder.cpp"]
-        SOURCE_HEADERS += [
-            "VulkanDeviceHolder.h",
-        ]
 
 LOCAL_INCLUDES += [
     "/media/ffvpx/",

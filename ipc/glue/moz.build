@@ -76,86 +76,27 @@ EXPORTS.mozilla.ipc += [
     "UtilityProcessSandboxing.h",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += ["WindowsMessageLoop.cpp"]
-    EXPORTS.mozilla.ipc += [
-        "WindowsMessageLoop.h",
-    ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += [
-        "CrossProcessMutex_windows.cpp",
-    ]
-elif not CONFIG["OS_ARCH"] in ("NetBSD", "OpenBSD"):
-    UNIFIED_SOURCES += [
-        "CrossProcessMutex_posix.cpp",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "CrossProcessMutex_unimplemented.cpp",
-    ]
+UNIFIED_SOURCES += [
+    "CrossProcessMutex_posix.cpp",
+]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    SOURCES += [
-        "CrossProcessSemaphore_windows.cpp",
-    ]
-elif CONFIG["OS_ARCH"] == "Darwin":
-    SOURCES += [
-        "CrossProcessSemaphore_mach.cpp",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "CrossProcessSemaphore_posix.cpp",
-    ]
+SOURCES += [
+    "CrossProcessSemaphore_mach.cpp",
+]
 
-if CONFIG["OS_ARCH"] == "Darwin":
-    UNIFIED_SOURCES += ["SharedMemoryPlatform_mach.cpp"]
-elif CONFIG["OS_ARCH"] == "WINNT":
-    UNIFIED_SOURCES += ["SharedMemoryPlatform_windows.cpp"]
-elif CONFIG["OS_TARGET"] == "Android":
-    UNIFIED_SOURCES += ["SharedMemoryPlatform_android.cpp"]
-else:
-    UNIFIED_SOURCES += ["SharedMemoryPlatform_posix.cpp"]
+UNIFIED_SOURCES += ["SharedMemoryPlatform_mach.cpp"]
 
 
-if CONFIG["OS_ARCH"] == "Linux":
-    UNIFIED_SOURCES += [
-        "ProcessUtils_linux.cpp",
-        "SetProcessTitle.cpp",
-    ]
-    EXPORTS.mozilla.ipc += [
-        "SetProcessTitle.h",
-    ]
-elif CONFIG["OS_ARCH"] in ("DragonFly", "FreeBSD", "NetBSD", "OpenBSD"):
-    UNIFIED_SOURCES += [
-        "ProcessUtils_bsd.cpp",
-        "SetProcessTitle.cpp",
-    ]
-    EXPORTS.mozilla.ipc += [
-        "SetProcessTitle.h",
-    ]
-elif CONFIG["TARGET_OS"] == "OSX":
-    UNIFIED_SOURCES += ["ProcessUtils_mac.mm"]
-else:
-    UNIFIED_SOURCES += [
-        "ProcessUtils_none.cpp",
-    ]
+UNIFIED_SOURCES += ["ProcessUtils_mac.mm"]
 
-if CONFIG["OS_ARCH"] != "WINNT":
-    EXPORTS.mozilla.ipc += [
-        "FileDescriptorShuffle.h",
-    ]
-    UNIFIED_SOURCES += [
-        "FileDescriptorShuffle.cpp",
-    ]
+EXPORTS.mozilla.ipc += [
+    "FileDescriptorShuffle.h",
+]
+UNIFIED_SOURCES += [
+    "FileDescriptorShuffle.cpp",
+]
 
-if CONFIG["TARGET_OS"] == "iOS":
-    EXPORTS.mozilla.ipc += [
-        "ExtensionKitUtils.h",
-    ]
-    UNIFIED_SOURCES += [
-        "ExtensionKitUtils.mm",
-    ]
 
 EXPORTS.ipc += [
     "EnumSerializer.h",
@@ -213,23 +154,13 @@ SOURCES += [
     "BackgroundParentImpl.cpp",
 ]
 
-if CONFIG["OS_ARCH"] == "Darwin":
-    # GeckoChildProcessHost.cpp cannot be built unified due to OSX header
-    # clashes with TextRange.
-    SOURCES += [
-        "GeckoChildProcessHost.cpp",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "GeckoChildProcessHost.cpp",
-    ]
+# GeckoChildProcessHost.cpp cannot be built unified due to OSX header
+# clashes with TextRange.
+SOURCES += [
+    "GeckoChildProcessHost.cpp",
+]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    UNIFIED_SOURCES += ["MessagePump_windows.cpp"]
-elif CONFIG["OS_ARCH"] == "Darwin":
-    UNIFIED_SOURCES += ["MessagePump_mac.mm"]
-elif CONFIG["OS_TARGET"] == "Android":
-    UNIFIED_SOURCES += ["MessagePump_android.cpp"]
+UNIFIED_SOURCES += ["MessagePump_mac.mm"]
 
 LOCAL_INCLUDES += [
     "!/dist/include/libwebrtc_overrides",
@@ -289,12 +220,7 @@ include("/ipc/chromium/chromium-config.mozbuild")
 
 FINAL_LIBRARY = "xul"
 
-if CONFIG["TARGET_OS"] == "OSX":
-    OS_LIBS += ["bsm"]  # for audit_token_to_pid
-elif CONFIG["TARGET_OS"] == "iOS":
-    OS_LIBS += ["-framework BrowserEngineKit"]
-elif CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    OS_LIBS += ["android"]
+OS_LIBS += ["bsm"]  # for audit_token_to_pid
 
 extra_vars = ()
 if CONFIG["NIGHTLY_BUILD"] and not CONFIG["MOZ_NO_SMART_CARDS"]:
@@ -313,12 +239,6 @@ for var in (
 ) + extra_vars:
     DEFINES[var] = '"%s"' % CONFIG[var]
 
-if CONFIG["MOZ_SANDBOX"] and CONFIG["OS_ARCH"] == "WINNT":
-    LOCAL_INCLUDES += [
-        "/security/sandbox/chromium",
-        "/security/sandbox/chromium-shim",
-        "/security/sandbox/win/src/sandboxbroker",
-    ]
 
 TEST_DIRS += [
     "test/gtest",

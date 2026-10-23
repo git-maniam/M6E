@@ -33,19 +33,9 @@ EXPORTS.mozilla.contentanalysis += [
     "ContentAnalysisIPCTypes.h",
 ]
 
-if CONFIG["OS_ARCH"] == "WINNT":
-    UNIFIED_SOURCES += [
-        "../../../third_party/content_analysis_sdk/browser/src/client_win.cc",
-        "../../../third_party/content_analysis_sdk/common/utils_win.cc",
-    ]
-elif CONFIG["OS_ARCH"] == "Darwin":
-    UNIFIED_SOURCES += [
-        "../../../third_party/content_analysis_sdk/browser/src/client_mac.cc",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "../../../third_party/content_analysis_sdk/browser/src/client_posix.cc",
-    ]
+UNIFIED_SOURCES += [
+    "../../../third_party/content_analysis_sdk/browser/src/client_mac.cc",
+]
 
 LOCAL_INCLUDES += [
     "../../../third_party/content_analysis_sdk",

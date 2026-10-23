@@ -32,31 +32,21 @@ UNIFIED_SOURCES += [
     "HeadlessWidget.cpp",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "uikit":
-    EXPORTS.mozilla.widget += [
-        "HeadlessCompositorWidgetParent.h",
-    ]
-
-    UNIFIED_SOURCES += [
-        "HeadlessCompositorWidgetParent.cpp",
-    ]
+EXPORTS.mozilla.widget += [
+    "HeadlessCompositorWidgetParent.h",
+]
+UNIFIED_SOURCES += [
+    "HeadlessCompositorWidgetParent.cpp",
+]
 
 if widget_dir == "gtk":
     UNIFIED_SOURCES += [
         "HeadlessLookAndFeelGTK.cpp",
     ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    UNIFIED_SOURCES += [
-        "HeadlessKeyBindingsCocoa.mm",
-    ]
-else:
-    UNIFIED_SOURCES += [
-        "HeadlessKeyBindings.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "HeadlessKeyBindings.h",
-    ]
+UNIFIED_SOURCES += [
+    "HeadlessKeyBindingsCocoa.mm",
+]
 
 include("/ipc/chromium/chromium-config.mozbuild")
 

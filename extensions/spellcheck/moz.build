@@ -4,9 +4,8 @@
 
 DIRS += ["idl", "ipc", "src"]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    # GeckoView disables hunspell spellchecker.
-    DIRS += ["hunspell", "locales"]
+# GeckoView disables hunspell spellchecker.
+DIRS += ["hunspell", "locales"]
 
 MOCHITEST_CHROME_MANIFESTS += ["tests/chrome/chrome.toml"]
 MOCHITEST_MANIFESTS += ["tests/mochitest/mochitest.toml"]

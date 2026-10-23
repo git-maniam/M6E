@@ -285,18 +285,9 @@ else:
     ]
 
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "windows":
-    SOURCES += [
-        "nsURLHelperWin.cpp",
-        "ShutdownLayer.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "ShutdownLayer.h",
-    ]
-else:
-    SOURCES += [
-        "nsURLHelperUnix.cpp",
-    ]
+SOURCES += [
+    "nsURLHelperUnix.cpp",
+]
 
 EXTRA_JS_MODULES += [
     "EssentialDomainsRemoteSettings.sys.mjs",
@@ -331,15 +322,10 @@ LOCAL_INCLUDES += [
     "/xpcom/components",
 ]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "cocoa":
-    LOCAL_INCLUDES += [
-        "/xpcom/base",
-    ]
+LOCAL_INCLUDES += [
+    "/xpcom/base",
+]
 
-if CONFIG["MOZ_WIDGET_TOOLKIT"] == "android":
-    LOCAL_INCLUDES += [
-        "/netwerk/system/android",
-    ]
 
 GeneratedFile(
     "ascii_pac_utils.inc", script="makecppstring.py", inputs=["ascii_pac_utils.js"]
