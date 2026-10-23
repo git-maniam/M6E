@@ -274,7 +274,12 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1 is done. P4.2a (Homebrew clang 23 and cross-language ThinLTO) is in `mozconfig` and committed as work in progress; next is the full rebuild, then a check that LTO is really on (`MOZ_LTO` in `obj-m6e/config/autoconf.mk`) and measuring. If the ld64 link fails, try `ac_add_options --enable-linker=lld` (Homebrew `lld` is pinned).
+**Checkpoint:** P4.1 is done. P4.2a (Homebrew clang 23 and cross-language ThinLTO) is in `mozconfig` and committed as work in progress; the full rebuild is running. Next: check that it links and runs, confirm `MOZ_LTO = 1` and `MOZ_LTO_RUST_CROSS = thin` in `obj-m6e/config/autoconf.mk`, then measure it against `artifacts/baseline-P4.1`.
+
+**P4.2a toolchain findings:**
+- **libc++ headers:** Homebrew clang uses its own libc++ 23 headers, which crash bindgen (`Not an item: ItemId(…)` in the `gecko-profiler` build script) and don't match the system `libc++.dylib`. `CXX` therefore adds `-nostdinc++ -isystem <SDK>/usr/include/c++/v1`, which configure also passes to bindgen.
+- **Linker:** with Homebrew clang, configure picks lld, which can't resolve clang 23's `objc_msgSendClass$…` stubs (in `ChannelPrefs`). `--enable-linker=ld64` uses Xcode 27's ld, and the clang driver hands it Homebrew's `libLTO.dylib`.
+- **Error messages:** mach's agent mode filters the terminal output. The full log is `obj-m6e/.mozbuild/logs/build/build_log_<time>.log`.
 
 **P4.1 results (Phase 3 build, Apple clang 21, no LTO):**
 
