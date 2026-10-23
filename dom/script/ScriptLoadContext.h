@@ -25,6 +25,7 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/StaticPrefs_dom.h"
 #include "mozilla/TaskController.h"  // mozilla::Task
+#include "mozilla/TimeStamp.h"       // mozilla::TimeDuration
 #include "mozilla/Utf8.h"            // mozilla::Utf8Unit
 #include "mozilla/Vector.h"
 #include "mozilla/dom/SRIMetadata.h"
@@ -113,6 +114,10 @@ class CompileOrDecodeTask : public mozilla::Task {
   bool IsDecodeTask() const { return mType == Type::Decode; }
   bool IsWasmTask() const { return mType == Type::Wasm; }
 
+  // M6E: time spent compiling or decoding off the main thread, for the page
+  // telemetry panel (D29). Taken once the task has finished.
+  mozilla::TimeDuration TakeRunTime() MOZ_EXCLUDES(mMutex);
+
   inline StencilCompileOrDecodeTask* AsStencilCompileOrDecodeTask();
   inline WasmCompileTask* AsWasmCompileTask();
   ScriptDecodeTask* AsScriptDecodeTask();
@@ -122,6 +127,8 @@ class CompileOrDecodeTask : public mozilla::Task {
   mozilla::Mutex mMutex;
 
   mozilla::Atomic<bool> mIsCancelled{false};
+
+  mozilla::TimeDuration mRunTime MOZ_GUARDED_BY(mMutex);
 
  private:
   // Remembers this task so that it is waited for at shutdown.

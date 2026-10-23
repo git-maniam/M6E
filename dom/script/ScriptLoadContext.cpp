@@ -7,6 +7,7 @@
 #include "GeckoProfiler.h"
 #include "ModuleLoadRequest.h"
 #include "js/SourceText.h"
+#include "js/TelemetryTimers.h"  // JS::AddCompileTime
 #include "js/loader/LoadContextBase.h"
 #include "js/loader/ModuleLoadRequest.h"
 #include "mozilla/HoldDropJSObjects.h"
@@ -286,6 +287,8 @@ already_AddRefed<JS::Stencil> ScriptLoadContext::StealOffThreadResult(
 
   StencilCompileOrDecodeTask* task =
       compileOrDecodeTask->AsStencilCompileOrDecodeTask();
+  // M6E: count the off-thread parse in the page's compile time (D29).
+  JS::AddCompileTime(aCx, compileOrDecodeTask->TakeRunTime());
   RefPtr<JS::Stencil> stencil = task->StealResult(aCx, aInstantiationStorage);
 
   if (mRequest->IsRetrievedAsSerializedStencil()) {

@@ -5167,6 +5167,13 @@ JS_PUBLIC_API JS::JSTimers JS::GetJSTimers(JSContext* cx) {
   return cx->realm()->timers;
 }
 
+JS_PUBLIC_API void JS::AddCompileTime(JSContext* cx,
+                                      mozilla::TimeDuration time) {
+  if (cx->realm()) {
+    cx->realm()->timers.compileTime += time;
+  }
+}
+
 namespace js {
 
 JS_PUBLIC_API void NoteIntentionalCrash() {

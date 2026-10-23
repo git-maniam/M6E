@@ -2490,10 +2490,17 @@ Task::TaskResult CompileOrDecodeTask::Run() {
     return TaskResult::Complete;
   }
 
+  TimeStamp start = TimeStamp::Now();
   TaskResult result = RunTask();
+  mRunTime += TimeStamp::Now() - start;
   // An interrupted task runs again later, so it is still worth waiting for.
   mMayStillRun = result != TaskResult::Complete;
   return result;
+}
+
+TimeDuration CompileOrDecodeTask::TakeRunTime() {
+  MutexAutoLock lock(mMutex);
+  return std::exchange(mRunTime, TimeDuration());
 }
 
 void CompileOrDecodeTask::Cancel() {

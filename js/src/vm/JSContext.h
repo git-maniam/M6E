@@ -281,6 +281,10 @@ struct JS_PUBLIC_API JSContext : public JS::RootingContext,
   // double-count execution time in reentrant situations.
   js::ContextData<bool> measuringExecutionTimeEnabled_;
 
+  // M6E: nesting depth of compilation timers, so that only the outermost
+  // compilation is timed (D29).
+  js::ContextData<uint32_t> compileTimerDepth_;
+
   // This variable is used by the HelperThread scheduling to update the priority
   // of task based on whether JavaScript is being executed on the main thread.
   mozilla::Atomic<bool, mozilla::ReleaseAcquire> isExecuting_;
@@ -296,6 +300,8 @@ struct JS_PUBLIC_API JSContext : public JS::RootingContext,
   void setMeasuringExecutionTimeEnabled(bool value) {
     measuringExecutionTimeEnabled_ = value;
   }
+
+  uint32_t& compileTimerDepth() { return compileTimerDepth_.ref(); }
 
   // While JSContexts are meant to be used on a single thread, this reference is
   // meant to be shared to helper thread tasks. This is used by helper threads

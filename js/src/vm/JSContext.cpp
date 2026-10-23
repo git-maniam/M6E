@@ -1145,6 +1145,7 @@ JSContext::JSContext(JSRuntime* runtime, const JS::ContextOptions& options)
       runtime_(runtime),
       options_(this, options),
       measuringExecutionTimeEnabled_(this, false),
+      compileTimerDepth_(this, 0),
       jitActivation(this, nullptr),
       isolate(this, nullptr),
       activation_(this, nullptr),

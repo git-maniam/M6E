@@ -54,6 +54,43 @@
 #include "vm/ObjectOperations-inl.h"  // HasProperty
 
 using namespace js;
+
+namespace {
+
+// M6E: page telemetry (D29). Adds the outermost main-thread compilation to
+// the realm's timers, and keeps the part spent inside timed execution apart
+// so that execution time can exclude it.
+class MOZ_RAII AutoCompileTimer {
+  JSContext* cx_;
+  JS::Realm* realm_ = nullptr;
+  mozilla::TimeDuration JS::JSTimers::*field_;
+  mozilla::TimeStamp start_;
+
+ public:
+  AutoCompileTimer(JSContext* maybeCx, mozilla::TimeDuration JS::JSTimers::*field)
+      : cx_(maybeCx && maybeCx->realm() ? maybeCx : nullptr), field_(field) {
+    if (cx_ && cx_->compileTimerDepth()++ == 0) {
+      realm_ = cx_->realm();
+      start_ = mozilla::TimeStamp::Now();
+    }
+  }
+  AutoCompileTimer(const AutoCompileTimer&) = delete;
+  AutoCompileTimer& operator=(const AutoCompileTimer&) = delete;
+
+  ~AutoCompileTimer() {
+    if (!cx_ || --cx_->compileTimerDepth() != 0) {
+      return;
+    }
+    mozilla::TimeDuration elapsed = mozilla::TimeStamp::Now() - start_;
+    JS::JSTimers& timers = realm_->timers;
+    timers.*field_ += elapsed;
+    if (cx_->isExecutingRef() && cx_->measuringExecutionTimeEnabled()) {
+      timers.compileTimeWhileExecuting += elapsed;
+    }
+  }
+};
+
+}  // namespace
 using namespace js::frontend;
 
 using mozilla::Maybe;
@@ -305,6 +342,7 @@ template <typename Unit>
     CompilationStencil** initialStencilOut,
     InitialStencilAndDelazifications** stencilsOut,
     CompilationGCOutput* gcOutput) {
+  AutoCompileTimer compileTimer(maybeCx, &JS::JSTimers::compileTime);
   if (input.options.selfHostingMode) {
     if (!input.initForSelfHostingGlobal(fc)) {
       return false;
@@ -461,6 +499,7 @@ static inline ScriptSource* getSource(
 template <typename T>
 bool InstantiateStencilsImpl(JSContext* cx, CompilationInput& input, T& stencil,
                              CompilationGCOutput& gcOutput) {
+  AutoCompileTimer compileTimer(cx, &JS::JSTimers::compileTime);
   {
     AutoGeckoProfilerEntry pseudoFrame(cx, "stencil instantiate",
                                        JS::ProfilingCategoryPair::JS_Parsing);
@@ -681,6 +720,7 @@ static JSScript* CompileEvalScriptImpl(
     JSContext* cx, const JS::ReadOnlyCompileOptions& options,
     SourceText<Unit>& srcBuf, JS::Handle<js::Scope*> enclosingScope,
     JS::Handle<JSObject*> enclosingEnv) {
+  AutoCompileTimer compileTimer(cx, &JS::JSTimers::compileTime);
   JS::Rooted<JSScript*> script(cx);
   {
     AutoReportFrontendContext fc(cx);
@@ -1285,6 +1325,7 @@ template <typename Unit>
 static ModuleObject* CompileModuleImpl(
     JSContext* cx, FrontendContext* fc,
     const JS::ReadOnlyCompileOptions& optionsInput, SourceText<Unit>& srcBuf) {
+  AutoCompileTimer compileTimer(cx, &JS::JSTimers::compileTime);
   AutoAssertReportedException assertException(cx, fc);
 
   CompileOptions options(cx, optionsInput);
@@ -1497,7 +1538,8 @@ static bool DelazifyCanonicalScriptedFunctionImpl(
 
   MOZ_DIAGNOSTIC_ASSERT(!fun->isGhost());
 
-  AutoIncrementalTimer timer(cx->realm()->timers.delazificationTime);
+  // M6E: outermost only, and kept apart from execution time (D29).
+  AutoCompileTimer timer(cx, &JS::JSTimers::delazificationTime);
 
   JS::CompileOptions options(cx);
   options.setMutedErrors(lazy->mutedErrors())
@@ -1669,6 +1711,7 @@ static JSFunction* CompileStandaloneFunction(
     JS::SourceText<char16_t>& srcBuf, const Maybe<uint32_t>& parameterListEnd,
     FunctionSyntaxKind syntaxKind, GeneratorKind generatorKind,
     FunctionAsyncKind asyncKind, JS::Handle<Scope*> enclosingScope = nullptr) {
+  AutoCompileTimer compileTimer(cx, &JS::JSTimers::compileTime);
   JS::Rooted<JSFunction*> fun(cx);
   {
     AutoReportFrontendContext fc(cx);
