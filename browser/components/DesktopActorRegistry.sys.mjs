@@ -949,24 +949,6 @@ let JSWINDOWACTORS = {
     safeForUntrustedWebProcess: true,
   },
 
-  AboutStudies: {
-    parent: {
-      esModuleURI:
-        "moz-src:///browser/components/nimbus/AboutStudiesParent.sys.mjs",
-    },
-    child: {
-      esModuleURI:
-        "moz-src:///browser/components/nimbus/AboutStudiesChild.sys.mjs",
-      events: {
-        pageshow: {},
-        pagehide: {},
-        ShieldPageEvent: { wantUntrusted: true },
-      },
-    },
-    matches: ["about:studies*"],
-    safeForUntrustedWebProcess: true,
-  },
-
   SmartFormFill: {
     parent: {
       esModuleURI:

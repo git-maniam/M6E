@@ -46,7 +46,6 @@ DIRS += [
     "mozcachedohttp",
     "multilineeditor",
     "newtab",
-    "nimbus",
     "originattributes",
     "pagedata",
     "passwordmgr",
