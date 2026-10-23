@@ -34,7 +34,8 @@ if CONFIG["MOZ_ASAN"] or CONFIG["MOZ_UBSAN"] or CONFIG["MOZ_TSAN"]:
 
 XPCSHELL_TESTS_MANIFESTS += ["unit/xpcshell.toml"]
 
-if CONFIG["COMPILE_ENVIRONMENT"]:
+# M6E: rules.mk skips SIMPLE_PROGRAMS in the PGO instrumented pass.
+if CONFIG["COMPILE_ENVIRONMENT"] and not CONFIG["MOZ_PROFILE_GENERATE"]:
     TEST_HARNESS_FILES.xpcshell.xpcom.tests.unit += [
         "!%s%s" % (f, CONFIG["BIN_SUFFIX"]) for f in test_progs
     ]
