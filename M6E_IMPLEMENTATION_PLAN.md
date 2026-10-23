@@ -286,7 +286,9 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2, P4.5, P4.6 (a to d) and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.7b, removing the dormant features (crash reporter, updater, Normandy, Translations, ML, VPN, Sync and so on). The user's decisions D25 to D28 (2026-10-23) apply in P4.8.
+**Checkpoint:** P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9.
+- **In progress:** P3.8, the page telemetry button. The user asked for it on 2026-10-23; see the spec's Phase 3 requirements and D29.
+- **Next:** P4.7c, the remaining dormant features (crash reporter, updater, Translations, ML, VPN, Sync and so on).
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -353,6 +355,17 @@ Don't start the next step until the current one builds and checks out. Split a s
   Each flag is a configure change and a full rebuild. Keep a flag only if it builds reliably and helps.
 - **P4.3 Profile:** take startup and interaction profiles, then defer or remove front-end work.
 - **P4.4 Rust rewrites:** only for a hotspot P4.3 proves, with the user's approval. Prefer native Rust behind XPCOM over WebAssembly.
+
+### P3.8 Page telemetry button (D29; added 2026-10-23)
+- **C++:**
+  - SpiderMonkey `JSTimers` gains `parseTime`, accumulated on main-thread compiles.
+  - `ScriptLoader` adds off-thread compile durations.
+  - A `[ChromeOnly]` `Document` getter returns the page's script parse and execution times and Gecko's time-to-first-interactive.
+- **Front end:**
+  - A JSWindowActor reads Navigation and Paint Timing plus that getter.
+  - A parent-process network observer counts transfer sizes per top-level page.
+  - A `#m6e-page-telemetry-button` in the address bar opens a panel with the seven figures.
+- **Tests:** a browser test for the panel and its values.
 
 ### Phase 4 additions (user request 2026-10-23; spec D21 to D24)
 Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PGO is off from P4.5 to P4.8 (D24).

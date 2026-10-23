@@ -98,6 +98,18 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
     - **What it covers:** everything the Shield covers that can apply per site: tracker and ad blocking (every category), fingerprinting protection (and full fingerprinting resistance in Maximum mode), and HTTPS-Only.
     - **Global only:** TLS options, punycode display, WebRTC IP handling, PDF scripting, referrer trimming, GPC and window move or resize. The engine applies these per connection or browser-wide, not per site.
 
+- **Page telemetry button (added 2026-10-23, D29):**
+  - **Placement and look:** a small button beside the Tracker Blocker button and the address bar, with a telemetry (gauge) icon and the tooltip "Telemetry".
+  - **Panel:** clicking it opens a small panel with accurate figures for the page in the current tab:
+    - TTFB (time to first byte);
+    - FCP (first contentful paint);
+    - TTI (time to interactive);
+    - page size;
+    - script parse time;
+    - script execution time;
+    - TLS/SSL handshake time.
+  - **Local only:** the figures are measured on the device for the user and are never sent anywhere. M6E has no data collection (Phase 1).
+
 ### Phase 4: Performance
 - Apply compile-flag optimisations first: LTO, the optimisation levels (`-O3`, Rust `opt-level = 3`) and Apple Silicon CPU tuning.
 - Rewrite JavaScript in Rust (native or Wasm) only where profiling shows a hotspot.
@@ -153,6 +165,7 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D26 | Add-on updates stay off. Installed add-ons are maintained by hand, together with the codebase. | The user's choice (2026-10-23). No automatic contact with addons.mozilla.org. |
 | D27 | WebGPU stays available. | The user's choice (2026-10-23): compatibility with GPU-heavy web apps. |
 | D28 | The JavaScript and Wasm JITs stay on, hardened around them: experimental JS and Wasm features are off and SpiderMonkey's built-in JIT hardening is kept. | The user's choice (2026-10-23): disabling the JIT would undo Phase 4's speed gains. |
+| D29 (agent) | How the page telemetry figures are measured:<br>• **TTFB:** `responseStart` of the page's navigation.<br>• **FCP:** the Paint Timing entry.<br>• **TTI:** Gecko's own time-to-first-interactive, the first 5-second window after content paints with no long tasks.<br>• **TLS handshake:** `connectEnd − secureConnectionStart`, or "connection reused" when no new handshake took place.<br>• **Page size:** bytes transferred by all of the page's requests (document, subframes and subresources, including cross-origin ones), counted in the parent process from the network channels. The size after decompression and the request count are shown as well.<br>• **Script parse and execution time:** SpiderMonkey's timers for the page's main realm while it loads. Execution comes from the existing `JSTimers`. Parse is a new timer covering main-thread and off-thread compilation. | Each figure comes from the engine's own measurement rather than an estimate. Web pages' own Resource Timing hides cross-origin sizes, so the size has to be counted in the parent. |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.
