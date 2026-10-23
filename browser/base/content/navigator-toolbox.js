@@ -218,6 +218,7 @@ document.addEventListener(
         #PlacesToolbar,
         #BMB_bookmarksPopup,
         #trust-icon-container,
+        #m6e-page-telemetry-button,
         #tracking-protection-icon-container,
         #identity-icon-box,
         #identity-permission-box,
@@ -290,6 +291,10 @@ document.addEventListener(
           gTrustPanelHandler.handleProtectionsButtonEvent(event);
           break;
 
+        case "m6e-page-telemetry-button":
+          gM6EPageTelemetry.handleButtonEvent(event);
+          break;
+
         case "tracking-protection-icon-container":
           gProtectionsHandler.handleProtectionsButtonEvent(event);
           break;
@@ -346,6 +351,7 @@ document.addEventListener(
         #home-button,
         #tracking-protection-icon-container,
         #trust-icon-container,
+        #m6e-page-telemetry-button,
         #identity-icon-box,
         #identity-permission-box,
         #translations-button,
@@ -409,6 +415,10 @@ document.addEventListener(
 
         case "trust-icon-container":
           gTrustPanelHandler.handleProtectionsButtonEvent(event);
+          break;
+
+        case "m6e-page-telemetry-button":
+          gM6EPageTelemetry.handleButtonEvent(event);
           break;
 
         case "identity-icon-box":

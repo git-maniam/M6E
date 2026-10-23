@@ -20,6 +20,7 @@
 @import url("chrome://browser/skin/menupanel.css");
 @import url("chrome://browser/skin/urlbar.css");
 @import url("chrome://browser/skin/identity-block/identity-block.css");
+@import url("chrome://browser/skin/identity-block/m6e-page-telemetry.css");
 @import url("chrome://browser/skin/notification-icons.css");
 @import url("chrome://browser/skin/addon-notification.css");
 @import url("chrome://browser/skin/identity-credential-notification.css");

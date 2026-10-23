@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Page telemetry test</title>
+  <script src="file_page_telemetry.js"></script>
+</head>
+<body>
+  <h1>Page telemetry</h1>
+  <p>Some text so that the page has a contentful paint.</p>
+  <img src="file_page_telemetry.svg" alt="">
+  <script>
+    // Inline work, so that execution time is measurable.
+    let start = performance.now();
+    let total = 0;
+    while (performance.now() - start < 30) {
+      total += Math.sqrt(total + 1);
+    }
+    document.body.dataset.total = total;
+  </script>
+</body>
+</html>

@@ -1106,4 +1106,47 @@
       </description>
     </vbox>
   </panel>
+  <!-- M6E: the page telemetry panel (D29). -->
+  <panel id="m6e-page-telemetry-panel"
+         type="arrow"
+         role="dialog"
+         orient="vertical"
+         aria-labelledby="m6e-page-telemetry-title">
+    <vbox id="m6e-page-telemetry-body">
+      <html:h2 id="m6e-page-telemetry-title" data-l10n-id="m6e-page-telemetry-title"/>
+      <html:p data-l10n-id="m6e-page-telemetry-description"/>
+      <html:p id="m6e-page-telemetry-unsupported" data-l10n-id="m6e-page-telemetry-unsupported" hidden="hidden"/>
+      <html:table id="m6e-page-telemetry-table">
+        <html:tr data-metric="ttfb">
+          <html:th data-l10n-id="m6e-page-telemetry-ttfb"/>
+          <html:td/>
+        </html:tr>
+        <html:tr data-metric="fcp">
+          <html:th data-l10n-id="m6e-page-telemetry-fcp"/>
+          <html:td/>
+        </html:tr>
+        <html:tr data-metric="tti">
+          <html:th data-l10n-id="m6e-page-telemetry-tti"/>
+          <html:td/>
+        </html:tr>
+        <html:tr data-metric="size">
+          <html:th data-l10n-id="m6e-page-telemetry-page-size"/>
+          <html:td/>
+        </html:tr>
+        <html:tr data-metric="scriptParse">
+          <html:th data-l10n-id="m6e-page-telemetry-script-parse"/>
+          <html:td/>
+        </html:tr>
+        <html:tr data-metric="scriptExecution">
+          <html:th data-l10n-id="m6e-page-telemetry-script-execution"/>
+          <html:td/>
+        </html:tr>
+        <html:tr data-metric="tls">
+          <html:th data-l10n-id="m6e-page-telemetry-tls"/>
+          <html:td/>
+        </html:tr>
+      </html:table>
+      <html:p id="m6e-page-telemetry-loading" data-l10n-id="m6e-page-telemetry-loading" hidden="hidden"/>
+    </vbox>
+  </panel>
 </popupset>

@@ -236,6 +236,12 @@ XPCOMUtils.defineLazyScriptGetter(
   "gTrustPanelHandler",
   "chrome://browser/content/browser-trustPanel.js"
 );
+// M6E: the page telemetry panel (D29).
+XPCOMUtils.defineLazyScriptGetter(
+  this,
+  "gM6EPageTelemetry",
+  "chrome://browser/content/browser-m6ePageTelemetry.js"
+);
 XPCOMUtils.defineLazyScriptGetter(
   this,
   ["gGestureSupport", "gHistorySwipeAnimation"],

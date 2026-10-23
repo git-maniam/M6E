@@ -199,6 +199,16 @@
             </span>
           </box>
 
+          <!-- M6E: the page telemetry button (D29). -->
+          <box id="m6e-page-telemetry-button"
+               align="center"
+               role="button"
+               aria-haspopup="dialog"
+               data-l10n-id="m6e-page-telemetry-button"
+               urlbar-slot="site-info">
+            <image id="m6e-page-telemetry-icon"/>
+          </box>
+
           <!-- Use onclick instead of normal popup= syntax since the popup
                 code fires onmousedown, and hence eats our favicon drag events. -->
           <box id="tracking-protection-icon-container" align="center"

@@ -1,0 +1,8 @@
+[DEFAULT]
+support-files = [
+  "file_page_telemetry.html",
+  "file_page_telemetry.js",
+  "file_page_telemetry.svg",
+]
+
+["browser_m6e_page_telemetry.js"]

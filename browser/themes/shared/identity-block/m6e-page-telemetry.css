@@ -1,0 +1,90 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* M6E: the page telemetry button and panel (D29). */
+
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+#m6e-page-telemetry-button {
+  height: var(--urlbar-basic-component-size);
+  padding-inline: var(--urlbar-icon-padding);
+  border-radius: var(--urlbar-inner-border-radius);
+  outline: var(--toolbarbutton-outline);
+  outline-offset: var(--toolbarbutton-outline-offset);
+  fill: currentColor;
+  fill-opacity: var(--urlbar-icon-fill-opacity);
+  -moz-context-properties: fill, fill-opacity;
+  list-style-image: url(chrome://browser/skin/m6e-page-telemetry.svg);
+
+  &:hover:not([open="true"]) {
+    background-color: var(--urlbar-box-background-color-hover);
+    color: var(--urlbar-box-text-color-hover);
+    outline-color: var(--toolbarbutton-outline-color-hover);
+  }
+
+  &:hover:active,
+  &[open="true"] {
+    background-color: var(--urlbar-box-background-color-active);
+    color: var(--urlbar-box-text-color-active);
+    outline-color: var(--toolbarbutton-outline-color-active);
+  }
+
+  &:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: var(--focus-outline-inset);
+  }
+
+  > #m6e-page-telemetry-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+#urlbar[pageproxystate="invalid"] > #m6e-page-telemetry-button {
+  display: none;
+}
+
+@media not -moz-pref("m6e.pageTelemetry.enabled") {
+  #m6e-page-telemetry-button {
+    display: none;
+  }
+}
+
+#m6e-page-telemetry-body {
+  padding: var(--space-large) var(--space-xlarge);
+  min-width: 24em;
+
+  > h2 {
+    margin: 0 0 var(--space-xsmall);
+    font-size: var(--font-size-large);
+    font-weight: var(--font-weight-bold);
+  }
+
+  > p {
+    margin: 0 0 var(--space-medium);
+    color: var(--text-color-deemphasized);
+  }
+}
+
+#m6e-page-telemetry-table {
+  border-collapse: collapse;
+  width: 100%;
+
+  th,
+  td {
+    padding-block: var(--space-xsmall);
+    border-top: 1px solid var(--border-color-deemphasized);
+  }
+
+  th {
+    font-weight: normal;
+    text-align: start;
+    padding-inline-end: var(--space-large);
+  }
+
+  td {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+}
