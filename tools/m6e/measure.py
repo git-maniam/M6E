@@ -208,7 +208,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--binary", required=True)
     parser.add_argument("--out", required=True)
-    parser.add_argument("--startup-runs", type=int, default=3)
+    parser.add_argument("--startup-runs", type=int, default=10)
     parser.add_argument("--idle-seconds", type=int, default=300)
     args = parser.parse_args()
 

@@ -77,6 +77,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.2b | No AI buttons in the default toolbar layout | `46b2ba9b0b` |
 | P2.7 | Home page splash image above the search box | `a37d26869c` |
 | P2.8 | "No Internet Connection" picture on offline error pages | `bd0f0d48fe` |
+| P4.1 | Phase 3 build measured: 681 ms first paint, 449 MB, 8 hosts; `measure.py` defaults to 10 runs | this commit |
 
 ## 3. Results by phase (as built)
 
@@ -264,36 +265,47 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Manual check:** the native banner and the macOS permission prompt on first use (System Settings, Notifications, M6E), because headless runs can't show them.
   - **Not done:** the optional "open at login, hidden" login item. It's native code and needs the user's agreement first.
 
-## 4. Next step: Phase 4, performance (P4.1 measure)
+## 4. Next step: Phase 4, performance (P4.2 build flags)
 
-**Resuming:** the user will start the next session with "Resume from Phase 4". Phases 0 to 3 are complete, all work is committed and pushed, and the tree is clean. Before starting:
+**Resuming:** the user starts a session with "Resume from Phase 4". Before continuing:
 1. Read `CLAUDE.md`, the spec (`m6e_browser_agent_instructions.md`) and this plan, and run `git log --oneline -15`.
 2. Run `git status` and `git fetch`. If `origin/main` is ahead (the user sometimes commits from the IDE), pull first.
-3. Build with `./mach build`. The objdir `obj-m6e` normally survives between sessions, so this is incremental; a clean objdir means a full 40-minute build.
-4. Commit and push work in progress often, and keep a checkpoint note in this section (user rule, connection drops).
+3. Build with `./mach build`. The objdir `obj-m6e` normally survives between sessions, so this is incremental; a clean objdir or a mozconfig change means a full build.
+4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
+5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**P4.1 Measure:**
-- Run `./mach python tools/m6e/measure.py --binary obj-m6e/dist/M6E.app/Contents/MacOS/m6e --out artifacts/P4.1-measure` on a quiet machine: no builds, tests or other browsers running.
-- Compare with the earlier results (`artifacts/` is git-ignored, so the numbers are copied here):
+**Checkpoint:** P4.1 is done. P4.2a (Homebrew clang 23 and cross-language ThinLTO) is in `mozconfig` and committed as work in progress; next is the full rebuild, then a check that LTO is really on (`MOZ_LTO` in `obj-m6e/config/autoconf.mk`) and measuring. If the ld64 link fails, try `ac_add_options --enable-linker=lld` (Homebrew `lld` is pinned).
 
-  | Run | First paint | Blank-tab memory | Idle hosts |
-  |---|---|---|---|
-  | Stock Nightly baseline (P0.4) | 785 ms | 698 MB (8 processes) | 21 hosts with HTTP requests, plus 40 hosts only looked up over DNS |
-  | After debloating (P1.14b) | 777 ms | 448 MB | 8 allowed hosts |
-  | After P3.1 (P3.1b) | 838 ms (taken while lint ran, so not valid) | 447 MB | 8 hosts |
-- **Expected hosts:** the 8 allowed ones: Remote Settings ×3, push, DoH, `update.googleapis.com`, `ciscobinary.openh264.org`, and one Google download host for Widevine.
+**P4.1 results (Phase 3 build, Apple clang 21, no LTO):**
 
-**Then P4.2:** add build flags one at a time (section 5). Each is a configure change and a full rebuild.
+| Run | First paint | Blank-tab memory | Idle hosts |
+|---|---|---|---|
+| Stock Nightly baseline (P0.4, 3 runs) | 785 ms | 698 MB (8 processes) | 21 hosts with HTTP requests, plus 40 hosts only looked up over DNS |
+| After debloating (P1.14b, 3 runs) | 777 ms | 448 MB | 8 allowed hosts |
+| **P4.1, 10 runs** | **681 ms** (range 664–712; session restored 714 ms) | **449 MB** (8 processes); 1497 MB with five sites | **8 allowed hosts**, none only looked up over DNS |
+
+- **Hosts:** Remote Settings ×3 (`firefox.settings.services.mozilla.com`, `content-signature-2.cdn.mozilla.net`, `firefox-settings-attachments.cdn.mozilla.net`), `push.services.mozilla.com`, `mozilla.cloudflare-dns.com` (DoH), `update.googleapis.com`, `ciscobinary.openh264.org` and `www.google.com` (the Widevine download in `gmp-sources/widevinecdm.json`).
+- **Noise:** a 3-run measurement of the same build gave 865 ms (752, 875, 865), so `measure.py` now defaults to 10 startup runs. Compare flags with 10-run medians only.
+- **A/B baseline:** `artifacts/baseline-P4.1/M6E.app` is a standalone copy of this build (`cp -RL`; the copy errors on dangling links to files Phase 1 removed are harmless). Measure it next to each flag build in the same session.
+
+**Already in place:** C/C++ already builds at `-O3` (`MOZ_OPTIMIZE_FLAGS`). Rust builds at opt-level 2 (the `RUSTC_OPT_LEVEL` default).
+
+**P4.2 order** (each is a full rebuild; measure with 10 runs after each and keep only what helps):
+- **P4.2a:** Homebrew clang 23 for C/C++ (`CC`/`CXX`), `--enable-lto=cross` (ThinLTO for C++ and Rust), linked by Xcode 27's ld64 with `MOZ_LD64_KNOWN_GOOD=1`.
+  - Rust's LLVM is 23.1.3 and Homebrew clang is 23.1.4, so the bitcode is compatible. The user chose this route on 2026-10-23.
+  - The clang driver passes Homebrew's `libLTO.dylib` to ld64. Mozilla links its LTO/PGO mac builds with ld64 because lld regressed performance (`build/macosx/mozconfig.common`).
+- **P4.2b:** CPU tuning (`-mcpu=apple-m1` and Rust `-C target-cpu=apple-m1`) plus `RUSTC_OPT_LEVEL=3`.
+- **P4.2c:** PGO (`MOZ_PGO=1`). This needs an instrumented build, a profiling run and a final build.
 
 ## 5. Remaining steps
 
 ### Phase 4: Performance
-- **P4.1 Measure:** repeat `measure.py` on the Phase 3 build and compare with the baselines.
+- **P4.1 Measure:** done (section 4).
 - **P4.2 Build flags:** add one flag at a time and measure after each:
   - **LTO:** `--enable-lto=cross` needs a clang whose LLVM matches Rust's. Check Homebrew's `llvm` against `rustc --version --verbose`.
   - **PGO:** `MOZ_PGO=1`.
   - **CPU tuning:** `-mcpu=apple-m1` (C/C++) and `-C target-cpu=apple-m1` (Rust).
-  - **Optimisation level:** an explicit `-O3`.
+  - **Optimisation level:** C/C++ is already `-O3`; Rust `RUSTC_OPT_LEVEL=3`.
 
   Each flag is a configure change and a full rebuild. Keep a flag only if it builds reliably and helps.
 - **P4.3 Profile:** take startup and interaction profiles, then defer or remove front-end work.
