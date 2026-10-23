@@ -13,7 +13,9 @@
 // we need not to use the suffixes.
 
 #  include <stdlib.h>  // for malloc, free
+#  if defined(XP_UNIX)
 #    include <unistd.h>
+#  endif  // if defined(XP_UNIX)
 
 #  define malloc_impl malloc
 #  define calloc_impl calloc
@@ -118,7 +120,13 @@ void* moz_xmemalign(size_t boundary, size_t size) {
 size_t moz_malloc_usable_size(void* ptr) {
   if (!ptr) return 0;
 
+#if defined(XP_DARWIN)
   return malloc_size(ptr);
+#elif defined(HAVE_MALLOC_USABLE_SIZE) || defined(MOZ_MEMORY)
+  return malloc_usable_size_impl(ptr);
+#else
+  return 0;
+#endif
 }
 
 size_t moz_malloc_size_of(const void* ptr) {

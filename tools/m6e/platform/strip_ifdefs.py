@@ -11,6 +11,11 @@ unmarked imports), whose #ifdefs stay so that security updates still apply.
     python3 tools/m6e/platform/strip_ifdefs.py            # dry run: counts
     python3 tools/m6e/platform/strip_ifdefs.py --apply    # rewrite files
     python3 tools/m6e/platform/strip_ifdefs.py --list     # files that change
+    python3 tools/m6e/platform/strip_ifdefs.py --frontend <list> [--apply]
+
+--frontend takes a file listing preprocessed front-end files (JS, XHTML,
+manifests: the "preprocess" entries of obj-m6e's install manifests) and runs
+unifdef in text mode, which doesn't parse C comments and quotes.
 """
 
 import argparse
@@ -64,22 +69,23 @@ def candidates(files):
     ]
 
 
-def unifdef_args():
+def unifdef_args(text=False, undefine_only=False):
     return (
         ["/usr/bin/unifdef"]
+        + (["-t"] if text else [])
         + [f"-U{s}" for s in UNDEFINED]
-        + [f"-D{s}" for s in DEFINED]
+        + ([] if undefine_only else [f"-D{s}" for s in DEFINED])
     )
 
 
-def process(path, apply):
+def process(path, apply, text=False, undefine_only=False):
     """Returns (path, status): status is "changed", "unchanged" or an error.
 
     unifdef writes to stdout and the file is only rewritten when it succeeds,
     since unifdef can leave truncated output on syntax it can't parse (for
     example C++ raw string literals).
     """
-    r = subprocess.run(unifdef_args() + [path], capture_output=True)
+    r = subprocess.run(unifdef_args(text, undefine_only) + [path], capture_output=True)
     if r.returncode == 0:
         return path, "unchanged"
     if r.returncode != 1:
@@ -96,11 +102,31 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--list", action="store_true")
+    parser.add_argument("--frontend", metavar="LIST")
+    parser.add_argument(
+        "--undefine-only",
+        metavar="LIST",
+        help="files also compiled for the wasm sandbox (wasm32-wasi), where the "
+        "macOS macros aren't defined: only strip the other platforms",
+    )
     args = parser.parse_args()
 
-    files = candidates(tracked_files())
+    if args.undefine_only:
+        with open(args.undefine_only) as fh:
+            files = [l.strip() for l in fh if l.strip()]
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+            results = list(pool.map(lambda f: process(f, args.apply, False, True), files))
+        print(f"{sum(s == 'changed' for _, s in results)} of {len(files)} changed", file=sys.stderr)
+        return 0
+    if args.frontend:
+        vendored = vendored_dirs(tracked_files())
+        with open(args.frontend) as fh:
+            files = [l.strip() for l in fh if l.strip() and not l.startswith(vendored)]
+    else:
+        files = candidates(tracked_files())
+    text = bool(args.frontend)
     with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
-        results = list(pool.map(lambda f: process(f, args.apply), files))
+        results = list(pool.map(lambda f: process(f, args.apply, text), files))
 
     changed = [p for p, s in results if s == "changed"]
     errors = [(p, s) for p, s in results if s.startswith("error")]

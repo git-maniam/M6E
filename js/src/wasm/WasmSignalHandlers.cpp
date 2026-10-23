@@ -26,8 +26,12 @@
 #include "wasm/WasmCode.h"
 #include "wasm/WasmInstance.h"
 
+#if   defined(XP_DARWIN)
 #  include <mach/exc.h>
 #  include <mach/mach.h>
+#elif !defined(__wasi__)
+#  include <signal.h>
+#endif
 
 using namespace js;
 using namespace js::wasm;
@@ -68,7 +72,7 @@ using namespace js::wasm;
 #      define R01_sig(p) ((p)->uc_mcontext.mc_gpr[1])
 #      define R32_sig(p) ((p)->uc_mcontext.mc_srr0)
 #    endif
-#  else
+#  elif defined(XP_DARWIN)
 #    define EIP_sig(p) ((p)->thread.uts.ts32.__eip)
 #    define EBP_sig(p) ((p)->thread.uts.ts32.__ebp)
 #    define ESP_sig(p) ((p)->thread.uts.ts32.__esp)
@@ -83,9 +87,13 @@ using namespace js::wasm;
 #    define RFP_sig(p) ((p)->thread.__fp)
 #    define R31_sig(p) ((p)->thread.__sp)
 #    define RLR_sig(p) ((p)->thread.__lr)
+#  else
+#    error \
+        "Don't know how to read/write to the thread state via the mcontext_t."
 #  endif
 
 
+#  if defined(XP_DARWIN)
 #    if defined(__x86_64__)
 struct macos_x64_context {
   x86_thread_state64_t thread;
@@ -113,6 +121,9 @@ struct macos_aarch64_context {
 #    else
 #      error Unsupported architecture
 #    endif
+#  else
+#    define CONTEXT ucontext_t
+#  endif
 
 #  if defined(_M_X64) || defined(__x86_64__)
 #    define PC_sig(p) RIP_sig(p)
@@ -311,6 +322,7 @@ struct AutoHandlingTrap {
 // the shared HandleTrap() above.
 // =============================================================================
 
+#  if   defined(XP_DARWIN)
 // On OSX we are forced to use the lower-level Mach exception mechanism instead
 // of Unix signals because breakpad uses Mach exceptions and would otherwise
 // report a crash before wasm gets a chance to handle the exception.
@@ -464,6 +476,85 @@ static void MachExceptionHandlerThread() {
   }
 }
 
+#  else  // If not Windows or Mac, assume Unix
+
+#    if defined(__mips__) || defined(__loongarch__)
+static const uint32_t kWasmTrapSignal = SIGFPE;
+#    else
+static const uint32_t kWasmTrapSignal = SIGILL;
+#    endif
+
+static struct sigaction sPrevSEGVHandler;
+static struct sigaction sPrevSIGBUSHandler;
+static struct sigaction sPrevWasmTrapHandler;
+
+typedef void (*sa_sigaction_t)(int, siginfo_t*, void*);
+
+// See the uses below for more context. We need to cast the SIG_DFL/SIG_IGN
+// sentinel values to check to see if they're in the sa_sigaction field (which
+// may or may not be in a union with the sa_handler field).
+#    define SIG_ACTION_DFL ((sa_sigaction_t)SIG_DFL)
+#    define SIG_ACTION_IGN ((sa_sigaction_t)SIG_IGN)
+
+static void WasmTrapHandler(int signum, siginfo_t* info, void* context) {
+  if (!sAlreadyHandlingTrap.get()) {
+    AutoHandlingTrap aht;
+    MOZ_RELEASE_ASSERT(signum == SIGSEGV || signum == SIGBUS ||
+                       signum == kWasmTrapSignal);
+    uint8_t* faultAddr = nullptr;
+    if (signum == SIGSEGV || signum == SIGBUS) {
+      faultAddr = (uint8_t*)info->si_addr;
+    }
+    JSContext* cx = TlsContext.get();  // Cold signal handling code
+    if (HandleTrap((CONTEXT*)context, faultAddr, cx)) {
+      return;
+    }
+  }
+
+  struct sigaction* previousSignal = nullptr;
+  switch (signum) {
+    case SIGSEGV:
+      previousSignal = &sPrevSEGVHandler;
+      break;
+    case SIGBUS:
+      previousSignal = &sPrevSIGBUSHandler;
+      break;
+    case kWasmTrapSignal:
+      previousSignal = &sPrevWasmTrapHandler;
+      break;
+  }
+  MOZ_ASSERT(previousSignal);
+
+  // This signal is not for any wasm code we expect, so we need to forward
+  // the signal to the next handler. If there is no next handler (SIG_IGN or
+  // SIG_DFL), then it's time to crash. To do this, we set the signal back to
+  // its original disposition and return. This will cause the faulting op to
+  // be re-executed which will crash in the normal way. The advantage of
+  // doing this to calling _exit() is that we remove ourselves from the crash
+  // stack which improves crash reports. If there is a next handler, call it.
+  // It will either crash synchronously, fix up the instruction so that
+  // execution can continue and return, or trigger a crash by returning the
+  // signal to it's original disposition and returning.
+  //
+  // Note: the order of these tests matter.
+  //
+  // POSIX specifies that if SA_SIGINFO is set, then sa_sigaction should be
+  // called instead of sa_handler. However, it appears that the flag can be set
+  // even when sa_sigaction is not a valid function pointer but instead one of
+  // the SIG_DFL/SIG_IGN sentinel values. In this case, we should not call the
+  // function, but fallthrough.
+  if ((previousSignal->sa_flags & SA_SIGINFO) &&
+      previousSignal->sa_sigaction != SIG_ACTION_DFL &&
+      previousSignal->sa_sigaction != SIG_ACTION_IGN) {
+    previousSignal->sa_sigaction(signum, info, context);
+  } else if (previousSignal->sa_handler == SIG_DFL ||
+             previousSignal->sa_handler == SIG_IGN) {
+    sigaction(signum, previousSignal, nullptr);
+  } else {
+    previousSignal->sa_handler(signum);
+  }
+}
+#  endif  // XP_WIN || XP_DARWIN || assume unix
 
 struct InstallState {
   bool tried;
@@ -492,7 +583,43 @@ void wasm::EnsureEagerProcessSignalHandlers() {
   sAlreadyHandlingTrap.infallibleInit();
 
   // Install whatever exception/signal handler is appropriate for the OS.
+#  if   defined(XP_DARWIN)
   // All the Mach setup in EnsureLazyProcessSignalHandlers.
+#  else
+  // SA_NODEFER allows us to reenter the signal handler if we crash while
+  // handling the signal, and fall through to the Breakpad handler by testing
+  // handlingSegFault.
+
+  // Allow handling OOB with signals on all architectures
+  struct sigaction faultHandler;
+  faultHandler.sa_flags = SA_SIGINFO | SA_NODEFER | SA_ONSTACK;
+  faultHandler.sa_sigaction = WasmTrapHandler;
+  sigemptyset(&faultHandler.sa_mask);
+  if (sigaction(SIGSEGV, &faultHandler, &sPrevSEGVHandler)) {
+    MOZ_CRASH("unable to install segv handler");
+  }
+
+#    if defined(JS_CODEGEN_ARM)
+  // On Arm Handle Unaligned Accesses
+  struct sigaction busHandler;
+  busHandler.sa_flags = SA_SIGINFO | SA_NODEFER | SA_ONSTACK;
+  busHandler.sa_sigaction = WasmTrapHandler;
+  sigemptyset(&busHandler.sa_mask);
+  if (sigaction(SIGBUS, &busHandler, &sPrevSIGBUSHandler)) {
+    MOZ_CRASH("unable to install sigbus handler");
+  }
+#    endif
+
+  // Install a handler to handle the instructions that are emitted to implement
+  // wasm traps.
+  struct sigaction wasmTrapHandler;
+  wasmTrapHandler.sa_flags = SA_SIGINFO | SA_NODEFER | SA_ONSTACK;
+  wasmTrapHandler.sa_sigaction = WasmTrapHandler;
+  sigemptyset(&wasmTrapHandler.sa_mask);
+  if (sigaction(kWasmTrapSignal, &wasmTrapHandler, &sPrevWasmTrapHandler)) {
+    MOZ_CRASH("unable to install wasm trap handler");
+  }
+#  endif
 
   eagerInstallState->success = true;
 #endif
@@ -511,6 +638,7 @@ static bool EnsureLazyProcessSignalHandlers() {
   lazyInstallState->tried = true;
   MOZ_RELEASE_ASSERT(lazyInstallState->success == false);
 
+#  ifdef XP_DARWIN
   // Create the port that all JSContext threads will redirect their traps to.
   kern_return_t kret;
   kret = mach_port_allocate(mach_task_self(), MACH_PORT_RIGHT_RECEIVE,
@@ -532,6 +660,7 @@ static bool EnsureLazyProcessSignalHandlers() {
     return false;
   }
   handlerThread.detach();
+#  endif
 
   lazyInstallState->success = true;
   return true;
@@ -561,6 +690,7 @@ bool wasm::EnsureFullSignalHandlers(JSContext* cx) {
     return false;
   }
 
+#  ifdef XP_DARWIN
   // In addition to the process-wide signal handler setup, OSX needs each
   // thread configured to send its exceptions to sMachDebugPort. While there
   // are also task-level (i.e. process-level) exception ports, those are
@@ -578,6 +708,7 @@ bool wasm::EnsureFullSignalHandlers(JSContext* cx) {
   if (kret != KERN_SUCCESS) {
     return false;
   }
+#  endif
 
   cx->wasm().haveSignalHandlers = true;
   return true;
