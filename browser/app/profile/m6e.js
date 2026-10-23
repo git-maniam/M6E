@@ -251,3 +251,105 @@ pref("browser.urlbar.trustPanel.breachAlerts.featureGate", false, locked);
 
 // The page telemetry button and panel (D29): measured on the device only.
 pref("m6e.pageTelemetry.enabled", true);
+
+// Attack-surface reduction (P4.8a, D22). M6E is built from Nightly, which
+// switches on experimental, less tested web features. These take Firefox
+// Release's values instead, except where Nightly's value is itself a security
+// gain (COEP credentialless, opaque response blocking, schemeful SameSite,
+// DOM clobbering protection, unused-permission expiry, content-script
+// resource isolation, no Components shim, no inline handlers in SVG <use>,
+// and the MathML and drag-event removals), which stay.
+pref("apz.record_checkerboarding", false);
+pref("browser.safebrowsing.globalCache.enabled", false);
+pref("browser.safebrowsing.realTime.enabled", false);
+pref("browser.safebrowsing.realTime.simulation.enabled", false);
+pref("browser.smartwindow.aitab.enabled", false);
+pref("clipboard.readCustomFormatsFromClipboard.enabled", false);
+pref("docshell.shistory.sameDocumentNavigationOverridesLoadType", true);
+pref("docshell.shistory.restoreSubframesOnReload", true);
+pref("dom.audio_session.enabled", false);
+pref("dom.audio_session.state_enabled", false);
+pref("dom.audio_session.block_start_during_interrupt.enabled", false);
+pref("dom.clipboard.customFormatSupport.enabled", false);
+pref("dom.event.treat_ctrl_click_as_right_click.disabled", false);
+pref("dom.fetch.streaming_upload", false);
+pref("dom.gamepad.non_standard_events.enabled", false);
+pref("dom.ipc.tabs.createKillHardCrashReports", false);
+pref("dom.forms.html_color_picker.enabled", false);
+pref("dom.forms.alpha.enabled", false);
+pref("dom.media.muted-state.enabled", false);
+pref("dom.media.webcodecs.enabled", false);
+pref("dom.media.webcodecs.h265.enabled", false);
+pref("dom.quota_exceeded_error.enabled", false);
+pref("dom.reporting.crash.enabled", false);
+pref("dom.script_loader.experimental.navigation_cache", false);
+pref("dom.speculation_rules.enabled", false);
+pref("dom.workers.throttling.enabled", false);
+pref("dom.webcrypto.encapsulation.enabled", false);
+pref("dom.worker.remoteDebugger.enabled", false);
+pref("dom.webshare.enabled", false);
+pref("general.smoothScroll.msdPhysics.enabled", false);
+pref("javascript.options.experimental.legacy_regexp", false);
+pref("layout.css.anchor-positioning.follows-transforms.enabled", false);
+pref("layout.css.corner-shape.enabled", false);
+pref("layout.css.ellipse-corners.enabled", false);
+pref("layout.css.grid-subgrid-baselines.enabled", false);
+pref("layout.css.display-grid-lanes.enabled", false);
+pref("layout.css.random.enabled", false);
+pref("layout.css.link-parameters.enabled", false);
+pref("layout.dynamic-reflow-roots.enabled", false);
+pref("layout.forms.button-input-align-content-block.enabled", false);
+pref("layout.css.typed-om.enabled", false);
+pref("mathml.a.element.enabled", false);
+pref("mathml.lspace_rspace_for_child_spacing_during_mrow_layout.enabled", false);
+pref("media.mediacapabilities.from-database", false);
+pref("media.hardware-video-decoding-vulkan.enabled", false);
+pref("media.getusermedia.browser.enabled", false);
+pref("media.aboutwebrtc.auto_refresh.peerconnection_section", true);
+pref("media.allowed-to-play.enabled", false);
+pref("media.geckoview.audio_session_type.enabled", false);
+pref("network.auth.use_redirect_for_retries", false);
+pref("network.proxy.detect_system_proxy_changes", false);
+pref("network.trr.async_connInfo", false);
+pref("network.http.http3.retry_different_ip_family", false);
+pref("network.jar.record_failure_reason", false);
+pref("network.http.retry_with_another_half_open", false);
+pref("network.http.happy_eyeballs_enabled", false);
+pref("network.http.happy_eyeballs_upgrade_enabled", false);
+pref("network.http.dictionaries.enable", false);
+pref("ui.mouse.right_click.select_under_cursor", false);
+// Nightly parses untrusted WebRTC SDP with two parsers in parallel.
+pref("media.peerconnection.sdp.alternate_parse_mode", "never");
+pref("media.decoder-doctor.notifications-allowed", "MediaWMFNeeded,MediaWidevineNoWMF,MediaCannotInitializePulseAudio,MediaCannotPlayNoDecoders,MediaUnsupportedLibavcodec,MediaPlatformDecoderNotFound");
+pref("privacy.purge_trackers.logging.level", "Error");
+pref("toolkit.aboutProcesses.showThreads", false);
+pref("devtools.jsonview.size-profiler.enabled", false);
+pref("extensions.formautofill.creditCards.storage.rust.runMigrationTest", false);
+pref("browser.urlbar.autoFill.adaptiveHistory.enabled", false);
+pref("browser.urlbar.newtab.featureGate", false);
+pref("places.semanticHistory.featureGate", false);
+pref("browser.tabs.tooltipsShowPidAndActiveness", false);
+pref("browser.tabs.groups.alternateMenu", false);
+pref("browser.lowMemoryResponseMask", 0);
+pref("browser.netError.searchCTA.enabled", false);
+pref("browser.sessionstore.loglevel", "Warn");
+pref("browser.sessionstore.log.appender.file.logOnSuccess", false);
+pref("sidebar.updatedBookmarks.enabled", false);
+pref("browser.smartwindow.aitab.menus", false);
+pref("services.sync.log.appender.file.logOnSuccess", false);
+pref("services.sync.engine.bookmarks.validation.enabled", false);
+pref("services.sync.engine.passwords.validation.enabled", false);
+pref("devtools.performance.popup.feature-flag", false);
+pref("devtools.performance.aboutprofiling.has-developer-options", false);
+pref("devtools.layout.boxmodel.highlightProperty", false);
+pref("devtools.webconsole.sidebarToggle", false);
+pref("devtools.high-contrast-mode-support", false);
+// The experimental WebDriver BiDi features of the remote agent.
+pref("remote.experimental.enabled", false);
+// Locked, as in Firefox Release: no SharedArrayBuffer without cross-origin
+// isolation.
+pref("dom.postMessage.sharedArrayBuffer.bypassCOOP_COEP.insecure.enabled", false, locked);
+// No remote debugging server.
+pref("devtools.debugger.remote-enabled", false, locked);
+// Known trackers may never reach the local network.
+pref("network.lna.block_trackers", true);

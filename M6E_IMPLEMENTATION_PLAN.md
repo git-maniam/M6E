@@ -287,7 +287,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.8, security hardening. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
+**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.8b (compiler and runtime hardening); P4.8a is done. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -467,6 +467,13 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
      - Add-on updates are off, so installed add-ons never get security fixes.
      - Turning a site off with the Shield on also allows plain http for it (D20).
      - The RUSTSEC ignores in `.cargo/audit.toml` need re-checking.
+  - **a results:** `m6e.js` gives Firefox Release's values to 59 of the 73 Nightly-dependent static prefs and to the Nightly blocks in `all.js` and `firefox.js`.
+    - **Now off:** Speculation Rules, streaming fetch uploads, Web Share, the worker remote debugger, Typed OM, compression dictionaries, Reporting API crash reports, experimental RegExp and WebCrypto features, the new clipboard formats, the experimental BiDi features, and Nightly's parallel second SDP parser.
+    - **Nightly values kept:** opaque response blocking, COEP credentialless, schemeful SameSite, DOM-clobbering protection, unused-permission expiry, content-script resource isolation, no `Components` shim, no inline handlers in SVG `<use>`, the MathML and `dragexit` removals, and visible control characters.
+    - **Locked:** the SharedArrayBuffer COOP/COEP bypass stays off (as in Release), and the devtools remote debugging server is locked off.
+    - **New:** Local Network Access also blocks trackers (`network.lna.block_trackers`).
+    - **Not locked:** the experimental features stay unlocked, so a user can opt in through about:config.
+    - **Checked in the running build.** Mochitests for these features that run only on Nightly need their prefs set again (P4.9).
   - **g:** prove the features marked for deletion (D30) unreachable: locked prefs, no listening sockets, no network traffic, and no entry points from web content or IPC.
 - **P4.9 Full test pass:** build, xpcshell and mochitest suites for the changed areas, `push_check.py`, `measure.py`, `speedometer.py`, `scan-strings.py` and the Phase 3 feature checks. Then the final PGO build, measure, and push.
 
