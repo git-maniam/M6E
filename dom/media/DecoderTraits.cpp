@@ -11,13 +11,9 @@
 #include "WebMDemuxer.h"
 #include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/glean/DomMediaHlsMetrics.h"
 #include "mozilla/glean/DomMediaMetrics.h"
 #include "nsMimeTypes.h"
 
-#ifdef MOZ_ANDROID_HLS_SUPPORT
-#  include "HLSDecoder.h"
-#endif
 #include "ADTSDecoder.h"
 #include "ADTSDemuxer.h"
 #include "FlacDecoder.h"
@@ -131,18 +127,9 @@ static CanPlayStatus CanHandleCodecsType(
 
 static CanPlayStatus CanHandleMediaType(
     const MediaContainerType& aType, DecoderDoctorDiagnostics* aDiagnostics) {
-  if (DecoderTraits::IsHttpLiveStreamingType(aType)) {
-    glean::hls::canplay_requested.Add();
-  }
   if (MatroskaDecoder::IsMatroskaType(aType)) {
     glean::media::mkv_content_count.Add();
   }
-#ifdef MOZ_ANDROID_HLS_SUPPORT
-  if (HLSDecoder::IsSupportedType(aType)) {
-    glean::hls::canplay_supported.Add();
-    return CANPLAY_MAYBE;
-  }
-#endif
 
   if (aType.ExtendedType().HaveCodecs()) {
     CanPlayStatus result = CanHandleCodecsType(aType, aDiagnostics);
@@ -286,9 +273,6 @@ bool DecoderTraits::IsSupportedInVideoDocument(const nsACString& aType) {
          MatroskaDecoder::IsSupportedType(
              *type,
              /* DecoderDoctorDiagnostics* */ nullptr) ||
-#ifdef MOZ_ANDROID_HLS_SUPPORT
-         HLSDecoder::IsSupportedType(*type) ||
-#endif
          false;
 }
 

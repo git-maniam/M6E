@@ -87,6 +87,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.6b | 702 platform conditions removed from 286 `moz.build` files; backend proven unchanged | `44250d4d06` |
 | P4.6c | `#ifdef`s stripped from 1,403 first-party files (about 62,000 lines); binaries' symbols unchanged | `12a394ab1c` |
 | P4.6d | Front-end `#ifdef`s stripped from 19 preprocessed files; outputs unchanged | `14020b7897` |
+| P4.7a | 20 platform-only orphan subtrees deleted (193 files); push still works | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -284,7 +285,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2, P4.5, P4.6 (a to d) and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.7, the dormant features.
+**Checkpoint:** P4.1, P4.2, P4.5, P4.6 (a to d) and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.7b, removing the dormant features (crash reporter, updater, Normandy, Translations, ML, VPN, Sync and so on). The user's decisions D25 to D28 (2026-10-23) apply in P4.8.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -407,6 +408,13 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - **c:** `unifdef` first-party C, C++ and Objective-C for `XP_WIN`, `XP_LINUX`, `MOZ_WIDGET_GTK`, `MOZ_WIDGET_ANDROID`, `ANDROID`, `MOZ_WAYLAND`, `MOZ_X11`, `XP_IOS` and the BSDs and Solaris. Keep `XP_UNIX`, `XP_DARWIN` and `XP_MACOSX`.
   - **d:** the same for preprocessed front-end files (`#ifdef` in JS, CSS and XHTML).
   - Build and test after each part.
+- **P4.7a results:** 20 platform-only subtrees (193 files) are deleted. After P4.6b no build file reaches them, and the macOS build reads none of their files:
+  - Windows COM, MSAA and IA2 accessibility, the maintenance service, Windows media-foundation EME, the about:third-party page, installer prefs, the installation-dir layout, the private-browsing proxy and the Windows push command-line handler;
+  - Android's linker, MediaDrm EME, HLS and themes;
+  - Linux's interposers, glxtest, speech-dispatcher and no-PIE launcher;
+  - the Linux crash injector.
+
+  Cross-platform HLS telemetry in `DecoderTraits.cpp` goes with them (`MOZ_ANDROID_HLS_SUPPORT` is now on the strip list). `push_check.py` passes. Crash-reporter crates, packaging scripts, fuzzing targets and PHC stay (crates are needed by cargo; the rest is tooling).
 - **P4.7 Dormant features (D23):** for Sync, Glean telemetry, Normandy, AI/ML, Translations, VPN (IP protection), the crash reporter, the updater, the default browser agent and others: try deleting each, keeping a deletion only if the build and tests pass. Show that whatever stays is unreachable.
 - **P4.8 Security hardening (D22):**
   - **a:** attack-surface reduction prefs and build options, including Nightly-only experimental features.

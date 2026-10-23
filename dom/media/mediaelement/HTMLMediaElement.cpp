@@ -22,9 +22,6 @@
 #include "GMPCrashHelper.h"
 #include "GVAutoplayPermissionRequest.h"
 #include "nsString.h"
-#ifdef MOZ_ANDROID_HLS_SUPPORT
-#  include "HLSDecoder.h"
-#endif
 #include "HTMLMediaElement.h"
 #include "ImageContainer.h"
 #include "MP4Decoder.h"
@@ -6007,17 +6004,6 @@ nsresult HTMLMediaElement::InitializeDecoderForChannel(
       mPreloadAction == HTMLMediaElement::PRELOAD_METADATA, mHasSuspendTaint,
       HasAttr(nsGkAtoms::loop), *containerType);
 
-#ifdef MOZ_ANDROID_HLS_SUPPORT
-  if (HLSDecoder::IsSupportedType(*containerType)) {
-    RefPtr<HLSDecoder> decoder = HLSDecoder::Create(decoderInit);
-    if (!decoder) {
-      reportCanPlay(false);
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
-    reportCanPlay(true);
-    return SetupDecoder(decoder.get(), aChannel);
-  }
-#endif
 
   RefPtr<ChannelMediaDecoder> decoder =
       ChannelMediaDecoder::Create(decoderInit, &diagnostics);

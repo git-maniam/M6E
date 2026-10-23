@@ -73,7 +73,6 @@ LOCAL_INCLUDES += [
     "/caps",
     "/docshell/base",
     "/ipc/chromium/src",
-    "/mozglue/linker",
     "/netwerk/base",
     "/netwerk/protocol/http",
     "/toolkit/components/jsoncpp/include",

@@ -30,7 +30,6 @@ gecko_metrics = [
     "dom/indexedDB/metrics.yaml",
     "dom/localstorage/metrics.yaml",
     "dom/media/eme/metrics.yaml",
-    "dom/media/hls/metrics.yaml",
     "dom/media/metrics.yaml",
     "dom/media/mp4/metrics.yaml",
     "dom/media/webrtc/metrics.yaml",

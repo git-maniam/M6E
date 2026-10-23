@@ -31,7 +31,7 @@ UNDEFINED = [
     "__MINGW32__", "__MINGW64__", "__CYGWIN__", "_MSC_VER",
     "MOZ_WIDGET_GTK", "MOZ_WAYLAND", "MOZ_X11", "MOZ_ENABLE_DBUS",
     "XP_LINUX", "__linux__", "__linux", "__gnu_linux__", "__GLIBC__",
-    "MOZ_WIDGET_ANDROID", "ANDROID", "__ANDROID__",
+    "MOZ_WIDGET_ANDROID", "ANDROID", "__ANDROID__", "MOZ_ANDROID_HLS_SUPPORT",
     "XP_IOS", "MOZ_WIDGET_UIKIT",
     "XP_FREEBSD", "XP_OPENBSD", "XP_NETBSD", "XP_DRAGONFLY", "XP_SOLARIS",
     "__FreeBSD__", "__OpenBSD__", "__NetBSD__", "__DragonFly__", "__sun",

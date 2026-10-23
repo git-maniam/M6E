@@ -42,7 +42,6 @@ if not CONFIG["JS_STANDALONE"]:
 
     LOCAL_INCLUDES += [
         "/mozglue/baseprofiler/core/",
-        "/mozglue/linker",
     ]
 
 
