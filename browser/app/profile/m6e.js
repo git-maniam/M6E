@@ -353,3 +353,8 @@ pref("dom.postMessage.sharedArrayBuffer.bypassCOOP_COEP.insecure.enabled", false
 pref("devtools.debugger.remote-enabled", false, locked);
 // Known trackers may never reach the local network.
 pref("network.lna.block_trackers", true);
+
+// Process isolation can't be lowered by about:config or a user.js (P4.8c):
+// the strongest content sandbox on macOS, and site isolation (Fission).
+pref("security.sandbox.content.level", 3, locked);
+pref("fission.autostart", true, locked);

@@ -18,8 +18,10 @@ export CXX="/opt/homebrew/opt/llvm/bin/clang++ -nostdinc++ -isystem $M6E_SDK/usr
 export MOZ_LD64_KNOWN_GOOD=1
 ac_add_options --enable-linker=ld64
 ac_add_options --enable-lto=cross
-export CFLAGS="-mcpu=apple-m1"
-export CXXFLAGS="-mcpu=apple-m1"
+# M6E: zero-initialise local variables, so uninitialised reads can't leak
+# memory (P4.8b, D22).
+export CFLAGS="-mcpu=apple-m1 -ftrivial-auto-var-init=zero"
+export CXXFLAGS="-mcpu=apple-m1 -ftrivial-auto-var-init=zero"
 export RUSTFLAGS="-C target-cpu=apple-m1"
 export RUSTC_OPT_LEVEL=3
 export STRIP=/usr/bin/strip

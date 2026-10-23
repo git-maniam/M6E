@@ -287,7 +287,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.8b (compiler and runtime hardening); P4.8a is done. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
+**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.8e/f/g (static analysis, extensions and protocol handlers, reachability of dormant features); P4.8a to d are done. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -474,6 +474,18 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
     - **New:** Local Network Access also blocks trackers (`network.lna.block_trackers`).
     - **Not locked:** the experimental features stay unlocked, so a user can opt in through about:config.
     - **Checked in the running build.** Mochitests for these features that run only on Nightly need their prefs set again (P4.9).
+    - **Compatibility:** Google, Wikipedia, GitHub, BBC and YouTube load with no navigation errors, and idle traffic is still the 8 allowed hosts.
+  - **b results:**
+    - **Added:** `-ftrivial-auto-var-init=zero` for C and C++ (`mozconfig` `CFLAGS`/`CXXFLAGS`), so uninitialised locals read as zero instead of leaking memory. Mozilla only uses this in debug builds; Chrome ships it. It takes effect with P4.9's final build, which measures its cost.
+    - **Already in place:** `_FORTIFY_SOURCE=2`, `-fstack-protector-strong`, `-fstrict-flex-arrays=1`, libc++ *extensive* hardening, and PHC (`MOZ_PHC=1`).
+    - **Not used:**
+      - `_FORTIFY_SOURCE=3`: the macOS SDK caps the level at 2 (`secure/_common.h`).
+      - `-fstack-clash-protection`: configure excludes macOS.
+      - Branch protection (PAC/BTI): it only protects arm64e processes, which third-party apps can't ship.
+  - **c results:**
+    - **State:** content sandbox level 3 (the macOS maximum), Fission on, networking in the sandboxed socket process, media in RDD, and utility processes.
+    - **Locked:** `security.sandbox.content.level` (3) and `fission.autostart` (true), so `about:config` or a `user.js` can't lower them.
+    - **Left alone:** the `MOZ_DISABLE_*_SANDBOX` environment variables. Setting them already requires code running on the Mac, so they add no remote risk.
   - **g:** prove the features marked for deletion (D30) unreachable: locked prefs, no listening sockets, no network traffic, and no entry points from web content or IPC.
 - **P4.9 Full test pass:** build, xpcshell and mochitest suites for the changed areas, `push_check.py`, `measure.py`, `speedometer.py`, `scan-strings.py` and the Phase 3 feature checks. Then the final PGO build, measure, and push.
 
