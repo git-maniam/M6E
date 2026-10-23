@@ -85,7 +85,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.5 | Upstream merged to `cfa0508a3b` (1,301 files); allowlist tests | `cfd42808e0` |
 | P4.6a | 141 platform-only directories deleted (2,195 files) | `3dcdd875c7` |
 | P4.6b | 702 platform conditions removed from 286 `moz.build` files; backend proven unchanged | `44250d4d06` |
-| P4.6c | `#ifdef`s stripped from 1,403 first-party files (about 62,000 lines); binaries' symbols unchanged | this commit |
+| P4.6c | `#ifdef`s stripped from 1,403 first-party files (about 62,000 lines); binaries' symbols unchanged | `12a394ab1c` |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
