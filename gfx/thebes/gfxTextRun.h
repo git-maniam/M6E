@@ -903,7 +903,7 @@ class gfxTextRun : public gfxShapedText {
 
   // **** drawing helper ****
   void DrawGlyphs(gfxFont* aFont, Range aRange, mozilla::gfx::Point* aPt,
-                  const PropertyProvider* aProvider, Range aSpacingRange,
+                  const PropertyProvider* aProvider, Range aProviderRange,
                   TextRunDrawParams& aParams, imgDrawingParams& aImgParams,
                   mozilla::gfx::ShapedTextFlags aOrientation) const;
 

@@ -85,8 +85,8 @@ class nsIDeviceContextSpec : public nsISupports {
    * aSizeInPoints gets handed off to a PrintTarget, and most PrintTarget
    * subclasses will ignore `aSizeInPoints`.
    */
-  NS_IMETHOD BeginPage(const IntSize& aSizeInPoints) = 0;
-  NS_IMETHOD EndPage() = 0;
+  virtual nsresult BeginPage(const IntSize& aSizeInPoints) { return NS_OK; }
+  virtual nsresult EndPage() { return NS_OK; }
 
  protected:
   using AsyncEndDocumentFunction = mozilla::MoveOnlyFunction<nsresult()>;

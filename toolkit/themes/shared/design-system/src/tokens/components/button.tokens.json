@@ -641,16 +641,13 @@
         "disabled": {
           "value": {
             "default": "inherit",
-            "brand": {
-              "prefersContrast": "{button.text.color.disabled}",
-              "forcedColors": "{button.text.color.disabled}"
-            },
+            "prefersContrast": "{button.text.color.disabled}",
+            "forcedColors": "{button.text.color.disabled}",
             "nova": {
               "comment": "Preserve token structure that can't be replicated in Figma",
               "value": {
                 "brand": {
-                  "default": "{button.text.color.ghost.@base}",
-                  "forcedColors": "GrayText"
+                  "default": "{button.text.color.ghost.@base}"
                 }
               }
             }

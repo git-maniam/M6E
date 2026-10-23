@@ -923,8 +923,7 @@ nsDisplayListBuilder::nsDisplayListBuilder(nsIFrame* aReferenceFrame,
       mBuildAsyncZoomContainer(false),
       mIsRelativeToLayoutViewport(false),
       mUseOverlayScrollbars(false),
-      mAlwaysLayerizeScrollbars(false),
-      mIsDestroying(false) {
+      mAlwaysLayerizeScrollbars(false) {
   MOZ_COUNT_CTOR(nsDisplayListBuilder);
 
   ShouldRebuildDisplayListDueToPrefChange();
@@ -1178,6 +1177,7 @@ nsDisplayListBuilder::~nsDisplayListBuilder() {
   while (c) {
     DisplayItemClipChain* next = c->mNextClipChainToDestroy;
     c->DisplayItemClipChain::~DisplayItemClipChain();
+    DisplayListArena::Free(DisplayListArenaObjectId::CLIPCHAIN, c);
     c = next;
   }
 
@@ -1462,7 +1462,7 @@ void nsDisplayListBuilder::FreeClipChains() {
 
       mClipDeduplicator.erase(*indirect);
       (*indirect)->DisplayItemClipChain::~DisplayItemClipChain();
-      Destroy(DisplayListArenaObjectId::CLIPCHAIN, *indirect);
+      DisplayListArena::Free(DisplayListArenaObjectId::CLIPCHAIN, *indirect);
 
       *indirect = next;
     } else {
@@ -1638,8 +1638,8 @@ const DisplayItemClipChain* nsDisplayListBuilder::AllocateDisplayItemClipChain(
     const DisplayItemClip& aClip, const ActiveScrolledRoot* aASR,
     const DisplayItemClipChain* aParent) {
   MOZ_DIAGNOSTIC_ASSERT(!(aParent && aParent->mOnStack));
-  void* p = Allocate(sizeof(DisplayItemClipChain),
-                     DisplayListArenaObjectId::CLIPCHAIN);
+  void* p = DisplayListArena::Allocate(DisplayListArenaObjectId::CLIPCHAIN,
+                                       sizeof(DisplayItemClipChain));
   DisplayItemClipChain* c = new (KnownNotNull, p)
       DisplayItemClipChain(aClip, aASR, aParent, mFirstClipChainToDestroy);
 #if defined(DEBUG) || defined(MOZ_DIAGNOSTIC_ASSERT_ENABLED)
@@ -1653,7 +1653,7 @@ const DisplayItemClipChain* nsDisplayListBuilder::AllocateDisplayItemClipChain(
     // collapse into the same clip chain object, because clip chains do not keep
     // track of the reference frame that they were created in.
     c->DisplayItemClipChain::~DisplayItemClipChain();
-    Destroy(DisplayListArenaObjectId::CLIPCHAIN, c);
+    DisplayListArena::Free(DisplayListArenaObjectId::CLIPCHAIN, c);
     return *(result.first);
   }
   mFirstClipChainToDestroy = c;
@@ -1989,8 +1989,6 @@ void nsDisplayTransform::AddSizeOfExcludingThis(nsWindowSizes& aSizes) const {
 }
 
 void nsDisplayListBuilder::AddSizeOfExcludingThis(nsWindowSizes& aSizes) const {
-  mPool.AddSizeOfExcludingThis(aSizes, Arena::ArenaKind::DisplayList);
-
   size_t n = 0;
   MallocSizeOf mallocSizeOf = aSizes.mState.mMallocSizeOf;
   n += mRetainedWindowDraggingRegion.SizeOfExcludingThis(mallocSizeOf);
@@ -2161,15 +2159,6 @@ void nsDisplayListBuilder::ReuseDisplayItem(nsDisplayItem* aItem) {
   }
 
   aItem->SetReusedItem();
-}
-
-void nsDisplayListSet::CopyTo(const nsDisplayListSet& aDestination) const {
-  for (size_t i = 0; i < mLists.size(); ++i) {
-    auto* from = mLists[i];
-    auto* to = aDestination.mLists[i];
-
-    from->CopyTo(to);
-  }
 }
 
 void nsDisplayListSet::MoveTo(const nsDisplayListSet& aDestination) const {
@@ -2796,7 +2785,6 @@ nsDisplayContainer::nsDisplayContainer(
     const ActiveScrolledRoot* aActiveScrolledRoot,
     ContainerASRType aContainerASRType, nsDisplayList* aList)
     : nsDisplayItem(aBuilder, aFrame, aActiveScrolledRoot),
-      mChildren(aBuilder),
       mFrameASR(aContainerASRType == ContainerASRType::AncestorOfContained
                     ? aBuilder->CurrentActiveScrolledRoot()
                     : nullptr),
@@ -3271,7 +3259,7 @@ AppendedBackgroundType nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
   // An auxiliary list is necessary in case we have background blending; if that
   // is the case, background items need to be wrapped by a blend container to
   // isolate blending to the background
-  nsDisplayList bgItemList(aBuilder);
+  nsDisplayList bgItemList;
   // Even if we don't actually have a background color to paint, we may still
   // need to create an item for hit testing and we still need to create an item
   // for background-color animations.
@@ -3369,7 +3357,7 @@ AppendedBackgroundType nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
                               willPaintBorder);
     }
 
-    nsDisplayList thisItemList(aBuilder);
+    nsDisplayList thisItemList;
     nsDisplayBackgroundImage::InitData bgData =
         nsDisplayBackgroundImage::GetInitData(aBuilder, aFrame, i, bgOriginRect,
                                               bgSC);
@@ -4853,7 +4841,6 @@ nsDisplayWrapList::nsDisplayWrapList(
     const ActiveScrolledRoot* aActiveScrolledRoot,
     ContainerASRType aContainerASRType, bool aClearClipChain)
     : nsPaintedDisplayItem(aBuilder, aFrame, aActiveScrolledRoot),
-      mList(aBuilder),
       mFrameASR(aContainerASRType == ContainerASRType::AncestorOfContained
                     ? aBuilder->CurrentActiveScrolledRoot()
                     : nullptr),
@@ -4874,7 +4861,6 @@ nsDisplayWrapList::nsDisplayWrapList(
 nsDisplayWrapList::nsDisplayWrapList(nsDisplayListBuilder* aBuilder,
                                      nsIFrame* aFrame, nsDisplayItem* aItem)
     : nsPaintedDisplayItem(aBuilder, aFrame),
-      mList(aBuilder),
       mOverrideZIndex(0),
       mHasZIndexOverride(false) {
   MOZ_COUNT_CTOR(nsDisplayWrapList);
@@ -5773,7 +5759,7 @@ nsDisplayFixedPosition* nsDisplayFixedPosition::CreateForFixedBackground(
     nsDisplayListBuilder* aBuilder, nsIFrame* aFrame, nsIFrame* aSecondaryFrame,
     nsDisplayBackgroundImage* aImage, const uint16_t aIndex,
     const ActiveScrolledRoot* aScrollTargetASR) {
-  nsDisplayList temp(aBuilder);
+  nsDisplayList temp;
   temp.AppendToTop(aImage);
 
   if (aSecondaryFrame) {
@@ -6221,7 +6207,6 @@ nsDisplayTransform::nsDisplayTransform(nsDisplayListBuilder* aBuilder,
                                        nsIFrame* aFrame, nsDisplayList* aList,
                                        const nsRect& aChildrenBuildingRect)
     : nsPaintedDisplayItem(aBuilder, aFrame),
-      mChildren(aBuilder),
       mTransform(Some(Matrix4x4())),
       mChildrenBuildingRect(aChildrenBuildingRect),
       mPrerenderDecision(PrerenderDecision::No),
@@ -6243,7 +6228,6 @@ nsDisplayTransform::nsDisplayTransform(nsDisplayListBuilder* aBuilder,
                                        bool aWrapsBackdropFilter,
                                        bool aForceIsolation)
     : nsPaintedDisplayItem(aBuilder, aFrame),
-      mChildren(aBuilder),
       mChildrenBuildingRect(aChildrenBuildingRect),
       mPrerenderDecision(aPrerenderDecision),
       mIsTransformSeparator(false),
@@ -6263,7 +6247,6 @@ nsDisplayTransform::nsDisplayTransform(nsDisplayListBuilder* aBuilder,
                                        const nsRect& aChildrenBuildingRect,
                                        decltype(WithTransformGetter))
     : nsPaintedDisplayItem(aBuilder, aFrame),
-      mChildren(aBuilder),
       mChildrenBuildingRect(aChildrenBuildingRect),
       mPrerenderDecision(PrerenderDecision::No),
       mIsTransformSeparator(false),
@@ -7653,7 +7636,7 @@ void nsDisplayTransform::WriteDebugInfo(std::stringstream& aStream) {
 nsDisplayPerspective::nsDisplayPerspective(nsDisplayListBuilder* aBuilder,
                                            nsIFrame* aFrame,
                                            nsDisplayList* aList)
-    : nsPaintedDisplayItem(aBuilder, aFrame), mList(aBuilder) {
+    : nsPaintedDisplayItem(aBuilder, aFrame) {
   mList.AppendToTop(aList);
   MOZ_ASSERT(mList.Length() == 1);
   MOZ_ASSERT(mList.GetTop()->GetType() == DisplayItemType::TYPE_TRANSFORM);

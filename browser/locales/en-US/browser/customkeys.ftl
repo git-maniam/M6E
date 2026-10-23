@@ -63,6 +63,7 @@ customkeys-reset-all-confirm-button-cancel = Cancel
 ## Added shortcuts:
 
 customkeys-file-duplicate-tab = Duplicate Tab
+customkeys-file-copy-tab-url = Copy Tab URL
 customkeys-file-focus-search = Focus the Search Bar
 
 customkeys-history-reopen-tab = Reopen Last Closed Tab

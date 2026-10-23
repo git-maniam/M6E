@@ -875,7 +875,12 @@ class InferenceEngine {
     const args = [wasm, pipelineOptions];
     const closure = {};
     const transferables = wasm instanceof ArrayBuffer ? [wasm] : [];
-    await worker.post("initializeEngine", args, closure, transferables);
+    try {
+      await worker.post("initializeEngine", args, closure, transferables);
+    } catch (error) {
+      worker.terminate();
+      throw error;
+    }
     ChromeUtils.addProfilerMarker(
       "MLEngineChild",
       { startTime },

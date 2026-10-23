@@ -8,7 +8,7 @@
 # documentation and how to modify this file.
 repo: mozilla-central
 created_at: '2021-10-14T12:50:40.073465'
-updated_at: '2026-10-16T18:03:00.701692+00:00'
+updated_at: '2026-10-19T23:26:51.625727+00:00'
 export:
   path: ./docs/mots/index.md
   format: md
@@ -22,6 +22,10 @@ aliases:
   - &TLMC
     nick: TLMC
 people:
+  - &007
+    bmo_id: 689628
+    name: Noah Bond
+    nick: '007'
   - &acottner
     bmo_id: 736702
     name: Alex Cottner
@@ -566,6 +570,10 @@ people:
     bmo_id: 580382
     name: Julien Cristau
     nick: jcristau
+  - &jdelorenzo
+    bmo_id: 779362
+    name: Julie De Lorenzo
+    nick: jdelorenzo
   - &jdescottes
     bmo_id: 559949
     name: Julian Descottes
@@ -4406,6 +4414,28 @@ modules:
           - *zombie
           - *tcampbell
           - *jonalmeida
+      - machine_name: fenix_tabs
+        name: Fenix - Tabs
+        description: Submodule for the tabs code in Firefox for Android.
+        includes:
+          - mobile/android/android-components/components/browser/tabstray/**/*
+          - mobile/android/android-components/components/compose/tabstray/**/*
+          - mobile/android/android-components/components/concept/tabstray/**/*
+          - mobile/android/android-components/components/feature/tabs/**/*
+          - mobile/android/android-components/components/feature/tabgroups-storage/**/*
+          - mobile/android/android-components/components/feature/tabdata-coordinator/**/*
+          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/tabstray/**/*
+          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/tabgroups/**/*
+          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/components/tabs/**/*
+        meta:
+          components:
+            - 'Firefox for Android :: Tabs'
+          review_group: android-tabs-reviewers
+        owners:
+          - *007
+        peers:
+          - *calu
+          - *jdelorenzo
 
   - machine_name: focus_android
     name: Focus for Android
@@ -5046,5 +5076,5 @@ modules:
         - Ryan Tilder
       group: dev-platform
 hashes:
-  config: 15f46743813505c26b0c5750f4a71cd239a70fd1
-  export: 2d48f785e1125797a123f83aa61f75c28cffef9f
+  config: 0fa1edd1eb9e634b8f3b5cd772db6bf9be49af8f
+  export: 0a1dc9b3b63a79c423de97a6d3fb023bdd50a70f

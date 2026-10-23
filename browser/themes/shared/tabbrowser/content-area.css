@@ -823,6 +823,15 @@ split-view-footer {
     -moz-window-shadow: none;
   }
 
+  &[copy-fading] {
+    opacity: 0;
+    transition: opacity 240ms ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
   moz-button {
     --button-min-height: 34px;
     --button-size-icon: 34px;
@@ -832,6 +841,14 @@ split-view-footer {
     @media -moz-pref("browser.nova.enabled") {
       --button-border-radius: var(--border-radius-xlarge);
     }
+  }
+
+  .more-actions-separator {
+    align-self: center;
+    width: 1px;
+    height: 18px;
+    margin-inline: var(--space-xsmall);
+    background-color: var(--border-color);
   }
 
   #ai-action-button::part(button) {
@@ -854,6 +871,53 @@ split-view-footer {
     -moz-context-properties: fill;
     fill: var(--button-icon-fill);
   }
+
+  .copy-action-confirmation {
+    display: flex;
+    align-items: center;
+    flex: none;
+    block-size: var(--icon-size-xlarge);
+    margin-block: 2px;
+    white-space: nowrap;
+
+    &[copied] {
+      margin-inline-end: 2px;
+      padding-inline-end: var(--space-medium);
+      border-radius: var(--border-radius-circle);
+      background-color: var(--color-accent-primary);
+      color: var(--button-text-color-primary);
+      font-size: var(--font-size-root);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
+
+  .copy-action-confirmation-icon {
+    display: none;
+    flex: none;
+    inline-size: var(--icon-size-xlarge);
+    block-size: var(--icon-size-xlarge);
+    background-image: url("chrome://global/skin/icons/check.svg");
+    background-size: var(--icon-size-default);
+    background-position: center;
+    background-repeat: no-repeat;
+    -moz-context-properties: fill;
+    fill: currentColor;
+  }
+
+  .copy-action-confirmation[copied] .copy-action-confirmation-icon {
+    display: block;
+  }
+
+  &[copied] {
+    #more-actions-button,
+    #more-actions-separator {
+      display: none;
+    }
+  }
+}
+
+#selection-more-actions-panel > .panel-subview-body {
+  gap: var(--space-medium);
 }
 
 #ask-chat-shortcuts {

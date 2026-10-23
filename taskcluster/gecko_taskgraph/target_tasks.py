@@ -68,6 +68,7 @@ UNCOMMON_TRY_TASK_LABELS = [
     # Can't actually run on try
     r"notarization",
     # not usually needed
+    r"^beetmover-integration-",
     "upload-symbols",
 ]
 

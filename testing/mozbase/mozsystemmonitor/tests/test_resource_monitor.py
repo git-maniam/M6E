@@ -35,6 +35,16 @@ UBSAN_LINES = [
 ]
 
 
+def _wait_for_measurement(monitor, timeout=30):
+    """Wait for the first measurement, which takes a while when the
+    collecting process is spawned rather than forked, e.g. on macOS."""
+    deadline = time.monotonic() + timeout
+    while not monitor.measurements:
+        assert time.monotonic() < deadline, "no measurement received"
+        monitor._drain_pipe()
+        time.sleep(0.05)
+
+
 @unittest.skipIf(psutil is None, "Resource monitor requires psutil.")
 class TestResourceMonitor(unittest.TestCase):
     def test_basic(self):
@@ -121,6 +131,7 @@ class TestResourceMonitor(unittest.TestCase):
         monitor = SystemResourceMonitor(poll_interval=0.25)
 
         monitor.start()
+        _wait_for_measurement(monitor)
         time.sleep(1)
         monitor.stop()
 
@@ -1503,7 +1514,7 @@ def test_process_sampling_still_running():
             monitor.start()
             # Let the monitor take its first sample, which is what it
             # considers to be running before it started.
-            time.sleep(0.5)
+            _wait_for_measurement(monitor)
             during = subprocess.Popen(sleep + ["during"])
             try:
                 time.sleep(1)

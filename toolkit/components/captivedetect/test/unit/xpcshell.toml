@@ -19,6 +19,8 @@ skip-if = ["os == 'android'"] # The captive detector is not built on Android
 
 ["test_captive_portal_not_found_404.js"]
 
+["test_fresh_connection.js"]
+
 ["test_multiple_requests.js"]
 
 ["test_user_cancel.js"]

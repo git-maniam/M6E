@@ -1120,7 +1120,59 @@ selection_menu:
         type: string
         description: >
           Where the toggle happened, e.g., menu, settings, uncheck_all,
-          context_menu.
+          context_menu. uncheck_all is the menu turning itself off because
+          its last action was turned off.
+
+  menu_shown:
+    type: event
+    description: >
+      The three-dot menu of the text selection actions menu was opened. Each
+      extra says whether that action's toggle was on, off or absent from the
+      menu. This is the denominator for the toggles in option_toggled.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=2069164
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=2069164
+    data_sensitivity:
+      - interaction
+    expires: never
+    notification_emails:
+      - scunnane@mozilla.com
+      - fx-search-telemetry@mozilla.com
+    send_in_pings:
+      - events
+    extra_keys:
+      ai:
+        type: string
+        description: State of the AI toggle, one of on, off or absent.
+      search:
+        type: string
+        description: State of the search toggle, one of on, off or absent.
+      copy:
+        type: string
+        description: State of the copy toggle, one of on, off or absent.
+
+  menu_click:
+    type: event
+    description: >
+      An entry of the three-dot menu of the text selection actions menu, other
+      than its toggles, was clicked.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=2069165
+    data_reviews:
+      - https://phabricator.services.mozilla.com/D335856
+    data_sensitivity:
+      - interaction
+    expires: never
+    notification_emails:
+      - scunnane@mozilla.com
+      - fx-search-telemetry@mozilla.com
+    send_in_pings:
+      - events
+    extra_keys:
+      item:
+        type: string
+        description: Which entry was clicked, e.g., settings.
 
   search_enabled:
     type: boolean
@@ -1151,6 +1203,25 @@ selection_menu:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2069156
     data_reviews:
       - https://phabricator.services.mozilla.com/D334183
+    data_sensitivity:
+      - interaction
+    expires: never
+    notification_emails:
+      - scunnane@mozilla.com
+      - fx-search-telemetry@mozilla.com
+    send_in_pings:
+      - metrics
+
+  copy_enabled:
+    type: boolean
+    lifetime: application
+    description: >
+      Indicates if the text selection actions menu would show the copy
+      action.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=2069152
+    data_reviews:
+      - https://phabricator.services.mozilla.com/D332275
     data_sensitivity:
       - interaction
     expires: never

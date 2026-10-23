@@ -1772,6 +1772,10 @@ newtab-horoscopes-widget-open-menu-button =
 # Context menu item linking to more information about the widget.
 newtab-horoscopes-menu-learn-more = Learn more
 
+# Context menu item linking to the Yahoo website, the provider of the
+# horoscopes. “Yahoo” is a brand name and should not be translated.
+newtab-horoscopes-menu-powered-by-yahoo = Powered by Yahoo
+
 ## Strings for the Travel widget
 
 # Widget heading; also the widget's accessible name. Travel (noun) is a

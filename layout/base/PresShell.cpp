@@ -254,8 +254,7 @@ struct RangePaintInfo {
   float mResolution = 1.0;
 
   explicit RangePaintInfo(nsIFrame* aFrame)
-      : mBuilder(aFrame, nsDisplayListBuilderMode::Painting, false),
-        mList(&mBuilder) {
+      : mBuilder(aFrame, nsDisplayListBuilderMode::Painting, false) {
     MOZ_COUNT_CTOR(RangePaintInfo);
     mBuilder.BeginFrame();
   }
@@ -786,8 +785,6 @@ PresShell::~PresShell() {
                    mLastCallbackEventRequest == nullptr,
                "post-reflow queues not empty.  This means we're leaking");
 
-  MOZ_ASSERT(!mAllocatedPointers || mAllocatedPointers->IsEmpty(),
-             "Some pres arena objects were not freed");
   MOZ_ASSERT(mContentVisibilityAutoFrames.IsEmpty(),
              "All content-visibility:auto frames should be unregistered");
   MOZ_ASSERT(mContentVisibilityHiddenCount == 0,
@@ -4397,8 +4394,8 @@ void PresShell::UnsuppressPainting() {
 
 // Post a request to handle an arbitrary callback after reflow has finished.
 nsresult PresShell::PostReflowCallback(nsIReflowCallback* aCallback) {
-  void* result = AllocateByObjectID(eArenaObjectID_nsCallbackEventRequest,
-                                    sizeof(nsCallbackEventRequest));
+  void* result = FrameArena::Allocate(eArenaObjectID_nsCallbackEventRequest,
+                                      sizeof(nsCallbackEventRequest));
   nsCallbackEventRequest* request = (nsCallbackEventRequest*)result;
 
   request->callback = aCallback;
@@ -4435,7 +4432,7 @@ void PresShell::CancelReflowCallback(nsIReflowCallback* aCallback) {
         mLastCallbackEventRequest = before;
       }
 
-      FreeByObjectID(eArenaObjectID_nsCallbackEventRequest, toFree);
+      FrameArena::Free(eArenaObjectID_nsCallbackEventRequest, toFree);
     } else {
       before = node;
       node = node->next;
@@ -4451,7 +4448,7 @@ void PresShell::CancelPostedReflowCallbacks() {
       mLastCallbackEventRequest = nullptr;
     }
     nsIReflowCallback* callback = node->callback;
-    FreeByObjectID(eArenaObjectID_nsCallbackEventRequest, node);
+    FrameArena::Free(eArenaObjectID_nsCallbackEventRequest, node);
     if (callback) {
       callback->ReflowCallbackCanceled();
     }
@@ -4469,7 +4466,7 @@ void PresShell::HandlePostedReflowCallbacks(bool aInterruptible) {
         mLastCallbackEventRequest = nullptr;
       }
       nsIReflowCallback* callback = node->callback;
-      FreeByObjectID(eArenaObjectID_nsCallbackEventRequest, node);
+      FrameArena::Free(eArenaObjectID_nsCallbackEventRequest, node);
       if (callback && callback->ReflowFinished()) {
         shouldFlush = true;
       }
@@ -5338,7 +5335,7 @@ UniquePtr<RangePaintInfo> PresShell::CreateRangePaintInfo(
     ViewID zoomedId = nsLayoutUtils::FindOrCreateIDFor(
         rootScrollContainerFrame->GetContent());
 
-    nsDisplayList wrapped(&info->mBuilder);
+    nsDisplayList wrapped;
     wrapped.AppendNewToTop<nsDisplayAsyncZoom>(
         &info->mBuilder, rootScrollContainerFrame, &info->mList, nullptr,
         nsDisplayItem::ContainerASRType::Constant, zoomedId);
@@ -5653,7 +5650,7 @@ already_AddRefed<SourceSurface> PresShell::RenderSelection(
 
 static void AddDisplayItemToBottom(nsDisplayListBuilder* aBuilder,
                                    nsDisplayList* aList, nsDisplayItem* aItem) {
-  nsDisplayList list(aBuilder);
+  nsDisplayList list;
   list.AppendToTop(aItem);
   list.AppendToTop(aList);
   aList->AppendToTop(&list);
@@ -12258,7 +12255,6 @@ PresShell* PresShell::GetRootPresShell() const {
 
 void PresShell::AddSizeOfIncludingThis(nsWindowSizes& aSizes) const {
   MallocSizeOf mallocSizeOf = aSizes.mState.mMallocSizeOf;
-  mFrameArena.AddSizeOfExcludingThis(aSizes, Arena::ArenaKind::PresShell);
   aSizes.mLayoutPresShellSize += mallocSizeOf(this);
   if (mCaret) {
     aSizes.mLayoutPresShellSize += mCaret->SizeOfIncludingThis(mallocSizeOf);

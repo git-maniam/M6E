@@ -1037,6 +1037,9 @@ class Browsertime(Perftest, metaclass=ABCMeta):
         env["MINIDUMP_SAVE_PATH"] = str(self.crash_directory)
         env["MOZ_REMOTE_SETTINGS_DEVTOOLS"] = "1"
         env["MOZ_REMOTE_SETTINGS_DISABLED"] = "1"
+        # Temporary workaround (bug 2083658): browsertime's bundled geckodriver
+        # doesn't set this. Remove once browsertime is updated (bug 2083786).
+        env["MOZ_REMOTE_ALLOW_SYSTEM_ACCESS"] = "1"
         if self.browsertime_video and self.browsertime_ffmpeg:
             ffmpeg_dir = os.path.dirname(os.path.abspath(self.browsertime_ffmpeg))
             old_path = env.setdefault("PATH", "")

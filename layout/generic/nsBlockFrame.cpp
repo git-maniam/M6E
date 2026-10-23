@@ -414,7 +414,7 @@ NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(InsideMarkerProperty, nsIFrame)
 //----------------------------------------------------------------------
 
 nsBlockFrame* NS_NewBlockFrame(PresShell* aPresShell, ComputedStyle* aStyle) {
-  return new (aPresShell) nsBlockFrame(aStyle, aPresShell->GetPresContext());
+  return new nsBlockFrame(aStyle, aPresShell->GetPresContext());
 }
 
 NS_IMPL_FRAMEARENA_HELPERS(nsBlockFrame)
@@ -6679,7 +6679,7 @@ void nsBlockFrame::DrainSelfPushedFloats() {
     }
 
     if (ourPushedFloats->IsEmpty()) {
-      StealPushedFloats()->Delete(presShell);
+      StealPushedFloats()->Delete();
     }
   }
 }
@@ -6691,7 +6691,7 @@ void nsBlockFrame::DrainPushedFloats() {
   // floats list, containing floats that we need to own.  Take these.
   nsBlockFrame* prevBlock = static_cast<nsBlockFrame*>(GetPrevInFlow());
   if (prevBlock) {
-    AutoFrameListPtr list(PresContext(), prevBlock->StealPushedFloats());
+    AutoFrameListPtr list(prevBlock->StealPushedFloats());
     if (list && list->NotEmpty()) {
       EnsureFloats()->InsertFrames(this, nullptr, std::move(*list));
     }
@@ -6782,15 +6782,14 @@ void nsBlockFrame::SetOverflowFloats(nsFrameList&& aList,
     nsFrameList* list = TakeProperty(OverflowFloatsProperty());
     NS_ASSERTION(aPropValue == list, "prop value mismatch");
     list->Clear();
-    list->Delete(PresShell());
+    list->Delete();
     RemoveStateBits(NS_BLOCK_HAS_OVERFLOW_FLOATS);
   } else if (HasAnyStateBits(NS_BLOCK_HAS_OVERFLOW_FLOATS)) {
     NS_ASSERTION(aPropValue == GetProperty(OverflowFloatsProperty()),
                  "prop value mismatch");
     *aPropValue = std::move(aList);
   } else {
-    SetProperty(OverflowFloatsProperty(),
-                new (PresShell()) nsFrameList(std::move(aList)));
+    SetProperty(OverflowFloatsProperty(), new nsFrameList(std::move(aList)));
     AddStateBits(NS_BLOCK_HAS_OVERFLOW_FLOATS);
   }
 }
@@ -6845,7 +6844,7 @@ nsFrameList* nsBlockFrame::EnsureFloats() {
   if (list) {
     return list;
   }
-  list = new (PresShell()) nsFrameList;
+  list = new nsFrameList;
   SetProperty(FloatsProperty(), list);
   AddStateBits(NS_BLOCK_HAS_FLOATS);
   return list;
@@ -6886,7 +6885,7 @@ nsFrameList* nsBlockFrame::EnsurePushedFloats() {
     return result;
   }
 
-  result = new (PresShell()) nsFrameList;
+  result = new nsFrameList;
   SetProperty(PushedFloatsProperty(), result);
   AddStateBits(NS_BLOCK_HAS_PUSHED_FLOATS);
 
@@ -7254,7 +7253,7 @@ void nsBlockFrame::RemoveFloat(nsIFrame* aFloat) {
     didStartRemovingFloat = true;
     if (floats->StartRemoveFrame(aFloat)) {
       if (floats->IsEmpty()) {
-        StealFloats()->Delete(PresShell());
+        StealFloats()->Delete();
       }
       return;
     }
@@ -7270,7 +7269,7 @@ void nsBlockFrame::RemoveFloat(nsIFrame* aFloat) {
     }
     if (found) {
       if (pushedFloats->IsEmpty()) {
-        StealPushedFloats()->Delete(PresShell());
+        StealPushedFloats()->Delete();
       }
       return;
     }
@@ -8208,7 +8207,7 @@ void nsBlockFrame::ReflowPushedFloats(BlockReflowState& aState,
     if (prevContinuation && prevContinuation->GetParent() == f->GetParent()) {
       floats->RemoveFrame(f);
       if (floats->IsEmpty()) {
-        StealFloats()->Delete(PresShell());
+        StealFloats()->Delete();
         floats = nullptr;
       }
       aState.AppendPushedFloatChain(f);
@@ -9019,7 +9018,7 @@ void nsBlockFrame::SetMarkerFrameForListItem(nsIFrame* aMarkerFrame) {
     SetProperty(InsideMarkerProperty(), aMarkerFrame);
   } else {
     SetProperty(OutsideMarkerProperty(),
-                new (PresShell()) nsFrameList(aMarkerFrame, aMarkerFrame));
+                new nsFrameList(aMarkerFrame, aMarkerFrame));
   }
   AddStateBits(NS_BLOCK_HAS_MARKER);
 }

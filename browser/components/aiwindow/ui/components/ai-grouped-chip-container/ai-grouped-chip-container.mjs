@@ -24,6 +24,7 @@ export class AIGroupedChipContainer extends MozLitElement {
     // Each host opens links itself, so it names the event it listens for.
     openLinkEvent: { type: String },
     isPanelOpen: { type: Boolean, state: true },
+    chipsLabel: { type: String },
   };
 
   constructor() {
@@ -31,6 +32,7 @@ export class AIGroupedChipContainer extends MozLitElement {
     this.chips = [];
     this.openLinkEvent = "AIChatContent:OpenLink";
     this.isPanelOpen = false;
+    this.chipsLabel = "smart-window-context-chips-tag-count";
   }
 
   // Keep this mousedown from reaching panel-list's document-level light-dismiss
@@ -131,7 +133,7 @@ export class AIGroupedChipContainer extends MozLitElement {
         </span>
         <span
           class="grouped-chips__label"
-          data-l10n-id="smart-window-context-chips-tag-count"
+          data-l10n-id=${this.chipsLabel}
           data-l10n-args=${JSON.stringify({ tags: this.chips.length })}
         ></span>
         <img

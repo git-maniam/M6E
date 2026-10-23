@@ -163,9 +163,9 @@ binaryornot==0.6.0 \
     --hash=sha256:900adfd5e1b821255ba7e63139b0396b14c88b9286e74e03b6f51e0200331337 \
     --hash=sha256:cc8d57cfa71d74ff8c28a7726734d53a851d02fad9e3a5581fb807f989f702f0
     # via cookiecutter
-certifi==2025.6.15 \
-    --hash=sha256:2e0c7ce7cb5d8f8634ca55d2ba7e6ec2689a2fd6537d8dec1296a477a4910057 \
-    --hash=sha256:d747aa5a8b9bbbb1bb8c22bb13e22bd1f18e9796defa16bab421f7f7a317323b
+certifi==2026.10.19 \
+    --hash=sha256:035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae \
+    --hash=sha256:42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b
     # via
     #   -c ../third_party/python/requirements.txt
     #   requests
@@ -1111,9 +1111,9 @@ taskcluster==110.0.0 \
     # via
     #   -c ../third_party/python/requirements.txt
     #   taskcluster-taskgraph
-taskcluster-taskgraph==24.4.0 \
-    --hash=sha256:87a4aecc0820e9888f0795681babc53b55664f61b0e3dc00736dbf4d1d04eef2 \
-    --hash=sha256:fac741fe8103e70e9c5e9d6b5058eb5aac4c09cf0ae55577561c203900ba95df
+taskcluster-taskgraph==24.5.1 \
+    --hash=sha256:1b460fa7f16a58ae85a8cbd7d4e4dcc9e816a93b60ff0301194a6c5d3aa626af \
+    --hash=sha256:40db5be961a4665b978b194f32224bd5ef783794bb779f4242f2cc6cdb08bf22
     # via
     #   -r requirements.in
     #   mozilla-taskgraph

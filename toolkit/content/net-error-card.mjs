@@ -19,6 +19,7 @@ import {
   getFilePath,
   gOffline,
   gNoConnectivity,
+  getLoopbackInfo,
   retryThis,
   VPN_ACTIVE,
   detectClockSkew,
@@ -587,6 +588,7 @@ export class NetErrorCard extends MozLitElement {
       filePath: getFilePath(),
       showOSXPermissionWarning:
         !gIsCertError && RPMShowOSXLocalNetworkPermissionWarning(),
+      loopback: gErrorCode === "connectionFailure" ? getLoopbackInfo() : null,
     });
 
     if (errorConfig.checkClockSkew && gIsCertError) {
@@ -1061,7 +1063,13 @@ export class NetErrorCard extends MozLitElement {
       whatCanYouDoSection = html`<div>
         <h3 data-l10n-id="fp-certerror-what-can-you-do"></h3>
         <ul class="what-can-you-do-list">
-          ${whatCanYouDoItems.map(id => html`<li data-l10n-id=${id}></li>`)}
+          ${whatCanYouDoItems.map(item => {
+            const { id, args } = typeof item === "string" ? { id: item } : item;
+            return html`<li
+              data-l10n-id=${id}
+              data-l10n-args=${args ? JSON.stringify(args) : null}
+            ></li>`;
+          })}
         </ul>
       </div>`;
     } else if (whatCanYouDoL10nId) {

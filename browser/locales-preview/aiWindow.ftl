@@ -505,7 +505,7 @@ aitab-page-delete =
     .title = Delete page
 
 aitab-page-delete-dialog-title = Delete this { -smart-page-brand-name }?
-aitab-page-delete-dialog-message = This generated page will be removed. The sources it was built from aren’t affected.
+aitab-page-delete-dialog-message = This page will be permanently deleted. The sources used to create it won’t be affected.
 
 aitab-page-delete-dialog-cancel =
     .label = Cancel
@@ -531,6 +531,13 @@ smartwindow-aitab-open-new =
 smartwindow-aitab-created-an-aitab = Created { -smart-page-brand-name }
 smartwindow-aitab-updated-an-aitab = Updated { -smart-page-brand-name }
 smartwindow-aitab-empty-chat-message = Want to make changes to your { -smart-page-brand-name }? Ask in the chat to add or remove content.
+
+# Variables:
+#   $tags (Number) - Number of sources used to create the AITab
+smart-window-aitab-sources-count = { $tags ->
+    [one] { $tags } source
+   *[other] { $tags } sources
+}
 
 ## "Pick up where you left off" cards for resuming browsing or chat journeys.
 ## A "journey" is a past browsing or chat session the user was in the middle

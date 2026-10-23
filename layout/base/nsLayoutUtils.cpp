@@ -2629,7 +2629,7 @@ nsresult nsLayoutUtils::GetFramesForArea(RelativeTo aRelativeTo,
   nsDisplayListBuilder builder(frame, nsDisplayListBuilderMode::EventDelivery,
                                false);
   builder.BeginFrame();
-  nsDisplayList list(&builder);
+  nsDisplayList list;
 
   if (aOptions.mBits.contains(FrameForPointOption::IgnorePaintSuppression)) {
     builder.IgnorePaintSuppression();
@@ -2673,7 +2673,6 @@ nsresult nsLayoutUtils::GetFramesForArea(RelativeTo aRelativeTo,
   nsDisplayItem::HitTestState hitTestState;
   list.HitTest(&builder, aRect, &hitTestState, &aOutFrames);
 
-  builder.SetIsDestroying();
   list.DeleteAll(&builder);
   builder.EndFrame();
   return NS_OK;
@@ -2938,12 +2937,9 @@ struct TemporaryDisplayListBuilder {
   TemporaryDisplayListBuilder(nsIFrame* aFrame,
                               nsDisplayListBuilderMode aBuilderMode,
                               const bool aBuildCaret)
-      : mBuilder(aFrame, aBuilderMode, aBuildCaret), mList(&mBuilder) {}
+      : mBuilder(aFrame, aBuilderMode, aBuildCaret) {}
 
-  ~TemporaryDisplayListBuilder() {
-    mBuilder.SetIsDestroying();
-    mList.DeleteAll(&mBuilder);
-  }
+  ~TemporaryDisplayListBuilder() { mList.DeleteAll(&mBuilder); }
 
   nsDisplayListBuilder mBuilder;
   nsDisplayList mList;

@@ -813,7 +813,7 @@
             gBrowser.TabMetrics.METRIC_SOURCE.DRAG_AND_DROP
           ),
         };
-        if (window.fullScreen) {
+        if (window.fullScreen && AppConstants.platform == "macosx") {
           // `left` and `top` above leave room for a window as large as this
           // one, and a fullscreen window covers the screen, so they collapse
           // onto the corner of it. The new window doesn't take our size

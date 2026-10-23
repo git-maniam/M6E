@@ -661,11 +661,7 @@ void gfxDWriteFontEntry::GetVariationInstancesInternal(
 
 #if MOZ_FONTATIONS
 void gfxDWriteFontEntry::InitSkrifaFontFace() {
-  RefPtr<IDWriteFontFace> face;
-  {
-    AutoReadLock lock(mLock);
-    face = mFontFace;
-  }
+  RefPtr<IDWriteFontFace> face = mFontFace;
   if (!face) {
     if (!mFont || FAILED(mFont->CreateFontFace(getter_AddRefs(face)))) {
       return;

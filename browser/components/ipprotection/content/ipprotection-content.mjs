@@ -434,6 +434,7 @@ export default class IPProtectionContentElement extends MozLitElement {
   siteRulesStatusTemplate() {
     if (
       !this.state.isSiteInclusionsEnabled ||
+      !this.state.isActive ||
       !this.state.siteData ||
       this.#hasErrors ||
       !this.hasSiteRule

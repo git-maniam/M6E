@@ -142,6 +142,9 @@ support-files = ["early_hint_preload_test_helper.sys.mjs",]
 
 ["browser_accept_language_override.js"]
 
+["browser_akamai_waf_telemetry.js"]
+support-files = ["!/netwerk/test/unit/http2-ca.pem"] # for node server
+
 ["browser_alt_data_cross_origin.js"]
 support-files = ["alt_data_cross_origin.sjs"]
 

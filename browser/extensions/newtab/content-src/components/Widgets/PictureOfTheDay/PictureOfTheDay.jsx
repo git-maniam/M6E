@@ -85,6 +85,8 @@ const PictureOfTheDay = ({
   // URL opened offline, or a broken/404 image) instead of showing a broken
   // image. Reset when a new picture arrives so the next day's image is tried.
   const [imageFailed, setImageFailed] = useState(false);
+  // Keep the picture hidden until it loads so its alt text never flashes.
+  const [imageLoaded, setImageLoaded] = useState(false);
   useEffect(() => {
     setImageFailed(false);
   }, [pictureData.thumbnailUrl]);
@@ -107,6 +109,13 @@ const PictureOfTheDay = ({
     pictureDate === prefs["widgets.pictureOfTheDay.wallpaperActive"];
   const hasPicture =
     Boolean(pictureData.thumbnailUrl) && !dismissed && !imageFailed;
+  // Reset only when the image leaves the page. On a new URL, Gecko keeps the
+  // old picture painted until the new one is ready.
+  useEffect(() => {
+    if (!hasPicture) {
+      setImageLoaded(false);
+    }
+  }, [hasPicture]);
 
   // Show the "New" badge until the user first interacts with the widget;
   // handleInteraction flips widgets.pictureOfTheDay.interaction on any action,
@@ -365,9 +374,10 @@ const PictureOfTheDay = ({
 
   const pictureImage = (
     <img
-      className="picture-of-the-day-image"
+      className={`picture-of-the-day-image${imageLoaded ? " loaded" : ""}`}
       src={pictureData.thumbnailUrl}
       alt={imageAlt}
+      onLoad={() => setImageLoaded(true)}
       onError={() => setImageFailed(true)}
     />
   );

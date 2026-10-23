@@ -152,6 +152,8 @@ export class IPProtectionPanel {
    *  An object containing the current and max usage
    * @property {boolean} isActivating
    *  True if the VPN service is in the process of connecting, else false.
+   * @property {boolean} isActive
+   *  True if the VPN proxy is active, else false.
    * @property {boolean} isPremium
    * True if the current device has Firefox set as the default browser or the user has a Mozilla VPN subscription and/or unlimited bandwidth
    * Initially false; recomputed asynchronously before the panel is shown.
@@ -429,6 +431,7 @@ export class IPProtectionPanel {
       bandwidthUsage: this.#getBandwidthUsage(),
       isActivating:
         lazy.IPPProxyManager.state === lazy.IPPProxyStates.ACTIVATING,
+      isActive: lazy.IPPProxyManager.state === lazy.IPPProxyStates.ACTIVE,
       isEnrolling: lazy.IPProtectionService.authProvider.isEnrolling,
       isPremium: false,
       showSiteInclusionPrompt: false,
@@ -1277,6 +1280,7 @@ export class IPProtectionPanel {
         error: errorType,
         isActivating:
           lazy.IPPProxyManager.state === lazy.IPPProxyStates.ACTIVATING,
+        isActive: lazy.IPPProxyManager.state === lazy.IPPProxyStates.ACTIVE,
         isEnrolling: lazy.IPProtectionService.authProvider.isEnrolling,
         bandwidthUsage: this.#getBandwidthUsage(),
         bandwidthWarning:

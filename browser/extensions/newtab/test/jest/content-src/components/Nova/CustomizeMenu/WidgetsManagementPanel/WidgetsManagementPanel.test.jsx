@@ -553,27 +553,6 @@ describe("<WidgetsManagementPanel>", () => {
       );
     });
 
-    it("labels an extension widget's toggle with its extension's Fluent id", async () => {
-      const fixture = withFixtureWidget({
-        extensionID: "fixture-widget@mozilla.org",
-      });
-      delete fixture.customizeL10nId;
-
-      const { container } = await renderPanel({}, allWidgetsVisible(), {
-        ExtensionWidgets: {
-          "fixture-widget@mozilla.org": {
-            src: "",
-            customizeL10nId: "fixture-widget-name",
-          },
-        },
-      });
-
-      expect(container.querySelector("#fixtureWidget-toggle")).toHaveAttribute(
-        "data-l10n-id",
-        "fixture-widget-name"
-      );
-    });
-
     it("skips a retired registry entry", async () => {
       withFixtureWidget({ retired: true });
 

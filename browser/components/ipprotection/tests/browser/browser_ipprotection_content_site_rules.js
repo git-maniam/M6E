@@ -469,6 +469,7 @@ add_task(async function test_site_rule_status_exclusion() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     siteData: {
       isExclusion: true,
       isInclusion: false,
@@ -499,6 +500,7 @@ add_task(async function test_site_rule_status_inclusion() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: false,
+    isActive: true,
     siteData: {
       isExclusion: false,
       isInclusion: true,
@@ -535,6 +537,7 @@ add_task(async function test_site_rule_status_structure() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     siteData: {
       isExclusion: true,
       isInclusion: false,
@@ -588,6 +591,7 @@ add_task(async function test_site_rule_status_hidden_when_rule_is_a_noop() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     siteData: {
       isExclusion: false,
       isInclusion: true,
@@ -602,6 +606,7 @@ add_task(async function test_site_rule_status_hidden_when_rule_is_a_noop() {
 
   await setPanelState({
     isProtectionEnabled: false,
+    isActive: true,
     siteData: {
       isExclusion: true,
       isInclusion: false,
@@ -633,6 +638,7 @@ add_task(async function test_site_rule_status_requires_user_rule() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     siteData: {
       isExclusion: true,
       isInclusion: false,
@@ -666,6 +672,7 @@ add_task(async function test_site_rule_status_feature_pref_disabled() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     siteData: {
       isExclusion: true,
       isInclusion: false,
@@ -699,6 +706,7 @@ add_task(async function test_site_rule_status_hidden_on_error() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     error: "generic",
     siteData: {
       isExclusion: true,
@@ -710,6 +718,35 @@ add_task(async function test_site_rule_status_hidden_on_error() {
   Assert.ok(
     !getSiteRuleStatus(content),
     "Site rule status card should not be present in an error state"
+  );
+
+  await closePanel();
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Tests that we don't show the status card when the proxy is not active.
+ */
+add_task(async function test_site_rule_status_hidden_when_proxy_inactive() {
+  await pushInclusionsPref(true);
+
+  setupService({
+    isReady: true,
+  });
+
+  let content = await openPanelWithSiteData({
+    isProtectionEnabled: true,
+    isActive: false,
+    siteData: {
+      isExclusion: true,
+      isInclusion: false,
+      hasSiteRule: true,
+    },
+  });
+
+  Assert.ok(
+    !getSiteRuleStatus(content),
+    "Site rule status card should not be present when the proxy is not active"
   );
 
   await closePanel();
@@ -735,6 +772,7 @@ add_task(async function test_site_rule_status_follows_protection_state() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: false,
+    isActive: true,
     siteData,
   });
 
@@ -751,6 +789,7 @@ add_task(async function test_site_rule_status_follows_protection_state() {
 
   await setPanelState({
     isProtectionEnabled: true,
+    isActive: true,
     siteData,
   });
   await Promise.all([content.updateComplete, statusShownPromise]);
@@ -769,6 +808,7 @@ add_task(async function test_site_rule_status_follows_protection_state() {
 
   await setPanelState({
     isProtectionEnabled: false,
+    isActive: true,
     siteData,
   });
   await Promise.all([content.updateComplete, statusHiddenPromise]);
@@ -795,6 +835,7 @@ add_task(async function test_site_rule_status_precedes_settings_link() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     siteData: {
       isExclusion: true,
       isInclusion: false,
@@ -835,6 +876,7 @@ add_task(async function test_has_site_inclusion_defaults_to_false() {
 
   let content = await openPanelWithSiteData({
     isProtectionEnabled: true,
+    isActive: true,
     siteData: {
       isExclusion: false,
       hasSiteRule: true,

@@ -35,8 +35,8 @@ const MESSAGES = () => [
             corner_image: {
               position: "bottom-right",
               imageURL:
-                "https://firefox-settings-attachments.cdn.mozilla.net/main-workspace/ms-images/20261014175824--kit-sit-look-up-cropped--0150401a-f05f-488a-a516-f98ec9810b32.svg",
-              height: "216px",
+                "https://firefox-settings-attachments.cdn.mozilla.net/main-workspace/ms-images/20261021204417--kit-sit-look-up--5559ae6b-6311-4bd4-87d8-96dbd0a78e48.svg",
+              height: "206px",
             },
             zap_border: true,
             zap_shadow: true,
@@ -54,13 +54,10 @@ const MESSAGES = () => [
             },
             tiles: {
               type: "single-select",
+              layout: "carousel",
               selected: "vertical-tabs",
               pill_nav_label: {
                 raw: "Feature highlights",
-              },
-              style: {
-                marginBlock: "0 70px",
-                paddingInline: "100px",
               },
               data: [
                 {
@@ -76,9 +73,7 @@ const MESSAGES = () => [
                   },
                   icon: {
                     background:
-                      "url('chrome://activity-stream/content/data/content/assets/mr-kit-smart-window.svg') center / cover no-repeat light-dark(rgb(240, 240, 244), rgb(43, 42, 51))",
-                    darkModeBackground:
-                      "url('chrome://activity-stream/content/data/content/assets/fox-doodle-backup-restore.svg') center / cover no-repeat light-dark(rgb(240, 240, 244), rgb(43, 42, 51))",
+                      "url('https://firefox-settings-attachments.cdn.mozilla.net/main-workspace/ms-images/20261021144626--onboarding-welcome-back-vpn--34e79f8a-3a56-421b-9162-82afe2ee12dd.svg') center / cover no-repeat light-dark(rgb(240, 240, 244), rgb(43, 42, 51))",
                   },
                   label: {
                     raw: "Split View",
@@ -114,7 +109,7 @@ const MESSAGES = () => [
                   },
                   icon: {
                     background:
-                      "url('chrome://activity-stream/content/data/content/assets/nuo-taborientation.svg') center / cover no-repeat light-dark(rgb(240, 240, 244), rgb(43, 42, 51))",
+                      "url('https://firefox-settings-attachments.cdn.mozilla.net/main-workspace/ms-images/20261021144724--onboarding-welcome-back-tidy-tabs--e3059850-5427-4967-9829-958c04c15396.svg') center / cover no-repeat light-dark(rgb(240, 240, 244), rgb(43, 42, 51))",
                   },
                   label: {
                     raw: "Vertical Tabs",
@@ -135,7 +130,7 @@ const MESSAGES = () => [
                   },
                   icon: {
                     background:
-                      "url('chrome://activity-stream/content/data/content/assets/euo-tab-orientation.svg') center / cover no-repeat light-dark(rgb(240, 240, 244), rgb(43, 42, 51))",
+                      "url('https://firefox-settings-attachments.cdn.mozilla.net/main-workspace/ms-images/20261021144652--onboarding-welcome-back-pdf-tools--63356684-de7a-4dec-899e-630e218e4c9e.svg') center / cover no-repeat light-dark(rgb(240, 240, 244), rgb(43, 42, 51))",
                   },
                   label: {
                     raw: "Tab Groups",

@@ -47,6 +47,7 @@ import {
 } from "common/PageLayoutVariants.mjs";
 import { WIDGET_ROW_COMPONENTS } from "./WidgetsComponentRegistry.jsx";
 import { WidgetWrapper } from "./WidgetWrapper";
+import { MozWidgetCard } from "./MozWidgetCard";
 // @experiment(remove) { bug 2069496 }
 import { WidgetsRowAd } from "./WidgetsRowAd.jsx";
 import { ErrorBoundary } from "content-src/components/ErrorBoundary/ErrorBoundary";
@@ -465,7 +466,7 @@ function Widgets({ widgetIds }) {
 
   function hideAllWidgets() {
     batch(() => {
-      const targets = getHideAllTargets(prefs, widgetEnabledMap);
+      const targets = getHideAllTargets(widgets, prefs, widgetEnabledMap);
       for (const target of targets) {
         dispatch(ac.SetPref(target.enabledPref, false));
       }
@@ -937,11 +938,12 @@ function Widgets({ widgetIds }) {
                           widgetEnabledMap={widgetEnabledMap}
                         />
                       ) : (
-                        <moz-widget
-                          widget-id={id}
+                        <MozWidgetCard
+                          dispatch={dispatch}
+                          entry={entry}
                           size={size}
-                          padded={true}
                           src={resolveWidgetSrc(entry, prefs)}
+                          widgetEnabledMap={widgetEnabledMap}
                         />
                       )}
                     </ErrorBoundary>

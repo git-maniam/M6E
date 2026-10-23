@@ -105,7 +105,7 @@ void ProfilerChild::ProcessChunkManagerUpdate(
     }
     thread = lockedUpdate->mProfilerChild->mThread;
   }
-  thread->Dispatch(NS_NewRunnableFunction(
+  RefPtr<Runnable> runnable = NS_NewRunnableFunction(
       "ProfilerChild::ProcessPendingUpdate", []() mutable {
         RefPtr<ProfilerChild> profilerChild;
         ProfileBufferControlledChunkManager::Update update;
@@ -120,7 +120,10 @@ void ProfilerChild::ProcessChunkManagerUpdate(
           lockedUpdate->mUpdate.Clear();
         }
         profilerChild->ProcessChunkManagerUpdate(std::move(update));
-      }));
+      });
+  // The ProfilerChild thread may have been shut down since the lock was
+  // released. Dispatch fallibly so the runnable is released instead of leaked.
+  thread->Dispatch(runnable.forget(), NS_DISPATCH_FALLIBLE);
 }
 
 /* static */ bool ProfilerChild::IsLockedOnCurrentThread() {

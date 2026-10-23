@@ -3357,8 +3357,6 @@ class _SessionStore {
       url: browser.currentURI.spec,
       title: aTab.label,
       userTypedValue,
-      // TODO(bug 2076655): Remove userTypedClear from the lazy state.
-      userTypedClear: 0,
     });
   }
 
@@ -6907,7 +6905,6 @@ class _SessionStore {
         url,
         title,
         userTypedValue: tabData.userTypedValue || "",
-        userTypedClear: tabData.userTypedClear || 0,
       });
     }
 

@@ -30,12 +30,17 @@ const GET_HEADING_FONT_EVENT = "AITab:GetHeadingFont";
 const DELETE_PAGE_EVENT = "AITab:DeletePage";
 
 /**
+ * Page data received from the parent actor.
+ *
+ * @typedef {import("../../actors/AITabParent.sys.mjs").AITabData} AITabData
+ */
+
+/**
  * Root component for about:smartpage. Looks up the page config for the
  * generated page named in the page URL and renders it.
  *
- * @property {?object} page - Page config to render, or null when there is none.
- * @property {string} status - One of "loading", "unavailable", "error" or
- *   "ready". Drives which of the states below is rendered.
+ * @property {AITabData|null} page - Page config to render, or null when there is none.
+ * @property {"loading"|"unavailable"|"error"|"ready"} status - Determines which page state is rendered.
  */
 export class AITabPage extends MozLitElement {
   #renderers;
@@ -63,6 +68,18 @@ export class AITabPage extends MozLitElement {
   connectedCallback() {
     super.connectedCallback();
     this.#loadPage();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+
+    this.status = "loading";
+    this.page = null;
+
+    window.removeEventListener(
+      "AITab:RefreshPageData",
+      this.#onRefreshPageData
+    );
   }
 
   /**
@@ -106,7 +123,26 @@ export class AITabPage extends MozLitElement {
     return new URLSearchParams(window.location.search).get("page");
   }
 
+  /**
+   * Handles the AITab:RefreshPageData event so the page can be refreshed
+   *
+   * @param {CustomEvent<AITabData>} event - Updated page data from the parent actor.
+   */
+  #onRefreshPageData = event => {
+    this.page = event.detail;
+    this.status = this.page ? "ready" : "unavailable";
+  };
+
+  /**
+   * Loads the page data for the Smart Page and loads the
+   * custom font for Smart Page. Triggers a view telemetry
+   * event.
+   *
+   * @returns {Promise<void>} Resolves after loading the page and recording its view.
+   */
   async #loadPage() {
+    window.addEventListener("AITab:RefreshPageData", this.#onRefreshPageData);
+
     let font = "unavailable";
     try {
       if (!this.pageName) {

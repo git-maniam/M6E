@@ -810,40 +810,18 @@ class BrowsingContextModule extends RootBiDiModule {
     }
 
     const browsingContext = browser.browsingContext;
-    const sessionData =
-      this.messageHandler.sessionData.getSessionDataForContext(
-        "browsingContext",
-        "event",
-        browsingContext
-      );
 
-    const hasEventSubscriptionToContextCreated = sessionData.some(
-      item => item.value === "browsingContext.contextCreated"
-    );
-
-    let waitForContextCreatedEvent = Promise.withResolvers();
-
-    // If a client subscribed to "browsingContext.contextCreated" event,
-    // we have to wait for it to be submitted.
-    if (hasEventSubscriptionToContextCreated) {
-      if (!this.#waitForContextCreatedEvent.has(browsingContext)) {
-        this.#waitForContextCreatedEvent.set(
-          browsingContext,
-          Promise.withResolvers()
-        );
-      }
-      waitForContextCreatedEvent =
-        this.#waitForContextCreatedEvent.get(browsingContext);
-    } else {
-      waitForContextCreatedEvent.resolve();
-    }
+    // Wait until a pending "browsingContext.contextCreated" event is handled,
+    // even if the client is not subscribed for this context. Otherwise a
+    // subscription made right after this command returns could receive this
+    // event in addition to the one emitted by the subscribe steps.
     await Promise.all([
       lazy.waitForInitialNavigationCompleted(browsingContext.webProgress, {
         unloadTimeout: 5000,
       }),
       waitForVisibilityStatePromise,
       blocker.promise,
-      waitForContextCreatedEvent.promise,
+      this.#waitForContextCreatedEvent.get(browsingContext)?.promise,
     ]);
 
     this.#blockedCreateCommands.delete(browser);
@@ -2495,56 +2473,50 @@ class BrowsingContextModule extends RootBiDiModule {
         return;
       }
 
-      // If `waitForTopBrowsingContextToBeReady` returns `null`,
-      // it means that the browsing context was discarded.
-      // Do not send an event in this case.
-      if (
-        !browsingContext.parent &&
-        (await lazy.waitForTopBrowsingContextToBeReady(browsingContext)) ===
-          null
-      ) {
-        return;
-      }
-
-      const browsingContextInfo = getBrowsingContextInfo(browsingContext, {
-        maxDepth: 0,
-      });
-
-      this.#emitContextEventForBrowsingContext(
-        browsingContext.id,
-        "browsingContext.contextCreated",
-        browsingContextInfo
+      const waitForContextCreatedEvent = Promise.withResolvers();
+      this.#waitForContextCreatedEvent.set(
+        browsingContext,
+        waitForContextCreatedEvent
       );
 
-      // This is an internal event is used by the script module
-      // to ensure that "script.realmCreated" event is emitted
-      // after "browsingContext.contextCreated".
-      this.emitEvent(
-        "browsingContext._contextCreatedEmitted",
-        { browsingContext },
-        browsingContextInfo
-      );
+      try {
+        // If `waitForTopBrowsingContextToBeReady` returns `null`,
+        // it means that the browsing context was discarded.
+        // Do not send an event in this case.
+        if (
+          !browsingContext.parent &&
+          (await lazy.waitForTopBrowsingContextToBeReady(browsingContext)) ===
+            null
+        ) {
+          return;
+        }
 
-      if (!this.#waitForContextCreatedEvent.has(browsingContext)) {
-        this.#waitForContextCreatedEvent.set(
-          browsingContext,
-          Promise.withResolvers()
+        const browsingContextInfo = getBrowsingContextInfo(browsingContext, {
+          maxDepth: 0,
+        });
+
+        this.#emitContextEventForBrowsingContext(
+          browsingContext.id,
+          "browsingContext.contextCreated",
+          browsingContextInfo
         );
-      }
 
-      this.#waitForContextCreatedEvent.get(browsingContext).resolve();
+        // This internal event is used by the script module to ensure that a
+        // "script.realmCreated" event is emitted after
+        // "browsingContext.contextCreated".
+        this.emitEvent(
+          "browsingContext._contextCreatedEmitted",
+          { browsingContext },
+          browsingContextInfo
+        );
+      } finally {
+        waitForContextCreatedEvent.resolve();
+      }
     }
   };
 
   #onContextDiscarded = async (eventName, data = {}) => {
     const { browsingContext, why } = data;
-
-    // In case the newly created browsing context got discarded immediately resolve pending promise.
-    if (this.#waitForContextCreatedEvent.has(browsingContext)) {
-      const waitForContextCreatedEvent =
-        this.#waitForContextCreatedEvent.get(browsingContext);
-      waitForContextCreatedEvent.resolve();
-    }
 
     if (this.#subscribedEvents.has("browsingContext.contextDestroyed")) {
       // Filter out top-level browsing contexts that are destroyed because of a

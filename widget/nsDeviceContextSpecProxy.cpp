@@ -104,8 +104,7 @@ nsDeviceContextSpecProxy::EndDocument() {
                                                                  __func__);
 }
 
-NS_IMETHODIMP
-nsDeviceContextSpecProxy::BeginPage(const IntSize& aSizeInPoints) {
+nsresult nsDeviceContextSpecProxy::BeginPage(const IntSize& aSizeInPoints) {
   if (!mRemotePrintJob || mRemotePrintJob->IsDestroyed()) {
     mRemotePrintJob = nullptr;
     return NS_ERROR_NOT_AVAILABLE;
@@ -117,8 +116,7 @@ nsDeviceContextSpecProxy::BeginPage(const IntSize& aSizeInPoints) {
   return NS_OK;
 }
 
-NS_IMETHODIMP
-nsDeviceContextSpecProxy::EndPage() {
+nsresult nsDeviceContextSpecProxy::EndPage() {
   if (!mRemotePrintJob || mRemotePrintJob->IsDestroyed()) {
     mRemotePrintJob = nullptr;
     return NS_ERROR_NOT_AVAILABLE;

@@ -1433,6 +1433,47 @@ function maybeRecordSearchActivationTelemetry(uri, isLaunch) {
   }
 }
 
+/**
+ * Records a click on a web notification that no running nsIAlertCallbacks was
+ * tracking, either because Firefox wasn't running or because the notification
+ * is from an earlier session.
+ *
+ * @param {nsIPrincipal} principal
+ * @param {string} action The action from the notification launch arguments.
+ * @param {string} appState The app_state_before_click value to record.
+ */
+function recordUntrackedNotificationClick(principal, action, appState) {
+  let actionType;
+  switch (action) {
+    case "":
+      actionType = "body";
+      break;
+    case "settings":
+      actionType = "settings";
+      break;
+    case "snooze":
+      actionType = "disable";
+      break;
+    default:
+      actionType = "action-button";
+  }
+
+  let siteCategory;
+  try {
+    siteCategory = Cc["@mozilla.org/site-category;1"]
+      .getService(Ci.nsISiteCategory)
+      .getCategory(principal);
+  } catch (_) {
+    // The site category is optional.
+  }
+
+  Glean.webNotification.clicked.record({
+    action: actionType,
+    app_state_before_click: appState,
+    site_category: siteCategory,
+  });
+}
+
 export function nsDefaultCommandLineHandler() {}
 
 nsDefaultCommandLineHandler.prototype = {
@@ -1519,6 +1560,16 @@ nsDefaultCommandLineHandler.prototype = {
     notificationData,
     alertService
   ) {
+    // Determined before any window is opened for this launch.
+    let appStateBeforeClick;
+    if (cmdLine.state == Ci.nsICommandLine.STATE_INITIAL_LAUNCH) {
+      appStateBeforeClick = "closed";
+    } else if (!Services.wm.getMostRecentBrowserWindow()) {
+      appStateBeforeClick = "background_no_window";
+    } else {
+      appStateBeforeClick = "unknown";
+    }
+
     let { tagWasHandled } = await alertService.handleWindowsTag(notificationId);
 
     try {
@@ -1578,6 +1629,12 @@ nsDefaultCommandLineHandler.prototype = {
     if (!tagWasHandled && origin && !opaqueRelaunchData) {
       let originPrincipal =
         Services.scriptSecurityManager.createContentPrincipalFromOrigin(origin);
+
+      recordUntrackedNotificationClick(
+        originPrincipal,
+        action ?? "",
+        appStateBeforeClick
+      );
 
       const handler = Cc["@mozilla.org/notification-handler;1"].getService(
         Ci.nsINotificationHandler

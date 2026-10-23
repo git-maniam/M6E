@@ -148,8 +148,6 @@
   }
 
   --tab-group-label-text-dark: var(--color-gray-100);
-  /* 5px of padding-block are adding to .tabbrowser-tab */
-  --tab-height-with-margin-padding: calc(5px + var(--tab-min-height) + (2 * var(--tab-margin-block)));
 
   @media -moz-pref("sidebar.verticalTabs") {
     --tab-min-height: max(32px, calc(var(--tab-label-line-height) * 1em));
@@ -2551,6 +2549,24 @@ tab-group {
 
 /* Tab Overflow */
 
+@property --tab-overflow-fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tab-overflow-fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tab-overflow-scrollbar-strip {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0;
+}
+
 #tabbrowser-arrowscrollbox,
 #pinned-tabs-container {
   &[orient="horizontal"] {
@@ -2587,28 +2603,61 @@ tab-group {
   &[orient="vertical"] {
     &::part(overflow-start-indicator),
     &::part(overflow-end-indicator) {
-      background-image: linear-gradient(to top, transparent 0%, light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.05)));
-      background-repeat: no-repeat;
-      pointer-events: none;
+      display: none;
+    }
 
-      position: relative;
-      height: 16px;
-      z-index: 1;
+    /* The strip keeps the scrollbar unmasked, so it must not be wider than the
+     * scrollbar or the space after the tabs. env(scrollbar-inline-size)
+     * ignores scrollbar-width: thin, which is half of it rounded down, or
+     * always 11px on macOS. */
+    &::part(scrollbox) {
+      --tab-overflow-scrollbar-strip: round(down, env(scrollbar-inline-size) / 2, 1px);
+      @media (prefers-reduced-motion: no-preference) {
+        transition:
+          --tab-overflow-fade-start 150ms ease,
+          --tab-overflow-fade-end 150ms ease;
+      }
 
-      margin-block: 0 -16px;
+      @media (-moz-platform: macos) {
+        --tab-overflow-scrollbar-strip: 11px;
+      }
 
-      @media -moz-pref("browser.nova.enabled") {
-        /* stylelint-disable-next-line stylelint-plugin-mozilla/use-paired-color-tokens -- a text-free fade over the scrolled tabs */
-        background-image: linear-gradient(to top, transparent, var(--toolbox-background-color));
-        /* Clear of the content area's rounded corner, then fade in. */
-        mask-image: linear-gradient(to right, transparent 8px, black calc(2 * 8px), black calc(100% - 2 * 8px), transparent calc(100% - 8px));
+      @media (-moz-overlay-scrollbars) {
+        --tab-overflow-scrollbar-strip: var(--tab-margin-inline-inner);
       }
     }
 
-    /* Flip the fade at the bottom */
-    &::part(overflow-end-indicator) {
-      transform: scaleY(-1);
-      margin-block: -16px 0;
+    &[overflowing]::part(scrollbox) {
+      mask-image:
+        linear-gradient(
+          to bottom,
+          transparent,
+          black min(var(--tab-overflow-fade-start), 25%),
+          black max(calc(100% - var(--tab-overflow-fade-end)), 75%),
+          transparent
+        ),
+        linear-gradient(black, black);
+      mask-repeat: no-repeat;
+      mask-position:
+        0 0,
+        right;
+      mask-size:
+        auto,
+        var(--tab-overflow-scrollbar-strip) 100%;
+    }
+
+    &:-moz-locale-dir(rtl)[overflowing]::part(scrollbox) {
+      mask-position:
+        0 0,
+        left;
+    }
+
+    &:not([scrolledtostart])::part(scrollbox) {
+      --tab-overflow-fade-start: var(--tab-height-with-margin-padding);
+    }
+
+    &:not([scrolledtoend])::part(scrollbox) {
+      --tab-overflow-fade-end: var(--tab-height-with-margin-padding);
     }
   }
 
@@ -2822,6 +2871,12 @@ tab-group {
       &::part(items-wrapper) {
         padding-inline: var(--tab-container-margin-inline-pinned-expanded);
       }
+
+      @media (-moz-overlay-scrollbars) {
+        &::part(scrollbox) {
+          --tab-overflow-scrollbar-strip: calc(var(--tab-container-margin-inline-pinned-expanded) + var(--tab-margin-inline-pinned-expanded));
+        }
+      }
     }
   }
 
@@ -2891,6 +2946,8 @@ tab-group {
       --tab-padding-block-end: 0px;
     }
   }
+
+  --tab-height-with-margin-padding: calc(var(--tab-padding-block-start) + var(--tab-padding-block-end) + var(--tab-min-height) + 2 * var(--tab-margin-block));
 
   min-height: 0;
   display: flex;

@@ -460,7 +460,6 @@ export class Tabbrowser {
     "stopScroll",
     "startScroll",
     "userTypedValue",
-    "userTypedClear",
     "didStartLoadSinceLastUserTyping",
     "audioMuted",
   ];
@@ -3344,7 +3343,6 @@ export class Tabbrowser {
           };
           break;
         case "userTypedValue":
-        case "userTypedClear":
           getter = () => lazy.SessionStore.getLazyTabValue(aTab, name);
           break;
         default:

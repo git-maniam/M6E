@@ -1120,9 +1120,18 @@ describe("<Widgets> extension widget", () => {
   const EXTENSION_WIDGET = {
     id: "extensionWidget",
     enabledPref: "widgets.extensionWidget.enabled",
+    sizePref: "widgets.extensionWidget.size",
     systemEnabledPref: "widgets.system.extensionWidget.enabled",
     defaultSize: "large",
     extensionID: EXTENSION_ID,
+  };
+  const EXTENSION_WIDGETS = {
+    [EXTENSION_ID]: {
+      src: EXTENSION_SRC,
+      name: "Tally",
+      telemetryName: EXTENSION_ID,
+      validSizes: ["medium", "large"],
+    },
   };
 
   beforeAll(() => {
@@ -1143,11 +1152,9 @@ describe("<Widgets> extension widget", () => {
     };
   }
 
-  it("renders a padded moz-widget card carrying its extension's widget src and size", () => {
+  it("renders a padded moz-widget card carrying its extension's widget src, size and name", () => {
     const { container } = renderWidgets(
-      extensionWidgetState({
-        [EXTENSION_ID]: { src: EXTENSION_SRC, name: "Tally" },
-      })
+      extensionWidgetState(EXTENSION_WIDGETS)
     );
     const card = container.querySelector(
       'moz-widget[widget-id="extensionWidget"]'
@@ -1155,6 +1162,27 @@ describe("<Widgets> extension widget", () => {
     expect(card.getAttribute("src")).toBe(EXTENSION_SRC);
     expect(card.getAttribute("size")).toBe("large");
     expect(card.hasAttribute("padded")).toBe(true);
+    const header = card.querySelector('moz-widget-header[slot="header"]');
+    expect(header.getAttribute("title")).toBe("Tally");
+  });
+
+  it("hides the widget under its extension's telemetry name", () => {
+    const { container, store } = renderWidgets(
+      extensionWidgetState(EXTENSION_WIDGETS)
+    );
+    fireEvent.click(
+      container.querySelector(
+        'panel-item[data-l10n-id="newtab-widget-section-menu-hide-all"]'
+      )
+    );
+    const hideAll = actionsFrom(store).find(
+      action => action.type === at.WIDGETS_HIDE_ALL
+    );
+    expect(hideAll.data.targets).toContainEqual({
+      enabledPref: "widgets.extensionWidget.enabled",
+      telemetryName: EXTENSION_ID,
+      active: true,
+    });
   });
 
   it("renders nothing while ExtensionWidgets has no entry for its extension", () => {

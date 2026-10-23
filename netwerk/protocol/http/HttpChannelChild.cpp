@@ -409,6 +409,7 @@ void HttpChannelChild::OnStartRequest(
 
   if (aUseResponseHead && !mCanceled) {
     mResponseHead = MakeUnique<nsHttpResponseHead>(aResponseHead);
+    CollectAkamaiResponseTelemetry();
   }
 
   mSecurityInfo = aArgs.securityInfo();
@@ -571,6 +572,25 @@ void HttpChannelChild::OnAfterLastPart(const nsresult& aStatus) {
   }
 }
 
+class HttpChannelChild::AkamaiWafBlockDetector final
+    : public nsIThreadRetargetableStreamListener {
+ public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIREQUESTOBSERVER
+  NS_DECL_NSISTREAMLISTENER
+  NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
+
+  // The channel owns the listener chain, so it outlives the detector's use.
+  AkamaiWafBlockDetector(nsIStreamListener* aNext, HttpChannelChild* aChannel)
+      : mNext(aNext), mChannel(aChannel) {}
+
+ private:
+  ~AkamaiWafBlockDetector() = default;
+
+  nsCOMPtr<nsIStreamListener> mNext;
+  HttpChannelChild* mChannel;
+};
+
 void HttpChannelChild::DoOnStartRequest(nsIRequest* aRequest) {
   nsresult rv;
 
@@ -603,12 +623,22 @@ void HttpChannelChild::DoOnStartRequest(nsIRequest* aRequest) {
     return;
   }
 
+  // The detector is placed after the content decoders so it sees the decoded
+  // body.
+  nsCOMPtr<nsIStreamListener> nextListener = mListener;
+  if (mAkamaiWafState == AkamaiWafState::MaybeBlocked) {
+    nextListener = new AkamaiWafBlockDetector(mListener, this);
+  }
+
   nsCOMPtr<nsIStreamListener> listener;
-  rv = DoApplyContentConversions(mListener, getter_AddRefs(listener), nullptr);
+  rv = DoApplyContentConversions(nextListener, getter_AddRefs(listener),
+                                 nullptr);
   if (NS_FAILED(rv)) {
     CancelWithReason(rv,
                      "HttpChannelChild DoApplyContentConversions failed"_ns);
-  } else if (listener) {
+  } else if (!listener) {
+    mListener = nextListener;
+  } else {
     mListener = listener;
     mCompressListener = listener;
 
@@ -1169,6 +1199,158 @@ void HttpChannelChild::CollectMixedContentTelemetry() {
   }
 }
 
+void HttpChannelChild::CollectAkamaiResponseTelemetry() {
+  mAkamaiWafState = AkamaiWafState::None;
+  if (!StaticPrefs::network_http_akamai_waf_telemetry_enabled() ||
+      !mResponseHead) {
+    return;
+  }
+
+  bool isAkamai = false;
+  (void)mResponseHead->VisitHeaders(
+      nsHttpHeaderArray::eFilterResponse,
+      [&isAkamai](const nsACString& aHeader, const nsACString& aValue) {
+        if ((aHeader.LowerCaseEqualsLiteral("server") &&
+             StringBeginsWith(aValue, "akamai"_ns,
+                              nsCaseInsensitiveCStringComparator)) ||
+            StringBeginsWith(aHeader, "akamai"_ns,
+                             nsCaseInsensitiveCStringComparator) ||
+            StringBeginsWith(aHeader, "x-akamai-"_ns,
+                             nsCaseInsensitiveCStringComparator)) {
+          isAkamai = true;
+          return NS_ERROR_ABORT;
+        }
+        return NS_OK;
+      });
+  if (!isAkamai) {
+    return;
+  }
+
+  if (mResponseHead->Status() == 403) {
+    mAkamaiWafState = AkamaiWafState::MaybeBlocked;
+  } else {
+    mAkamaiWafState = AkamaiWafState::AkamaiResponse;
+  }
+}
+
+NS_IMPL_ISUPPORTS(HttpChannelChild::AkamaiWafBlockDetector, nsIStreamListener,
+                  nsIRequestObserver, nsIThreadRetargetableStreamListener)
+
+NS_IMETHODIMP
+HttpChannelChild::AkamaiWafBlockDetector::OnStartRequest(nsIRequest* aRequest) {
+  nsCOMPtr<nsIStreamListener> next = mNext;
+  return next->OnStartRequest(aRequest);
+}
+
+NS_IMETHODIMP
+HttpChannelChild::AkamaiWafBlockDetector::OnStopRequest(nsIRequest* aRequest,
+                                                        nsresult aStatusCode) {
+  nsCOMPtr<nsIStreamListener> next = mNext;
+  return next->OnStopRequest(aRequest, aStatusCode);
+}
+
+NS_IMETHODIMP
+HttpChannelChild::AkamaiWafBlockDetector::OnDataAvailable(
+    nsIRequest* aRequest, nsIInputStream* aInputStream, uint64_t aOffset,
+    uint32_t aCount) {
+  nsCOMPtr<nsIStreamListener> next = mNext;
+
+  // The block page is small, so only the beginning of the body is inspected.
+  static constexpr uint64_t kMaxInspectedOffset = 4096;
+  if (aOffset >= kMaxInspectedOffset ||
+      mChannel->mAkamaiWafState != AkamaiWafState::MaybeBlocked) {
+    return next->OnDataAvailable(aRequest, aInputStream, aOffset, aCount);
+  }
+
+  nsAutoCString data;
+  nsresult rv = NS_ReadInputStreamToString(aInputStream, data, aCount);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (FindInReadable("https://errors.edgesuite.net/18"_ns, data) ||
+      FindInReadable(
+          "https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18"_ns, data)) {
+    mChannel->mAkamaiWafState = AkamaiWafState::Blocked;
+  }
+
+  nsCOMPtr<nsIInputStream> stream;
+  rv = NS_NewCStringInputStream(getter_AddRefs(stream), std::move(data));
+  NS_ENSURE_SUCCESS(rv, rv);
+  return next->OnDataAvailable(aRequest, stream, aOffset, aCount);
+}
+
+NS_IMETHODIMP
+HttpChannelChild::AkamaiWafBlockDetector::CheckListenerChain() {
+  nsCOMPtr<nsIThreadRetargetableStreamListener> listener =
+      do_QueryInterface(mNext);
+  if (!listener) {
+    return NS_ERROR_NO_INTERFACE;
+  }
+  return listener->CheckListenerChain();
+}
+
+NS_IMETHODIMP
+HttpChannelChild::AkamaiWafBlockDetector::OnDataFinished(nsresult aStatus) {
+  nsCOMPtr<nsIThreadRetargetableStreamListener> listener =
+      do_QueryInterface(mNext);
+  if (listener) {
+    return listener->OnDataFinished(aStatus);
+  }
+  return NS_OK;
+}
+
+void HttpChannelChild::MaybeCollectAkamaiWafBlockTelemetry() {
+  MOZ_ASSERT(NS_IsMainThread());
+  AkamaiWafState state = mAkamaiWafState.exchange(AkamaiWafState::None);
+  if (state == AkamaiWafState::None) {
+    return;
+  }
+
+  ExtContentPolicyType type = mLoadInfo->GetExternalContentPolicyType();
+  bool isDocumentLoad = type == ExtContentPolicy::TYPE_DOCUMENT ||
+                        type == ExtContentPolicy::TYPE_SUBDOCUMENT;
+  if (isDocumentLoad) {
+    switch (state) {
+      case AkamaiWafState::Blocked:
+        glean::network::akamai_waf_blocked.Set(true);
+        glean::network::akamai_document_loads.Get("waf_blocked"_ns).Add(1);
+        break;
+      case AkamaiWafState::MaybeBlocked:
+        glean::network::akamai_document_loads.Get("forbidden"_ns).Add(1);
+        break;
+      default:
+        glean::network::akamai_document_loads.Get("ok"_ns).Add(1);
+        break;
+    }
+  } else if (state == AkamaiWafState::Blocked) {
+    glean::network::akamai_waf_blocked_subresource.Set(true);
+  }
+
+  // Document and frame loads set the use counters on the document they
+  // created, subresources on the loading document. Frames propagate them to
+  // the page.
+  RefPtr<Document> doc;
+  if (isDocumentLoad) {
+    if (RefPtr<BrowsingContext> bc = mLoadInfo->GetTargetBrowsingContext()) {
+      doc = bc->GetExtantDocument();
+    }
+    if (doc && doc->GetChannel() != static_cast<nsIChannel*>(this)) {
+      doc = nullptr;
+    }
+  } else {
+    mLoadInfo->GetLoadingDocument(getter_AddRefs(doc));
+  }
+  if (!doc) {
+    return;
+  }
+
+  doc->SetUseCounter(eUseCounter_custom_AkamaiUsed);
+  if (state == AkamaiWafState::Blocked) {
+    doc->SetUseCounter(eUseCounter_custom_AkamaiWafBlocked);
+  } else if (state == AkamaiWafState::MaybeBlocked) {
+    doc->SetUseCounter(eUseCounter_custom_AkamaiForbidden);
+  }
+}
+
 void HttpChannelChild::DoOnStopRequest(nsIRequest* aRequest,
                                        nsresult aChannelStatus) {
   AUTO_PROFILER_LABEL("HttpChannelChild::DoOnStopRequest", NETWORK);
@@ -1226,6 +1408,10 @@ void HttpChannelChild::DoOnStopRequest(nsIRequest* aRequest,
     listener->OnStopRequest(aRequest, mStatus);
   }
   StoreOnStopRequestCalled(true);
+
+  // Content decoders may deliver the last decoded data from OnStopRequest, so
+  // this must run after the listener has been notified.
+  MaybeCollectAkamaiWafBlockTelemetry();
 
   // If we're a multi-part stream, then don't cleanup yet, and we'll do so
   // in OnAfterLastPart.

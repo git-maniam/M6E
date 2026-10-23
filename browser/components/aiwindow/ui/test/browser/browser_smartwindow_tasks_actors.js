@@ -20,6 +20,32 @@ add_task(async function test_smartwindow_tasks_actor_registration() {
   await SpecialPowers.popPrefEnv();
 });
 
+add_task(
+  async function test_smartwindow_tasks_interrupted_error_localization() {
+    await SpecialPowers.pushPrefEnv({
+      set: [["browser.smartwindow.enabled", true]],
+    });
+
+    await BrowserTestUtils.withNewTab(
+      "about:smartwindowtasks",
+      async browser => {
+        await SpecialPowers.spawn(browser, [], async () => {
+          const message = await content.document.l10n.formatValue(
+            "ai-tasks-alert-history-error-interrupted"
+          );
+          Assert.ok(message, "The interrupted check error should be localized");
+          Assert.ok(
+            !message.includes("{"),
+            "The interrupted check error should have no unresolved references"
+          );
+        });
+      }
+    );
+
+    await SpecialPowers.popPrefEnv();
+  }
+);
+
 /**
  * Test that SmartWindowTasks actor is not available when preference is disabled
  */

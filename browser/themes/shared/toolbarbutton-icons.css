@@ -279,7 +279,7 @@
           > .fire-button-flame-rest {
             animation:
               fire-button-flame-shape 800ms steps(var(--fire-button-flame-frames)),
-              fire-button-flame-fade-out 800ms;
+              fire-button-flame-hide-after-grow 800ms;
           }
 
           > .fire-button-flame-flare {
@@ -299,8 +299,11 @@
   }
 }
 
-/* In the fades, the first quarter is the grow and the rest is the slower
-   settle. The frames already include that timing. */
+/* In these animations, the first quarter is the grow and the rest is the
+   slower settle. The frames already include that timing. Each layer fades in
+   over the one below it, which stays opaque until it is covered and then
+   switches off, so the hover background never shows through the flame. The
+   flare switches off when its animation ends and its base opacity applies. */
 @keyframes fire-button-flame-shape {
   from {
     mask-position: 0 0;
@@ -310,10 +313,10 @@
   }
 }
 
-@keyframes fire-button-flame-fade-out {
+@keyframes fire-button-flame-hide-after-grow {
   from {
     opacity: 1;
-    animation-timing-function: cubic-bezier(0.25, 1, 0.42, 1);
+    animation-timing-function: step-end;
   }
   25%,
   to {
@@ -326,12 +329,9 @@
     opacity: 0;
     animation-timing-function: cubic-bezier(0.25, 1, 0.42, 1);
   }
-  25% {
-    opacity: 1;
-    animation-timing-function: cubic-bezier(0.45, 1, 0.85, 1);
-  }
+  25%,
   to {
-    opacity: 0;
+    opacity: 1;
   }
 }
 

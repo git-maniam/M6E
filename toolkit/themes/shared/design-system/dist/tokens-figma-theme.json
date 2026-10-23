@@ -597,7 +597,7 @@
   "button/text/color/ghost/disabled": {
     "light": "inherit",
     "dark": "inherit",
-    "forcedColors": "inherit"
+    "forcedColors": "{Theme$button/text/color/disabled}"
   },
   "button/text/color/ghost/hover": {
     "light": "inherit",

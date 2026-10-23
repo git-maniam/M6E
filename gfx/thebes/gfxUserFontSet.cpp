@@ -832,7 +832,11 @@ bool gfxUserFontEntry::LoadPlatformFont(uint32_t aSrcIndex,
   if (StaticPrefs::gfx_font_rendering_fontations_enabled_AtStartup()) {
     SkrifaFontRef* skf = skrifa_font_new(fontData->Data(), fontData->Length());
     if (skf) {
+      // We can safely call SetSkrifaFont without locking, as the font entry is
+      // newly-created and not yet shared with any other thread.
+      MOZ_PUSH_IGNORE_THREAD_SAFETY
       fe->SetSkrifaFont(skf);
+      MOZ_POP_THREAD_SAFETY
 #  if NIGHTLY_BUILD
       // also append (skrifa) to the name for devtools visibility
       originalFullName.AppendLiteral(" (skrifa)");

@@ -899,10 +899,7 @@ describe("getWidgets", () => {
     const src = "moz-extension://test/w.html";
     expect(
       getWidgets([extensionWidget], {
-        [extensionWidget.extensionID]: {
-          src,
-          customizeL10nId: "extension-label",
-        },
+        [extensionWidget.extensionID]: { src },
       })
     ).toEqual([{ ...extensionWidget, src }]);
   });

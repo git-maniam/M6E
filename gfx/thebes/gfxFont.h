@@ -1517,6 +1517,10 @@ class gfxFont {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING_WITH_DESTROY(gfxFont, MaybeDestroy())
   int32_t GetRefCount() { return int32_t(mRefCnt); }
 
+  // Call immediately after creating an instance of a gfxFont subclass.
+  // Caller must then check IsValid() to confirm if the instance is usable.
+  void InitMetrics();
+
   // options to specify the kind of AA to be used when creating a font
   typedef enum : uint8_t {
     kAntialiasDefault,
@@ -2397,12 +2401,18 @@ class gfxFont {
 
   mozilla::Atomic<bool> mMathInitialized;  // TryGetMathTable() called?
 
+  // Must be implemented by platform subclasses: initialize mMetrics if not
+  // being done via Skrifa.
+  virtual bool InitMetricsFromPlatform() = 0;
+
+  // Optional: allow subclass to do any necessary finalization after metrics
+  // have been set up.
+  virtual void FinishInitFontMetrics() {}
+
   // Helper for subclasses that want to initialize standard metrics from the
   // tables of sfnt (TrueType/OpenType) fonts.
   // This will use mFUnitsConvFactor if it is already set, else compute it
   // from mAdjustedSize and the unitsPerEm in the font's 'head' table.
-  // Returns TRUE and sets mIsValid=TRUE if successful;
-  // Returns TRUE but leaves mIsValid=FALSE if the font seems to be broken.
   // Returns FALSE if the font does not appear to be an sfnt at all,
   // and should be handled (if possible) using other APIs.
   bool InitMetricsFromSfntTables();
@@ -2498,13 +2508,18 @@ struct MOZ_STACK_CLASS TextRunDrawParams {
   const mozilla::gfx::DrawOptions* drawOpts = nullptr;
   nsAtom* fontPalette = nullptr;
   mozilla::gfx::FontPaletteValueSet* paletteValueSet = nullptr;
-  // The source text for the range passed to gfxFont::Draw, as provided by
-  // gfxTextRun::PropertyProvider::GetSourceText, but converted to UTF-8.
-  // Only set if needsSourceText is true and the provider returned the text.
+  // The source text, as provided by
+  // gfxTextRun::PropertyProvider::GetSourceText, converted to UTF-8.
+  // GetSourceText may be called with a narrower range than the one passed to
+  // gfxFont::Draw, if a ligature spans multiple PropertyProviders; see
+  // sourceCharToByte. Only set if needsSourceText is true and the provider
+  // returned the text.
   const nsACString* sourceText = nullptr;
-  // The byte offset in sourceText For each textrun character in that range. The
-  // final element should be the length of sourceText. This must only be set if
-  // sourceText is also set.
+  // The byte offset in sourceText for each character in the range passed to
+  // gfxFont::Draw, which may be wider than the range sourceText itself covers.
+  // Characters outside sourceText's own range map to the byte offset at its
+  // nearest edge. The final element should be the length of sourceText. This
+  // must only be set if sourceText is also set.
   const uint32_t* sourceCharToByte = nullptr;
   DrawMode drawMode = DrawMode::GLYPH_FILL;
   bool isVerticalRun = false;

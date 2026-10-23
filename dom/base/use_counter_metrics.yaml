@@ -108,8 +108,8 @@ use.counter:
     send_in_pings:
       - use-counters
 
-# Total of 2676 use counter metrics (excludes denominators).
-# Total of 436 'page' use counters.
+# Total of 2682 use counter metrics (excludes denominators).
+# Total of 439 'page' use counters.
 use.counter.page:
   svgsvgelement_getelementbyid:
     type: counter
@@ -6350,6 +6350,57 @@ use.counter.page:
     send_in_pings:
       - use-counters
 
+  akamai_used:
+    type: counter
+    description: >
+      Whether a page loaded a document or subresource served by Akamai.
+      Compare against `use.counter.top_level_content_documents_destroyed`
+      to calculate the rate.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    notification_emails:
+      - dom-core@mozilla.com
+      - emilio@mozilla.com
+    expires: never
+    send_in_pings:
+      - use-counters
+
+  akamai_waf_blocked:
+    type: counter
+    description: >
+      Whether a page had a load blocked by the Akamai WAF.
+      Compare against `use.counter.top_level_content_documents_destroyed`
+      to calculate the rate.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    notification_emails:
+      - dom-core@mozilla.com
+      - emilio@mozilla.com
+    expires: never
+    send_in_pings:
+      - use-counters
+
+  akamai_forbidden:
+    type: counter
+    description: >
+      Whether a page had a load get a 403 from Akamai that is not the WAF block page.
+      Compare against `use.counter.top_level_content_documents_destroyed`
+      to calculate the rate.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    notification_emails:
+      - dom-core@mozilla.com
+      - emilio@mozilla.com
+    expires: never
+    send_in_pings:
+      - use-counters
+
   notificationoptions_navigate:
     type: counter
     description: >
@@ -7523,7 +7574,7 @@ use.counter.page:
     send_in_pings:
       - use-counters
 
-# Total of 436 'document' use counters.
+# Total of 439 'document' use counters.
 use.counter.doc:
   svgsvgelement_getelementbyid:
     type: counter
@@ -13751,6 +13802,57 @@ use.counter.doc:
     type: counter
     description: >
       Whether a document has used MathML.
+      Compare against `use.counter.content_documents_destroyed`
+      to calculate the rate.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    notification_emails:
+      - dom-core@mozilla.com
+      - emilio@mozilla.com
+    expires: never
+    send_in_pings:
+      - use-counters
+
+  akamai_used:
+    type: counter
+    description: >
+      Whether a document loaded a document or subresource served by Akamai.
+      Compare against `use.counter.content_documents_destroyed`
+      to calculate the rate.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    notification_emails:
+      - dom-core@mozilla.com
+      - emilio@mozilla.com
+    expires: never
+    send_in_pings:
+      - use-counters
+
+  akamai_waf_blocked:
+    type: counter
+    description: >
+      Whether a document had a load blocked by the Akamai WAF.
+      Compare against `use.counter.content_documents_destroyed`
+      to calculate the rate.
+    bugs:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    data_reviews:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1852098
+    notification_emails:
+      - dom-core@mozilla.com
+      - emilio@mozilla.com
+    expires: never
+    send_in_pings:
+      - use-counters
+
+  akamai_forbidden:
+    type: counter
+    description: >
+      Whether a document had a load get a 403 from Akamai that is not the WAF block page.
       Compare against `use.counter.content_documents_destroyed`
       to calculate the rate.
     bugs:

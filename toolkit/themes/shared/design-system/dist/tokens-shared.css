@@ -597,6 +597,7 @@
       --button-text-color-ghost: var(--button-text-color);
       --button-text-color-ghost-hover: var(--button-text-color-hover);
       --button-text-color-ghost-active: var(--button-text-color-active);
+      --button-text-color-ghost-disabled: var(--button-text-color-disabled);
 
       /** card **/
       --card-border-color: color-mix(in srgb, currentColor 41%, transparent);
@@ -693,6 +694,7 @@
       --button-text-color-ghost: var(--button-text-color);
       --button-text-color-ghost-hover: var(--button-text-color-hover);
       --button-text-color-ghost-active: var(--button-text-color-active);
+      --button-text-color-ghost-disabled: var(--button-text-color-disabled);
       --button-text-color-menu: MenuText;
       --button-text-color-menu-hover: -moz-menuhovertext;
       --button-text-color-menu-active: var(--button-text-color-menu-hover);

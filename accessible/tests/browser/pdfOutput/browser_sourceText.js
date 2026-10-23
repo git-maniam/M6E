@@ -38,6 +38,24 @@ addSourceTextTest("testNonBmpLigature", `<p>&#x1D400;&#x1D401;</p>`, [
   "\u{1D400}\u{1D401}",
 ]);
 
+// The "fi" ligature here spans the last character of the first text node and
+// the first character of the second, so the ligature is split across two layout
+// frames. We do this using an empty comment in the middle of the text, but
+// there are other ways the text could be split across nodes.
+//
+// XXX Bug 1669335: pdf.js doesn't consult /ActualText, so it can't tell the
+// two halves of the ligature's glyph apart. It always resolves that glyph via
+// the font's /ToUnicode CMap, which can only map to the text of whichever
+// half drew first ("f"). Therefore, the expected text below is "xxffx", but
+// it should ideally be "xxfix".
+addSourceTextTest(
+  "testLigatureAcrossTextNodes",
+  `<p>xxf<!---->ix</p>`,
+  texts => {
+    is(texts.join(""), "xxffx", "PDF text correct");
+  }
+);
+
 addSourceTextTest(
   "testFontFeatureSettings",
   `<p style='font-feature-settings: "ssty" 1;'>2</p>`,

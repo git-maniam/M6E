@@ -210,6 +210,12 @@ document.addEventListener(
           case "Browser:DuplicateTab":
             BrowserCommands.duplicateTab();
             break;
+          case "Browser:CopyTabURL":
+            BrowserUtils.copyLink(
+              gURLBar.makeURIReadable(gBrowser.currentURI).displaySpec,
+              gBrowser.selectedBrowser.contentTitle
+            );
+            break;
           case "Browser:NextTab":
             gBrowser.tabContainer.advanceSelectedTab(
               1,

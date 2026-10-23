@@ -154,6 +154,20 @@ ChromeUtils.defineLazyGetter(lazy, "log", function () {
  * @typedef {"button" | "enter" | "follow-up" | "menu" | "resume" | "retry" | "shortcuts" | "starter" | "suggestion"} ChatSubmitType
  */
 
+/**
+ * Request context used to record an assistant response's first displayed character.
+ *
+ * @typedef {{
+ *   messageId: string,
+ *   conversationId: string,
+ *   requestId: string,
+ *   messageSeq: number,
+ *   startedAt: number,
+ *   location: string,
+ *   model: string
+ * }} PendingFirstCharacterContext
+ */
+
 const MODE = {
   FULLPAGE: "fullpage",
   SIDEBAR: "sidebar",
@@ -284,6 +298,14 @@ export class AIWindow extends MozLitElement {
   #memoriesToggled = null;
   #visibilityChangeHandler;
   #abortController = null;
+
+  /**
+   * Context for a response awaiting its first displayed character, allowing
+   * that character to be associated with the request telemetry.
+   *
+   * @type {PendingFirstCharacterContext | null}
+   */
+  #pendingFirstCharacterContext = null;
 
   #starters = [];
   #starterPromptsAbortController = null;
@@ -910,6 +932,7 @@ export class AIWindow extends MozLitElement {
 
     this.#abortController?.abort();
     this.#abortController = null;
+    this.#pendingFirstCharacterContext = null;
 
     // Clean up visibility change handler
     if (this.#visibilityChangeHandler) {
@@ -2790,6 +2813,7 @@ export class AIWindow extends MozLitElement {
     this.#setBrowserContainerActiveState(true);
 
     this.#abortController?.abort();
+    this.#pendingFirstCharacterContext = null;
     this.#abortController = new AbortController();
     const { signal } = this.#abortController;
     const stopWatchingTabClose =
@@ -2798,6 +2822,7 @@ export class AIWindow extends MozLitElement {
     this.isGenerating = true;
 
     const requestStart = ChromeUtils.now();
+    let assistantMessage;
     let firstTokenTime = null;
     const onUpdate = (_e, message) => {
       if (message.role !== lazy.MESSAGE_ROLE.ASSISTANT) {
@@ -2846,17 +2871,33 @@ export class AIWindow extends MozLitElement {
           skipUserDispatch
         );
 
-        conversation.addAssistantMessage("text", "");
+        assistantMessage = conversation.addAssistantMessage("text", "");
 
         this.#sendModelRequestTelemetryEvent();
       } else if (ensureAssistantResponse) {
         // The user turn is already in the conversation, so generatePrompt is
         // skipped; add the empty assistant message receiveResponse streams into.
-        const assistantMessage = conversation.addAssistantMessage("text", "");
+        assistantMessage = conversation.addAssistantMessage("text", "");
         if (assistantToolUIData) {
           assistantMessage.toolUIData = assistantToolUIData;
         }
         this.#sendModelRequestTelemetryEvent();
+      }
+
+      if (assistantMessage && !isRetry && !signal.aborted) {
+        const { messageCount } = this.#getConversationLastMessageAndCount(
+          lazy.MESSAGE_ROLE.ASSISTANT,
+          conversation
+        );
+        this.#pendingFirstCharacterContext = {
+          messageId: assistantMessage.id,
+          conversationId: conversation.id,
+          requestId: assistantMessage.parentMessageId,
+          messageSeq: messageCount,
+          startedAt: requestStart,
+          location: this.mode === MODE.FULLPAGE ? "home" : MODE.SIDEBAR,
+          model: engine.model,
+        };
       }
 
       await lazy.Chat.fetchWithHistory({
@@ -2996,19 +3037,45 @@ export class AIWindow extends MozLitElement {
     return { duration, latency };
   }
 
+  /**
+   * Records the time from request start to the first rendered response character.
+   *
+   * @param {{conversationId: string, messageId: string}} detail
+   */
+  onFirstCharacterDisplayed({ conversationId, messageId }) {
+    const pending = this.#pendingFirstCharacterContext;
+    if (
+      !pending ||
+      pending.messageId !== messageId ||
+      pending.conversationId !== conversationId
+    ) {
+      return;
+    }
+
+    this.#pendingFirstCharacterContext = null;
+    Glean.smartWindow.timeToFirstCharacter.record({
+      location: pending.location,
+      chat_id: pending.conversationId,
+      message_seq: pending.messageSeq,
+      request_id: pending.requestId,
+      model: pending.model,
+      latency: Math.round(ChromeUtils.now() - pending.startedAt),
+    });
+  }
+
   get modelName() {
     return lazy.getCurrentModelName();
   }
 
-  #getConversationLastMessageAndCount(role) {
-    if (!this.#conversation) {
+  #getConversationLastMessageAndCount(role, conversation = this.#conversation) {
+    if (!conversation) {
       return { lastMessage: null, messageCount: 0 };
     }
 
     let lastMessage = null;
     let messageCount = 0;
     let countAtLastMatch = 0;
-    for (const message of this.#conversation.messages.slice(1)) {
+    for (const message of conversation.messages.slice(1)) {
       if (message.content?.type === "text") {
         messageCount++;
       }

@@ -13,6 +13,7 @@ import {
   gOffline,
   searchParams,
   getHostName,
+  getLoopbackInfo,
   getSubjectAltNames,
   getFailedCertificatesAsPEMString,
   recordSecurityUITelemetry,
@@ -682,6 +683,9 @@ function getNetErrorDescParts(noConnectivity) {
     noConnectivity,
     showOSXPermissionWarning: RPMShowOSXLocalNetworkPermissionWarning(),
     offline: gOffline,
+    // Only a refused connection means "nothing is listening"; timeouts and
+    // resets on loopback can have other causes.
+    loopback: gErrorCode == "connectionFailure" ? getLoopbackInfo() : null,
   };
 
   // The legacy page looks up configs by gErrorCode (the URL e= parameter).

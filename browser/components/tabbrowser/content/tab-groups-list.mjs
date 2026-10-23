@@ -44,7 +44,7 @@ class TabGroupsList extends MozLitElement {
   }
 
   get #win() {
-    return this.documentGlobal;
+    return /** @type {BrowserWindow} */ (this.documentGlobal);
   }
 
   connectedCallback() {

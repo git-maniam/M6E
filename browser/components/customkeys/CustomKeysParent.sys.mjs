@@ -117,6 +117,7 @@ export class CustomKeysParent extends JSWindowActorParent {
     const fileCat = topWin.document.getElementById("file-menu").label;
     let cat = keys[fileCat];
     add(cat, "key_duplicateTab", "customkeys-file-duplicate-tab");
+    add(cat, "key_copyTabURL", "customkeys-file-copy-tab-url");
     const isMac = AppConstants.platform === "macosx";
     if (!isMac) {
       add(

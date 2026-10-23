@@ -3324,8 +3324,8 @@ MediaResult FFmpegVideoDecoder<LIBAV_VER>::CreateImageMediaCodec(
   }
 
   RefPtr<VideoData> v = VideoData::CreateFromImage(
-      {mFrame->width, mFrame->height}, aOffset,
-      TimeUnit::FromMicroseconds(aPts), TimeUnit::FromMicroseconds(aDuration),
+      mInfo.mDisplay, aOffset, TimeUnit::FromMicroseconds(aPts),
+      TimeUnit::FromMicroseconds(aDuration),
       img.forget().downcast<layers::Image>(), mFrame->flags & AV_FRAME_FLAG_KEY,
       TimeUnit::FromMicroseconds(aTimecode));
 

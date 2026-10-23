@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+requestLongerTimeout(2);
+
 const { GenAI } = ChromeUtils.importESModule(
   "moz-src:///browser/components/genai/GenAI.sys.mjs"
 );
@@ -124,7 +126,7 @@ add_task(async function test_selection_menu_position_with_rtl_app_locale() {
       "Anchor resolved to RTL"
     );
 
-    const clickX = 150;
+    const clickX = 300;
     await selectAllAndMouseUp(browser, { releaseX: clickX, releaseY: 20 });
     await TestUtils.waitForCondition(
       () => panel.getAttribute("panelopen") === "true",
@@ -186,13 +188,14 @@ add_task(async function test_no_menu_when_chatbot_blocked() {
 });
 
 /**
- * Check that a blocked chatbot and an unavailable search service together
- * leave no menu to show at all.
+ * Check that a blocked chatbot, an unavailable search service and a disabled
+ * Copy action together leave no menu to show at all.
  */
 add_task(async function test_no_menu_when_nothing_available() {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.copy.enabled", false],
       ["browser.ml.chat.enabled", false],
     ],
   });
@@ -271,6 +274,7 @@ add_task(async function test_menu_closes_when_nothing_left_to_offer() {
       ["browser.highlightToSearch.featureGate", true],
       ["browser.highlightToSearch.enabled", true],
       ["browser.highlightToSearch.search.enabled", true],
+      ["browser.highlightToSearch.copy.enabled", false],
       ["browser.ml.chat.enabled", false],
     ],
   });
@@ -353,6 +357,11 @@ add_task(async function test_search_action_click() {
       const panel = await showSelectionMenu(browser);
       const searchButton = document.getElementById("search-action-button");
       Assert.ok(!searchButton.hidden, "Search is offered without a chatbot");
+      Assert.deepEqual(
+        Glean.sapImpressionCounts.textSelection.testGetValue(),
+        { [SearchService.defaultEngine.id]: 1 },
+        "Showing Search records one impression, for the default engine"
+      );
 
       const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
       searchButton.click();
@@ -394,6 +403,7 @@ add_task(async function test_search_action_click() {
  * action is offered.
  */
 add_task(async function test_search_disabled_keeps_ai_action() {
+  Services.fog.testResetFOG();
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.highlightToSearch.featureGate", true],
@@ -416,6 +426,11 @@ add_task(async function test_search_disabled_keeps_ai_action() {
         document.getElementById("search-action-button").hidden,
         "Search is hidden when turned off"
       );
+      Assert.deepEqual(
+        Glean.sapImpressionCounts.textSelection.testGetValue(),
+        {},
+        "No impression is recorded while Search is hidden"
+      );
 
       panel.hide();
     });
@@ -424,15 +439,87 @@ add_task(async function test_search_disabled_keeps_ai_action() {
   }
 });
 
-/**
- * Check that Smart Window never offers the Search action.
- */
-add_task(async function test_smart_window_hides_search() {
+async function doPrivateWindowImpressionTest(shouldRecordCounts) {
+  Services.fog.testResetFOG();
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.highlightToSearch.featureGate", true],
       ["browser.highlightToSearch.enabled", true],
       ["browser.highlightToSearch.search.enabled", true],
+      ["browser.ml.chat.provider", ""],
+      // This pref is the opposite of what it seems like it should be.
+      ["browser.engagement.search_counts.pbm", !shouldRecordCounts],
+    ],
+  });
+
+  const win = await BrowserTestUtils.openNewBrowserWindow({ private: true });
+
+  try {
+    await BrowserTestUtils.openNewForegroundTab(
+      win.gBrowser,
+      "data:text/plain,hi"
+    );
+    const browser = win.gBrowser.selectedBrowser;
+    await SimpleTest.promiseFocus(browser);
+
+    const selectPromise = SpecialPowers.spawn(browser, [], () =>
+      ContentTaskUtils.waitForCondition(() => content.getSelection().toString())
+    );
+    win.goDoCommand("cmd_selectAll");
+    await selectPromise;
+    await BrowserTestUtils.synthesizeMouse(
+      browser,
+      60,
+      10,
+      { type: "mouseup" },
+      browser
+    );
+
+    const panel = win.document.getElementById(
+      "selection-shortcut-action-panel"
+    );
+    await TestUtils.waitForCondition(
+      () => panel.getAttribute("panelopen") === "true",
+      "Selection menu opened in a private window"
+    );
+    Assert.ok(
+      !win.document.getElementById("search-action-button").hidden,
+      "Search is offered in a private window"
+    );
+    Assert.deepEqual(
+      Glean.sapImpressionCounts.textSelection.testGetValue(),
+      shouldRecordCounts ? { [SearchService.defaultPrivateEngine.id]: 1 } : {},
+      "The impression follows the private browsing counts pref"
+    );
+  } finally {
+    await BrowserTestUtils.closeWindow(win);
+    await SpecialPowers.popPrefEnv();
+  }
+}
+
+/**
+ * Check that the Search impression is recorded in a private window, using the
+ * private default engine, unless private browsing counts are turned off.
+ */
+add_task(async function test_private_window_impression_counts_enabled() {
+  await doPrivateWindowImpressionTest(true);
+});
+
+add_task(async function test_private_window_impression_counts_disabled() {
+  await doPrivateWindowImpressionTest(false);
+});
+
+/**
+ * Check that Smart Window never offers the Search or Copy actions.
+ */
+add_task(async function test_smart_window_hides_search_and_copy() {
+  Services.fog.testResetFOG();
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.enabled", true],
+      ["browser.highlightToSearch.search.enabled", true],
+      ["browser.highlightToSearch.copy.enabled", true],
       ["browser.ml.chat.shortcuts", true],
       ["browser.ml.chat.shortcuts.smartwindow", true],
     ],
@@ -460,6 +547,15 @@ add_task(async function test_smart_window_hides_search() {
     Assert.ok(
       win.document.getElementById("search-action-button").hidden,
       "Search is not offered in Smart Window"
+    );
+    Assert.ok(
+      win.document.getElementById("copy-action-button").hidden,
+      "Copy is not offered in Smart Window"
+    );
+    Assert.deepEqual(
+      Glean.sapImpressionCounts.textSelection.testGetValue(),
+      {},
+      "No impression is recorded in Smart Window"
     );
   } finally {
     await BrowserTestUtils.closeWindow(win);
@@ -876,6 +972,828 @@ add_task(async function test_selection_menu_events() {
 
     const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
     panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that Copy stays gated on the Nimbus feature even when the chatbot
+ * path already shows the menu, so existing chat-shortcut users don't see it
+ * before the feature ships.
+ */
+add_task(async function test_copy_action_gated_on_feature() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.ml.chat.shortcuts", true],
+      ["browser.ml.chat.shortcut.onboardingMouseoverCount", 2],
+      ["browser.ml.chat.provider", "http://localhost:8080"],
+      ["browser.highlightToSearch.featureGate", false],
+      ["browser.highlightToSearch.copy.enabled", true],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+
+    Assert.ok(
+      document.getElementById("copy-action-button").hidden,
+      "Copy stays hidden without the feature gate, even for an existing chatbot user"
+    );
+    Assert.less(
+      document
+        .getElementById("copy-action-confirmation")
+        .getBoundingClientRect().width,
+      1,
+      "Confirmation pill has no footprint without a copy"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that Copy is hidden when its own setting is off, even with the
+ * feature fully enabled.
+ */
+add_task(async function test_copy_action_hidden_when_disabled() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.ml.chat.shortcuts", true],
+      ["browser.ml.chat.shortcut.onboardingMouseoverCount", 2],
+      ["browser.ml.chat.provider", "http://localhost:8080"],
+      ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.enabled", true],
+      ["browser.highlightToSearch.copy.enabled", false],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+
+    Assert.ok(
+      document.getElementById("copy-action-button").hidden,
+      "Copy stays hidden while its own setting is off"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that Copy alone is enough to open the menu, so a user who has turned
+ * off the chatbot and Search can still copy.
+ */
+add_task(async function test_menu_shows_with_only_copy() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.enabled", true],
+      ["browser.highlightToSearch.search.enabled", false],
+      ["browser.highlightToSearch.copy.enabled", true],
+      ["browser.ml.chat.enabled", false],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+
+    Assert.ok(
+      !document.getElementById("copy-action-button").hidden,
+      "Copy is shown"
+    );
+    Assert.ok(
+      document.getElementById("search-action-button").hidden,
+      "Search is hidden"
+    );
+    Assert.ok(
+      document.getElementById("ai-action-button").hidden,
+      "AI is hidden"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that clicking Copy writes the selection to the clipboard, records
+ * the action click, announces a confirmation to assistive technology, and
+ * ends the interaction by closing the menu.
+ */
+add_task(async function test_copy_action() {
+  Services.fog.testResetFOG();
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.ml.chat.shortcuts", true],
+      ["browser.ml.chat.shortcut.onboardingMouseoverCount", 2],
+      ["browser.ml.chat.provider", "http://localhost:8080"],
+      ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.enabled", true],
+      ["browser.highlightToSearch.copy.enabled", true],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+
+    const copyActionButton = document.getElementById("copy-action-button");
+    Assert.ok(
+      !copyActionButton.hidden,
+      "Copy is shown with the feature enabled"
+    );
+
+    const moreActionsButton = document.getElementById("more-actions-button");
+    const moreActionsSeparator = document.getElementById(
+      "more-actions-separator"
+    );
+    Assert.ok(
+      BrowserTestUtils.isVisible(moreActionsButton) &&
+        BrowserTestUtils.isVisible(moreActionsSeparator),
+      "The three-dot button and its separator are shown before a copy"
+    );
+
+    const confirmation = document.getElementById("copy-action-confirmation");
+    Assert.equal(
+      confirmation.getAttribute("role"),
+      "status",
+      "Confirmation is announced to assistive technology"
+    );
+    Assert.less(
+      confirmation.getBoundingClientRect().width,
+      1,
+      "Confirmation has no footprint before a copy"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    await new Promise((resolve, reject) => {
+      SimpleTest.waitForClipboard(
+        "hi",
+        () => EventUtils.synthesizeMouseAtCenter(copyActionButton, {}, window),
+        resolve,
+        () => reject(new Error("Clipboard did not receive the selection"))
+      );
+    });
+
+    await TestUtils.waitForCondition(
+      () => confirmation.hasAttribute("copied"),
+      "Confirmation is shown after the text is translated"
+    );
+    Assert.greater(
+      confirmation.getBoundingClientRect().width,
+      0,
+      "Confirmation shown after copying"
+    );
+    Assert.ok(
+      BrowserTestUtils.isHidden(moreActionsButton) &&
+        BrowserTestUtils.isHidden(moreActionsSeparator),
+      "The confirmation replaces the three-dot button and its separator"
+    );
+    Assert.notEqual(
+      getComputedStyle(confirmation).backgroundColor,
+      "rgba(0, 0, 0, 0)",
+      "Confirmation renders as a filled pill, not bare text"
+    );
+    Assert.greaterOrEqual(
+      confirmation.getBoundingClientRect().left,
+      copyActionButton.getBoundingClientRect().right,
+      "Confirmation doesn't cover the clicked Copy icon"
+    );
+    const pillRect = confirmation.getBoundingClientRect();
+    const tickRect = confirmation
+      .querySelector(".copy-action-confirmation-icon")
+      .getBoundingClientRect();
+    Assert.less(
+      Math.abs(tickRect.width - tickRect.height),
+      1,
+      "The tick sits in a square"
+    );
+    Assert.less(
+      Math.abs(tickRect.height - pillRect.height),
+      1,
+      "The tick's square is as tall as the pill, so it reads as a circle in the round end"
+    );
+
+    const clicks = Glean.selectionMenu.actionClick.testGetValue();
+    Assert.equal(clicks.length, 1, "One action clicked");
+    Assert.equal(clicks[0].extra.action, "copy", "Clicked the copy action");
+    Assert.equal(clicks[0].extra.selection, 2, "Selected hi");
+
+    await TestUtils.waitForCondition(
+      () => panel.hasAttribute("copy-fading"),
+      "The whole bar fades out, not just the confirmation"
+    );
+    await panelHidden;
+    Assert.ok(
+      !panel.hasAttribute("copy-fading"),
+      "The fade is cleared so the next selection shows the bar"
+    );
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that the bar grows to fit the translated Copied pill, rather than
+ * being sized for the pill before its text has been translated.
+ */
+add_task(async function test_copy_action_bar_fits_confirmation() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.enabled", true],
+      ["browser.highlightToSearch.search.enabled", false],
+      ["browser.highlightToSearch.copy.enabled", true],
+      ["browser.ml.chat.enabled", false],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    const initialWidth = panel.getBoundingClientRect().width;
+    const copyActionButton = document.getElementById("copy-action-button");
+    const confirmation = document.getElementById("copy-action-confirmation");
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    await new Promise((resolve, reject) => {
+      SimpleTest.waitForClipboard(
+        "hi",
+        () => EventUtils.synthesizeMouseAtCenter(copyActionButton, {}, window),
+        resolve,
+        () => reject(new Error("Clipboard did not receive the selection"))
+      );
+    });
+
+    await TestUtils.waitForCondition(
+      () => confirmation.hasAttribute("copied"),
+      "Confirmation is shown after the text is translated"
+    );
+    Assert.ok(
+      confirmation.querySelector(".copy-action-confirmation-text").textContent,
+      "Confirmation text is translated"
+    );
+
+    const pillRect = confirmation.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    Assert.greater(
+      panelRect.width,
+      initialWidth,
+      "The panel grows to fit the confirmation"
+    );
+    Assert.greaterOrEqual(
+      pillRect.left,
+      panelRect.left,
+      "Confirmation doesn't overflow the start edge of the panel"
+    );
+    Assert.lessOrEqual(
+      pillRect.right,
+      panelRect.right,
+      "Confirmation doesn't overflow the end edge of the panel"
+    );
+    Assert.lessOrEqual(
+      confirmation.scrollWidth,
+      confirmation.clientWidth,
+      "Confirmation's content isn't wider than the pill"
+    );
+    const actionsBox = panel.querySelector(".panel-subview-body");
+    Assert.lessOrEqual(
+      actionsBox.scrollWidth,
+      actionsBox.clientWidth,
+      "Nothing in the bar is clipped"
+    );
+    Assert.greaterOrEqual(
+      pillRect.left,
+      copyActionButton.getBoundingClientRect().right,
+      "Confirmation doesn't cover the Copy icon"
+    );
+
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+const MORE_ACTIONS_PREFS = [
+  ["browser.ml.chat.shortcuts", true],
+  ["browser.ml.chat.shortcut.onboardingMouseoverCount", 2],
+  ["browser.ml.chat.provider", "http://localhost:8080"],
+  ["browser.highlightToSearch.featureGate", true],
+  ["browser.highlightToSearch.enabled", true],
+  ["browser.highlightToSearch.search.enabled", true],
+  ["browser.highlightToSearch.copy.enabled", true],
+];
+
+async function openMoreActions() {
+  const moreActionsPanel = document.getElementById(
+    "selection-more-actions-panel"
+  );
+  const shown = BrowserTestUtils.waitForEvent(moreActionsPanel, "popupshown");
+  EventUtils.synthesizeMouseAtCenter(
+    document.getElementById("more-actions-button"),
+    {}
+  );
+  await shown;
+  return moreActionsPanel;
+}
+
+async function clickToggle(id) {
+  const toggle = document.getElementById(id);
+  await toggle.updateComplete;
+  EventUtils.synthesizeMouseAtCenter(toggle.buttonEl, {});
+  await toggle.updateComplete;
+}
+
+/**
+ * Check that the three-dot button stays hidden for an existing chatbot user
+ * while the Highlight to Search feature gate is off.
+ */
+add_task(async function test_more_actions_hidden_without_feature_gate() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ...MORE_ACTIONS_PREFS,
+      ["browser.highlightToSearch.featureGate", false],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+
+    Assert.ok(
+      document.getElementById("more-actions-button").hidden,
+      "Three-dot button stays hidden without the feature gate"
+    );
+    Assert.ok(
+      document.getElementById("more-actions-separator").hidden,
+      "The rule before it stays hidden too"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that the three-dot menu shows a toggle per action reflecting its pref,
+ * and records that it was shown.
+ */
+add_task(async function test_more_actions_menu_shows_toggles() {
+  Services.fog.testResetFOG();
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ...MORE_ACTIONS_PREFS,
+      ["browser.highlightToSearch.copy.enabled", false],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+
+    const moreActionsButton = document.getElementById("more-actions-button");
+    Assert.ok(!moreActionsButton.hidden, "Three-dot button is shown");
+
+    const moreActionsPanel = await openMoreActions();
+    const aiToggle = document.getElementById("more-actions-ai-toggle");
+    const searchToggle = document.getElementById("more-actions-search-toggle");
+    const copyToggle = document.getElementById("more-actions-copy-toggle");
+    Assert.ok(aiToggle.label, "AI row is already named when the menu opens");
+    await Promise.all(
+      [aiToggle, searchToggle, copyToggle].map(toggle => toggle.updateComplete)
+    );
+
+    Assert.ok(!aiToggle.hidden, "AI row is present");
+    Assert.ok(aiToggle.pressed, "AI is on");
+    Assert.ok(searchToggle.pressed, "Search is on");
+    Assert.ok(!copyToggle.pressed, "Copy is off");
+
+    const shown = Glean.selectionMenu.menuShown.testGetValue();
+    Assert.equal(shown.length, 1, "Three-dot menu shown once");
+    Assert.deepEqual(
+      [shown[0].extra.ai, shown[0].extra.search, shown[0].extra.copy],
+      ["on", "on", "off"],
+      "The shown event carries each row's state"
+    );
+
+    const hidden = BrowserTestUtils.waitForEvent(
+      moreActionsPanel,
+      "popuphidden"
+    );
+    EventUtils.synthesizeMouseAtCenter(
+      document.getElementById("more-actions-button"),
+      {}
+    );
+    await hidden;
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that flipping a toggle writes its pref, records the change and
+ * re-renders the bar without reopening the menu.
+ */
+add_task(async function test_more_actions_toggle_updates_bar() {
+  Services.fog.testResetFOG();
+  await SpecialPowers.pushPrefEnv({ set: MORE_ACTIONS_PREFS });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    await openMoreActions();
+
+    const copyButton = document.getElementById("copy-action-button");
+    const aiButton = document.getElementById("ai-action-button");
+    Assert.ok(!copyButton.hidden, "Copy starts shown");
+
+    await clickToggle("more-actions-copy-toggle");
+    Assert.ok(
+      !Services.prefs.getBoolPref("browser.highlightToSearch.copy.enabled"),
+      "Copy pref is written"
+    );
+    Assert.ok(copyButton.hidden, "Copy leaves the bar immediately");
+    Assert.equal(panel.state, "open", "The bar stays open");
+
+    await clickToggle("more-actions-ai-toggle");
+    Assert.ok(
+      !Services.prefs.getBoolPref("browser.ml.chat.shortcuts"),
+      "AI pref is written"
+    );
+    Assert.ok(aiButton.hidden, "AI leaves the bar immediately");
+    Assert.ok(
+      !document.getElementById("more-actions-button").hidden,
+      "The three-dot button stays so the actions can be turned back on"
+    );
+
+    await clickToggle("more-actions-copy-toggle");
+    Assert.ok(
+      Services.prefs.getBoolPref("browser.highlightToSearch.copy.enabled"),
+      "Copy pref is written back on"
+    );
+    Assert.ok(!copyButton.hidden, "Copy returns to the bar immediately");
+
+    const toggled = Glean.selectionMenu.optionToggled.testGetValue();
+    Assert.deepEqual(
+      toggled.map(e => [e.extra.action, e.extra.enabled, e.extra.source]),
+      [
+        ["copy", "false", "menu"],
+        ["ai", "false", "menu"],
+        ["copy", "true", "menu"],
+      ],
+      "Each toggle is recorded with the menu as its source"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that turning off the last action in the three-dot menu turns the whole
+ * menu off, as unchecking the last action in Settings does.
+ */
+add_task(async function test_more_actions_uncheck_all_turns_menu_off() {
+  Services.fog.testResetFOG();
+  await SpecialPowers.pushPrefEnv({ set: MORE_ACTIONS_PREFS });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    await openMoreActions();
+
+    await clickToggle("more-actions-copy-toggle");
+    await clickToggle("more-actions-search-toggle");
+    Assert.equal(panel.state, "open", "The bar stays open with an action left");
+    Assert.ok(
+      Services.prefs.getBoolPref("browser.highlightToSearch.enabled"),
+      "The menu stays on with an action left"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    await clickToggle("more-actions-ai-toggle");
+    await panelHidden;
+    Assert.ok(
+      !Services.prefs.getBoolPref("browser.highlightToSearch.enabled"),
+      "Turning off the last action turns the menu off"
+    );
+
+    const toggled = Glean.selectionMenu.optionToggled.testGetValue();
+    Assert.deepEqual(
+      toggled.map(e => [e.extra.action, e.extra.enabled, e.extra.source]),
+      [
+        ["copy", "false", "menu"],
+        ["search", "false", "menu"],
+        ["ai", "false", "menu"],
+        ["master", "false", "uncheck_all"],
+      ],
+      "The menu turning itself off is recorded"
+    );
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that the bar closes when the chatbot shortcuts pref is turned off from
+ * outside the three-dot menu while that menu is open.
+ */
+add_task(async function test_more_actions_bar_closes_on_external_ai_off() {
+  await SpecialPowers.pushPrefEnv({ set: MORE_ACTIONS_PREFS });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    await openMoreActions();
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    Services.prefs.setBoolPref("browser.ml.chat.shortcuts", false);
+    await panelHidden;
+    Assert.equal(panel.state, "closed", "The bar closes");
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that a selection made while the bar is still open starts without the
+ * previous copy confirmation or its pending hide.
+ */
+add_task(async function test_copy_confirmation_reset_on_new_selection() {
+  await SpecialPowers.pushPrefEnv({ set: MORE_ACTIONS_PREFS });
+
+  const pendingHides = new Set();
+  const { setTimeout: realSetTimeout, clearTimeout: realClearTimeout } = window;
+  window.setTimeout = (callback, delay, ...args) => {
+    const id = realSetTimeout(callback, delay, ...args);
+    if (delay == 850) {
+      pendingHides.add(id);
+    }
+    return id;
+  };
+  window.clearTimeout = id => {
+    pendingHides.delete(id);
+    realClearTimeout(id);
+  };
+
+  try {
+    await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+      const panel = await showSelectionMenu(browser);
+      const confirmation = document.getElementById("copy-action-confirmation");
+
+      EventUtils.synthesizeMouseAtCenter(
+        document.getElementById("copy-action-button"),
+        {},
+        window
+      );
+      await TestUtils.waitForCondition(
+        () => confirmation.hasAttribute("copied"),
+        "Confirmation is shown after copying"
+      );
+      Assert.equal(pendingHides.size, 1, "The confirmation scheduled a hide");
+
+      GenAI.handleShortcutsMessage(
+        "GenAI:ShowShortcuts",
+        {
+          selection: "hi",
+          delay: 0,
+          screenXDevPx: 10,
+          screenYDevPx: 10,
+        },
+        browser
+      );
+      Assert.ok(
+        !confirmation.hasAttribute("copied"),
+        "Confirmation is cleared by the new selection"
+      );
+      Assert.equal(pendingHides.size, 0, "The pending hide is cancelled");
+
+      const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+      panel.hide();
+      await panelHidden;
+    });
+  } finally {
+    window.setTimeout = realSetTimeout;
+    window.clearTimeout = realClearTimeout;
+    await SpecialPowers.popPrefEnv();
+  }
+});
+
+/**
+ * Check that a selection made while the Copied text is still being translated
+ * doesn't bring the previous confirmation back.
+ */
+add_task(async function test_copy_confirmation_reset_during_translation() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.ml.chat.shortcuts", true],
+      ["browser.ml.chat.shortcut.onboardingMouseoverCount", 2],
+      ["browser.ml.chat.provider", "http://localhost:8080"],
+      ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.enabled", true],
+      ["browser.highlightToSearch.copy.enabled", true],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    const confirmation = document.getElementById("copy-action-confirmation");
+    const confirmationText = confirmation.querySelector(
+      ".copy-action-confirmation-text"
+    );
+
+    EventUtils.synthesizeMouseAtCenter(
+      document.getElementById("copy-action-button"),
+      {},
+      window
+    );
+    GenAI.handleShortcutsMessage(
+      "GenAI:ShowShortcuts",
+      {
+        selection: "hi",
+        delay: 0,
+        screenXDevPx: 10,
+        screenYDevPx: 10,
+      },
+      browser
+    );
+
+    await document.l10n.translateElements([]);
+    await new Promise(resolve =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    );
+    Assert.ok(
+      !confirmation.hasAttribute("copied"),
+      "The stale translation doesn't show the confirmation"
+    );
+    Assert.equal(
+      confirmationText.textContent,
+      "",
+      "The stale translation leaves no text behind"
+    );
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that a Smart Window selection shows only the AI action, even after a
+ * classic selection in the same window showed the other actions.
+ */
+add_task(async function test_smart_window_resets_classic_actions() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ...MORE_ACTIONS_PREFS,
+      ["browser.ml.chat.shortcuts.smartwindow", true],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    Assert.ok(
+      !document.getElementById("copy-action-button").hidden,
+      "Classic selection shows Copy"
+    );
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+
+    await SpecialPowers.spawn(browser, [], () =>
+      content.getSelection().removeAllRanges()
+    );
+    document.documentElement.setAttribute("ai-window", "");
+    try {
+      await showSelectionMenu(browser);
+      for (const id of [
+        "search-action-button",
+        "copy-action-button",
+        "more-actions-separator",
+        "more-actions-button",
+      ]) {
+        Assert.ok(document.getElementById(id).hidden, `${id} is hidden`);
+      }
+      Assert.ok(
+        !document.getElementById("ai-action-button").hidden,
+        "The AI action is shown"
+      );
+    } finally {
+      document.documentElement.removeAttribute("ai-window");
+      const hidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+      panel.hide();
+      await hidden;
+    }
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that the AI row is absent from the three-dot menu, not shown
+ * unchecked, while the chatbot is blocked.
+ */
+add_task(async function test_more_actions_ai_row_absent_when_blocked() {
+  Services.fog.testResetFOG();
+  await SpecialPowers.pushPrefEnv({
+    set: [...MORE_ACTIONS_PREFS, ["browser.ml.chat.enabled", false]],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    await openMoreActions();
+
+    Assert.ok(
+      document.getElementById("more-actions-ai-toggle").hidden,
+      "AI row is absent while the chatbot is blocked"
+    );
+    const shown = Glean.selectionMenu.menuShown.testGetValue();
+    Assert.equal(shown[0].extra.ai, "absent", "The shown event says so");
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await panelHidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that the three-dot menu closes with the bar.
+ */
+add_task(async function test_more_actions_closes_with_bar() {
+  await SpecialPowers.pushPrefEnv({ set: MORE_ACTIONS_PREFS });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    const moreActionsPanel = await openMoreActions();
+
+    const hidden = BrowserTestUtils.waitForEvent(
+      moreActionsPanel,
+      "popuphidden"
+    );
+    panel.hide();
+    await hidden;
+    Assert.equal(moreActionsPanel.state, "closed", "Three-dot menu closed");
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that the copy confirmation keeps readable text on its fill in high
+ * contrast mode.
+ */
+add_task(async function test_copy_confirmation_in_high_contrast() {
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.ml.chat.shortcuts", true],
+      ["browser.ml.chat.shortcut.onboardingMouseoverCount", 2],
+      ["browser.ml.chat.provider", "http://localhost:8080"],
+      ["browser.highlightToSearch.featureGate", true],
+      ["browser.highlightToSearch.enabled", true],
+      ["browser.highlightToSearch.copy.enabled", true],
+      ["ui.useAccessibilityTheme", 1],
+    ],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    const confirmation = document.getElementById("copy-action-confirmation");
+
+    const panelHidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    EventUtils.synthesizeMouseAtCenter(
+      document.getElementById("copy-action-button"),
+      {},
+      window
+    );
+    await TestUtils.waitForCondition(() => confirmation.hasAttribute("copied"));
+
+    const style = getComputedStyle(confirmation);
+    Assert.notEqual(
+      style.color,
+      style.backgroundColor,
+      "Confirmation text differs from its background in high contrast"
+    );
+
     await panelHidden;
   });
 
@@ -1631,4 +2549,128 @@ add_task(async function test_textarea_selection_menu() {
   }
 
   spy.restore();
+});
+
+/**
+ * Check that the three-dot menu lines up with the bar it opens from, names the
+ * chatbot row generically, and ends with a Manage settings row.
+ */
+add_task(async function test_more_actions_menu_layout() {
+  await SpecialPowers.pushPrefEnv({
+    set: [...MORE_ACTIONS_PREFS, ["browser.ml.chat.provider", ""]],
+  });
+
+  await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+    const panel = await showSelectionMenu(browser);
+    const openSpy = sinon.spy(
+      document.getElementById("selection-more-actions-panel"),
+      "openPopup"
+    );
+    const moreActionsPanel = await openMoreActions();
+
+    const aiToggle = document.getElementById("more-actions-ai-toggle");
+    Assert.equal(aiToggle.label, "Ask AI", "Chatbot row has a generic name");
+
+    Assert.ok(
+      openSpy.calledWith(panel, "after_start"),
+      "Menu opens from the start edge of the bar"
+    );
+    openSpy.restore();
+
+    const menuBody = moreActionsPanel.querySelector(".panel-subview-body");
+    Assert.less(
+      Math.abs(
+        aiToggle.buttonEl.getBoundingClientRect().right -
+          menuBody.getBoundingClientRect().right
+      ),
+      2,
+      "Toggles sit at the end of their rows"
+    );
+
+    for (const [toggle, icon] of [
+      [aiToggle, "highlights.svg"],
+      [
+        document.getElementById("more-actions-search-toggle"),
+        "search-glass.svg",
+      ],
+      [document.getElementById("more-actions-copy-toggle"), "edit-copy.svg"],
+    ]) {
+      await toggle.updateComplete;
+      Assert.ok(
+        toggle.shadowRoot.querySelector("img.icon")?.src.endsWith(icon),
+        `${icon} is shown beside its row`
+      );
+    }
+
+    const manage = document.getElementById("more-actions-manage-settings");
+    Assert.ok(BrowserTestUtils.isVisible(manage), "Manage settings is shown");
+    Assert.ok(
+      moreActionsPanel.querySelector("toolbarseparator"),
+      "Manage settings is set apart from the toggles"
+    );
+
+    const separator = document.getElementById("more-actions-separator");
+    const separatorRect = separator.getBoundingClientRect();
+    Assert.deepEqual(
+      [separatorRect.width, separatorRect.height],
+      [1, 18],
+      "A thin rule separates the actions from the three-dot button"
+    );
+    Assert.lessOrEqual(
+      document.getElementById("copy-action-button").getBoundingClientRect()
+        .right,
+      separatorRect.left,
+      "The rule comes after the last action"
+    );
+    Assert.lessOrEqual(
+      separatorRect.right,
+      document.getElementById("more-actions-button").getBoundingClientRect()
+        .left,
+      "The rule comes before the three-dot button"
+    );
+
+    const hidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+    panel.hide();
+    await hidden;
+  });
+
+  await SpecialPowers.popPrefEnv();
+});
+
+/**
+ * Check that Manage settings opens the Highlight to Search settings, closes
+ * the menu and records the click.
+ */
+add_task(async function test_more_actions_manage_settings() {
+  Services.fog.testResetFOG();
+  await SpecialPowers.pushPrefEnv({ set: MORE_ACTIONS_PREFS });
+  const openPreferencesStub = sinon.stub(window, "openPreferences");
+
+  try {
+    await BrowserTestUtils.withNewTab("data:text/plain,hi", async browser => {
+      const panel = await showSelectionMenu(browser);
+      const moreActionsPanel = await openMoreActions();
+
+      const hidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");
+      EventUtils.synthesizeMouseAtCenter(
+        document.getElementById("more-actions-manage-settings"),
+        {},
+        window
+      );
+      await hidden;
+
+      Assert.ok(
+        openPreferencesStub.calledWith("general-highlight-to-search"),
+        "Opened the Highlight to Search settings"
+      );
+      Assert.equal(moreActionsPanel.state, "closed", "Menu closed");
+
+      const clicks = Glean.selectionMenu.menuClick.testGetValue();
+      Assert.equal(clicks?.length, 1, "The click was recorded");
+      Assert.equal(clicks[0].extra.item, "settings", "It names the entry");
+    });
+  } finally {
+    openPreferencesStub.restore();
+    await SpecialPowers.popPrefEnv();
+  }
 });

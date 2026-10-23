@@ -295,6 +295,7 @@ already_AddRefed<gfxFont> gfxFontEntry::FindOrMakeFont(
   if (!newFont) {
     return nullptr;
   }
+  newFont->InitMetrics();
   if (!newFont->Valid()) {
     newFont->Destroy();
     return nullptr;

@@ -329,6 +329,7 @@ export class IPProtectionToolbarButton {
 
     this.updateIconStatus(toolbaritem, {
       isActive,
+      isProxyActive,
       isError,
       isNetworkError,
       isExcluded,
@@ -461,12 +462,14 @@ export class IPProtectionToolbarButton {
    * @param {XULElement} toolbaritem
    *  The toolbaritem to update
    * @param {object} status
-   *  VPN connection status
+   *  VPN connection status. isActive is true when the VPN is on for all
+   *  sites, isProxyActive whenever the proxy is connected in any mode.
    */
   updateIconStatus(
     toolbaritem,
     status = {
       isActive: false,
+      isProxyActive: false,
       isError: false,
       isExcluded: false,
       isIncluded: false,
@@ -484,7 +487,10 @@ export class IPProtectionToolbarButton {
     let isNetworkError = status.isNetworkError;
     let isError = status.isError && !isNetworkError;
     let isExcluded = status.isExcluded && this.isExceptionsFeatureEnabled;
-    let isIncluded = status.isIncluded && this.isInclusionsFeatureEnabled;
+    let isIncluded =
+      status.isIncluded &&
+      status.isProxyActive &&
+      this.isInclusionsFeatureEnabled;
     let isPaused = status.isPaused;
     let l10nId =
       isError || isNetworkError

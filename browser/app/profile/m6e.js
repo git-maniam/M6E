@@ -42,6 +42,7 @@ pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 pref("toolkit.telemetry.firstShutdownPing.enabled", false, locked);
 pref("browser.newtabpage.activity-stream.telemetry", false, locked);
 pref("browser.discovery.enabled", false, locked);
+pref("network.http.akamai_waf_telemetry.enabled", false, locked);
 
 // Crash reporting is not built. Never offer to send crash reports.
 pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);

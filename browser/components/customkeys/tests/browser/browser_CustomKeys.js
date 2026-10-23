@@ -363,6 +363,32 @@ add_task(async function testDuplicateTab() {
   CustomKeys.resetAll();
 });
 
+add_task(async function testCopyTabURL() {
+  CustomKeys.changeKey("key_copyTabURL", {
+    modifiers: consts.unusedModifiers,
+    key: consts.unusedKey,
+  });
+  try {
+    const url = "https://example.com/?copy=tab#fragment";
+    await BrowserTestUtils.withNewTab(url, async () => {
+      await SimpleTest.promiseClipboardChange(url, () =>
+        EventUtils.synthesizeKey(consts.unusedKey, consts.unusedOptions, window)
+      );
+      await BrowserTestUtils.withNewTab("about:robots", async () => {
+        await SimpleTest.promiseClipboardChange("about:robots", () =>
+          EventUtils.synthesizeKey(
+            consts.unusedKey,
+            consts.unusedOptions,
+            window
+          )
+        );
+      });
+    });
+  } finally {
+    CustomKeys.resetKey("key_copyTabURL");
+  }
+});
+
 // Test that changes apply to other windows.
 add_task(async function testOtherWindow() {
   // Test changing a key before a new window is opened.

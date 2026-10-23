@@ -304,7 +304,7 @@ void WebrtcAudioConduit::OnControlConfigChange() {
 
   if (mControl.mMid.Ref() != mSendStreamConfig.rtp.mid) {
     mSendStreamConfig.rtp.mid = mControl.mMid.Ref();
-    sendStreamReconfigureNeeded = true;
+    sendStreamRecreationNeeded = true;
   }
 
   if (mControl.mRemoteSsrc.Ref() != mControl.mConfiguredRemoteSsrc) {

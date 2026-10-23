@@ -20,8 +20,8 @@
  */
 
 /**
- * pdfjsVersion = 6.5.260
- * pdfjsBuild = 33734f1fd
+ * pdfjsVersion = 6.5.273
+ * pdfjsBuild = 5d143c409
  */
 
 ;// ./src/shared/util.js
@@ -2045,7 +2045,7 @@ class FloatingToolbar {
 }
 
 ;// ./src/shared/internal_evt.js
-const INTERNAL_EVT = "ab5663f4-faaf-4567-8756-699708a0797a";
+const INTERNAL_EVT = "fc035972-b0fa-48f2-b210-0956ed9f371d";
 const internalOpt = Object.freeze({
   internal: INTERNAL_EVT
 });
@@ -9151,6 +9151,7 @@ class TilingPattern {
         owner.ctx.drawImage(tmpCanvas.canvas, x0, y0, bboxWidth, bboxHeight);
         owner.canvasFactory.destroy(tmpCanvas);
       } else {
+        owner.resetGraphicsState();
         this.setFillAndStrokeStyleToContext(owner, this.paintType, this.color);
         this.clipBbox(owner, x0, y0, x1, y1);
         owner.baseTransformStack.push(owner.baseTransform);
@@ -10575,6 +10576,27 @@ class CanvasGraphics {
     this.pendingClip = null;
     this._cachedScaleForStroking[0] = -1;
   }
+  resetGraphicsState() {
+    const {
+      clipBox,
+      transferMaps,
+      transferMapsFallback
+    } = this.current;
+    const current = this.current = new CanvasExtraState(0, 0);
+    current.clipBox = clipBox;
+    current.transferMaps = transferMaps;
+    current.transferMapsFallback = transferMapsFallback;
+    const ctx = this.ctx;
+    ctx.lineWidth = 1;
+    ctx.lineCap = "butt";
+    ctx.lineJoin = "miter";
+    ctx.miterLimit = 10;
+    if (ctx.setLineDash !== undefined) {
+      ctx.setLineDash([]);
+      ctx.lineDashOffset = 0;
+    }
+    this._cachedScaleForStroking[0] = -1;
+  }
   transform(opIdx, a, b, c, d, e, f) {
     this.dependencyTracker?.recordIncrementalData("transform", opIdx);
     this.ctx.transform(a, b, c, d, e, f);
@@ -11158,7 +11180,7 @@ class CanvasGraphics {
         } else if (this.contentVisible) {
           this.save();
           if (operatorList.fnArray[0] === OPS.setCharWidth) {
-            current.fillAlpha = current.strokeAlpha = 1;
+            this.current.fillAlpha = this.current.strokeAlpha = 1;
             ctx.globalAlpha = 1;
           }
           ctx.scale(fontSize, fontSize);
@@ -14545,7 +14567,7 @@ class RendererWorker {
         terminateEarly("TypedArray transfer test failed.");
         return;
       }
-      const apiVersion = "6.5.260";
+      const apiVersion = "6.5.273";
       if (apiVersion !== data.workerVersion) {
         terminateEarly(`The API version "${apiVersion}" does not match the Worker version "${data.workerVersion}".`);
         return;
@@ -15179,7 +15201,7 @@ function getDocument(src = {}) {
   }
   const docParams = {
     docId,
-    apiVersion: "6.5.260",
+    apiVersion: "6.5.273",
     data,
     password,
     disableAutoFetch,
@@ -16849,8 +16871,8 @@ class InternalRenderTask {
     }
   }
 }
-const version = "6.5.260";
-const build = "33734f1fd";
+const version = "6.5.273";
+const build = "5d143c409";
 
 ;// ./src/display/editor/color_picker.js
 

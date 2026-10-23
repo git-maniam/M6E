@@ -121,8 +121,8 @@ add_task(async function test_header_reference_count_label() {
     const header = element.wrappedJSObject;
 
     for (const [count, expected] of [
-      [1, "1 Tag"],
-      [3, "3 Tags"],
+      [1, "1 source"],
+      [3, "3 sources"],
     ]) {
       header.references = Cu.cloneInto(
         Array.from({ length: count }, (_, i) => ({
