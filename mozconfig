@@ -22,3 +22,4 @@ export CFLAGS="-mcpu=apple-m1"
 export CXXFLAGS="-mcpu=apple-m1"
 export RUSTFLAGS="-C target-cpu=apple-m1"
 export RUSTC_OPT_LEVEL=3
+ac_add_options MOZ_PGO=1
