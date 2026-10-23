@@ -288,6 +288,15 @@ Don't start the next step until the current one builds and checks out. Split a s
 
 **Checkpoint:** P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9.
 - **In progress:** P3.8, the page telemetry button. The user asked for it on 2026-10-23; see the spec's Phase 3 requirements and D29.
+  - **Written and pushed, not yet built:**
+    - the SpiderMonkey `compileTime` and `compileTimeWhileExecuting` timers;
+    - `JS::AddCompileTime`;
+    - the script loader's off-thread timing;
+    - `Document.getM6EPageTimings()`;
+    - `browser/components/pagetelemetry/`, with the actor, the parent-side byte counting and the test;
+    - the button and panel: `navigator-toolbox.inc.xhtml`, `main-popupset.inc.xhtml`, `browser-m6ePageTelemetry.js` and `m6e-page-telemetry.css`/`.svg`;
+    - `m6ePageTelemetry.ftl`.
+  - **Next:** build, then `./mach test browser/components/pagetelemetry` (with a window), then lint.
 - **Next:** P4.7c, the remaining dormant features (crash reporter, updater, Translations, ML, VPN, Sync and so on).
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
