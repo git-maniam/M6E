@@ -20,6 +20,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | Tool | Use |
 |---|---|
 | `chrome_eval.py` | `./mach python tools/m6e/chrome_eval.py --binary obj-m6e/dist/M6E.app/Contents/MacOS/m6e --script check.js --headless` runs a JS snippet with chrome privileges on a fresh profile and prints the JSON it returns |
+| `speedometer.py` | Runs the vendored Speedometer 3 offline against one or more builds, alternating them by round, and writes the scores as JSON |
 | `measure.py` | Startup timings, memory, and every host a fresh profile contacts in 5 idle minutes (plain launch, not Marionette) |
 | `push/push_check.py` | Web Push end to end: subscribes, sends real pushes, and checks notifications with the page open, with its tab closed, after a restart, and with no windows (`--rfp` repeats it with fingerprinting resistance) |
 | `branding/make-icons.sh` | Regenerates every branding image from `M6E-Icon.png` |
@@ -78,6 +79,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P2.7 | Home page splash image above the search box | `a37d26869c` |
 | P2.8 | "No Internet Connection" picture on offline error pages | `bd0f0d48fe` |
 | P4.1 | Phase 3 build measured: 681 ms first paint, 449 MB, 8 hosts; `measure.py` defaults to 10 runs | `bc97a8ada7` |
+| P4.2a | Homebrew clang 23, ld64 and cross-language ThinLTO: Speedometer +12%, first paint 647 ms | this commit |
 
 ## 3. Results by phase (as built)
 
@@ -274,7 +276,20 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1 is done. P4.2a (Homebrew clang 23 and cross-language ThinLTO) is in `mozconfig` and committed as work in progress; the full rebuild is running. Next: check that it links and runs, confirm `MOZ_LTO = 1` and `MOZ_LTO_RUST_CROSS = thin` in `obj-m6e/config/autoconf.mk`, then measure it against `artifacts/baseline-P4.1`.
+**Checkpoint:** P4.1 and P4.2a are done. P4.2b (CPU tuning and Rust opt-level 3) is next: add the flags to `mozconfig`, commit as work in progress, rebuild, then compare with `tools/m6e/speedometer.py` and `measure.py` against the P4.2a build. Before the rebuild, copy the P4.2a app to `artifacts/build-P4.2a/` (`cp -RL`) so the two can be compared side by side.
+
+**P4.2a results** (the baseline copy and the new build, measured in the same session):
+
+| Build | Speedometer 3 (20 iterations) | First paint (10 runs) | Blank-tab memory | Idle hosts |
+|---|---|---|---|---|
+| P4.1 baseline (Apple clang 21, lld, no LTO) | 34.79 ± 3.87 | 681 ms (P4.1 run) | 449 MB | 8 |
+| **P4.2a** (Homebrew clang 23, ld64, cross-language ThinLTO) | **39.01 ± 4.65 (+12%)** | **647 ms** | 449 MB | 8 |
+
+- **Binary size:** `XUL` shrank from 302.6 MB to 277.7 MB.
+- **Checks:** Rust objects in `libgkrust.a` are LLVM bitcode, which confirms cross-language LTO. ld reports "LTO support using: LLVM version 23.1.4". All five sites in the memory run loaded.
+- **Noise:** the baseline copy's first-paint run in this session (median 882 ms, worst run 1383 ms) ran while the machine was still busy, so it isn't used.
+- **Widevine host:** the download used `edgedl.me.gvt1.com`, the other Google mirror in `gmp-sources/widevinecdm.json`. Either mirror counts as the one allowed Widevine host.
+- **Same-session comparison:** `tools/m6e/speedometer.py` runs the vendored Speedometer 3 offline, alternating builds by round. Startup time hardly reflects compiler flags, so use Speedometer to judge them.
 
 **P4.2a toolchain findings:**
 - **libc++ headers:** Homebrew clang uses its own libc++ 23 headers, which crash bindgen (`Not an item: ItemId(…)` in the `gecko-profiler` build script) and don't match the system `libc++.dylib`. `CXX` therefore adds `-nostdinc++ -isystem <SDK>/usr/include/c++/v1`, which configure also passes to bindgen.
