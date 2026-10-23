@@ -16,4 +16,5 @@ export CC=/opt/homebrew/opt/llvm/bin/clang
 M6E_SDK=$(xcrun --sdk macosx --show-sdk-path)
 export CXX="/opt/homebrew/opt/llvm/bin/clang++ -nostdinc++ -isystem $M6E_SDK/usr/include/c++/v1"
 export MOZ_LD64_KNOWN_GOOD=1
+ac_add_options --enable-linker=ld64
 ac_add_options --enable-lto=cross
