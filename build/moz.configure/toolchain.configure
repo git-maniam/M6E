@@ -1940,6 +1940,17 @@ def select_linker_tmpl(host_or_target):
             if retcode == 1 and "Logging ld64 options" in stderr:
                 kind = "ld64"
 
+            # M6E: Xcode 15+'s linker ignores LD_PRINT_OPTIONS; identify it by -v.
+            elif (
+                retcode == 1
+                and linker == "ld64"
+                and "PROJECT:ld"
+                in get_cmd_output(
+                    *(cmd_base + linker_flag + ["-Wl,-v"] + toolchain_flags), env=env
+                )[2]
+            ):
+                kind = "ld64"
+
             elif retcode != 0:
                 return None
 
