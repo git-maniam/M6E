@@ -80,6 +80,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P2.8 | "No Internet Connection" picture on offline error pages | `bd0f0d48fe` |
 | P4.1 | Phase 3 build measured: 681 ms first paint, 449 MB, 8 hosts; `measure.py` defaults to 10 runs | `bc97a8ada7` |
 | P4.2a | Homebrew clang 23, ld64 and cross-language ThinLTO: Speedometer +12%, first paint 647 ms | `3e02d45126` |
+| P4.2b | Apple Silicon CPU tuning and Rust opt-level 3: within noise, kept as the spec asks | this commit |
 
 ## 3. Results by phase (as built)
 
@@ -276,7 +277,9 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1 and P4.2a are done. P4.2b (CPU tuning and Rust opt-level 3) is next: add the flags to `mozconfig`, commit as work in progress, rebuild, then compare with `tools/m6e/speedometer.py` and `measure.py` against the P4.2a build. Before the rebuild, copy the P4.2a app to `artifacts/build-P4.2a/` (`cp -RL`) so the two can be compared side by side.
+**Checkpoint:** P4.1, P4.2a and P4.2b are done. P4.2c (PGO, `ac_add_options MOZ_PGO=1`) is next. `./mach build` then does an instrumented build in `obj-m6e/instrumented`, runs `make package` on it (M6E's first packaging run, an early check for P5.1), runs `build/pgo/profileserver.py` (its pages, including Speedometer 3, are served from 127.0.0.1, and its prefs come from `testing/profiles`), and finally rebuilds `obj-m6e` with the profile. Compare against `artifacts/build-P4.2b/`.
+
+**P4.2b results:** `-mcpu=apple-m1` (C/C++), `-C target-cpu=apple-m1` (Rust) and `RUSTC_OPT_LEVEL=3`. Speedometer 3: 37.17 ± 4.60 (median 38.78) against P4.2a's 36.52 ± 4.60 (median 38.51), measured in the same session. First paint 670 ms (range 639–688), 449 MB, 8 hosts. That is within noise. The flags are kept anyway: the spec asks for them, they build reliably, and they don't cost anything. A same-session rerun of P4.2a gave 36.5 against the 39.0 measured earlier, so only compare scores taken in the same session.
 
 **P4.2a results** (the baseline copy and the new build, measured in the same session):
 
@@ -288,7 +291,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 - **Binary size:** `XUL` shrank from 302.6 MB to 277.7 MB.
 - **Checks:** Rust objects in `libgkrust.a` are LLVM bitcode, which confirms cross-language LTO. ld reports "LTO support using: LLVM version 23.1.4". All five sites in the memory run loaded.
 - **Noise:** the baseline copy's first-paint run in this session (median 882 ms, worst run 1383 ms) ran while the machine was still busy, so it isn't used.
-- **Widevine host:** the download used `edgedl.me.gvt1.com`, the other Google mirror in `gmp-sources/widevinecdm.json`. Either mirror counts as the one allowed Widevine host.
+- **Widevine host:** the one allowed Google host for Widevine varies by run: `www.google.com`, its redirect target `dl.google.com`, or the other mirror listed in `gmp-sources/widevinecdm.json`, `edgedl.me.gvt1.com`.
 - **Same-session comparison:** `tools/m6e/speedometer.py` runs the vendored Speedometer 3 offline, alternating builds by round. Startup time hardly reflects compiler flags, so use Speedometer to judge them.
 
 **P4.2a toolchain findings:**
