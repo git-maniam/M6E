@@ -287,7 +287,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.8e/f/g (static analysis, extensions and protocol handlers, reachability of dormant features); P4.8a to d are done. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
+**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.8e, static analysis; P4.8a to d, f and g are done. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -487,6 +487,16 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
     - **Locked:** `security.sandbox.content.level` (3) and `fission.autostart` (true), so `about:config` or a `user.js` can't lower them.
     - **Left alone:** the `MOZ_DISABLE_*_SANDBOX` environment variables. Setting them already requires code running on the Mac, so they add no remote risk.
   - **g:** prove the features marked for deletion (D30) unreachable: locked prefs, no listening sockets, no network traffic, and no entry points from web content or IPC.
+  - **f results:**
+    - **Add-ons:** signatures are required and locked; add-ons load only from the profile and the application (`extensions.enabledScopes` 5, locked), so other software can't side-load them.
+    - **Downloads:** M6E asks before handling a new file type, and downloads stay out of macOS's Recent Items.
+    - **Already in place:** link prefetch, DNS prefetch and speculative connections off (P3.4), a warning before external protocol handlers, and Local Network Access with tracker blocking (P4.8a).
+  - **g results:**
+    - **Prefs:** the VPN, Translations, Mozilla accounts, ML/AI, telemetry, studies and content relevancy are off and locked, and so are Nimbus rollouts now.
+    - **Not built:** the updater service and the crash reporter.
+    - **Pages:** web pages could link to eight dormant-feature pages: `about:translations`, `about:aichatcontent`, `about:smartpage`, `about:smartwindowtasks`, `about:smartformfillreview`, the ASRouter tools `about:asrouter` and `about:messagepreview`, and `about:referrals`, which redirected to firefox.com. All eight are unregistered (`AboutRedirector.cpp`, `nsAboutRedirector.cpp` and the two `components.conf` files).
+    - **Sockets:** a normal run on a fresh profile listens on no TCP port. Its three UDP sockets are HTTP/3 client connections; with HTTP/3 off there are none.
+    - **Network:** idle traffic is the 8 allowed hosts (P4.8a).
 - **P4.9 Full test pass:** build, xpcshell and mochitest suites for the changed areas, `push_check.py`, `measure.py`, `speedometer.py`, `scan-strings.py` and the Phase 3 feature checks. Then the final PGO build, measure, and push.
 
 ### Phase 5: Packaging and acceptance

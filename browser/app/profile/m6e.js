@@ -358,3 +358,14 @@ pref("network.lna.block_trackers", true);
 // the strongest content sandbox on macOS, and site isolation (Fission).
 pref("security.sandbox.content.level", 3, locked);
 pref("fission.autostart", true, locked);
+
+// Add-ons and downloads (P4.8f). Only signed add-ons, and only from the
+// profile and the application, so other software can't side-load them.
+pref("xpinstall.signatures.required", true, locked);
+pref("extensions.enabledScopes", 5, locked);
+pref("extensions.autoDisableScopes", 15, locked);
+// Ask what to do with file types not seen before, instead of opening them.
+pref("browser.download.always_ask_before_handling_new_types", true);
+pref("browser.download.manager.addToRecentDocs", false);
+// Nimbus rollouts can't be turned back on (P4.8g, D30).
+pref("nimbus.rollouts.enabled", false, locked);
