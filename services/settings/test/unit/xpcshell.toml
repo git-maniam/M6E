@@ -51,3 +51,5 @@ skip-if = [
 skip-if = [
   "os == 'android'", # Bug 2042499
 ]
+
+["test_m6e_allowed_collections.js"]

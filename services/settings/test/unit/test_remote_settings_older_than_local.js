@@ -15,6 +15,14 @@ function setJSONResponse(response, changeset) {
 }
 
 add_setup(() => {
+  // M6E: these upstream tests sync collections outside the D2 allowlist,
+  // which test_m6e_allowed_collections.js covers.
+  const isAllowedCollection = Utils.isAllowedCollection;
+  Utils.isAllowedCollection = () => true;
+  registerCleanupFunction(() => {
+    Utils.isAllowedCollection = isAllowedCollection;
+  });
+
   Services.prefs.setStringPref("services.settings.loglevel", "debug");
 
   // Set up an HTTP Server

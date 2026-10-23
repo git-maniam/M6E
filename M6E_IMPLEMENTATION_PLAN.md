@@ -82,6 +82,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.2a | Homebrew clang 23, ld64 and cross-language ThinLTO: Speedometer +12%, first paint 647 ms | `3e02d45126` |
 | P4.2b | Apple Silicon CPU tuning and Rust opt-level 3: within noise, kept as the spec asks | `e3c330b3d2` |
 | P4.2c | PGO: Speedometer +15% (median +18%), first paint 597 ms; DMG packaging works | `a169c87934` |
+| P4.5 | Upstream merged to `cfa0508a3b` (1,301 files); allowlist tests | this commit |
+| P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | this commit |
 
 ## 3. Results by phase (as built)
 
@@ -278,7 +280,10 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1 and P4.2 (a, b and c) are done. PGO is now off in `mozconfig` for the P4.5 to P4.8 source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. On 2026-10-23 the user added P4.5 to P4.9 (platform removal including `#ifdef`s, security hardening, dormant-feature deletion; see section 5 and spec D21 to D24). Fixes for the review of M6E's changes (P4.8d) are committed but not yet built or tested. Next is P4.5, the upstream merge.
+**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6, platform removal:
+- **Ready:** `tools/m6e/platform/strip_ifdefs.py`. Its dry run would change 1,432 first-party files; 75 files it can't parse (raw string literals and the like) stay as they are.
+- **Delete list:** `artifacts/P4.6-delete-dirs-final.txt` (142 directories, about 2,280 files) lists platform-named directories that the macOS build doesn't read. `artifacts/P4.6-used-all.txt` lists the files the build does read: C dependency files, Rust dep-info, `dist/` and `_tests` links, and backend inputs.
+- **References to fix:** `artifacts/P4.6-delete-refs.txt` lists the 38 of those directories that other files refer to.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -353,6 +358,21 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - **Dry run** (`git apply --check`):
     - 274 changes are to files M6E deleted. Exclude them and keep the deletions.
     - Only 3 conflicts, all in `browser/components/preferences/tests/etp/`. Upstream deletes `browser-srd.toml` and `browser_contentblocking_standard_tcp_section.js`, both of which P3.5 modified. The repo has no upstream history (snapshot import), so it comes in as a diff. Resolve conflicts with M6E's deletions by keeping the deletion. Then rerun the P5.3 maintenance scripts.
+- **P4.5 results:**
+  - **Merge:** upstream `034cd8a8..cfa0508a3b` was applied as a three-way diff (work-in-progress commit `53d399f2c4`): 1,301 files, of which 61 were added, 88 deleted, 1,130 modified and 11 renamed.
+    - Left out: changes to the 274 files M6E deleted, and 12 new files in directories M6E removed. A new file is left out only if its nearest ancestor that existed upstream is gone here.
+    - The one conflict, `preferences/tests/etp/browser.toml`, now has upstream's list plus M6E's two tests. Upstream removed `browser-srd.toml`, because the settings redesign is now the default.
+  - **Checks:**
+    - The merge bumped `CLOBBER` (libwebrtc), so a clean build: 16.5 minutes with LTO.
+    - New pref `network.http.akamai_waf_telemetry.enabled` is locked off.
+    - The new onboarding images on Mozilla's CDN are only used by ASRouter's test provider. The new Horoscopes widget was already locked off.
+    - `scan-strings.py` finds 0 strings, and the search configuration is unchanged.
+  - **Network:** only the 8 allowed hosts while idle.
+  - **Tests** (2,325 + 498 trust-panel passes): ETP settings, HTTPS-First, HTTPS-Only, Reader View, Remote Settings and the trust panel.
+    - Two Remote Settings tests synced collections outside the D2 allowlist. They now stub `Utils.isAllowedCollection`. The new `test_m6e_allowed_collections.js` checks what is allowed and what is blocked, and that blocked collections never fetch.
+    - Three failures are environmental:
+      - the network's DNS resolves nonexistent hosts (`https-only/browser_console_logging.js` and `websocket-unexpected` in `test_resource_upgrade.html`);
+      - the symlinked `_tests` path in `browser_localfile_readerMode.js`. Reader View does open the local file.
 - **P4.6 Platform removal (D21):**
   - **a:** delete platform-only files and directories (first-party and vendored), checking for references first.
   - **b:** remove WINNT, Linux, GTK and Android branches from `moz.build`, `moz.configure`, makefiles and mozconfigs.
@@ -368,6 +388,22 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - **e:** static analysis (clang-tidy and analyzer security checks) of first-party code that parses untrusted input or handles IPC, with a manual review of what it finds.
   - **f:** extensions, protocol handlers and local-network access.
   - Fix what is found. Record every finding and fix here.
+- **P4.8d results** (an independent review of every M6E change; all fixes built and tested):
+  1. **Medium:** a Shield switch could leave per-site overrides from the other state behind, so the Tracker Blocker showed "protected" while the engine still exempted the site.
+     - **Fix:** `setSiteProtected` clears all four override types first, and `isSiteProtected` follows the C++ order.
+     - **Test:** `test_site_override_after_shield_switch`.
+  2. **Low:** with the Shield off, HTTPS-Only exempted every site, so even Firefox's HTTPS-First was lost.
+     - **Fix:** the Shield-off value of `dom.security.https_only_mode` is now false, giving HTTPS-First everywhere. `PotentiallyDowngradeHttpsFirstRequest` refuses the plain http fallback for `m6e-protect` sites (after the in-progress flag is set). The old exemption in `TestIfPrincipalIsExempt` is gone.
+     - **Test:** `dom/security/test/https-first/browser_m6e_shield_off_no_downgrade.js`.
+     - **Limit:** for protected sites with the Shield off, subresources get HTTPS-First's mixed-content upgrading, not HTTPS-Only's.
+  3. **Low:** the console paste guard was off (`devtools.selfxss.count` 5, copied from Nightly branding). It is now 0.
+  4. **Low:** content relevancy's Rust Remote Settings client bypasses the D2 allowlist. `toolkit.contentRelevancy.enabled` is now locked off; P4.7 removes the feature.
+  5. **Info:** Reader View cloned the page inside the live document, which re-ran page custom elements and image loads. Ad slots are now stripped from a copy imported into an inert document.
+  6. **For the user to decide (P4.8a):**
+     - Safe Browsing is off, so there is no malware, phishing or download protection.
+     - Add-on updates are off, so installed add-ons never get security fixes.
+     - Turning a site off with the Shield on also allows plain http for it (D20).
+     - The RUSTSEC ignores in `.cargo/audit.toml` need re-checking.
 - **P4.9 Full test pass:** build, xpcshell and mochitest suites for the changed areas, `push_check.py`, `measure.py`, `speedometer.py`, `scan-strings.py` and the Phase 3 feature checks. Then the final PGO build, measure, and push.
 
 ### Phase 5: Packaging and acceptance

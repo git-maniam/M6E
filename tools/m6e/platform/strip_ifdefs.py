@@ -66,21 +66,30 @@ def candidates(files):
 
 def unifdef_args():
     return (
-        ["/usr/bin/unifdef", "-x", "2"]
+        ["/usr/bin/unifdef"]
         + [f"-U{s}" for s in UNDEFINED]
         + [f"-D{s}" for s in DEFINED]
     )
 
 
 def process(path, apply):
-    """Returns (path, status): status is "changed", "unchanged" or an error."""
-    cmd = unifdef_args() + (["-m", path] if apply else [path])
-    r = subprocess.run(cmd, capture_output=True)
+    """Returns (path, status): status is "changed", "unchanged" or an error.
+
+    unifdef writes to stdout and the file is only rewritten when it succeeds,
+    since unifdef can leave truncated output on syntax it can't parse (for
+    example C++ raw string literals).
+    """
+    r = subprocess.run(unifdef_args() + [path], capture_output=True)
     if r.returncode == 0:
         return path, "unchanged"
-    if r.returncode == 1:
-        return path, "changed"
-    return path, "error: " + r.stderr.decode(errors="replace").strip()[:200]
+    if r.returncode != 1:
+        return path, "error: " + r.stderr.decode(errors="replace").strip()[:200]
+    if apply:
+        mode = os.stat(path).st_mode
+        with open(path, "wb") as fh:
+            fh.write(r.stdout)
+        os.chmod(path, mode)
+    return path, "changed"
 
 
 def main():
