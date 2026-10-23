@@ -1,2 +1,0 @@
-MINGW_CPU=x86_64
-. "$topsrcdir/build/mozconfig.mingwclang"
