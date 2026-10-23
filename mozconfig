@@ -23,5 +23,6 @@ export CXXFLAGS="-mcpu=apple-m1"
 export RUSTFLAGS="-C target-cpu=apple-m1"
 export RUSTC_OPT_LEVEL=3
 export STRIP=/usr/bin/strip
+export MOZ_PKG_FORMAT=DMG
 export LLVM_PROFDATA=/opt/homebrew/opt/llvm/bin/llvm-profdata
 ac_add_options MOZ_PGO=1
