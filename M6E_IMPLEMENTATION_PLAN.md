@@ -85,6 +85,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.5 | Upstream merged to `cfa0508a3b` (1,301 files); allowlist tests | `cfd42808e0` |
 | P4.6a | 141 platform-only directories deleted (2,195 files) | `3dcdd875c7` |
 | P4.6b | 702 platform conditions removed from 286 `moz.build` files; backend proven unchanged | `44250d4d06` |
+| P4.6c | `#ifdef`s stripped from 1,403 first-party files (about 62,000 lines); binaries' symbols unchanged | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -282,7 +283,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6c (`#ifdef`s):
+**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6d (front-end preprocessor `#ifdef`s: `strip_ifdefs.py --frontend artifacts/P4.6d-candidates.txt`, 19 files), then P4.7. Notes:
 - **Ready:** `tools/m6e/platform/strip_ifdefs.py`. Its dry run would change 1,432 first-party files; 75 files it can't parse (raw string literals and the like) stay as they are.
 - **References:** P4.6b removes the dead references to the deleted directories that remain in `moz.build` conditions (see `artifacts/P4.6-delete-refs.txt`).
 
@@ -381,6 +382,10 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - **Proof:** `tools/m6e/platform/compare_backends.py` compares the build backend generated before and after (a `git worktree` of the previous commit plus `./mach configure`). Result: 5,856 backend files, 0 differences. So the macOS build compiles exactly the same sources with the same defines and flags.
   - **Bug caught on the way:** the first version resolved a dead `elif` on its own and pulled its `else` body out of a chain that started with an undecided condition (the build caught this in `tools/profiler`). A decided `elif` is now dropped from its chain or becomes the chain's `else`.
   - **Not changed:** 6 files whose rewrite wouldn't parse, and vendored directories (D21).
+- **P4.6c results:** `strip_ifdefs.py` ran `unifdef` over 1,403 first-party C, C++ and Objective-C files and removed about 62,000 lines of `XP_WIN`, `MOZ_WIDGET_GTK`, `ANDROID`, `XP_LINUX`, BSD and other branches. 73 files it can't parse are unchanged.
+  - **Proof:** the symbol tables of all 22 shipped binaries (`nm -j`) are identical before and after, including XUL's 472,819 symbols.
+  - **wasm sandbox:** 15 files are also compiled for the RLBox wasm sandbox (`wasm32-wasi`), where `XP_DARWIN`, `XP_UNIX` and `__APPLE__` aren't defined. They are stripped with `--undefine-only`; `mozalloc.cpp` had lost its non-Darwin fallback. The wasm targets' dependency files are the `*.wasm*.pp` files in `obj-m6e`.
+  - **Cargo:** cargo needs every target's crate manifests to resolve the workspace, so `toolkit/crashreporter/rust_minidump_writer_linux` (deleted in P4.6a) is restored. P4.6a's build had passed only because Rust wasn't rebuilt.
 - **P4.6 Platform removal (D21):**
   - **a:** delete platform-only files and directories (first-party and vendored), checking for references first.
   - **b:** remove WINNT, Linux, GTK and Android branches from `moz.build`, `moz.configure`, makefiles and mozconfigs.
