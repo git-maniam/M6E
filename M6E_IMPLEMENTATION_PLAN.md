@@ -74,7 +74,9 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.6 | Push notifications verified; push check tool | `4b25cc5ac6` |
 | P2.6 | Fox artwork replaced with the M6E icon | `f6b2bfd7eb` |
 | P3.7 | Tracker Blocker button with a two-way, session-only per-site switch | `94d2a79bd4` |
-| P3.2b | No AI buttons in the default toolbar layout | see `git log --grep P3.2b` |
+| P3.2b | No AI buttons in the default toolbar layout | `46b2ba9b0b` |
+| P2.7 | Home page splash image above the search box | `a37d26869c` |
+| P2.8 | "No Internet Connection" picture on offline error pages | `bd0f0d48fe` |
 
 ## 3. Results by phase (as built)
 
@@ -133,6 +135,13 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Finding them:** 90 by file name (`fox`, `kit`, `firefox`), and 33 more by reviewing contact sheets of every illustration-sized image (artifacts `sheet-*.png`).
   - **Tool:** `tools/m6e/branding/replace-fox-art.sh` with the list `fox-art.txt`. An SVG embeds the 256 px icon centred in its original viewBox; a PNG or GIF is redrawn at its pixel size (`icon-tool.swift fit`). File names are unchanged.
   - **Left out:** the Windows-only `browser/components/shell/icons/kit.ico`, which macOS never shows.
+- **Home page splash (P2.7):** New Tab's `Logo` component (`browser/extensions/newtab/content-src/components/Logo/`) shows `data/content/assets/m6e-home-splash.jpg`, which is `home_page_splash.png` as JPEG (760 KB instead of 2.7 MB), in place of the logo and wordmark.
+  - **Sizing:** `.m6e-home-splash` in `_Logo.scss` sizes it as `min(50vw, 50vh)` wide with a 3:2 aspect ratio and rounded corners.
+  - **Build:** `./mach build faster` regenerates the New Tab bundles (it needs Node). Checked at 1280 and 900 px wide.
+- **No Internet page (P2.8):** `NET_ERROR_ILLUSTRATIONS.noInternet` is `chrome://global/skin/illustrations/no-internet.jpg`, made from `no_internet.png` as JPEG (670 KB).
+  - **When it shows:** `net-error-card.mjs` uses it for `netOffline` and `NS_ERROR_OFFLINE`, and for errors that normally show the no-connection illustration while `navigator.onLine` is false. A mistyped address while online keeps the usual illustration.
+  - **Layout:** `aboutNetError.css` stacks the picture above the text (class `no-internet` on the card) at `min(36em, 80vw, 60vh * 1.5)`.
+  - **Checked:** with `Services.io.offline` (or `m6e -offline <url>`) and on an online DNS error.
 - **macOS look (P2.5, D15):** `toolkit/themes/shared/m6e-tokens.css` is imported from the generated `tokens-shared.css`, and the token generator's header helper keeps that import.
   - **Accent:** follows `AccentColor`.
   - **Toolbar:** a neutral grey tab strip and toolbar with no Nova gradient, a white selected tab with a neutral edge, and a white page canvas.
@@ -257,9 +266,24 @@ Don't start the next step until the current one builds and checks out. Split a s
 
 ## 4. Next step: Phase 4, performance (P4.1 measure)
 
-Phase 3 is complete. Start a fresh session for Phase 4 (see section 7).
-- **P4.1:** run `measure.py` on the current build, on a quiet machine with nothing else running, and compare it with `artifacts/baseline-P0` and `artifacts/phase1-P1.14b`.
-- **Then P4.2:** build flags one at a time. Each is a full rebuild.
+**Resuming:** the user will start the next session with "Resume from Phase 4". Phases 0 to 3 are complete, all work is committed and pushed, and the tree is clean. Before starting:
+1. Read `CLAUDE.md`, the spec (`m6e_browser_agent_instructions.md`) and this plan, and run `git log --oneline -15`.
+2. Run `git status` and `git fetch`. If `origin/main` is ahead (the user sometimes commits from the IDE), pull first.
+3. Build with `./mach build`. The objdir `obj-m6e` normally survives between sessions, so this is incremental; a clean objdir means a full 40-minute build.
+4. Commit and push work in progress often, and keep a checkpoint note in this section (user rule, connection drops).
+
+**P4.1 Measure:**
+- Run `./mach python tools/m6e/measure.py --binary obj-m6e/dist/M6E.app/Contents/MacOS/m6e --out artifacts/P4.1-measure` on a quiet machine: no builds, tests or other browsers running.
+- Compare with the earlier results (`artifacts/` is git-ignored, so the numbers are copied here):
+
+  | Run | First paint | Blank-tab memory | Idle hosts |
+  |---|---|---|---|
+  | Stock Nightly baseline (P0.4) | 785 ms | 698 MB (8 processes) | 21 hosts with HTTP requests, plus 40 hosts only looked up over DNS |
+  | After debloating (P1.14b) | 777 ms | 448 MB | 8 allowed hosts |
+  | After P3.1 (P3.1b) | 838 ms (taken while lint ran, so not valid) | 447 MB | 8 hosts |
+- **Expected hosts:** the 8 allowed ones: Remote Settings ×3, push, DoH, `update.googleapis.com`, `ciscobinary.openh264.org`, and one Google download host for Widevine.
+
+**Then P4.2:** add build flags one at a time (section 5). Each is a configure change and a full rebuild.
 
 ## 5. Remaining steps
 
@@ -308,5 +332,5 @@ Phase 3 is complete. Start a fresh session for Phase 4 (see section 7).
 | LTO and PGO lengthen builds | Add flags one at a time (P4.2) |
 
 ## 7. Session notes
-- **Fresh sessions:** start each phase in a fresh session, with the spec, this plan, `CLAUDE.md` and the memory notes as the handoff.
+- **Fresh sessions:** start each phase in a fresh session, with the spec, this plan, `CLAUDE.md` and the memory notes as the handoff. "Resume from Phase N" means: follow the resuming checklist in section 4, then continue with that phase.
 - **Model choice:** Sonnet suits high-volume, build-driven steps. Opus suits design and profiling (Phases 3 and 4). Fable suits stubborn build-system or security-review problems.

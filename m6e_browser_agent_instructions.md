@@ -32,7 +32,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
 | 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | Done |
-| 4 | Performance | **Next** |
+| 4 | Performance | **Next.** Resume with "Resume from Phase 4"; see the plan's section 4. |
 | 5 | Packaging (`.dmg`) and acceptance | Not started |
 
 ## 3. Requirements
@@ -63,6 +63,9 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 - **Attribution:** the About dialog and `about:license` state that M6E is based on Firefox source code from the Mozilla project under the Mozilla Public License 2.0.
 - **Icon:** every branding image is generated from `M6E-Icon.png` by `tools/m6e/branding/make-icons.sh`. To change the icon, replace the artwork and rerun the script.
 - **macOS look (D15):** a neutral, Safari-like grey toolbar with a white selected tab, and accent colours that follow the macOS system accent.
+- **No fox artwork:** Firefox's fox mascot (Kit), fox illustrations and Firefox logos are replaced by the M6E icon everywhere they appear: popups, error pages, feature callouts, panels, the sidebar, New Tab and onboarding.
+- **Home page:** the M6E splash illustration (`home_page_splash.png` in the repository root) sits above the Google search box, in place of the logo and wordmark, and scales with the window.
+- **No Internet page:** when a page can't load because there is no internet connection, the error page shows the M6E "No Internet Connection" illustration (`no_internet.png` in the repository root) above the message, sized to the window. Other errors keep the M6E icon.
 
 ### Phase 3: Features and privacy (done)
 - **Search engines:**

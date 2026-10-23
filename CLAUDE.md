@@ -9,6 +9,8 @@ This is a Firefox fork being turned into "M6E", a debloated, privacy-first brows
 - `m6e_browser_agent_instructions.md`: the spec, covering what M6E is, current status and the numbered decision log (D1 to D20).
 - `M6E_IMPLEMENTATION_PLAN.md`: how it's built, covering the step loop, tools, a progress log with commits, as-built notes and the next step.
 
+Resuming: when the user says "Resume from Phase N", follow the resuming checklist at the top of the plan's section 4 ("Next step"), then continue with that phase.
+
 Working rules:
 - **Where M6E changes live:**
   - behaviour prefs: `browser/app/profile/m6e.js`;
@@ -22,3 +24,4 @@ Working rules:
 - **Check behaviour** in the running build with `tools/m6e/chrome_eval.py` and `tools/m6e/measure.py` (see the plan for Marionette pitfalls).
 - **Branding text:** never blindly replace "Firefox" or "Mozilla". They must stay in licences, MPL headers, the attribution text, internal identifiers and upstream URLs. `tools/m6e/branding/scan-strings.py` checks user-visible strings.
 - **Commits:** one commit per plan step (`M6E P<phase>.<step>: …`), pushed to `origin/main` after it builds and checks out.
+- **Checkpoints:** during a step, also commit and push work in progress (`… (work in progress): …`) and keep the checkpoint note in the plan's section 4 current, so a dropped connection never loses work.
