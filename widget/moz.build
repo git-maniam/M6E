@@ -374,7 +374,7 @@ if toolkit == "windows":
         "windows/PCompositorWidget.ipdl",
         "windows/PlatformWidgetTypes.ipdlh",
     ]
-if toolkit == "android":
+elif toolkit == "android":
     IPDL_SOURCES = [
         "android/PCompositorWidget.ipdl",
         "android/PlatformWidgetTypes.ipdlh",

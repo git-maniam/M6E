@@ -64,9 +64,10 @@ if CONFIG["OS_TARGET"] == "Darwin" and CONFIG["TARGET_CPU"] in ("aarch64", "x86_
         UNIFIED_SOURCES += [
             "core/PowerCounters-mac-amd64.cpp",
         ]
-UNIFIED_SOURCES += [
-    "gecko/nsProfiler.cpp",
-]
+else:
+    UNIFIED_SOURCES += [
+        "gecko/nsProfiler.cpp",
+    ]
 
 LOCAL_INCLUDES += [
     "/caps",

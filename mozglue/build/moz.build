@@ -7,7 +7,8 @@
 # If this is ever changed, update MOZ_SHARED_MOZGLUE in browser/installer/Makefile.in
 if CONFIG["JS_STANDALONE"] and not CONFIG["MOZ_MEMORY"]:
     Library("mozglue")
-SharedLibrary("mozglue")
+else:
+    SharedLibrary("mozglue")
 
 
 

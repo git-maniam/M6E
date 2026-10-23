@@ -156,10 +156,11 @@ elif CONFIG["JS_CODEGEN_ARM"]:
     ]
     if CONFIG["JS_SIMULATOR_ARM"]:
         UNIFIED_SOURCES += ["arm/Simulator-arm.cpp"]
-    SOURCES += [
-        "arm/llvm-compiler-rt/arm/aeabi_idivmod.S",
-        "arm/llvm-compiler-rt/arm/aeabi_uidivmod.S",
-    ]
+    else:
+        SOURCES += [
+            "arm/llvm-compiler-rt/arm/aeabi_idivmod.S",
+            "arm/llvm-compiler-rt/arm/aeabi_uidivmod.S",
+        ]
 elif CONFIG["JS_CODEGEN_ARM64"]:
     UNIFIED_SOURCES += [
         "arm64/Architecture-arm64.cpp",

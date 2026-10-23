@@ -135,6 +135,15 @@ def rewrite_once(source):
             )
         else:
             else_line = end
+        if re.match(r"\s*elif\b", lines[start]):
+            # An elif belongs to its chain: drop the clause, or make it the
+            # chain's else, without touching the earlier clauses.
+            if result:
+                block = [" " * base + "else:\n"] + lines[body_start:else_line]
+            else:
+                block = []
+                end = else_line
+            return "".join(lines[:start] + block + lines[end:])
         if result:
             block = dedent(lines[body_start:else_line], indent_of(lines[node.body[0].lineno - 1]) - base)
         elif not node.orelse:

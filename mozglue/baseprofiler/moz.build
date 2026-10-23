@@ -35,9 +35,10 @@ if not CONFIG["JS_STANDALONE"]:
         UNIFIED_SOURCES += [
             "core/shared-libraries-macos.cc",
         ]
-    SOURCES += [
-        "core/shared-libraries-noop.cc",
-    ]
+    else:
+        SOURCES += [
+            "core/shared-libraries-noop.cc",
+        ]
 
     LOCAL_INCLUDES += [
         "/mozglue/baseprofiler/core/",
