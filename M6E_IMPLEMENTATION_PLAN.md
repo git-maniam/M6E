@@ -83,7 +83,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.2b | Apple Silicon CPU tuning and Rust opt-level 3: within noise, kept as the spec asks | `e3c330b3d2` |
 | P4.2c | PGO: Speedometer +15% (median +18%), first paint 597 ms; DMG packaging works | `a169c87934` |
 | P4.5 | Upstream merged to `cfa0508a3b` (1,301 files); allowlist tests | `cfd42808e0` |
-| P4.6a | 141 platform-only directories deleted (2,195 files) | this commit |
+| P4.6a | 141 platform-only directories deleted (2,195 files) | `3dcdd875c7` |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
