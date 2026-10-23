@@ -80,7 +80,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P2.8 | "No Internet Connection" picture on offline error pages | `bd0f0d48fe` |
 | P4.1 | Phase 3 build measured: 681 ms first paint, 449 MB, 8 hosts; `measure.py` defaults to 10 runs | `bc97a8ada7` |
 | P4.2a | Homebrew clang 23, ld64 and cross-language ThinLTO: Speedometer +12%, first paint 647 ms | `3e02d45126` |
-| P4.2b | Apple Silicon CPU tuning and Rust opt-level 3: within noise, kept as the spec asks | this commit |
+| P4.2b | Apple Silicon CPU tuning and Rust opt-level 3: within noise, kept as the spec asks | `e3c330b3d2` |
 
 ## 3. Results by phase (as built)
 
