@@ -12,15 +12,8 @@
 // improves readability, particular for conditional blocks that exceed a single
 // screen.
 
-#ifdef XP_UNIX
-  #ifndef XP_MACOSX
-    #define UNIX_BUT_NOT_MAC
-  #endif
-#endif
 
-#ifdef XP_MACOSX
   pref("browser.hiddenWindowChromeURL", "chrome://browser/content/hiddenWindowMac.xhtml");
-#endif
 
 // Set add-ons abuse report related prefs specific to Firefox Desktop.
 pref("extensions.abuseReport.enabled", true);
@@ -149,9 +142,7 @@ pref("app.update.notifyDuringDownload", false);
 // (which is in a file in the update directory). Because of this, this pref
 // should no longer be used directly. Instead, getAppUpdateAutoEnabled and
 // getAppUpdateAutoEnabled from UpdateUtils.sys.mjs should be used.
-#ifndef XP_WIN
   pref("app.update.auto", true);
-#endif
 
 // If set to true, the Update Service will apply updates in the background
 // when it finishes downloading them.
@@ -202,14 +193,12 @@ pref("app.update.langpack.enabled", true);
   pref("app.update.background.allowUpdatesForUnelevatedInstallations", false);
 #endif
 
-#ifdef XP_MACOSX
   // If set to true, Firefox will automatically restart if it is left running
   // with no browser windows open.
   pref("app.update.noWindowAutoRestart.enabled", true);
   // How long to wait after all browser windows are closed before restarting,
   // in milliseconds. 5 min = 300000 ms
   pref("app.update.noWindowAutoRestart.delayMs", 300000);
-#endif
 
 #if defined(MOZ_BACKGROUNDTASKS)
   // The amount of time, in seconds, before background tasks time out and exit.
@@ -290,46 +279,6 @@ pref("browser.shell.mostRecentDateSetAsDefault", "");
 pref("browser.shell.skipDefaultBrowserCheckOnFirstRun", true);
 pref("browser.shell.didSkipDefaultBrowserCheckOnFirstRun", false);
 pref("browser.shell.defaultBrowserCheckCount", 0);
-#if defined(XP_WIN)
-// Attempt to set the default browser on Windows 10 using the UserChoice registry keys,
-// before falling back to launching the modern Settings dialog.
-pref("browser.shell.setDefaultBrowserUserChoice", true);
-// When setting default via UserChoice, temporarily rename an ancestor registry key to
-// prevent kernel drivers from locking the UserChoice subkeys.
-pref("browser.shell.setDefaultBrowserUserChoice.regRename", true);
-// When setting the default browser on Windows 10 using the UserChoice
-// registry keys, also try to set Firefox as the default PDF handler.
-pref("browser.shell.setDefaultPDFHandler", true);
-// When setting Firefox as the default PDF handler (subject to conditions
-// above), only set Firefox as the default PDF handler when the existing handler
-// is a known browser, and not when existing handler is another PDF handler such
-// as Acrobat Reader or Nitro PDF.
-pref("browser.shell.setDefaultPDFHandler.onlyReplaceBrowsers", true);
-// Will be set to `true` if the user indicates that they don't want to be asked
-// again about Firefox being their default PDF handler any more.
-pref("browser.shell.checkDefaultPDF.silencedByUser", false);
-// Whether or not the user should be shown the guidance notifications when
-// setting Firefox as their default browser.
-pref("browser.shell.setDefaultGuidanceNotifications", true);
-pref("browser.shell.focusSetDefaultBrowserButton", false);
-
-// Whether to display a Kit image behind the set default browser button in
-// Windows Settings. It can take the following values:
-// - "off": Don't display the image.
-// - "static": Display a static image.
-// - "animated": Display an animated image.
-pref("browser.shell.displayKitImageBehindSetDefaultBrowserButton", "off");
-
-pref("browser.shell.customIcon.enabled", true);
-
-// After a failed UserChoice attempt, show the OS "Open with" picker via the
-// undocumented IOpenWithLauncher API so the user can pick Firefox themselves.
-pref("browser.shell.setDefaultPDFHandler.useOpenWith", true);
-// Delay between invoking a default-handler method (UserChoice / Open with /
-// modern settings) and sampling whether Firefox is actually the default.
-// The sample is reported via the set_default_pdf_handler_attempt event.
-pref("browser.shell.setDefaultPDFHandler.attemptWaitTimeMs", 30000);
-#endif
 
 
 // 0 = blank, 1 = home (browser.startup.homepage), 2 = last visited page, 3 = resume previous browser session
@@ -347,11 +296,7 @@ pref("browser.startup.couldRestoreSession.count", 0);
 
 // Show a skeleton UI window prior to loading libxul. Only visible for windows
 // users as it is not implemented anywhere else.
-#if defined(XP_WIN)
-pref("browser.startup.preXulSkeletonUI", true);
-#endif
 
-#ifndef XP_LINUX
 // These are called browser.startup.windowsLaunchOnLogin.* because they originated
 // on Windows, but they now operate on macOS as well.
 // They can't be changed until there are no experiments running that are using the
@@ -366,7 +311,6 @@ pref("browser.startup.windowsLaunchOnLogin.enabled", true);
 // direction.
 pref("browser.startup.windowsLaunchOnLogin.defaultEnabled", false);
 pref("browser.startup.windowsLaunchOnLogin.alreadyApplied", false);
-#endif
 
 // Show an upgrade dialog on major upgrades.
 pref("browser.startup.upgradeDialog.enabled", false);
@@ -376,26 +320,14 @@ pref("browser.chrome.site_icons", true);
 pref("browser.warnOnQuit", true);
 
 // Whether to warn when quitting when using the shortcut key.
-#if defined(XP_WIN)
-  pref("browser.warnOnQuitShortcut", false);
-#else
   pref("browser.warnOnQuitShortcut", true);
-#endif
 
 // TODO bug 1702563: Renable fullscreen autohide by default on macOS.
-#ifdef XP_MACOSX
   pref("browser.fullscreen.autohide", false);
-#else
-  pref("browser.fullscreen.autohide", true);
-#endif
 
 pref("browser.overlink-delay", 80);
 
-#if defined(XP_WIN)
-  pref("browser.taskbarTabs.enabled", true);
-#else
   pref("browser.taskbarTabs.enabled", false);
-#endif
 
 // How the shell service should create desktop entries on Unix-likes.
 // See ShellService.sys.mjs for the valid APIs.
@@ -952,9 +884,6 @@ pref("browser.download.alwaysOpenPanel", true);
 //   2 - Remove the download from both session list and history.
 pref("browser.download.clearHistoryOnDelete", 0);
 
-#ifndef XP_MACOSX
-  pref("browser.helperApps.deleteTempFileOnExit", true);
-#endif
 
 // This controls the visibility of the radio button in the
 // Unknown Content Type (Helper App) dialog that will open
@@ -1098,11 +1027,7 @@ pref("browser.link.open_newwindow.restriction", 2);
 // window.open arguments) when the browser is in fullscreen mode.
 // We set this differently on Mac because the fullscreen implementation there is
 // different.
-#ifdef XP_MACOSX
   pref("browser.link.open_newwindow.disabled_in_fullscreen", true);
-#else
-  pref("browser.link.open_newwindow.disabled_in_fullscreen", false);
-#endif
 
 // If true, opening javscript: URLs using middle-click, CTRL+click etc. are blocked.
 pref("browser.link.alternative_click.block_javascript", true);
@@ -1215,11 +1140,7 @@ pref("browser.tabs.groups.smart.userEnabled", true);
 pref("security.allow_parent_unrestricted_js_loads", false);
 
 // Unload tabs when available memory is running low
-#if defined(XP_MACOSX) || defined(XP_WIN)
     pref("browser.tabs.unloadOnLowMemory", true);
-#else
-    pref("browser.tabs.unloadOnLowMemory", false);
-#endif
 
 // Tab Unloader does not unload tabs whose last inactive period is longer than
 // this value (in milliseconds).
@@ -1235,7 +1156,6 @@ pref("browser.tabs.searchclipboardfor.middleclick", false);
 // Use default or new-and-improved tab context menu structure
 pref("browser.tabs.contextmenu.altstructure.enabled", false);
 
-#if defined(XP_MACOSX)
   // During low memory periods, poll with this frequency (milliseconds)
   // until memory is no longer low. Changes to the pref take effect immediately.
   // Browser restart not required. Chosen to be consistent with the windows
@@ -1267,7 +1187,6 @@ pref("browser.tabs.contextmenu.altstructure.enabled", false);
   // reaching the "critical" level. A true value indicates the response should
   // occur when reaching the "warn" level.
   pref("browser.lowMemoryResponseOnWarn", false);
-#endif
 
 pref("browser.ctrlTab.sortByRecentlyUsed", false);
 
@@ -1398,29 +1317,17 @@ pref("browser.gesture.swipe.up", "cmd_scrollTop");
 pref("browser.gesture.swipe.down", "cmd_scrollBottom");
 pref("browser.gesture.pinch.latched", false);
 pref("browser.gesture.pinch.threshold", 25);
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-  // Enabled for touch input display zoom.
-  pref("browser.gesture.pinch.out", "cmd_fullZoomEnlarge");
-  pref("browser.gesture.pinch.in", "cmd_fullZoomReduce");
-  pref("browser.gesture.pinch.out.shift", "cmd_fullZoomReset");
-  pref("browser.gesture.pinch.in.shift", "cmd_fullZoomReset");
-#else
   // Disabled by default due to issues with track pad input.
   pref("browser.gesture.pinch.out", "");
   pref("browser.gesture.pinch.in", "");
   pref("browser.gesture.pinch.out.shift", "");
   pref("browser.gesture.pinch.in.shift", "");
-#endif
 pref("browser.gesture.twist.latched", false);
 pref("browser.gesture.twist.threshold", 0);
 pref("browser.gesture.twist.right", "cmd_gestureRotateRight");
 pref("browser.gesture.twist.left", "cmd_gestureRotateLeft");
 pref("browser.gesture.twist.end", "cmd_gestureRotateEnd");
-#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-  pref("browser.gesture.tap", "cmd_fullZoomReset");
-#else
   pref("browser.gesture.tap", "");
-#endif
 
 pref("browser.history_swipe_animation.disabled", false);
 
@@ -1430,23 +1337,12 @@ pref("browser.history_swipe_animation.disabled", false);
 // 3: Zoom in or out (reflowing zoom).
 // 4: Treat vertical wheel as horizontal scroll
 // 5: Zoom in or out (pinch zoom).
-#ifdef XP_MACOSX
   // On macOS, if the wheel has one axis only, shift+wheel comes through as a
   // horizontal scroll event. Thus, we can't assign anything other than normal
   // scrolling to shift+wheel.
   pref("mousewheel.with_shift.action", 1);
   pref("mousewheel.with_alt.action", 2);
   pref("mousewheel.with_control.action", 1);
-#else
-  // On the other platforms (non-macOS), user may use legacy mouse which
-  // supports only vertical wheel but want to scroll horizontally.  For such
-  // users, we should provide horizontal scroll with shift+wheel (same as
-  // Chrome). However, shift+wheel was used for navigating history.  For users
-  // who want to keep using this feature, let's enable it with alt+wheel.  This
-  // is better for consistency with macOS users.
-  pref("mousewheel.with_shift.action", 4);
-  pref("mousewheel.with_alt.action", 2);
-#endif
 
 pref("mousewheel.with_meta.action", 1);
 
@@ -1684,17 +1580,6 @@ pref("browser.bookmarks.editDialog.firstEditField", "namePicker");
 // The number of recently selected folders in the edit bookmarks dialog.
 pref("browser.bookmarks.editDialog.maxRecentFolders", 7);
 
-#if defined(XP_WIN) && defined(MOZ_SANDBOX)
-  // This controls the strength of the Windows content process sandbox for
-  // testing purposes. This will require a restart.
-  // On windows these levels are:
-  // See - security/sandbox/win/src/sandboxbroker/sandboxBroker.cpp
-  // SetSecurityLevelForContentProcess() for what the different settings mean.
-  pref("security.sandbox.content.level", 9);
-
-  // Pref controlling if messages relevant to sandbox violations are logged.
-  pref("security.sandbox.logging.enabled", false);
-#endif
 
 #if defined(XP_MACOSX) && defined(MOZ_SANDBOX)
   // This pref is discussed in bug 1083344, the naming is inspired from its
@@ -1725,53 +1610,8 @@ pref("browser.bookmarks.editDialog.maxRecentFolders", 7);
   pref("security.sandbox.logging.enabled", false);
 #endif
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
-  // This pref is introduced as part of bug 742434, the naming is inspired from
-  // its Windows/Mac counterpart, but on Linux it's an integer which means:
-  // 0 -> "no sandbox"
-  // 1 -> no longer used; level will be clamped to 2
-  // 2 -> "seccomp-bpf + write file broker"
-  // 3 -> "seccomp-bpf + read/write file brokering"
-  // 4 -> all of the above + network/socket restrictions + chroot
-  // 5 -> blocks access to GL / DRI / display servers
-  //      (formerly the separate pref `security.sandbox.content.headless`)
-  //      (side effect: sets MOZ_HEADLESS for content processes)
-  // 6 -> default-deny for ioctl
-  //
-  // The purpose of this setting is to allow Linux users or distros to disable
-  // the sandbox while we fix their problems, or to allow running Firefox with
-  // exotic configurations we can't reasonably support out of the box.
-  //
-  pref("security.sandbox.content.level", 6);
-  pref("security.sandbox.content.write_path_whitelist", "");
-  pref("security.sandbox.content.read_path_whitelist", "");
-  pref("security.sandbox.content.syscall_whitelist", "");
-  // Introduced as part of bug 1608558.  Linux is currently the only platform
-  // that uses a sandbox level for the socket process.  The following levels
-  // are currently defined:
-  // 0 -> "no sandbox"
-  // 1 -> "sandboxed, allows socket operations and reading necessary certs"
-  // 2 -> default-deny for ioctl
-  pref("security.sandbox.socket.process.level", 2);
-#endif
 
-#if defined(XP_OPENBSD) && defined(MOZ_SANDBOX)
-  pref("security.sandbox.content.level", 1);
-#endif
 
-#ifdef XP_WIN
-  pref("browser.taskbar.previews.enable", false);
-  pref("browser.taskbar.previews.max", 20);
-  pref("browser.taskbar.previews.cachetime", 5);
-
-  pref("browser.taskbar.lists.enabled", true);
-  pref("browser.taskbar.lists.frequent.enabled", true);
-  pref("browser.taskbar.lists.recent.enabled", false);
-  pref("browser.taskbar.lists.maxListItemCount", 7);
-  pref("browser.taskbar.lists.tasks.enabled", true);
-  pref("browser.taskbar.lists.refreshInSeconds", 120);
-  pref("browser.startMenu.msixPinnedWhenLastChecked", false);
-#endif
 
 // Preferences to be synced by default.
 // Preferences with the prefix `services.sync.prefs.sync-seen.` should have
@@ -2312,9 +2152,6 @@ pref("toolkit.startup.max_resumed_crashes", 3);
 
 // Whether to use RegisterApplicationRestart to restart the browser and resume
 // the session on next Windows startup
-#if defined(XP_WIN)
-  pref("toolkit.winRegisterApplicationRestart", true);
-#endif
 
 // The values of preferredAction and alwaysAskBeforeHandling before pdf.js
 // became the default.
@@ -2933,9 +2770,6 @@ pref("browser.tabs.remoteSVGIconDecoding", true);
 // nightly and developer edition.
 pref("extensions.experiments.enabled", false);
 
-#if defined(XP_WIN)
-  pref("dom.ipc.processPriorityManager.backgroundUsesEcoQoS", true);
-#endif
 
 // Don't limit how many nodes we care about on desktop:
 pref("reader.parse-node-limit", 0);
@@ -3623,22 +3457,7 @@ pref("first-startup.category-tasks-enabled", true);
 // Enable the default browser agent.
 // The agent still runs as scheduled if this pref is disabled,
 // but it exits immediately before taking any action.
-#ifdef XP_WIN
-  pref("default-browser-agent.enabled", true);
-#endif
 
-#ifdef XP_WIN
-  // Timeouts used to receive push messages with --receive-push-messages
-  pref("app.backgroundNotifications.receivePushMessages.perMessageTimeoutMs", 5000);
-  pref("app.backgroundNotifications.receivePushMessages.totalTimeoutMs", 60000);
-
-  // The helper runs only while both of these are true; available is Nimbus's
-  // and enabled is the user's. See pushNotificationHelper in
-  // FeatureManifest.yaml.
-  pref("app.backgroundNotifications.helper.available", false);
-  pref("app.backgroundNotifications.helper.enabled", false);
-  pref("app.backgroundNotifications.helper.loglevel", "Error");
-#endif
 
 // Shows 'View Image Info' item in the image context menu
 #ifdef MOZ_DEV_EDITION
@@ -3669,12 +3488,10 @@ pref("svg.context-properties.content.allowed-domains", "profile.accounts.firefox
   pref("extensions.translations.disabled", true);
 #endif
 
-#if defined(XP_MACOSX) || defined(XP_WIN)
 pref("browser.firefoxbridge.enabled", false);
 pref("browser.firefoxbridge.extensionOrigins",
     "chrome-extension://gkcbmfjnnjoambnfmihmnkneakghogca/"
 );
-#endif
 
 // Turn on interaction measurements
 pref("browser.places.interactions.enabled", true);
@@ -3703,17 +3520,10 @@ pref("browser.pdfjs.feature-tour", "{\"screen\":\"\",\"complete\":false}");
 // `navigation-icon-{min|max}-radius` is the minimum or the maximum radius of
 // the icon's outer circle size in response to the user's swipe gesture.  `-1`
 // means that the circle radius never changes.
-#ifdef XP_MACOSX
   pref("browser.swipe.navigation-icon-start-position", -20);
   pref("browser.swipe.navigation-icon-end-position", 0);
   pref("browser.swipe.navigation-icon-min-radius", -1);
   pref("browser.swipe.navigation-icon-max-radius", -1);
-#else
-  pref("browser.swipe.navigation-icon-start-position", -40);
-  pref("browser.swipe.navigation-icon-end-position", 60);
-  pref("browser.swipe.navigation-icon-min-radius", 12);
-  pref("browser.swipe.navigation-icon-max-radius", 20);
-#endif
 
 pref("ui.new-webcompat-reporter.enabled", true);
 
@@ -3887,9 +3697,6 @@ pref("browser.preferences.notifications-section.enabled", false);
 // A preference that will be locked to reflect whether this build has support
 // for XDG Config Home handling. Mostly used to be able to keep tests around
 // in case of a backout of the feature
-#if defined(MOZ_WIDGET_GTK)
-pref("widget.support-xdg-config", true, locked);
-#endif
 
 // A preference that enables Content Sharing
 pref("browser.contentsharing.enabled", false);
@@ -3906,8 +3713,6 @@ pref("browser.referrals.pingSubmitted", false);
 // When enabled, Firefox ignores the distribution.ini file if global.id is MozillaOnline.
 pref("distribution.mozillaonline.ignore", true);
 
-#ifdef XP_MACOSX
   pref("browser.macAppMenu.setAsDefaultShown", false);
-#endif
 
 #include m6e.js

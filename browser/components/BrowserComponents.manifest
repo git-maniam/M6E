@@ -24,14 +24,9 @@ category browser-before-ui-startup moz-src:///browser/components/remotecontrol/R
 category browser-before-ui-startup resource:///modules/AboutHomeStartupCache.sys.mjs AboutHomeStartupCache.init
 category browser-before-ui-startup moz-src:///browser/components/AccountsGlue.sys.mjs AccountsGlue.init
 category browser-before-ui-startup moz-src:///browser/modules/ObserverForwarder.sys.mjs ObserverForwarder.init
-#ifdef XP_WIN
-category browser-before-ui-startup moz-src:///browser/components/shell/StartupOSIntegration.sys.mjs StartupOSIntegration.applyCustomIconOnStartup
-#endif
-#ifdef XP_MACOSX
 category browser-before-ui-startup moz-src:///browser/modules/ASWebAuthSessionService.sys.mjs ASWebAuthSessionService.init
 category browser-idle-startup moz-src:///browser/modules/ASWebAuthSessionService.sys.mjs ASWebAuthSessionService.removeLeftoverEphemeralContainers
 category browser-quit-application-granted moz-src:///browser/modules/ASWebAuthSessionService.sys.mjs ASWebAuthSessionService.uninit
-#endif
 
 # Browser window lifecycle consumers
 category browser-window-before-initial-xul-layout-document-preparation chrome://browser/content/browser-customization.js AutoHideMenubar.init
@@ -75,9 +70,7 @@ category browser-window-delayed-startup moz-src:///browser/components/reportbrok
 category browser-window-delayed-startup moz-src:///browser/components/search/SearchUIUtils.sys.mjs SearchUIUtils.init
 category browser-window-delayed-startup moz-src:///browser/components/sharing/SharePageAction.sys.mjs SharePageAction.init
 category browser-window-delayed-startup moz-src:///browser/components/taskbartabs/TaskbarTabsPageAction.sys.mjs TaskbarTabsPageAction.init
-#ifdef XP_MACOSX
 category browser-window-delayed-startup resource://gre/modules/RosettaUtils.sys.mjs RosettaUtils.maybeWarnAboutRosetta
-#endif
 category browser-window-delayed-startup resource:///modules/ReducedProtectionNotification.sys.mjs ReducedProtectionNotification.observePref
 category browser-window-delayed-startup chrome://browser/content/browser.js#BrowserOffline BrowserOffline.init
 category browser-window-delayed-startup chrome://browser/content/tabbrowser/browser-fullZoom.js FullZoom.init
@@ -187,9 +180,6 @@ category browser-first-window-ready moz-src:///toolkit/components/captchadetecti
 category browser-first-window-ready moz-src:///browser/components/customizableui/SearchWidgetTracker.sys.mjs SearchWidgetTracker.init
 category browser-first-window-ready moz-src:///toolkit/components/widgets/WidgetManager.sys.mjs WidgetManager.init
 #ifdef MOZ_SANDBOX
-#ifdef XP_LINUX
-category browser-first-window-ready resource://gre/modules/SandboxUtils.sys.mjs SandboxUtils.maybeWarnAboutMissingUserNamespaces
-#endif
 category browser-window-delayed-startup resource://gre/modules/SandboxUtils.sys.mjs SandboxUtils.maybeWarnAboutDisabledContentSandbox
 category browser-first-window-ready resource://gre/modules/SandboxUtils.sys.mjs SandboxUtils.observeContentSandboxPref
 #endif
@@ -212,17 +202,11 @@ category browser-idle-startup resource:///modules/asrouter/ASRouterTargeting.sys
 category browser-idle-startup resource://gre/modules/UpdateListener.sys.mjs UpdateListener.maybeShowUnsupportedNotification
 category browser-idle-startup resource:///modules/UpdatePolicyEnforcer.sys.mjs UpdatePolicyEnforcer.registerObservers
 #endif
-#ifdef XP_WIN
-category browser-idle-startup resource:///modules/WindowsJumpLists.sys.mjs WinTaskbarJumpList.startup
-category browser-idle-startup resource://gre/modules/PushNotificationHelper.sys.mjs PushNotificationHelper.init
-#endif
 #ifdef MOZ_DEFAULT_BROWSER_AGENT
 category browser-idle-startup resource://gre/modules/DefaultAgentScheduler.sys.mjs DefaultAgentScheduler.maybeScheduleDefaultAgentTask
 #endif
-#if defined(XP_WIN) || defined(XP_MACOSX)
 category browser-idle-startup moz-src:///browser/components/defaultlaunchonlogin/DefaultLaunchOnLogin.sys.mjs DefaultLaunchOnLogin.maybeEnableOnFirstRun
 category browser-idle-startup moz-src:///browser/components/shell/StartupOSIntegration.sys.mjs StartupOSIntegration.onStartupIdle
-#endif
 
 # Note that these telemetry entries schedule their own idle tasks,
 # so they are guaranteed to run after everything else.

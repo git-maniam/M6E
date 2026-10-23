@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
--->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE html [
   <!ENTITY % htmlDTD PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
   %htmlDTD;
@@ -47,19 +45,11 @@
         <xul:treechildren flex="1"/>
       </xul:tree>
       <div class="button-container">
-#ifdef XP_UNIX
         <xul:button id="errorCancel"
                 data-l10n-id="restore-page-close-button"/>
         <xul:button class="primary"
                 id="errorTryAgain"
                 data-l10n-id="restore-page-try-again-button"/>
-#else
-        <xul:button class="primary"
-                id="errorTryAgain"
-                data-l10n-id="restore-page-try-again-button"/>
-        <xul:button id="errorCancel"
-                data-l10n-id="restore-page-close-button"/>
-#endif
       </div>
       <!-- holds the session data for when the tab is closed -->
       <input type="text" id="sessionData" hidden="true"/>

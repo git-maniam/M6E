@@ -15,10 +15,8 @@
         xmlns:html="http://www.w3.org/1999/xhtml"
         width="800" height="500"
         screenX="10" screenY="10"
-#ifdef XP_MACOSX
         hidetitlebarseparator="true"
         macnativefullscreen="false"
-#endif
         persist="width height screenX screenY sizemode">
 
   <linkset>
@@ -67,19 +65,8 @@
 
   <script src="chrome://browser/content/places/places.js"/>
   <script src="chrome://global/content/editMenuOverlay.js"/>
-#ifndef XP_MACOSX
-  <!-- On Mac, this is included via macWindow.inc.xhtml -> global-scripts.js -> browser.js -> defineLazyScriptGetter -->
-  <script src="chrome://browser/content/places/editBookmark.js"/>
-  <!-- On Mac, thes are included via macWindow.inc.xhtml -> global-scripts.js -->
-  <script src="chrome://global/content/globalOverlay.js"/>
-  <script src="chrome://browser/content/utilityOverlay.js"/>
-#endif
 
-#ifdef XP_MACOSX
 #include ../../../base/content/macWindow.inc.xhtml
-#else
-#include placesCommands.inc.xhtml
-#endif
 
   <!-- This must be included after macWindow.inc.xhtml to override DownloadsView -->
   <script src="chrome://browser/content/downloads/allDownloadsView.js"/>
@@ -115,16 +102,6 @@
          modifiers="accel"/>
 
     <!-- Back/Forward Keys Support -->
-#ifndef XP_MACOSX
-    <key id="placesKey_goBackKb"
-         keycode="VK_LEFT"
-         command="OrganizerCommand:Back"
-         modifiers="alt"/>
-    <key id="placesKey_goForwardKb"
-         keycode="VK_RIGHT"
-         command="OrganizerCommand:Forward"
-         modifiers="alt"/>
-#else
     <key id="placesKey_goBackKb"
          keycode="VK_LEFT"
          command="OrganizerCommand:Back"
@@ -133,8 +110,6 @@
          keycode="VK_RIGHT"
          command="OrganizerCommand:Forward"
          modifiers="accel"/>
-#endif
-#ifdef XP_UNIX
     <key id="placesKey_goBackKb2"
          data-l10n-id="nav-back-shortcut-alt"
          command="OrganizerCommand:Back"
@@ -143,15 +118,12 @@
          data-l10n-id="nav-fwd-shortcut-alt"
          command="OrganizerCommand:Forward"
          modifiers="accel"/>
-#endif
   </keyset>
 
 #include ../../../../toolkit/content/editMenuKeys.inc.xhtml
-#ifdef XP_MACOSX
   <keyset id="editMenuKeysExtra">
     <key id="key_delete2" keycode="VK_BACK" command="cmd_delete"/>
   </keyset>
-#endif
 
   <popupset id="placesPopupset">
 #include placesContextMenu.inc.xhtml
@@ -185,61 +157,12 @@
                       command="placesCmd_new:separator"
                       data-l10n-id="places-add-separator"/>
 
-#ifdef XP_MACOSX
             <menuseparator id="orgDeleteSeparator"/>
 
             <menuitem id="orgDelete"
                       command="cmd_delete"
                       data-l10n-id="text-action-delete"
                       key="key_delete"/>
-#else
-            <menuseparator id="orgUndoSeparator"/>
-
-            <menuitem id="orgUndo"
-                      command="cmd_undo"
-                      data-l10n-id="text-action-undo"
-                      key="key_undo"/>
-            <menuitem id="orgRedo"
-                      command="cmd_redo"
-                      data-l10n-id="text-action-redo"
-                      key="key_redo"/>
-
-            <menuseparator id="orgCutSeparator"/>
-
-            <menuitem id="orgCut"
-                      command="cmd_cut"
-                      data-l10n-id="text-action-cut"
-                      key="key_cut"
-                      selection="separator|link|folder|mixed"/>
-            <menuitem id="orgCopy"
-                      command="cmd_copy"
-                      data-l10n-id="text-action-copy"
-                      key="key_copy"
-                      selection="separator|link|folder|mixed"/>
-            <menuitem id="orgPaste"
-                      command="cmd_paste"
-                      data-l10n-id="text-action-paste"
-                      key="key_paste"
-                      selection="mutable"/>
-            <menuitem id="orgDelete"
-                      command="cmd_delete"
-                      data-l10n-id="text-action-delete"
-                      key="key_delete"/>
-
-            <menuseparator id="selectAllSeparator"/>
-
-            <menuitem id="orgSelectAll"
-                      command="cmd_selectAll"
-                      data-l10n-id="text-action-select-all"
-                      key="key_selectAll"/>
-
-            <menuseparator id="orgCloseSeparator"/>
-
-            <menuitem id="orgClose"
-                      command="OrganizerCommand:CloseWindow"
-                      key="placesKey_close"
-                      data-l10n-id="places-file-close"/>
-#endif
           </menupopup>
         </menu>
         <menu class="menu-iconic" data-l10n-id="places-view-button"

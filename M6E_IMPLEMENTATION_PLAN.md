@@ -86,6 +86,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.6a | 141 platform-only directories deleted (2,195 files) | `3dcdd875c7` |
 | P4.6b | 702 platform conditions removed from 286 `moz.build` files; backend proven unchanged | `44250d4d06` |
 | P4.6c | `#ifdef`s stripped from 1,403 first-party files (about 62,000 lines); binaries' symbols unchanged | `12a394ab1c` |
+| P4.6d | Front-end `#ifdef`s stripped from 19 preprocessed files; outputs unchanged | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -283,9 +284,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6d (front-end preprocessor `#ifdef`s: `strip_ifdefs.py --frontend artifacts/P4.6d-candidates.txt`, 19 files), then P4.7. Notes:
-- **Ready:** `tools/m6e/platform/strip_ifdefs.py`. Its dry run would change 1,432 first-party files; 75 files it can't parse (raw string literals and the like) stay as they are.
-- **References:** P4.6b removes the dead references to the deleted directories that remain in `moz.build` conditions (see `artifacts/P4.6-delete-refs.txt`).
+**Checkpoint:** P4.1, P4.2, P4.5, P4.6 (a to d) and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.7, the dormant features.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -386,6 +385,22 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - **Proof:** the symbol tables of all 22 shipped binaries (`nm -j`) are identical before and after, including XUL's 472,819 symbols.
   - **wasm sandbox:** 15 files are also compiled for the RLBox wasm sandbox (`wasm32-wasi`), where `XP_DARWIN`, `XP_UNIX` and `__APPLE__` aren't defined. They are stripped with `--undefine-only`; `mozalloc.cpp` had lost its non-Darwin fallback. The wasm targets' dependency files are the `*.wasm*.pp` files in `obj-m6e`.
   - **Cargo:** cargo needs every target's crate manifests to resolve the workspace, so `toolkit/crashreporter/rust_minidump_writer_linux` (deleted in P4.6a) is restored. P4.6a's build had passed only because Rust wasn't rebuilt.
+- **P4.6d results:** `strip_ifdefs.py --frontend` stripped the platform branches from the 19 preprocessed front-end files (`firefox.js`, `AppConstants.sys.mjs`, 14 XHTML files, 2 manifests and `.lldbinit.in`).
+  - **No longer preprocessed:** 5 XHTML files had no directives left, and Mozilla's preprocessor rejects those, so their `jar.mn` `*` markers are removed. Two of them had `#` licence comments that only the preprocessor removed; they are now XML comments.
+  - **Proof:**
+    - The preprocessed outputs in `dist/` are identical apart from `//@line` markers.
+    - The other three now-unprocessed files match their old output byte for byte.
+    - All six changed dialogs and pages open in the browser exactly as on the P4.1 baseline.
+    - `AppConstants.platform` is still `macosx`.
+- **P4.6 summary and limits:** Windows, Linux and Android code is gone from the first-party C, C++, Objective-C and preprocessed front-end code, from `moz.build`, and wherever whole directories could go. What remains:
+  - vendored code (D21);
+  - Rust `cfg(target_os = ...)` code;
+  - runtime checks such as `AppConstants.platform == "win"` in JavaScript;
+  - test manifests' `skip-if` conditions;
+  - CI configuration (`taskcluster/`, `testing/mozharness`);
+  - the 73 C files and 6 `moz.build` files the tools can't parse.
+
+  None of these is compiled or run on macOS.
 - **P4.6 Platform removal (D21):**
   - **a:** delete platform-only files and directories (first-party and vendored), checking for references first.
   - **b:** remove WINNT, Linux, GTK and Android branches from `moz.build`, `moz.configure`, makefiles and mozconfigs.

@@ -30,13 +30,8 @@
       <xul:key id="closeShortcut" key="W" modifiers="accel"/>
       <xul:key id="muteShortcut" key="↓" modifiers="accel"/>
       <xul:key id="unMuteShortcut" key="↑" modifiers="accel"/>
-#ifndef XP_MACOSX
-      <xul:key data-l10n-id="picture-in-picture-toggle-shortcut" command="View:PictureInPicture" modifiers="accel,shift"/>
-      <xul:key data-l10n-id="picture-in-picture-toggle-shortcut-alt" command="View:PictureInPicture" modifiers="accel,shift"/>
-#else
       <xul:key data-l10n-id="picture-in-picture-toggle-shortcut-mac" command="View:PictureInPicture" modifiers="accel,alt,shift"/>
       <xul:key data-l10n-id="picture-in-picture-toggle-shortcut-mac-alt" command="View:PictureInPicture" modifiers="accel,alt,shift"/>
-#endif
       <xul:key id="fullscreenToggleShortcut" data-l10n-id="pictureinpicture-toggle-fullscreen-shortcut" command="View:Fullscreen"/>
     </xul:keyset>
 
@@ -44,7 +39,6 @@
       <xul:browser type="content" primary="true" remote="true" remoteType="web" id="browser" tabindex="-1" messagemanagergroup="pip-player"></xul:browser>
     </div>
     <div id="controls" dir="ltr">
-#ifdef XP_MACOSX
       <button id="close"
       class="control-item control-button tooltip-under-controls" data-l10n-attrs="tooltip"
       mac="true"
@@ -53,14 +47,6 @@
       class="control-item control-button tooltip-under-controls" data-l10n-id="pictureinpicture-unpip-btn" data-l10n-attrs="tooltip"
       mac="true"
       />
-#else
-      <button id="unpip"
-      class="control-item control-button tooltip-under-controls" data-l10n-id="pictureinpicture-unpip-btn" data-l10n-attrs="tooltip"
-      />
-      <button id="close"
-      class="control-item control-button tooltip-under-controls" data-l10n-attrs="tooltip"
-      />
-#endif
     <div id="controls-bottom-gradient" class="control-item"></div>
     <div id="controls-bottom">
       <div class="controls-bottom-upper">

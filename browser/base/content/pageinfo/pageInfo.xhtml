@@ -11,9 +11,7 @@
   data-l10n-id="page-info-window"
   data-l10n-attrs="style"
   windowtype="Browser:page-info"
-#ifdef XP_MACOSX
   hidetitlebarseparator="true"
-#endif
   align="stretch"
   screenX="10" screenY="10"
   persist="screenX screenY width height sizemode">
@@ -27,13 +25,7 @@
 
     <html:link rel="localization" href="browser/pageInfo.ftl"/>
   </linkset>
-  #ifdef XP_MACOSX
   #include ../macWindow.inc.xhtml
-  #else
-  <script src="chrome://global/content/globalOverlay.js"/>
-  <script src="chrome://global/content/editMenuOverlay.js"/>
-  <script src="chrome://browser/content/utilityOverlay.js"/>
-  #endif
   <script src="chrome://global/content/contentAreaUtils.js"/>
   <script src="chrome://global/content/treeUtils.js"/>
   <script src="chrome://browser/content/pageinfo/pageInfo.js"/>
@@ -53,11 +45,7 @@
   <keyset id="pageInfoKeySet">
     <key data-l10n-id="close-dialog" data-l10n-attrs="key" modifiers="accel" command="cmd_close"/>
     <key keycode="VK_ESCAPE" command="cmd_close"/>
-#ifdef XP_MACOSX
     <key key="." modifiers="meta"  command="cmd_close"/>
-#else
-    <key keycode="VK_F1" command="cmd_help"/>
-#endif
     <key data-l10n-id="copy"       data-l10n-attrs="key" modifiers="accel" command="cmd_copy"/>
     <key data-l10n-id="select-all" data-l10n-attrs="key" modifiers="accel" command="cmd_selectAll"/>
     <key data-l10n-id="select-all" data-l10n-attrs="key" modifiers="alt"   command="cmd_selectAll"/>

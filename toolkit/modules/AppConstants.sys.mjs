@@ -56,56 +56,22 @@ export var AppConstants = Object.freeze({
   MOZ_WEBRTC: @MOZ_WEBRTC_BOOL@,
 
   MOZ_WIDGET_GTK:
-#ifdef MOZ_WIDGET_GTK
-  true,
-#else
   false,
-#endif
 
   MOZ_WMF_CDM: @MOZ_WMF_CDM_BOOL@,
 
   XP_UNIX:
-#ifdef XP_UNIX
   true,
-#else
-  false,
-#endif
 
 // NOTE! XP_LINUX has to go after MOZ_WIDGET_ANDROID otherwise Android
 // builds will be misidentified as linux.
   platform:
-#ifdef MOZ_WIDGET_GTK
-  "linux",
-#elif XP_WIN
-  "win",
-#elif XP_MACOSX
   "macosx",
-#elif XP_IOS
-  "ios",
-#elif MOZ_WIDGET_ANDROID
-  "android",
-#elif XP_LINUX
-  "linux",
-#else
-  "other",
-#endif
 
 // Most of our frontend code assumes that any desktop Unix platform
 // is "linux". Add the distinction for code that needs it.
   unixstyle:
-#ifdef XP_LINUX
-    "linux",
-#elif XP_OPENBSD
-    "openbsd",
-#elif XP_NETBSD
-    "netbsd",
-#elif XP_FREEBSD
-    "freebsd",
-#elif XP_SOLARIS
-    "solaris",
-#else
     "other",
-#endif
 
   isPlatformAndVersionAtLeast(platform, version) {
     let platformVersion = Services.sysinfo.getProperty("version");
@@ -179,9 +145,7 @@ export var AppConstants = Object.freeze({
 
   MOZ_BING_API_CLIENTID: "@MOZ_BING_API_CLIENTID@",
   MOZ_BING_API_KEY: "@MOZ_BING_API_KEY@",
-#if !defined(MOZ_WIDGET_ANDROID) && !defined(XP_WIN)
   MOZ_GOOGLE_LOCATION_SERVICE_API_KEY: "@MOZ_GOOGLE_LOCATION_SERVICE_API_KEY@",
-#endif
   MOZ_GOOGLE_SAFEBROWSING_API_KEY: "@MOZ_GOOGLE_SAFEBROWSING_API_KEY@",
   MOZ_MOZILLA_API_KEY: "@MOZ_MOZILLA_API_KEY@",
 
@@ -239,19 +203,7 @@ export var AppConstants = Object.freeze({
 
 #if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
   MOZ_CAN_FOLLOW_SYSTEM_TIME:
-#ifdef XP_WIN
     true,
-#elif XP_MACOSX
-    true,
-#elif MOZ_WIDGET_GTK
-  #ifdef MOZ_ENABLE_DBUS
-    true,
-  #else
-    false,
-  #endif
-#else
-    false,
-#endif
 #endif
 
   MOZ_SYSTEM_POLICIES: @MOZ_SYSTEM_POLICIES_BOOL@,
