@@ -821,3 +821,17 @@ partial interface Document {
 };
 
 Document includes ARIANotifyMixin;
+
+// M6E: the page telemetry panel (D29). Times in milliseconds, measured from
+// the start of the page load to its load event; timeToInteractive is Gecko's
+// time to first interactive, absent until it is known.
+dictionary M6EPageTimings {
+  boolean loaded = false;
+  double scriptParseTime = 0;
+  double scriptExecutionTime = 0;
+  double timeToInteractive;
+};
+
+partial interface Document {
+  [ChromeOnly] M6EPageTimings getM6EPageTimings();
+};

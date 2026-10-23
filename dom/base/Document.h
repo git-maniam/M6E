@@ -15,6 +15,7 @@
 #include "Units.h"
 #include "imgIRequest.h"
 #include "js/RootingAPI.h"
+#include "js/TelemetryTimers.h"
 #include "js/friend/DOMProxy.h"
 #include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/Assertions.h"
@@ -225,6 +226,7 @@ class Rule;
 }  // namespace css
 
 namespace dom {
+struct M6EPageTimings;
 class AnonymousContent;
 class Attr;
 class AutoSuppressNotifyingDevToolsOfNodeRemovals;
@@ -3525,6 +3527,9 @@ class Document : public nsINode,
 
   nsDOMNavigationTiming* GetNavigationTiming() const { return mTiming; }
 
+  // M6E: the page telemetry panel (D29).
+  void GetM6EPageTimings(M6EPageTimings& aResult);
+
   void SetNavigationTiming(nsDOMNavigationTiming* aTiming);
 
   inline void SetPageloadEventFeature(
@@ -6062,6 +6067,10 @@ class Document : public nsINode,
 
   // Collection of data used by the pageload event.
   PageloadEventData mPageloadEventData;
+
+  // M6E: the main realm's JS timers at the end of the page load (D29).
+  JS::JSTimers ReadJSTimers();
+  mozilla::Maybe<JS::JSTimers> mJSTimersAtLoad;
 
   // Whether AccumulatePageLoadTelemetry() collected metrics, and whether the
   // tab was foreground when the load event started. Background loads are still

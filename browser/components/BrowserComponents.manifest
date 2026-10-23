@@ -13,6 +13,8 @@ category first-startup-new-profile resource:///modules/AboutNewTabResourceMappin
 
 # Browser global components initializing before UI startup
 category browser-before-ui-startup moz-src:///browser/components/sessionstore/SessionStore.sys.mjs SessionStore.init
+# M6E: the page telemetry panel (D29).
+category browser-before-ui-startup moz-src:///browser/components/pagetelemetry/M6EPageTelemetry.sys.mjs M6EPageTelemetry.init
 category browser-before-ui-startup resource:///modules/BuiltInThemes.sys.mjs BuiltInThemes.maybeInstallActiveBuiltInTheme
 #ifdef MOZ_NORMANDY
 #endif

@@ -248,3 +248,6 @@ pref("browser.urlbar.trackerCount.enabled", true);
 // No data breach alerts: they offer scans with Mozilla Monitor.
 pref("browser.urlbar.trustPanel.breachAlerts", false, locked);
 pref("browser.urlbar.trustPanel.breachAlerts.featureGate", false, locked);
+
+// The page telemetry button and panel (D29): measured on the device only.
+pref("m6e.pageTelemetry.enabled", true);

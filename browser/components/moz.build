@@ -48,6 +48,7 @@ DIRS += [
     "newtab",
     "originattributes",
     "pagedata",
+    "pagetelemetry",
     "passwordmgr",
     "permissions",
     "pictureinpicture",

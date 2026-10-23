@@ -21673,11 +21673,43 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
     }
   }
 
+  // M6E: keep the timers for the page telemetry panel (D29).
+  if (aDoc->mJSTimersAtLoad.isNothing()) {
+    aDoc->mJSTimersAtLoad.emplace(aDoc->ReadJSTimers());
+  }
+
   // Stop the JS execution timer once the page is loaded.
   {
     AutoJSContext cx;
     if (static_cast<JSContext*>(cx)) {
       JS::SetMeasuringExecutionTimeEnabled(cx, false);
+    }
+  }
+}
+
+JS::JSTimers Document::ReadJSTimers() {
+  nsIGlobalObject* global = GetScopeObject();
+  if (!global || !global->GetGlobalJSObject()) {
+    return {};
+  }
+  AutoJSContext cx;
+  JSAutoRealm ar(cx, global->GetGlobalJSObject());
+  return JS::GetJSTimers(cx);
+}
+
+void Document::GetM6EPageTimings(M6EPageTimings& aResult) {
+  JS::JSTimers timers = mJSTimersAtLoad.valueOr(ReadJSTimers());
+  aResult.mLoaded = mJSTimersAtLoad.isSome();
+  aResult.mScriptParseTime =
+      (timers.compileTime + timers.delazificationTime).ToMilliseconds();
+  aResult.mScriptExecutionTime = std::max(
+      0.0,
+      (timers.executionTime - timers.compileTimeWhileExecuting).ToMilliseconds());
+  if (nsDOMNavigationTiming* timing = GetNavigationTiming()) {
+    DOMTimeMilliSec ttfi = timing->GetTimeToTTFI();
+    if (ttfi) {
+      aResult.mTimeToInteractive.Construct(
+          static_cast<double>(ttfi - timing->GetNavigationStart()));
     }
   }
 }

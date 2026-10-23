@@ -949,6 +949,20 @@ let JSWINDOWACTORS = {
     safeForUntrustedWebProcess: true,
   },
 
+  // M6E: the page telemetry panel (D29).
+  M6EPageTelemetry: {
+    parent: {
+      esModuleURI:
+        "moz-src:///browser/components/pagetelemetry/M6EPageTelemetryParent.sys.mjs",
+    },
+    child: {
+      esModuleURI:
+        "moz-src:///browser/components/pagetelemetry/M6EPageTelemetryChild.sys.mjs",
+    },
+    matches: ["http://*/*", "https://*/*"],
+    messageManagerGroups: ["browsers"],
+  },
+
   SmartFormFill: {
     parent: {
       esModuleURI:
