@@ -89,6 +89,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.6d | Front-end `#ifdef`s stripped from 19 preprocessed files; outputs unchanged | `14020b7897` |
 | P4.7a | 20 platform-only orphan subtrees deleted (193 files); push still works | `596062f662` |
 | P4.7b | Normandy and about:studies removed | `8a3c3fac23` |
+| P3.8 | Page telemetry button: TTFB, FCP, TTI, page size, script parse/execution, TLS | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -286,18 +287,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9.
-- **In progress:** P3.8, the page telemetry button. The user asked for it on 2026-10-23; see the spec's Phase 3 requirements and D29.
-  - **Written and pushed, not yet built:**
-    - the SpiderMonkey `compileTime` and `compileTimeWhileExecuting` timers;
-    - `JS::AddCompileTime`;
-    - the script loader's off-thread timing;
-    - `Document.getM6EPageTimings()`;
-    - `browser/components/pagetelemetry/`, with the actor, the parent-side byte counting and the test;
-    - the button and panel: `navigator-toolbox.inc.xhtml`, `main-popupset.inc.xhtml`, `browser-m6ePageTelemetry.js` and `m6e-page-telemetry.css`/`.svg`;
-    - `m6ePageTelemetry.ftl`.
-  - **Next:** build, then `./mach test browser/components/pagetelemetry` (with a window), then lint.
-- **Next:** P4.7c, the remaining dormant features (crash reporter, updater, Translations, ML, VPN, Sync and so on).
+**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.7c, the remaining dormant features (crash reporter, updater, Translations, ML, VPN, Sync and so on).
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -375,6 +365,16 @@ Don't start the next step until the current one builds and checks out. Split a s
   - A parent-process network observer counts transfer sizes per top-level page.
   - A `#m6e-page-telemetry-button` in the address bar opens a panel with the seven figures.
 - **Tests:** a browser test for the panel and its values.
+
+- **P3.8 results:** the gauge button (`#m6e-page-telemetry-button`, tooltip "Telemetry") sits after the Tracker Blocker. Its panel shows the seven figures and refreshes every second while open.
+  - **On Wikipedia:** TTFB 1,161 ms, FCP 1,443 ms, TTI 2,041 ms, 84.2 kB in 7 requests, script parse 1 ms, execution 4 ms, TLS 324 ms.
+  - **How it was built:**
+    - The button reuses `.identity-box-button` for its box styles.
+    - The actor needs `safeForUntrustedWebProcess`: the parent only displays the numbers, through Fluent, and counts sizes itself.
+    - The parent sees `decodedBodySize` as 0, because decompression happens in content. So the panel shows bytes on the wire and how many requests came from the cache.
+    - A page served from cache has no TTFB ("Not available").
+  - **Tests:** `browser/components/pagetelemetry/tests/browser` passes (10/10; it needs a fresh URL per load to avoid the cache), and the trust panel suite still passes (498).
+  - **Values with Maximum protection:** the Navigation and Paint Timing figures (TTFB, FCP, TLS) go through the web APIs, so they are rounded there. The other figures come from Gecko directly.
 
 ### Phase 4 additions (user request 2026-10-23; spec D21 to D24)
 Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PGO is off from P4.5 to P4.8 (D24).

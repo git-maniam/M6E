@@ -22,15 +22,23 @@ const gPageSizes = new Map();
 /** The latest top-level document response per browsing context id. */
 const gDocumentResponses = new Map();
 
-function addSize(innerWindowId, transferred, resources) {
+function addSize(innerWindowId, transferred, cached) {
   let size = gPageSizes.get(innerWindowId);
   if (!size) {
-    size = { transferred: 0, resources: 0, requests: 0 };
+    size = { transferred: 0, requests: 0, cached: 0 };
     gPageSizes.set(innerWindowId, size);
   }
   size.transferred += transferred;
-  size.resources += resources;
   size.requests += 1;
+  size.cached += cached ? 1 : 0;
+}
+
+function isFromCache(channel) {
+  try {
+    return channel.QueryInterface(Ci.nsICacheInfoChannel).isFromCache();
+  } catch {
+    return false;
+  }
 }
 
 export const M6EPageTelemetry = {
@@ -66,15 +74,17 @@ export const M6EPageTelemetry = {
       return;
     }
     let loadInfo = channel.loadInfo;
+    // Responses are decompressed in the content process, so only the bytes on
+    // the wire are known here.
     let transferred = channel.transferSize;
-    let resources = channel.decodedBodySize;
+    let cached = isFromCache(channel);
     if (
       loadInfo.externalContentPolicyType == Ci.nsIContentPolicy.TYPE_DOCUMENT
     ) {
       gDocumentResponses.set(loadInfo.browsingContextID, {
         url: channel.URI.spec,
         transferred,
-        resources,
+        cached,
       });
       return;
     }
@@ -82,16 +92,16 @@ export const M6EPageTelemetry = {
       loadInfo.innerWindowID
     )?.topWindowContext;
     if (topWindow) {
-      addSize(topWindow.innerWindowId, transferred, resources);
+      addSize(topWindow.innerWindowId, transferred, cached);
     }
   },
 
   /**
-   * The bytes transferred and the decoded size of all the requests of the page
-   * shown in a browser so far, including its own document.
+   * The bytes transferred by all the requests of the page shown in a browser
+   * so far, including its own document, and how many came from the cache.
    *
    * @param {MozBrowser} browser
-   * @returns {{transferred: number, resources: number, requests: number}?}
+   * @returns {{transferred: number, requests: number, cached: number}?}
    */
   getPageSize(browser) {
     let windowGlobal = browser.browsingContext?.currentWindowGlobal;
@@ -104,14 +114,14 @@ export const M6EPageTelemetry = {
       addSize(
         windowGlobal.innerWindowId,
         documentResponse.transferred,
-        documentResponse.resources
+        documentResponse.cached
       );
     }
     return (
       gPageSizes.get(windowGlobal.innerWindowId) ?? {
         transferred: 0,
-        resources: 0,
         requests: 0,
+        cached: 0,
       }
     );
   },
@@ -123,7 +133,10 @@ export const M6EPageTelemetry = {
    * @param {MozBrowser} browser
    */
   async collect(browser) {
-    if (!browser.currentURI?.schemeIs("http") && !browser.currentURI?.schemeIs("https")) {
+    if (
+      !browser.currentURI?.schemeIs("http") &&
+      !browser.currentURI?.schemeIs("https")
+    ) {
       return null;
     }
     let actor =

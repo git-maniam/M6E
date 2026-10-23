@@ -961,6 +961,9 @@ let JSWINDOWACTORS = {
     },
     matches: ["http://*/*", "https://*/*"],
     messageManagerGroups: ["browsers"],
+    // The parent only shows the figures, as numbers, and counts page size
+    // itself.
+    safeForUntrustedWebProcess: true,
   },
 
   SmartFormFill: {

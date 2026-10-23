@@ -8,12 +8,15 @@
 const { M6EPageTelemetry } = ChromeUtils.importESModule(
   "moz-src:///browser/components/pagetelemetry/M6EPageTelemetry.sys.mjs"
 );
-const TEST_URL =
+const TEST_PATH =
   "https://example.com/browser/browser/components/pagetelemetry/tests/browser/file_page_telemetry.html";
+// A fresh URL per load, so that the measured load isn't served from cache.
+let gLoads = 0;
+const testURL = () => `${TEST_PATH}?load=${++gLoads}&t=${Date.now()}`;
 
 add_task(async function test_button_tooltip() {
   let button = document.getElementById("m6e-page-telemetry-button");
-  await BrowserTestUtils.withNewTab(TEST_URL, async () => {
+  await BrowserTestUtils.withNewTab(testURL(), async () => {
     await TestUtils.waitForCondition(
       () => button.getAttribute("tooltiptext") == "Telemetry",
       "The button's tooltip says Telemetry"
@@ -23,7 +26,7 @@ add_task(async function test_button_tooltip() {
 });
 
 add_task(async function test_panel_values() {
-  await BrowserTestUtils.withNewTab(TEST_URL, async browser => {
+  await BrowserTestUtils.withNewTab(testURL(), async browser => {
     let data;
     await TestUtils.waitForCondition(
       async () => {
@@ -50,7 +53,6 @@ add_task(async function test_panel_values() {
       "The document, the script and the image are counted"
     );
     Assert.greater(data.size.transferred, 0, "Transferred bytes are counted");
-    Assert.greater(data.size.resources, 0, "Decoded bytes are counted");
     ok(
       ["handshake", "reused"].includes(data.tlsState),
       `The https page reports its handshake (${data.tlsState})`
@@ -73,7 +75,7 @@ add_task(async function test_panel_values() {
     );
     let sizeCell = panel.querySelector('tr[data-metric="size"] > td');
     await TestUtils.waitForCondition(
-      () => /requests\)$/.test(sizeCell.textContent),
+      () => /requests/.test(sizeCell.textContent),
       "The panel shows the page size"
     );
     let hidden = BrowserTestUtils.waitForEvent(panel, "popuphidden");

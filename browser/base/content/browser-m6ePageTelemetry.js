@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* eslint-env mozilla/browser-window */
-
 // M6E: the page telemetry button and panel (D29).
 
 ChromeUtils.defineESModuleGetters(this, {
@@ -125,7 +123,11 @@ var gM6EPageTelemetry = {
     this.setMilliseconds(cell("fcp"), data.fcp, missing);
     this.setMilliseconds(cell("tti"), data.tti, "m6e-page-telemetry-measuring");
     this.setMilliseconds(cell("scriptParse"), data.scriptParse, missing);
-    this.setMilliseconds(cell("scriptExecution"), data.scriptExecution, missing);
+    this.setMilliseconds(
+      cell("scriptExecution"),
+      data.scriptExecution,
+      missing
+    );
 
     let tls = cell("tls");
     switch (data.tlsState) {
@@ -133,7 +135,10 @@ var gM6EPageTelemetry = {
         this.setMilliseconds(tls, data.tls, missing);
         break;
       case "reused":
-        document.l10n.setAttributes(tls, "m6e-page-telemetry-connection-reused");
+        document.l10n.setAttributes(
+          tls,
+          "m6e-page-telemetry-connection-reused"
+        );
         break;
       default:
         document.l10n.setAttributes(tls, "m6e-page-telemetry-not-encrypted");
@@ -141,11 +146,17 @@ var gM6EPageTelemetry = {
 
     let size = cell("size");
     if (data.size) {
-      document.l10n.setAttributes(size, "m6e-page-telemetry-size", {
-        transferred: this.formatBytes(data.size.transferred),
-        resources: this.formatBytes(data.size.resources),
-        requests: data.size.requests,
-      });
+      document.l10n.setAttributes(
+        size,
+        data.size.cached
+          ? "m6e-page-telemetry-size-cached"
+          : "m6e-page-telemetry-size",
+        {
+          transferred: this.formatBytes(data.size.transferred),
+          requests: data.size.requests,
+          cached: data.size.cached,
+        }
+      );
     } else {
       document.l10n.setAttributes(size, "m6e-page-telemetry-not-available");
     }

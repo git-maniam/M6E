@@ -6,38 +6,16 @@
 
 @namespace html url("http://www.w3.org/1999/xhtml");
 
+/* Padding, radius, hover, active and focus come from .identity-box-button. */
 #m6e-page-telemetry-button {
-  height: var(--urlbar-basic-component-size);
-  padding-inline: var(--urlbar-icon-padding);
-  border-radius: var(--urlbar-inner-border-radius);
-  outline: var(--toolbarbutton-outline);
-  outline-offset: var(--toolbarbutton-outline-offset);
   fill: currentColor;
   fill-opacity: var(--urlbar-icon-fill-opacity);
   -moz-context-properties: fill, fill-opacity;
   list-style-image: url(chrome://browser/skin/m6e-page-telemetry.svg);
 
-  &:hover:not([open="true"]) {
-    background-color: var(--urlbar-box-background-color-hover);
-    color: var(--urlbar-box-text-color-hover);
-    outline-color: var(--toolbarbutton-outline-color-hover);
-  }
-
-  &:hover:active,
-  &[open="true"] {
-    background-color: var(--urlbar-box-background-color-active);
-    color: var(--urlbar-box-text-color-active);
-    outline-color: var(--toolbarbutton-outline-color-active);
-  }
-
-  &:focus-visible {
-    outline: var(--focus-outline);
-    outline-offset: var(--focus-outline-inset);
-  }
-
   > #m6e-page-telemetry-icon {
-    width: 16px;
-    height: 16px;
+    width: var(--size-item-small);
+    height: var(--size-item-small);
   }
 }
 

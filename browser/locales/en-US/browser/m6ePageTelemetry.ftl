@@ -21,13 +21,21 @@ m6e-page-telemetry-tls = TLS/SSL handshake time
 #   $value (Number) - a duration in milliseconds
 m6e-page-telemetry-milliseconds = { NUMBER($value, maximumFractionDigits: 0) } ms
 # Variables:
-#   $transferred (String) - bytes sent over the network, for example "1.2 MB"
-#   $resources (String) - the size of the page's files after decompression
+#   $transferred (String) - bytes received over the network, for example "1.2 MB"
 #   $requests (Number) - the number of requests the page made
 m6e-page-telemetry-size =
     { $requests ->
-        [one] { $transferred } ({ $resources } uncompressed, 1 request)
-       *[other] { $transferred } ({ $resources } uncompressed, { $requests } requests)
+        [one] { $transferred } (1 request)
+       *[other] { $transferred } ({ $requests } requests)
+    }
+# Variables:
+#   $transferred (String) - bytes received over the network, for example "1.2 MB"
+#   $requests (Number) - the number of requests the page made
+#   $cached (Number) - how many of them were served from the browser's cache
+m6e-page-telemetry-size-cached =
+    { $requests ->
+        [one] { $transferred } (1 request, from cache)
+       *[other] { $transferred } ({ $requests } requests, { $cached } from cache)
     }
 m6e-page-telemetry-measuring = Measuring…
 m6e-page-telemetry-not-available = Not available
