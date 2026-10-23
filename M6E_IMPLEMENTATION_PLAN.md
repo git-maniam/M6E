@@ -83,6 +83,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.2b | Apple Silicon CPU tuning and Rust opt-level 3: within noise, kept as the spec asks | `e3c330b3d2` |
 | P4.2c | PGO: Speedometer +15% (median +18%), first paint 597 ms; DMG packaging works | `a169c87934` |
 | P4.5 | Upstream merged to `cfa0508a3b` (1,301 files); allowlist tests | `cfd42808e0` |
+| P4.6a | 141 platform-only directories deleted (2,195 files) | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -280,10 +281,9 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6, platform removal:
+**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6b (`moz.build` conditions, `tools/m6e/platform/strip_mozbuild.py`), then P4.6c:
 - **Ready:** `tools/m6e/platform/strip_ifdefs.py`. Its dry run would change 1,432 first-party files; 75 files it can't parse (raw string literals and the like) stay as they are.
-- **Delete list:** `artifacts/P4.6-delete-dirs-final.txt` (142 directories, about 2,280 files) lists platform-named directories that the macOS build doesn't read. `artifacts/P4.6-used-all.txt` lists the files the build does read: C dependency files, Rust dep-info, `dist/` and `_tests` links, and backend inputs.
-- **References to fix:** `artifacts/P4.6-delete-refs.txt` lists the 38 of those directories that other files refer to.
+- **References:** P4.6b removes the dead references to the deleted directories that remain in `moz.build` conditions (see `artifacts/P4.6-delete-refs.txt`).
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -373,6 +373,9 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
     - Three failures are environmental:
       - the network's DNS resolves nonexistent hosts (`https-only/browser_console_logging.js` and `websocket-unexpected` in `test_resource_upgrade.html`);
       - the symlinked `_tests` path in `browser_localfile_readerMode.js`. Reader View does open the local file.
+- **P4.6a results:** 141 platform-only directories deleted (2,195 files, about 445,000 lines), and the build passes.
+  - **First pass:** it also deleted `gfx/skia/skia/src/utils/win`, which Skia compiles everywhere and empties with its own `#if`s. The used-file list had missed it: dependency files record sources pulled in by unified builds as paths relative to the object directory, so the list must resolve those too (fixed; 24,315 C files). The directory is restored.
+  - **Validation:** the build backend checks that every source in an evaluated condition exists, so a wrong deletion fails at `config.status`.
 - **P4.6 Platform removal (D21):**
   - **a:** delete platform-only files and directories (first-party and vendored), checking for references first.
   - **b:** remove WINNT, Linux, GTK and Android branches from `moz.build`, `moz.configure`, makefiles and mozconfigs.
