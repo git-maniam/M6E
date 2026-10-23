@@ -277,7 +277,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2a and P4.2b are done. P4.2c (PGO, `ac_add_options MOZ_PGO=1`) is in `mozconfig` and its build is running. `LLVM_PROFDATA` must be set in `mozconfig`, because configure doesn't find Homebrew's `llvm-profdata` by itself. If a session drops mid-build, rerun `./mach build`. `./mach build` then does an instrumented build in `obj-m6e/instrumented`, runs `make package` on it (M6E's first packaging run, an early check for P5.1), runs `build/pgo/profileserver.py` (its pages, including Speedometer 3, are served from 127.0.0.1, and its prefs come from `testing/profiles`), and finally rebuilds `obj-m6e` with the profile. Compare against `artifacts/build-P4.2b/`.
+**Checkpoint:** P4.1, P4.2a and P4.2b are done. On 2026-10-23 the user added P4.5 to P4.9 (platform removal including `#ifdef`s, security hardening, dormant-feature deletion; see section 5 and spec D21 to D24), to finish before Phase 4 ends. P4.2c (PGO, `ac_add_options MOZ_PGO=1`) is in `mozconfig` and its build is running. `LLVM_PROFDATA` must be set in `mozconfig`, because configure doesn't find Homebrew's `llvm-profdata` by itself. If a session drops mid-build, rerun `./mach build`. `./mach build` then does an instrumented build in `obj-m6e/instrumented`, runs `make package` on it (M6E's first packaging run, an early check for P5.1), runs `build/pgo/profileserver.py` (its pages, including Speedometer 3, are served from 127.0.0.1, and its prefs come from `testing/profiles`), and finally rebuilds `obj-m6e` with the profile. Compare against `artifacts/build-P4.2b/`.
 
 **P4.2b results:** `-mcpu=apple-m1` (C/C++), `-C target-cpu=apple-m1` (Rust) and `RUSTC_OPT_LEVEL=3`. Speedometer 3: 37.17 ± 4.60 (median 38.78) against P4.2a's 36.52 ± 4.60 (median 38.51), measured in the same session. First paint 670 ms (range 639–688), 449 MB, 8 hosts. That is within noise. The flags are kept anyway: the spec asks for them, they build reliably, and they don't cost anything. A same-session rerun of P4.2a gave 36.5 against the 39.0 measured earlier, so only compare scores taken in the same session.
 
@@ -333,6 +333,26 @@ Don't start the next step until the current one builds and checks out. Split a s
   Each flag is a configure change and a full rebuild. Keep a flag only if it builds reliably and helps.
 - **P4.3 Profile:** take startup and interaction profiles, then defer or remove front-end work.
 - **P4.4 Rust rewrites:** only for a hotspot P4.3 proves, with the user's approval. Prefer native Rust behind XPCOM over WebAssembly.
+
+### Phase 4 additions (user request 2026-10-23; spec D21 to D24)
+Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PGO is off from P4.5 to P4.8 (D24).
+- **P4.5 Upstream merge:** apply upstream `034cd8a8..main` (364 commits on 2026-10-23) before deleting anything, while it still applies cleanly. The repo has no upstream history (snapshot import), so it comes in as a diff. Resolve conflicts with M6E's deletions by keeping the deletion. Then rerun the P5.3 maintenance scripts.
+- **P4.6 Platform removal (D21):**
+  - **a:** delete platform-only files and directories (first-party and vendored), checking for references first.
+  - **b:** remove WINNT, Linux, GTK and Android branches from `moz.build`, `moz.configure`, makefiles and mozconfigs.
+  - **c:** `unifdef` first-party C, C++ and Objective-C for `XP_WIN`, `XP_LINUX`, `MOZ_WIDGET_GTK`, `MOZ_WIDGET_ANDROID`, `ANDROID`, `MOZ_WAYLAND`, `MOZ_X11`, `XP_IOS` and the BSDs and Solaris. Keep `XP_UNIX`, `XP_DARWIN` and `XP_MACOSX`.
+  - **d:** the same for preprocessed front-end files (`#ifdef` in JS, CSS and XHTML).
+  - Build and test after each part.
+- **P4.7 Dormant features (D23):** for Sync, Glean telemetry, Normandy, AI/ML, Translations, VPN (IP protection), the crash reporter, the updater, the default browser agent and others: try deleting each, keeping a deletion only if the build and tests pass. Show that whatever stays is unreachable.
+- **P4.8 Security hardening (D22):**
+  - **a:** attack-surface reduction prefs and build options, including Nightly-only experimental features.
+  - **b:** compiler and runtime hardening (stack protector, `_FORTIFY_SOURCE`, libc++ hardening, automatic variable initialisation, allocator hardening).
+  - **c:** sandbox and process isolation checks (content, GPU, RDD, socket and utility processes, Fission, and environment-variable overrides).
+  - **d:** review every M6E commit.
+  - **e:** static analysis (clang-tidy and analyzer security checks) of first-party code that parses untrusted input or handles IPC, with a manual review of what it finds.
+  - **f:** extensions, protocol handlers and local-network access.
+  - Fix what is found. Record every finding and fix here.
+- **P4.9 Full test pass:** build, xpcshell and mochitest suites for the changed areas, `push_check.py`, `measure.py`, `speedometer.py`, `scan-strings.py` and the Phase 3 feature checks. Then the final PGO build, measure, and push.
 
 ### Phase 5: Packaging and acceptance
 - **P5.1 Package:** run `./mach package` for `M6E.app` and the `.dmg`.

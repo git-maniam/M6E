@@ -32,7 +32,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
 | 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | Done |
-| 4 | Performance | **In progress:** P4.1 done, P4.2 build flags next. Resume with "Resume from Phase 4"; see the plan's section 4. |
+| 4 | Performance, platform removal, dormant-feature removal, security hardening | **In progress:** P4.1, P4.2a and P4.2b done; P4.2c (PGO) building; then P4.5 to P4.9 (added 2026-10-23). Resume with "Resume from Phase 4"; see the plan's section 4. |
 | 5 | Packaging (`.dmg`) and acceptance | Not started |
 
 ## 3. Requirements
@@ -102,6 +102,20 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 - Apply compile-flag optimisations first: LTO, the optimisation levels (`-O3`, Rust `opt-level = 3`) and Apple Silicon CPU tuning.
 - Rewrite JavaScript in Rust (native or Wasm) only where profiling shows a hotspot.
 
+### Phase 4: Platform removal, dormant features and security hardening (added 2026-10-23)
+The user added these before Phase 4 can finish:
+- **Platform removal (D21):** remove everything specific to Windows, Linux and Android, including `#ifdef` branches in shared code. Check each removal for dependencies first, and keep it only if the build and tests pass.
+- **Security hardening (D22):** harden M6E as far as possible. This covers:
+  - merging upstream security fixes;
+  - reducing the attack surface that web content and the network can reach;
+  - compiler and runtime hardening;
+  - sandbox and process isolation;
+  - a security review of every M6E change;
+  - static analysis and a review of first-party code that parses untrusted input;
+  - fixing what is found.
+- **Dormant features (D23):** delete each dormant Mozilla feature if the build and tests pass without it. Anything that can't be deleted must be shown to be unreachable remotely: no listening sockets, no network endpoints, no entry points from web content or IPC, and locked prefs.
+- **Testing:** test thoroughly when this is done, then push to GitHub.
+
 ### Phase 5: Packaging
 - Produce `M6E.app` and a `.dmg` for Apple Silicon, signed ad hoc (D8), and run the final acceptance checks.
 
@@ -131,6 +145,10 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D18 | Hardening defaults use strict Enhanced Tracking Protection, which includes Fingerprinting Protection, rather than full fingerprinting resistance (`privacy.resistFingerprinting`). Full resistance is part of the Privacy Shield's strict mode. | Full resistance spoofs the time zone to UTC, letterboxes windows and breaks more sites. The gentler protection blocks most fingerprinting without that. |
 | D19 (agent) | The Tracker Blocker builds on Firefox's tracking protection icon and protections panel rather than a new widget. The count covers the current tab's page. | One blocking engine and one place to see what was blocked. |
 | D20 | The global Privacy Shield sets the default for every site, and the Tracker Blocker's per-site switch overrides it both ways. With the Shield on, it turns protection off for an important site that breaks. With the Shield off, it turns protection on for a high-risk site. Shield off means no tracker blocking, which also lifts cookie isolation, as Firefox's per-site off does (agent: implemented through the content blocking allow list). Per-site choices last for the session only. The switch covers everything the Shield covers that the engine can apply per site. | The user's model (2026-10-23): one global default, with per-site exceptions in either direction. Global-only hardening is an engine limit. |
+| D21 | Remove all Windows, Linux and Android code, including `#ifdef` branches in shared source. This supersedes Phase 1's rule to leave them. In first-party code, branches are stripped with `unifdef`. In vendored third-party code, whole platform-only files and directories are deleted, but `#ifdef`s inside vendored libraries stay (agent; see the note). | The user's choice (2026-10-23). Note (agent): stripping `#ifdef`s doesn't change the macOS binary, because the compiler already discards them. Inside vendored libraries (libvpx, ffmpeg, NSS, SQLite and others, frequent sources of security fixes), the edits would have to be redone on every security update, which works against D22. |
+| D22 | Security hardening is in scope "everything under the Sun": upstream security merges, attack-surface reduction, compiler hardening, sandbox checks, a review of M6E's changes, static analysis and a review of first-party parsers, plus fixes. | The user's choice (2026-10-23): a security-hardened browser. |
+| D23 | Dormant Mozilla features are deleted when the build and tests pass without them. Whatever stays must be shown to be unreachable remotely. This supersedes D13. | The user's choice (2026-10-23). |
+| D24 (agent) | During the P4.5 to P4.8 source work, builds run without PGO (LTO stays on) so each full rebuild takes 15 to 40 minutes instead of 2 hours. PGO comes back for the final measured and packaged build. | Many full rebuilds are needed. PGO triples each one and only affects speed, not correctness. |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.
