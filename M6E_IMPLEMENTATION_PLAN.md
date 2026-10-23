@@ -88,7 +88,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.6c | `#ifdef`s stripped from 1,403 first-party files (about 62,000 lines); binaries' symbols unchanged | `12a394ab1c` |
 | P4.6d | Front-end `#ifdef`s stripped from 19 preprocessed files; outputs unchanged | `14020b7897` |
 | P4.7a | 20 platform-only orphan subtrees deleted (193 files); push still works | `596062f662` |
-| P4.7b | Normandy and about:studies removed | this commit |
+| P4.7b | Normandy and about:studies removed | `8a3c3fac23` |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
