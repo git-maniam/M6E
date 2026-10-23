@@ -1407,13 +1407,19 @@ export class NetErrorCard extends MozLitElement {
     const { bodyTitleL10nId, image } = this.errorConfig;
     // The CTA invites the user to weigh up where to go next, so it shows the
     // security illustration rather than dnsNotFound's no-connection one.
-    const {
-      src,
-      alt = "",
-      className,
-    } = this.shouldShowSearchCTA()
+    let illustration = this.shouldShowSearchCTA()
       ? NET_ERROR_ILLUSTRATIONS.securityError
       : (image ?? NET_ERROR_ILLUSTRATIONS.securityError);
+    // M6E: a connection error while offline, or while the system reports no
+    // network, shows the "No Internet Connection" picture.
+    if (
+      ["netOffline", "NS_ERROR_OFFLINE"].includes(this.errorConfig.errorCode) ||
+      ((image ?? null) == NET_ERROR_ILLUSTRATIONS.noConnection &&
+        !navigator.onLine)
+    ) {
+      illustration = NET_ERROR_ILLUSTRATIONS.noInternet;
+    }
+    const { src, alt = "", className } = illustration;
     const title = bodyTitleL10nId ?? "fp-certerror-body-title";
 
     return html`<link
@@ -1421,7 +1427,9 @@ export class NetErrorCard extends MozLitElement {
         href="chrome://global/skin/aboutNetError.css"
       />
       <article
-        class="felt-privacy-container"
+        class=${illustration == NET_ERROR_ILLUSTRATIONS.noInternet
+          ? "felt-privacy-container no-internet"
+          : "felt-privacy-container"}
         aria-labelledby="error-title"
         aria-describedby="error-intro whatCanYouDo"
       >

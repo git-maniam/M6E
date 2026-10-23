@@ -286,6 +286,12 @@ button:disabled {
       flex-direction: column;
       align-items: start;
     }
+
+    /* M6E: the "No Internet Connection" picture always sits above the text. */
+    &.no-internet {
+      flex-direction: column;
+      align-items: center;
+    }
   }
 
   .img-container > img {
@@ -295,6 +301,16 @@ button:disabled {
 
     &.no-connection {
       width: 13em;
+    }
+
+    /* M6E: the "No Internet Connection" picture (3:2) sits above the text and
+       scales with the window. */
+    &.no-internet {
+      width: min(36em, 80vw, 60vh * 1.5);
+      height: auto;
+      aspect-ratio: 3 / 2;
+      margin-inline-end: 0;
+      border-radius: var(--border-radius-large);
     }
 
     @media (max-width: 640px) {

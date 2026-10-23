@@ -7,6 +7,11 @@ export const NET_ERROR_ILLUSTRATIONS = {
     src: "chrome://global/skin/illustrations/no-connection.svg",
     className: "no-connection",
   },
+  // M6E: shown instead of noConnection when there is no internet connection.
+  noInternet: {
+    src: "chrome://global/skin/illustrations/no-internet.jpg",
+    className: "no-internet",
+  },
   securityError: {
     src: "chrome://global/skin/illustrations/security-error.svg",
   },
