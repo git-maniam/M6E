@@ -7,4 +7,3 @@ DIRS += [
     "/toolkit/crashreporter/google-breakpad/src/processor",
     "/tools/crashreporter/injector",
 ]
-

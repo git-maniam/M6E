@@ -49,5 +49,4 @@ if CONFIG["TARGET_CPU"] in ("loongarch64", "ppc64"):
     ]
 
 
-
 FINAL_LIBRARY = "xul"

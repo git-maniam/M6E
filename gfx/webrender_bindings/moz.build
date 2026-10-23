@@ -61,10 +61,6 @@ UNIFIED_SOURCES += [
 ]
 
 
-
-
-
-
 if CONFIG["COMPILE_ENVIRONMENT"]:
     EXPORTS.mozilla.webrender += [
         "!webrender_ffi_generated.h",

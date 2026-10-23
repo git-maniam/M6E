@@ -13,4 +13,3 @@ def FirefoxBranding():
         JS_PREFERENCE_FILES += [
             "pref/firefox-branding.js",
         ]
-

@@ -22,7 +22,6 @@ TESTING_JS_MODULES += [
 ]
 
 
-
 TEST_HARNESS_FILES.testing.mochitest.tests.SimpleTest += ["StructuredLog.sys.mjs"]
 
 with Files("**"):

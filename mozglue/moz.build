@@ -9,7 +9,6 @@ if CONFIG["MOZ_LINKER"]:
     DIRS += ["linker"]
 
 
-
 DIRS += [
     "baseprofiler",
     "build",

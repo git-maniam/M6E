@@ -9,4 +9,3 @@ USE_LIBS += [
     "jsrust",
     "zlib",
 ]
-

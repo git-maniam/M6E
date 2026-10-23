@@ -38,5 +38,3 @@ else:
         "../lib",
     ]
     USE_LIBS += ["mozpkix", "nspr", "nss", "tlsserver"]
-
-

@@ -16,7 +16,6 @@ SOURCES += [
 ]
 
 
-
 SharedLibrary("test_trust_anchors")
 
 NoVisibilityFlags()

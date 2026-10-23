@@ -84,6 +84,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.2c | PGO: Speedometer +15% (median +18%), first paint 597 ms; DMG packaging works | `a169c87934` |
 | P4.5 | Upstream merged to `cfa0508a3b` (1,301 files); allowlist tests | `cfd42808e0` |
 | P4.6a | 141 platform-only directories deleted (2,195 files) | `3dcdd875c7` |
+| P4.6b | 702 platform conditions removed from 286 `moz.build` files; backend proven unchanged | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -281,7 +282,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6b (`moz.build` conditions, `tools/m6e/platform/strip_mozbuild.py`), then P4.6c:
+**Checkpoint:** P4.1, P4.2 (a, b and c), P4.5 (upstream merge) and P4.8d (review of M6E's changes) are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. Next is P4.6c (`#ifdef`s):
 - **Ready:** `tools/m6e/platform/strip_ifdefs.py`. Its dry run would change 1,432 first-party files; 75 files it can't parse (raw string literals and the like) stay as they are.
 - **References:** P4.6b removes the dead references to the deleted directories that remain in `moz.build` conditions (see `artifacts/P4.6-delete-refs.txt`).
 
@@ -376,6 +377,10 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
 - **P4.6a results:** 141 platform-only directories deleted (2,195 files, about 445,000 lines), and the build passes.
   - **First pass:** it also deleted `gfx/skia/skia/src/utils/win`, which Skia compiles everywhere and empties with its own `#if`s. The used-file list had missed it: dependency files record sources pulled in by unified builds as paths relative to the object directory, so the list must resolve those too (fixed; 24,315 C files). The directory is restored.
   - **Validation:** the build backend checks that every source in an evaluated condition exists, so a wrong deletion fails at `config.status`.
+- **P4.6b results:** `tools/m6e/platform/strip_mozbuild.py` removed 702 Windows, Linux and Android conditions from 286 first-party `moz.build` files, and `ruff-format` tidied them.
+  - **Proof:** `tools/m6e/platform/compare_backends.py` compares the build backend generated before and after (a `git worktree` of the previous commit plus `./mach configure`). Result: 5,856 backend files, 0 differences. So the macOS build compiles exactly the same sources with the same defines and flags.
+  - **Bug caught on the way:** the first version resolved a dead `elif` on its own and pulled its `else` body out of a chain that started with an undecided condition (the build caught this in `tools/profiler`). A decided `elif` is now dropped from its chain or becomes the chain's `else`.
+  - **Not changed:** 6 files whose rewrite wouldn't parse, and vendored directories (D21).
 - **P4.6 Platform removal (D21):**
   - **a:** delete platform-only files and directories (first-party and vendored), checking for references first.
   - **b:** remove WINNT, Linux, GTK and Android branches from `moz.build`, `moz.configure`, makefiles and mozconfigs.

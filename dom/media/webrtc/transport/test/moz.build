@@ -40,7 +40,6 @@ for var in ("HAVE_STRDUP", "NR_SOCKET_IS_VOID_PTR", "SCTP_DEBUG"):
     DEFINES[var] = True
 
 
-
 LOCAL_INCLUDES += [
     "/dom/media/webrtc/transport/third_party/nrappkit/src/port/darwin/include",
 ]

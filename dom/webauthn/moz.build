@@ -83,7 +83,6 @@ OS_LIBS += [
 ]
 
 
-
 MOCHITEST_MANIFESTS += ["tests/mochitest.toml"]
 BROWSER_CHROME_MANIFESTS += [
     "tests/browser/browser.toml",

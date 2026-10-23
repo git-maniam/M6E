@@ -37,7 +37,6 @@ LOCAL_INCLUDES += [
 USE_STATIC_MSVCRT = True
 
 
-
 RCINCLUDE = "maintenanceservice.rc"
 
 DisableStlWrapping()

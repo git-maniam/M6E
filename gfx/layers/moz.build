@@ -200,7 +200,6 @@ EXPORTS.mozilla.layers += [
 ]
 
 
-
 EXPORTS.mozilla.layers += [
     "GpuFenceMTLSharedEvent.h",
     "NativeLayerCA.h",

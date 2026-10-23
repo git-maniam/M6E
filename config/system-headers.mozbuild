@@ -1039,7 +1039,6 @@ if CONFIG["HAVE_SINGLE_THREADED_H"]:
     ]
 
 
-
 if CONFIG["MOZ_SYSTEM_GBM"]:
     system_headers += [
         "gbm.h",
@@ -1150,9 +1149,6 @@ if CONFIG["MOZ_SYSTEM_ICU"]:
         "unicode/ustring.h",
         "unicode/utypes.h",
     ]
-
-
-
 
 
 if CONFIG["MOZ_APP_SYSTEM_HEADERS"]:

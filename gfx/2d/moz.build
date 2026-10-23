@@ -77,8 +77,6 @@ SOURCE_HEADERS += [
 ]
 
 
-
-
 EXPORTS.mozilla.gfx += [
     "ConvolutionFilter.h",
     "HelpersSkia.h",

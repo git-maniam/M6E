@@ -78,7 +78,6 @@ IPDL_SOURCES = [
 # For now, only enable FxR CLH for Windows Nightly builds (BUG 1565349)
 
 
-
 COMPILE_FLAGS["WARNINGS_CXXFLAGS"] += ["-Werror=switch"]
 
 include("/ipc/chromium/chromium-config.mozbuild")

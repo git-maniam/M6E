@@ -24,4 +24,3 @@ LOCAL_INCLUDES += [
 DisableStlWrapping()
 
 DIST_INSTALL = True
-

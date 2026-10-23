@@ -21,4 +21,3 @@ EXPORTS.mozilla += [
     "/mozglue/misc/TimeStamp.h",
     "/mozglue/misc/Uptime.h",
 ]
-

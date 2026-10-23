@@ -77,8 +77,6 @@ UNIFIED_SOURCES += [
 ]
 
 
-
-
 EXPORTS.mozilla.webgpu += [
     "SharedTextureMacIOSurface.h",
 ]

@@ -89,7 +89,6 @@ if CONFIG["MOZ_WEBRTC_SIGNALING"]:
         "/third_party/libwebrtc",
     ]
 
-
     # Avoid warnings from third-party code that we can not modify.
 
 

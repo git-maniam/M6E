@@ -133,7 +133,6 @@ else:
     WINCONSOLE = False
 
 
-
 SOURCE_HEADERS += [
     "archivereader.h",
     "crctable.h",

@@ -16,7 +16,6 @@ SOURCES += [
 ]
 
 
-
 SharedLibrary("pkcs11testmodule")
 
 NoVisibilityFlags()

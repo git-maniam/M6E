@@ -157,4 +157,3 @@ MOZ_SRC_FILES += [
     "SerialDeviceSharingHelper.sys.mjs",
     "UIDensityTelemetry.sys.mjs",
 ]
-

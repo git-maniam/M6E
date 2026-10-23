@@ -24,7 +24,6 @@ with Files("TestBaseProfiler.cpp"):
     BUG_COMPONENT = ("Core", "Gecko Profiler")
 
 
-
 TEST_DIRS += [
     "gtest",
 ]

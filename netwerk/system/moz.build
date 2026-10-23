@@ -6,7 +6,6 @@
 DIRS += ["mac"]
 
 
-
 SOURCES += [
     "LinkServiceCommon.cpp",
 ]
