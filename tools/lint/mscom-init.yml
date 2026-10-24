@@ -20,21 +20,15 @@ forbid-mscom-init:
         - rs
     exclude:
         # These files contain utilities for using COM more safely.
-        - ipc/mscom/ApartmentRegion.h
-        - ipc/mscom/COMWrappers.cpp
-        - ipc/mscom/COMWrappers.h
-        - ipc/mscom/EnsureMTA.cpp
         # These files have been reviewed by MSCOM peers, and the use of
         # CoInitialize within them has been confirmed to be necessary and
         # proper.
-        - ipc/mscom/ProcessRuntime.cpp
         # These files are existing legacy uses of CoInitialize (and so forth)
         # that must eventually be fixed -- probably by converting them to use
         # ApartmentRegion and moving them to _that_ lint's exception-list.
         - image/DecodePool.cpp
         - ipc/glue/IOThread.cpp
         - toolkit/components/bitsdownload/bits_client/bits/src/lib.rs
-        - toolkit/crashreporter/google-breakpad/src/common/windows/pdb_source_line_writer.cc
         - xpcom/io/nsLocalFileWin.cpp
 
 forbid-apartment-region:
@@ -53,7 +47,4 @@ forbid-apartment-region:
         - cpp
     exclude:
         # ApartmentRegion's definition.
-        - ipc/mscom/ApartmentRegion.h
         # These files have been reviewed and approved by MSCOM peers.
-        - ipc/mscom/ProcessRuntime.cpp
-        - ipc/mscom/ProcessRuntime.h

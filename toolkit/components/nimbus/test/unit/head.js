@@ -26,6 +26,25 @@ const { NimbusTestUtils } = ChromeUtils.importESModule(
   "resource://testing-common/NimbusTestUtils.sys.mjs"
 );
 
+// M6E: m6e.js locks studies, rollouts, telemetry upload, AI features and
+// about:welcome off, and locks captivedetect.canonicalURL. Unlock them and
+// restore the upstream defaults so these tests exercise upstream behaviour.
+{
+  const defaults = Services.prefs.getDefaultBranch(null);
+  for (const pref of [
+    "app.shield.optoutstudies.enabled",
+    "datareporting.healthreport.uploadEnabled",
+    "nimbus.rollouts.enabled",
+    "browser.aboutwelcome.enabled",
+  ]) {
+    Services.prefs.unlockPref(pref);
+    defaults.setBoolPref(pref, true);
+  }
+  Services.prefs.unlockPref("browser.ai.control.default");
+  defaults.setStringPref("browser.ai.control.default", "available");
+  Services.prefs.unlockPref("captivedetect.canonicalURL");
+}
+
 NimbusTestUtils.init(this);
 
 add_setup(async function () {
