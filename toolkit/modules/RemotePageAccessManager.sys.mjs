@@ -234,17 +234,12 @@ export let RemotePageAccessManager = {
       RPMSendAsyncMessage: [
         "OpenContentBlockingPreferences",
         "OpenAboutLogins",
-        "OpenSyncPreferences",
-        "ClearMonitorCache",
         "RecordEntryPoint",
       ],
       RPMSendQuery: [
         "FetchUserLoginsData",
-        "FetchMonitorData",
         "FetchContentBlockingEvents",
-        "FetchMobileDeviceConnected",
         "FetchEntryPoint",
-        "FetchVPNSubStatus",
         "FetchShowVPNCard",
         "FetchPrivacyMetrics",
       ],
@@ -256,7 +251,6 @@ export let RemotePageAccessManager = {
       ],
       RPMGetBoolPref: [
         "browser.contentblocking.report.lockwise.enabled",
-        "browser.contentblocking.report.monitor.enabled",
         "privacy.fingerprintingProtection",
         "privacy.socialtracking.block_cookies.enabled",
         "browser.contentblocking.report.privacy_metrics.enabled",
@@ -271,9 +265,6 @@ export let RemotePageAccessManager = {
       ],
       RPMGetStringPref: [
         "browser.contentblocking.category",
-        "browser.contentblocking.report.monitor.url",
-        "browser.contentblocking.report.monitor.sign_in_url",
-        "browser.contentblocking.report.manage_devices.url",
         "browser.contentblocking.report.lockwise.mobile-android.url",
         "browser.contentblocking.report.lockwise.mobile-ios.url",
         "browser.contentblocking.report.mobile-ios.url",
@@ -285,10 +276,7 @@ export let RemotePageAccessManager = {
       ],
       RPMGetIntPref: ["network.cookie.cookieBehavior"],
       RPMGetFormatURLPref: [
-        "browser.contentblocking.report.monitor.how_it_works.url",
         "browser.contentblocking.report.lockwise.how_it_works.url",
-        "browser.contentblocking.report.monitor.preferences_url",
-        "browser.contentblocking.report.monitor.home_page_url",
         "browser.contentblocking.report.social.url",
         "browser.contentblocking.report.cookie.url",
         "browser.contentblocking.report.tracker.url",

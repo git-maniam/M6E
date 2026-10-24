@@ -2552,10 +2552,6 @@ pref("browser.contentblocking.features.strict", "tp,tpPrivate,cookieBehavior5,co
 // Enable Protections report's Lockwise card by default.
 pref("browser.contentblocking.report.lockwise.enabled", true);
 
-// Disable rotections report's Monitor card by default. The new Monitor API does
-// not support this feature as of now. See Bug 1815751.
-pref("browser.contentblocking.report.monitor.enabled", false);
-
 // Disable Protections report's Privacy Metrics card.
 pref("browser.contentblocking.report.privacy_metrics.enabled", false);
 
@@ -2583,15 +2579,7 @@ pref("browser.promo.pin.enabled", true);
 pref("browser.promo.relay.enabled", true);
 
 pref("browser.contentblocking.report.hide_vpn_banner", false);
-pref("browser.contentblocking.report.vpn_sub_id", "sub_HrfCZF7VPHzZkA");
 
-pref("browser.contentblocking.report.monitor.url", "https://monitor.firefox.com/?entrypoint=protection_report_monitor&utm_source=about-protections");
-pref("browser.contentblocking.report.monitor.how_it_works.url", "https://monitor.firefox.com/about");
-pref("browser.contentblocking.report.monitor.sign_in_url", "https://monitor.firefox.com/oauth/init?entrypoint=protection_report_monitor&utm_source=about-protections&email=");
-pref("browser.contentblocking.report.monitor.preferences_url", "https://monitor.firefox.com/user/preferences");
-pref("browser.contentblocking.report.monitor.home_page_url", "https://monitor.firefox.com/user/dashboard");
-pref("browser.contentblocking.report.manage_devices.url", "https://accounts.firefox.com/settings/clients");
-pref("browser.contentblocking.report.endpoint_url", "https://monitor.firefox.com/user/breach-stats?includeResolved=true");
 pref("browser.contentblocking.report.mobile-ios.url", "https://apps.apple.com/app/firefox-private-safe-browser/id989804926");
 pref("browser.contentblocking.report.mobile-android.url", "https://play.google.com/store/apps/details?id=org.mozilla.firefox&referrer=utm_source%3Dprotection_report%26utm_content%3Dmobile_promotion");
 pref("browser.contentblocking.report.vpn.url", "https://vpn.mozilla.org/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=about-protections-card");

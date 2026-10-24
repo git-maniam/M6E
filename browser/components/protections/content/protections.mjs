@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import LockwiseCard from "./lockwise-card.mjs";
-import MonitorCard from "./monitor-card.mjs";
 import VPNCard from "./vpn-card.mjs";
 
 let cbCategory = RPMGetStringPref("browser.contentblocking.category");
@@ -445,24 +444,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // For tests
   const lockwiseUI = document.querySelector(".lockwise-card");
   lockwiseUI.dataset.enabled = lockwiseEnabled;
-
-  let monitorEnabled = RPMGetBoolPref(
-    "browser.contentblocking.report.monitor.enabled",
-    true
-  );
-  if (monitorEnabled) {
-    // Show the Monitor card.
-    const monitorUI = document.querySelector(".card.monitor-card.hidden");
-    monitorUI.classList.remove("hidden");
-    monitorUI.classList.add("loading");
-
-    const monitorCard = new MonitorCard(document);
-    monitorCard.init();
-  }
-
-  // For tests
-  const monitorUI = document.querySelector(".monitor-card");
-  monitorUI.dataset.enabled = monitorEnabled;
 
   const privacyMetricsEnabled = RPMGetBoolPref(
     "browser.contentblocking.report.privacy_metrics.enabled",

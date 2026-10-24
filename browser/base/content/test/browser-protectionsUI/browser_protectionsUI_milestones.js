@@ -6,7 +6,6 @@ add_setup(async function () {
     set: [
       // Hide protections cards so as not to trigger more async messaging
       // when landing on the page.
-      ["browser.contentblocking.report.monitor.enabled", false],
       ["browser.contentblocking.report.lockwise.enabled", false],
       ["browser.contentblocking.cfr-milestone.update-interval", 0],
     ],

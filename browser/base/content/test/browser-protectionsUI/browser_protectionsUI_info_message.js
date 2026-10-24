@@ -17,7 +17,6 @@ add_setup(async function () {
       ["browser.protections_panel.toast.timeout", 100],
       // Hide protections cards so as not to trigger more async messaging
       // when landing on the page.
-      ["browser.contentblocking.report.monitor.enabled", false],
       ["browser.contentblocking.report.lockwise.enabled", false],
       ["privacy.trackingprotection.enabled", true],
       // Set the infomessage pref to ensure the message is displayed
