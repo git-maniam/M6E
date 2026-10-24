@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const lazy = {};
@@ -11,22 +10,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   FirefoxRelay: "resource://gre/modules/FirefoxRelay.sys.mjs",
   FormHistory: "resource://gre/modules/FormHistory.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
-});
-
-ChromeUtils.defineLazyGetter(lazy, "SmartFormFillAutocomplete", () => {
-  if (AppConstants.MOZ_BUILD_APP != "browser") {
-    return undefined;
-  }
-
-  try {
-    return ChromeUtils.importESModule(
-      // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
-      "moz-src:///browser/components/aiwindow/ui/modules/SmartFormFillAutocomplete.sys.mjs"
-    ).SmartFormFillAutocomplete;
-  } catch (error) {
-    console.error(`Unable to load SmartFormFillAutocomplete.sys.mjs: ${error}`);
-  }
-  return undefined;
 });
 
 XPCOMUtils.defineLazyPreferenceGetter(
@@ -85,12 +68,7 @@ export class FormHistoryParent extends JSWindowActorParent {
     );
   }
 
-  async #onAutoCompleteSearch({
-    searchString,
-    params,
-    inputType,
-    scenarioName,
-  }) {
+  async #onAutoCompleteSearch({ searchString, params, scenarioName }) {
     searchString = searchString.trim().toLowerCase();
 
     // The search bar manages its own history and is not served here.
@@ -124,20 +102,11 @@ export class FormHistoryParent extends JSWindowActorParent {
       scenarioName,
       hasInput: !!searchString.length,
     });
-    const smartFormFillPromise =
-      lazy.SmartFormFillAutocomplete?.autocompleteItemsAsync({
-        browsingContext: this.browsingContext,
-        searchString,
-        inputType,
-      }) ?? [];
 
-    const [formHistoryEntries, relayEntries, smartFormFillEntries] =
-      await Promise.all([
-        formHistoryPromise,
-        relayPromise,
-        smartFormFillPromise,
-      ]);
-    const externalEntries = [...relayEntries, ...smartFormFillEntries];
+    const [formHistoryEntries, externalEntries] = await Promise.all([
+      formHistoryPromise,
+      relayPromise,
+    ]);
 
     this.previousSearchString = searchString;
     this.previousSearchResult = formHistoryEntries;
@@ -182,14 +151,13 @@ export class FormHistoryParent extends JSWindowActorParent {
   }
 
   async searchAutoCompleteEntries(searchString, data) {
-    const { inputName, inputType, scenarioName } = data;
+    const { inputName, scenarioName } = data;
     const params = {
       fieldname: inputName,
     };
     return this.#onAutoCompleteSearch({
       searchString,
       params,
-      inputType,
       scenarioName,
     });
   }

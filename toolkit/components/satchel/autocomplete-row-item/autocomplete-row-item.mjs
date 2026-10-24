@@ -21,14 +21,6 @@ class AutocompleteRowItem extends MozLitElement {
     subfocused: { type: Boolean, reflect: true },
     menuopen: { type: Boolean, reflect: true },
     type: { type: String, reflect: true },
-    // Smart Form Fill properties
-    sources: { type: Array },
-    sourcesLabel: { type: String },
-    sourcesPillsLabel: { type: String },
-    sourcesPillsLabelHover: { type: String },
-    loading: { type: Boolean },
-    loadingLabel: { type: String },
-    emptySourcesLabel: { type: String },
   };
 
   #actionsMenu = null;
@@ -140,97 +132,6 @@ class AutocompleteRowItem extends MozLitElement {
     ></moz-button>`;
   }
 
-  renderSmartFormFillLoader() {
-    return html`
-      <span class="sff-loader">
-        <span class="sff-loader-spinner"></span>
-        <span class="sff-loader-label">${this.loadingLabel}</span>
-      </span>
-    `;
-  }
-
-  renderSourcesSummaryPill() {
-    const stopMouseEvents = e => e.stopPropagation();
-    const onMouseDown = e => {
-      e.stopPropagation();
-      this.activateSecondaryAction();
-    };
-
-    return html`
-      <span
-        class="sources-pill"
-        @mousedown=${onMouseDown}
-        @mouseup=${stopMouseEvents}
-      >
-        <span class="sources-summary-list">
-          ${this.sources.map(
-            source => html`
-              <img
-                class="source-favicon source-favicon-single"
-                src=${source.favicon}
-                alt=${source.label}
-              />
-            `
-          )}
-        </span>
-        <span class="sources-summary-text">
-          <span class="sources-count">${this.sourcesPillsLabel}</span>
-          <span class="sources-count sources-count-hover"
-            >${this.sourcesPillsLabelHover}</span
-          >
-          <img
-            class="sources-count-icon"
-            src="chrome://global/skin/icons/arrow-right-12.svg"
-            alt=""
-          />
-        </span>
-      </span>
-    `;
-  }
-
-  renderNamedSourcePills() {
-    return html`
-      <span class="sources-named-list">
-        ${this.sources.map(
-          source =>
-            html`<span class="sources-pill sources-pill-named">
-              <img
-                role="presentation"
-                class="source-favicon"
-                src=${source.favicon}
-              />
-              <span class="source-label">${source.label}</span>
-            </span>`
-        )}
-      </span>
-    `;
-  }
-
-  renderSourcesValue() {
-    if (this.loading) {
-      return this.renderSmartFormFillLoader();
-    }
-
-    if (!this.sources?.length) {
-      return this.emptySourcesLabel;
-    }
-
-    if (this.sources?.length < 3) {
-      return this.renderNamedSourcePills();
-    }
-
-    return this.renderSourcesSummaryPill();
-  }
-
-  renderSmartFormFillLabels() {
-    return html`
-      <span class="description smart-form-fill-sources">
-        <span class="sources-label">${this.sourcesLabel}</span>
-        ${this.renderSourcesValue()}
-      </span>
-    `;
-  }
-
   renderDefaultLabels() {
     return html`<span class="label">${this.label}</span> ${when(
         this.description,
@@ -250,9 +151,7 @@ class AutocompleteRowItem extends MozLitElement {
           () => html`<img role="presentation" class="icon" src=${this.icon} />`
         )}
         <div class="labels-container">
-          ${this.type == "smartFormFill"
-            ? this.renderSmartFormFillLabels()
-            : this.renderDefaultLabels()}
+          ${this.renderDefaultLabels()}
         </div>
         ${when(this.actions?.secondary, () =>
           this.renderSecondaryActionButton()
