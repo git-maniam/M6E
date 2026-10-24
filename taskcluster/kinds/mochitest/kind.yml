@@ -649,37 +649,6 @@ tasks:
                 - "--setpref=layout.css.devPixelsPerPx=1.0"
         allow-software-gl-layers: false
 
-    mochitest-browser-translations:
-        description: "Mochitest browser translations"
-        suite:
-            name: mochitest-browser-translations
-        treeherder-symbol: M(tr8ns)
-        schedules-component: mochitest-browser-translations
-        loopback-video: true
-        run-on-projects:
-            by-test-platform:
-                android.*: []
-                default: built-projects
-        tier: default
-        max-run-time:
-            by-test-platform:
-                .*-asan.*: 2400
-                .*-tsan.*: 2400
-                .*-ccov.*: 2400
-                .*/debug: 2400
-                default: 1800
-        mozharness:
-            mochitest-flavor: browser
-        instance-size: default
-        allow-software-gl-layers: false
-        virtualization: virtual
-        fetches:
-            fetch:
-                - tr8ns.inference
-                - tr8ns.T.esen.lex
-                - tr8ns.T.esen.model
-                - tr8ns.T.esen.vocab
-
     mochitest-browser-chrome-ml-models:
         description: "Mochitest browser-chrome tests that download real ML models from model-hub.mozilla.org"
         suite:

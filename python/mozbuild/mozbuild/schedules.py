@@ -72,7 +72,6 @@ EXCLUSIVE_COMPONENTS = [
     "mochitest-browser-media",
     "mochitest-browser-chrome",
     "mochitest-browser-chrome-ml-models",
-    "mochitest-browser-translations",
     "mochitest-chrome",
     "mochitest-plain",
     "web-platform-tests-crashtest",

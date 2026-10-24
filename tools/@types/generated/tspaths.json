@@ -454,9 +454,6 @@
       "chrome://browser/content/tabbrowser/tabsplitview.mjs": [
         "../../../browser/components/tabbrowser/content/tabsplitview.mjs"
       ],
-      "chrome://browser/content/translations/TranslationsPanelShared.sys.mjs": [
-        "../../../browser/components/translations/content/TranslationsPanelShared.sys.mjs"
-      ],
       "chrome://browser/content/urlbar/L10nCache.mjs": [
         "../../../browser/components/urlbar/content/L10nCache.mjs"
       ],
@@ -814,27 +811,6 @@
       "chrome://global/content/reader/moz-slider.mjs": [
         "../../../toolkit/components/reader/moz-slider.mjs"
       ],
-      "chrome://global/content/translations/TranslationsFeature.sys.mjs": [
-        "../../../toolkit/components/translations/TranslationsFeature.sys.mjs"
-      ],
-      "chrome://global/content/translations/TranslationsTelemetry.sys.mjs": [
-        "../../../toolkit/components/translations/TranslationsTelemetry.sys.mjs"
-      ],
-      "chrome://global/content/translations/TranslationsUtils.mjs": [
-        "../../../toolkit/components/translations/TranslationsUtils.mjs"
-      ],
-      "chrome://global/content/translations/Translator.mjs": [
-        "../../../toolkit/components/translations/content/Translator.mjs"
-      ],
-      "chrome://global/content/translations/bergamot-translator.js": [
-        "../../../toolkit/components/translations/bergamot-translator/bergamot-translator.js"
-      ],
-      "chrome://global/content/translations/translations-document.sys.mjs": [
-        "../../../toolkit/components/translations/content/translations-document.sys.mjs"
-      ],
-      "chrome://global/content/translations/translations-engine.sys.mjs": [
-        "../../../toolkit/components/translations/content/translations-engine.sys.mjs"
-      ],
       "chrome://global/content/vendor/Redux.sys.mjs": [
         "../../../toolkit/content/vendor/react/Redux.sys.mjs"
       ],
@@ -891,9 +867,6 @@
       ],
       "chrome://mochitests/content/browser/js/xpconnect/tests/browser/worker_source.mjs": [
         "../../../js/xpconnect/tests/browser/worker_source.mjs"
-      ],
-      "chrome://mochitests/content/browser/toolkit/components/translations/tests/browser/translations-test.mjs": [
-        "../../../toolkit/components/translations/tests/browser/translations-test.mjs"
       ],
       "chrome://mochitests/content/chrome/dom/network/tests/tcpsocket_test.sys.mjs": [
         "../../../dom/network/tests/tcpsocket_test.sys.mjs"
@@ -5637,9 +5610,6 @@
       ],
       "resource://gre/actors/PageExtractorParent.sys.mjs": [
         "../../../toolkit/components/pageextractor/PageExtractorParent.sys.mjs"
-      ],
-      "resource://gre/actors/TranslationsParent.sys.mjs": [
-        "../../../toolkit/components/translations/actors/TranslationsParent.sys.mjs"
       ],
       "resource://gre/modules/AboutPagesUtils.sys.mjs": [
         "../../../toolkit/modules/AboutPagesUtils.sys.mjs"

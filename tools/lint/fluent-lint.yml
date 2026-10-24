@@ -18,7 +18,6 @@ fluent-lint:
         - Screenshots
         - Send
         - Solo
-        - Translations
         - VPN
     type: external
     payload: fluent-lint:lint

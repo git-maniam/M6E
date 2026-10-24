@@ -5008,11 +5008,9 @@ modules:
     machine_name: toolkit
   - machine_name: translation
     name: Translation
-    description: Support for translation in Firefox, and the infrastructure to train
-      new translation language models.
+    description: Language identification for Firefox.
     includes:
       - toolkit/components/translations/**/*
-      - browser/components/translations/**/*
     excludes: []
     owners:
       - *nordzilla

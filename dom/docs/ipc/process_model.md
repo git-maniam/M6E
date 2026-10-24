@@ -203,7 +203,7 @@ The shared web content process is used to host content which is not isolated int
 :default count: 1 (``dom.ipc.processCount.inference``)
 ```
 
-The inference content process is used to isolate inference runtimes, currently ONNX runtime and Bergamot. This process hosts chrome workers that are running WASM runtimes along with some Javascript to perform inference tasks like translation or image-to-text.
+The inference content process is used to isolate inference runtimes, currently the ONNX runtime. This process hosts chrome workers that are running WASM runtimes along with some Javascript to perform inference tasks like image-to-text.
 
 The models can allocate large amounts of memory, which can cause the process to be killed by the OS in memory-constrained environments like Android. This separation ensures other important processes like content processes are not killed.
 

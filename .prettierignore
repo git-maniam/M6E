@@ -963,8 +963,6 @@ toolkit/components/printing/tests/simplifyArticleSample.html
 toolkit/components/processtools/tests/browser/dummy.html
 toolkit/components/reader/tests/browser/readerModeArticleMedium.html
 toolkit/components/reader/tests/browser/readerModeArticleShort.html
-toolkit/components/translations/content/translations.html
-toolkit/components/translations/tests/browser/translations-tester-no-tag.html
 toolkit/components/url-classifier/tests/mochitest/classifiedAnnotatedFrame.html
 toolkit/components/url-classifier/tests/mochitest/classifiedAnnotatedPBFrame.html
 toolkit/components/url-classifier/tests/mochitest/classifierFrame.html
@@ -1539,8 +1537,6 @@ toolkit/components/reader/readability/
 toolkit/components/reputationservice/chromium/
 toolkit/components/resistfingerprinting/content/gl-matrix.js
 toolkit/components/translations/cld2/
-toolkit/components/translations/bergamot-translator/thirdparty
-toolkit/components/translations/bergamot-translator/bergamot-translator.js
 toolkit/components/url-classifier/chromium/
 toolkit/components/utils/mozjexl.sys.mjs
 toolkit/content/vendor/react/
