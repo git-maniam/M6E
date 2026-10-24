@@ -19,8 +19,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
-  FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   ChangePasswordURLs:
     "moz-src:///browser/components/aboutlogins/ChangePasswordURLs.sys.mjs",
 });
@@ -32,12 +30,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
   lazy,
   "BREACH_ALERTS_ENABLED",
   "signon.management.page.breach-alerts.enabled",
-  false
-);
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "FXA_ENABLED",
-  "identity.fxaccounts.enabled",
   false
 );
 XPCOMUtils.defineLazyPreferenceGetter(
@@ -109,10 +101,6 @@ export class AboutLoginsParent extends JSWindowActorParent {
       }
       case "AboutLogins:SortChanged": {
         this.#sortChanged(message.data);
-        break;
-      }
-      case "AboutLogins:SyncEnable": {
-        this.#syncEnable();
         break;
       }
       case "AboutLogins:ImportFromBrowser": {
@@ -220,10 +208,6 @@ export class AboutLoginsParent extends JSWindowActorParent {
     Services.prefs.setCharPref("signon.management.page.sort", sort);
   }
 
-  #syncEnable() {
-    this.#documentGlobal.gSync.openFxAEmailFirstPage("password-manager");
-  }
-
   #importFromBrowser() {
     try {
       lazy.MigrationUtils.showMigrationWizard(this.#documentGlobal, {
@@ -304,8 +288,6 @@ export class AboutLoginsParent extends JSWindowActorParent {
 
     const logins = await AboutLogins.getAllLogins();
     try {
-      let syncState = await AboutLogins.getSyncState();
-
       let selectedSort = Services.prefs.getCharPref(
         "signon.management.page.sort",
         "name"
@@ -318,7 +300,6 @@ export class AboutLoginsParent extends JSWindowActorParent {
       this.sendAsyncMessage("AboutLogins:Setup", {
         logins,
         selectedSort,
-        syncState,
         primaryPasswordEnabled: lazy.LoginHelper.isPrimaryPasswordSet(),
         passwordRevealVisible: Services.policies.isAllowed("passwordReveal"),
         importVisible:
@@ -561,13 +542,6 @@ class AboutLoginsInternal {
       }
       case "passwordmgr-crypto-loginCanceled": {
         this.#showPrimaryPasswordLoginNotifications();
-        break;
-      }
-      case lazy.UIState.ON_UPDATE: {
-        this.#messageSubscribers(
-          "AboutLogins:SyncState",
-          await this.getSyncState()
-        );
         break;
       }
       case "passwordmgr-storage-changed": {
@@ -836,39 +810,11 @@ class AboutLoginsInternal {
     );
   }
 
-  async getSyncState() {
-    const state = lazy.UIState.get();
-    // As long as Sync is configured, about:logins will treat it as
-    // authenticated. More diagnostics and error states can be handled
-    // by other more Sync-specific pages.
-    const loggedIn = state.status != lazy.UIState.STATUS_NOT_CONFIGURED;
-    const passwordSyncEnabled = state.syncEnabled && lazy.PASSWORD_SYNC_ENABLED;
-    const accountURL =
-      await lazy.FxAccounts.config.promiseManageURI("password-manager");
-
-    return {
-      loggedIn,
-      email: state.email,
-      avatarURL: state.avatarURL,
-      fxAccountsEnabled: lazy.FXA_ENABLED,
-      passwordSyncEnabled,
-      accountURL,
-    };
-  }
-
-  async onPasswordSyncEnabledPreferenceChange(_data, _previous, _latest) {
-    this.#messageSubscribers(
-      "AboutLogins:SyncState",
-      await this.getSyncState()
-    );
-  }
-
   #observedTopics = [
     "passwordmgr-crypto-login",
     "passwordmgr-crypto-loginCanceled",
     "passwordmgr-storage-changed",
     "passwordmgr-reload-all",
-    lazy.UIState.ON_UPDATE,
   ];
 
   addObservers() {
@@ -890,11 +836,3 @@ class AboutLoginsInternal {
 
 let AboutLogins = new AboutLoginsInternal();
 export var _AboutLogins = AboutLogins;
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "PASSWORD_SYNC_ENABLED",
-  "services.sync.engine.passwords",
-  false,
-  AboutLogins.onPasswordSyncEnabledPreferenceChange.bind(AboutLogins)
-);
