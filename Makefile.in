@@ -153,9 +153,6 @@ endif # MOZ_CRASHREPORTER
 endif # MOZ_ENABLE_FULL_SYMBOLS
 
 uploadsymbols:
-ifdef MOZ_ENABLE_FULL_SYMBOLS
-	$(PYTHON3) -u $(topsrcdir)/toolkit/crashreporter/tools/upload_symbols.py '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).tar.zst'
-endif
 
 .PHONY: package-generated-sources
 package-generated-sources:

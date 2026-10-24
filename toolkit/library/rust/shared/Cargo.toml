@@ -66,10 +66,6 @@ oxilangtag-ffi = { path = "../../../../intl/locale/rust/oxilangtag-ffi" }
 unicode-bidi = "0.3.15"
 unicode-bidi-ffi = { path = "../../../../intl/bidi/rust/unicode-bidi-ffi" }
 rure = "0.2.2"
-rust_minidump_writer_linux = { path = "../../../crashreporter/rust_minidump_writer_linux", optional = true }
-mozannotation_client = { path = "../../../crashreporter/mozannotation_client", optional = true }
-mozannotation_server  = { path = "../../../crashreporter/mozannotation_server", optional = true }
-crash_helper_client = { path = "../../../crashreporter/crash_helper_client", optional = true }
 gecko-profiler = { path = "../../../../tools/profiler/rust-api"}
 midir_impl = { path = "../../../../dom/midi/midir_impl", optional = true }
 dom = { path = "../../../../dom/base/rust" }
@@ -147,7 +143,6 @@ webext-storage = "0.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 backgroundtaskregistrar = { path = "../../../../toolkit/components/taskscheduler/rust", optional = true }
-win32_process_mitigations = { path = "../../../crashreporter/win32_process_mitigations" }
 shell_windows = { path = "../../../../browser/components/shell/rust/shell_windows", optional = true }
 
 [features]
@@ -166,8 +161,6 @@ libfuzzer = ["authrs_bridge/fuzzing"]
 webrtc = ["mdns_service"]
 glean_disable_upload = ["fog_control/disable_upload"]
 glean_with_gecko = ["fog_control/with_gecko"]
-oxidized_breakpad = ["rust_minidump_writer_linux"]
-crashreporter = ["crash_helper_client", "mozannotation_client"]
 with_dbus = ["audio_thread_priority/with_dbus"]
 thread_sanitizer = ["xpcom/thread_sanitizer"]
 uniffi_fixtures = ["uniffi-bindgen-gecko-js-test-fixtures"]

@@ -391,25 +391,6 @@ bin/libfreebl_64int_3.so
 @BINPATH@/maintenanceservice_installer.exe
 #endif
 
-; [Crash Reporter]
-;
-#ifdef MOZ_CRASHREPORTER
-#ifdef XP_MACOSX
-@BINPATH@/crashreporter.app/
-#else
-@BINPATH@/crashreporter@BIN_SUFFIX@
-#if defined(XP_WIN)
-@BINPATH@/@DLL_PREFIX@mozwer@DLL_SUFFIX@
-#endif
-#endif
-#endif
-
-; [ crashhelper ]
-;
-#ifdef MOZ_CRASHREPORTER
-@BINPATH@/crashhelper@BIN_SUFFIX@
-#endif
-
 ; [ Ping Sender ]
 ;
 @BINPATH@/pingsender@BIN_SUFFIX@

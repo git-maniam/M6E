@@ -84,7 +84,6 @@ export LDFLAGS="-fsanitize=memory"
 
 # These three are required by MSan
 ac_add_options --disable-jemalloc
-ac_add_options --disable-crashreporter
 ac_add_options --disable-elf-hack
 
 # Keep symbols to symbolize MSan traces

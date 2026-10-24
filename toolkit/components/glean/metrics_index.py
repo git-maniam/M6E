@@ -153,7 +153,6 @@ firefox_desktop_metrics = [
     "services/fxaccounts/metrics.yaml",
     "toolkit/components/contentanalysis/metrics.yaml",
     "toolkit/components/contentrelevancy/metrics.yaml",
-    "toolkit/components/crashes/metrics.yaml",
     "toolkit/components/nimbus/metrics.yaml",
     "toolkit/components/nimbus/metrics-normandy.yaml",
     "toolkit/components/pictureinpicture/metrics.yaml",
@@ -170,7 +169,6 @@ firefox_desktop_metrics = [
 # Metrics that are sent by the Firefox Desktop Background Update Task
 # Order is lexicographical, enforced by t/c/glean/tests/pytest/test_yaml_indices.py
 background_update_metrics = [
-    "toolkit/components/crashes/metrics.yaml",
     "toolkit/mozapps/update/background_task_metrics.yaml",
     "toolkit/mozapps/update/shared_metrics.yaml",
 ]
@@ -180,7 +178,6 @@ background_update_metrics = [
 background_tasks_metrics = [
     "browser/components/metrics.yaml",
     "toolkit/components/backgroundtasks/metrics.yaml",
-    "toolkit/components/crashes/metrics.yaml",
 ]
 
 # Test metrics

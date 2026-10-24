@@ -64,8 +64,6 @@ export const AppConstants: Readonly<{
   isPlatformAndVersionAtLeast(platform: Platform, version: string): boolean;
   isPlatformAndVersionAtMost(platform: Platform, version: string): boolean;
 
-  MOZ_CRASHREPORTER: boolean;
-
   MOZ_NORMANDY: boolean;
 
   MOZ_MAINTENANCE_SERVICE: boolean;

@@ -3420,42 +3420,6 @@ with only_when(target_is_osx):
 # Miscellaneous options
 # ==============================================================
 
-# Alternative Crashreporter setting
-# On Enterprise, clear the default value to avoid mozilla.com url compiled into
-# product: correct URL will be derived at runtime when console address is known
-option(
-    "--with-crashreporter-url",
-    env="MOZ_CRASHREPORTER_URL",
-    default=depends("--enable-enterprise")(
-        lambda enterprise: None if enterprise else "https://crash-reports.mozilla.com/"
-    ),
-    nargs=1,
-    help="Set an alternative crashreporter url",
-)
-
-set_config(
-    "MOZ_CRASHREPORTER_URL",
-    depends("--with-crashreporter-url")(lambda x: x[0].rstrip("/") if x else ""),
-)
-
-
-# Crash reporter options
-# ==============================================================
-@depends(target)
-def oxidized_breakpad(target):
-    if target.kernel == "Linux":
-        return target.cpu in ("aarch64", "arm", "x86", "x86_64")
-    return False
-
-
-set_config("MOZ_OXIDIZED_BREAKPAD", True, when=oxidized_breakpad)
-set_define("MOZ_OXIDIZED_BREAKPAD", True, when=oxidized_breakpad)
-
-# Environment variable to mock the crashreporter for testing
-option(env="MOZ_CRASHREPORTER_MOCK", help="Mock the crashreporter to test native GUIs")
-set_config("MOZ_CRASHREPORTER_MOCK", True, when="MOZ_CRASHREPORTER_MOCK")
-
-
 # Wine
 # ==============================================================
 @depends(target, host)
@@ -3493,49 +3457,16 @@ with only_when(compile_environment):
     set_config("MOZ_SYSTEM_LIBEVENT", True, when="--with-system-libevent")
 
 
-# Crash reporting
-# ==============================================================
-@depends(target, developer_options, artifact_builds)
-def crashreporter_default(target, developer_options, artifacts):
-    if target.os in ("WINNT", "OSX"):
-        return True
-    if target.kernel == "Linux" and target.cpu in ("x86", "x86_64", "arm", "aarch64"):
-        # The crash reporter prevents crash stacktraces to be logged in the
-        # logs on Android, so we leave it out by default in developer builds.
-        return target.os != "Android" or not developer_options or artifacts
-    return False
-
-
-option(
-    "--enable-crashreporter",
-    default=crashreporter_default,
-    help="{Enable|Disable} crash reporting",
-)
-
-
-set_config("MOZ_CRASHREPORTER", True, when="--enable-crashreporter")
-set_define("MOZ_CRASHREPORTER", True, when="--enable-crashreporter")
-
-with only_when(compile_environment):
-    with only_when("--enable-crashreporter"):
-        pkg_check_modules(
-            "MOZ_GTHREAD",
-            "gthread-2.0",
-            when=depends(target)(lambda t: t.os == "GNU" and t.kernel == "Linux"),
-        )
-
-
 # If we have any service that uploads data (and requires data submission
 # policy alert), set MOZ_DATA_REPORTING.
 # ==============================================================
 @depends(
     "MOZ_TELEMETRY_REPORTING",
     "MOZ_SERVICES_HEALTHREPORT",
-    "--enable-crashreporter",
     "MOZ_NORMANDY",
 )
-def data_reporting(telemetry, healthreport, crashreporter, normandy):
-    return telemetry or healthreport or crashreporter or normandy
+def data_reporting(telemetry, healthreport, normandy):
+    return telemetry or healthreport or normandy
 
 
 set_config("MOZ_DATA_REPORTING", True, when=data_reporting)

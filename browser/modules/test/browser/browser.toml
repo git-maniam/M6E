@@ -14,11 +14,6 @@ skip-if = [
   "os == 'linux' && os_version == '22.04' && arch == 'x86_64' && display == 'wayland'", # Bug 2057872
 ]
 
-["browser_CrashFileCleaner.js"]
-run-if = [
-  "crashreporter",
-]
-
 ["browser_EveryWindow.js"]
 
 ["browser_HomePage_add_button.js"]
@@ -63,11 +58,6 @@ support-files = [
 ["browser_UIDensityTelemetry.js"]
 
 ["browser_URILoadingHelper_chromeless.js"]
-
-["browser_UnsubmittedCrashHandler.js"]
-run-if = [
-  "crashreporter",
-]
 
 ["browser_UpdatePolicyEnforcer.js"]
 

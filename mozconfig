@@ -7,7 +7,6 @@ ac_add_options --disable-bootstrap
 ac_add_options --with-wasi-sysroot=/opt/homebrew/share/wasi-sysroot
 export WASM_CC=/opt/homebrew/opt/llvm/bin/clang
 export WASM_CXX=/opt/homebrew/opt/llvm/bin/clang++
-ac_add_options --disable-crashreporter
 ac_add_options --disable-updater
 ac_add_options --with-branding=browser/branding/m6e
 ac_add_options --with-distribution-id=org.m6e

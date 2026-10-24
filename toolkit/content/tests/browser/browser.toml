@@ -88,11 +88,6 @@ fail-if = [
 
 ["browser_contentTitle.js"]
 
-["browser_content_url_annotation.js"]
-run-if = [
-  "crashreporter",
-]
-
 ["browser_crash_previous_frameloader.js"]
 run-if = [
   "crashreporter",
