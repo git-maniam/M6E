@@ -438,7 +438,6 @@ async function test_contextmenu(selector, menuItems, options = {}) {
   if (menuItems) {
     if (Services.prefs.getBoolPref("devtools.inspector.enabled", true)) {
       let inspectItems = [];
-      let hasSeparatorAboveAskChat = false;
       let viewSourceIndex = menuItems.indexOf("context-viewsource");
       if (viewSourceIndex == -1) {
         viewSourceIndex = menuItems.indexOf(
@@ -446,16 +445,7 @@ async function test_contextmenu(selector, menuItems, options = {}) {
         );
       }
 
-      const askChatIndex = menuItems.indexOf("context-ask-chat");
-      const isAskChatLastItem = menuItems.at(-6) === "context-ask-chat";
-      if (askChatIndex >= 2) {
-        hasSeparatorAboveAskChat = menuItems[askChatIndex - 2] === "---";
-      }
-
-      if (
-        viewSourceIndex == -1 &&
-        !(isAskChatLastItem && hasSeparatorAboveAskChat)
-      ) {
+      if (viewSourceIndex == -1) {
         inspectItems.push("---", null);
       }
 

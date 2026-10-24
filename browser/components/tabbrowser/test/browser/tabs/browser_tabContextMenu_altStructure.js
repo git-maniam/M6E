@@ -15,27 +15,16 @@ ChromeUtils.defineLazyGetter(this, "SidebarTestUtils", () => {
 
 // Verifies the alternate tab context menu layout
 // (browser.tabs.contextmenu.altstructure.enabled): the tab "move" operations
-// are relocated into the "Move Tab to" submenu, the AI entrypoint collapses to a
-// single "Summarize Page" item, and WebExtension items land in the trailing
-// extensions section.
+// are relocated into the "Move Tab to" submenu, and WebExtension items land in
+// the trailing extensions section.
 
 const ALT_PREF = "browser.tabs.contextmenu.altstructure.enabled";
 
 add_setup(async function () {
-  // Setting a provider fires onChatProviderChange, which auto-opens the GenAI
-  // chat sidebar. That leaves a chat browser around that leaks a window at shutdown.
-  // Disable it first, in its own pushPrefEnv, so the guard is in effect before the
-  // provider change below.
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.chat.openSidebarOnProviderChange", false]],
-  });
   await SpecialPowers.pushPrefEnv({
     set: [
       [ALT_PREF, true],
       ["browser.tabs.groups.enabled", true],
-      // Make the AI page feature available so the summarize item is shown.
-      ["browser.ml.chat.page", true],
-      ["browser.ml.chat.provider", "http://localhost:8080"],
     ],
   });
 });
@@ -73,35 +62,6 @@ add_task(async function test_move_operations_in_submenu() {
       document.getElementById("context_closeDuplicateTabs").parentNode.id,
       "closeTabOptions",
       "Close Duplicates is inside the Close Multiple submenu"
-    );
-
-    await closeTabContextMenu();
-  });
-});
-
-// The AI entrypoint is a single flat "Summarize Page" item; the full
-// #context_askChat submenu is hidden.
-add_task(async function test_single_summarize_item() {
-  await BrowserTestUtils.withNewTab("https://example.com", async () => {
-    await openTabContextMenu(gBrowser.selectedTab);
-
-    const askChat = document.getElementById("context_askChat");
-    const summarize = document.getElementById("context_askChatSummarize");
-
-    // buildTabSummarizeItem populates the flat item asynchronously.
-    await TestUtils.waitForCondition(
-      () => !summarize.hidden,
-      "flat Summarize Page item is shown"
-    );
-
-    Assert.ok(
-      askChat.hidden,
-      "the ask-chat submenu is hidden in the alt layout"
-    );
-    Assert.equal(
-      summarize.parentNode.id,
-      "tabContextMenu",
-      "the summarize item is a top-level item"
     );
 
     await closeTabContextMenu();

@@ -99,17 +99,6 @@ if (!Services.prefs.getBoolPref("layout.css.text-decoration-inset.enabled")) {
   });
 }
 
-if (
-  !Services.prefs.getBoolPref("layout.css.scroll-driven-animations.enabled")
-) {
-  ignoreList.push({
-    sourceName: /\b(smartbar|ai-action-confirmation)\.css$/i,
-    errorMessage:
-      /Unknown property .*(animation-range|animation-timeline|scroll-timeline|view-timeline|timeline-scope)/i,
-    isFromDevTools: false,
-  });
-}
-
 if (!Services.prefs.getBoolPref("dom.headingoffset.enabled")) {
   ignoreList.push({
     sourceName: /\b(html)\.css$/i,
