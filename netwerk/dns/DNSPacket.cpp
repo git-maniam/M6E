@@ -30,7 +30,7 @@ static uint32_t get32bit(const unsigned char* aData, unsigned int index) {
 // These are normally explicit filtering performed by the recursive resolver.
 bool hardFail(uint16_t code) {
   const uint16_t noFallbackErrors[] = {
-      4,   // Forged answer (malware filtering)
+      4,  // Forged answer (malware filtering)
       // M6E: Cloudflare for Families answers blocked names with 0.0.0.0 and
       // Censored, so these must not fall back to native DNS either (D25).
       15,  // Blocked
@@ -44,6 +44,18 @@ bool hardFail(uint16_t code) {
     }
   }
   return false;
+}
+
+// M6E: a filtering resolver (Cloudflare for Families) answers a blocked name
+// with 0.0.0.0 or ::, followed by an extended DNS error. Skipping such an
+// address lets the error decide whether to fall back to native DNS (D25).
+static bool IsUnspecifiedAddress(const unsigned char* aData, uint16_t aLength) {
+  for (uint16_t i = 0; i < aLength; i++) {
+    if (aData[i] != 0) {
+      return false;
+    }
+  }
+  return true;
 }
 
 nsresult DNSPacket::FillBuffer(
@@ -776,6 +788,10 @@ nsresult DNSPacket::DecodeInternal(
             LOG(("TRR bad length for A (%u)\n", RDLENGTH));
             return NS_ERROR_UNEXPECTED;
           }
+          if (!aAllowRFC1918 &&
+              IsUnspecifiedAddress(aBuffer + index, RDLENGTH)) {
+            break;
+          }
           rv = aResp.Add(TTL, aBuffer, index, RDLENGTH, aAllowRFC1918);
           if (NS_FAILED(rv)) {
             LOG(
@@ -788,6 +804,10 @@ nsresult DNSPacket::DecodeInternal(
           if (RDLENGTH != 16) {
             LOG(("TRR bad length for AAAA (%u)\n", RDLENGTH));
             return NS_ERROR_UNEXPECTED;
+          }
+          if (!aAllowRFC1918 &&
+              IsUnspecifiedAddress(aBuffer + index, RDLENGTH)) {
+            break;
           }
           rv = aResp.Add(TTL, aBuffer, index, RDLENGTH, aAllowRFC1918);
           if (NS_FAILED(rv)) {
