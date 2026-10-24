@@ -64,7 +64,6 @@ async function openAboutWelcome() {
       info(`evaluateScreenTargeting called with args: ${args}`);
       // Renders easy setup import screen as first screen to prevent pin/default dialog boxes breaking tests
       const falseTargeting = [
-        "isSmartWindowOnboarding",
         EASY_SETUP_TARGETING,
         "isDeviceMigration",
         "backupRestoreEnabled && 'messaging-system-action.showRestoreFromBackup' |preferenceValue == true",

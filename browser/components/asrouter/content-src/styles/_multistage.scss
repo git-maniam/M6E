@@ -55,7 +55,7 @@ html {
 // Below variables are used via config JSON in AboutWelcomeDefaults
 // and referenced below inside dummy class to pass test browser_parsable_css
 .dummy {
-  background: var(--mr-welcome-background-color) var(--mr-welcome-background-gradient) var(--mr-secondary-position) var(--mr-screen-background-color) var(--mr-smart-window-background-gradient);
+  background: var(--mr-welcome-background-color) var(--mr-welcome-background-gradient) var(--mr-secondary-position) var(--mr-screen-background-color);
 }
 
 // Styling for content rendered in a Spotlight messaging surface.
@@ -133,8 +133,7 @@ html {
 
 .onboardingContainer:has(.pinnable-sites-list) {
   // Messages can layer their hero image over this gradient. Each stop resolves
-  // to the same flat color in dark mode (see the smart-window gradient above
-  // for the same per-stop light-dark() pattern).
+  // to the same flat color in dark mode.
   --pinnable-sites-gradient: linear-gradient(
     0deg,
     light-dark(rgb(252, 245, 240), var(--onboarding-dark-backdrop-color)) 0%,
@@ -278,7 +277,6 @@ html {
     light-dark(rgba(144, 89, 255, 20%), rgba(144, 89, 255, 30%)) 0%,
     light-dark(rgba(2, 144, 238, 20%), rgba(2, 144, 238, 30%)) 100%
   );
-  --mr-smart-window-background-gradient: radial-gradient(190% 105% at 50% 90%, light-dark(#FDF3F2, #4E243F) 0%, light-dark(#ECE4FB, #311764) 100%);
   --mr-screen-background-color: light-dark(var(--color-gray-0), var(--color-gray-70));
   --single-select-border-color: var(--color-gray-60);
   --single-select-hover-color: light-dark(var(--color-gray-20), var(--color-gray-70));
@@ -5136,67 +5134,5 @@ html {
   // is actually present so we don't disturb existing screens.
   .main-content:has(> .animation-play-pause-button) {
     position: relative;
-  }
-}
-
-.SMARTWINDOW_FEEDBACK_SCREEN {
-  .welcome-text {
-    align-items: start;
-    margin: 0 0 8px;
-  }
-
-  .main-content-inner {
-    justify-content: flex-start;
-    padding: 32px;
-  }
-
-  .main-content.no-steps {
-    padding-bottom: 0;
-  }
-
-  #content-tiles-container {
-    margin: 0 8px;
-
-    .content-tile,
-    .textarea-container {
-      margin-inline: 0;
-    }
-
-    .tile-title-container {
-      margin-block: 0 8px;
-    }
-
-    .content-tile .multi-select-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      justify-items: start;
-      align-items: start;
-      gap: 8px;
-      margin-inline: 0;
-      padding: 12px;
-
-      .checkbox-container {
-        align-items: flex-start;
-      }
-    }
-  }
-
-  .tile-subtitle {
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .link-paragraph {
-    text-align: start;
-    padding: 0 8px;
-    margin-block: 12px 20px;
-  }
-
-  .action-buttons {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: center;
-    padding: 0 4px;
-    gap: 8px;
   }
 }

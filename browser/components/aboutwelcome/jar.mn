@@ -20,7 +20,6 @@ browser.jar:
   content/activity-stream/data/content/assets/heart.webp                                    (./assets/heart.webp)
   content/activity-stream/data/content/assets/long-zap.svg                                  (./assets/long-zap.svg)
   content/activity-stream/data/content/assets/mobile-download-qr-existing-user.svg          (./assets/mobile-download-qr-existing-user.svg)
-  content/activity-stream/data/content/assets/mr-kit-smart-window.svg                       (./assets/mr-kit-smart-window.svg)
   content/activity-stream/data/content/assets/mr-rtamo-background-image.svg                 (./assets/mr-rtamo-background-image.svg)
   content/activity-stream/data/content/assets/noodle-C.svg                                  (./assets/noodle-C.svg)
   content/activity-stream/data/content/assets/noodle-outline-L.svg                          (./assets/noodle-outline-L.svg)

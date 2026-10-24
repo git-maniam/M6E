@@ -69,7 +69,6 @@ targeting, use separate messages instead.
 - [`ipProtectionPanelClosed`](#ipprotectionpanelclosed)
 - [`ipProtectionBandwidthReset`](#ipprotectionbandwidthreset)
 - [`selectableProfilesUpdated`](#selectableprofilesupdated)
-- [`smartWindowNewTab`](#smartwindownewtab)
 - [`nimbusUpdate`](#nimbusupdate)
 - [`lastWindowClose`](#lastwindowclose)
 
@@ -415,16 +414,6 @@ Happens when the user closes n or more tabs in a session
   targeting: "currentTabsOpen >= 4"
 }
 ```
-```js
-// The trigger also includes an optional action context variable
-// when a caller marks the tab.smartWindowActionSource before close.
-// Here, the message triggers when the close was attributed to a specific source
-// (e.g., "close_current_tab" set by a toolcall)
-{
-  trigger: { id: "nthTabClosed" },
-  targeting: "actionSource == 'close_current_tab'"
-}
-```
 
 ### `nthTabOpened`
 
@@ -660,17 +649,6 @@ A currentTabsOpen context variable is included to be used in the targeting
 {
   trigger: { id: "tabSwitch" },
   targeting: `!'browser.tab.splitview.hasUsed'|preferenceValue && currentTabsOpen >=5`
-}
-```
-
-### `smartWindowNewTab`
-
-Occurs every time a user opens a new Smart Window tab.
-
-```js
-{
-  trigger: { id: "smartWindowNewTab" },
-  targeting: "isAIWindow && 'browser.smartwindow.firstrun.hasCompleted' | preferenceValue",
 }
 ```
 
