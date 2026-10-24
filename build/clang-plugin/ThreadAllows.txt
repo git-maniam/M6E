@@ -17,9 +17,6 @@
 # Gecko/Firefox thread names
 # (See also "Unsorted thread names", below.)
 
-# Used by `nsUpdateProcessor` to check for updates. May also be used for polling
-# the update process.
-UpdateProcessor
 # Used by `BackgroundClipboardContentAnalysisParent` to handle clipboard requests
 # from content processes.
 BkgrndClipboard

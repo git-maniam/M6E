@@ -245,14 +245,8 @@ nsresult BackgroundTasks::RunBackgroundTask(nsICommandLine* aCmdLine) {
   return GetCurrentSerialEventTarget()->DelayedDispatch(r.forget(), 100);
 }
 
-bool BackgroundTasks::IsUpdatingTaskName(const nsCString& aName) {
-  return aName.EqualsLiteral("backgroundupdate") ||
-         aName.EqualsLiteral("shouldprocessupdates");
-}
-
 bool BackgroundTasks::IsEphemeralProfileTaskName(const nsCString& aName) {
-  return !(aName.EqualsLiteral("backgroundupdate") ||
-           aName.EqualsLiteral("defaultagent") ||
+  return !(aName.EqualsLiteral("defaultagent") ||
            aName.EqualsLiteral("message") ||  // Just for development.
            aName.EqualsLiteral("not_ephemeral_profile"));  // Just for testing.
 }

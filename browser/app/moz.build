@@ -68,11 +68,6 @@ extra_files = [
     (f"{branding}/document.icns", "Resources/document.icns"),
     (f"{branding}/Assets.car", "Resources/Assets.car"),
 ]
-if CONFIG["MOZ_UPDATER"]:
-    extra_files.append((
-        f"!/{FINAL_TARGET}/org.mozilla.updater",
-        "Library/LaunchServices/org.mozilla.updater",
-    ))
 MacOSBundle(
     f"!/dist/{CONFIG['MOZ_MACBUNDLE_NAME']}",
     skeleton="macbuild/Contents",

@@ -23,17 +23,6 @@ DIRS += [
 ]
 
 
-if CONFIG["MOZ_UPDATER"] and CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    DIRS += ["mozapps/update"]
-
-if CONFIG["MOZ_MAINTENANCE_SERVICE"] or CONFIG["MOZ_UPDATER"]:
-    DIRS += [
-        "mozapps/update/common",
-    ]
-
-if CONFIG["MOZ_MAINTENANCE_SERVICE"]:
-    DIRS += ["components/maintenanceservice"]
-
 DIRS += ["xre"]
 
 DIRS += ["mozapps/handling"]

@@ -382,12 +382,6 @@
       "chrome://browser/content/preferences/widgets/sync-engines-list.mjs": [
         "../../../browser/components/preferences/widgets/sync-engine-list/sync-engines-list.mjs"
       ],
-      "chrome://browser/content/preferences/widgets/update-information.mjs": [
-        "../../../browser/components/preferences/widgets/update-information/update-information.mjs"
-      ],
-      "chrome://browser/content/preferences/widgets/update-state.mjs": [
-        "../../../browser/components/preferences/widgets/update-state/update-state.mjs"
-      ],
       "chrome://browser/content/profiles/avatar.mjs": [
         "../../../browser/components/profiles/content/avatar.mjs"
       ],
@@ -1635,9 +1629,6 @@
       ],
       "resource:///modules/URILoadingHelper.sys.mjs": [
         "../../../browser/modules/URILoadingHelper.sys.mjs"
-      ],
-      "resource:///modules/UpdatePolicyEnforcer.sys.mjs": [
-        "../../../browser/modules/UpdatePolicyEnforcer.sys.mjs"
       ],
       "resource:///modules/WindowsJumpLists.sys.mjs": [
         "../../../browser/modules/WindowsJumpLists.sys.mjs"
@@ -5665,9 +5656,6 @@
       "resource://gre/modules/AppServicesTracing.sys.mjs": [
         "../../../toolkit/modules/AppServicesTracing.sys.mjs"
       ],
-      "resource://gre/modules/AppUpdater.sys.mjs": [
-        "../../../toolkit/mozapps/update/AppUpdater.sys.mjs"
-      ],
       "resource://gre/modules/AsanReporter.sys.mjs": [
         "../../../toolkit/modules/AsanReporter.sys.mjs"
       ],
@@ -5688,9 +5676,6 @@
       ],
       "resource://gre/modules/BackgroundTasksUtils.sys.mjs": [
         "../../../toolkit/components/backgroundtasks/BackgroundTasksUtils.sys.mjs"
-      ],
-      "resource://gre/modules/BackgroundUpdate.sys.mjs": [
-        "../../../toolkit/mozapps/update/BackgroundUpdate.sys.mjs"
       ],
       "resource://gre/modules/BinarySearch.sys.mjs": [
         "../../../toolkit/modules/BinarySearch.sys.mjs"
@@ -6457,18 +6442,6 @@
       "resource://gre/modules/SyncedBookmarksMirror.sys.mjs": [
         "../../../toolkit/components/places/SyncedBookmarksMirror.sys.mjs"
       ],
-      "resource://gre/modules/TaskScheduler.sys.mjs": [
-        "../../../toolkit/components/taskscheduler/TaskScheduler.sys.mjs"
-      ],
-      "resource://gre/modules/TaskSchedulerMacOSImpl.sys.mjs": [
-        "../../../toolkit/components/taskscheduler/TaskSchedulerMacOSImpl.sys.mjs"
-      ],
-      "resource://gre/modules/TaskSchedulerWinImpl.sys.mjs": [
-        "../../../toolkit/components/taskscheduler/TaskSchedulerWinImpl.sys.mjs"
-      ],
-      "resource://gre/modules/TaskSchedulerWinMSIXImpl.sys.mjs": [
-        "../../../toolkit/components/taskscheduler/TaskSchedulerWinMSIXImpl.sys.mjs"
-      ],
       "resource://gre/modules/TelemetryArchive.sys.mjs": [
         "../../../toolkit/components/telemetry/app/TelemetryArchive.sys.mjs"
       ],
@@ -6525,18 +6498,6 @@
       ],
       "resource://gre/modules/UntrustedModulesPing.sys.mjs": [
         "../../../toolkit/components/telemetry/pings/UntrustedModulesPing.sys.mjs"
-      ],
-      "resource://gre/modules/UpdateListener.sys.mjs": [
-        "../../../toolkit/mozapps/update/UpdateListener.sys.mjs"
-      ],
-      "resource://gre/modules/UpdateLog.sys.mjs": [
-        "../../../toolkit/mozapps/update/UpdateLog.sys.mjs"
-      ],
-      "resource://gre/modules/UpdateService.sys.mjs": [
-        "../../../toolkit/mozapps/update/UpdateService.sys.mjs"
-      ],
-      "resource://gre/modules/UpdateTelemetry.sys.mjs": [
-        "../../../toolkit/mozapps/update/UpdateTelemetry.sys.mjs"
       ],
       "resource://gre/modules/UpdateTimerManager.sys.mjs": [
         "../../../toolkit/components/timermanager/UpdateTimerManager.sys.mjs"
@@ -6627,9 +6588,6 @@
       ],
       "resource://gre/modules/addons/siteperms-addon-utils.sys.mjs": [
         "../../../toolkit/mozapps/extensions/internal/siteperms-addon-utils.sys.mjs"
-      ],
-      "resource://gre/modules/backgroundtasks/BackgroundTask_backgroundupdate.sys.mjs": [
-        "../../../toolkit/mozapps/update/BackgroundTask_backgroundupdate.sys.mjs"
       ],
       "resource://gre/modules/backgroundtasks/BackgroundTask_defaultagent.sys.mjs": [
         "../../../toolkit/mozapps/defaultagent/BackgroundTask_defaultagent.sys.mjs"
@@ -7761,9 +7719,6 @@
       ],
       "resource://testing-common/backgroundtasks/BackgroundTask_backgroundtask_specific_pref.sys.mjs": [
         "../../../toolkit/components/backgroundtasks/tests/BackgroundTask_backgroundtask_specific_pref.sys.mjs"
-      ],
-      "resource://testing-common/backgroundtasks/BackgroundTask_shouldprocessupdates.sys.mjs": [
-        "../../../toolkit/components/backgroundtasks/tests/BackgroundTask_shouldprocessupdates.sys.mjs"
       ],
       "resource://testing-common/backgroundtasks/BackgroundTask_unique_profile.sys.mjs": [
         "../../../toolkit/components/backgroundtasks/tests/BackgroundTask_unique_profile.sys.mjs"

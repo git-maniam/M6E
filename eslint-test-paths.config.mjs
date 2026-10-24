@@ -64,7 +64,6 @@ const extraXpcshellTestPaths = [
   "toolkit/components/places/tests/queries/",
   "toolkit/components/thumbnails/test/",
   "toolkit/modules/tests/modules/",
-  "toolkit/mozapps/update/tests/data/",
   "toolkit/components/url-classifier/tests/performance/",
   "toolkit/xre/test/",
   "widget/headless/tests/",

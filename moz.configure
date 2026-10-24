@@ -654,10 +654,10 @@ def build_backend_defaults(
         host.os == "WINNT"
         and target.os == "WINNT"
         and compile_environment
-        and project not in ("mobile/android", "memory", "tools/update-programs")
+        and project not in ("mobile/android", "memory")
     ):
         all_backends.append("VisualStudio")
-    if compile_environment and project not in ("memory", "tools/update-programs"):
+    if compile_environment and project not in ("memory",):
         all_backends.append("Clangd")
     return tuple(all_backends) or None
 

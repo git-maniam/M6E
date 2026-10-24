@@ -148,16 +148,6 @@ if CONFIG["MOZ_JXL"]:
         "third_party/rust/jxl_transforms",
     ]
 
-LICENSES += ["bspatch"]
-LICENSES["bspatch"].title = "bspatch License"
-LICENSES["bspatch"].text = "bspatch.txt"
-LICENSES["bspatch"].spdx = "BSD-2-Clause"
-LICENSES["bspatch"].notice = """
-<p>
-              This license applies to the following files:
-            </p>
-"""
-
 LICENSES += ["chromium"]
 LICENSES["chromium"].title = "Chromium License"
 LICENSES["chromium"].text = "chromium.txt"

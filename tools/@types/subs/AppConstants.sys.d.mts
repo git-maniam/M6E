@@ -37,7 +37,6 @@ export const AppConstants: Readonly<{
   // #ifdef MOZ_TELEMETRY_REPORTING
   MOZ_TELEMETRY_REPORTING: boolean;
 
-  MOZ_UPDATER: boolean;
 
   MOZ_WEBRTC: boolean;
 
@@ -68,11 +67,9 @@ export const AppConstants: Readonly<{
 
   MOZ_NORMANDY: boolean;
 
-  MOZ_MAINTENANCE_SERVICE: boolean;
 
   MOZ_BACKGROUNDTASKS: boolean;
 
-  MOZ_UPDATE_AGENT: boolean;
 
   MOZ_BITS_DOWNLOAD: boolean;
 

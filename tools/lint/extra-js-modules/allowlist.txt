@@ -67,8 +67,6 @@ browser/components/topsites/TippyTopProvider.sys.mjs
 browser/components/topsites/TopSites.sys.mjs
 browser/components/topsites/constants.mjs
 browser/modules/AboutNewTab.sys.mjs
-browser/modules/BackgroundTask_install.sys.mjs
-browser/modules/BackgroundTask_uninstall.sys.mjs
 browser/modules/BrowserDOMWindow.sys.mjs
 browser/modules/BrowserUIUtils.sys.mjs
 browser/modules/BrowserUsageTelemetry.sys.mjs
@@ -97,7 +95,6 @@ browser/modules/SiteDataManager.sys.mjs
 browser/modules/SitePermissions.sys.mjs
 browser/modules/TransientPrefs.sys.mjs
 browser/modules/URILoadingHelper.sys.mjs
-browser/modules/UpdatePolicyEnforcer.sys.mjs
 browser/modules/WindowsJumpLists.sys.mjs
 browser/modules/WindowsPreviewPerTab.sys.mjs
 browser/modules/ZoomUI.sys.mjs
@@ -485,10 +482,6 @@ toolkit/components/satchel/megalist/aggregator/DefaultAggregator.sys.mjs
 toolkit/components/satchel/megalist/aggregator/datasources/DataSourceBase.sys.mjs
 toolkit/components/satchel/megalist/aggregator/datasources/LoginDataSource.sys.mjs
 toolkit/components/search/SearchSuggestions.sys.mjs
-toolkit/components/taskscheduler/TaskScheduler.sys.mjs
-toolkit/components/taskscheduler/TaskSchedulerMacOSImpl.sys.mjs
-toolkit/components/taskscheduler/TaskSchedulerWinImpl.sys.mjs
-toolkit/components/taskscheduler/TaskSchedulerWinMSIXImpl.sys.mjs
 toolkit/components/telemetry/TelemetryStartup.sys.mjs
 toolkit/components/telemetry/app/ClientID.sys.mjs
 toolkit/components/telemetry/app/TelemetryArchive.sys.mjs
@@ -665,14 +658,6 @@ toolkit/mozapps/handling/ContentDispatchChooser.sys.mjs
 toolkit/mozapps/pushnotificationhelper/PushNotificationHelper.sys.mjs
 toolkit/mozapps/pushnotificationhelper/PushNotificationHelperRegistry.sys.mjs
 toolkit/mozapps/pushnotificationhelper/WindowsPushNotificationHelper.sys.mjs
-toolkit/mozapps/update/AppUpdater.sys.mjs
-toolkit/mozapps/update/BackgroundTask_backgroundupdate.sys.mjs
-toolkit/mozapps/update/BackgroundUpdate.sys.mjs
-toolkit/mozapps/update/UpdateListener.sys.mjs
-toolkit/mozapps/update/UpdateLog.sys.mjs
-toolkit/mozapps/update/UpdateService.sys.mjs
-toolkit/mozapps/update/UpdateServiceStub.sys.mjs
-toolkit/mozapps/update/UpdateTelemetry.sys.mjs
 uriloader/exthandler/ExtHandlerService.sys.mjs
 uriloader/exthandler/HandlerList.sys.mjs
 uriloader/exthandler/WebHandlerApp.sys.mjs

@@ -123,9 +123,6 @@ DIRS += ["autocomplete", "printingui", "satchel", "captivedetect"]
 
 DIRS += ["terminator"]
 
-if CONFIG["MOZ_BACKGROUNDTASKS"] and CONFIG["OS_TARGET"] in ("WINNT", "Darwin"):
-    DIRS += ["taskscheduler"]
-
 DIRS += ["build"]
 
 

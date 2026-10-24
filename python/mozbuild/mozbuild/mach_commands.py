@@ -3628,27 +3628,6 @@ def repackage_sign_msix(command_context, input, force=False, verbose=False):
     return 0
 
 
-@SubCommand("repackage", "mar", description="Repackage into complete MAR file")
-@CommandArgument("--input", "-i", type=str, required=True, help="Input filename")
-@CommandArgument("--mar", type=str, required=True, help="Mar binary path")
-@CommandArgument("--output", "-o", type=str, required=True, help="Output filename")
-@CommandArgument(
-    "--arch", type=str, required=True, help="The architecture you are building."
-)
-@CommandArgument("--mar-channel-id", type=str, help="Mar channel id")
-def repackage_mar(command_context, input, mar, output, arch, mar_channel_id):
-    from mozbuild.repackaging.mar import repackage_mar
-
-    repackage_mar(
-        command_context.topsrcdir,
-        input,
-        mar,
-        output,
-        arch=arch,
-        mar_channel_id=mar_channel_id,
-    )
-
-
 @SubCommand(
     "repackage",
     "snap",

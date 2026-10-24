@@ -22,64 +22,13 @@ def debug_dmg_install_helper(enabled):
 set_config("DMG_INSTALL_HELPER_DEBUG", debug_dmg_install_helper)
 
 
-# Updater
-# ==============================================================
-@depends(build_project, target)
-def updater_default(build_project, target):
-    if build_project == "tools/update-programs":
-        return True
-    return build_project != "mobile/android" and target.os != "iOS"
-
-
-option(
-    "--enable-updater",
-    default=updater_default,
-    help="{Enable|Disable} building the updater",
-)
-
-set_config("MOZ_UPDATER", True, when="--enable-updater")
-set_define("MOZ_UPDATER", True, when="--enable-updater")
-
-# Updates that do not verify signatures
-# ==============================================================
-
-option(
-    "--enable-unverified-updates",
-    help="Enable application update without verifying MAR or updater binary signatures",
-)
-
-
-@depends("--enable-unverified-updates", "--enable-compile-environment")
-def disable_unverified_updates(unverified_updates, compile_environment):
-    if unverified_updates:
-        if not compile_environment:
-            die("--enable-unverified-updates requires --enable-compile-environment")
-    return not unverified_updates
-
-
-set_define(
-    "MOZ_VERIFY_MAR_SIGNATURE",
-    depends_if(disable_unverified_updates)(lambda _: True),
-)
-set_config(
-    "MOZ_VERIFY_MAR_SIGNATURE",
-    True,
-    depends_if(disable_unverified_updates)(lambda _: True),
-)
-
-set_config(
-    "DISABLE_UPDATER_AUTHENTICODE_CHECK",
-    True,
-    depends_if("--enable-unverified-updates")(lambda _: True),
-)
-
-# Mac elevated updates without production signing
+# Mac privileged helper without production signing
 # ==============================================================
 
 option(
     "--enable-mac-elevated-updates-with-generic-certs",
     when=target_is_osx,
-    help="Allow local developer-signed builds to perform elevated updates on macOS",
+    help="Allow local developer-signed builds to use the privileged DMG install helper on macOS",
 )
 
 
@@ -124,7 +73,6 @@ def generate_smprivilegedexec_requirements(relaxed):
     requirements = ""
     smprivilegedexecutables_list = [
         "org.mozilla.dmgInstallHelper",
-        "org.mozilla.updater",
     ]
 
     for executable in smprivilegedexecutables_list:
@@ -139,119 +87,6 @@ def generate_smprivilegedexec_requirements(relaxed):
 set_config(
     "MOZ_SMPRIVILEGEDEXECUTABLES_REQUIREMENTS", generate_smprivilegedexec_requirements
 )
-
-# MAR channel ID configuration
-# ==============================================================
-
-option(env="MAR_CHANNEL_ID", nargs=1, help="MAR channel identifier")
-
-set_config(
-    "MAR_CHANNEL_ID",
-    depends_if("MAR_CHANNEL_ID")(lambda channel: channel[0]),
-)
-
-option(
-    env="ACCEPTED_MAR_CHANNEL_IDS", nargs="+", help="Accepted MAR channel identifiers"
-)
-
-set_config(
-    "ACCEPTED_MAR_CHANNEL_IDS",
-    depends_if("ACCEPTED_MAR_CHANNEL_IDS")(lambda channels: ",".join(channels)),
-)
-
-# Use NSS for MAR signatures even on platforms where system libraries are
-# supported (currently Windows and macOS).
-# ==============================================================
-
-can_toggle_nss_mar = target_is_windows | target_is_osx
-
-option(
-    "--enable-nss-mar",
-    when=can_toggle_nss_mar,
-    help="Enable using NSS to check MAR signatures instead of system crypto",
-)
-
-
-@depends(
-    depends("--enable-nss-mar", when=can_toggle_nss_mar)(lambda x: x),
-    can_toggle_nss_mar,
-)
-def enable_nss_mar(enabled, can_toggle_nss_mar):
-    return enabled or not can_toggle_nss_mar
-
-
-set_config("MOZ_USE_NSS_FOR_MAR", True, when=enable_nss_mar)
-
-# Maintenance service (Windows only)
-# ==============================================================
-
-
-@depends("--enable-updater")
-def maintenance_service_default(updater):
-    return bool(updater)
-
-
-option(
-    "--enable-maintenance-service",
-    when=target_is_windows,
-    default=maintenance_service_default,
-    help="{Enable|Disable} building of maintenance service",
-)
-
-set_define(
-    "MOZ_MAINTENANCE_SERVICE",
-    depends_if("--enable-maintenance-service", when=target_is_windows)(lambda _: True),
-)
-set_config(
-    "MOZ_MAINTENANCE_SERVICE",
-    depends_if("--enable-maintenance-service", when=target_is_windows)(lambda _: True),
-)
-
-
-@depends("--enable-maintenance-service", "--enable-updater", when=target_is_windows)
-def check_maintenance_service(mainteance_service, updater):
-    if mainteance_service and not updater:
-        die("--enable-updater is required to --enable-maintenance-service")
-
-
-# Update agent (currently Windows and macOS only)
-# This is an independent task that runs on a schedule to
-# check for, download, and install updates.
-# ==============================================================
-
-
-@depends("--enable-backgroundtasks", "--enable-updater", build_project)
-def update_agent_default(backgroundtasks, updater, build_project):
-    return bool(backgroundtasks) and bool(updater) and build_project == "browser"
-
-
-option(
-    "--disable-update-agent",
-    when=target_is_windows | target_is_osx,
-    default=update_agent_default,
-    help="{Enable|Disable} building update agent",
-)
-
-set_config(
-    "MOZ_UPDATE_AGENT",
-    depends_if("--enable-update-agent", when=target_is_windows | target_is_osx)(
-        lambda _: True
-    ),
-)
-
-
-@depends(
-    "--enable-update-agent",
-    "--enable-backgroundtasks",
-    "--enable-updater",
-    when=target_is_windows | target_is_osx,
-)
-def check_update_agent(update_agent, backgroundtasks, updater):
-    if update_agent and not backgroundtasks:
-        die("--enable-backgroundtasks is required to --enable-update-agent")
-    if update_agent and not updater:
-        die("--enable-updater is required to --enable-update-agent")
-
 
 # Enable or disable the default browser agent, which monitors the user's default
 # browser setting on Windows.
@@ -329,30 +164,3 @@ def push_notification_helper_flag(enabled):
 
 
 set_config("MOZ_PUSH_NOTIFICATION_HELPER", push_notification_helper_flag)
-
-# Supported patch formats for the updater
-# =======================================
-
-with only_when("--enable-updater"):
-    include("zucchini.configure")
-
-    with only_when(~zucchini_is_available):
-        set_config("MOZ_BSPATCH", True)
-        set_define("MOZ_BSPATCH", True)
-
-    with only_when(zucchini_is_available):
-        option(
-            "--disable-bspatch",
-            help="Disable bspatch support",
-        )
-
-        set_config("MOZ_BSPATCH", True, when="--enable-bspatch")
-        set_define("MOZ_BSPATCH", True, when="--enable-bspatch")
-
-        @depends("--enable-bspatch", "--enable-zucchini")
-        def check_at_least_one_patch_format(bspatch, zucchini):
-            if not bspatch and not zucchini:
-                die(
-                    "You must enable at least one patch format when --enable-updater "
-                    "is used. Use --enable-bspatch or --enable-zucchini."
-                )

@@ -14,9 +14,7 @@
 namespace CommandLineServiceMac {
 
 static const int kArgsGrowSize = 20;
-#ifndef MOZ_UPDATER
 static const char kRelaunchShell[] = "/bin/sh";
-#endif
 
 static char** sArgs = nullptr;
 static int sArgsAllocated = 0;
@@ -56,32 +54,9 @@ void SetupMacCommandLine(int& argc, char**& argv, bool forRestart) {
 
   NSString* path = [NSString stringWithUTF8String:argv[0]];
   bool relaunchExecutable = false;
-#ifdef MOZ_UPDATER
-  if (forRestart &&
-      [path hasSuffix:[NSString stringWithUTF8String:MOZ_APP_NAME]]) {
-    // When we restart, we ask the updater binary to restart us instead.
-    // Essentially, we are using the updater as a relauncher process. We pass
-    // our pid along so that it waits for us to go away before it launches the
-    // new process. Two processes of the same app bundle must not be registered
-    // with macOS at the same time: the second one is treated as another
-    // instance of the app and is given its own dock tile, which then sticks
-    // around in the dock's list of recently used applications.
-    NSString* updaterPath = [[path stringByDeletingLastPathComponent]
-        stringByAppendingPathComponent:
-            @"updater.app/Contents/MacOS/org.mozilla.updater"];
-    AddToCommandLine(updaterPath.UTF8String);
-    AddToCommandLine("--openAppBundle");
-    AddToCommandLine("--wait-pid");
-    AddToCommandLine(
-        [NSString stringWithFormat:@"%d", [[NSProcessInfo processInfo]
-                                              processIdentifier]]
-            .UTF8String);
-  }
-#else
-  // M6E: there is no updater to relaunch through, so a shell waits for this
-  // process to exit (or become a zombie) and then runs the executable again,
-  // inheriting the environment. A command line already set up this way is
-  // left alone.
+  // M6E: a shell waits for this process to exit (or become a zombie) and then
+  // runs the executable again, inheriting the environment. A command line
+  // already set up this way is left alone.
   if (forRestart && [path isEqualToString:@(kRelaunchShell)]) {
     free(sArgs);
     sArgs = nullptr;
@@ -101,20 +76,11 @@ void SetupMacCommandLine(int& argc, char**& argv, bool forRestart) {
     path = [[NSBundle mainBundle] executablePath];
     relaunchExecutable = true;
   }
-#endif
 
   // We adjust the path to point to the .app bundle, rather than the executable
   // itself, to allow for the use of the NSWorkspace API for launching and
-  // relaunching the application. We intentionally exclude the
-  // org.mozilla.updater binary because we are experiencing NSCocoaErrors of
-  // type `kLSUnknownErr` when trying to launch the updater.app with the
-  // NSWorkspace API, at least on macOS 10.15. The updater is launched using
-  // NSTask instead. We do not experience these NSCocoaErrors on more modern
-  // versions of macOS and we may be able to switch to the NSWorkspace API once
-  // we no longer support the older versions of macOS where these errors occur.
-  // See bug 1911178.
-  if (!relaunchExecutable && ![path hasSuffix:@"org.mozilla.updater"] &&
-      ![path hasSuffix:@".app"]) {
+  // relaunching the application.
+  if (!relaunchExecutable && ![path hasSuffix:@".app"]) {
     // Ensure that the path in the first argument points to the .app bundle.
     // This strips three last path components, for example:
     //
@@ -123,8 +89,7 @@ void SetupMacCommandLine(int& argc, char**& argv, bool forRestart) {
     path = [[[path stringByDeletingLastPathComponent]
         stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
   }
-  if (!relaunchExecutable && ![path hasSuffix:@"org.mozilla.updater"] &&
-      ![path hasSuffix:@".app"]) {
+  if (!relaunchExecutable && ![path hasSuffix:@".app"]) {
     // We were unable to obtain the path to the .app bundle and are unable to
     // build a valid command line.
     return;
