@@ -62,3 +62,23 @@ add_task(async function test_onUpdate() {
   Services.prefs.setStringPref(PREF, "three");
   Assert.equal(calls.length, 1);
 });
+
+add_task(async function test_feature_override() {
+  const { overrideFeature } = ChromeUtils.importESModule(
+    "resource://testing-common/FeatureOverride.sys.mjs"
+  );
+  Services.prefs.setStringPref(PREF, "one");
+
+  let feature = NimbusFeatures.urlbar;
+  let cleanup = await overrideFeature({
+    featureId: "urlbar",
+    value: { quickSuggestRankingMode: "two", other: 3 },
+  });
+  Assert.equal(feature.getVariable("quickSuggestRankingMode"), "two");
+  Assert.equal(feature.getVariable("other"), 3);
+  Assert.equal(feature.getAllVariables().other, 3);
+
+  await cleanup();
+  Assert.equal(feature.getVariable("quickSuggestRankingMode"), "one");
+  Assert.strictEqual(feature.getVariable("other"), undefined);
+});
