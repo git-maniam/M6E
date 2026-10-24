@@ -308,33 +308,6 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["SHOW_FIREFOX_ACCOUNTS"]
-            },
-            "data": {
-              "type": "object",
-              "properties": {
-                "entrypoint": {
-                  "type": "string",
-                  "description": "Adds entrypoint={your value} to the FXA URL"
-                },
-                "extraParams": {
-                  "type": "object",
-                  "description": "Any extra parameter that will be added to the FXA URL. E.g. {foo: bar} would result in <FXA_url>?foo=bar'"
-                }
-              },
-              "required": ["entrypoint"],
-              "additionalProperties": false
-            }
-          },
-          "required": ["type", "data"],
-          "additionalProperties": false,
-          "description": "Show Firefox Accounts"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
               "enum": ["SHOW_MIGRATION_WIZARD"]
             },
             "data": {

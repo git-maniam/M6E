@@ -1,5 +1,4 @@
 [DEFAULT]
-prefs = ["identity.fxaccounts.remote.root=https://example.com/"]
 support-files = [
   "head.js",
   "../../index.md",
@@ -109,8 +108,6 @@ run-if = [
 ["browser_sma_set_prefs.js"]
 
 ["browser_sma_set_search_mode.js"]
-
-["browser_sma_show_firefox_accounts.js"]
 
 ["browser_sma_show_migration_wizard.js"]
 

@@ -339,7 +339,7 @@ add_task(async function test_new_tab_init_runs_scheduler() {
   });
   sandbox
     .stub(feed, "getFeatureFlags")
-    .resolves({ signedIn: false, hasLogins: false, relayMasks: false });
+    .resolves({ hasLogins: false, relayMasks: false });
   sandbox.stub(feed, "getProfileCreatedMs").resolves(0);
 
   // Mirror the real NEW_TAB_INIT: data is the tabDetails (carries portID) and
@@ -410,7 +410,7 @@ add_task(async function test_force_message_id_pins_the_message() {
   });
   sandbox
     .stub(feed, "getFeatureFlags")
-    .resolves({ signedIn: false, hasLogins: false, relayMasks: false });
+    .resolves({ hasLogins: false, relayMasks: false });
   sandbox.stub(feed, "getProfileCreatedMs").resolves(0);
 
   await feed.onAction({ type: actionTypes.NEW_TAB_INIT });
@@ -530,7 +530,7 @@ add_task(async function test_message_state_roundtrip() {
 
 add_task(async function test_getFeatureFlags_returns_booleans() {
   const flags = await new PrivacyFeed().getFeatureFlags();
-  for (const key of ["signedIn", "hasLogins", "relayMasks"]) {
+  for (const key of ["hasLogins", "relayMasks"]) {
     Assert.equal(typeof flags[key], "boolean", `${key} is a boolean`);
   }
 });
@@ -1053,7 +1053,7 @@ add_task(async function test_new_tab_broadcast_carries_etp_off() {
   });
   sandbox
     .stub(feed, "getFeatureFlags")
-    .resolves({ signedIn: false, hasLogins: false, relayMasks: false });
+    .resolves({ hasLogins: false, relayMasks: false });
   sandbox.stub(feed, "getProfileCreatedMs").resolves(0);
 
   const portID = "port-etp";

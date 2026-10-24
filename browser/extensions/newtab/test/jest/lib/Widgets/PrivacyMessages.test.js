@@ -248,13 +248,13 @@ describe("selectPrivacyMessage", () => {
     // rand near 1 selects the last pool entry. With no suppression that's a
     // promo; with the logins feature in use the logins promo is filtered out.
     const withLogins = selectPrivacyMessage(
-      ctx({ features: { signedIn: true, hasLogins: true, relayMasks: true } }),
+      ctx({ features: { hasLogins: true, relayMasks: true } }),
       base,
       NOW,
       rand([0.999, 0.9])
     );
     // vpn/monitor promos have no signal, so a promo can still appear; just
-    // assert no suppressible promo (logins/relay/signin) is shown.
+    // assert no suppressible promo (logins/relay) is shown.
     const msg = PRIVACY_MESSAGES.find(
       m => m.id === withLogins.decision.messageId
     );
