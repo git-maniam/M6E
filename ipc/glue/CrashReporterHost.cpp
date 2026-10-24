@@ -14,12 +14,6 @@
 #include "nsXULAppAPI.h"
 #include "nsIFile.h"
 
-#if defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && \
-    defined(MOZ_OXIDIZED_BREAKPAD)
-#  include "mozilla/toolkit/crashreporter/rust_minidump_writer_linux_ffi_generated.h"
-#endif  // defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) &&
-        // defined(MOZ_OXIDIZED_BREAKPAD)
-
 namespace mozilla::ipc {
 
 ChildThreadId GetChildThreadIdFromArgs(
@@ -34,27 +28,9 @@ CrashReporterHost::CrashReporterHost(
       mChildID(aChildID),
       mThreadId(GetChildThreadIdFromArgs(aInitArgs)),
       mStartTime(::time(nullptr)),
-      mFinalized(false) {
-#if defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && \
-    defined(MOZ_OXIDIZED_BREAKPAD)
-  const CrashReporter::AuxvInfo& ipdlAuxvInfo = aInitArgs.auxvInfo();
-  DirectAuxvDumpInfo auxvInfo = {};
-  auxvInfo.program_header_count = ipdlAuxvInfo.programHeaderCount();
-  auxvInfo.program_header_address = ipdlAuxvInfo.programHeaderAddress();
-  auxvInfo.linux_gate_address = ipdlAuxvInfo.linuxGateAddress();
-  auxvInfo.entry_address = ipdlAuxvInfo.entryAddress();
-  CrashReporter::RegisterChildAuxvInfo(mChildID, auxvInfo);
-#endif  // defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) &&
-        // defined(MOZ_OXIDIZED_BREAKPAD)
-}
+      mFinalized(false) {}
 
-CrashReporterHost::~CrashReporterHost() {
-#if defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && \
-    defined(MOZ_OXIDIZED_BREAKPAD)
-  CrashReporter::UnregisterChildAuxvInfo(mChildID);
-#endif  // defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) &&
-        // defined(MOZ_OXIDIZED_BREAKPAD)
-}
+CrashReporterHost::~CrashReporterHost() {}
 
 bool CrashReporterHost::GenerateCrashReport() {
   if (!TakeCrashedChildMinidump()) {
