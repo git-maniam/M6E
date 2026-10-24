@@ -106,65 +106,6 @@ describe("settings ai features", () => {
       BrowserTestUtils.removeTab(generalTab);
     });
 
-    it("hides Tab Group Suggestions when globally blocked", async () => {
-      await SpecialPowers.pushPrefEnv({
-        set: [
-          ["browser.ai.control.default", "available"],
-          ["browser.ai.control.smartTabGroups", "default"],
-          ["browser.tabs.groups.enabled", true],
-          ["browser.tabs.groups.smart.enabled", true],
-          ["browser.tabs.groups.smart.userEnabled", true],
-        ],
-      });
-
-      // Tab Group Suggestions is only available in en-* locales
-      if (!Services.locale.appLocaleAsBCP47.startsWith("en")) {
-        Assert.ok(true, "Skipping: locale is not en-*");
-        return;
-      }
-
-      let aiControlsTab = gBrowser.selectedTab;
-      await openAiFeaturePanel(doc, win);
-
-      await new Promise(resolve => open_preferences(resolve));
-      let generalTab = gBrowser.selectedTab;
-      let generalDoc = gBrowser.selectedBrowser.contentDocument;
-      let generalWin = generalDoc.documentGlobal;
-      await maybeNavigateToPane("tabsBrowsing", generalWin);
-
-      let tabGroupSetting = generalWin.Preferences.getSetting(
-        "tabGroupSuggestions"
-      );
-      let tabGroupControl = generalDoc.getElementById("tabGroupSuggestions");
-      Assert.ok(
-        BrowserTestUtils.isVisible(tabGroupControl),
-        "Tab Group Suggestions control is visible"
-      );
-
-      gBrowser.selectedTab = aiControlsTab;
-      const toggle = doc.getElementById("aiControlDefaultToggle");
-      const dialogEl = doc.querySelector("block-ai-confirmation-dialog");
-      await dialogEl.updateComplete;
-      let dialogShown = BrowserTestUtils.waitForEvent(
-        dialogEl.dialog,
-        "toggle"
-      );
-      EventUtils.synthesizeMouseAtCenter(toggle.buttonEl, {}, win);
-      await dialogShown;
-      Assert.ok(dialogEl.dialog.open, "Dialog is open");
-      await waitForSettingChange(tabGroupSetting, () =>
-        EventUtils.synthesizeMouseAtCenter(dialogEl.confirmButton, {}, win)
-      );
-
-      gBrowser.selectedTab = generalTab;
-      Assert.ok(
-        !BrowserTestUtils.isVisible(tabGroupControl),
-        "Tab Group Suggestions control is hidden after blocking"
-      );
-
-      BrowserTestUtils.removeTab(generalTab);
-    });
-
     it("hides Translations setting when globally blocked via AI Controls toggle", async () => {
       await SpecialPowers.pushPrefEnv({
         set: [
@@ -251,7 +192,6 @@ describe("settings ai features", () => {
           ["browser.ai.control.default", "blocked"],
           ["browser.ai.control.linkPreviewKeyPoints", "default"],
           ["browser.ml.linkPreview.enabled", true],
-          ["extensions.ml.enabled", false],
         ],
       });
 

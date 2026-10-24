@@ -362,12 +362,9 @@ export let StartupTelemetry = {
     const GLOBAL_AI_PREF = "browser.ai.control.default";
     const AI_CONTROL_FEATURES = {
       "browser.ai.control.translations": "translations",
-      "browser.ai.control.pdfjsAltText": "pdfjsAltText",
-      "browser.ai.control.smartTabGroups": "smartTabGroups",
       "browser.ai.control.linkPreviewKeyPoints": "linkPreviewKeyPoints",
       "browser.ai.control.sidebarChatbot": "sidebarChatbot",
       "browser.ai.control.smartWindow": "smartWindow",
-      "browser.ai.control.speechRecognition": "speechRecognition",
     };
     const _checkAiControlPrefs = async () => {
       const globalIsBlocked =

@@ -3,7 +3,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
- * @import { AIFeature } from "chrome://global/content/ml/AIFeature.sys.mjs"
  * @typedef {typeof OnDeviceModelFeatures[keyof typeof OnDeviceModelFeatures]} OnDeviceModelFeaturesEnum
  */
 
@@ -15,11 +14,6 @@ const lazy = XPCOMUtils.declareLazy({
     "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   GenAI: "moz-src:///browser/components/genai/GenAI.sys.mjs",
   LinkPreview: "moz-src:///browser/components/genai/LinkPreview.sys.mjs",
-  PdfJsGuessAltTextFeature: "resource://pdf.js/PdfJsAIFeature.sys.mjs",
-  SmartTabGroupingManager:
-    "moz-src:///browser/components/tabbrowser/SmartTabGrouping.sys.mjs",
-  SpeechRecognitionFeature:
-    "moz-src:///dom/media/webspeech/recognition/SpeechRecognitionFeature.sys.mjs",
   TranslationsFeature:
     "chrome://global/content/translations/TranslationsFeature.sys.mjs",
 });
@@ -28,31 +22,17 @@ const lazy = XPCOMUtils.declareLazy({
  * Features that support on-device AI models.
  */
 const OnDeviceModelFeatures = Object.freeze({
-  TabGroups: "smartTabGroups",
   KeyPoints: "linkPreviewKeyPoints",
-  PdfAltText: "pdfjsAltText",
   Translations: "translations",
   SidebarChatbot: "sidebarChatbot",
   SmartWindow: "smartWindow",
-  SpeechRecognition: "speechRecognition",
 });
 
 /** @type {Record<OnDeviceModelFeaturesEnum, string[]>} */
 const FeaturePrefs = Object.freeze({
-  [OnDeviceModelFeatures.PdfAltText]: [
-    "pdfjs.enableGuessAltText",
-    "pdfjs.enableAltTextModelDownload",
-    "pdfjs.enableAltText",
-  ],
   [OnDeviceModelFeatures.KeyPoints]: [
     "browser.ml.linkPreview.enabled",
     "browser.ml.linkPreview.optin",
-  ],
-  [OnDeviceModelFeatures.TabGroups]: [
-    "browser.tabs.groups.enabled",
-    "browser.tabs.groups.smart.enabled",
-    "browser.tabs.groups.smart.userEnabled",
-    "browser.tabs.groups.smart.optin",
   ],
   [OnDeviceModelFeatures.Translations]: ["browser.translations.enable"],
   [OnDeviceModelFeatures.SidebarChatbot]: [
@@ -68,13 +48,6 @@ const FeaturePrefs = Object.freeze({
     // unpredictable order. This is triggered e.g. when UITour overrides
     // this pref externally.
     "browser.ai.control.smartWindow",
-  ],
-  // Speech recognition has no separate feature pref: the AI Controls pref is
-  // the source of truth, and the C++ SpeechRecognition implementation reads it
-  // directly to gate available()/install()/start(). Observe the control pref so
-  // the AI Controls UI reflects state changes; no JS teardown is needed.
-  [OnDeviceModelFeatures.SpeechRecognition]: [
-    "browser.ai.control.speechRecognition",
   ],
 });
 
@@ -127,26 +100,19 @@ export const OnDeviceModelManager = {
    * Get an {@link AIFeature} for a feature id.
    *
    * @param {OnDeviceModelFeaturesEnum} feature
-   * @returns {typeof AIFeature}
+   * @returns {object}
    */
   getAIFeature(feature) {
     switch (feature) {
       case OnDeviceModelFeatures.KeyPoints:
         // @ts-expect-error: LinkPreview implements more than AIFeature
         return lazy.LinkPreview;
-      case OnDeviceModelFeatures.PdfAltText:
-        return lazy.PdfJsGuessAltTextFeature;
-      case OnDeviceModelFeatures.TabGroups:
-        // @ts-expect-error: SmartTabGroupingManager implements more than AIFeature
-        return lazy.SmartTabGroupingManager;
       case OnDeviceModelFeatures.Translations:
         return lazy.TranslationsFeature;
       case OnDeviceModelFeatures.SidebarChatbot:
         return lazy.GenAI;
       case OnDeviceModelFeatures.SmartWindow:
         return lazy.AIWindow;
-      case OnDeviceModelFeatures.SpeechRecognition:
-        return lazy.SpeechRecognitionFeature;
       default:
         throw new Error(`Unknown feature "${feature}"`);
     }
@@ -161,18 +127,12 @@ export const OnDeviceModelManager = {
     switch (feature) {
       case OnDeviceModelFeatures.KeyPoints:
         return "browser.ai.control.linkPreviewKeyPoints";
-      case OnDeviceModelFeatures.PdfAltText:
-        return "browser.ai.control.pdfjsAltText";
-      case OnDeviceModelFeatures.TabGroups:
-        return "browser.ai.control.smartTabGroups";
       case OnDeviceModelFeatures.Translations:
         return "browser.ai.control.translations";
       case OnDeviceModelFeatures.SidebarChatbot:
         return "browser.ai.control.sidebarChatbot";
       case OnDeviceModelFeatures.SmartWindow:
         return "browser.ai.control.smartWindow";
-      case OnDeviceModelFeatures.SpeechRecognition:
-        return "browser.ai.control.speechRecognition";
       default:
         throw new Error(`Unknown feature "${feature}"`);
     }

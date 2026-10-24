@@ -30,7 +30,6 @@ describe("settings ai features", () => {
       await SpecialPowers.pushPrefEnv({
         set: [
           ["browser.ai.control.default", "available"],
-          ["extensions.ml.enabled", true],
         ],
       });
 
@@ -61,17 +60,12 @@ describe("settings ai features", () => {
         "available",
         "Pref unchanged after cancel"
       );
-      Assert.ok(
-        Services.prefs.getBoolPref("extensions.ml.enabled"),
-        "ML enabled pref unchanged after cancel"
-      );
     });
 
     it("blocks AI features on confirm, unblocks on toggle off", async () => {
       await SpecialPowers.pushPrefEnv({
         set: [
           ["browser.ai.control.default", "available"],
-          ["extensions.ml.enabled", true],
         ],
       });
       Services.fog.testResetFOG();
@@ -120,10 +114,6 @@ describe("settings ai features", () => {
         "blocked",
         "Pref set to blocked after confirm"
       );
-      Assert.ok(
-        !Services.prefs.getBoolPref("extensions.ml.enabled"),
-        "ML enabled pref set to false after confirm"
-      );
       Assert.equal(
         translationsSetting.value,
         "blocked",
@@ -137,24 +127,24 @@ describe("settings ai features", () => {
         "Telemetry recorded blocked=true"
       );
 
-      // Enable STG to confirm it stays enabled on un-block
-      let stgSetting = win.Preferences.getSetting(
-        "aiControlSmartTabGroupsSelect"
+      // Enable key points to confirm it stays enabled on un-block
+      let keyPointsSetting = win.Preferences.getSetting(
+        "aiControlLinkPreviewKeyPointsSelect"
       );
       Assert.equal(
-        stgSetting.value,
+        keyPointsSetting.value,
         "blocked",
-        "STG is blocked after global block"
+        "Key points are blocked after global block"
       );
       await waitForAnimationFrame();
-      const stgControl = doc.getElementById("aiControlSmartTabGroupsSelect");
-      stgControl.focus();
+      const keyPointsControl = doc.getElementById("aiControlLinkPreviewKeyPointsSelect");
+      keyPointsControl.focus();
       let pickerOpened = BrowserTestUtils.waitForSelectPopupShown(
         win.docShell.chromeEventHandler.documentGlobal
       );
       EventUtils.sendKey("space");
       const selectPopup = await pickerOpened;
-      await waitForSettingChange(stgSetting, () => {
+      await waitForSettingChange(keyPointsSetting, () => {
         if (selectPopup.isNativeMenu) {
           selectPopup.activateItem(selectPopup.childNodes[1]);
         } else {
@@ -162,9 +152,9 @@ describe("settings ai features", () => {
           EventUtils.sendKey("return");
         }
       });
-      Assert.equal(stgSetting.value, "enabled", "STG is now enabled");
+      Assert.equal(keyPointsSetting.value, "enabled", "Key points are now enabled");
 
-      // Unblock to confirm reset to available and STG is still enabled
+      // Unblock to confirm reset to available and key points are still enabled
       toggle.buttonEl.scrollIntoView();
       await waitForAnimationFrame();
       await waitForSettingChange(defaultSetting, () =>
@@ -176,16 +166,12 @@ describe("settings ai features", () => {
         "available",
         "Pref set to available after unblocking"
       );
-      Assert.ok(
-        Services.prefs.getBoolPref("extensions.ml.enabled"),
-        "ML enabled pref set to true after unblocking"
-      );
       Assert.equal(
         translationsSetting.value,
         "available",
         "Translations are now available"
       );
-      Assert.equal(stgSetting.value, "enabled", "STG stayed enabled");
+      Assert.equal(keyPointsSetting.value, "enabled", "Key points stayed enabled");
       telemetryEvents = Glean.browser.globalAiControlToggled.testGetValue();
       Assert.equal(telemetryEvents.length, 2, "Two telemetry events recorded");
       Assert.equal(

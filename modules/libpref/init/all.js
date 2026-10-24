@@ -1768,12 +1768,6 @@ pref("extensions.install_origins.enabled", false);
 pref("extensions.browser_style_mv3.supported", false);
 pref("extensions.browser_style_mv3.same_as_mv2", false);
 
-// Experimental Inference API
-pref("extensions.ml.enabled", true);
-
-// Local model management page enabled
-pref("extensions.htmlaboutaddons.local_model_management", true);
-
 // Middle-mouse handling
 pref("middlemouse.paste", false);
 pref("middlemouse.contentLoadURL", false);
@@ -1876,9 +1870,6 @@ pref("dom.ipc.processCount.webIsolated", 1);
 #else
 pref("dom.ipc.processCount.webIsolated", 4);
 #endif
-
-// For now we allow a single inference process
-pref("dom.ipc.processCount.inference", 1);
 
 // Keep a single privileged about process alive for performance reasons.
 // e.g. we do not want to throw content processes out every time we navigate
@@ -3619,33 +3610,12 @@ pref("browser.translations.chaos.timeoutMS", 0);
 // AI controls
 pref("browser.ai.control.default", "available");
 pref("browser.ai.control.translations", "default");
-pref("browser.ai.control.pdfjsAltText", "default");
-pref("browser.ai.control.smartTabGroups", "default");
 pref("browser.ai.control.linkPreviewKeyPoints", "default");
 pref("browser.ai.control.sidebarChatbot", "default");
 pref("browser.ai.control.smartWindow", "default");
-pref("browser.ai.control.speechRecognition", "default");
 
-// Enable the experimental machine learning inference engine.
-pref("browser.ml.enable", true);
 // Set to "All" to see all logs, which are useful for debugging.
 pref("browser.ml.logLevel", "Error");
-// Model hub root URL used to download models.
-pref("browser.ml.modelHubRootUrl", "https://model-hub.mozilla.org/");
-// Model URL template
-pref("browser.ml.modelHubUrlTemplate", "{model}/{revision}");
-// Maximum disk size for ML model cache (in GiB)
-pref("browser.ml.modelCacheMaxSize", 4);
-// Model cache timeout in ms
-pref("browser.ml.modelCacheTimeout", 120000);
-// Route llama.cpp inference to the HWInference utility process
-pref("browser.ml.llama.hwInference", true);
-// Minimal Physical RAM required in GiB
-pref("browser.ml.minimumPhysicalMemory", 3);
-// Check for memory before running
-pref("browser.ml.checkForMemory", true);
-// Allowed overrides for various ml features
-pref("browser.ml.overridePipelineOptions", "{}");
 // How long the PageExtractor waits for a headless page load, in ms.
 pref("browser.ml.pageExtractor.headlessTimeoutMs", 15000);
 
@@ -4027,63 +3997,6 @@ pref("extensions.formautofill.available", "detect");
 #else
 pref("extensions.formautofill.addresses.supported", "detect");
 #endif
-
-// Use ML for address form field detection.
-#if defined(XP_WIN) || defined(XP_MACOSX)
-  #if MOZ_UPDATE_CHANNEL != release && MOZ_UPDATE_CHANNEL != esr
-    pref("extensions.formautofill.useml", true);
-  #else
-    pref("extensions.formautofill.useml", false);
-  #endif
-#else
-pref("extensions.formautofill.useml", false);
-#endif
-
-// Set at runtime once we have asked the inference process whether the native
-// ONNX runtime is available. Until then we stay on the regex heuristics.
-pref("extensions.formautofill.useml.nativeOnnxAvailable", false);
-
-// Use the two-engine (encoder + fusion head) field classifier instead of the
-// single text-classification model. Controlled by the form-autofill-ml Nimbus
-// feature.
-pref("extensions.formautofill.useml.twoHead", true);
-// How long an idle ML autofill engine is kept alive, in milliseconds. -1 means
-// never time out. Controlled by the form-autofill-ml Nimbus feature.
-pref("extensions.formautofill.useml.timeoutMS", 120000);
-// Comma separated list of field types the ML model is not trusted with. Those
-// types are classified by the regular expression based heuristics instead, and
-// any prediction the model makes for one of them is discarded. Related field
-// types belong on the list together, see `_getRegexpHeuristicFieldNames`.
-// Controlled by the autofill-ml-ignore-field-types Nimbus feature.
-pref("extensions.formautofill.useml.ignoreFieldTypes", "");
-
-// If ML identifies a field as 'other' or cannot identify a field,
-// use the heuristics value instead if assigned.
-pref("extensions.formautofill.useml.useHeuristicsForOther", false);
-
-// Optional AutoFill tokenizer features, as a JSON array of feature keys that
-// change a field's exported mlData:
-//   "select_option"    - "<first>...<last>" option-range token for a <select>.
-//   "input_attributes" - "**maxlen<N>"/"**inputmode<mode>" tokens.
-//   "strip_common"     - in forms with 3+ fields, drop tokens present in EVERY
-//                        field (form-wide boilerplate like "form1"/"ctl00").
-//   "strip_frequent"   - like strip_common but drops tokens present in >=85% of
-//                        the form's fields (catches near-universal boilerplate).
-// Default "[]" (none). Each feature changes the mlData contract, so the consuming
-// model must be trained with the same features enabled.
-pref("extensions.formautofill.useml.features", "[]");
-
-// Field types whose regex-heuristic recommendation is fed to the model as a
-// "**hint<class>" token (the "regex_hint" mlFeature); a regex prediction outside
-// this set becomes "**hintnone". Only takes effect when "regex_hint" is in
-// useml.features. This list is part of the model's input contract and must match
-// the hintable set the shipped model was trained with.
-pref("extensions.formautofill.useml.hint.fields",
-  "[\"email\",\"tel\",\"tel-country-code\",\"street-address\",\"address-line1\",\"address-line2\",\"address-line3\",\"postal-code\",\"address-level1\",\"address-level2\",\"organization\",\"country\",\"name\",\"given-name\",\"family-name\",\"cc-name\",\"cc-type\"]");
-
-// Pin the ML model revision to load (the encoder and head engines share one
-// version). Empty = use the Remote Settings default.
-pref("extensions.formautofill.useml.modelVersion", "");
 
 pref("extensions.formautofill.addresses.enabled", true);
 pref("extensions.formautofill.addresses.capture.enabled", true);

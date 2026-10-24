@@ -12,9 +12,6 @@
   "interventions": [
     {
       "platforms": ["all"],
-      "pref_check": {
-        "media.webspeech.recognition.enable": false
-      },
       "css": ["hide_mic_icon"],
       "content_scripts": {
         "js": ["define_SpeechRecognition.js"]

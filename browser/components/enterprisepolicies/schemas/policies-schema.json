@@ -128,52 +128,6 @@
             }
           }
         },
-        "PDFAltText": {
-          "type": "object",
-          "properties": {
-            "Value": {
-              "type": "string",
-              "oneOf": [
-                {
-                  "const": "available",
-                  "title": "Available",
-                  "description": "The feature is on and available to users."
-                },
-                {
-                  "const": "blocked",
-                  "title": "Blocked",
-                  "description": "The feature is off and unavailable to users."
-                }
-              ]
-            },
-            "Locked": {
-              "type": "boolean"
-            }
-          }
-        },
-        "SmartTabGroups": {
-          "type": "object",
-          "properties": {
-            "Value": {
-              "type": "string",
-              "oneOf": [
-                {
-                  "const": "available",
-                  "title": "Available",
-                  "description": "The feature is on and available to users."
-                },
-                {
-                  "const": "blocked",
-                  "title": "Blocked",
-                  "description": "The feature is off and unavailable to users."
-                }
-              ]
-            },
-            "Locked": {
-              "type": "boolean"
-            }
-          }
-        },
         "LinkPreviewKeyPoints": {
           "type": "object",
           "properties": {
@@ -237,18 +191,6 @@
                   "description": "The feature is off and unavailable to users."
                 }
               ]
-            },
-            "Locked": {
-              "type": "boolean"
-            }
-          }
-        },
-        "SpeechRecognition": {
-          "type": "object",
-          "properties": {
-            "Value": {
-              "type": "string",
-              "enum": ["available", "blocked"]
             },
             "Locked": {
               "type": "boolean"
@@ -2432,7 +2374,6 @@
           "Enabled": true,
           "Chatbot": true,
           "LinkPreviews": true,
-          "TabGroups": true,
           "Locked": true
         }
       ],
@@ -2444,9 +2385,6 @@
           "type": "boolean"
         },
         "LinkPreviews": {
-          "type": "boolean"
-        },
-        "TabGroups": {
           "type": "boolean"
         },
         "Enabled": {

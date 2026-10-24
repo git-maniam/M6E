@@ -57,8 +57,6 @@ Preferences.addAll([
   { id: "browser.tabs.hoverPreview.showThumbnails", type: "bool" },
   { id: "browser.tabs.dragDrop.createGroup.enabled", type: "bool" },
   { id: "browser.tabs.groups.enabled", type: "bool" },
-  { id: "browser.tabs.groups.smart.userEnabled", type: "bool" },
-  { id: "browser.tabs.groups.smart.enabled", type: "bool" },
   { id: "privacy.userContext.ui.enabled", type: "bool" },
 
   { id: "privacy.userContext.enabled", type: "bool" },
@@ -253,33 +251,6 @@ Preferences.addSetting({
 Preferences.addSetting({
   id: "tabGroups",
   pref: "browser.tabs.groups.enabled",
-});
-Preferences.addSetting({
-  id: "smartTabGroups",
-  pref: "browser.tabs.groups.smart.enabled",
-});
-Preferences.addSetting({
-  id: "tabGroupSuggestions",
-  pref: "browser.tabs.groups.smart.userEnabled",
-  deps: [
-    "tabGroups",
-    "smartTabGroups",
-    "aiControlDefault",
-    "aiControlSmartTabGroups",
-  ],
-  visible: ({
-    smartTabGroups,
-    tabGroups,
-    aiControlDefault,
-    aiControlSmartTabGroups,
-  }) => {
-    return (
-      window.canShowAiFeature(aiControlSmartTabGroups, aiControlDefault) &&
-      !!tabGroups.value &&
-      !!smartTabGroups.value &&
-      Services.locale.appLocaleAsBCP47.startsWith("en")
-    );
-  },
 });
 Preferences.addSetting({
   id: "tabGroupDragToCreate",
@@ -734,10 +705,6 @@ SettingGroupManager.registerGroups({
           {
             id: "tabPreviewShowThumbnails",
             l10nId: "settings-tabs-show-image-in-preview",
-          },
-          {
-            id: "tabGroupSuggestions",
-            l10nId: "settings-tabs-show-group-and-tab-suggestions",
           },
           {
             id: "tabGroupDragToCreate",

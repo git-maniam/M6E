@@ -22,8 +22,6 @@ describe("AI Controls telemetry", () => {
         ["browser.preferences.aiControls", true],
         ["browser.ai.control.default", "available"],
         ["browser.ai.control.translations", "default"],
-        ["browser.ai.control.pdfjsAltText", "default"],
-        ["browser.ai.control.smartTabGroups", "default"],
         ["browser.ai.control.linkPreviewKeyPoints", "default"],
         ["browser.ai.control.sidebarChatbot", "default"],
         ["browser.ai.control.smartWindow", "default"],
@@ -32,7 +30,6 @@ describe("AI Controls telemetry", () => {
         // Prevent the sidebar from auto-opening when browser.ml.chat.provider is
         // restored by SpecialPowers during pref cleanup after the sidebarChatbot test
         ["browser.ml.chat.openSidebarOnProviderChange", false],
-        ["browser.tabs.groups.smart.optin", true],
         ["browser.smartwindow.enabled", true],
         ["browser.smartwindow.tos.consentTime", 1770830464],
         ["browser.smartwindow.memories.generateFromHistory", false],
@@ -68,20 +65,6 @@ describe("AI Controls telemetry", () => {
       "Feature is translations"
     );
     Assert.equal(events[0].extra.selection, "blocked", "Selection is blocked");
-  });
-
-  it("records event when smartTabGroups set to enabled", async () => {
-    let selectEl = doc.getElementById("aiControlSmartTabGroupsSelect");
-    await changeMozSelectValue(selectEl, "enabled");
-
-    let events = Glean.browser.aiControlChanged.testGetValue();
-    Assert.equal(events.length, 1, "One event recorded");
-    Assert.equal(
-      events[0].extra.feature,
-      "smartTabGroups",
-      "Feature is smartTabGroups"
-    );
-    Assert.equal(events[0].extra.selection, "enabled", "Selection is enabled");
   });
 
   it("records event when sidebarChatbot set to blocked", async () => {

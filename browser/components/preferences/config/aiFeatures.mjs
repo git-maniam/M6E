@@ -66,8 +66,6 @@ Preferences.addSetting({
   id: "onDeviceGroup",
   deps: [
     "aiControlTranslationsSelect",
-    "aiControlPdfjsAltTextSelect",
-    "aiControlSmartTabGroupsSelect",
     "aiControlLinkPreviewKeyPointsSelect",
   ],
   getControlConfig(config, deps) {
@@ -125,9 +123,6 @@ function updateAiControlDefault(state) {
       AiControlGlobalStates.blocked
     );
   }
-  // There's no feature-specific dropdown for extensions since it's still a
-  // trial feature, so just turn it off/on based on the global switch.
-  Services.prefs.setBoolPref("extensions.ml.enabled", !isBlocked);
   Glean.browser.globalAiControlToggled.record({ blocked: isBlocked });
 }
 
@@ -197,15 +192,6 @@ class BlockAiConfirmationDialog extends MozLitElement {
       <ul>
         <li
           data-l10n-id="preferences-ai-controls-block-confirmation-translations"
-        ></li>
-        <li
-          data-l10n-id="preferences-ai-controls-block-confirmation-speech-recognition"
-        ></li>
-        <li
-          data-l10n-id="preferences-ai-controls-block-confirmation-pdfjs"
-        ></li>
-        <li
-          data-l10n-id="preferences-ai-controls-block-confirmation-tab-group-suggestions"
         ></li>
         <li
           data-l10n-id="preferences-ai-controls-block-confirmation-key-points"
@@ -563,43 +549,9 @@ makeAiControlSetting({
   },
 });
 makeAiControlSetting({
-  id: "aiControlPdfjsAltTextSelect",
-  pref: "browser.ai.control.pdfjsAltText",
-  feature: OnDeviceModelManager.features.PdfAltText,
-});
-makeAiControlSetting({
-  id: "aiControlSmartTabGroupsSelect",
-  pref: "browser.ai.control.smartTabGroups",
-  feature: OnDeviceModelManager.features.TabGroups,
-  setup(emitChange) {
-    const onTabGroupsEnabledChange = (_, __, changedPref) => {
-      if (changedPref == "browser.tabs.groups.enabled") {
-        emitChange();
-      }
-    };
-    Services.prefs.addObserver(
-      "browser.tabs.groups.enabled",
-      onTabGroupsEnabledChange
-    );
-    return () =>
-      Services.prefs.removeObserver(
-        "browser.tabs.groups.enabled",
-        onTabGroupsEnabledChange
-      );
-  },
-  visible() {
-    return Services.prefs.getBoolPref("browser.tabs.groups.enabled", true);
-  },
-});
-makeAiControlSetting({
   id: "aiControlLinkPreviewKeyPointsSelect",
   pref: "browser.ai.control.linkPreviewKeyPoints",
   feature: OnDeviceModelManager.features.KeyPoints,
-});
-makeAiControlSetting({
-  id: "aiControlSpeechRecognitionSelect",
-  pref: "browser.ai.control.speechRecognition",
-  feature: OnDeviceModelManager.features.SpeechRecognition,
 });
 
 // sidebar chatbot
@@ -1437,53 +1389,6 @@ SettingGroupManager.registerGroups({
                         },
                       },
                     ],
-                  },
-                ],
-              },
-              {
-                control: "moz-box-item",
-                items: [
-                  {
-                    id: "aiControlSpeechRecognitionSelect",
-                    l10nId:
-                      "preferences-ai-controls-speech-recognition-control",
-                    control: "moz-select",
-                    controlAttrs: {
-                      inputlayout: "inline-end",
-                    },
-                    supportPage: "speech-recognition-firefox",
-                    options: [...AI_CONTROL_OPTIONS],
-                  },
-                ],
-              },
-              {
-                control: "moz-box-item",
-                items: [
-                  {
-                    id: "aiControlPdfjsAltTextSelect",
-                    l10nId: "preferences-ai-controls-pdfjs-control",
-                    control: "moz-select",
-                    controlAttrs: {
-                      inputlayout: "inline-end",
-                    },
-                    supportPage: "pdf-alt-text",
-                    options: [...AI_CONTROL_OPTIONS],
-                  },
-                ],
-              },
-              {
-                control: "moz-box-item",
-                items: [
-                  {
-                    id: "aiControlSmartTabGroupsSelect",
-                    l10nId:
-                      "preferences-ai-controls-tab-group-suggestions-control",
-                    control: "moz-select",
-                    controlAttrs: {
-                      inputlayout: "inline-end",
-                    },
-                    supportPage: "how-use-ai-enhanced-tab-groups",
-                    options: [...AI_CONTROL_OPTIONS],
                   },
                 ],
               },

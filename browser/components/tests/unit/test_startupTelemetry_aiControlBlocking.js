@@ -11,12 +11,9 @@ const GLOBAL_AI_PREF = "browser.ai.control.default";
 const AI_CONTROL_PREFS = {
   [GLOBAL_AI_PREF]: "default",
   "browser.ai.control.translations": "translations",
-  "browser.ai.control.pdfjsAltText": "pdfjsAltText",
-  "browser.ai.control.smartTabGroups": "smartTabGroups",
   "browser.ai.control.linkPreviewKeyPoints": "linkPreviewKeyPoints",
   "browser.ai.control.sidebarChatbot": "sidebarChatbot",
   "browser.ai.control.smartWindow": "smartWindow",
-  "browser.ai.control.speechRecognition": "speechRecognition",
 };
 
 function resetPrefs(changes = {}) {
@@ -61,12 +58,9 @@ add_task(function test_defaults_no_prefs_set() {
   );
   assertFeatureMetrics({
     translations: false,
-    pdfjsAltText: false,
-    smartTabGroups: false,
     linkPreviewKeyPoints: false,
     sidebarChatbot: false,
     smartWindow: false,
-    speechRecognition: false,
   });
 });
 
@@ -83,12 +77,9 @@ add_task(function test_global_blocked_features_default() {
   );
   assertFeatureMetrics({
     translations: true,
-    pdfjsAltText: true,
-    smartTabGroups: true,
     linkPreviewKeyPoints: true,
     sidebarChatbot: true,
     smartWindow: true,
-    speechRecognition: true,
   });
 });
 
@@ -106,12 +97,9 @@ add_task(function test_global_available_one_feature_blocked() {
   );
   assertFeatureMetrics({
     translations: true,
-    pdfjsAltText: false,
-    smartTabGroups: false,
     linkPreviewKeyPoints: false,
     sidebarChatbot: false,
     smartWindow: false,
-    speechRecognition: false,
   });
 });
 
@@ -119,7 +107,7 @@ add_task(function test_global_blocked_one_feature_enabled() {
   Services.fog.testResetFOG();
   resetPrefs({
     default: "blocked",
-    smartTabGroups: "enabled",
+    translations: "enabled",
   });
 
   Assert.equal(
@@ -128,13 +116,10 @@ add_task(function test_global_blocked_one_feature_enabled() {
     "Global should be true when blocked"
   );
   assertFeatureMetrics({
-    translations: true,
-    pdfjsAltText: true,
-    smartTabGroups: false,
+    translations: false,
     linkPreviewKeyPoints: true,
     sidebarChatbot: true,
     smartWindow: true,
-    speechRecognition: true,
   });
 });
 
@@ -151,12 +136,9 @@ add_task(function test_pref_observer_global_change() {
   );
   assertFeatureMetrics({
     translations: false,
-    pdfjsAltText: false,
-    smartTabGroups: false,
     linkPreviewKeyPoints: false,
     sidebarChatbot: false,
     smartWindow: false,
-    speechRecognition: false,
   });
 
   Services.prefs.setStringPref(GLOBAL_AI_PREF, "blocked");
@@ -168,12 +150,9 @@ add_task(function test_pref_observer_global_change() {
   );
   assertFeatureMetrics({
     translations: true,
-    pdfjsAltText: true,
-    smartTabGroups: true,
     linkPreviewKeyPoints: true,
     sidebarChatbot: true,
     smartWindow: true,
-    speechRecognition: true,
   });
 });
 
