@@ -6,7 +6,7 @@
 
 Run with the mach Python environment, which provides marionette_driver:
 
-    ./mach python tools/m6e/profile.py --binary <app>/Contents/MacOS/<exe> --out <dir>
+    ./mach python tools/m6e/gecko_profile.py --binary <app>/Contents/MacOS/<exe> --out <dir>
 
 Writes startup.json.gz and interaction.json.gz (load them in profiler.firefox.com)
 and summary.md, which ranks the parent process main thread's functions and JS
