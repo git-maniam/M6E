@@ -67,16 +67,11 @@ skip-if = [
 
 ["browser_UITour_showProtectionReport.js"]
 
-["browser_UITour_sync.js"]
-
 ["browser_UITour_toggleReaderMode.js"]
 
 ["browser_backgroundTab.js"]
 
 ["browser_closeTab.js"]
-
-["browser_fxa.js"]
-tags = "os_integration"
 
 ["browser_fxa_config.js"]
 

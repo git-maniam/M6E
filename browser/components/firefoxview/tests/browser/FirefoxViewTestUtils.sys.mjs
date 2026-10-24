@@ -128,9 +128,6 @@ function closeFirefoxViewTab(win) {
  * @param {boolean} [options.openNewWindow]
  *   Whether to run the task in a new window. If false, the current window will
  *   be used.
- * @param {boolean} [options.resetFlowManager]
- *   Whether to reset the internal state of TabsSetupFlowManager before running
- *   the task.
  * @param {Window} [options.win]
  *   The window in which to run the task.
  * @param {(MozBrowser) => any} taskFn
@@ -139,20 +136,13 @@ function closeFirefoxViewTab(win) {
  *   The value returned by the task.
  */
 async function withFirefoxView(
-  { openNewWindow = false, resetFlowManager = true, win = null },
+  { openNewWindow = false, win = null },
   taskFn
 ) {
   if (!win) {
     win = openNewWindow
       ? await BrowserTestUtils.openNewBrowserWindow()
       : Services.wm.getMostRecentBrowserWindow();
-  }
-  if (resetFlowManager) {
-    const { TabsSetupFlowManager } = ChromeUtils.importESModule(
-      "resource:///modules/firefox-view-tabs-setup-manager.sys.mjs"
-    );
-    // reset internal state so we aren't reacting to whatever state the last invocation left behind
-    TabsSetupFlowManager.resetInternalState();
   }
   // Setting this pref allows the test to run as expected with a keyboard on MacOS
   await win.SpecialPowers.pushPrefEnv({

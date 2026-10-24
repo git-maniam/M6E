@@ -195,7 +195,6 @@ export default [
       "layout/tools/reftest/reftest-analyzer.xhtml",
       "mobile/android/geckoview/src/androidTest/**",
       "mobile/android/android-components/components/feature/webcompat/**",
-      "services/automation/ServicesAutomation.sys.mjs",
       "services/settings/RemoteSettings.worker.mjs",
       "taskcluster/docker/index-task/insert-indexes.js",
       "testing/**",
