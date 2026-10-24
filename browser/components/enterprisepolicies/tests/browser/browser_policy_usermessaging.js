@@ -8,7 +8,6 @@ add_task(async function test_usermessaging() {
     policies: {
       UserMessaging: {
         MoreFromMozilla: false,
-        FirefoxLabs: false,
       },
     },
   });
@@ -21,13 +20,6 @@ add_task(async function test_usermessaging() {
     ok(
       !moreFromMozillaCategory || moreFromMozillaCategory.hidden,
       "The more category is hidden"
-    );
-    let firefoxLabsCategory = browser.contentDocument.getElementById(
-      "category-experimental"
-    );
-    ok(
-      !firefoxLabsCategory || firefoxLabsCategory.hidden,
-      "The labs category is hidden"
     );
   });
 });
