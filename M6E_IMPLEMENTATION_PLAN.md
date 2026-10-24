@@ -718,6 +718,8 @@ Each is the recommended option. The user reviews these in the Summary of Complet
 | P6.2 | Stale lint-config entries (the 324 known and any new ones); the unreachability proof for whatever stays | lint configs |
 | P6.3 | LTO and PGO back on, a clean build, the full regression run, acceptance, measurements and the release DMG | |
 
+- **VPN promo surfaces (P6.1a):** the promo surfaces that stay (about:protections VPN card, about:privatebrowsing promo, ASRouter captive-portal promo, FxA menu VPN button) all read `browser.vpn_promo.enabled` through `BrowserUtils.shouldShowVPNPromo`. `m6e.js` locks it to false next to `browser.ipProtection.enabled`, so none of them can show. The locked pref is the unreachability proof; the surfaces themselves are deleted in a later step or with the feature that owns them.
+
 - **Order:** features that others depend on go last. The AI interface goes before the ML engine, the VPN and Sync before Mozilla accounts, and Nimbus last, because nearly every feature reads it. The analysis may change the order.
 - **Done when:** every feature is deleted or proven unreachable, the release build passes, the regression suites match the baseline, acceptance passes 15 of 15, and startup, memory and app size are measured against Phase 5.
 

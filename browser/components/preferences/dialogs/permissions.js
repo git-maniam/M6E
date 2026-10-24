@@ -91,7 +91,7 @@ var gPermissionManager = {
    * @param {boolean} params.sessionVisible Display the "Allow for Session" button in the dialog (Only for Cookie & HTTPS-Only permissions)
    * @param {boolean} params.allowVisible Display the "Allow" button in the dialog
    * @param {boolean} params.disableETPVisible Display the "Add Exception" button in the dialog (Only for ETP permissions)
-   * @param {boolean} params.addVisible Display the "Add" button in the dialog (Only for ipp-vpn permissions)
+   * @param {boolean} params.addVisible Display the "Add" button in the dialog (Currently unused)
    * @param {boolean} params.hideStatusColumn Hide the "Status" column in the dialog
    * @param {boolean} params.forcedHTTP Save inputs whose URI has a HTTPS scheme with a HTTP scheme (Used by HTTPS-Only)
    * @param {number} params.capabilityFilter Display permissions that have the specified capability only. See Ci.nsIPermissionManager.
@@ -245,8 +245,7 @@ var gPermissionManager = {
           );
           break;
         case "btnAdd":
-          // This button is for ipp-vpn, which only supports
-          // site exclusions at this time.
+          // Currently unused: no permission type shows this button.
           gPermissionManager.addPermission(Ci.nsIPermissionManager.DENY_ACTION);
       }
     });
