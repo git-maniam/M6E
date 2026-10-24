@@ -23,7 +23,7 @@ add_setup(async () => {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.ml.chat.enabled", true],
-      ["sidebar.main.tools", "aichat,syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "aichat,history,bookmarks"],
     ],
   });
 
@@ -260,18 +260,18 @@ add_task(async function test_keyboard_navigation_vertical_tabs() {
   await SidebarTestUtils.waitForTabstripOrientation(window, "vertical");
   await SidebarController.updateUIState({ launcherExpanded: false });
   const sidebar = document.querySelector("sidebar-main");
-  const syncedTabsButton = await BrowserTestUtils.waitForMutationCondition(
+  const historyButton = await BrowserTestUtils.waitForMutationCondition(
     sidebar.shadowRoot,
     { childList: true, subtree: true },
-    () => sidebar.shadowRoot.querySelector("moz-button[view=viewTabsSidebar]"),
-    { msg: "Waiting for Synced Tabs button to be present." }
+    () => sidebar.shadowRoot.querySelector("moz-button[view=viewHistorySidebar]"),
+    { msg: "Waiting for History button to be present." }
   );
-  await SidebarTestUtils.showPanel(window, "viewTabsSidebar");
+  await SidebarTestUtils.showPanel(window, "viewHistorySidebar");
   await sidebar.updateComplete;
   Assert.equal(
     sidebar.buttonGroup.activeChild,
-    syncedTabsButton,
-    "Synced Tabs button is active."
+    historyButton,
+    "History button is active."
   );
   const newTabButton = sidebar.querySelector("#tabs-newtab-button");
 
@@ -296,12 +296,12 @@ add_task(async function test_keyboard_navigation_vertical_tabs() {
 
   info("Tab to get to tools.");
   await BrowserTestUtils.waitForMutationCondition(
-    syncedTabsButton,
+    historyButton,
     { attributes: true },
-    () => BrowserTestUtils.isVisible(syncedTabsButton)
+    () => BrowserTestUtils.isVisible(historyButton)
   );
   EventUtils.synthesizeKey("KEY_Tab", {});
-  ok(isActiveElement(syncedTabsButton), "Synced tabs tool button is focused.");
+  ok(isActiveElement(historyButton), "Synced tabs tool button is focused.");
 
   info("Shift+Tab back to new tab button.");
   EventUtils.synthesizeKey("KEY_Tab", { shiftKey: true }, window);

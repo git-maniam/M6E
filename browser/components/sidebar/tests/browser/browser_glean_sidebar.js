@@ -5,20 +5,9 @@
 
 requestLongerTimeout(10);
 
-const lazy = {};
-
 const initialTabDirection = Services.prefs.getBoolPref(VERTICAL_TABS_PREF)
   ? "vertical"
   : "horizontal";
-
-ChromeUtils.defineESModuleGetters(lazy, {
-  SyncedTabs: "resource://services-sync/SyncedTabs.sys.mjs",
-  SyncedTabsErrorHandler:
-    "resource:///modules/firefox-view-synced-tabs-error-handler.sys.mjs",
-  TabsSetupFlowManager:
-    "resource:///modules/firefox-view-tabs-setup-manager.sys.mjs",
-  UIState: "resource://gre/modules/UIState.sys.mjs",
-});
 
 add_setup(async () => {
   // The display/position/tabs-layout metrics are only recorded by init(), and
@@ -156,64 +145,6 @@ add_task(async function test_history_sidebar_toggle() {
       "Event has the correct sidebar version."
     );
   }
-});
-
-async function test_synced_tabs_sidebar_toggle(revampEnabled) {
-  await SpecialPowers.pushPrefEnv({
-    set: [["sidebar.revamp", revampEnabled]],
-  });
-  await SidebarController.waitUntilStable();
-  await testSidebarToggle("viewTabsSidebar", Glean.syncedTabs.sidebarToggle);
-  let events = Glean.syncedTabs.sidebarToggle.testGetValue();
-  for (const { extra } of events) {
-    Assert.equal(
-      extra.synced_tabs_loaded,
-      "false",
-      "Event indicates that synced tabs aren't loaded yet."
-    );
-    Assert.equal(
-      extra.version,
-      getExpectedVersionString(),
-      "Event has the correct sidebar version."
-    );
-  }
-
-  // Repeat test while simulating synced tabs loaded state.
-  Services.fog.testResetFOG();
-  const sandbox = sinon.createSandbox();
-  if (revampEnabled) {
-    sandbox.stub(lazy.TabsSetupFlowManager, "uiStateIndex").value(4);
-  } else {
-    sandbox.stub(lazy.UIState, "get").returns({ status: "signed_in" });
-  }
-
-  await testSidebarToggle("viewTabsSidebar", Glean.syncedTabs.sidebarToggle);
-  events = Glean.syncedTabs.sidebarToggle.testGetValue();
-  for (const { extra } of events) {
-    Assert.equal(
-      extra.synced_tabs_loaded,
-      "true",
-      "Event indicates that synced tabs are now loaded."
-    );
-    Assert.equal(
-      extra.version,
-      getExpectedVersionString(),
-      "Event has the correct sidebar version."
-    );
-  }
-
-  sandbox.restore();
-  await SpecialPowers.popPrefEnv();
-  await SidebarController.waitUntilStable();
-  Services.fog.testResetFOG();
-}
-
-add_task(async function test_synced_tabs_sidebar_toggle_legacy() {
-  await test_synced_tabs_sidebar_toggle(false);
-});
-
-add_task(async function test_synced_tabs_sidebar_toggle_revamp() {
-  await test_synced_tabs_sidebar_toggle(true);
 });
 
 add_task(async function test_bookmarks_sidebar_toggle() {
@@ -358,13 +289,6 @@ add_task(async function test_customize_chatbot_enabled() {
   );
   await SpecialPowers.popPrefEnv();
   await SidebarController.waitUntilStable();
-});
-
-add_task(async function test_customize_synced_tabs_enabled() {
-  await testCustomizeToggle(
-    "viewTabsSidebar",
-    Glean.sidebarCustomize.syncedTabsEnabled
-  );
 });
 
 add_task(async function test_customize_history_enabled() {
@@ -660,7 +584,6 @@ async function testIconClick(expanded) {
 
   const gleanEvents = new Map([
     ["viewGenaiChatSidebar", Glean.sidebar.chatbotIconClick],
-    ["viewTabsSidebar", Glean.sidebar.syncedTabsIconClick],
     ["viewHistorySidebar", Glean.sidebar.historyIconClick],
     ["viewOpenTabsSidebar", Glean.sidebar.openTabsIconClick],
     ["viewBookmarksSidebar", Glean.sidebar.bookmarksIconClick],
@@ -928,73 +851,6 @@ add_task(async function test_history_link_glean_probe() {
 
   await PlacesUtils.history.clear();
   SidebarController.hide();
-  cleanUpExtraTabs();
-});
-
-add_task(async function test_synced_tabs_link_glean_probe() {
-  Services.fog.testResetFOG();
-
-  const syncedTabClients = [
-    {
-      id: 1,
-      type: "client",
-      name: "My desktop",
-      clientType: "desktop",
-      lastModified: 1655730486760,
-      tabs: [
-        {
-          device: "My desktop",
-          deviceType: "desktop",
-          type: "tab",
-          title: "Test page",
-          url: "http://mochi.test:8888/browser/",
-          icon: "",
-          lastUsed: 1655391592,
-          client: 1,
-          fxaDeviceId: "1",
-          availableCommands: {},
-          secondaryL10nArgs: '{"deviceName": "My Desktop"}',
-        },
-      ],
-    },
-  ];
-
-  const sandbox = sinon.createSandbox();
-  sandbox.stub(lazy.SyncedTabsErrorHandler, "getErrorType").returns(null);
-  sandbox.stub(lazy.TabsSetupFlowManager, "uiStateIndex").value(4);
-  sandbox.stub(lazy.SyncedTabs, "getTabClients").resolves(syncedTabClients);
-  sandbox
-    .stub(lazy.SyncedTabs, "createRecentTabsList")
-    .resolves(syncedTabClients.flatMap(client => client.tabs));
-
-  await SidebarController.show("viewTabsSidebar");
-  const { contentDocument, contentWindow } = SidebarController.browser;
-  const component = contentDocument.querySelector("sidebar-syncedtabs");
-
-  const rows = await TestUtils.waitForCondition(() => {
-    const tabList = component.cards?.[0]?.querySelector("sidebar-tab-list");
-    return tabList?.rowEls?.length && tabList.rowEls;
-  }, "Synced tab rows are shown.");
-
-  const loaded = BrowserTestUtils.waitForNewTab(
-    gBrowser,
-    syncedTabClients[0].tabs[0].url,
-    true
-  );
-
-  AccessibilityUtils.setEnv({ focusableRule: false });
-  EventUtils.synthesizeMouseAtCenter(rows[0].mainEl, {}, contentWindow);
-  AccessibilityUtils.resetEnv();
-  await loaded;
-
-  Assert.equal(
-    Glean.sidebar.link.synced_tabs.testGetValue(),
-    1,
-    "One synced tabs link click was recorded."
-  );
-
-  SidebarController.hide();
-  sandbox.restore();
   cleanUpExtraTabs();
 });
 

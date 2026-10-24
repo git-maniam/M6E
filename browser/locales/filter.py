@@ -17,7 +17,6 @@ def test(mod, path, entity=None):
         "extensions/spellcheck",
         "other-licenses/branding/firefox",
         "browser/branding/official",
-        "services/sync",
     ):
         return "ignore"
     if mod not in ("browser", "extensions/spellcheck"):

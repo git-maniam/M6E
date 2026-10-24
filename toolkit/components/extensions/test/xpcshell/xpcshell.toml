@@ -1,5 +1,5 @@
 [DEFAULT]
-head = "head.js head_telemetry.js head_sync.js head_storage.js"
+head = "head.js head_telemetry.js head_storage.js"
 firefox-appdir = "browser"
 dupe-manifest = ""
 support-files = [
@@ -50,12 +50,6 @@ run-if = [
 ["test_MatchPattern.js"]
 
 ["test_OriginControls.js"]
-
-["test_StorageSyncService.js"]
-skip-if = [
-  "!sync",
-  "os == 'android' && arch == 'x86_64'",
-]
 
 ["test_WebExtensionPolicy.js"]
 

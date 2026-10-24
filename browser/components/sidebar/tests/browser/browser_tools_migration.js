@@ -6,7 +6,7 @@
 add_setup(async () => {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,bookmarks,history"],
+      ["sidebar.main.tools", "bookmarks,history"],
       ["sidebar.newTool.migration.bookmarks", "{}"],
       ["browser.ml.chat.enabled", false],
       [
@@ -39,7 +39,7 @@ add_task(async function test_duplicate_tool() {
 add_task(async function test_one_time_tool_migration() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,history"],
+      ["sidebar.main.tools", "history"],
       ["sidebar.newTool.migration.bookmarks", "{}"],
     ],
   });
@@ -149,7 +149,7 @@ add_task(async function test_check_visibility_enabled() {
 add_task(async function test_resource_monitor_visibility_migration() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,history"],
+      ["sidebar.main.tools", "history"],
       ["browser.resourceMonitor.enabled", false],
       [
         "sidebar.newTool.migration.resourcemonitor",
@@ -210,7 +210,7 @@ add_task(async function test_resource_monitor_visibility_migration() {
 add_task(async function test_passwords_visibility_migration() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,history"],
+      ["sidebar.main.tools", "history"],
       ["browser.contextual-password-manager.enabled", false],
       [
         "sidebar.newTool.migration.passwords",

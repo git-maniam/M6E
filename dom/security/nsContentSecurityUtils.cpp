@@ -1261,9 +1261,7 @@ static nsLiteralCString sStyleSrcUnsafeInlineAllowList[] = {
     "chrome://browser/content/preferences/dialogs/selectBookmark.xhtml"_ns,
     "chrome://browser/content/preferences/dialogs/siteDataSettings.xhtml"_ns,
     "chrome://browser/content/preferences/dialogs/sitePermissions.xhtml"_ns,
-    "chrome://browser/content/preferences/dialogs/syncChooseWhatToSync.xhtml"_ns,
     "chrome://browser/content/preferences/dialogs/translations.xhtml"_ns,
-    "chrome://browser/content/preferences/fxaPairDevice.xhtml"_ns,
     "chrome://browser/content/safeMode.xhtml"_ns,
     "chrome://browser/content/sanitize_v2.xhtml"_ns,
     "chrome://browser/content/search/addEngine.xhtml"_ns,
@@ -1313,7 +1311,6 @@ static nsLiteralCString sImgSrcMozRemoteImageAllowList[] = {
     "chrome://browser/content/aiwindow/aiWindow.html"_ns,
     "chrome://browser/content/firefoxview/firefoxview.html"_ns,
     "chrome://browser/content/preferences/dialogs/applicationManager.xhtml"_ns,
-    "chrome://browser/content/sidebar/sidebar-syncedtabs.html"_ns,
     "chrome://global/content/aboutProcesses.html"_ns,
     "chrome://mozapps/content/handling/appChooser.xhtml"_ns,
 };
@@ -1349,15 +1346,12 @@ static nsLiteralCString sImgSrcDataBlobAllowList[] = {
     "chrome://browser/content/places/bookmarksSidebar.xhtml"_ns,
     "chrome://browser/content/places/places.xhtml"_ns,
     "chrome://browser/content/preferences/dialogs/permissions.xhtml"_ns,
-    "chrome://browser/content/preferences/fxaPairDevice.xhtml"_ns,
     "chrome://browser/content/screenshots/screenshots-preview.html"_ns,
     "chrome://browser/content/sidebar/sidebar-bookmarks.html"_ns,
     "chrome://browser/content/sidebar/sidebar-customize.html"_ns,
     "chrome://browser/content/sidebar/sidebar-history.html"_ns,
     "chrome://browser/content/sidebar/sidebar-opentabs.html"_ns,
-    "chrome://browser/content/sidebar/sidebar-syncedtabs.html"_ns,
     "chrome://browser/content/spotlight.html"_ns,
-    "chrome://browser/content/syncedtabs/sidebar.html"_ns,
     "chrome://browser/content/webext-panels.xhtml"_ns,
     "chrome://devtools/content/application/index.html"_ns,
     "chrome://devtools/content/framework/browser-toolbox/window.html"_ns,
@@ -1403,7 +1397,6 @@ static nsLiteralCString sImgSrcAddonsAllowList[] = {
 //  UNSAFE! Allows loading everything.
 static nsLiteralCString sImgSrcWildcardAllowList[] = {
     "about:reader"_ns,
-    "chrome://browser/content/syncedtabs/sidebar.html"_ns,
     // STOP! Do not add anything to this list.
 };
 // img-src https://example.org

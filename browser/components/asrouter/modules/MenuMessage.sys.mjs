@@ -227,13 +227,6 @@ export const MenuMessage = {
       msgElement.style.flex = "1";
     }
     msgContainer.appendChild(msgElement);
-
-    if (force) {
-      await win.gSync.toggleAccountPanel(
-        document.getElementById("fxa-toolbar-menu-button"),
-        new MouseEvent("mousedown")
-      );
-    }
   },
 
   hidePxiMenuMessage(browser) {

@@ -1,7 +1,5 @@
 "use strict";
 
-Services.prefs.setBoolPref("webextensions.storage.sync.kinto", false);
-
 PromiseTestUtils.allowMatchingRejectionsGlobally(
   /WebExtension context not found/
 );

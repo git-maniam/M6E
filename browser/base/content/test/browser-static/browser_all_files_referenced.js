@@ -423,19 +423,6 @@ for (let entry of ignorableAllowlist) {
 }
 
 if (!isDevtools) {
-  // services/sync/modules/service.sys.mjs
-  for (let module of [
-    "addons.sys.mjs",
-    "bookmarks.sys.mjs",
-    "forms.sys.mjs",
-    "history.sys.mjs",
-    "passwords.sys.mjs",
-    "prefs.sys.mjs",
-    "tabs.sys.mjs",
-    "extension-storage.sys.mjs",
-  ]) {
-    allowlist.add("resource://services-sync/engines/" + module);
-  }
   // resource://devtools/shared/worker/loader.js,
   // resource://devtools/shared/loader/builtin-modules.js
   if (!AppConstants.ENABLE_WEBDRIVER) {

@@ -58,9 +58,6 @@ exports.fixed = {
   "resource://services-settings/Utils.sys.mjs": [
     "services/settings/Utils.sys.mjs",
   ],
-  "resource://services-sync/util.sys.mjs": [
-    "services/sync/modules/util.sys.mjs",
-  ],
   "resource://test/es6module.js": ["js/xpconnect/tests/unit/es6module.js"],
   "resource://test/module.sys.mjs": undefined,
   "resource://test/not_found.mjs": undefined,
@@ -82,9 +79,6 @@ exports.fixed = {
   ],
   "resource://testing-common/dom/quota/test/modules/Utils.sys.mjs": [
     "dom/quota/test/modules/system/Utils.sys.mjs",
-  ],
-  "resource://testing-common/services/sync/utils.sys.mjs": [
-    "services/sync/modules-testing/utils.sys.mjs",
   ],
   // Map types from node_modules into lit.all.mjs
   "chrome://global/content/vendor/lit.all.mjs": [

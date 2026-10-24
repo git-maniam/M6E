@@ -1,7 +1,5 @@
 "use strict";
 
-Services.prefs.setBoolPref("webextensions.storage.sync.kinto", false);
-
 AddonTestUtils.init(this);
 
 add_task(async function setup() {

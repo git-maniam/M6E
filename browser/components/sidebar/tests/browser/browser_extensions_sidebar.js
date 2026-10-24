@@ -202,7 +202,7 @@ add_task(async function test_open_new_private_window_after_install() {
 
   is(
     Services.prefs.getStringPref("sidebar.main.tools").split(",").sort().join(),
-    "aichat,bookmarks,history,opentabs,passwords,syncedtabs",
+    "aichat,bookmarks,history,opentabs,passwords",
     "Extension is not in the main tools pref"
   );
 
@@ -259,7 +259,7 @@ add_task(async function test_customize_sidebar_extensions() {
 
   is(
     Services.prefs.getStringPref("sidebar.main.tools").split(",").sort().join(),
-    "aichat,bookmarks,history,opentabs,passwords,syncedtabs",
+    "aichat,bookmarks,history,opentabs,passwords",
     "Extension is not in the main tools pref"
   );
   // Test reloading an extension
@@ -283,7 +283,7 @@ add_task(async function test_customize_sidebar_extensions() {
 
   is(
     Services.prefs.getStringPref("sidebar.main.tools").split(",").sort().join(),
-    "aichat,bookmarks,history,opentabs,passwords,syncedtabs",
+    "aichat,bookmarks,history,opentabs,passwords",
     "Extension is still not in the main tools pref"
   );
 

@@ -168,16 +168,15 @@ function reportCategoryConsumerError(categoryName, fn, ex) {
   });
 }
 
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "INVALID_SHAREABLE_SCHEMES",
-  "services.sync.engine.tabs.filteredSchemes",
-  "",
-  null,
-  val => {
-    return new Set(val.split("|"));
-  }
-);
+const INVALID_SHAREABLE_SCHEMES = new Set([
+  "about",
+  "resource",
+  "chrome",
+  "file",
+  "blob",
+  "moz-extension",
+  "data",
+]);
 
 ChromeUtils.defineLazyGetter(lazy, "gLocalization", () => {
   return new Localization(["toolkit/global/browser-utils.ftl"], true);
@@ -585,7 +584,7 @@ export var BrowserUtils = {
     }
     // Use the same preference as synced tabs to disable what kind
     // of tabs we can send to another device
-    return lazy.INVALID_SHAREABLE_SCHEMES.has(url.scheme) ? null : url;
+    return INVALID_SHAREABLE_SCHEMES.has(url.scheme) ? null : url;
   },
 
   /**

@@ -132,13 +132,6 @@ add_task(async function test_xul_text_link_label() {
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
       "---",
       null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
       "context-searchselect",
       true,
       "context-searchselect-private",
@@ -216,13 +209,6 @@ add_task(async function test_plaintext() {
     null,
     "context-viewsource",
     true,
-    "---",
-    null,
-    "context-sendpagetodevice",
-    true,
-    // This entry will be blank because the submenu is dynamically generated.
-    [],
-    null,
   ]);
 });
 
@@ -249,13 +235,6 @@ const kLinkItems = [
   "context-copylink",
   true,
   ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-  "---",
-  null,
-  "context-sendlinktodevice",
-  true,
-  // This entry will be blank because the submenu is dynamically generated.
-  [],
-  null,
   "---",
   null,
   "context-searchselect",
@@ -332,13 +311,6 @@ add_task(async function test_linkpreviewcommand() {
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
       "---",
       null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
       "context-searchselect",
       true,
       "context-searchselect-private",
@@ -384,13 +356,6 @@ add_task(async function test_linkpreviewcommand_disabled() {
       "context-copylink",
       true,
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
       "---",
       null,
       "context-searchselect",
@@ -439,13 +404,6 @@ add_task(async function test_linkpreviewcommand_not_on_text() {
       null,
       "context-viewsource",
       true,
-      "---",
-      null,
-      "context-sendpagetodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
     ],
     {
       awaitOnMenuBuilt: {
@@ -1185,13 +1143,6 @@ add_task(async function test_iframe() {
       null,
       "context-viewsource",
       true,
-      "---",
-      null,
-      "context-sendpagetodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
     ],
     {
       awaitOnMenuBuilt: {
@@ -1590,13 +1541,6 @@ add_task(async function test_pdf_viewer_in_iframe() {
       null,
       "context-viewsource",
       true,
-      "---",
-      null,
-      "context-sendpagetodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
     ],
     {
       shiftkey: true,
@@ -1802,13 +1746,6 @@ add_task(async function test_dom_full_screen() {
     null,
     "context-viewsource",
     true,
-    "---",
-    null,
-    "context-sendpagetodevice",
-    true,
-    // This entry will be blank because the submenu is dynamically generated.
-    [],
-    null,
   ]);
   if (AppConstants.platform == "macosx") {
     // Put the bookmarks item next to save page:
@@ -1911,13 +1848,6 @@ add_task(async function test_pagemenu2() {
       null,
       "context-viewsource",
       true,
-      "---",
-      null,
-      "context-sendpagetodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
     ],
     {
       shiftkey: true,
@@ -2054,13 +1984,6 @@ add_task(async function test_select_text_link() {
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
       "---",
       null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
       "context-copy",
       true,
       "context-selectall",
@@ -2135,13 +2058,6 @@ add_task(async function test_imagelink() {
       "context-copylink",
       true,
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
       "---",
       null,
       "context-viewimage",
@@ -2347,13 +2263,6 @@ add_task(async function test_srcdoc() {
       null,
       "context-viewsource",
       true,
-      "---",
-      null,
-      "context-sendpagetodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
     ],
     {
       awaitOnMenuBuilt: {
@@ -2409,13 +2318,6 @@ add_task(async function test_svg_link() {
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
       "---",
       null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
       "context-searchselect",
       true,
       "context-searchselect-private",
@@ -2456,13 +2358,6 @@ add_task(async function test_svg_link() {
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
       "---",
       null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
       "context-searchselect",
       true,
       "context-searchselect-private",
@@ -2501,13 +2396,6 @@ add_task(async function test_svg_link() {
       "context-copylink",
       true,
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
       "---",
       null,
       "context-searchselect",
@@ -2552,13 +2440,6 @@ add_task(async function test_svg_relative_link() {
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
       "---",
       null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
       "context-searchselect",
       true,
       "context-searchselect-private",
@@ -2599,13 +2480,6 @@ add_task(async function test_svg_relative_link() {
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
       "---",
       null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
       "context-searchselect",
       true,
       "context-searchselect-private",
@@ -2644,13 +2518,6 @@ add_task(async function test_svg_relative_link() {
       "context-copylink",
       true,
       ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
       "---",
       null,
       "context-searchselect",
@@ -2729,13 +2596,6 @@ add_task(async function test_background_image() {
     null,
     "context-viewsource",
     true,
-    "---",
-    null,
-    "context-sendpagetodevice",
-    true,
-    // This entry will be blank because the submenu is dynamically generated.
-    [],
-    null,
   ];
   if (AppConstants.platform == "macosx") {
     // Back/fwd/(stop|reload) and their separator go before the image items,
@@ -2898,13 +2758,6 @@ add_task(async function test_strip_on_share_on_secure_about_page() {
       true,
       "context-copylink",
       true,
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
       "---",
       null,
       "context-searchselect",

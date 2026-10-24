@@ -249,16 +249,6 @@ export var TelemetryController = Object.freeze({
   },
 
   /**
-   * Allows the sync ping to tell the controller that it is initializing, so
-   * should be included in the orderly shutdown process.
-   *
-   * @param {Function} aFnShutdown The function to call as telemetry shuts down.
-   */
-  registerSyncPingShutdown(afnShutdown) {
-    Impl.registerSyncPingShutdown(afnShutdown);
-  },
-
-  /**
    * Allows waiting for TelemetryControllers delayed initialization to complete.
    * The returned promise is guaranteed to resolve before TelemetryController is shutting down.
    *
@@ -316,9 +306,6 @@ var Impl = {
   _probeRegistrationPromise: null,
   // The promise of any outstanding task sending the "deletion-request" ping.
   _deletionRequestPingSubmittedPromise: null,
-  // A function to shutdown the sync/fxa ping, or null if that ping has not
-  // self-initialized.
-  _fnSyncPingShutdown: null,
 
   get _log() {
     return TelemetryControllerBase.log;
@@ -890,12 +877,6 @@ var Impl = {
 
       lazy.TelemetryEventPing.shutdown();
 
-      // Shutdown the sync ping if it is initialized - this is likely, but not
-      // guaranteed, to submit a "shutdown" sync ping.
-      if (this._fnSyncPingShutdown) {
-        this._fnSyncPingShutdown();
-      }
-
       // Stop the datachoices infobar display.
       lazy.TelemetryReportingPolicy.shutdown();
       lazy.TelemetryEnvironment.shutdown();
@@ -986,16 +967,6 @@ var Impl = {
         }
     }
     return undefined;
-  },
-
-  /**
-   * Register the sync ping's shutdown handler.
-   */
-  registerSyncPingShutdown(fnShutdown) {
-    if (this._fnSyncPingShutdown) {
-      throw new Error("The sync ping shutdown handler is already registered.");
-    }
-    this._fnSyncPingShutdown = fnShutdown;
   },
 
   /**
@@ -1187,7 +1158,6 @@ var Impl = {
   async reset() {
     this._clientID = null;
     this._profileGroupID = null;
-    this._fnSyncPingShutdown = null;
     this._detachObservers();
 
     let sessionReset = lazy.TelemetrySession.testReset();

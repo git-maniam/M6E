@@ -120,7 +120,6 @@ let JSWINDOWACTORS = {
         AboutLoginsRecordTelemetryEvent: { wantUntrusted: true },
         AboutLoginsRemoveAllLogins: { wantUntrusted: true },
         AboutLoginsSortChanged: { wantUntrusted: true },
-        AboutLoginsSyncEnable: { wantUntrusted: true },
         AboutLoginsUpdateLogin: { wantUntrusted: true },
         AboutLoginsExportPasswords: { wantUntrusted: true },
       },

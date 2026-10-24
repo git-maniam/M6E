@@ -125,8 +125,6 @@ def extract_info_from_mozbuild(command_context, paths):
                     urlmap["resource://services-crypto/" + module_name] = newurl
                 elif module_path.startswith("services/settings/"):
                     urlmap["resource://services-settings/" + module_name] = newurl
-                elif module_path.startswith("services/sync/"):
-                    urlmap["resource://services-sync/" + module_name] = newurl
 
                 # Handle standard resource URLs.
                 if is_browser:

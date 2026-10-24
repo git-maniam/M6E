@@ -178,13 +178,6 @@ add_task(async function test_shouldShowRelayPromo() {
 });
 
 add_task(function test_getShareableURL() {
-  // Some test suites, specifically android, don't have this setup properly -- so we add it manually
-  if (!Preferences.get("services.sync.engine.tabs.filteredSchemes")) {
-    Preferences.set(
-      "services.sync.engine.tabs.filteredSchemes",
-      "about|resource|chrome|file|blob|moz-extension|data"
-    );
-  }
   // Empty shouldn't be sendable
   Assert.ok(!BrowserUtils.getShareableURL(""));
   // Valid

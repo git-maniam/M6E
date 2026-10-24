@@ -152,10 +152,6 @@ function removeNonReleaseButtons(areaPanelPlacements) {
   }
 }
 
-function removeNonOriginalButtons() {
-  CustomizableUI.removeWidgetFromArea("sync-button");
-}
-
 function assertAreaPlacements(areaId, expectedPlacements) {
   let actualPlacements = getAreaWidgetIds(areaId);
   placementArraysEqual(areaId, actualPlacements, expectedPlacements);

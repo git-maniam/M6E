@@ -17,7 +17,7 @@ add_setup(async () => {
     set: [
       [VERTICAL_TABS_PREF, true],
       [SIDEBAR_BUTTON_INTRODUCED_PREF, false],
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history"],
+      ["sidebar.main.tools", "aichat,passwords,history"],
     ],
   });
   await SidebarTestUtils.waitForTabstripOrientation(window, "vertical");
@@ -368,7 +368,7 @@ add_task(async function test_states_for_hide_sidebar_vertical() {
     () => SidebarController.isOpen
   );
   const toolButton = sidebarMain.shadowRoot.querySelector(
-    'moz-button[view="viewTabsSidebar"]'
+    'moz-button[view="viewHistorySidebar"]'
   );
   if (toolButton.checkVisibility({ visibilityProperty: true })) {
     EventUtils.synthesizeMouseAtCenter(toolButton, {}, win);
@@ -377,7 +377,7 @@ add_task(async function test_states_for_hide_sidebar_vertical() {
     // its layout box intact, and the overflow menu's copies are removed and
     // recreated by the intersection observer as that menu opens, so there is
     // nothing a click can reach. Load the tool so the rest of the task runs.
-    await SidebarTestUtils.showPanel(win, "viewTabsSidebar");
+    await SidebarTestUtils.showPanel(win, "viewHistorySidebar");
   }
   await panelShown;
   await SidebarController.waitUntilStable();

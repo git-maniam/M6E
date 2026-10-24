@@ -110,7 +110,6 @@ export default [
   ...(await convertConfigurationFile("security")),
   ...(await convertConfigurationFile("security/manager/ssl/tests")),
   ...(await convertConfigurationFile("security/manager/tools")),
-  ...(await convertConfigurationFile("services/sync/tests/tps")),
   ...(await convertConfigurationFile("taskcluster/docker/index-task")),
   ...(await convertConfigurationFile("taskcluster/docker/periodic-updates")),
   ...(await convertConfigurationFile(

@@ -1474,27 +1474,17 @@ EnvironmentCache.prototype = {
   },
 
   async _updateServicesInfo() {
-    let syncEnabled = false;
     let accountEnabled = false;
-    let weaveService =
-      Cc["@mozilla.org/weave/service;1"].getService().wrappedJSObject;
-    syncEnabled = weaveService && weaveService.enabled;
-    if (syncEnabled) {
-      // All sync users are account users, definitely.
-      accountEnabled = true;
-    } else {
-      // Not all account users are sync users. See if they're signed into FxA.
-      try {
-        let user = await this._getFxaSignedInUser();
-        if (user) {
-          accountEnabled = true;
-        }
-      } catch (e) {
-        this._log.error("_updateServicesInfo() caught error", e);
-        return;
+    try {
+      let user = await this._getFxaSignedInUser();
+      if (user) {
+        accountEnabled = true;
       }
+    } catch (e) {
+      this._log.error("_updateServicesInfo() caught error", e);
+      return;
     }
-    Glean.fxa.syncEnabled.set(syncEnabled);
+    Glean.fxa.syncEnabled.set(false);
     Glean.fxa.accountEnabled.set(accountEnabled);
   },
 

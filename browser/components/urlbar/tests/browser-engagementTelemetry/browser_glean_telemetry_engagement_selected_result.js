@@ -697,27 +697,6 @@ add_task(async function selected_result_tab_serp() {
   BrowserTestUtils.removeTab(tab);
 });
 
-add_task(async function selected_result_remote_tab() {
-  const remoteTab = await loadRemoteTab("https://example.com");
-
-  await doTest(async () => {
-    await openPopup("example");
-    await selectRowByProvider("UrlbarProviderRemoteTabs");
-    await doEnter();
-
-    await assertEngagementTelemetry([
-      {
-        selected_result: "remote_tab",
-        selected_position: 2,
-        provider: "UrlbarProviderRemoteTabs",
-        results: "search_engine,remote_tab",
-      },
-    ]);
-  });
-
-  await remoteTab.unload();
-});
-
 add_task(async function selected_result_addon() {
   const addon = loadOmniboxAddon({ keyword: "omni" });
   await addon.startup();

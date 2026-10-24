@@ -148,20 +148,6 @@ add_task(async function clipboard() {
   });
 });
 
-add_task(async function remote_tab() {
-  await doRemoteTabTest({
-    trigger: () => doBlur(),
-    assert: () =>
-      assertAbandonmentTelemetry([
-        {
-          groups: "heuristic,remote_tab",
-          results: "search_engine,remote_tab",
-          n_results: 2,
-        },
-      ]),
-  });
-});
-
 add_task(async function addon() {
   await doAddonTest({
     trigger: () => doBlur(),

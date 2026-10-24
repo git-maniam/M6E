@@ -16,7 +16,6 @@ if CONFIG["MOZ_PLACES"]:
         "mozIAsyncHistory.idl",
         "mozIPlacesAutoComplete.idl",
         "mozIPlacesPendingOperation.idl",
-        "mozISyncedBookmarksMirror.idl",
         "nsIFaviconService.idl",
         "nsINavBookmarksService.idl",
         "nsIPlacesPreviewsHelperService.idl",
@@ -34,7 +33,6 @@ if CONFIG["MOZ_PLACES"]:
         "nsFaviconService.h",
         "PageIconProtocolHandler.h",
         "Shutdown.h",
-        "SyncedBookmarksMirror.h",
     ]
 
     SOURCE_HEADERS += [
@@ -93,7 +91,6 @@ if CONFIG["MOZ_PLACES"]:
         "PlacesSyncUtils.sys.mjs",
         "PlacesTransactions.sys.mjs",
         "PlacesUtils.sys.mjs",
-        "SyncedBookmarksMirror.sys.mjs",
         "TaggingService.sys.mjs",
     ]
 

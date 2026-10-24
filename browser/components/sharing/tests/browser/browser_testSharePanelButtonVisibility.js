@@ -24,11 +24,6 @@ add_task(async function test_shareablePage() {
       },
       { id: "share-panel-screenshot", visible: true, name: "Screenshots" },
       { id: "share-panel-qr-code", visible: true, name: "QR code" },
-      {
-        id: "share-panel-send-to-device",
-        visible: true,
-        name: "Send to device",
-      },
     ];
 
     for (let { id, visible, name } of buttonVisibility) {
@@ -62,11 +57,6 @@ add_task(async function test_nonShareablePage() {
       },
       { id: "share-panel-screenshot", visible: true, name: "Screenshots" },
       { id: "share-panel-qr-code", visible: false, name: "QR code" },
-      {
-        id: "share-panel-send-to-device",
-        visible: false,
-        name: "Send to device",
-      },
     ];
 
     for (let { id, visible, name } of buttonVisibility) {

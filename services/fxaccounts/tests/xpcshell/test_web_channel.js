@@ -546,14 +546,6 @@ add_task(async function test_helpers_login_without_customize_sync() {
         recordConnection: sinon.spy(),
       },
     },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {
-          configure() {},
-        },
-      },
-    },
   });
 
   // ensure the previous account pref is overwritten.
@@ -596,14 +588,6 @@ add_task(async function test_helpers_login_set_previous_account_hash() {
         recordConnection() {},
       },
     },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {
-          configure() {},
-        },
-      },
-    },
   });
 
   // ensure the previous account pref is overwritten.
@@ -635,14 +619,6 @@ add_task(async function test_helpers_login_another_user_signed_in() {
       },
       telemetry: {
         recordConnection: sinon.spy(),
-      },
-    },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {
-          configure() {},
-        },
       },
     },
   });
@@ -691,14 +667,6 @@ add_task(async function test_helpers_login_same_user_signed_in() {
         recordConnection: sinon.spy(),
       },
     },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {
-          configure() {},
-        },
-      },
-    },
   });
   helpers._disconnect = sinon.spy();
 
@@ -744,14 +712,6 @@ add_task(async function test_helpers_login_same_user_new_session_token() {
       },
       telemetry: {
         recordConnection: sinon.spy(),
-      },
-    },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {
-          configure() {},
-        },
       },
     },
   });
@@ -810,14 +770,6 @@ add_task(async function test_helpers_login_same_user_reauth() {
         recordConnection: sinon.spy(),
       },
     },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {
-          configure() {},
-        },
-      },
-    },
   });
   helpers._disconnect = sinon.spy();
 
@@ -864,14 +816,6 @@ add_task(async function test_helpers_login_with_customize_sync() {
         recordConnection: sinon.spy(),
       },
     },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {
-          configure() {},
-        },
-      },
-    },
   });
 
   await helpers.login({
@@ -907,12 +851,6 @@ add_task(async function test_helpers_persist_requested_services() {
       },
       telemetry: {
         recordConnection() {},
-      },
-    },
-    weaveXPCOM: {
-      whenLoaded() {},
-      Weave: {
-        Service: {},
       },
     },
   });
@@ -1051,6 +989,10 @@ add_task(async function test_helpers_getFxAStatus_engines_oauth() {
     },
   });
 
+  Services.prefs.setBoolPref(
+    "services.sync.engine.creditcards.available",
+    true
+  );
   // disable the "addresses" engine.
   Services.prefs.setBoolPref("services.sync.engine.addresses.available", false);
   let fxaStatus = await helpers.getFxaStatus("sync", mockSendingContext);

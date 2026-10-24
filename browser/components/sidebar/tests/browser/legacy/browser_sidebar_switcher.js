@@ -77,7 +77,7 @@ function pickSwitcherMenuitem(querySelector = null) {
  * @param {string} key           Event.key to open the switcher menu popup
  * @param {string} sidebarTitle  Title of the sidebar that is to be activated
  *                               during the test (capitalized one word versions),
- *                               i.e. "History" or "Tabs"
+ *                               i.e. "History"
  */
 async function testSidebarMenuKeyToggle(key, sidebarTitle) {
   info(`Testing "${key}" key handling of sidebar menu popup items
@@ -130,15 +130,9 @@ async function testSidebarMenuKeyToggle(key, sidebarTitle) {
     // We cannot synthesize key events with native menus, so explicitly
     // activate the desired sidebar
     let sidebarShown = BrowserTestUtils.waitForEvent(window, "SidebarShown");
-    if (sidebarTitle == "Tabs") {
-      SidebarController._switcherPanel.activateItem(
-        document.getElementById("sidebar-switcher-tabs")
-      );
-    } else {
-      SidebarController._switcherPanel.activateItem(
-        document.getElementById("sidebar-switcher-history")
-      );
-    }
+    SidebarController._switcherPanel.activateItem(
+      document.getElementById("sidebar-switcher-history")
+    );
     await sidebarShown;
   } else {
     info("Testing keyboard navigation between sidebar menu popup controls");
@@ -167,13 +161,6 @@ async function testSidebarMenuKeyToggle(key, sidebarTitle) {
       "sidebar-switcher-history",
       "The 2nd sidebar menu item (History) is active"
     );
-
-    if (sidebarTitle === "Tabs") {
-      await arrowDown(
-        "sidebar-switcher-tabs",
-        "The 3rd sidebar menu item (Synced Tabs) is active"
-      );
-    }
 
     // Activate the tested sidebar switcher option to open the tested sidebar:
     let sidebarShown = BrowserTestUtils.waitForEvent(window, "SidebarShown");
@@ -284,7 +271,6 @@ add_task(async function keynav() {
   await SidebarController.show("viewBookmarksSidebar");
 
   await testSidebarMenuKeyToggle("KEY_Enter", "History");
-  await testSidebarMenuKeyToggle(" ", "Tabs");
 
   SidebarController.hide();
 });
@@ -308,14 +294,6 @@ add_task(async function mouse() {
     sidebar.getAttribute("sidebarcommand"),
     "viewHistorySidebar",
     "History sidebar loaded"
-  );
-
-  await showSwitcherPanelPromise();
-  await pickSwitcherMenuitem("#sidebar-switcher-tabs");
-  Assert.equal(
-    sidebar.getAttribute("sidebarcommand"),
-    "viewTabsSidebar",
-    "Tabs sidebar loaded"
   );
 
   await showSwitcherPanelPromise();

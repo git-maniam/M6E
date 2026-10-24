@@ -245,8 +245,6 @@ MACH_COMMANDS = {
     "test-interventions": MachCommandReference(
         "testing/webcompat/mach_commands.py",
     ),
-    "tps-build": MachCommandReference("testing/tps/mach_commands.py"),
-    "tps-test": MachCommandReference("testing/tps/mach_commands.py"),
     "try": MachCommandReference("tools/tryselect/mach_commands.py"),
     "ts": MachCommandReference("tools/ts/mach_commands.py"),
     "uniffi": MachCommandReference(

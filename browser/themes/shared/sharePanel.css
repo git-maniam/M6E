@@ -31,18 +31,6 @@
   list-style-image: url("chrome://browser/content/sharing/qr-code.svg");
 }
 
-#share-panel-send-to-device {
-  list-style-image: url("chrome://browser/skin/device-phone.svg");
-}
-
-#share-panel-connect-device {
-  list-style-image: url("chrome://global/skin/icons/plus.svg");
-}
-
-#share-panel-device-help {
-  list-style-image: url("chrome://global/skin/icons/help.svg");
-}
-
 #share-panel-mail {
   list-style-image: url("chrome://browser/content/sharing/mail.svg");
 }

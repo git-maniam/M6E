@@ -230,20 +230,6 @@ async function doClipboardTest({ trigger, assert }) {
   await SpecialPowers.popPrefEnv();
 }
 
-async function doRemoteTabTest({ trigger, assert }) {
-  const remoteTab = await loadRemoteTab("https://example.com");
-
-  await doTest(async () => {
-    await openPopup("example");
-    await selectRowByProvider("UrlbarProviderRemoteTabs");
-
-    await trigger();
-    await assert();
-  });
-
-  await remoteTab.unload();
-}
-
 async function doAddonTest({ trigger, assert }) {
   const addon = loadOmniboxAddon({ keyword: "omni" });
   await addon.startup();

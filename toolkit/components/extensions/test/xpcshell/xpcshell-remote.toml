@@ -1,5 +1,5 @@
 [DEFAULT]
-head = "head.js head_remote.js head_telemetry.js head_sync.js head_storage.js"
+head = "head.js head_remote.js head_telemetry.js head_storage.js"
 firefox-appdir = "browser"
 dupe-manifest = ""
 support-files = [

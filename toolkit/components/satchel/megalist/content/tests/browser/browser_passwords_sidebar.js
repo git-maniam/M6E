@@ -385,7 +385,7 @@ add_task(async function test_passwords_entry_is_not_visible_for_old_sidebar() {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["sidebar.revamp", false],
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "aichat,passwords,history,bookmarks"],
     ],
   });
 

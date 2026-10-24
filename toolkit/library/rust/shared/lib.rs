@@ -13,8 +13,6 @@ extern crate audioipc2_server;
 extern crate authrs_bridge;
 #[cfg(feature = "bitsdownload")]
 extern crate bitsdownload;
-#[cfg(feature = "moz_places")]
-extern crate bookmark_sync;
 extern crate buildid_reader_ffi;
 extern crate cascade_bloom_filter;
 extern crate cert_storage;

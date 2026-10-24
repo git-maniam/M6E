@@ -7,15 +7,6 @@ const { ExtensionStorageIDB } = ChromeUtils.importESModule(
   "resource://gre/modules/ExtensionStorageIDB.sys.mjs"
 );
 
-// Detect if the current build is still using the legacy storage.sync Kinto-based backend
-// (currently only GeckoView builds does have that still enabled).
-//
-// TODO(Bug 1625257): remove this once the rust-based storage.sync backend has been enabled
-// also on GeckoView build and the legacy Kinto-based backend has been ripped off.
-const storageSyncKintoEnabled = Services.prefs.getBoolPref(
-  "webextensions.storage.sync.kinto"
-);
-
 const server = createHttpServer({ hosts: ["example.com"] });
 server.registerDirectory("/data/", do_get_file("data"));
 server.registerPathHandler("/test-page.html", (req, res) => {
@@ -230,15 +221,7 @@ add_task(async function test_api_listener_call_exception() {
   };
 
   const notifyStorageSyncListener = extensionTestWrapper => {
-    // The notifyListeners method from ExtensionStorageSyncKinto does use
-    // the Extension class instance as the key for the storage.sync listeners
-    // map, whereas ExtensionStorageSync does use the extension id instead.
-    //
-    // TODO(Bug 1625257): remove this once the rust-based storage.sync backend has been enabled
-    // also on GeckoView build and the legacy Kinto-based backend has been ripped off.
-    let listenersMapKey = storageSyncKintoEnabled
-      ? extensionTestWrapper.extension
-      : extensionTestWrapper.id;
+    let listenersMapKey = extensionTestWrapper.id;
     ok(
       ExtensionParent.apiManager.global.extensionStorageSync.listeners.has(
         listenersMapKey

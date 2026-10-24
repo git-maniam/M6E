@@ -88,10 +88,6 @@ export class AboutLoginsChild extends JSWindowActorChild {
         this.#aboutLoginsSortChanged(event.detail);
         break;
       }
-      case "AboutLoginsSyncEnable": {
-        this.#aboutLoginsSyncEnable();
-        break;
-      }
       case "AboutLoginsUpdateLogin": {
         this.#aboutLoginsUpdateLogin(event.detail);
         break;
@@ -230,10 +226,6 @@ export class AboutLoginsChild extends JSWindowActorChild {
 
   #aboutLoginsSortChanged(detail) {
     this.sendAsyncMessage("AboutLogins:SortChanged", detail);
-  }
-
-  #aboutLoginsSyncEnable() {
-    this.sendAsyncMessage("AboutLogins:SyncEnable");
   }
 
   #aboutLoginsUpdateLogin(login) {

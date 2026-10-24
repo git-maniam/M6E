@@ -93,9 +93,8 @@ share_button:
         description: >
           A string space separated list indicating what buttons were clicked in the panel during the use of
           the share button. The action will be one of the following: "", "copy-link", "os-share", "mail",
-          "screenshot", "qr-code", "send-to-device", "conntect-or-sign-in", "connect-device", "device-help".
-          An empty string means that the panel was closed with no action taken. "connect-or-sign-in" means
-          the send to mobile button was clicked while signed out or signed in with no devices connected.
+          "screenshot", "qr-code".
+          An empty string means that the panel was closed with no action taken.
 
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2052270

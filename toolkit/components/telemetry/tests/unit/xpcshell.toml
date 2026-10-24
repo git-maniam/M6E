@@ -72,11 +72,6 @@ run-if = [
 ["test_SubsessionChaining.js"]
 tags = "addons"
 
-["test_SyncPingIntegration.js"]
-skip-if = [
-  "os == 'android'",
-]
-
 ["test_TOUNotificationFlow.js"]
 skip-if = [
   "appname == 'thunderbird'",

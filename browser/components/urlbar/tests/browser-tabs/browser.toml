@@ -35,8 +35,6 @@ https_first_disabled = true
 
 ["browser_raceWithTabs.js"]
 
-["browser_remotetab.js"]
-
 ["browser_switchToTabHavingURI_aOpenParams.js"]
 
 ["browser_switchToTab_chiclet.js"]

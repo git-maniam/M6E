@@ -148,18 +148,6 @@ ARCHIVE_FILES = {
             "pattern": "/**",
             "dest": "telemetry/marionette",
         },
-        {"source": buildconfig.topsrcdir, "base": "testing", "pattern": "tps/**"},
-        {
-            "source": buildconfig.topsrcdir,
-            "base": "services/sync/",
-            "pattern": "tps/**",
-        },
-        {
-            "source": buildconfig.topsrcdir,
-            "base": "services/sync/tests/tps",
-            "pattern": "**",
-            "dest": "tps/tests",
-        },
         {
             "source": buildconfig.topsrcdir,
             "base": "testing/web-platform/tests/tools/wptserve",
