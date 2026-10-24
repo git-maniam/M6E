@@ -294,6 +294,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 - **Prepared in parallel** (a workflow of six agents on disjoint files, each independently reviewed; see the P5 results below as they are integrated): DMG layout, ad-hoc signing script, acceptance script, memory investigation, merge tooling, DNS-blocking test.
 - **Saved builds for A/B work:** `artifacts/baseline-P4.1`, `build-P4.2a`, `build-P4.2b` and `build-P4.9` (the finished build before the D25 change).
 - **After the build:** P5.0 (check D25 on the new binary and run its xpcshell test), P5.1 (package, sign, DMG), P5.2 (run `tools/m6e/acceptance.py` on the packaged app), P5.3 (document the merge procedure), then P6.1.
+- **Autonomous mode (from 2026-10-24):** the user is away for a few hours and asked me to take the recommended option for every decision, and to highlight those decisions in the final "Summary of Completion". Every such decision is logged in "Decisions taken while the user was away" below, with the alternatives and why the recommended one was chosen.
 - **Distribution note:** D8 (ad-hoc signing) means other Macs show a Gatekeeper warning on first open. Because M6E is for everyone, a Developer ID plus notarization (Apple Developer Program, $99 a year) removes it; this is the user's decision.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
@@ -598,6 +599,13 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
 - **P5.0 Malware and phishing protection by DNS (D25, 2026-10-24):** `m6e.js` sets `network.trr.default_provider_uri` to `https://security.cloudflare-dns.com/dns-query`. `DNSPacket.cpp` adds extended DNS errors 15 and 16 to `hardFail()`, so blocked names don't fall back to ordinary DNS. The bundled `doh-providers.json` names the default "Cloudflare for Families (security)".
   - **Checked before the change:** the endpoint answers `example.com` normally and returns `0.0.0.0` with error 16 for `malware.testcategory.com` and `phishing.testcategory.com`.
   - **Still to do:** build with the Phase 5 release build. Then check that both test domains show the "can't find this site" page (with no fallback to ordinary DNS, logged with `MOZ_LOG=nsHostResolver:5`), that normal sites load, and that the only change in idle hosts is `security.cloudflare-dns.com` in place of `mozilla.cloudflare-dns.com`.
+
+### Decisions taken while the user was away (2026-10-24)
+Each is the recommended option. The user reviews these in the Summary of Completion; any can be reversed.
+
+| # | Decision | Alternatives | Why this one |
+|---|---|---|---|
+| A1 | Proceed through Phase 5 without asking questions | Pause for each choice | The user asked for recommended decisions while away |
 
 ### After Phase 5
 - **P6.1 Delete the dormant features (D30):**
