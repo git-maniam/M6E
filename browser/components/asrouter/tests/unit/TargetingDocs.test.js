@@ -50,11 +50,7 @@ describe("ASRTargeting docs", () => {
     // "allow" includes targeting attributes that are not implemented by
     // ASRTargetingAttributes. For example trigger context passed to the evaluation
     // context in when a trigger runs or ASRouter state used in the evaluation.
-    const allow = [
-      "browserIsSelected",
-      "isFirstStartup",
-      "isNonStubFirstRun",
-    ];
+    const allow = ["browserIsSelected", "isFirstStartup", "isNonStubFirstRun"];
     for (const targetingParam of DOCS_TARGETING_HEADINGS.filter(
       doc => !allow.includes(doc)
     )) {

@@ -49,31 +49,28 @@ add_task(async function test_setup() {
 });
 
 add_task(async function test_text_input() {
-  await test_contextmenu(
-    "#input_text",
-    [
-      "context-undo",
-      false,
-      "context-redo",
-      false,
-      "---",
-      null,
-      "context-cut",
-      false,
-      "context-copy",
-      false,
-      "context-paste",
-      null, // ignore clipboard state
-      "context-delete",
-      false,
-      "context-selectall",
-      false,
-      "---",
-      null,
-      "spell-check-enabled",
-      true,
-    ]
-  );
+  await test_contextmenu("#input_text", [
+    "context-undo",
+    false,
+    "context-redo",
+    false,
+    "---",
+    null,
+    "context-cut",
+    false,
+    "context-copy",
+    false,
+    "context-paste",
+    null, // ignore clipboard state
+    "context-delete",
+    false,
+    "context-selectall",
+    false,
+    "---",
+    null,
+    "spell-check-enabled",
+    true,
+  ]);
 });
 
 add_task(async function test_text_input_disabled() {
@@ -182,35 +179,32 @@ add_task(async function firefox_relay_input() {
     set: [["signon.firefoxRelay.feature", "enabled"]],
   });
 
-  await test_contextmenu(
-    "#input_username",
-    [
-      "use-relay-mask",
-      true,
-      "---",
-      null,
-      "context-undo",
-      false,
-      "context-redo",
-      false,
-      "---",
-      null,
-      "context-cut",
-      false,
-      "context-copy",
-      false,
-      "context-paste",
-      null, // ignore clipboard state
-      "context-delete",
-      false,
-      "context-selectall",
-      false,
-      "---",
-      null,
-      "spell-check-enabled",
-      true,
-    ]
-  );
+  await test_contextmenu("#input_username", [
+    "use-relay-mask",
+    true,
+    "---",
+    null,
+    "context-undo",
+    false,
+    "context-redo",
+    false,
+    "---",
+    null,
+    "context-cut",
+    false,
+    "context-copy",
+    false,
+    "context-paste",
+    null, // ignore clipboard state
+    "context-delete",
+    false,
+    "context-selectall",
+    false,
+    "---",
+    null,
+    "spell-check-enabled",
+    true,
+  ]);
 
   await test_contextmenu(
     "#input_email",

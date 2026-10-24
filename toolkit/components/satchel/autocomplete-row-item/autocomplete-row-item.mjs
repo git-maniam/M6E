@@ -150,9 +150,7 @@ class AutocompleteRowItem extends MozLitElement {
           this.icon,
           () => html`<img role="presentation" class="icon" src=${this.icon} />`
         )}
-        <div class="labels-container">
-          ${this.renderDefaultLabels()}
-        </div>
+        <div class="labels-container">${this.renderDefaultLabels()}</div>
         ${when(this.actions?.secondary, () =>
           this.renderSecondaryActionButton()
         )}

@@ -106,8 +106,7 @@ export let NewTabPagePreloading = {
     let windowPrivate = lazy.PrivateBrowsingUtils.isWindowPrivate(window);
     let countKey = windowPrivate ? "private" : "normal";
     let topWindows = lazy.BrowserWindowTracker.orderedWindows.filter(
-      w =>
-        lazy.PrivateBrowsingUtils.isWindowPrivate(w) == windowPrivate
+      w => lazy.PrivateBrowsingUtils.isWindowPrivate(w) == windowPrivate
     );
     if (topWindows.indexOf(window) >= this.MAX_COUNT) {
       return;

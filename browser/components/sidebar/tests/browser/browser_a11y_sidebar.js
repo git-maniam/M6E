@@ -15,9 +15,7 @@ async function focusAndActivateElement(elem, activateMethod) {
 
 add_setup(async () => {
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["sidebar.main.tools", "syncedtabs,history,bookmarks"],
-    ],
+    set: [["sidebar.main.tools", "syncedtabs,history,bookmarks"]],
   });
 
   const sidebarLauncher = document.querySelector("sidebar-main");

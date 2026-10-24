@@ -89,9 +89,7 @@ add_task(async function test_resize_of_tools() {
   });
 
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
-    ],
+    set: [["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"]],
   });
 
   await resetToolsHeight();
@@ -140,9 +138,7 @@ add_task(async function test_overflow_menu() {
   });
 
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
-    ],
+    set: [["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"]],
   });
 
   await resetToolsHeight();
@@ -220,9 +216,7 @@ add_task(async function test_overflow_menu_with_keyboard() {
   });
 
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
-    ],
+    set: [["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"]],
   });
 
   await resetToolsHeight();
@@ -322,9 +316,7 @@ add_task(
     });
 
     await SpecialPowers.pushPrefEnv({
-      set: [
-        ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
-      ],
+      set: [["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"]],
     });
 
     const sidebar = SidebarController.sidebarMain;
@@ -412,9 +404,7 @@ add_task(async function test_tools_overflow() {
   );
 
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
-    ],
+    set: [["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"]],
   });
   await sidebar.updateComplete;
   Assert.strictEqual(

@@ -568,7 +568,6 @@ LightweightThemeConsumer.prototype = {
       this._lastExperimentData.stylesheet = stylesheet;
     }
   },
-
 };
 
 function _getContentProperties(doc, hasTheme, data) {
