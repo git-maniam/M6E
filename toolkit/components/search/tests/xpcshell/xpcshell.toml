@@ -45,6 +45,8 @@ support-files = [
 
 ["test_defaultEngine.js"]
 
+["test_defaultEngine_experiments.js"]
+
 ["test_defaultEngine_fallback.js"]
 
 ["test_defaultPrivateEngine.js"]
@@ -77,6 +79,10 @@ tags = "remote-settings searchmain"
 ["test_getSubmission_params.js"]
 
 ["test_getSubmission_params_pref.js"]
+
+["test_getSubmission_params_prefNimbus.js"]
+
+["test_getSubmission_params_prefNimbus_invalid.js"]
 
 ["test_getSubmission_partnerCode.js"]
 

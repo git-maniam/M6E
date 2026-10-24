@@ -219,22 +219,9 @@ function needHomepageOverride(updateMilestones = true) {
  *         The nsIUpdate for the update that has been applied.
  * @param  defaultOverridePage
  *         The default override page
- * @param  nimbusOverridePage
- *         Nimbus provided URL
- * @param  disableWnp
- *         Boolean, disables all WNPs if true
  * @return The override page.
  */
-function getPostUpdateOverridePage(
-  update,
-  defaultOverridePage,
-  nimbusOverridePage,
-  disableWnp
-) {
-  if (disableWnp) {
-    return "";
-  }
-
+function getPostUpdateOverridePage(update, defaultOverridePage) {
   update = update.QueryInterface(Ci.nsIWritablePropertyBag);
   let actions = update.getProperty("actions");
   // When the update doesn't specify actions fallback to the original behavior
@@ -253,10 +240,6 @@ function getPostUpdateOverridePage(
   // use the default fallback (which will also be provided by the policy).
   if (!Services.policies.isAllowed("postUpdateCustomPage")) {
     return defaultOverridePage;
-  }
-
-  if (nimbusOverridePage) {
-    return nimbusOverridePage;
   }
 
   return update.getProperty("openURL") || defaultOverridePage;
@@ -912,98 +895,11 @@ nsBrowserContentHandler.prototype = {
               overridePage = null;
             }
 
-            /**
-             * If the override URL is provided by an experiment, is a valid
-             * Firefox What's New Page URL, and the update version is less than
-             * or equal to the maxVersion set by the experiment, we'll try to use
-             * the experiment override URL instead of the default or the
-             * update-provided URL. Additional policy checks are done in
-             *
-             * @see getPostUpdateOverridePage
-             */
-            const nimbusOverrideUrl = Services.urlFormatter.formatURLPref(
-              "startup.homepage_override_url_nimbus"
-            );
-            // This defines the maximum allowed Fx update version to see the
-            // nimbus WNP. For ex, if maxVersion is set to 127 but user updates
-            // to 128, they will not qualify.
-            const maxVersion = Services.prefs.getCharPref(
-              "startup.homepage_override_nimbus_maxVersion",
-              ""
-            );
-            // This defines the minimum allowed Fx update version to see the
-            // nimbus WNP. For ex, if minVersion is set to 126 but user updates
-            // to 124, they will not qualify.
-            const minVersion = Services.prefs.getCharPref(
-              "startup.homepage_override_nimbus_minVersion",
-              ""
-            );
-            // Pref used to disable all WNPs
-            const disableWNP = Services.prefs.getBoolPref(
-              "startup.homepage_override_nimbus_disable_wnp",
-              false
-            );
-            let nimbusWNP;
-            // minVersion and maxVersion optional variables
-            const versionMatch =
-              (!maxVersion ||
-                Services.vc.compare(update.appVersion, maxVersion) <= 0) &&
-              (!minVersion ||
-                Services.vc.compare(update.appVersion, minVersion) >= 0);
-
-            // The update version should be less than or equal to maxVersion and
-            // greater or equal to minVersion set by the experiment.
-            if (nimbusOverrideUrl && versionMatch) {
-              try {
-                let uri = Services.io.newURI(
-                  nimbusOverrideUrl.split("|")[0].trim()
-                );
-                // Only allow https://www.mozilla.org, https://www.mozilla.com, and https://www.firefox.com
-                if (
-                  uri.scheme === "https" &&
-                  [
-                    "www.mozilla.org",
-                    "www.mozilla.com",
-                    "www.firefox.com",
-                  ].includes(uri.host)
-                ) {
-                  nimbusWNP = nimbusOverrideUrl;
-                } else {
-                  throw new Error("Bad URL");
-                }
-              } catch {
-                console.error("Invalid WNP URL: ", nimbusOverrideUrl);
-              }
-            }
-
             if (
               update &&
               Services.vc.compare(update.appVersion, old_mstone) > 0
             ) {
-              overridePage = getPostUpdateOverridePage(
-                update,
-                overridePage,
-                nimbusWNP,
-                disableWNP
-              );
-              // Record a Nimbus exposure event for the whatsNewPage feature.
-              // The override page could be set in 3 ways: 1. set by Nimbus; 2.
-              // set by the update file (openURL); 3. defaulting to the
-              // evergreen page (set by the startup.homepage_override_url pref,
-              // value depends on the Fx channel). This is done to record that
-              // the control cohort could have seen the experimental What's New
-              // Page (and will instead see the default What's New Page, or
-              // won't see a WNP if the experiment disabled it by setting
-              // disable_wnp). `recordExposureEvent` only records an event if
-              // the user is enrolled in an experiment or rollout on the
-              // whatsNewPage feature, so it's safe to call it unconditionally.
-              if (overridePage || (versionMatch && disableWNP)) {
-                let nimbusWNPFeature = lazy.NimbusFeatures.whatsNewPage;
-                nimbusWNPFeature
-                  .ready()
-                  .then(() => nimbusWNPFeature.recordExposureEvent());
-              }
-
+              overridePage = getPostUpdateOverridePage(update, overridePage);
               lazy.LaterRun.enable(lazy.LaterRun.ENABLE_REASON_UPDATE_APPLIED);
             }
 

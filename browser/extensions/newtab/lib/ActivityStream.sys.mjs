@@ -350,7 +350,7 @@ function storiesRegionLocaleMatches(geo, locale) {
     return new RegionLocaleMap(entries).matches(geo, locale);
   }
   // Read the pref directly, not through a pocketNewtab variable: a Nimbus
-  // variable is absent on hosts whose FeatureManifest predates it.
+  // variable is absent on hosts whose feature definitions predate it.
   const json = Services.prefs.getStringPref(STORIES_REGION_LOCALE_CONFIG, null);
   return RegionLocaleMap.fromJSON(json, {
     fallback: STORIES_REGION_LOCALE_DEFAULT,

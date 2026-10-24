@@ -7084,39 +7084,6 @@
       "resource://nimbus/ExperimentAPI.sys.mjs": [
         "../../../toolkit/components/nimbus/ExperimentAPI.sys.mjs"
       ],
-      "resource://nimbus/FeatureManifest.sys.mjs": [
-        "../../../tools/@types/subs/FeatureManifest.sys.d.mts"
-      ],
-      "resource://nimbus/FirefoxLabs.sys.mjs": [
-        "../../../toolkit/components/nimbus/FirefoxLabs.sys.mjs"
-      ],
-      "resource://nimbus/lib/Enrollments.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/Enrollments.sys.mjs"
-      ],
-      "resource://nimbus/lib/ExperimentManager.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/ExperimentManager.sys.mjs"
-      ],
-      "resource://nimbus/lib/ExperimentStore.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/ExperimentStore.sys.mjs"
-      ],
-      "resource://nimbus/lib/Migrations.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/Migrations.sys.mjs"
-      ],
-      "resource://nimbus/lib/PrefFlipsFeature.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/PrefFlipsFeature.sys.mjs"
-      ],
-      "resource://nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/RemoteSettingsExperimentLoader.sys.mjs"
-      ],
-      "resource://nimbus/lib/SharedDataMap.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/SharedDataMap.sys.mjs"
-      ],
-      "resource://nimbus/lib/TargetingContextRecorder.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/TargetingContextRecorder.sys.mjs"
-      ],
-      "resource://nimbus/lib/Telemetry.sys.mjs": [
-        "../../../toolkit/components/nimbus/lib/Telemetry.sys.mjs"
-      ],
       "resource://normandy/Normandy.sys.mjs": [
         "../../../toolkit/components/normandy/Normandy.sys.mjs"
       ],
@@ -7647,9 +7614,6 @@
       ],
       "resource://testing-common/NewtabSearchbarTestUtils.sys.mjs": [
         "../../../browser/components/urlbar/tests/NewtabSearchbarTestUtils.sys.mjs"
-      ],
-      "resource://testing-common/NimbusTestUtils.sys.mjs": [
-        "../../../toolkit/components/nimbus/test/NimbusTestUtils.sys.mjs"
       ],
       "resource://testing-common/NodeServer.sys.mjs": [
         "../../../netwerk/test/httpserver/NodeServer.sys.mjs"

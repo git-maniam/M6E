@@ -12,14 +12,29 @@ export const EnrollmentType = Object.freeze({
 // featureId -> variable -> [type, fallbackPref]
 const FALLBACK_PREFS = {
   urlbar: {
-    actionsOnboardingTimesToShow: ["int", "browser.urlbar.quickactions.timesToShowOnboardingLabel"],
+    actionsOnboardingTimesToShow: [
+      "int",
+      "browser.urlbar.quickactions.timesToShowOnboardingLabel",
+    ],
     addonsFeatureGate: ["boolean", "browser.urlbar.addons.featureGate"],
-    allowSearchSuggestionsForSimpleOrigins: ["boolean", "browser.urlbar.allowSearchSuggestionsForSimpleOrigins"],
+    allowSearchSuggestionsForSimpleOrigins: [
+      "boolean",
+      "browser.urlbar.allowSearchSuggestionsForSimpleOrigins",
+    ],
     ampFeatureGate: ["boolean", "browser.urlbar.amp.featureGate"],
-    ampMatchingStrategy: ["int", "browser.urlbar.quicksuggest.ampMatchingStrategy"],
+    ampMatchingStrategy: [
+      "int",
+      "browser.urlbar.quicksuggest.ampMatchingStrategy",
+    ],
     fakespotFeatureGate: ["boolean", "browser.urlbar.fakespot.featureGate"],
-    flightStatusFeatureGate: ["boolean", "browser.urlbar.flightStatus.featureGate"],
-    importantDatesFeatureGate: ["boolean", "browser.urlbar.importantDates.featureGate"],
+    flightStatusFeatureGate: [
+      "boolean",
+      "browser.urlbar.flightStatus.featureGate",
+    ],
+    importantDatesFeatureGate: [
+      "boolean",
+      "browser.urlbar.importantDates.featureGate",
+    ],
     marketFeatureGate: ["boolean", "browser.urlbar.market.featureGate"],
     merinoClientVariants: ["string", "browser.urlbar.merino.clientVariants"],
     merinoEndpointURL: ["string", "browser.urlbar.merino.endpointURL"],
@@ -30,35 +45,80 @@ const FALLBACK_PREFS = {
     newtabFeatureGate: ["boolean", "browser.urlbar.newtab.featureGate"],
     newtabVariantA: ["boolean", "browser.urlbar.newtab.variantA"],
     newtabVariantB: ["boolean", "browser.urlbar.newtab.variantB"],
-    quickSuggestAmpTopPickCharThreshold: ["int", "browser.urlbar.quicksuggest.ampTopPickCharThreshold"],
+    quickSuggestAmpTopPickCharThreshold: [
+      "int",
+      "browser.urlbar.quicksuggest.ampTopPickCharThreshold",
+    ],
     quickSuggestEnabled: ["boolean", "browser.urlbar.quicksuggest.enabled"],
-    quickSuggestImpressionCapsSponsoredEnabled: ["boolean", "browser.urlbar.quicksuggest.impressionCaps.sponsoredEnabled"],
-    quickSuggestImpressionCapsNonSponsoredEnabled: ["boolean", "browser.urlbar.quicksuggest.impressionCaps.nonSponsoredEnabled"],
-    quickSuggestMlInitDelaySeconds: ["int", "browser.urlbar.quicksuggest.mlInitDelaySeconds"],
+    quickSuggestImpressionCapsSponsoredEnabled: [
+      "boolean",
+      "browser.urlbar.quicksuggest.impressionCaps.sponsoredEnabled",
+    ],
+    quickSuggestImpressionCapsNonSponsoredEnabled: [
+      "boolean",
+      "browser.urlbar.quicksuggest.impressionCaps.nonSponsoredEnabled",
+    ],
+    quickSuggestMlInitDelaySeconds: [
+      "int",
+      "browser.urlbar.quicksuggest.mlInitDelaySeconds",
+    ],
     quickSuggestMlEnabled: ["boolean", "browser.urlbar.quicksuggest.mlEnabled"],
-    quickSuggestNonSponsoredIndex: ["int", "browser.urlbar.quicksuggest.nonSponsoredIndex"],
-    quickSuggestOnlineAvailable: ["boolean", "browser.urlbar.quicksuggest.online.available"],
-    quickSuggestRankingMode: ["string", "browser.urlbar.quicksuggest.rankingMode"],
+    quickSuggestNonSponsoredIndex: [
+      "int",
+      "browser.urlbar.quicksuggest.nonSponsoredIndex",
+    ],
+    quickSuggestOnlineAvailable: [
+      "boolean",
+      "browser.urlbar.quicksuggest.online.available",
+    ],
+    quickSuggestRankingMode: [
+      "string",
+      "browser.urlbar.quicksuggest.rankingMode",
+    ],
     quickSuggestSettingsUi: ["int", "browser.urlbar.quicksuggest.settingsUi"],
-    quickSuggestSponsoredIndex: ["int", "browser.urlbar.quicksuggest.sponsoredIndex"],
-    quickSuggestSponsoredPriority: ["boolean", "browser.urlbar.quicksuggest.sponsoredPriority"],
-    resultExplanationsFeatureGate: ["boolean", "browser.urlbar.resultExplanations.featureGate"],
+    quickSuggestSponsoredIndex: [
+      "int",
+      "browser.urlbar.quicksuggest.sponsoredIndex",
+    ],
+    quickSuggestSponsoredPriority: [
+      "boolean",
+      "browser.urlbar.quicksuggest.sponsoredPriority",
+    ],
+    resultExplanationsFeatureGate: [
+      "boolean",
+      "browser.urlbar.resultExplanations.featureGate",
+    ],
     sportsFeatureGate: ["boolean", "browser.urlbar.sports.featureGate"],
-    trackerCountFeatureGate: ["boolean", "browser.urlbar.trackerCount.featureGate"],
+    trackerCountFeatureGate: [
+      "boolean",
+      "browser.urlbar.trackerCount.featureGate",
+    ],
     weatherFeatureGate: ["boolean", "browser.urlbar.weather.featureGate"],
     weatherUiTreatment: ["int", "browser.urlbar.weather.uiTreatment"],
     wikipediaFeatureGate: ["boolean", "browser.urlbar.wikipedia.featureGate"],
     yelpMlEnabled: ["boolean", "browser.urlbar.yelp.mlEnabled"],
     yelpFeatureGate: ["boolean", "browser.urlbar.yelp.featureGate"],
-    yelpServiceResultDistinction: ["boolean", "browser.urlbar.yelp.serviceResultDistinction"],
-    yelpShowLessFrequentlyCap: ["int", "browser.urlbar.yelp.showLessFrequentlyCap"],
+    yelpServiceResultDistinction: [
+      "boolean",
+      "browser.urlbar.yelp.serviceResultDistinction",
+    ],
+    yelpShowLessFrequentlyCap: [
+      "int",
+      "browser.urlbar.yelp.showLessFrequentlyCap",
+    ],
     yelpSuggestPriority: ["boolean", "browser.urlbar.yelp.priority"],
-    yelpRealtimeFeatureGate: ["boolean", "browser.urlbar.yelpRealtime.featureGate"],
+    yelpRealtimeFeatureGate: [
+      "boolean",
+      "browser.urlbar.yelpRealtime.featureGate",
+    ],
   },
   aboutwelcome: {
     enabled: ["boolean", "browser.aboutwelcome.enabled"],
     screens: ["json", "browser.aboutwelcome.screens"],
-    languageMismatchEnabled: ["boolean", "intl.multilingual.aboutWelcome.languageMismatchEnabled"],
+    languageMismatchEnabled: [
+      "boolean",
+      "intl.multilingual.aboutWelcome.languageMismatchEnabled",
+    ],
     backdrop: ["string", "browser.aboutwelcome.backdrop"],
   },
   preonboarding: {
@@ -74,52 +134,148 @@ const FALLBACK_PREFS = {
     template: ["string", "browser.preferences.moreFromMozilla.template"],
   },
   newtab: {
-    customizationMenuEnabled: ["boolean", "browser.newtabpage.activity-stream.customizationMenu.enabled"],
+    customizationMenuEnabled: [
+      "boolean",
+      "browser.newtabpage.activity-stream.customizationMenu.enabled",
+    ],
     topSitesContileEnabled: ["boolean", "browser.topsites.contile.enabled"],
   },
   pocketNewtab: {
-    contileTopsitesPositions: ["string", "browser.newtabpage.activity-stream.discoverystream.contile-topsites-positions"],
-    spocAdTypes: ["string", "browser.newtabpage.activity-stream.discoverystream.spocAdTypes"],
-    spocZoneIds: ["string", "browser.newtabpage.activity-stream.discoverystream.spocZoneIds"],
-    spocSiteId: ["string", "browser.newtabpage.activity-stream.discoverystream.spocSiteId"],
-    widgetPositions: ["string", "browser.newtabpage.activity-stream.discoverystream.widget-positions"],
-    hybridLayout: ["boolean", "browser.newtabpage.activity-stream.discoverystream.hybridLayout.enabled"],
-    hideCardBackground: ["boolean", "browser.newtabpage.activity-stream.discoverystream.hideCardBackground.enabled"],
-    fourCardLayout: ["boolean", "browser.newtabpage.activity-stream.discoverystream.fourCardLayout.enabled"],
-    newFooterSection: ["boolean", "browser.newtabpage.activity-stream.discoverystream.newFooterSection.enabled"],
-    hideDescriptions: ["boolean", "browser.newtabpage.activity-stream.discoverystream.hideDescriptions.enabled"],
-    hideDescriptionsRegions: ["string", "browser.newtabpage.activity-stream.discoverystream.hideDescriptionsRegions"],
-    compactGrid: ["boolean", "browser.newtabpage.activity-stream.discoverystream.compactGrid.enabled"],
-    compactImages: ["boolean", "browser.newtabpage.activity-stream.discoverystream.compactImages.enabled"],
-    imageGradient: ["boolean", "browser.newtabpage.activity-stream.discoverystream.imageGradient.enabled"],
-    titleLines: ["int", "browser.newtabpage.activity-stream.discoverystream.titleLines"],
-    descLines: ["int", "browser.newtabpage.activity-stream.discoverystream.descLines"],
-    readTime: ["boolean", "browser.newtabpage.activity-stream.discoverystream.readTime.enabled"],
-    newSponsoredLabel: ["boolean", "browser.newtabpage.activity-stream.discoverystream.newSponsoredLabel.enabled"],
-    ctaButtonSponsors: ["string", "browser.newtabpage.activity-stream.discoverystream.ctaButtonSponsors"],
-    ctaButtonVariant: ["string", "browser.newtabpage.activity-stream.discoverystream.ctaButtonVariant"],
-    regionStoriesConfig: ["string", "browser.newtabpage.activity-stream.discoverystream.region-stories-config"],
-    merinoProviderEndpoint: ["string", "browser.newtabpage.activity-stream.discoverystream.merino-provider.endpoint"],
-    regionStoriesBlock: ["string", "browser.newtabpage.activity-stream.discoverystream.region-stories-block"],
-    regionSpocsConfig: ["string", "browser.newtabpage.activity-stream.discoverystream.region-spocs-config"],
-    pocketFeedParameters: ["string", "browser.newtabpage.activity-stream.discoverystream.pocket-feed-parameters"],
+    contileTopsitesPositions: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.contile-topsites-positions",
+    ],
+    spocAdTypes: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.spocAdTypes",
+    ],
+    spocZoneIds: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.spocZoneIds",
+    ],
+    spocSiteId: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.spocSiteId",
+    ],
+    widgetPositions: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.widget-positions",
+    ],
+    hybridLayout: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.hybridLayout.enabled",
+    ],
+    hideCardBackground: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.hideCardBackground.enabled",
+    ],
+    fourCardLayout: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.fourCardLayout.enabled",
+    ],
+    newFooterSection: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.newFooterSection.enabled",
+    ],
+    hideDescriptions: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.hideDescriptions.enabled",
+    ],
+    hideDescriptionsRegions: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.hideDescriptionsRegions",
+    ],
+    compactGrid: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.compactGrid.enabled",
+    ],
+    compactImages: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.compactImages.enabled",
+    ],
+    imageGradient: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.imageGradient.enabled",
+    ],
+    titleLines: [
+      "int",
+      "browser.newtabpage.activity-stream.discoverystream.titleLines",
+    ],
+    descLines: [
+      "int",
+      "browser.newtabpage.activity-stream.discoverystream.descLines",
+    ],
+    readTime: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.readTime.enabled",
+    ],
+    newSponsoredLabel: [
+      "boolean",
+      "browser.newtabpage.activity-stream.discoverystream.newSponsoredLabel.enabled",
+    ],
+    ctaButtonSponsors: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.ctaButtonSponsors",
+    ],
+    ctaButtonVariant: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.ctaButtonVariant",
+    ],
+    regionStoriesConfig: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.region-stories-config",
+    ],
+    merinoProviderEndpoint: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.merino-provider.endpoint",
+    ],
+    regionStoriesBlock: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.region-stories-block",
+    ],
+    regionSpocsConfig: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.region-spocs-config",
+    ],
+    pocketFeedParameters: [
+      "string",
+      "browser.newtabpage.activity-stream.discoverystream.pocket-feed-parameters",
+    ],
   },
   shellService: {
     setDefaultPDFHandler: ["boolean", "browser.shell.setDefaultPDFHandler"],
-    setDefaultPDFHandlerOnlyReplaceBrowsers: ["boolean", "browser.shell.setDefaultPDFHandler.onlyReplaceBrowsers"],
-    setDefaultGuidanceNotifications: ["boolean", "browser.shell.setDefaultGuidanceNotifications"],
+    setDefaultPDFHandlerOnlyReplaceBrowsers: [
+      "boolean",
+      "browser.shell.setDefaultPDFHandler.onlyReplaceBrowsers",
+    ],
+    setDefaultGuidanceNotifications: [
+      "boolean",
+      "browser.shell.setDefaultGuidanceNotifications",
+    ],
   },
   upgradeDialog: {
     enabled: ["boolean", "browser.startup.upgradeDialog.enabled"],
   },
   pingsender: {
-    backgroundTaskEnabled: ["boolean", "toolkit.telemetry.shutdownPingSender.backgroundtask.enabled"],
+    backgroundTaskEnabled: [
+      "boolean",
+      "toolkit.telemetry.shutdownPingSender.backgroundtask.enabled",
+    ],
   },
   mailto: {
     dualPrompt: ["boolean", "browser.mailto.dualPrompt"],
-    "dualPrompt.onLocationChange": ["boolean", "browser.mailto.dualPrompt.onLocationChange"],
-    "dualPrompt.dismissXClickMinutes": ["int", "browser.mailto.dualPrompt.dismissXClickMinutes"],
-    "dualPrompt.dismissNotNowMinutes": ["int", "browser.mailto.dualPrompt.dismissNotNowMinutes"],
+    "dualPrompt.onLocationChange": [
+      "boolean",
+      "browser.mailto.dualPrompt.onLocationChange",
+    ],
+    "dualPrompt.dismissXClickMinutes": [
+      "int",
+      "browser.mailto.dualPrompt.dismissXClickMinutes",
+    ],
+    "dualPrompt.dismissNotNowMinutes": [
+      "int",
+      "browser.mailto.dualPrompt.dismissNotNowMinutes",
+    ],
   },
   contentRelevancy: {
     enabled: ["boolean", "toolkit.contentRelevancy.enabled"],

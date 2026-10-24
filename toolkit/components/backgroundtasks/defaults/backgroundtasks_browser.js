@@ -31,6 +31,9 @@ pref(
   false
 );
 
+// Don't refresh experiments while a background task is running.
+pref("app.normandy.run_interval_seconds", 0);
+
 #if defined(ENABLE_TESTS)
   // Test prefs to verify background tasks override browser prefs correctly.
   pref("toolkit.backgroundtasks.tests.browserPrefsOverriden", 26);

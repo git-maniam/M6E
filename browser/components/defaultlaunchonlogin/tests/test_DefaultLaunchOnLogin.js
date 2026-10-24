@@ -10,12 +10,10 @@ const { sinon } = ChromeUtils.importESModule(
 const { AppConstants } = ChromeUtils.importESModule(
   "resource://gre/modules/AppConstants.sys.mjs"
 );
-const {
-  DefaultLaunchOnLogin,
-  DEFAULT_LAUNCH_ON_LOGIN_PREF,
-} = ChromeUtils.importESModule(
-  "moz-src:///browser/components/defaultlaunchonlogin/DefaultLaunchOnLogin.sys.mjs"
-);
+const { DefaultLaunchOnLogin, DEFAULT_LAUNCH_ON_LOGIN_PREF } =
+  ChromeUtils.importESModule(
+    "moz-src:///browser/components/defaultlaunchonlogin/DefaultLaunchOnLogin.sys.mjs"
+  );
 const { LaunchOnLogin } = ChromeUtils.importESModule(
   "resource://gre/modules/LaunchOnLogin.sys.mjs"
 );

@@ -1393,7 +1393,6 @@ interface GleanImpl {
     preferencesPaneAppearance: Record<string, GleanCounter>;
     preferencesPaneContainers: Record<string, GleanCounter>;
     preferencesPaneDownloads: Record<string, GleanCounter>;
-    preferencesPaneExperimental: Record<string, GleanCounter>;
     preferencesPaneGeneral: Record<string, GleanCounter>;
     preferencesPaneHome: Record<string, GleanCounter>;
     preferencesPaneLanguages: Record<string, GleanCounter>;
@@ -6563,71 +6562,6 @@ interface GleanImpl {
     windowClosed: GleanDatetime;
   }
 
-  nimbusEvents: {
-    databaseWrite: GleanEventWithExtras<{ success?: string|boolean }>;
-    enrollFailed: GleanEventWithExtras<{ branch?: string, experiment?: string, reason?: string }>;
-    enrollment: GleanEventWithExtras<{ branch?: string, experiment?: string, experiment_type?: string }>;
-    enrollmentStatus: GleanEventWithExtras<{ branch?: string, conflict_slug?: string, error_string?: string, migration?: string, reason?: string, slug?: string, status?: string }>;
-    exposure: GleanEventWithExtras<{ branch?: string, experiment?: string, feature_id?: string }>;
-    isReady: GleanEventNoExtras;
-    migration: GleanEventWithExtras<{ duration?: string|number, error_reason?: string, is_first_startup?: string|boolean, migration_id?: string, success?: string|boolean }>;
-    remoteSettingsSyncError: GleanEventWithExtras<{ collection?: string, force_sync?: string|boolean, reason?: string, trigger?: string }>;
-    startupDatabaseConsistency: GleanEventWithExtras<{ db_active_count?: string|number, primary?: string, store_active_count?: string|number, total_db_count?: string|number, total_store_count?: string|number, trigger?: string }>;
-    unenrollFailed: GleanEventWithExtras<{ experiment?: string, reason?: string }>;
-    unenrollment: GleanEventWithExtras<{ about_config_change?: string, branch?: string, changed_pref?: string, conflicting_slug?: string, experiment?: string, locale?: string, migration?: string, pref_name?: string, pref_type?: string, reason?: string }>;
-    updateError: GleanEventWithExtras<{ during_shutdown?: string|boolean, error?: string, trigger?: string }>;
-    validationFailed: GleanEventWithExtras<{ branch?: string, experiment?: string, l10n_ids?: string, locale?: string, reason?: string }>;
-  }
-
-  nimbusTargetingContext: {
-    activeExperiments: GleanObject;
-    activeRollouts: GleanObject;
-    addonsInfo: GleanObject;
-    addressesSaved: GleanQuantity;
-    allowedNotificationOrigins: GleanQuantity;
-    archBits: GleanQuantity;
-    attributionData: GleanObject;
-    browserSettings: GleanObject;
-    buildId: GleanQuantity;
-    currentDate: GleanString;
-    defaultPdfHandler: GleanObject;
-    distributionId: GleanString;
-    doesAppNeedPin: GleanBoolean;
-    enrollmentsMap: GleanObject;
-    firefoxVersion: GleanQuantity;
-    hasActiveEnterprisePolicies: GleanBoolean;
-    hasPinnedTabs: GleanBoolean;
-    homePageSettings: GleanObject;
-    isDefaultBrowser: GleanBoolean;
-    isDefaultHandler: GleanObject;
-    isFirstStartup: GleanBoolean;
-    isFxAEnabled: GleanBoolean;
-    isFxASignedIn: GleanBoolean;
-    isMsix: GleanBoolean;
-    launchOnLoginAllowedByPolicy: GleanBoolean;
-    launchOnLoginEnabled: GleanBoolean;
-    locale: GleanString;
-    memoryMb: GleanQuantity;
-    os: GleanObject;
-    primaryResolution: GleanObject;
-    profileAgeCreated: GleanQuantity;
-    profileGroupProfileCount: GleanQuantity;
-    region: GleanString;
-    totalBookmarksCount: GleanQuantity;
-    userMonthlyActivity: GleanObject;
-    userPrefersReducedMotion: GleanBoolean;
-    usesFirefoxSync: GleanBoolean;
-    version: GleanString;
-  }
-
-  nimbusTargetingEnvironment: {
-    attrEvalErrors: Record<"activeExperiments"|"activeRollouts"|"addonsInfo"|"addressesSaved"|"allowedNotificationOrigins"|"archBits"|"attributionData"|"browserSettings"|"buildId"|"currentDate"|"defaultPDFHandler"|"distributionId"|"doesAppNeedPin"|"enrollmentsMap"|"firefoxVersion"|"hasActiveEnterprisePolicies"|"hasPinnedTabs"|"homePageSettings"|"isDefaultBrowser"|"isDefaultHandler"|"isFirstStartup"|"isFxAEnabled"|"isFxASignedIn"|"isMSIX"|"launchOnLoginAllowedByPolicy"|"launchOnLoginEnabled"|"locale"|"memoryMB"|"os"|"primaryResolution"|"profileAgeCreated"|"profileGroupProfileCount"|"region"|"totalBookmarksCount"|"userMonthlyActivity"|"userPrefersReducedMotion"|"usesFirefoxSync"|"version", GleanCounter>;
-    prefTypeErrors: Record<"browser.ai.control.default"|"browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons"|"browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features"|"browser.newtabpage.activity-stream.feeds.section.highlights"|"browser.newtabpage.activity-stream.feeds.section.topstories"|"browser.newtabpage.activity-stream.feeds.topsites"|"browser.newtabpage.activity-stream.showSearch"|"browser.newtabpage.activity-stream.showSponsoredTopSites"|"browser.newtabpage.enabled"|"browser.profiles.created"|"browser.startup.page"|"browser.tabs.splitview.hasUsed"|"browser.toolbars.bookmarks.visibility"|"browser.urlbar.lastUrlbarSearchSeconds"|"browser.urlbar.showSearchSuggestionsFirst"|"browser.urlbar.suggest.quicksuggest.sponsored"|"media.videocontrols.picture-in-picture.enabled"|"media.videocontrols.picture-in-picture.video-toggle.enabled"|"media.videocontrols.picture-in-picture.video-toggle.has-used"|"messaging-system-action.testday"|"network.trr.mode"|"nimbus.qa.pref-1"|"nimbus.qa.pref-2"|"security.sandbox.content.level"|"termsofuse.acceptedDate"|"termsofuse.acceptedVersion"|"termsofuse.bypassNotification"|"termsofuse.firstAcceptedDate"|"trailhead.firstrun.didSeeAboutWelcome", GleanCounter>;
-    prefValues: GleanObject;
-    targetingContextValue: GleanText;
-    userSetPrefs: GleanObject;
-  }
-
   normandy: {
     exposeNimbusExperiment: GleanEventWithExtras<{ branchSlug?: string, featureId?: string, value?: string }>;
     enrollAddonRollout: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, experimentType?: string, value?: string }>;
@@ -7798,10 +7732,6 @@ interface GleanImpl {
     deleteTasksTime: GleanQuantity;
     elapsed: GleanQuantity;
     newProfile: GleanBoolean;
-    nimbusInitTime: GleanQuantity;
-    nimbusLoaderInitTime: GleanQuantity;
-    nimbusManagerInitTime: GleanQuantity;
-    nimbusStoreInitTime: GleanQuantity;
     normandyInitTime: GleanQuantity;
     statusCode: GleanQuantity;
   }
@@ -8210,7 +8140,6 @@ interface GleanPingsImpl {
   testOhttpPing: GleanPingNoReason;
   testPing: GleanPingNoReason;
   heartbeat: GleanPingNoReason;
-  nimbusTargetingContext: GleanPingNoReason;
   pageExtractor: GleanPingNoReason;
   brokenSiteReport: GleanPingNoReason;
   userCharacteristics: GleanPingNoReason;

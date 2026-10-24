@@ -657,7 +657,7 @@ add_task(function test_trimLabel_dropsDanglingConnectives() {
 
 add_task(async function test_nimbus_overwrites_atg_prefs() {
   // Proves the `autoTabGrouping` Nimbus feature's setPref variables actually
-  // reach their prefs -- the FeatureManifest name -> pref mapping is not checked
+  // reach their prefs -- the feature variable -> pref mapping is not checked
   // at build time. The variables use branch:default, which Nimbus only reverts on
   // restart (not this session), so this asserts the override, not restoration.
   const PREF_MIN_CANDIDATE_TABS =

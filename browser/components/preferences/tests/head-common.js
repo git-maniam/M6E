@@ -236,11 +236,7 @@ async function clearSearch(doc) {
   await searchCompletedPromise;
 }
 
-async function evaluateSearchResults(
-  keyword,
-  searchResults,
-  includeExperiments = false
-) {
+async function evaluateSearchResults(keyword, searchResults) {
   searchResults = Array.isArray(searchResults)
     ? searchResults
     : [searchResults];
@@ -251,9 +247,6 @@ async function evaluateSearchResults(
   let mainPrefTag = gBrowser.contentDocument.getElementById("mainPrefPane");
   for (let i = 0; i < mainPrefTag.childElementCount; i++) {
     let child = mainPrefTag.children[i];
-    if (!includeExperiments && child.id?.startsWith("pane-experimental")) {
-      continue;
-    }
     if (child.localName == "setting-group") {
       // Skip migrated setting-groups to avoid interference with legacy tests
       if (child.hasAttribute("data-srd-migrated")) {

@@ -106,10 +106,7 @@ async function test_rollout(
     set: [
       ["browser.mailto.dualPrompt", dualPrompt],
       ["browser.mailto.dualPrompt.onLocationChange", onLocationChange],
-      [
-        "browser.mailto.dualPrompt.dismissXClickMinutes",
-        dismissXClickMinutes,
-      ],
+      ["browser.mailto.dualPrompt.dismissXClickMinutes", dismissXClickMinutes],
       ["browser.mailto.dualPrompt.dismissNotNowMinutes", dismissNotNowMinutes],
     ],
   });

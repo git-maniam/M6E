@@ -1781,7 +1781,7 @@ pref("browser.topsites.contile.endpoint", "https://contile.services.mozilla.com/
 pref("browser.newtab.preload", true);
 
 // For further detail on the TOU prefs below, see the `preonboarding` feature in
-// FeatureManifest.yaml
+// toolkit/components/nimbus/ExperimentAPI.sys.mjs
 // Version of the TOU that the user last accepted
 pref("termsofuse.acceptedVersion", 0);
 // Stringified timestamp of when the user last accepted the TOU
@@ -1920,7 +1920,7 @@ pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", 
 pref("browser.newtabpage.activity-stream.asrouter.providers.message-groups", "{\"id\":\"message-groups\",\"enabled\":true,\"type\":\"remote-settings\",\"collection\":\"message-groups\",\"updateCycleInMs\":3600000}");
 pref("browser.newtabpage.activity-stream.asrouter.providers.onboarding", "{\"id\":\"onboarding\",\"type\":\"local\",\"localProvider\":\"OnboardingMessageProvider\",\"enabled\":true,\"exclude\":[]}");
 pref("browser.newtabpage.activity-stream.asrouter.providers.cfr", "{\"id\":\"cfr\",\"enabled\":true,\"type\":\"remote-settings\",\"collection\":\"cfr\",\"updateCycleInMs\":3600000}");
-pref("browser.newtabpage.activity-stream.asrouter.providers.messaging-experiments", "{\"id\":\"messaging-experiments\",\"enabled\":true,\"type\":\"remote-experiments\",\"updateCycleInMs\":3600000}");
+pref("browser.newtabpage.activity-stream.asrouter.providers.messaging-experiments", "{\"id\":\"messaging-experiments\",\"enabled\":false,\"type\":\"remote-experiments\",\"updateCycleInMs\":3600000}");
 
 // ASRouter user prefs
 pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", true);
@@ -2085,18 +2085,6 @@ pref("browser.newtabpage.sponsor-protection.enabled", true);
 pref("browser.aboutwelcome.enabled", true);
 // Used to set multistage welcome UX
 pref("browser.aboutwelcome.screens", "");
-// Whether to gate loading about:welcome on Nimbus experiments having loaded.
-// The gate shows a splash screen while experiments load, then auto-advances.
-// On platforms where experiments are already loaded when the modal opens,
-// skipSplashIfLoaded causes the splash to be skipped via screen targeting.
-pref("browser.aboutwelcome.experimentsGate.enabled", true);
-// Whether to skip showing the experiment loading splash screen if Nimbus is
-// already initialized when the preonboarding modal's screen targeting is
-// evaluated.
-pref("browser.aboutwelcome.experimentsGate.skipSplashIfLoaded", true);
-// Minimum and maximum time (ms) to display the experiment-loading splash screen.
-pref("browser.aboutwelcome.experimentsGate.minDisplayMs", 3000);
-pref("browser.aboutwelcome.experimentsGate.maxDisplayMs", 8000);
 
 // Global Nova redesign enabled pref
 pref("browser.nova.enabled", true);
@@ -3548,13 +3536,6 @@ pref("browser.profiles.enabled", true);
 pref("browser.profiles.profile-name.updated", false);
 // Whether to allow the user to merge profile data
 pref("browser.profiles.sync.allow-danger-merge", false);
-
-pref("startup.homepage_override_url_nimbus", "");
-// These prefs are referring to the Fx update version
-pref("startup.homepage_override_nimbus_maxVersion", "");
-pref("startup.homepage_override_nimbus_minVersion", "");
-// Pref to disable all What's New pages
-pref("startup.homepage_override_nimbus_disable_wnp", false);
 
 // Pref to enable the content relevancy feature.
 pref("toolkit.contentRelevancy.enabled", false);

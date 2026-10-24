@@ -1763,29 +1763,6 @@ const TargetingGetters = {
   },
 
   /**
-   * Whether Nimbus has loaded remote experiments at least once.
-   *
-   * @return {boolean}
-   */
-  get experimentsLoaded() {
-    try {
-      // If Nimbus experiments are disabled, we can consider them loaded
-      if (!lazy.ExperimentAPI.enabled) {
-        return true;
-      }
-      // Check if the loader has updated recipes at least once
-      const hasUpdated = lazy.ExperimentAPI._rsLoader?._hasUpdatedOnce ?? false;
-      return hasUpdated;
-    } catch (e) {
-      lazy.ASRouterPreferences.console.error(
-        "nimbusExperimentsLoaded check failed",
-        e
-      );
-      return false;
-    }
-  },
-
-  /**
    * The total number of crashes the user has experienced, as recorded by the
    * crash manager at crash time (independent of report submission).
    *

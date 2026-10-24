@@ -51,6 +51,8 @@ support-files = ["file_csp_module.sys.mjs"]
 
 ["browser_default_bookmark_toolbar_visibility.js"]
 
+["browser_default_browser_prompt.js"]
+
 ["browser_default_webprotocol_handler_mailto.js"]
 run-if = [
   "os == 'win'",

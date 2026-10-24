@@ -34,7 +34,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ASRouterDefaultConfig:
     // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
     "resource:///modules/asrouter/ASRouterDefaultConfig.sys.mjs",
-
 });
 
 class CannotLockProfileError extends Error {

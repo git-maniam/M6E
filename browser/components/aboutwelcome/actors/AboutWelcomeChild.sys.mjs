@@ -153,10 +153,6 @@ export class AboutWelcomeChild extends JSWindowActorChild {
     Cu.exportFunction(this.RPMGetFormatURLPref.bind(this), window, {
       defineAs: "RPMGetFormatURLPref",
     });
-
-    Cu.exportFunction(this.AWWaitForNimbus.bind(this), window, {
-      defineAs: "AWWaitForNimbus",
-    });
   }
 
   /**
@@ -416,10 +412,6 @@ export class AboutWelcomeChild extends JSWindowActorChild {
     return this.sendQueryAndCloneForContent(
       "AWPage:GET_UNHANDLED_CAMPAIGN_ACTION"
     );
-  }
-
-  AWWaitForNimbus() {
-    return this.wrapPromise(this.sendQuery("AWPage:WAIT_FOR_NIMBUS"));
   }
 
   RPMGetFormatURLPref(formatURL) {

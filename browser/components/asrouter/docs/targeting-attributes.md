@@ -1597,54 +1597,6 @@ Indicates whether a user has selected an encrypted or non-encrypted backup metho
 
 A boolean. `true` when a user downloads Firefox from a Smart Window marketing campaign (ie. `attributionData.campaign == "smart_window"`), `false` otherwise.
 
-### `isFirstStartup`
-
-`true` while Firefox is running through its first-startup sequence (i.e., when
-`FirstStartup` is in the `IN_PROGRESS` state). This tracks the first startup
-of the browser itself.
-
-> ⚠ **NOTE:** This targeting attribute is only available for the JEXL expressions
-> of experiments' advanced targeting configs, which are defined in the
-> [experimenter repository](https://experimenter.info). Targeting expressions for
-> messages do not have access to this attribute.
-
-#### Definition
-
-```ts
-declare const isFirstStartup: boolean;
-```
-
-[Source](https://searchfox.org/mozilla-central/source/toolkit/components/nimbus/lib/ExperimentManager.sys.mjs#233)
-
-### `isNonStubFirstRun`
-
-`true` during the first Nimbus `updateRecipes` pass on a new profile, `false`
-on all subsequent passes. The `nimbus.firstUpdateComplete` pref is set to `true`
-after the first `updateRecipes` pass completes; this attribute reads from that
-pref.
-
-This is the cross-platform equivalent of `isFirstStartup` for platforms where
-`isFirstStartup` is always `false` (Mac, Linux, and MSIX). On Windows stub
-installer builds, both `isFirstStartup` and `isNonStubFirstRun` will be `true`
-during first-run enrollment.
-
-> **NOTE:** This targeting attribute is only available for the JEXL expressions
-> of experiments' advanced targeting configs, which are defined in the
-> [experimenter repository](https://experimenter.info). Targeting expressions for
-> messages do not have access to this attribute.
-
-#### Definition
-
-```ts
-declare const isNonStubFirstRun: boolean;
-```
-
-[Source](https://searchfox.org/mozilla-central/source/toolkit/components/nimbus/lib/ExperimentManager.sys.mjs#235)
-
-### `experimentsLoaded`
-
-Boolean that's true once Nimbus has loaded remote experiments from Remote Settings at least once. Returns true if experiments are disabled. This generally shouldn't be used outside of the splash screen.
-
 ### `crashCount`
 
 The total number of crashes per 180 days the user has experienced, as recorded by the [crash manager](https://searchfox.org/firefox-main/source/toolkit/components/crashes/CrashManager.in.sys.mjs#1006-1016) at crash time, independent of whether a crash report was submitted.

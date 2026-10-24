@@ -82,3 +82,41 @@ add_task(async function test_feature_override() {
   Assert.equal(feature.getVariable("quickSuggestRankingMode"), "one");
   Assert.strictEqual(feature.getVariable("other"), undefined);
 });
+
+add_task(async function test_no_network_or_telemetry_surface() {
+  let source = await (
+    await fetch("resource://nimbus/ExperimentAPI.sys.mjs")
+  ).text();
+  for (let token of [
+    "RemoteSettings",
+    "remote-settings",
+    "fetch(",
+    "XMLHttpRequest",
+    "Glean",
+    "Telemetry",
+    "ServerSocket",
+    "setStringPref",
+    "setBoolPref",
+    "setIntPref",
+    "setCharPref",
+  ]) {
+    Assert.ok(!source.includes(token), `Stub source does not use ${token}`);
+  }
+  Assert.deepEqual(
+    [...source.matchAll(/^import .*$/gm)].map(m => m[0]),
+    ['import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";'],
+    "Stub imports only XPCOMUtils"
+  );
+
+  for (let name of [
+    "ExperimentManager",
+    "ExperimentStore",
+    "RemoteSettingsExperimentLoader",
+  ]) {
+    Assert.throws(
+      () => ChromeUtils.importESModule(`resource://nimbus/lib/${name}.sys.mjs`),
+      /NS_ERROR|Error|Failed/,
+      `${name} is not importable`
+    );
+  }
+});
