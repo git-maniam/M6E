@@ -45,7 +45,6 @@ security.OCSP.timeoutMilliseconds.soft  # soft-fail OCSP timeout of 1 s instead 
 signon.storage.rust.enabled  # Nightly stores logins through the Rust component
 
 # Dormant features that are locked off
-browser.ipProtection.hasSeenFeature  # the VPN is locked off
 dom.security.unexpected_system_load_telemetry_enabled  # telemetry is off
 extensions.formautofill.useml  # needs browser.ml.enable, which is locked off
 extensions.translations.disabled  # Translations is locked off

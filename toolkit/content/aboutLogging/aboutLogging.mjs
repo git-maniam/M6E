@@ -190,18 +190,6 @@ const gLoggingPresets = {
       description: "about-logging-preset-navigation-description",
     },
   },
-  vpn: {
-    modules:
-      "IPP_ProxyManager:5,IPP_GuardianClient:5,IPP_GuardianTypes:5,IPP_Serverlist:5,IPP_NetworkUtils:5,IPP_AlwaysOn:5,IPP_EnterpriseAuthProvider:5,IPP_FxaActivateAuthProvider:5,IPP_SiteRuleManager:5,IPP_SiteRuleProviders:5,GeckoView.IPProtection:5",
-    l10nIds: {
-      label: "about-logging-preset-vpn-label",
-      description: "about-logging-preset-vpn-description",
-    },
-    // The IP Protection log modules all run on the parent process main thread;
-    // firefox-platform records GeckoMain so the log markers are captured.
-    profilerPreset: "firefox-platform",
-    javascriptTracing: true,
-  },
   ...gOsSpecificLoggingPresets,
   custom: {
     modules: "",

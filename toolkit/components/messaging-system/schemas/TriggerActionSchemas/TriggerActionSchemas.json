@@ -573,42 +573,6 @@
           "properties": {
             "id": {
               "type": "string",
-              "enum": ["ipProtectionReady"]
-            }
-          },
-          "additionalProperties": false,
-          "required": ["id"],
-          "description": "Happens when the IP protection widget is loaded and the toolbar item is available"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string",
-              "enum": ["ipProtectionPanelClosed"]
-            }
-          },
-          "additionalProperties": false,
-          "required": ["id"],
-          "description": "Fires on close of the IP Protection Panel"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string",
-              "enum": ["ipProtectionBandwidthReset"]
-            }
-          },
-          "additionalProperties": false,
-          "required": ["id"],
-          "description": "Fires when the IP protection bandwidth quota resets at the start of a new month"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string",
               "enum": ["selectableProfilesUpdated"]
             },
             "context": {

@@ -4,9 +4,6 @@
 
 "use strict";
 
-const ONBOARDING_MESSAGE_MASK_PREF =
-  "browser.ipProtection.onboardingMessageMask";
-
 /**
  * Opens the dialog for a specified permission type with a set capabilityFilter.
  *
@@ -182,8 +179,8 @@ function cleanupPermissions(permissionType) {
  */
 add_task(async function test_filter_dialog_DENY_ACTION_only() {
   // capabilityFilter isn't exclusive to any permission type.
-  // Let's use ipp-vpn as an example to test the filter.
-  const permissionType = "ipp-vpn";
+  // Let's use install as an example to test the filter.
+  const permissionType = "install";
   const capabilityFilter = Ci.nsIPermissionManager.DENY_ACTION;
 
   let sites = getMockSiteOrigins(permissionType, capabilityFilter);
@@ -195,9 +192,6 @@ add_task(async function test_filter_dialog_DENY_ACTION_only() {
   );
 
   cleanupPermissions(permissionType);
-  // Since we're using ipp-vpn for this test, clear any prefs related to the permission.
-  // We can remove this line if we change the permission type.
-  Services.prefs.clearUserPref(ONBOARDING_MESSAGE_MASK_PREF);
 });
 
 /**
@@ -206,8 +200,8 @@ add_task(async function test_filter_dialog_DENY_ACTION_only() {
  */
 add_task(async function test_filter_dialog_ALLOW_ACTION_only() {
   // capabilityFilter isn't exclusive to any permission type.
-  // Let's use ipp-vpn as an example to test the filter.
-  const permissionType = "ipp-vpn";
+  // Let's use install as an example to test the filter.
+  const permissionType = "install";
   const capabilityFilter = Ci.nsIPermissionManager.ALLOW_ACTION;
 
   let sites = getMockSiteOrigins(permissionType, capabilityFilter);
@@ -219,7 +213,4 @@ add_task(async function test_filter_dialog_ALLOW_ACTION_only() {
   );
 
   cleanupPermissions(permissionType);
-  // Since we're using ipp-vpn for this test, clear any prefs related to the permission.
-  // We can remove this line if we change the permission type.
-  Services.prefs.clearUserPref(ONBOARDING_MESSAGE_MASK_PREF);
 });

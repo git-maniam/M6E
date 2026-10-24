@@ -16,12 +16,6 @@ ChromeUtils.defineLazyGetter(this, "SearchTestUtils", () => {
 });
 
 ChromeUtils.defineESModuleGetters(this, {
-  IPProtection:
-    "moz-src:///browser/components/ipprotection/IPProtection.sys.mjs",
-  IPPProxyManager:
-    "moz-src:///toolkit/components/ipprotection/IPPProxyManager.sys.mjs",
-  ProxyUsage:
-    "moz-src:///toolkit/components/ipprotection/GuardianTypes.sys.mjs",
   UrlbarShared: "chrome://browser/content/urlbar/UrlbarShared.mjs",
   UrlbarTestUtils: "resource://testing-common/UrlbarTestUtils.sys.mjs",
 });
@@ -1150,37 +1144,6 @@ add_task(async function test_elementClicked_trigger() {
   document.documentElement.removeChild(button);
 });
 
-add_task(async function test_ipprotection_ready() {
-  const sandbox = sinon.createSandbox();
-  const receivedTrigger = new Promise(resolve => {
-    sandbox.stub(ASRouter, "sendTriggerMessage").callsFake(({ id }) => {
-      if (id === "ipProtectionReady") {
-        resolve(true);
-      }
-    });
-  });
-
-  IPProtection.init();
-
-  let ipProtectionReadyTrigger = await receivedTrigger;
-  Assert.ok(ipProtectionReadyTrigger, "ipProtectionReady trigger sent");
-
-  IPProtection.uninit();
-  sandbox.restore();
-
-  if (PanelUI.panel.state === "showing") {
-    await BrowserTestUtils.waitForEvent(PanelUI.panel, "popupshown");
-  }
-  if (PanelUI.panel.state !== "closed") {
-    let panelHidden = BrowserTestUtils.waitForEvent(
-      PanelUI.panel,
-      "popuphidden"
-    );
-    PanelUI.hide();
-    await panelHidden;
-  }
-});
-
 add_task(async function test_tabSwitch() {
   const sandbox = sinon.createSandbox();
 
@@ -1243,92 +1206,6 @@ add_task(async function test_tabSwitch() {
   BrowserTestUtils.removeTab(aboutTab);
 
   await SpecialPowers.popPrefEnv();
-  sandbox.restore();
-});
-
-add_task(async function test_ipprotection_panel_closed() {
-  const sandbox = sinon.createSandbox();
-  const receivedTrigger = new Promise(resolve => {
-    sandbox.stub(ASRouter, "sendTriggerMessage").callsFake(({ id }) => {
-      if (id === "ipProtectionPanelClosed") {
-        resolve(true);
-      }
-    });
-  });
-
-  IPProtection.init();
-
-  // Get the panel for the window
-  const panel = IPProtection.getPanel(window);
-
-  // Open the panel
-  await panel.open(window);
-
-  // Close the panel, which should trigger ipProtectionPanelClosed
-  let panelHidden = BrowserTestUtils.waitForEvent(panel.panel, "popuphidden");
-  panel.close();
-  await panelHidden;
-
-  Assert.ok(
-    await receivedTrigger,
-    "ipProtectionPanelClosed trigger sent on closing IP Protection panel"
-  );
-
-  // Open and close the panel again
-  await panel.open(window);
-  panelHidden = BrowserTestUtils.waitForEvent(panel.panel, "popuphidden");
-  panel.close();
-  await panelHidden;
-
-  // Clean up prefs
-  Services.prefs.clearUserPref("browser.ipProtection.added");
-  Services.prefs.clearUserPref("browser.ipProtection.everOpenedPanel");
-
-  IPProtection.uninit();
-  await SpecialPowers.popPrefEnv();
-  sandbox.restore();
-});
-
-add_task(async function test_ipprotection_bandwidth_reset() {
-  const sandbox = sinon.createSandbox();
-  const receivedTrigger = new Promise(resolve => {
-    sandbox.stub(ASRouter, "sendTriggerMessage").callsFake(({ id }) => {
-      if (id === "ipProtectionBandwidthReset") {
-        resolve(true);
-      }
-    });
-  });
-
-  IPProtection.init();
-  IPProtection.getPanel(window);
-
-  const oldResetDate = new Date(Date.now() - 86400000).toISOString();
-  const newResetDate = new Date(Date.now() + 86400000).toISOString();
-  const max = "5368709120";
-
-  Services.prefs.setStringPref(
-    "browser.ipProtection.bandwidthResetDate",
-    oldResetDate
-  );
-
-  const usage = new ProxyUsage(max, max, newResetDate);
-  IPPProxyManager.dispatchEvent(
-    new CustomEvent("IPPProxyManager:UsageChanged", {
-      bubbles: true,
-      composed: true,
-      detail: { usage },
-    })
-  );
-
-  Assert.ok(
-    await receivedTrigger,
-    "ipProtectionBandwidthReset trigger sent when bandwidth resets"
-  );
-
-  Services.prefs.clearUserPref("browser.ipProtection.bandwidthResetDate");
-  Services.prefs.clearUserPref("browser.ipProtection.bandwidthThreshold");
-
-  IPProtection.uninit();
   sandbox.restore();
 });
 

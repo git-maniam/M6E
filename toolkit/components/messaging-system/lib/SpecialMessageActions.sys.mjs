@@ -48,9 +48,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ICON_CATALOG:
     // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
     "moz-src:///browser/components/shell/CustomIconManager.sys.mjs",
-  IPProtection:
-    // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
-    "moz-src:///browser/components/ipprotection/IPProtection.sys.mjs",
   MessagingSystemAllowlists:
     "resource://messaging-system/lib/MessagingSystemAllowlists.sys.mjs",
   MigrationUtils:
@@ -415,10 +412,6 @@ export const SpecialMessageActions = {
       "browser.smartwindow.memories.generateFromHistory",
       "browser.crashReports.unsubmittedCheck.autoSubmit2",
       "browser.dataFeatureRecommendations.enabled",
-      "browser.ipProtection.bandwidth.enabled",
-      "browser.ipProtection.blockIPProtectionCallouts",
-      "browser.ipProtection.enabled",
-      "browser.ipProtection.optedOut",
       "browser.migrate.content-modal.about-welcome-behavior",
       "browser.migrate.content-modal.import-all.enabled",
       "browser.migrate.preferences-entrypoint.enabled",
@@ -1229,10 +1222,6 @@ export const SpecialMessageActions = {
         ) {
           await lazy.SessionStore.restoreLastSession();
         }
-        break;
-      }
-      case "IPPROTECTION_ENROLL": {
-        await lazy.IPProtection.getPanel(window)?.enroll();
         break;
       }
       case "SET_BROWSER_ICON": {

@@ -645,26 +645,6 @@ interface GleanImpl {
     displayed: GleanEventWithExtras<{ delay?: string|number, selection?: string|number, smart_window?: string|boolean }>;
   }
 
-  ipprotection: {
-    alertButtonClicked: GleanEventWithExtras<{ buttonType?: string|number, reason?: string }>;
-    bandwidthUsedThreshold: GleanEventWithExtras<{ percentage?: string|number }>;
-    clickUpgradeButton: GleanEventNoExtras;
-    enrollment: GleanEventWithExtras<{ enrolled?: string|boolean, reason?: string }>;
-    exclusionToggled: GleanEventWithExtras<{ excluded?: string|boolean }>;
-    getStarted: GleanEventNoExtras;
-    locationChanged: GleanEventWithExtras<{ location?: string }>;
-    locationSelectorButtonClicked: GleanEventNoExtras;
-    locationUpgradePromoClicked: GleanEventNoExtras;
-    removedFromToolbar: GleanEventNoExtras;
-    breakageMessageDismissed: GleanEventNoExtras;
-    breakageMessageShown: GleanEventNoExtras;
-    error: GleanEventWithExtras<{ reason?: string, source?: string }>;
-    exclusionAdded: GleanCounter;
-    gpiEnrollment: GleanEventWithExtras<{ hadPreviousJwt?: string|boolean, httpStatus?: string|number, reason?: string }>;
-    paused: GleanEventWithExtras<{ wasActive?: string|boolean }>;
-    started: GleanEventWithExtras<{ inPrivateBrowsing?: string|boolean, userAction?: string|boolean }>;
-    stopped: GleanEventWithExtras<{ duration?: string, userAction?: string|boolean }>;
-  }
 
   backgroundUpdate: {
     reasonsToNotUpdate: GleanStringList;
@@ -1652,11 +1632,6 @@ interface GleanImpl {
     exposure: Record<"newtab_searchbar"|"searchbar"|"smartbar"|"urlbar", GleanCounter>;
   }
 
-  addonsSearchDetection: {
-    etldChangeOther: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, from?: string, to?: string, value?: string }>;
-    etldChangeWebrequest: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, from?: string, to?: string, value?: string }>;
-    sameSiteRedirect: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, origin?: string, paramChanged?: string }>;
-  }
 
   browserContentCrash: {
     dumpUnavailable: GleanCounter;

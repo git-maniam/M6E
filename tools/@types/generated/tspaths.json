@@ -271,30 +271,6 @@
       "chrome://browser/content/genai/content/model-optin.mjs": [
         "../../../browser/components/genai/content/model-optin.mjs"
       ],
-      "chrome://browser/content/ipprotection/bandwidth-usage.mjs": [
-        "../../../browser/components/ipprotection/content/bandwidth-usage.mjs"
-      ],
-      "chrome://browser/content/ipprotection/ipprotection-constants.mjs": [
-        "../../../browser/components/ipprotection/content/ipprotection-constants.mjs"
-      ],
-      "chrome://browser/content/ipprotection/ipprotection-message-bar.mjs": [
-        "../../../browser/components/ipprotection/content/ipprotection-message-bar.mjs"
-      ],
-      "chrome://browser/content/ipprotection/ipprotection-status-box.mjs": [
-        "../../../browser/components/ipprotection/content/ipprotection-status-box.mjs"
-      ],
-      "chrome://browser/content/ipprotection/ipprotection-status-card.mjs": [
-        "../../../browser/components/ipprotection/content/ipprotection-status-card.mjs"
-      ],
-      "chrome://browser/content/ipprotection/ipprotection-unauthenticated.mjs": [
-        "../../../browser/components/ipprotection/content/ipprotection-unauthenticated.mjs"
-      ],
-      "chrome://browser/content/ipprotection/ipprotection-utils.mjs": [
-        "../../../browser/components/ipprotection/content/ipprotection-utils.mjs"
-      ],
-      "chrome://browser/content/ipprotection/locations-list.mjs": [
-        "../../../browser/components/ipprotection/content/locations-list.mjs"
-      ],
       "chrome://browser/content/migration/migration-wizard-constants.mjs": [
         "../../../browser/components/migration/content/migration-wizard-constants.mjs"
       ],
@@ -7809,18 +7785,6 @@
       ],
       "resource://testing-common/httpd.sys.mjs": [
         "../../../netwerk/test/httpserver/httpd.sys.mjs"
-      ],
-      "resource://testing-common/ipprotection/IPPAlwaysOn.sys.mjs": [
-        "../../../toolkit/components/ipprotection/enterprise/IPPAlwaysOn.sys.mjs"
-      ],
-      "resource://testing-common/ipprotection/IPPDummyAuthProvider.sys.mjs": [
-        "../../../toolkit/components/ipprotection/tests/IPPDummyAuthProvider.sys.mjs"
-      ],
-      "resource://testing-common/ipprotection/IPPEnterpriseAuthProvider.sys.mjs": [
-        "../../../toolkit/components/ipprotection/enterprise/IPPEnterpriseAuthProvider.sys.mjs"
-      ],
-      "resource://testing-common/ipprotection/IPPGpiAuthProvider.sys.mjs": [
-        "../../../toolkit/components/ipprotection/gpi/IPPGpiAuthProvider.sys.mjs"
       ],
       "resource://testing-common/services/common/logging.sys.mjs": [
         "../../../services/common/modules-testing/logging.sys.mjs"

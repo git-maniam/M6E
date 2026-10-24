@@ -75,9 +75,6 @@ ChromeUtils.defineESModuleGetters(this, {
   Sanitizer: "resource:///modules/Sanitizer.sys.mjs",
   SelectableProfileService:
     "resource:///modules/profiles/SelectableProfileService.sys.mjs",
-  IPProtection:
-    "moz-src:///browser/components/ipprotection/IPProtection.sys.mjs",
-  BANDWIDTH: "chrome://browser/content/ipprotection/ipprotection-constants.mjs",
 });
 
 const SANITIZE_ON_SHUTDOWN_MAPPINGS = {
@@ -622,7 +619,6 @@ var gPrivacyPane = {
     initSettingGroup("cookiesAndSiteData");
     initSettingGroup("cookiesAndSiteData2");
     initSettingGroup("certificates");
-    initSettingGroup("ipprotection");
     initSettingGroup("history");
     initSettingGroup("history2");
     initSettingGroup("permissions");

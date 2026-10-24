@@ -49,7 +49,6 @@ browser/components/firefoxview/content/synced-tabs-empty.svg
 browser/components/firefoxview/content/synced-tabs-error.svg
 browser/components/firefoxview/content/view-chats.svg
 browser/components/genai/assets/onboarding-link-preview-image-longpress.svg
-browser/components/ipprotection/assets/vpn-settings-get-started.svg
 browser/components/privatebrowsing/content/assets/focus-logo.svg
 browser/components/profiles/content/assets/kit-profiles-dark.svg
 browser/components/profiles/content/assets/kit-profiles-light.svg

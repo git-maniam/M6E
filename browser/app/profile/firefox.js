@@ -3605,64 +3605,6 @@ pref("toolkit.contentRelevancy.log", false);
 // rotation altogether.
 pref("browser.contextual-services.contextId.rotation-in-days", 3);
 pref("browser.contextual-services.contextId.rust-component.enabled", true);
-// Pref to block feature callout messages related to IP protection
-pref("browser.ipProtection.blockIPProtectionCallouts", false);
-// Pref to enable the IP protection feature
-pref("browser.ipProtection.enabled", false);
-// Pref to track whether the user has opted out of using IP Protection
-pref("browser.ipProtection.optedOut", false);
-// Pref to enable the autoStart feature
-pref("browser.ipProtection.features.autoStart", false);
-// Prefs to track the user turning on autostart preference
-pref("browser.ipProtection.autoStartEnabled", false);
-pref("browser.ipProtection.autoStartPrivateEnabled", false);
-pref("browser.ipProtection.autoRestoreEnabled", false);
-// Pref to track whether the user has turned IP protection on
-pref("browser.ipProtection.userEnabled", false);
-// Pref to track the number of times the user has enabled IP protection (max 3)
-pref("browser.ipProtection.userEnableCount", 0);
-// Pref to track if user has ever opened the VPN panel
-pref("browser.ipProtection.everOpenedPanel", false);
-// Pref to track if the user has opened the panel since release 160
-pref("browser.ipProtection.openedPanelSince160", false);
-// Pref to track if the VPN UI has ever been exposed to the user. Once it is
-// true the UI is shown regardless of the l10n coverage of
-// browser/ipProtection.ftl. A profile data upgrade sets it to true on profiles
-// that predate the gate, so the gate only applies to new profiles. On Nightly
-// the gate is off: translations always lag there.
-#ifdef NIGHTLY_BUILD
-pref("browser.ipProtection.hasSeenFeature", true);
-#else
-pref("browser.ipProtection.hasSeenFeature", false);
-#endif
-// Firefox major version that the l10n coverage gate was last enforced for, 0
-// when it never hid the feature. The gate stops applying as soon as the browser
-// is updated to a different major version.
-pref("browser.ipProtection.l10nGateVersion", 0);
-// Pref to enable support for site exceptions
-pref("browser.ipProtection.features.siteExceptions", true);
-// Pref to enable support for site inclusions
-pref("browser.ipProtection.features.siteInclusions", false);
-// Pref to track if the site inclusion prompt has been shown in the VPN panel
-pref("browser.ipProtection.siteInclusionPromptShown", false);
-pref("browser.ipProtection.log", false);
-pref("browser.ipProtection.guardian.endpoint", "https://vpn.mozilla.org/");
-pref("browser.ipProtection.added", false);
-// Pref to track whether the user has upgraded to Mozilla VPN
-pref("browser.ipProtection.hasUpgraded", false);
-// Pref to disable upgrade-related messaging when VPN upgrade is not available
-pref("browser.ipProtection.upgradeNotAvailable", false);
-// Pref that enables bandwidth usage feature
-pref("browser.ipProtection.bandwidth.enabled", true);
-// Pref for messaging the maximum bandwidth allowance in GB
-pref("browser.ipProtection.bandwidth.maxInGb", 50);
-// Pref that stores the current egress location for the VPN
-pref("browser.ipProtection.egressLocation", "");
-// Pref that flips at 50%, 75%, and 90% bandwidth usage thresholds
-pref("browser.ipProtection.bandwidthThreshold", 0);
-// Tracks the highest bandwidth warning threshold (75 or 90) dismissed per surface.
-// Stored as JSON: { infobar: <number>, panel: <number> }. Reset when bandwidth resets.
-pref("browser.ipProtection.bandwidthWarningDismissedThreshold", "");
 
 // Pref to enable aboug:glean redesign.
 pref("about.glean.redesign.enabled", false);

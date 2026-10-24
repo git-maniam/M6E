@@ -1105,18 +1105,6 @@
         {
           "type": "object",
           "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["IPPROTECTION_ENROLL"]
-            }
-          },
-          "required": ["type"],
-          "additionalProperties": false,
-          "description": "Enrolls the user in IP Protection by initiating sign-in and entitlement."
-        },
-        {
-          "type": "object",
-          "properties": {
             "data": {
               "type": "object",
               "properties": {

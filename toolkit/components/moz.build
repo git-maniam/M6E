@@ -141,9 +141,6 @@ DIRS += ["aboutwebauthn"]
 if CONFIG["MOZ_BUILD_APP"] == "browser":
     DIRS += ["messaging-system"]
 
-if CONFIG["MOZ_BUILD_APP"] != "comm/mail":
-    DIRS += ["ipprotection"]
-
 DIRS += ["nimbus"]
 
 if CONFIG["MOZ_BACKGROUNDTASKS"]:

@@ -5022,16 +5022,6 @@ var ConfirmationHint = {
     MozXULElement.insertFTLIfNeeded("toolkit/branding/brandings.ftl");
     MozXULElement.insertFTLIfNeeded("browser/confirmationHints.ftl");
 
-    // IP Protection strings are still in preview (see Bug 2011776).
-    // Only insert the preview file if we're showing a hint for IP Protection.
-    if (
-      messageId ===
-        "confirmation-hint-ipprotection-navigated-to-excluded-site" ||
-      messageId === "confirmation-hint-ipprotection-navigated-to-included-site"
-    ) {
-      MozXULElement.insertFTLIfNeeded("browser/ipProtection.ftl");
-    }
-
     document.l10n.setAttributes(this._message, messageId, l10nArgs);
     if (descriptionId) {
       document.l10n.setAttributes(this._description, descriptionId);

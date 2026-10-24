@@ -1078,17 +1078,6 @@ export let ProfileDataUpgrader = {
       Services.prefs.clearUserBranch("browser.promo.cookiebanners.");
     }
 
-    if (existingDataVersion < 180) {
-      // Bug 2056232: the IP Protection UI is now gated on the l10n coverage of
-      // browser/ipProtection.ftl, and only for users who have never seen the
-      // feature. Existing profiles are assumed to have already seen it, so the
-      // gate never takes it away from them.
-      const IPP_HAS_SEEN_FEATURE_PREF = "browser.ipProtection.hasSeenFeature";
-      if (!Services.prefs.prefHasUserValue(IPP_HAS_SEEN_FEATURE_PREF)) {
-        Services.prefs.setBoolPref(IPP_HAS_SEEN_FEATURE_PREF, true);
-      }
-    }
-
     if (existingDataVersion < 181) {
       // Bug 2058359 - Re-enable "update service" setting for auto-disabled installations
       if (
@@ -1139,10 +1128,6 @@ export let ProfileDataUpgrader = {
 
       // We need to override this in order to roll the new sidebar out to everyone
       Services.prefs.clearUserPref("sidebar.revamp");
-    }
-
-    if (existingDataVersion < 184) {
-      Services.prefs.clearUserPref("browser.ipProtection.locationListCache");
     }
 
     // Update the migration version.

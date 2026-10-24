@@ -233,7 +233,6 @@ async function setupLnaPrefs() {
       ["network.lna.blocking", true],
       ["network.lna.websocket.enabled", true],
       ["network.lna.local-network-to-localhost.skip-checks", false],
-      ["browser.ipProtection.enabled", false],
     ],
   });
   Services.obs.notifyObservers(null, "testonly-reload-permissions-from-disk");
