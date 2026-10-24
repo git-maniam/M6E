@@ -91,7 +91,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.7b | Normandy and about:studies removed | `8a3c3fac23` |
 | P3.8 | Page telemetry button: TTFB, FCP, TTI, page size, script parse/execution, TLS | `7e1542f61b` |
 | P4.8 | Security hardening: experimental features off, auto-var-init, sandbox locks, add-on and download prefs, static analysis, dormant pages unregistered | `45bf9d9e22` and earlier |
-| P4.9, P4.3 | Final PGO build, full test pass and profiling; Phase 4 complete | this commit |
+| P4.9, P4.3 | Final PGO build, full test pass and profiling; Phase 4 complete | `ff0b6ab100` |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
