@@ -357,9 +357,9 @@ pref("security.sandbox.content.level", 3, locked);
 pref("fission.autostart", true, locked);
 
 // Add-ons and downloads (P4.8f). Only signed add-ons, and only from the
-// profile and the application, so other software can't side-load them. The
-// scopes stay unlocked because test profiles must enable the harness add-ons.
-pref("xpinstall.signatures.required", true, locked);
+// profile and the application, so other software can't side-load them.
+// Unlocked, because test profiles must install the unsigned harness add-ons.
+pref("xpinstall.signatures.required", true);
 pref("extensions.enabledScopes", 5);
 pref("extensions.autoDisableScopes", 15);
 // Ask what to do with file types not seen before, instead of opening them.

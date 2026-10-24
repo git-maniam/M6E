@@ -515,7 +515,7 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
       - deliberate perfect forwarding and `sizeof` patterns.
     - Mozilla runs these analyzers in its own CI, so few findings were expected.
   - **f results:**
-    - **Add-ons:** signatures are required and locked. Add-ons load only from the profile and the application (`extensions.enabledScopes` 5), so other software can't side-load them.
+    - **Add-ons:** signatures are required. Add-ons load only from the profile and the application (`extensions.enabledScopes` 5), so other software can't side-load them. None of these is locked: test profiles must install the unsigned harness add-ons (a lock made every mochitest abort with `ERROR_SIGNEDSTATE_REQUIRED`), and changing them needs local write access, which could change the app itself anyway.
     - **Correction (P4.9):** the scope prefs are no longer locked. With `autoDisableScopes` locked, the test profiles' value of 0 had no effect, so the harness add-ons stayed disabled. That hung PGO's profiling run for hours (its quitter add-on never ran) and would have broken mochitests too.
     - **Downloads:** M6E asks before handling a new file type, and downloads stay out of macOS's Recent Items.
     - **Already in place:** link prefetch, DNS prefetch and speculative connections off (P3.4), a warning before external protocol handlers, and Local Network Access with tracker blocking (P4.8a).
