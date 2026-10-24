@@ -87,6 +87,8 @@ pref("network.trr.mode", 2);
 // Cloudflare for Families (security), which also refuses to resolve known
 // malware and phishing domains: free, with no account or API key (D25).
 pref("network.trr.default_provider_uri", "https://security.cloudflare-dns.com/dns-query");
+// A name the resolver blocks must not fall back to native DNS, so this stays on.
+pref("network.trr.hard_fail_on_extended_error", true, locked);
 
 // No captive portal, connectivity or region checks.
 pref("network.captive-portal-service.enabled", false, locked);
