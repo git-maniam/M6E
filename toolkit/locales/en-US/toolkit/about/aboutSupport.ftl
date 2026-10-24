@@ -460,17 +460,6 @@ support-remote-settings-sync-history-status = Status
 support-remote-settings-sync-history-datetime = Date
 support-remote-settings-sync-history-infos = Infos
 
-## Normandy sections
-
-support-remote-experiments-title = Remote Experiments
-support-remote-experiments-name = Name
-support-remote-experiments-branch = Experiment Branch
-support-remote-experiments-see-about-studies = See <a data-l10n-name="support-about-studies-link">about:studies</a> for more information, including how to disable individual experiments or to disable { -brand-short-name } from running this type of experiment in the future.
-
-support-remote-features-title = Remote Features
-support-remote-features-name = Name
-support-remote-features-status = Status
-
 ## Pointing devices
 
 pointing-device-mouse = Mouse

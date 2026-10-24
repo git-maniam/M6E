@@ -1648,33 +1648,6 @@ var snapshotFormatters = {
       )
     );
   },
-
-  normandy(data) {
-    if (!data) {
-      return;
-    }
-
-    const { nimbusExperiments, nimbusRollouts } = data;
-
-    $.append(
-      $("remote-features-tbody"),
-      nimbusRollouts.map(({ userFacingName, branch }) =>
-        $.new("tr", [
-          $.new("td", [document.createTextNode(userFacingName)]),
-          $.new("td", [document.createTextNode(`(${branch.slug})`)]),
-        ])
-      )
-    );
-    $.append(
-      $("remote-experiments-tbody"),
-      nimbusExperiments.map(({ userFacingName, branch }) =>
-        $.new("tr", [
-          $.new("td", [document.createTextNode(userFacingName)]),
-          $.new("td", [document.createTextNode(branch?.slug || branch)]),
-        ])
-      )
-    );
-  },
 };
 
 var $ = document.getElementById.bind(document);

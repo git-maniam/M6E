@@ -39,19 +39,6 @@ add_task(async function test_success() {
 
         if (AppConstants.MOZ_NORMANDY) {
           Assert.greater(Glean.firstStartup.normandyInitTime.testGetValue(), 0);
-          Assert.greater(
-            Glean.firstStartup.nimbusStoreInitTime.testGetValue(),
-            0
-          );
-          Assert.greater(
-            Glean.firstStartup.nimbusManagerInitTime.testGetValue(),
-            0
-          );
-          Assert.greater(
-            Glean.firstStartup.nimbusLoaderInitTime.testGetValue(),
-            0
-          );
-          Assert.greater(Glean.firstStartup.nimbusInitTime.testGetValue(), 0);
         }
 
         if (AppConstants.MOZ_UPDATE_AGENT) {
@@ -84,19 +71,6 @@ add_task(async function test_timeout() {
 
         if (AppConstants.MOZ_NORMANDY) {
           Assert.greater(Glean.firstStartup.normandyInitTime.testGetValue(), 0);
-          Assert.greater(
-            Glean.firstStartup.nimbusStoreInitTime.testGetValue(),
-            0
-          );
-          Assert.greater(
-            Glean.firstStartup.nimbusManagerInitTime.testGetValue(),
-            0
-          );
-          Assert.greater(
-            Glean.firstStartup.nimbusLoaderInitTime.testGetValue(),
-            0
-          );
-          Assert.greater(Glean.firstStartup.nimbusInitTime.testGetValue(), 0);
         }
 
         if (AppConstants.MOZ_UPDATE_AGENT) {

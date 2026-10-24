@@ -1020,41 +1020,6 @@ var dataProviders = {
     });
   },
 
-  async normandy(done) {
-    if (!AppConstants.MOZ_NORMANDY) {
-      done();
-      return;
-    }
-
-    const { ExperimentAPI } = ChromeUtils.importESModule(
-      "resource://nimbus/ExperimentAPI.sys.mjs"
-    );
-
-    // Get Normandy data in parallel, and sort each group by slug.
-    const [nimbusExperiments, nimbusRollouts] = await Promise.all(
-      [
-        ExperimentAPI.manager.store
-          .ready()
-          .then(() => ExperimentAPI.manager.store.getAllActiveExperiments()),
-        ExperimentAPI.manager.store
-          .ready()
-          .then(() => ExperimentAPI.manager.store.getAllActiveRollouts()),
-      ].map(promise =>
-        promise
-          .catch(error => {
-            console.error(error);
-            return [];
-          })
-          .then(items => items.sort((a, b) => a.slug.localeCompare(b.slug)))
-      )
-    );
-
-    done({
-      nimbusExperiments,
-      nimbusRollouts,
-    });
-  },
-
   async remoteSettings(done) {
     const { RemoteSettings } = ChromeUtils.importESModule(
       "resource://services-settings/remote-settings.sys.mjs"
