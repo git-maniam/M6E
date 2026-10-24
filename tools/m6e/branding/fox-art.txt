@@ -34,11 +34,9 @@ browser/components/asrouter/content/assets/smiling-fox-icon.svg
 browser/components/asrouter/content/assets/windows-guidance-static.svg
 browser/components/asrouter/content/assets/windows-guidance.gif
 browser/components/controlcenter/content/assets/fox-concern.svg
-browser/components/firefoxview/content/empty-chat.svg
 browser/components/firefoxview/content/history-empty.svg
 browser/components/firefoxview/content/synced-tabs-empty.svg
 browser/components/firefoxview/content/synced-tabs-error.svg
-browser/components/firefoxview/content/view-chats.svg
 browser/components/ipprotection/assets/vpn-settings-get-started.svg
 browser/components/privatebrowsing/content/assets/focus-logo.svg
 browser/components/profiles/content/assets/kit-profiles-dark.svg

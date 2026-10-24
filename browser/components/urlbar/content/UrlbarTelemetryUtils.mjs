@@ -261,21 +261,6 @@ export class UrlbarTelemetryUtils {
   }
 
   /**
-   * The chat telemetry fields, gathered from the live input.
-   *
-   * @param {any} input
-   *   The input.
-   * @returns {{chatId: string, intent: string, model: string}}
-   */
-  static smartbarData(input) {
-    return {
-      chatId: input.conversationTelemetryInfo?.chat_id ?? "",
-      intent: input.smartbarAction ?? "",
-      model: input.modelName ?? "",
-    };
-  }
-
-  /**
    * The telemetry type and (if keyword exposures are enabled) keyword recorded
    * for an exposure, computed when the exposure is added to the queue.
    *
@@ -431,7 +416,6 @@ export class UrlbarTelemetryUtils {
       selType: details.selType,
       searchSource: details.searchSource,
       searchMode: details.searchMode,
-      location: details.location,
       windowMode: details.windowMode,
       startEventInfo,
     };
@@ -561,8 +545,6 @@ export class UrlbarTelemetryUtils {
    *   The search string's word count.
    * @param {string} data.provider
    *   The picked result's provider name.
-   * @param {string} data.searchSource
-   *   The search source.
    * @param {?object} data.searchMode
    *   The active search mode, if any.
    * @param {number} data.selIndex
@@ -577,14 +559,6 @@ export class UrlbarTelemetryUtils {
    *   The `data-action` of the picked action button, for `selType === "action"`.
    * @param {number} [data.viewTime]
    *   The bounce view time in milliseconds.
-   * @param {?object} [data.location]
-   *   The interaction location.
-   * @param {string} [data.chatId]
-   *   Smartbar-only chat session id.
-   * @param {string} [data.intent]
-   *   Smartbar-only detected intent.
-   * @param {string} [data.model]
-   *   Smartbar-only selected model.
    * @param {string} data.windowMode
    *   The window mode: classic or private.
    * @returns {?{metric: string, eventInfo: object}} The Glean metric name and
@@ -598,7 +572,6 @@ export class UrlbarTelemetryUtils {
     numChars,
     numWords,
     provider,
-    searchSource,
     searchMode,
     selIndex,
     visibleResults,
@@ -606,22 +579,9 @@ export class UrlbarTelemetryUtils {
     selType,
     pickedActionKey = null,
     viewTime = 0,
-    location: sapLocation = null,
-    chatId = "",
-    intent = "",
-    model: telemetryModel = "",
     windowMode,
   }) {
     const search_mode = this.getSearchMode(searchMode);
-    const isSmartbar = searchSource === "smartbar";
-    const smartbarExtras = isSmartbar
-      ? {
-          location: sapLocation,
-          chat_id: chatId,
-          intent,
-          model: telemetryModel,
-        }
-      : {};
     let numResults = visibleResults.length;
     let groups = visibleResults
       .map(r => UrlbarShared.searchEngagementTelemetryGroup(r))
@@ -676,7 +636,6 @@ export class UrlbarTelemetryUtils {
             results,
             actions,
             window_mode: windowMode,
-            ...smartbarExtras,
           },
         };
       }
@@ -694,7 +653,6 @@ export class UrlbarTelemetryUtils {
             results,
             actions,
             window_mode: windowMode,
-            ...smartbarExtras,
           },
         };
       }
@@ -722,7 +680,6 @@ export class UrlbarTelemetryUtils {
             results,
             feature: "suggest",
             window_mode: windowMode,
-            ...smartbarExtras,
           },
         };
       }
@@ -750,7 +707,6 @@ export class UrlbarTelemetryUtils {
               "events.bounce.maxSecondsFromLastSearch"
             ),
             window_mode: windowMode,
-            ...smartbarExtras,
           },
         };
       }
@@ -772,8 +728,6 @@ export class UrlbarTelemetryUtils {
    *   The `collectSnapshot()` snapshot.
    * @param {object} engagementData
    *   `{searchMode, visibleResults, viewIsOpen, searchSource}`.
-   * @param {object} smartbarData
-   *   `{chatId, intent, model}`.
    * @param {?Set<string>} previousSearchWords
    *   The prior session's search words, for the "refined" interaction check.
    * @returns {{built: ?{metric: string, eventInfo: object}, previousSearchWords: ?Set<string>}}
@@ -781,14 +735,12 @@ export class UrlbarTelemetryUtils {
   static buildRecordedEngagement(
     snapshot,
     engagementData,
-    smartbarData,
     previousSearchWords
   ) {
     return this.#buildRecorded(
       snapshot.method,
       snapshot,
       engagementData,
-      smartbarData,
       previousSearchWords
     );
   }
@@ -804,8 +756,6 @@ export class UrlbarTelemetryUtils {
    *   The `collectSnapshot()` snapshot.
    * @param {object} engagementData
    *   `{searchMode, visibleResults, viewIsOpen, searchSource}`.
-   * @param {object} smartbarData
-   *   `{chatId, intent, model}`.
    * @param {?Set<string>} previousSearchWords
    *   The prior session's search words, for the "refined" interaction check.
    * @returns {?{metric: string, eventInfo: object}} The built event.
@@ -813,25 +763,17 @@ export class UrlbarTelemetryUtils {
   static buildRecordedDisableCandidate(
     snapshot,
     engagementData,
-    smartbarData,
     previousSearchWords
   ) {
     return this.#buildRecorded(
       "disable",
       snapshot,
       engagementData,
-      smartbarData,
       previousSearchWords
     ).built;
   }
 
-  static #buildRecorded(
-    method,
-    snapshot,
-    engagementData,
-    smartbarData,
-    previousSearchWords
-  ) {
+  static #buildRecorded(method, snapshot, engagementData, previousSearchWords) {
     let { internalDetails } = snapshot;
     let searchMode = internalDetails.searchMode ?? engagementData.searchMode;
     let interactionResult = this.getInteractionType(
@@ -850,17 +792,12 @@ export class UrlbarTelemetryUtils {
       numChars: snapshot.numChars,
       numWords: snapshot.numWords,
       provider: internalDetails.provider,
-      searchSource: internalDetails.searchSource,
       searchMode,
       selIndex: internalDetails.selIndex,
       visibleResults: engagementData.visibleResults,
       viewIsOpen: engagementData.viewIsOpen,
       selType: internalDetails.selType,
       pickedActionKey: internalDetails.pickedActionKey,
-      location: internalDetails.location,
-      chatId: smartbarData.chatId,
-      intent: smartbarData.intent,
-      model: smartbarData.model,
       windowMode: internalDetails.windowMode,
     });
     return {

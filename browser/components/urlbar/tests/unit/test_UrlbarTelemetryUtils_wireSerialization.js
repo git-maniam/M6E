@@ -57,7 +57,6 @@ function makeRecordedEngagement({ exposures = null } = {}) {
     numChars: snapshot.numChars,
     numWords: snapshot.numWords,
     provider: internalDetails.provider,
-    searchSource: internalDetails.searchSource,
     searchMode: null,
     selIndex: internalDetails.selIndex,
     visibleResults,

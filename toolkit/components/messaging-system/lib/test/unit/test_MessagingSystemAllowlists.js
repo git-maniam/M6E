@@ -168,7 +168,7 @@ add_task(async function test_blocklist_applies_to_set_for_test() {
   registerCleanupFunction(() => MessagingSystemAllowlists._resetForTest());
 
   MessagingSystemAllowlists._setForTest({
-    actionOnly: ["SUMMARIZE_PAGE", "FOO_ACTION"],
+    actionOnly: ["RESET_PROFILE", "FOO_ACTION"],
     setPref: ["app.update.disabledForTesting", "foo.pref"],
   });
 

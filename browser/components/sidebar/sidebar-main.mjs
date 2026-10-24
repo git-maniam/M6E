@@ -350,8 +350,7 @@ export default class SidebarMain extends MozLitElement {
     if (this.contextMenuTarget?.hasAttribute("contextMenu")) {
       this.hideExistingMenuItem();
 
-      const toolId = this.contextMenuTarget.getAttribute("contextMenu");
-      await this.buildToolContextMenuItems(event, toolId);
+      await this.buildToolContextMenuItems();
 
       const items = this._contextMenu.querySelectorAll(
         "[customized-tool='true']"
@@ -368,27 +367,12 @@ export default class SidebarMain extends MozLitElement {
     event.preventDefault();
   }
 
-  async buildToolContextMenuItems(event, toolId) {
+  async buildToolContextMenuItems() {
     const menu = this._contextMenu;
     // Clear previously added custom menuitems
     menu
       .querySelectorAll("[customized-tool='true']")
       .forEach(node => node.remove());
-
-    const menuBuilders = {};
-
-    const builder = menuBuilders[toolId];
-    if (typeof builder === "function") {
-      const originalAppendChild = menu.appendChild.bind(menu);
-
-      menu.appendChild = child => {
-        child.setAttribute("customized-tool", true);
-        return originalAppendChild(child);
-      };
-
-      await builder(menu);
-      menu.appendChild = originalAppendChild;
-    }
 
     return menu;
   }

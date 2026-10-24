@@ -151,7 +151,6 @@ module.exports = [
       "browser/themes/shared/addon-notification.css",
       "browser/themes/shared/addons/extension-controlled.css",
       "browser/themes/shared/addons/unified-extensions.css",
-      "browser/themes/shared/aiWindowSidebar.css",
       "browser/themes/shared/autocomplete.css",
       "browser/themes/shared/blockedSite.css",
       "browser/themes/shared/contextmenu.css",

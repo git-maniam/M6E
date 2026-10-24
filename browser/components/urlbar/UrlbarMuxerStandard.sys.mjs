@@ -1339,12 +1339,11 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
     }
 
     // If we find results other than the heuristic, "Search in Private
-    // Window," tail suggestions, or AI chat results, then we should hide
-    // tail suggestions since they're a last resort.
+    // Window," or tail suggestions, then we should hide tail suggestions
+    // since they're a last resort.
     if (
       state.canShowTailSuggestions &&
       !result.heuristic &&
-      result.type != lazy.UrlbarShared.RESULT_TYPE.AI_CHAT &&
       (result.type != lazy.UrlbarShared.RESULT_TYPE.SEARCH ||
         (!result.payload.inPrivateWindow && !result.payload.tail))
     ) {

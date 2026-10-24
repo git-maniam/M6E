@@ -1887,21 +1887,6 @@ UrlbarUtils.RESULT_PAYLOAD_SCHEMA = {
       },
     },
   },
-  [UrlbarShared.RESULT_TYPE.AI_CHAT]: {
-    type: "object",
-    required: ["icon", "query", "title"],
-    properties: {
-      icon: {
-        type: "string",
-      },
-      query: {
-        type: "string",
-      },
-      title: {
-        type: "string",
-      },
-    },
-  },
 };
 
 /**

@@ -15,10 +15,6 @@ import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
  * @import {UrlbarChildControllerProxy, UrlbarInputProxy, UrlbarParent, UrlbarViewProxy} from "moz-src:///browser/components/urlbar/actors/UrlbarParent.sys.mjs"
  */
 
-/**
- * @typedef {"fullpage" | "sidebar" | "urlbar"} SapLocation
- */
-
 const lazy = XPCOMUtils.declareLazy({
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   AppProvidedConfigEngine:
@@ -1756,9 +1752,6 @@ export class TelemetryEvent {
    *   One of "unknown", "autofill", "visiturl", "bookmark", "help", "history",
    *   "keyword", "searchengine", "searchsuggestion", "switchtab", "remotetab",
    *   "extension", "oneoff", "dismiss".
-   * @property {SapLocation} [location]
-   *   The location where the interaction occurred.
-   *   Required when sap is "smartbar".
    * @property {WindowMode} [windowMode]
    *   The window mode: classic, private, or smartwindow.
    */
@@ -1848,7 +1841,6 @@ export class TelemetryEvent {
       lazy.UrlbarTelemetryUtils.buildRecordedEngagement(
         snapshot,
         engagementData,
-        this.#smartbarData,
         this.#previousSearchWordsSet
       );
     this.#previousSearchWordsSet = previousSearchWords;
@@ -1859,7 +1851,6 @@ export class TelemetryEvent {
       ? lazy.UrlbarTelemetryUtils.buildRecordedDisableCandidate(
           snapshot,
           engagementData,
-          this.#smartbarData,
           this.#previousSearchWordsSet
         )
       : null;
@@ -1936,15 +1927,6 @@ export class TelemetryEvent {
       this._controller.input,
       this._controller.view
     );
-  }
-
-  /**
-   * The smartbar-only telemetry fields, from the live input.
-   *
-   * @type {{chatId: string, intent: string, model: string}}
-   */
-  get #smartbarData() {
-    return lazy.UrlbarTelemetryUtils.smartbarData(this._controller.input);
   }
 
   /**
@@ -2107,18 +2089,8 @@ export class TelemetryEvent {
    *   actions row, which can contain multiple action buttons.
    * @param {number} [details.viewTime]
    *   The length of the view time in milliseconds.
-   * @param {SapLocation} [details.location]
-   *   The location where the interaction occurred.
-   *   Required when sap is "smartbar".
    * @param {WindowMode} [details.windowMode]
    *   The window mode: classic, private, or smartwindow.
-   * @param {string} [details.chatId]
-   *   UUID for this smart window session. Unique identifier for each chat
-   *   conversation. Only set when sap is `smartbar`.
-   * @param {string} [details.intent]
-   *   The detected intent for the input. Only set when sap is `smartbar`.
-   * @param {string} [details.model]
-   *   Model selected by the user. Only set when sap is `smartbar`.
    * @param {?string} [details.engagementSap]
    *   The search access point. The address bar's `urlbar`, `urlbar_newtab` and
    *   `urlbar_addonpage` depend on the page loaded at the time the search was
@@ -2143,10 +2115,6 @@ export class TelemetryEvent {
       selType,
       pickedActionKey = null,
       viewTime = 0,
-      location = null,
-      chatId = "",
-      intent = "",
-      model = "",
       windowMode,
       engagementSap,
     }
@@ -2177,7 +2145,6 @@ export class TelemetryEvent {
       numChars,
       numWords,
       provider,
-      searchSource,
       searchMode,
       selIndex,
       visibleResults,
@@ -2185,31 +2152,11 @@ export class TelemetryEvent {
       selType,
       pickedActionKey,
       viewTime,
-      location,
-      chatId,
-      intent,
-      model,
       windowMode,
     });
     if (built) {
       this.#fillAndRecord(built, sap);
     }
-  }
-
-  /**
-   * Returns Smart Window telemetry data for SAP `smartbar`.
-   *
-   * @param {string} searchSource
-   *   The search source identifier.
-   * @returns {{ chatId: string, intent: string, model: string } | null}
-   *   Telemetry for the smartbar.
-   */
-  #getOptionalSmartbarTelemetry(searchSource) {
-    const isSmartbar = this.#searchSourceToSap(searchSource) === "smartbar";
-    if (!isSmartbar) {
-      return null;
-    }
-    return this.#smartbarData;
   }
 
   /**
@@ -2672,9 +2619,7 @@ export class TelemetryEvent {
       visibleResults: snapshot.visibleResults,
       selType: snapshot.selType,
       viewTime: viewTime / 1000,
-      location: snapshot.location,
       windowMode: snapshot.windowMode,
-      ...this.#getOptionalSmartbarTelemetry(snapshot.searchSource),
     });
   }
 }

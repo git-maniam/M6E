@@ -150,13 +150,11 @@ export class UrlbarChildTelemetry {
       if (snapshot) {
         let { input, view } = this.#controller;
         let engagementData = UrlbarTelemetryUtils.engagementData(input, view);
-        let smartbarData = UrlbarTelemetryUtils.smartbarData(input);
 
         let { built, previousSearchWords } =
           UrlbarTelemetryUtils.buildRecordedEngagement(
             snapshot,
             engagementData,
-            smartbarData,
             this.#previousSearchWords
           );
         this.#previousSearchWords = previousSearchWords;
@@ -170,7 +168,6 @@ export class UrlbarChildTelemetry {
           ? UrlbarTelemetryUtils.buildRecordedDisableCandidate(
               snapshot,
               engagementData,
-              smartbarData,
               this.#previousSearchWords
             )
           : null;
@@ -317,7 +314,6 @@ export class UrlbarChildTelemetry {
   async startTrackingBounceEvent(browserId, event, details) {
     let { input, view } = this.#controller;
     let engagementData = UrlbarTelemetryUtils.engagementData(input, view);
-    let smartbarData = UrlbarTelemetryUtils.smartbarData(input);
 
     let snapshot = UrlbarTelemetryUtils.collectBounceSnapshot(
       event,
@@ -348,16 +344,11 @@ export class UrlbarChildTelemetry {
       numChars: snapshot.numChars,
       numWords: snapshot.numWords,
       provider: snapshot.provider,
-      searchSource,
       searchMode,
       selIndex: snapshot.selIndex,
       visibleResults: snapshot.visibleResults,
       viewIsOpen: engagementData.viewIsOpen,
       selType: snapshot.selType,
-      location: snapshot.location,
-      chatId: smartbarData.chatId,
-      intent: smartbarData.intent,
-      model: smartbarData.model,
       windowMode: snapshot.windowMode,
     });
 

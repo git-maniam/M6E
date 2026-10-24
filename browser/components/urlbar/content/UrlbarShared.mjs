@@ -232,8 +232,6 @@ export const UrlbarShared = {
     DYNAMIC: 8,
     // A restrict keyword result, could be @bookmarks, @history, or @tabs.
     RESTRICT: 9,
-    // An AI chat result.
-    AI_CHAT: 10,
 
     // When you add a new type, also add its schema to
     // UrlbarUtils.RESULT_PAYLOAD_SCHEMA. Also consider checking if
@@ -265,7 +263,6 @@ export const UrlbarShared = {
   // because we don't want to make downgrades unnecessarily hard.
   RESULT_GROUP: Object.freeze({
     ABOUT_PAGES: "aboutPages",
-    AI: "ai",
     GENERAL: "general",
     GENERAL_PARENT: "generalParent",
     FORM_HISTORY: "formHistory",
@@ -1157,8 +1154,6 @@ export const UrlbarShared = {
         return UrlbarShared.RESULT_GROUP.REMOTE_TAB;
       case UrlbarShared.RESULT_TYPE.RESTRICT:
         return UrlbarShared.RESULT_GROUP.RESTRICT_SEARCH_KEYWORD;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return UrlbarShared.RESULT_GROUP.AI;
     }
     // When enabled, semantic history results (both history URLs and
     // switch-to-tab results) get their own group so they fill only the space
@@ -1236,9 +1231,6 @@ export const UrlbarShared = {
       }
       case UrlbarShared.RESULT_GROUP.RESTRICT_SEARCH_KEYWORD: {
         return "restrict_keyword";
-      }
-      case UrlbarShared.RESULT_GROUP.AI: {
-        return "ai";
       }
     }
 
@@ -1414,8 +1406,6 @@ export const UrlbarShared = {
           return "restrict_keyword_actions";
         }
         break;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return "ai_chat";
     }
 
     return "unknown";

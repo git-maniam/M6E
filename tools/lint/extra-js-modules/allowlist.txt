@@ -49,7 +49,6 @@ browser/components/enterprisepolicies/schemas/schema.sys.mjs
 browser/components/extensions/ExtensionBrowsingData.sys.mjs
 browser/components/extensions/ExtensionControlledPopup.sys.mjs
 browser/components/extensions/ExtensionPopups.sys.mjs
-browser/components/firefoxview/ChatsController.sys.mjs
 browser/components/firefoxview/HistoryController.sys.mjs
 browser/components/firefoxview/OpenTabs.sys.mjs
 browser/components/firefoxview/OpenTabsController.sys.mjs

@@ -248,17 +248,6 @@ export var Nova = {
       },
     },
 
-    // Optional
-    // C03 - AI side panel open
-    sidePanelAI: {
-      selectors: [":root"],
-      async applyConfig() {
-        let win = await reset();
-        await navigateTo(win, HOME_PAGE);
-        await win.SidebarController.show("viewGenaiChatSidebar");
-      },
-    },
-
     // C05 - High contrast mode
     hcm: {
       selectors: [":root"],

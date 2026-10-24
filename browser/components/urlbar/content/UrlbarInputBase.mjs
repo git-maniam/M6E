@@ -2251,18 +2251,6 @@ ${
 
         return;
       }
-      case UrlbarShared.RESULT_TYPE.AI_CHAT: {
-        // AI Chat results handle their own navigation.
-        this.controller.engagementEvent.record(event, {
-          result,
-          element,
-          searchString: this._lastSearchString,
-          selType: this.view.telemetryTypeFromElement(result, element),
-          searchSource: this.getSearchSource(event),
-          windowMode: this.windowMode,
-        });
-        return;
-      }
     }
 
     if (!loadRequest) {
@@ -3611,8 +3599,6 @@ ${
         );
       case UrlbarShared.RESULT_TYPE.RESTRICT:
         return result.payload.autofillKeyword + " ";
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return result.payload.query ?? "";
       case UrlbarShared.RESULT_TYPE.TIP: {
         let value = element?.dataset.url || element?.dataset.input;
         if (value) {

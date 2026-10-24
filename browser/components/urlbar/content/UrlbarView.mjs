@@ -441,8 +441,6 @@ export class UrlbarView {
           return "restrict_keyword_actions";
         }
         break;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return "ai_chat";
     }
     return "unknown";
   }
@@ -2679,13 +2677,6 @@ export class UrlbarView {
           action.textContent = result.payload.device;
         };
         setURL = true;
-        break;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        actionSetter = () => {
-          this.#l10nCache.setElementL10n(action, {
-            id: "urlbar-result-action-ai-chat",
-          });
-        };
         break;
       case UrlbarShared.RESULT_TYPE.SEARCH:
         if (
