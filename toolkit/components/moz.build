@@ -56,7 +56,6 @@ DIRS += [
     "kvstore",
     "media",
     "mediasniffer",
-    "ml",
     "mozintl",
     "mozprotocol",
     "pageextractor",
