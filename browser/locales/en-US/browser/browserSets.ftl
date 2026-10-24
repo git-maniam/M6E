@@ -107,9 +107,6 @@ nav-reload-shortcut =
 nav-stop-shortcut =
     .key = .
 
-ai-chatbot-sidebar-shortcut =
-    .key = X
-
 open-tabs-sidebar-shortcut2 =
     .key = U
 

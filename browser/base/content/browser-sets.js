@@ -8,8 +8,6 @@ document.addEventListener(
     const lazy = {};
     ChromeUtils.defineESModuleGetters(lazy, {
       TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
-      AIWindowUI:
-        "moz-src:///browser/components/aiwindow/ui/modules/AIWindowUI.sys.mjs",
       ContainerCreationPanel:
         "chrome://browser/content/usercontext/ContainerCreationPanel.mjs",
       Referrals: "moz-src:///browser/components/referrals/Referrals.sys.mjs",
@@ -22,15 +20,7 @@ document.addEventListener(
       .addEventListener("command", event => {
         switch (event.target.id) {
           case "cmd_newNavigator":
-            if (AIWindow.isDefaultWindow) {
-              AIWindow.launchWindow(
-                gBrowser?.selectedBrowser,
-                true,
-                "keyboard_shortcut"
-              );
-            } else {
-              OpenBrowserWindow();
-            }
+            OpenBrowserWindow();
             break;
           case "cmd_handleBackspace":
             BrowserCommands.handleBackspace();
@@ -303,15 +293,6 @@ document.addEventListener(
           case "cmd_openUnifiedExtensionsPanel":
             gUnifiedExtensions.openPanel(event);
             break;
-          case "Tools:ClassicWindow":
-            OpenBrowserWindow({ aiWindow: false });
-            break;
-          case "Tools:AIWindow":
-            AIWindow.launchWindow(gBrowser?.selectedBrowser, true, "menu");
-            break;
-          case "Tools:ChatsHistory":
-            FirefoxViewHandler.openTab("chats");
-            break;
           case "Tools:Sanitize": {
             let { DIALOG_ENTRY_POINTS } = Sanitizer;
             let source = event.sourceEvent?.target;
@@ -381,26 +362,6 @@ document.addEventListener(
         case "viewBookmarksToolbarKb":
           BookmarkingUI.toggleBookmarksToolbar("shortcut");
           break;
-        case "viewGenaiChatSidebarKb": {
-          const currentURI = window.gBrowser.selectedBrowser.currentURI;
-          const isSmartWindowFullPageMode =
-            AIWindow.isAIWindowContentPage(currentURI);
-          if (AIWindow.isAIWindowActive(window) && !isSmartWindowFullPageMode) {
-            lazy.AIWindowUI.toggleSidebar(window);
-            break;
-          }
-
-          const pref = "browser.ml.chat.enabled";
-          const enabled = Services.prefs.getBoolPref(pref);
-          Glean.genaiChatbot.keyboardShortcut.record({
-            enabled,
-            sidebar: SidebarController.currentID,
-          });
-          if (enabled) {
-            SidebarController.toggle("viewGenaiChatSidebar");
-          }
-          break;
-        }
         case "toggleSidebarKb":
           if (SIDEBAR_REVAMP_ENABLED) {
             SidebarController.handleToolbarButtonClick().then(() => {

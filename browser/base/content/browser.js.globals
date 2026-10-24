@@ -1,6 +1,5 @@
 [
   "XPCOMUtils",
-  "AIWindow",
   "AppConstants",
   "gBrowser",
   "gContextMenu",
