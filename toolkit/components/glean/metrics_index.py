@@ -154,8 +154,6 @@ firefox_desktop_metrics = [
     "toolkit/components/contentanalysis/metrics.yaml",
     "toolkit/components/contentrelevancy/metrics.yaml",
     "toolkit/components/crashes/metrics.yaml",
-    "toolkit/components/nimbus/metrics.yaml",
-    "toolkit/components/nimbus/metrics-normandy.yaml",
     "toolkit/components/pictureinpicture/metrics.yaml",
     "toolkit/components/places/metrics.yaml",
     "toolkit/components/reportbrokensite/metrics.yaml",
@@ -232,7 +230,6 @@ firefox_desktop_pings = [
     "browser/modules/pings.yaml",
     "services/fxaccounts/pings.yaml",
     "services/sync/pings.yaml",
-    "toolkit/components/nimbus/pings.yaml",
     "toolkit/components/reportbrokensite/pings.yaml",
     "toolkit/components/telemetry/pings.yaml",
     "toolkit/modules/pings.yaml",
@@ -251,7 +248,6 @@ background_update_pings = [
 # Order is lexicographical, enforced by t/c/glean/tests/pytest/test_yaml_indices.py
 background_tasks_pings = [
     "toolkit/components/backgroundtasks/pings.yaml",
-    "toolkit/components/nimbus/pings.yaml",
 ]
 
 # Test pings

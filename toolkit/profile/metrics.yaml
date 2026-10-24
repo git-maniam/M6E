@@ -196,7 +196,6 @@ profiles:
     expires: never
     send_in_pings:
       - metrics
-      - heartbeat
       - update
 
   creation_place:
@@ -268,7 +267,6 @@ profiles:
     expires: never
     send_in_pings:
       - metrics
-      - heartbeat
       - update
 
   recovered_from_backup:
