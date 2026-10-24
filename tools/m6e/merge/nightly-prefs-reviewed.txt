@@ -1,0 +1,54 @@
+# Prefs whose default differs between Nightly and Release and that M6E leaves
+# at Nightly's value, read by new-nightly-prefs.py. One "pref.name  # reason"
+# per line. Prefs that browser/app/profile/m6e.js sets, and Nightly-only
+# prefs that are off, do not belong here. Reviewed at P5.3 against the tree
+# merged to upstream cfa0508a3b; add a line for every NEW pref that is kept.
+
+# Security gain, kept (as listed in the comment in m6e.js)
+browser.disable_pickers_in_hidden_extension_pages  # no file pickers from hidden extension pages
+dom.document.name_getter_prevent_shadowing.enabled  # DOM clobbering protection
+dom.use_components_shim  # no Components shim
+dom.event.dragexit.enabled  # dragexit event removed
+layout.css.control-characters.visible  # control characters are shown
+mathml.href_link_on_non_anchor_element.disabled  # MathML legacy feature removed
+mathml.legacy_mathvariant_attribute.disabled  # MathML legacy feature removed
+mathml.mathspace_names.disabled  # MathML legacy feature removed
+network.cookie.sameSite.schemeful  # schemeful SameSite
+permissions.expireUnused.enabled  # unused permissions expire
+privacy.antitracking.isolateContentScriptResources  # content-script resource isolation
+svg.use-element.block-inline-event-handlers  # no inline handlers in SVG use
+
+# Security or privacy gain, kept
+gfx.downloadable_fonts.otl_validation  # stricter checks on downloaded fonts
+media.use-remote-encoder.video.platform  # the platform video encoder runs in the RDD sandbox process
+memory.phc.size_kb  # PHC use-after-free detector gets 16 MB instead of 1.1 MB
+privacy.bounceTrackingProtection.mode  # 1 enforces bounce tracking protection, Release's 3 only logs
+
+# Behaviour only, no security effect
+bidi.edit.caret_movement_style  # text caret movement in bidirectional text
+dom.webnotifications.requireinteraction.enabled  # notifications that stay until dismissed (D12)
+extensions.formautofill.addresses.supported  # address autofill region detection, no network
+javascript.options.compact_on_user_inactive_delay  # memory compaction 15 s after inactivity instead of 5 min
+layout.css.floating-first-letter.tight-glyph-bounds  # rendering detail
+layout.css.letter-spacing.model  # rendering detail
+layout.css.outline-offset.snapping  # rendering detail
+media.aboutwebrtc.hist.enabled  # history in the local about:webrtc page
+media.audio-max-decode-error  # decode errors tolerated before giving up
+media.video-max-decode-error  # decode errors tolerated before giving up
+media.ffmpeg.allow-openh264  # ffmpeg decoder path, not used on macOS
+media.peerconnection.allow_old_setParameters  # Nightly refuses the pre-standard setParameters
+media.peerconnection.allow_old_setParameters.allowlist  # Nightly-only allowlist for the pref above
+network.dnsNegativeCacheExpiration  # failed lookups are cached for 5 min instead of 1
+network.http.upload_copy_max_segment_size  # upload buffer size
+network.trr.fast_pto_for_http3_conn  # only with HTTP/3, which is off
+security.OCSP.timeoutMilliseconds.soft  # soft-fail OCSP timeout of 1 s instead of 2 s
+signon.storage.rust.enabled  # Nightly stores logins through the Rust component
+
+# Dormant features that are locked off
+browser.ipProtection.hasSeenFeature  # the VPN is locked off
+dom.security.unexpected_system_load_telemetry_enabled  # telemetry is off
+extensions.formautofill.useml  # needs browser.ml.enable, which is locked off
+extensions.translations.disabled  # Translations is locked off
+intl.multilingual.liveReload  # the interface is en-US only
+javascript.options.wasm_moz_intgemm  # Translations' matrix builtin; privileged contexts only (IsPrivilegedContext)
+toolkit.crashreporter.include_context_heap  # no crash reporter

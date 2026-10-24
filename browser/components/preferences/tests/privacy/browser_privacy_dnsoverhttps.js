@@ -24,6 +24,7 @@ const FIRST_RESOLVER_VALUE = DoHTestUtils.providers[0].uri;
 // See bug 1741554. Override the IP to a local address so that any background
 // connection attempts to the DoH endpoint don't try to reach a real server.
 gDNSOverride.addIPOverride("mozilla.cloudflare-dns.com", "127.0.0.1");
+gDNSOverride.addIPOverride("security.cloudflare-dns.com", "127.0.0.1");
 
 Services.prefs.setStringPref("network.trr.confirmationNS", "skip");
 

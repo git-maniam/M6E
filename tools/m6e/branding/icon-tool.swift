@@ -10,8 +10,6 @@
 //       icon grid (an 824 px body) without changing its aspect ratio.
 //   swift icon-tool.swift document <master.png> <out.png>
 //       Draw a 1024x1024 document icon: a page with the app icon on it.
-//   swift icon-tool.swift dmg-background <out.png> <width> <height>
-//       Draw the DMG window background with an arrow towards Applications.
 //   swift icon-tool.swift fit <icon.png> <target>
 //       Replace an existing PNG or GIF image with the icon, centred at the
 //       largest size that fits, on a transparent canvas of the target's pixel
@@ -178,27 +176,6 @@ func document(_ masterPath: String, _ outPath: String) {
     writePNG(ctx.makeImage()!, outPath)
 }
 
-func dmgBackground(_ outPath: String, _ width: Int, _ height: Int) {
-    let ctx = makeContext(width, height)
-    ctx.setFillColor(CGColor(srgbRed: 0.965, green: 0.969, blue: 0.976, alpha: 1))
-    ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
-    // A chevron between the app (left) and Applications (right) positions.
-    let cx = Double(width) / 2, cy = Double(height) / 2
-    let arrow = CGMutablePath()
-    arrow.move(to: CGPoint(x: cx - 90, y: cy))
-    arrow.addLine(to: CGPoint(x: cx + 70, y: cy))
-    arrow.move(to: CGPoint(x: cx + 20, y: cy + 50))
-    arrow.addLine(to: CGPoint(x: cx + 70, y: cy))
-    arrow.addLine(to: CGPoint(x: cx + 20, y: cy - 50))
-    ctx.setStrokeColor(CGColor(srgbRed: 0.55, green: 0.57, blue: 0.62, alpha: 1))
-    ctx.setLineWidth(14)
-    ctx.setLineCap(.round)
-    ctx.setLineJoin(.round)
-    ctx.addPath(arrow)
-    ctx.strokePath()
-    writePNG(ctx.makeImage()!, outPath)
-}
-
 func fit(_ iconPath: String, _ targetPath: String) {
     let target = loadImage(targetPath)
     let icon = loadImage(iconPath)
@@ -220,8 +197,6 @@ let args = CommandLine.arguments
 switch args.count > 1 ? args[1] : "" {
 case "master" where args.count == 4: master(args[2], args[3])
 case "document" where args.count == 4: document(args[2], args[3])
-case "dmg-background" where args.count == 5:
-    dmgBackground(args[2], Int(args[3]) ?? 1440, Int(args[4]) ?? 880)
 case "fit" where args.count == 4: fit(args[2], args[3])
 default: fail("usage: see the comment at the top of icon-tool.swift")
 }

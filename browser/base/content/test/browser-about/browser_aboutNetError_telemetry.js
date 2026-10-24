@@ -288,7 +288,7 @@ function assertDohEventExtras(event, label) {
   Assert.equal(event.extra.mode, "3", `${label}: mode`);
   Assert.equal(
     event.extra.provider_key,
-    "mozilla.cloudflare-dns.com",
+    "security.cloudflare-dns.com",
     `${label}: provider_key`
   );
   Assert.equal(

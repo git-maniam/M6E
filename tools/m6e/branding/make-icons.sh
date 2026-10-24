@@ -5,7 +5,8 @@
 
 # Regenerate every macOS branding image in browser/branding/m6e from the
 # M6E-Icon.png artwork in the repository root. Output names never change, so
-# replacing the artwork and rerunning this script is the whole update.
+# replacing the artwork and rerunning this script is the whole update. The DMG
+# background and .DS_Store come last, from make-dmg-layout.py.
 #
 #   tools/m6e/branding/make-icons.sh [source.png]
 
@@ -22,7 +23,6 @@ mkdir -p "$out/content"
 
 swift "$tool" master "$source" "$out/m6e-icon-1024.png"
 swift "$tool" document "$out/m6e-icon-1024.png" "$work/document-1024.png"
-swift "$tool" dmg-background "$out/background.png" 1440 880
 
 # make_iconset <1024 px png> <output .iconset directory>
 make_iconset() {
@@ -88,5 +88,7 @@ for name in about-wordmark firefox-wordmark; do
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 196 99" fill="context-fill #1d1d1f"><text x="0" y="82" font-family="-apple-system, BlinkMacSystemFont, system-ui, sans-serif" font-size="96" font-weight="700" letter-spacing="-1">M6E</text></svg>
 SVG
 done
+
+python3 "$top/tools/m6e/branding/make-dmg-layout.py"
 
 echo "Branding images written to $out"

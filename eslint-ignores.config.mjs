@@ -310,4 +310,8 @@ export default [
   "dom/base/test/jsmodules/import_circular_1.mjs",
   "dom/base/test/jsmodules/importmaps/multiple/import_circular.mjs",
   "dom/base/test/jsmodules/importmaps/multiple/import_circular_1.mjs",
+
+  // M6E: function body that tools/m6e/chrome_eval.py wraps, so it has a
+  // top-level await and return.
+  "tools/m6e/d25_check.js",
 ];

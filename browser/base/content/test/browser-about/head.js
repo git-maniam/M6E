@@ -289,9 +289,11 @@ async function loadTRRErrorPage() {
 
   // See bug 1831731: prevent real connections to the DoH endpoint.
   if (!_trrDnsOverrideSet) {
-    Cc["@mozilla.org/network/native-dns-override;1"]
-      .getService(Ci.nsINativeDNSResolverOverride)
-      .addIPOverride("mozilla.cloudflare-dns.com", "127.0.0.1");
+    let override = Cc["@mozilla.org/network/native-dns-override;1"].getService(
+      Ci.nsINativeDNSResolverOverride
+    );
+    override.addIPOverride("mozilla.cloudflare-dns.com", "127.0.0.1");
+    override.addIPOverride("security.cloudflare-dns.com", "127.0.0.1");
     _trrDnsOverrideSet = true;
   }
 

@@ -1883,6 +1883,8 @@ skip-if = [
 ]
 run-sequentially = ["true"] # We want to check performance
 
+["test_trr_blocked_ede.js"]
+
 ["test_trr_blocklist.js"]
 
 ["test_trr_cancel.js"]

@@ -1,0 +1,3 @@
+# The upstream mozilla-firefox/firefox commit that this tree has merged
+# (D9). The next merge diffs from here. Updated by hand after each merge.
+cfa0508a3bcffb86d3f4a5dadf3f97199e025a6e
