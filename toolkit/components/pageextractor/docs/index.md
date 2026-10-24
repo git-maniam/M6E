@@ -157,7 +157,5 @@ contributing
 
 ## See also
 
-- [Firefox AI Runtime](/toolkit/components/ml/index.md), Firefox's inference
-  platform.
 - GeckoView exposes Page Extractor to Android through its own module in
   `mobile/shared`.

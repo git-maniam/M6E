@@ -1685,14 +1685,6 @@ export var UITour = {
             "browser.ai.control.translations",
             "default"
           ),
-          pdfjsAltText: Services.prefs.getStringPref(
-            "browser.ai.control.pdfjsAltText",
-            "default"
-          ),
-          smartTabGroups: Services.prefs.getStringPref(
-            "browser.ai.control.smartTabGroups",
-            "default"
-          ),
           linkPreviewKeyPoints: Services.prefs.getStringPref(
             "browser.ai.control.linkPreviewKeyPoints",
             "default"
@@ -1703,10 +1695,6 @@ export var UITour = {
           ),
           smartWindow: Services.prefs.getStringPref(
             "browser.ai.control.smartWindow",
-            "default"
-          ),
-          speechRecognition: Services.prefs.getStringPref(
-            "browser.ai.control.speechRecognition",
             "default"
           ),
         });
