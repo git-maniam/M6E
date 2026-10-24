@@ -44,8 +44,6 @@
  * @property {boolean} [isMiniWindow]
  *   Whether the window is a mini window. Mini windows are ephemeral, so they
  *   aren't written to the session file or kept as closed windows.
- * @property {boolean} [isAIWindow]
- *   Whether the window is an AI window.
  * @property {string} [title]
  *   Title of the window's selected tab.
  * @property {WindowArgumentsState} [args]
@@ -332,8 +330,6 @@ import { GlobalState } from "moz-src:///browser/components/sessionstore/GlobalSt
 const lazy = XPCOMUtils.declareLazy({
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.sys.mjs",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
   DevToolsShim: "chrome://devtools-startup/content/DevToolsShim.sys.mjs",
@@ -1769,10 +1765,6 @@ class _SessionStore {
 
     if (aWindow.document.documentElement.hasAttribute("mini-window")) {
       this.#windows[this.#windowIds.get(aWindow)].isMiniWindow = true;
-    }
-
-    if (lazy.AIWindow.isAIWindowActiveAndEnabled(aWindow)) {
-      this.#windows[this.#windowIds.get(aWindow)].isAIWindow = true;
     }
 
     if (aWindow.document.documentElement.hasAttribute(ARG_CHROMELESS_WINDOW)) {
@@ -5446,14 +5438,9 @@ class _SessionStore {
       // the state we're trying to restore and then fallback to the last selected
       // window.
       let windowToUse = windows[lastSessionWindowID];
-      let lastWindowIsAIWindow =
-        lastWindow && lazy.AIWindow.isAIWindowActive(lastWindow);
-      let thisWindowIsAIWindow =
-        !!winState.isAIWindow && lazy.AIWindow.isAIWindowEnabled();
       if (
         !windowToUse &&
         canUseLastWindow &&
-        lastWindowIsAIWindow == thisWindowIsAIWindow &&
         this.#canRestoreIntoExistingWindow(lastWindow, winState)
       ) {
         windowToUse = lastWindow;
@@ -5767,9 +5754,6 @@ class _SessionStore {
     if (startupPref == 1) {
       homePages = homePages.concat(lazy.HomePage.get(aWindow).split("|"));
     }
-    if (lazy.AIWindow.isAIWindowActiveAndEnabled(aWindow)) {
-      homePages.push(lazy.AIWindow.initialStartupURL);
-    }
 
     for (let i = tabbrowser.pinnedTabCount; i < tabbrowser.tabs.length; i++) {
       let tab = tabbrowser.tabs[i];
@@ -5819,8 +5803,6 @@ class _SessionStore {
     if (workspaceID) {
       winData.workspaceID = workspaceID;
     }
-
-    winData.isAIWindow = lazy.AIWindow.isAIWindowActive(aWindow);
   }
 
   /**
@@ -6495,7 +6477,7 @@ class _SessionStore {
       let state = this.#statesToRestore[WINDOW_RESTORE_IDS.get(window)];
       // Wait for these promises after we've restored data into them below.
       resizePromises.push(
-        this.#restoreWindowFeatures(window, state.windows[0], state.options)
+        this.#restoreWindowFeatures(window, state.windows[0])
       );
     }
 
@@ -7037,35 +7019,8 @@ class _SessionStore {
    *        Window reference
    * @param {WindowStateData} aWinData
    *        Object containing session data for the window
-   * @param {RestoreOptions} [aOptions]
-   *        Options for the restoration
    */
-  #restoreWindowFeatures(aWindow, aWinData, aOptions = {}) {
-    // A restored window keeps its saved type: Classic stays Classic and Smart
-    // stays Smart, for both automatic (startup.page=3 / crash) and manual
-    // "Restore previous session" restores.
-    // The only exception is the new startup window when Smart Window is the user's
-    // default and we are NOT auto-restoring a session.
-    // aOptions.firstWindow is set only for the initial startup window (manual
-    // restores don't set it), and willRestore() is true only for automatic
-    // restore / crash recovery — so this forces Smart for a genuinely new
-    // default startup window, never for a window restored from a saved session.
-    const isNewDefaultStartupWindow =
-      aOptions.firstWindow &&
-      !lazy.SessionStartup.willRestore() &&
-      lazy.AIWindow.shouldOpenAsSmartWindow();
-    const shouldBeAIWindow =
-      isNewDefaultStartupWindow ||
-      (!!aWinData.isAIWindow && lazy.AIWindow.isAIWindowEnabled());
-
-    const trigger = aOptions.trigger ?? "open_browser";
-
-    if (lazy.AIWindow.isAIWindowActive(aWindow) !== shouldBeAIWindow) {
-      lazy.AIWindow.toggleAIWindow(aWindow, shouldBeAIWindow, trigger);
-    } else if (shouldBeAIWindow) {
-      lazy.AIWindow.recordOpenWindowTelemetry(trigger);
-    }
-
+  #restoreWindowFeatures(aWindow, aWinData) {
     let promiseParts = Promise.withResolvers();
     const wasMinimized = aWindow.windowState == aWindow.STATE_MINIMIZED;
     aWindow.setTimeout(() => {
@@ -7513,23 +7468,8 @@ class _SessionStore {
       }
     });
 
-    // A window CANNOT be both a Private Window and an AI Window
     if (winState.isPrivate) {
       features.push("private");
-    } else if (winState.isAIWindow) {
-      let tab = winState.tabs[winState.selected - 1];
-      let restoreSessionURL = "";
-      if (tab.entries.length) {
-        // tab.index is 1-based in the session store format (0/falsy means unset).
-        let activeIndex = this.historyIndex(tab);
-        restoreSessionURL = tab.entries[activeIndex].url;
-      }
-      args = lazy.AIWindow.handleAIWindowOptions({
-        openerWindow: null,
-        args,
-        aiWindow: winState.isAIWindow,
-        restoreSessionURL,
-      });
     }
 
     if (!args.length) {
