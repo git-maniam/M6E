@@ -18,8 +18,6 @@ user_pref("browser.newtabpage.activity-stream.tippyTop.service.endpoint", "");
 user_pref("browser.newtabpage.activity-stream.discoverystream.config", "[]");
 user_pref("browser.newtabpage.activity-stream.unifiedAds.endpoint", "");
 
-// For Activity Stream firstrun page, use an empty string to avoid fetching.
-user_pref("browser.newtabpage.activity-stream.fxaccounts.endpoint", "");
 // Background thumbnails in particular cause grief, and disabling thumbnails
 // in general can't hurt - we re-enable them when tests need them.
 user_pref("browser.pagethumbnails.capturing_disabled", true);

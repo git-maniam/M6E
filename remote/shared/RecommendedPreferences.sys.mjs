@@ -353,9 +353,6 @@ const COMMON_PREFERENCES = new Map([
   // Do not scan Wifi
   ["geo.wifi.scan", false],
 
-  // Disable Firefox accounts ping
-  ["identity.fxaccounts.auth.uri", "https://{server}/dummy/fxa"],
-
   // Allow scroll amount larger than one page on a single mouse wheel event.
   ["mousewheel.allow_scrolling_more_than_one_page", true],
 
