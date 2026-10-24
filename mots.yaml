@@ -1696,9 +1696,7 @@ modules:
 
   - name: 'Core: Crash reporting'
     description: Infrastructure and tools used to generate, submit and process crash
-      reports. This includes the in-tree google-breakpad fork, the crash report generation
-      machinery as well as the host tools used to dump symbols, analyse minidumps
-      and generate stack traces.
+      reports.
     includes:
       - toolkit/crashreporter/**/*
       - toolkit/components/crashes/**/*

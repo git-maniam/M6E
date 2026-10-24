@@ -100,11 +100,6 @@ add_task(async function chromeUITest() {
     "welcomeback",
   ];
 
-  // else skip about:crashes, it is only available with plugin
-  if (AppConstants.MOZ_CRASHREPORTER) {
-    secureChromePages.push("crashes");
-  }
-
   let nonSecureExamplePages = [
     "about:about",
     "about:credits",

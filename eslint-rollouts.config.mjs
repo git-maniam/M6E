@@ -999,7 +999,6 @@ export default [
       "browser/modules/test/browser/browser_PermissionUI_prompts.js",
       "browser/modules/test/browser/browser_SitePermissions_tab_urls.js",
       "browser/modules/test/browser/browser_Telemetry_numberOfSiteOriginsPerDocument.js",
-      "browser/modules/test/browser/browser_UnsubmittedCrashHandler.js",
       "browser/modules/test/browser/browser_UsageTelemetry.js",
       "browser/modules/test/browser/browser_UsageTelemetry_domains.js",
       "browser/modules/test/browser/browser_UsageTelemetry_private_and_restore.js",
