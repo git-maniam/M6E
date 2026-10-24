@@ -112,11 +112,6 @@ default::
 	@echo "==================="
 endif
 
-ifdef MOZ_CRASHREPORTER
-include $(topsrcdir)/toolkit/mozapps/installer/package-name.mk
-
-endif
-
 .PHONY: prepsymbolsarchive
 prepsymbolsarchive:
 	echo packing symbols
@@ -144,12 +139,8 @@ symbolsarchive: prepsymbolsarchive
 ifdef MOZ_ENABLE_FULL_SYMBOLS
 buildsymbols: symbolsfullarchive symbolsarchive
 else
-ifdef MOZ_CRASHREPORTER
-buildsymbols: symbolsarchive
-else
 buildsymbols:
-	@echo "Skipping symbols generation because MOZ_CRASHREPORTER is not set."
-endif # MOZ_CRASHREPORTER
+	@echo "Skipping symbols generation because the crash reporter is not built."
 endif # MOZ_ENABLE_FULL_SYMBOLS
 
 uploadsymbols:
