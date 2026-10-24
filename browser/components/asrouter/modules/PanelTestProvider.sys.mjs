@@ -516,7 +516,7 @@ const MESSAGES = () => [
           id: "FREQUENCY_CAP_CLEANUP_TEST",
           anchors: [
             {
-              selector: "#fxa-toolbar-menu-button",
+              selector: "#PanelUI-menu-button",
               panel_position: {
                 anchor_attachment: "bottomcenter",
                 callout_attachment: "topright",
@@ -1189,7 +1189,7 @@ const MESSAGES = () => [
     template: "toast_notification",
     content: {
       title: {
-        string_id: "cfr-doorhanger-bookmark-fxa-header",
+        string_id: "cfr-doorhanger-feature-heading",
       },
       body: "Body",
       image_url:
@@ -1837,47 +1837,6 @@ const MESSAGES = () => [
     },
   },
   {
-    id: "FXA_ACCOUNTS_PXIMENU_ROW_LAYOUT",
-    template: "menu_message",
-    content: {
-      messageType: "fxa_cta",
-      layout: "row",
-      primaryText: "Bounce between devices",
-      secondaryText:
-        "Sync and encrypt your bookmarks, passwords, and more on all your devices.",
-      primaryActionText: "Sign up",
-      primaryAction: {
-        type: "FXA_SIGNIN_FLOW",
-        data: {
-          where: "tab",
-          extraParams: {
-            utm_source: "firefox-desktop",
-            utm_medium: "product",
-            utm_campaign: "some-campaign",
-            utm_content: "some-content",
-          },
-          autoClose: false,
-        },
-      },
-      closeAction: {
-        type: "BLOCK_MESSAGE",
-        data: {
-          id: "FXA_ACCOUNTS_APPMENU_PROTECT_BROWSING_DATA",
-        },
-      },
-      imageURL: "chrome://browser/content/asrouter/assets/fox-with-devices.svg",
-      imageVerticalBottomOffset: -32,
-      imageVerticalTopOffset: -4,
-      containerVerticalBottomOffset: 20,
-      imageWidth: 100,
-    },
-    skip_in_tests: "TODO",
-    trigger: {
-      id: "menuOpened",
-    },
-    testingTriggerContext: "pxi_menu",
-  },
-  {
     id: "TEST_NEWTAB_MESSAGE",
     template: "newtab_message",
     content: {
@@ -2135,75 +2094,11 @@ const MESSAGES = () => [
             tiles: {
               type: "single-select",
               autoTrigger: false,
-              selected: "sync",
+              selected: "backup",
               action: {
                 picker: "<event>",
               },
               data: [
-                {
-                  inert: true,
-                  type: "backup",
-                  icon: {
-                    background:
-                      "center / contain no-repeat url('chrome://browser/content/asrouter/assets/fox-with-box-on-cloud.svg')",
-                    width: "133.9601px",
-                    height: "90.1186px",
-                    marginBlockStart: "8px",
-                    borderRadius: "5px",
-                  },
-                  id: "sync",
-                  flair: {
-                    centered: true,
-                    text: {
-                      string_id: "create-backup-screen-1-flair",
-                      fontSize: "0.625em",
-                      fontWeight: "600",
-                      lineHeight: "normal",
-                    },
-                  },
-                  label: {
-                    string_id: "create-backup-screen-1-sync-label",
-                    fontSize: 17,
-                    fontWeight: 600,
-                  },
-                  body: {
-                    string_id: "create-backup-screen-1-sync-body",
-                    fontSize: "0.625em",
-                    fontWeight: "400",
-                    marginBlock: "-6px 16px",
-                    color: "var(--text-color-deemphasized)",
-                  },
-                  tilebutton: {
-                    label: {
-                      string_id: "create-backup-select-tile-button-label",
-                      minHeight: "24px",
-                      minWidth: "revert",
-                      lineHeight: "100%",
-                      paddingBlock: "4px",
-                      paddingInline: "16px",
-                      marginBlock: "0 16px",
-                    },
-                    style: "primary",
-                    action: {
-                      type: "FXA_SIGNIN_FLOW",
-                      dismiss: "actionResult",
-                      needsAwait: true,
-                      data: {
-                        autoClose: false,
-                        entrypoint: "spotlight-create-backup",
-                        extraParams: {
-                          service: "sync",
-                          entrypoint_experiment: "fx-backup-onboarding",
-                          entrypoint_variation: "1",
-                          utm_medium: "firefox-desktop",
-                          utm_source: "spotlight",
-                          utm_campaign: "fx-backup-onboarding",
-                          utm_term: "fx-backup-onboarding-spotlight-1",
-                        },
-                      },
-                    },
-                  },
-                },
                 {
                   inert: true,
                   type: "backup",

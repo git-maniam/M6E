@@ -15,8 +15,8 @@
       "properties": {
         "messageType": {
           "type": "string",
-          "description": "The subtype of the message. 'fxa_cta' is used for Firefox Accounts messaging and is only visible when signed out, unless 'allowWhenSignedIn' property is provided. It replaces the fxa menu item when displayed. 'default_cta' is used for general messages, regardless of sign in state and only visible within the App Menu.",
-          "enum": ["fxa_cta", "default_cta"]
+          "description": "The subtype of the message. 'default_cta' is used for general messages and is only visible within the App Menu.",
+          "enum": ["default_cta"]
         },
         "primaryText": {
           "$ref": "file:///FxMSCommon.schema.json#/$defs/localizableText",
@@ -114,10 +114,6 @@
           "type": "string",
           "description": "Position of the illustration. For split layout, 'start' or 'end' selects which inline side the illustration sits on (defaults to 'end'). For both split and column layout, 'bottom' renders the illustration at the bottom of the card.",
           "enum": ["start", "end", "bottom"]
-        },
-        "allowWhenSignedIn": {
-          "type": "boolean",
-          "description": "If true, the message will be shown even when the user is signed in. For 'fxa_cta' messages. Defaults to 'false'."
         }
       }
     },
@@ -127,7 +123,7 @@
     },
     "testingTriggerContext": {
       "type": "string",
-      "enum": ["app_menu", "pxi_menu"]
+      "enum": ["app_menu"]
     }
   },
   "additionalProperties": true

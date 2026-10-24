@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
-const FXA_ENABLED_PREF = "identity.fxaccounts.enabled";
 const TOPIC_SELECTION_MODAL_LAST_DISPLAYED_PREF =
   "browser.newtabpage.activity-stream.discoverystream.topicSelection.onboarding.lastDisplayed";
 const NOTIFICATION_INTERVAL_AFTER_TOPIC_MODAL_MS = 60000; // Assuming avoid notification up to 1 minute after newtab Topic Notification Modal
@@ -106,12 +105,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   LaunchOnLogin: "resource://gre/modules/LaunchOnLogin.sys.mjs",
 });
 
-ChromeUtils.defineLazyGetter(lazy, "fxAccounts", () => {
-  return ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton();
-});
-
 ChromeUtils.defineLazyGetter(
   lazy,
   "searchFormHistoryFieldname",
@@ -132,12 +125,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
   "cfrAddonsUserPref",
   "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
   true
-);
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "hasAccessedFxAPanel",
-  "identity.fxaccounts.toolbar.accessed",
-  false
 );
 XPCOMUtils.defineLazyPreferenceGetter(
   lazy,
@@ -162,12 +149,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
   "devtoolsSelfXSSCount",
   "devtools.selfxss.count",
   0
-);
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "isFxAEnabled",
-  FXA_ENABLED_PREF,
-  true
 );
 XPCOMUtils.defineLazyPreferenceGetter(
   lazy,
@@ -845,21 +826,10 @@ const TargetingGetters = {
     return Services.prefs.prefHasUserValue(FXA_USERNAME_PREF);
   },
   get isFxAEnabled() {
-    return lazy.isFxAEnabled;
+    return false;
   },
   get isFxASignedIn() {
-    return new Promise(resolve => {
-      if (!lazy.isFxAEnabled) {
-        resolve(false);
-      }
-      if (Services.prefs.getStringPref(FXA_USERNAME_PREF, "")) {
-        resolve(true);
-      }
-      lazy.fxAccounts
-        .getSignedInUser()
-        .then(data => resolve(!!data))
-        .catch(() => resolve(false));
-    });
+    return false;
   },
   get sync() {
     return {
@@ -1086,7 +1056,7 @@ const TargetingGetters = {
     return !!lazy.AutoTabGroupingSuggestions?.isAvailable;
   },
   get hasAccessedFxAPanel() {
-    return lazy.hasAccessedFxAPanel;
+    return false;
   },
   get userPrefs() {
     return {
@@ -1125,14 +1095,7 @@ const TargetingGetters = {
     );
   },
   get attachedFxAOAuthClients() {
-    return this.usesFirefoxSync
-      ? new Promise(resolve =>
-          lazy.fxAccounts
-            .listAttachedOAuthClients()
-            .then(clients => resolve(clients))
-            .catch(() => resolve([]))
-        )
-      : [];
+    return [];
   },
   get relayProfileInfo() {
     return QueryCache.getters.relayProfileInfo.get();

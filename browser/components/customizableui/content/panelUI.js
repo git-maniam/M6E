@@ -274,7 +274,6 @@ const PanelUI = {
       "appMenu-libraryView"
     ).addEventListener("command", this._onLibraryCommand);
     this.mainView.addEventListener("command", this);
-    this.mainView.addEventListener("click", this);
     this.mainView.addEventListener("ViewShowing", this._onMainViewShow);
     this._eventListenersAdded = true;
   },
@@ -291,7 +290,6 @@ const PanelUI = {
       "appMenu-libraryView"
     ).removeEventListener("command", this._onLibraryCommand);
     this.mainView.removeEventListener("command", this);
-    this.mainView.removeEventListener("click", this);
     this._eventListenersAdded = false;
   },
 
@@ -467,13 +465,6 @@ const PanelUI = {
       case "activate":
         this.updateNotifications();
         break;
-      case "click": {
-        let novaFxaButton = aEvent.target.closest("#appMenu-nova-fxa-label");
-        if (novaFxaButton) {
-          gSync.toggleAccountPanel(novaFxaButton, aEvent);
-        }
-        break;
-      }
       case "command":
         this.onCommand(aEvent);
         break;
@@ -500,9 +491,6 @@ const PanelUI = {
     switch (target.id) {
       case "appMenu-update-banner":
         this._onBannerItemSelected(aEvent);
-        break;
-      case "appMenu-fxa-label2":
-        gSync.toggleAccountPanel(target, aEvent);
         break;
       case "appMenu-bookmarks-button":
         BookmarkingUI.showSubView(target);
@@ -805,20 +793,7 @@ const PanelUI = {
     }
   },
 
-  _onMainViewShow(event) {
-    let panelview = event.target;
-    let messageId = panelview.getAttribute(
-      MenuMessage.SHOWING_FXA_MENU_MESSAGE_ATTR
-    );
-    if (messageId) {
-      MenuMessage.recordMenuMessageTelemetry(
-        "IMPRESSION",
-        MenuMessage.SOURCES.APP_MENU,
-        messageId
-      );
-      let message = ASRouter.getMessageById(messageId);
-      ASRouter.addImpression(message);
-    }
+  _onMainViewShow() {
     updateZoomUI(gBrowser.selectedBrowser);
   },
 
