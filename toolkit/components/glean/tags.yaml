@@ -225,8 +225,6 @@ $schema: moz://mozilla.org/schemas/glean/tags/1-0-0
   description: The Bugzilla component which applies to this object.
 'Core :: Web Painting':
   description: The Bugzilla component which applies to this object.
-'Core :: Web Speech':
-  description: The Bugzilla component which applies to this object.
 'Core :: WebRTC':
   description: The Bugzilla component which applies to this object.
 'Core :: WebRTC: Audio/Video':

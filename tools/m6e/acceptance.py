@@ -140,8 +140,10 @@ REMOVED_PREFS = {
         "browser.ai.control.translations": "blocked",
     },
     "AI": {
-        "browser.ml.enable": False,
         "browser.ml.chat.enabled": False,
+        "pdfjs.enableAltText": False,
+        "pdfjs.enableGuessAltText": False,
+        "pdfjs.enableAltTextModelDownload": False,
         "browser.smartwindow.enabled": False,
         "browser.ai.control.default": "blocked",
         "browser.ai.control.sidebarChatbot": "blocked",

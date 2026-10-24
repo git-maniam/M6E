@@ -232,20 +232,6 @@ TEST_SUITES = {
             "test-verify($|.*(-1|[^0-9])$)",
         ],
     },
-    "mochitest-speech-recognition": {
-        "aliases": ("msr", "speech-recognition"),
-        "build_flavor": "mochitest",
-        "mach_command": "mochitest",
-        "kwargs": {
-            "flavor": "plain",
-            "subsuite": "speech-recognition",
-            "test_paths": None,
-        },
-        "task_regex": [
-            "mochitest-speech-recognition($|.*(-1|[^0-9])$)",
-            "test-verify($|.*(-1|[^0-9])$)",
-        ],
-    },
     "mochitest-browser-media": {
         "aliases": ("bmda", "browser-mda"),
         "build_flavor": "browser-chrome",
@@ -271,20 +257,6 @@ TEST_SUITES = {
         },
         "task_regex": [
             "mochitest-browser-translations($|.*(-1|[^0-9])$)",
-            "test-verify($|.*(-1|[^0-9])$)",
-        ],
-    },
-    "mochitest-browser-chrome-ml-models": {
-        "aliases": ("bc-ml", "browser-ml-models"),
-        "build_flavor": "browser-chrome",
-        "mach_command": "mochitest",
-        "kwargs": {
-            "flavor": "browser-chrome",
-            "subsuite": "ml-models",
-            "test_paths": None,
-        },
-        "task_regex": [
-            "mochitest-browser-chrome-ml-models($|.*(-1|[^0-9])$)",
             "test-verify($|.*(-1|[^0-9])$)",
         ],
     },
@@ -551,7 +523,6 @@ _test_subsuites = {
     ("browser-chrome", "devtools"): "mochitest-devtools-chrome",
     ("browser-chrome", "devtools-compat"): "mochitest-devtools-compat",
     ("browser-chrome", "media-bc"): "mochitest-browser-media",
-    ("browser-chrome", "ml-models"): "mochitest-browser-chrome-ml-models",
     ("browser-chrome", "remote"): "mochitest-remote",
     ("browser-chrome", "screenshots"): "mochitest-browser-screenshots",
     ("browser-chrome", "translations"): "mochitest-browser-translations",
@@ -560,7 +531,6 @@ _test_subsuites = {
     ("marionette", "unittest"): "marionette-unittest",
     ("mochitest", "gpu"): "mochitest-plain-gpu",
     ("mochitest", "media"): "mochitest-media",
-    ("mochitest", "speech-recognition"): "mochitest-speech-recognition",
     ("mochitest", "webgl1-core"): "mochitest-webgl1-core",
     ("mochitest", "webgl1-ext"): "mochitest-webgl1-ext",
     ("mochitest", "webgl2-core"): "mochitest-webgl2-core",

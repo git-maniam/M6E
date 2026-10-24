@@ -34,12 +34,12 @@ add_task(async function test() {
       await waitForPdfJS(browser, pdfUrl);
 
       const prefs = {
-        enableGuessAltText: {
+        enableNewAltTextWhenAddingImage: {
           type: "Bool",
-          initialValue: false,
-          newValue: true,
-          expectedValue: true,
-          listenForUpdate: true,
+          initialValue: true,
+          newValue: false,
+          expectedValue: false,
+          listenForUpdate: false,
         },
         pdfBugEnabled: {
           type: "Bool",

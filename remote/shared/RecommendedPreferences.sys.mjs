@@ -134,9 +134,6 @@ const COMMON_PREFERENCES = new Map([
   // Make sure error page is not shown for blank pages with 4xx or 5xx response code
   ["browser.http.blank_page_with_error_response.enabled", true],
 
-  // Disable all machine learning features by default
-  ["browser.ml.enable", false],
-
   // Disable CFR features for automated tests.
   ["browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false],
 
@@ -373,10 +370,6 @@ const COMMON_PREFERENCES = new Map([
 
   // Make sure SNTP requests do not hit the network
   ["network.sntp.pools", "%(server)s"],
-
-  // Turn off semantic history search as it triggers network connections to
-  // download ML models.
-  ["places.semanticHistory.featureGate", false],
 
   // Privacy and Tracking Protection
   ["privacy.trackingprotection.enabled", false],

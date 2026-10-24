@@ -64,20 +64,6 @@ let JSPROCESSACTORS = {
     },
   },
 
-  // A single process (shared with translations) that manages machine learning engines.
-  MLEngine: {
-    remoteTypes: ["inference"],
-    parent: {
-      esModuleURI:
-        "moz-src:///toolkit/components/ml/actors/MLEngineParent.sys.mjs",
-    },
-    child: {
-      esModuleURI:
-        "moz-src:///toolkit/components/ml/actors/MLEngineChild.sys.mjs",
-    },
-    enablePreference: "browser.ml.enable",
-  },
-
   ProcessConduits: {
     // "parent" remoteTypes is currently needed to support MV3 background service workers
     // also when extensions.webextensions.remote is set to false.
