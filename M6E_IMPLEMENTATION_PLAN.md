@@ -289,7 +289,12 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** Phase 4 is complete (2026-10-24), including the user's additions P4.5 to P4.9 and P3.8. Next is Phase 5, packaging and acceptance (section 5), starting with P5.0: Cloudflare for Families (D25) is committed but not yet built. Then P6.1, deleting the dormant features (D30). `mozconfig` has PGO on, which is right for the release build; `./mach build faster` is refused with PGO, so for front-end-only changes run `make -C obj-m6e/faster`.
+**Checkpoint (2026-10-24):** Phase 4 is complete. Phase 5 has started.
+- **Running:** the full profile-guided rebuild for D25 (`artifacts/P5.0-build.log`; `DNSPacket.cpp` changed, so all three stages run). If the session drops, rerun `./mach build`.
+- **Prepared in parallel** (a workflow of six agents on disjoint files, each independently reviewed; see the P5 results below as they are integrated): DMG layout, ad-hoc signing script, acceptance script, memory investigation, merge tooling, DNS-blocking test.
+- **Saved builds for A/B work:** `artifacts/baseline-P4.1`, `build-P4.2a`, `build-P4.2b` and `build-P4.9` (the finished build before the D25 change).
+- **After the build:** P5.0 (check D25 on the new binary and run its xpcshell test), P5.1 (package, sign, DMG), P5.2 (run `tools/m6e/acceptance.py` on the packaged app), P5.3 (document the merge procedure), then P6.1.
+- **Distribution note:** D8 (ad-hoc signing) means other Macs show a Gatekeeper warning on first open. Because M6E is for everyone, a Developer ID plus notarization (Apple Developer Program, $99 a year) removes it; this is the user's decision.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
