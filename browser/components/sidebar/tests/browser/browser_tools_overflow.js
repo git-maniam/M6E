@@ -6,9 +6,8 @@ add_setup(async () => {
     set: [
       [VERTICAL_TABS_PREF, true],
       [SIDEBAR_VISIBILITY_PREF, "always-show"],
-      ["browser.ml.chat.enabled", true],
       ["browser.contextual-password-manager.enabled", true],
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history"],
+      ["sidebar.main.tools", "passwords,syncedtabs,history"],
     ],
   });
 });
@@ -91,7 +90,7 @@ add_task(async function test_resize_of_tools() {
 
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
     ],
   });
 
@@ -142,7 +141,7 @@ add_task(async function test_overflow_menu() {
 
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
     ],
   });
 
@@ -222,7 +221,7 @@ add_task(async function test_overflow_menu_with_keyboard() {
 
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
     ],
   });
 
@@ -324,7 +323,7 @@ add_task(
 
     await SpecialPowers.pushPrefEnv({
       set: [
-        ["sidebar.main.tools", "aichat,passwords,syncedtabs,history,bookmarks"],
+        ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
       ],
     });
 
@@ -414,7 +413,7 @@ add_task(async function test_tools_overflow() {
 
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "passwords,syncedtabs,history,bookmarks"],
     ],
   });
   await sidebar.updateComplete;

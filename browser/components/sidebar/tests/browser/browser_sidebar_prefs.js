@@ -11,7 +11,7 @@ add_task(async function test_tools_prefs() {
 
   Services.prefs.setStringPref(
     "sidebar.main.tools",
-    "aichat,syncedtabs,history,bookmarks"
+    "syncedtabs,history,bookmarks"
   );
 
   // Open customize sidebar
@@ -237,7 +237,7 @@ add_task(async function test_flip_revamp_pref() {
  * Check that panels can stay open when flipping sidebar.revamp
  */
 add_task(async function test_flip_revamp_pref_with_panel() {
-  await SidebarTestUtils.showPanel(window, "viewGenaiChatSidebar");
+  await SidebarTestUtils.showPanel(window, "viewBookmarksSidebar");
   ok(SidebarController.isOpen, "panel open with revamp");
 
   await SpecialPowers.pushPrefEnv({

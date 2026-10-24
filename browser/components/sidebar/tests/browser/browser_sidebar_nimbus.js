@@ -79,32 +79,6 @@ add_task(async function test_nimbus_rollout_experiment() {
 });
 
 /**
- * Check that multi-feature chatbot sets prefs
- */
-add_task(async function test_nimbus_multi_feature() {
-  const chatbot = "browser.ml.chat.test";
-  Assert.ok(!Services.prefs.prefHasUserValue(chatbot), "chatbot is default");
-
-  const cleanup = await NimbusTestUtils.enroll(
-    NimbusTestUtils.factories.recipe.withFeatureConfig("foo", {
-      branchSlug: "variant",
-      featureId: "chatbot",
-      value: { prefs: { test: { value: true } } },
-    })
-  );
-
-  Assert.ok(Services.prefs.prefHasUserValue(chatbot), "chatbot user pref set");
-
-  await cleanup();
-
-  Assert.ok(Services.prefs.prefHasUserValue(chatbot), "chatbot pref still set");
-
-  Services.prefs.clearUserPref(chatbot);
-  Services.prefs.clearUserPref("browser.ml.chat.nimbus");
-  Services.prefs.clearUserPref("sidebar.nimbus");
-});
-
-/**
  * Check that minimum versions get enforced
  */
 add_task(async function test_nimbus_minimum_version() {

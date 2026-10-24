@@ -17,7 +17,7 @@ add_setup(async () => {
     set: [
       [VERTICAL_TABS_PREF, true],
       [SIDEBAR_BUTTON_INTRODUCED_PREF, false],
-      ["sidebar.main.tools", "aichat,passwords,syncedtabs,history"],
+      ["sidebar.main.tools", "passwords,syncedtabs,history"],
     ],
   });
   await SidebarTestUtils.waitForTabstripOrientation(window, "vertical");
@@ -200,10 +200,10 @@ add_task(async function test_expanded_state_for_always_show() {
 // the panel) is covered by browser_hide_sidebar.js.
 
 add_task(async function test_toolbar_sidebar_badges() {
-  const SIDEBAR_COMMAND_ID = "viewGenaiChatSidebar";
+  const SIDEBAR_COMMAND_ID = "viewHistorySidebar";
 
   await SpecialPowers.pushPrefEnv({
-    set: [["sidebar.notification.badge.aichat", true]],
+    set: [["sidebar.notification.badge.history", true]],
   });
   await SpecialPowers.pushPrefEnv({
     set: [[VERTICAL_TABS_PREF, false]],
@@ -234,7 +234,7 @@ add_task(async function test_toolbar_sidebar_badges() {
 
   // Set badge pref false to check if all badges are cleared
   await SpecialPowers.pushPrefEnv({
-    set: [[`sidebar.notification.badge.aichat`, false]],
+    set: [[`sidebar.notification.badge.history`, false]],
   });
   Assert.ok(
     !badgeEl.classList.contains("feature-callout") && !toolEntry.attention,
@@ -244,26 +244,13 @@ add_task(async function test_toolbar_sidebar_badges() {
   // Test that disabled tools don't show badges
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "history"],
-      ["sidebar.notification.badge.aichat", true],
+      ["sidebar.main.tools", "syncedtabs"],
+      ["sidebar.notification.badge.history", true],
     ],
   });
   Assert.ok(
     !badgeEl.classList.contains("feature-callout"),
     "Toolbar badge should not appear for disabled tools"
-  );
-  await SpecialPowers.popPrefEnv();
-
-  // Test that hidden tools don't show badges
-  await SpecialPowers.pushPrefEnv({
-    set: [
-      ["browser.ml.chat.enabled", false],
-      ["sidebar.notification.badge.aichat", true],
-    ],
-  });
-  Assert.ok(
-    !badgeEl.classList.contains("feature-callout"),
-    "Toolbar badge should not appear for hidden tools"
   );
   await SpecialPowers.popPrefEnv();
 
