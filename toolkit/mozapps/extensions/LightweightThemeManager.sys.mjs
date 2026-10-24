@@ -229,52 +229,8 @@ export var LightweightThemeManager = {
   // Bump this number whenever the shape or interpretation of the theme data
   // changes, in order to invalidate extensions startup cache.
   DATA_VERSION: 1,
-  aiThemeData: null,
-  _aiThemeDataPromise: null,
-  aiNovaThemeData: null,
-  _aiNovaThemeDataPromise: null,
   privateThemeData: null,
   _privateThemeDataPromise: null,
-
-  async promiseAIThemeData() {
-    if (this.aiThemeData) {
-      return this.aiThemeData;
-    }
-
-    if (this._aiThemeDataPromise) {
-      return this._aiThemeDataPromise;
-    }
-
-    this._aiThemeDataPromise = this._fetchThemeDataFromBuiltinManifest(
-      "resource://builtin-themes/aiwindow/"
-    ).then(data => {
-      this.aiThemeData = data;
-      this._aiThemeDataPromise = null;
-      return data;
-    });
-
-    return this._aiThemeDataPromise;
-  },
-
-  async promiseAINovathemeData() {
-    if (this.aiNovaThemeData) {
-      return this.aiNovaThemeData;
-    }
-
-    if (this._aiNovaThemeDataPromise) {
-      return this._aiNovaThemeDataPromise;
-    }
-
-    this._aiNovaThemeDataPromise = this._fetchThemeDataFromBuiltinManifest(
-      "resource://builtin-themes/aiwindow-nova/"
-    ).then(data => {
-      this.aiNovaThemeData = data;
-      this._aiNovaThemeDataPromise = null;
-      return data;
-    });
-
-    return this._aiNovaThemeDataPromise;
-  },
 
   async promisePrivateThemeData() {
     if (this.privateThemeData) {

@@ -70,16 +70,10 @@ gViewController.defineView("list", async type => {
     filterFn: disabledAddonsFilterFn,
   });
 
-  // Show the forced-colors and smart window theme notices only
-  // in themes list view.
+  // Show the forced-colors theme notice only in themes list view.
   if (type === "theme") {
     const forcedColorsNotice = document.createElement("forced-colors-notice");
     frag.appendChild(forcedColorsNotice);
-
-    const smartWindowNotice = document.createElement(
-      "smartwindow-themes-notice"
-    );
-    frag.appendChild(smartWindowNotice);
   }
 
   list.setSections(sections);
