@@ -182,7 +182,6 @@ REMOVED_PREFS = {
         "browser.newtabpage.activity-stream.widgets.weather.enabled": False,
         "browser.newtabpage.activity-stream.widgets.stocks.enabled": False,
     },
-    "Nimbus experiments": {"nimbus.rollouts.enabled": False},
     "Content relevancy": {"toolkit.contentRelevancy.enabled": False},
 }
 
@@ -553,6 +552,16 @@ for (const cid in Cc) {
 }
 out.about = { absent: ABOUT.filter(n => !registered.includes(n)), registered: ABOUT.filter(n => registered.includes(n)), allRegistered: registered.sort() };
 out.pocketPref = P.getPrefType("extensions.pocket.enabled") ? P.getBoolPref("extensions.pocket.enabled") : null;
+let nimbusEnrollment = true;
+try {
+  ChromeUtils.importESModule("resource://nimbus/lib/ExperimentManager.sys.mjs");
+} catch (e) {
+  nimbusEnrollment = false;
+}
+out.nimbus = {
+  enrollmentModule: nimbusEnrollment,
+  enabled: ChromeUtils.importESModule("resource://nimbus/ExperimentAPI.sys.mjs").ExperimentAPI.enabled,
+};
 out.aiWindowEnabled = win.AIWindow?.isAIWindowEnabled?.() ?? null;
 out.sidebarSyncTools = win.SidebarController?.toolsAndExtensions
   ? [...win.SidebarController.toolsAndExtensions.keys()].filter(k => /sync|firefoxview|pocket/i.test(k)) : [];
@@ -1412,6 +1421,12 @@ def check_removed(ctx, r):
             not c["value"],
             f"AppConstants.{c['name']}={c['value']}",
         )
+    r.add(
+        "Nimbus cannot enrol",
+        not data["nimbus"]["enrollmentModule"] and not data["nimbus"]["enabled"],
+        f"enrolment code present={data['nimbus']['enrollmentModule']},"
+        f" ExperimentAPI.enabled={data['nimbus']['enabled']}",
+    )
     r.add(
         "Pocket is off",
         data["pocketPref"] in (None, False),
