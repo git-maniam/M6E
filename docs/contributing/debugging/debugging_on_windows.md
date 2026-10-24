@@ -67,8 +67,8 @@ and click "Start".
 
 ## Debugging Release and Nightly Builds
 
-Refer to the steps to {doc}`use the Mozilla symbol
-server </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>` and {doc}`source
+Refer to the steps to use the Mozilla symbol
+server and {doc}`source
 server </taskcluster/using-the-mozilla-source-server>`
 
 ## Creating a Visual Studio project for Firefox

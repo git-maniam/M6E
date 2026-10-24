@@ -132,7 +132,7 @@ strive for simplicity.
 
 In the spirit of creating a *responsible* process, the sample will connect
 several components that any deployed Gecko process is likely to need. These
-include configuring a sandbox, {doc}`registration with the CrashReporter service </toolkit/crashreporter/crashreporter/index>`
+include configuring a sandbox, registration with the CrashReporter service
 and ("minimal") XPCOM initialization. Consult documentation for these
 components for more information on their integration.
 

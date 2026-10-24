@@ -38,11 +38,7 @@ cluster. If you are interested in obtaining this advanced access, read
 - [Crash pings (Telemetry) and crash reports (Socorro/Crash
   Stats)](https://bluesock.org/~willkg/blog/mozilla/crash_pings_crash_reports.html)
 - [Building with Debug Symbols](/setup/building_with_debug_symbols.md)
-- {ref}`Environment variables affecting crash reporting <environment-variables-affecting-crash-reporting>`
 - [Uploading symbols to Mozilla's symbol server](uploading_symbol.md)
-- [Crash Reporter](/toolkit/crashreporter/crashreporter/index.md)
-- [Crash Manager](/toolkit/components/crashes/crash-manager/index.md)
-- [Crash Ping Lifecycle](/toolkit/components/crashes/crash-manager/crash-ping-lifecycle.md)
 
 ```{toctree}
 :hidden:

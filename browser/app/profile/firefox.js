@@ -1552,9 +1552,6 @@ pref("browser.zoom.full", true);
 // Whether or not to update background tabs to the current zoom level.
 pref("browser.zoom.updateBackgroundTabs", true);
 
-// The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "https://crash-stats.mozilla.org/report/index/");
-
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
      "https://www.mozilla.org/legal/privacy/firefox.html");
@@ -2739,10 +2736,6 @@ pref("browser.tabs.remote.tabCacheSize", 0);
 pref("browser.tabs.remote.warmup.maxTabs", 3);
 pref("browser.tabs.remote.warmup.unloadDelayMs", 2000);
 
-// For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", true);
-pref("browser.tabs.crashReporting.includeURL", false);
-
 // Enables the "Unload Tab" context menu item
 pref("browser.tabs.unloadTabInContextMenu", true);
 
@@ -2865,27 +2858,6 @@ pref("signon.suggestImportCount", 3);
 // Whether the autocomplete dropdown lets users remove saved records
 // (logins, credit cards, and addresses) directly from the panel.
 pref("browser.autocomplete.removeRecords.enabled", false);
-
-// Whether or not the browser should scan for unsubmitted
-// crash reports, and then show a notification for submitting
-// those reports.
-#ifdef NIGHTLY_BUILD
-  pref("browser.crashReports.unsubmittedCheck.enabled", true);
-#else
-  pref("browser.crashReports.unsubmittedCheck.enabled", false);
-#endif
-
-// chancesUntilSuppress is how many times we'll show the unsubmitted
-// crash report notification across different days and shutdown
-// without a user choice before we suppress the notification for
-// some number of days.
-pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 4);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
-
-// Whether the browser should periodically prune stale crash-related files
-// (InstallTime markers, old submitted/pending reports, and the pending-report
-// cap).
-pref("browser.crashReports.cleanupCheck.enabled", true);
 
 // Preferences for the form autofill toolkit component.
 // Checkbox in sync options for credit card data sync service
