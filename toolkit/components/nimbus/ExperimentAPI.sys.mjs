@@ -11,7 +11,6 @@ import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 
 const lazy = XPCOMUtils.declareLazy({
-  AsyncShutdown: "resource://gre/modules/AsyncShutdown.sys.mjs",
   ExperimentManager: "resource://nimbus/lib/ExperimentManager.sys.mjs",
   FeatureManifest: "resource://nimbus/FeatureManifest.sys.mjs",
   FirstStartup: "resource://gre/modules/FirstStartup.sys.mjs",
@@ -34,9 +33,6 @@ const lazy = XPCOMUtils.declareLazy({
     default: "nimbus-desktop-experiments",
   },
 });
-
-const CRASHREPORTER_ENABLED =
-  AppConstants.MOZ_CRASHREPORTER && AppConstants.MOZ_APP_NAME !== "thunderbird";
 
 const IS_MAIN_PROCESS =
   Services.appinfo.processType === Services.appinfo.PROCESS_TYPE_DEFAULT;
@@ -210,9 +206,6 @@ export const ExperimentAPI = new (class {
     }
 
     this._onEnabledPrefChange = this._onEnabledPrefChange.bind(this);
-    this._annotateCrashReport = this._annotateCrashReport.bind(this);
-    this._removeCrashReportAnnotator =
-      this._removeCrashReportAnnotator.bind(this);
 
     ChromeUtils.defineLazyGetter(this, "_remoteSettingsClient", function () {
       return lazy.RemoteSettings(lazy.COLLECTION_ID);
@@ -351,23 +344,10 @@ export const ExperimentAPI = new (class {
       }
     }
 
-    // ... but we should still try to report telemetry and connect the crash
-    // reporter.
+    // ... but we should still try to report telemetry.
 
     if (this.#firstStartupTimestamps) {
       this.#firstStartupTimestamps.loaderInitEnd = ChromeUtils.now();
-    }
-
-    if (CRASHREPORTER_ENABLED) {
-      this.manager.store.on("update", this._annotateCrashReport);
-      this._annotateCrashReport();
-
-      if (!inShutdown) {
-        lazy.AsyncShutdown.appShutdownConfirmed.addBlocker(
-          "ExperimentAPI: removing crash report annotator",
-          this._removeCrashReportAnnotator
-        );
-      }
     }
 
     // Avoid registering these observers during shutdown as they may trigger
@@ -454,10 +434,6 @@ export const ExperimentAPI = new (class {
     this.#experimentLoader?.disable();
     this.#experimentLoader = null;
 
-    lazy.AsyncShutdown.appShutdownConfirmed.removeBlocker(
-      this._removeCrashReportAnnotator
-    );
-    this.#experimentManager?.store.off("update", this._annotateCrashReport);
     this.#experimentManager = null;
 
     Services.prefs.removeObserver(
@@ -570,32 +546,6 @@ export const ExperimentAPI = new (class {
     }
 
     return this.manager.store.ready();
-  }
-
-  /**
-   * Annotate the current crash report with current enrollments.
-   */
-  _annotateCrashReport() {
-    if (!Services.appinfo.crashReporterEnabled) {
-      return;
-    }
-
-    const activeEnrollments = this.manager.store
-      .getAll()
-      .filter(e => e.active)
-      .map(e => `${e.slug}:${e.branch.slug}`)
-      .join(",");
-
-    Services.appinfo.annotateCrashReport(
-      "NimbusEnrollments",
-      activeEnrollments
-    );
-  }
-
-  _removeCrashReportAnnotator() {
-    if (this.#initializedPromise) {
-      this.#experimentManager?.store.off("update", this._annotateCrashReport);
-    }
   }
 
   /**
