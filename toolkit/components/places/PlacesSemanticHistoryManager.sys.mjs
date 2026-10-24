@@ -271,8 +271,9 @@ class PlacesSemanticHistoryManager {
         "places.semanticHistory.initialized"
       );
 
+      let isAvailable = this.canUseSemanticSearch;
       let removeFiles =
-        (wasInitialized && !this.canUseSemanticSearch) ||
+        (wasInitialized && !isAvailable) ||
         Services.prefs.getBoolPref(
           "places.semanticHistory.removeOnStartup",
           false
