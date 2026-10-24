@@ -33,9 +33,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   SearchUIUtils: "moz-src:///browser/components/search/SearchUIUtils.sys.mjs",
   SearchUtils: "moz-src:///toolkit/components/search/SearchUtils.sys.mjs",
   ShortcutUtils: "resource://gre/modules/ShortcutUtils.sys.mjs",
-  TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
-  TranslationsUtils:
-    "chrome://global/content/translations/TranslationsUtils.mjs",
   WebsiteFilter: "resource:///modules/policies/WebsiteFilter.sys.mjs",
 });
 
@@ -115,15 +112,6 @@ const IMAGE_ONLY_PROTOCOLS = [
 ];
 
 export class nsContextMenu {
-  /**
-   * A promise to retrieve the translations language pair
-   * if the context menu was opened in a context relevant to
-   * open the SelectTranslationsPanel.
-   *
-   * @type {Promise<{sourceLanguage: string, targetLanguage: string}>}
-   */
-  #translationsLangPairPromise;
-
   /**
    * Cancels the login lookup for this menu once the menu is gone, so that a
    * result arriving late is discarded instead of being applied to a menu it was
@@ -924,7 +912,6 @@ export class nsContextMenu {
     }
 
     this.showAndFormatSearchContextItem();
-    this.showTranslateSelectionItem();
     lazy.GenAI.buildAskChatMenu(document.getElementById("context-ask-chat"), {
       browser: this.browser,
       selectionInfo: this.selectionInfo,
@@ -2665,144 +2652,6 @@ export class nsContextMenu {
       [this.browser.currentURI.spec],
       "tab_list"
     );
-  }
-
-  /**
-   * Opens the SelectTranslationsPanel singleton instance.
-   *
-   * @param {Event} event - The triggering event for opening the panel.
-   */
-  openSelectTranslationsPanel(event) {
-    const context = this.contentData.context;
-    let screenX = context.screenXDevPx / this.window.devicePixelRatio;
-    let screenY = context.screenYDevPx / this.window.devicePixelRatio;
-    this.window.SelectTranslationsPanel.open(
-      event,
-      screenX,
-      screenY,
-      this.#getTextToTranslate(),
-      this.isTextSelected,
-      this.#translationsLangPairPromise
-    ).catch(console.error);
-  }
-
-  /**
-   * Localizes the translate-selection menuitem.
-   *
-   * The item will either be localized with a target language's display name
-   * or localized in a generic way without a target language.
-   *
-   * @param {Element} translateSelectionItem
-   * @returns {Promise<void>}
-   */
-  async localizeTranslateSelectionItem(translateSelectionItem) {
-    const { sourceLanguage, targetLanguage } =
-      await this.#translationsLangPairPromise;
-
-    if (targetLanguage) {
-      if (
-        lazy.TranslationsUtils.langTagsMatch(sourceLanguage, targetLanguage)
-      ) {
-        translateSelectionItem.removeAttribute("target-language");
-        this.document.l10n.setAttributes(
-          translateSelectionItem,
-          this.isTextSelected
-            ? "main-context-menu-translate-selection"
-            : "main-context-menu-translate-link-text"
-        );
-        return;
-      }
-
-      let displayName;
-
-      try {
-        const languageDisplayNames =
-          lazy.TranslationsParent.createLanguageDisplayNames();
-        displayName = languageDisplayNames.of(targetLanguage);
-      } catch {
-        // languageDisplayNames.of threw, do nothing.
-      }
-
-      if (displayName) {
-        translateSelectionItem.setAttribute("target-language", targetLanguage);
-        this.document.l10n.setAttributes(
-          translateSelectionItem,
-          this.isTextSelected
-            ? "main-context-menu-translate-selection-to-language"
-            : "main-context-menu-translate-link-text-to-language",
-          { language: displayName }
-        );
-        return;
-      }
-    }
-
-    // Either no to-language exists, or an error occurred,
-    // so localize the menuitem without a target language.
-    translateSelectionItem.removeAttribute("target-language");
-    this.document.l10n.setAttributes(
-      translateSelectionItem,
-      this.isTextSelected
-        ? "main-context-menu-translate-selection"
-        : "main-context-menu-translate-link-text"
-    );
-  }
-
-  /**
-   * Fetches text for translation, prioritizing selected text over link text.
-   *
-   * @returns {string} The text to translate.
-   */
-  #getTextToTranslate() {
-    if (this.isTextSelected) {
-      // If there is an active selection, we will always offer to translate.
-      return this.selectionInfo.fullText.trim();
-    }
-
-    const linkText = this.linkTextStr.trim();
-    if (!linkText) {
-      // There was no underlying link text, so do not offer to translate.
-      return "";
-    }
-
-    if (URL.canParse(linkText)) {
-      // The underlying link text is a URL, we should not offer to translate.
-      return "";
-    }
-
-    // Since the underlying link text is not a URL, we should offer to translate it.
-    return linkText;
-  }
-
-  /**
-   * Displays or hides the translate-selection item in the context menu.
-   */
-  showTranslateSelectionItem() {
-    const translateSelectionItem = this.document.getElementById(
-      "context-translate-selection"
-    );
-    const translationsEnabled = lazy.TranslationsParent.AIFeature.isEnabled;
-    const selectTranslationsEnabled = Services.prefs.getBoolPref(
-      "browser.translations.select.enable"
-    );
-
-    const textToTranslate = this.#getTextToTranslate();
-
-    translateSelectionItem.hidden =
-      // Only show the item if the feature is enabled.
-      !(translationsEnabled && selectTranslationsEnabled) ||
-      // Only show the item if Translations is supported on this hardware.
-      !lazy.TranslationsParent.getIsTranslationsEngineSupported() ||
-      // If there is no text to translate, we have nothing to do.
-      textToTranslate.length === 0;
-
-    if (translateSelectionItem.hidden) {
-      translateSelectionItem.removeAttribute("target-language");
-      return;
-    }
-
-    this.#translationsLangPairPromise =
-      this.window.SelectTranslationsPanel.getLangPairPromise(textToTranslate);
-    this.localizeTranslateSelectionItem(translateSelectionItem);
   }
 
   // Formats the 'Search <engine> for "<selection or link text>"' context menu.

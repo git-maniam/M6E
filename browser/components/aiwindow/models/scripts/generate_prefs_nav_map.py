@@ -50,7 +50,6 @@ PANE_DESCRIPTION_L10N_IDS = {
     "history": "history-section-header",
     "paneProfiles": "preferences-profiles-section-header",
     "personalizeSmartWindow": "smart-window-model-section",
-    "translations": "settings-translations-header",
 }
 
 _BLOCK_RE = re.compile(r"^([\w-]+)\s*=[^\n]*\n((?:[ \t]+[^\n]*\n?)*)", re.MULTILINE)

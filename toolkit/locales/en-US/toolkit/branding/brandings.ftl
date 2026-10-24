@@ -23,7 +23,6 @@
 -screenshots-brand-name = Screenshots
 -mozilla-vpn-brand-name = VPN
 -profiler-brand-name = Profiler
--translations-brand-name = Translations
 -relay-brand-name = Relay
 -relay-brand-short-name = Relay
 -fakespot-brand-name = Fakespot

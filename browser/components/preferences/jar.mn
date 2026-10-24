@@ -8,7 +8,6 @@ browser.jar:
 *  content/browser/preferences/preferences.xhtml
 
    content/browser/preferences/main.js
-   content/browser/preferences/translations.js
    content/browser/preferences/search.js
    content/browser/preferences/privacy.js
    content/browser/preferences/sync.js
@@ -48,7 +47,6 @@ browser.jar:
    content/browser/preferences/config/privacy.mjs                       (config/privacy.mjs)
    content/browser/preferences/config/LegacyPaneMappings.mjs            (config/LegacyPaneMappings.mjs)
    content/browser/preferences/config/search.mjs                        (config/search.mjs)
-   content/browser/preferences/config/translations.mjs                  (config/translations.mjs)
    content/browser/preferences/config/SettingGroupManager.mjs           (config/SettingGroupManager.mjs)
    content/browser/preferences/config/SettingPaneManager.mjs            (config/SettingPaneManager.mjs)
    content/browser/preferences/widgets/browser-language-restart-message.mjs          (widgets/browser-language-restart-message/browser-language-restart-message.mjs)

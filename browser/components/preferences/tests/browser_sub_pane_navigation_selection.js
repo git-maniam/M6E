@@ -232,7 +232,7 @@ add_task(async function test_back_button_from_subpane() {
 
 /**
  * Bug 2040444 - Tests that when visiting the URL for a subcategory like
- * #general-translations after visiting an external URL, the back
+ * #languages-spellCheck after visiting an external URL, the back
  * button exits about:preferences and takes you back through the
  * history to the external URL.
  */
@@ -261,16 +261,16 @@ add_task(async function back_button_exits_subcategorized_hash() {
   // visit the subcategorized URL and wait for it to settle on #languages
   BrowserTestUtils.startLoadingURIString(
     tab.linkedBrowser,
-    "about:preferences#languages-translations"
+    "about:preferences#languages-spellCheck"
   );
   await TestUtils.waitForCondition(
     () => tab.linkedBrowser.contentWindow?.location.hash == "#languages",
-    "Waiting for #languages-translations to normalize to #languages"
+    "Waiting for #languages-spellCheck to normalize to #languages"
   );
   is(
     tab.linkedBrowser.contentWindow.location.hash,
     "#languages",
-    "Hash normalized from #languages-translations to #languages"
+    "Hash normalized from #languages-spellCheck to #languages"
   );
 
   // press back twice to land back on the starting page

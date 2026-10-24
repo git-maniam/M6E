@@ -458,34 +458,6 @@ document.addEventListener(
           gUnifiedExtensions.reportExtension(event.target.parentElement);
           break;
 
-        // == full-page-translations-panel-settings-menupopup ==
-        case "translations-panel-settings-always-offer-translation":
-          FullPageTranslationsPanel.onAlwaysOfferTranslations();
-          break;
-        case "translations-panel-settings-always-translate":
-          FullPageTranslationsPanel.onAlwaysTranslateLanguage();
-          break;
-        case "translations-panel-settings-never-translate":
-          FullPageTranslationsPanel.onNeverTranslateLanguage();
-          break;
-        case "translations-panel-settings-never-translate-site":
-          FullPageTranslationsPanel.onNeverTranslateSite();
-          break;
-        case "translations-panel-manage-languages":
-          FullPageTranslationsPanel.openManageLanguages();
-          break;
-        case "translations-panel-about":
-          FullPageTranslationsPanel.onAboutTranslations();
-          break;
-
-        // == select-translations-panel-settings-menupopup ==
-        case "select-translations-panel-open-settings-page-menuitem":
-          SelectTranslationsPanel.openTranslationsSettingsPage();
-          break;
-        case "select-translations-panel-about-translations-menuitem":
-          SelectTranslationsPanel.onAboutTranslations();
-          break;
-
         // == customizationPanelItemContextMenu ==
         case "customizationPanelItemContextMenuManageExtension":
           ToolbarContextMenu.openAboutAddonsForContextAction(
@@ -753,9 +725,6 @@ document.addEventListener(
         case "sharing-tabs-warning-panel":
           gSharedTabWarning.sharedTabWarningShown();
           break;
-        case "full-page-translations-panel-settings-menupopup":
-          FullPageTranslationsPanel.handleSettingsPopupShownEvent();
-          break;
       }
     });
 
@@ -768,14 +737,6 @@ document.addEventListener(
         case "tabContextMenu":
           // Reset Send Tab exposure tracking when tab context menu closes
           gSync._resetSendTabExposureTracking();
-          break;
-      }
-    });
-
-    mainPopupSet.addEventListener("popuphidden", event => {
-      switch (event.target.id) {
-        case "full-page-translations-panel-settings-menupopup":
-          FullPageTranslationsPanel.handleSettingsPopupHiddenEvent();
           break;
       }
     });

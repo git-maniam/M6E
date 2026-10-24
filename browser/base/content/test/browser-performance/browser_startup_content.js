@@ -67,8 +67,7 @@ const intermittently_loaded_scripts = {
   modules: new Set([
     "resource://gre/modules/nsAsyncShutdown.sys.mjs",
 
-    // Translations code which may be preffed on.
-    "resource://gre/actors/TranslationsChild.sys.mjs",
+    // Language identification used by extension content scripts.
     "resource://gre/modules/translations/LanguageDetector.sys.mjs",
     "moz-src:///dom/console/ConsoleAPIStorage.sys.mjs", // Logging related.
 

@@ -20,8 +20,6 @@ const lazy = XPCOMUtils.declareLazy({
     "moz-src:///browser/components/tabbrowser/SmartTabGrouping.sys.mjs",
   SpeechRecognitionFeature:
     "moz-src:///dom/media/webspeech/recognition/SpeechRecognitionFeature.sys.mjs",
-  TranslationsFeature:
-    "chrome://global/content/translations/TranslationsFeature.sys.mjs",
 });
 
 /**
@@ -31,7 +29,6 @@ const OnDeviceModelFeatures = Object.freeze({
   TabGroups: "smartTabGroups",
   KeyPoints: "linkPreviewKeyPoints",
   PdfAltText: "pdfjsAltText",
-  Translations: "translations",
   SidebarChatbot: "sidebarChatbot",
   SmartWindow: "smartWindow",
   SpeechRecognition: "speechRecognition",
@@ -54,7 +51,6 @@ const FeaturePrefs = Object.freeze({
     "browser.tabs.groups.smart.userEnabled",
     "browser.tabs.groups.smart.optin",
   ],
-  [OnDeviceModelFeatures.Translations]: ["browser.translations.enable"],
   [OnDeviceModelFeatures.SidebarChatbot]: [
     "browser.ml.chat.provider",
     "browser.ml.chat.enabled",
@@ -139,8 +135,6 @@ export const OnDeviceModelManager = {
       case OnDeviceModelFeatures.TabGroups:
         // @ts-expect-error: SmartTabGroupingManager implements more than AIFeature
         return lazy.SmartTabGroupingManager;
-      case OnDeviceModelFeatures.Translations:
-        return lazy.TranslationsFeature;
       case OnDeviceModelFeatures.SidebarChatbot:
         return lazy.GenAI;
       case OnDeviceModelFeatures.SmartWindow:
@@ -165,8 +159,6 @@ export const OnDeviceModelManager = {
         return "browser.ai.control.pdfjsAltText";
       case OnDeviceModelFeatures.TabGroups:
         return "browser.ai.control.smartTabGroups";
-      case OnDeviceModelFeatures.Translations:
-        return "browser.ai.control.translations";
       case OnDeviceModelFeatures.SidebarChatbot:
         return "browser.ai.control.sidebarChatbot";
       case OnDeviceModelFeatures.SmartWindow:

@@ -1436,41 +1436,6 @@ setting-group[groupid="aiStatesDescription"] {
   }
 }
 
-#translations-manage-install-list {
-  height: 220px;
-  overflow: auto;
-  background-color: var(--background-color-box);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-small);
-  resize: vertical;
-  margin: 4px 0;
-}
-
-.translations-manage-language:first-child {
-  border-bottom: 1px solid var(--border-color);
-  padding: 8px;
-  margin-bottom: 8px;
-}
-
-.translations-manage-language {
-  align-items: center;
-  padding: 0 8px;
-}
-
-.translations-manage-language > label {
-  flex: 1;
-  margin: 0 15px;
-}
-
-#translations-manage-error {
-  color: var(--text-color-error);
-  margin: var(--space-large) 0;
-}
-
-.translations-download-language-error {
-  background-color: var(--background-color-critical);
-}
-
 .hidden-category {
   display: none;
 }

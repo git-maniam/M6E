@@ -110,10 +110,6 @@ add_task(async function test_link_contextmenu() {
     "privacy.query_stripping.strip_on_share.enabled"
   );
 
-  const expectTranslateSelection =
-    Services.prefs.getBoolPref("browser.translations.enable") &&
-    Services.prefs.getBoolPref("browser.translations.select.enable");
-
   const expectInspectAccessibility =
     Services.prefs.getBoolPref("devtools.accessibility.enabled", true) &&
     (Services.prefs.getBoolPref("devtools.everOpened", false) ||
@@ -141,7 +137,6 @@ add_task(async function test_link_contextmenu() {
     "context-sendlinktodevice",
     "context-sep-sendlinktodevice",
     "context-searchselect",
-    ...(expectTranslateSelection ? ["context-translate-selection"] : []),
     "context-ask-chat",
     "frame-sep",
     ...(expectInspectAccessibility ? ["context-inspect-a11y"] : []),
@@ -372,10 +367,6 @@ add_task(async function test_link_contextmenu_mobile() {
     "privacy.query_stripping.strip_on_share.enabled"
   );
 
-  const expectTranslateSelection =
-    Services.prefs.getBoolPref("browser.translations.enable") &&
-    Services.prefs.getBoolPref("browser.translations.select.enable");
-
   const expectInspectAccessibility =
     Services.prefs.getBoolPref("devtools.accessibility.enabled", true) &&
     (Services.prefs.getBoolPref("devtools.everOpened", false) ||
@@ -403,7 +394,6 @@ add_task(async function test_link_contextmenu_mobile() {
     "context-sendlinktodevice",
     "context-sep-sendlinktodevice",
     "context-searchselect",
-    ...(expectTranslateSelection ? ["context-translate-selection"] : []),
     "context-ask-chat",
     "frame-sep",
     ...(expectInspectAccessibility ? ["context-inspect-a11y"] : []),

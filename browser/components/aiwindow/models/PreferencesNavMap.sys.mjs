@@ -80,10 +80,5 @@ export const PREFERENCES_NAV_MAP = {
     "label": "Browser Privacy",
     "breadcrumb": "Settings > Browser Privacy",
     "description": null
-  },
-  "about:preferences#translations": {
-    "label": "More translation settings",
-    "breadcrumb": "Settings > General > More translation settings",
-    "description": "Translate pages or selected text. To protect your privacy, translations stay on your device."
   }
 };

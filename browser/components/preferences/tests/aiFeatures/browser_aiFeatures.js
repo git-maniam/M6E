@@ -10,7 +10,6 @@ add_setup(async function setupPrefs() {
     set: [
       ["browser.preferences.aiControls", true],
       ["browser.ai.control.default", "available"],
-      ["browser.ai.control.translations", "default"],
       ["browser.ai.control.pdfjsAltText", "default"],
       ["browser.ai.control.smartTabGroups", "default"],
       ["browser.ai.control.linkPreviewKeyPoints", "default"],
@@ -63,12 +62,6 @@ describe("settings ai features", () => {
           "Sidebar Chatbot",
           "browser.ml.chat.enabled",
           "aiControlSidebarChatbotSelect"
-        );
-        await runPolicyTest(
-          doc,
-          "Translations",
-          "browser.translations.enable",
-          "aiControlTranslationsSelect"
         );
 
         // Smart Window enterprise policy
