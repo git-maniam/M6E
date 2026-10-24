@@ -32,21 +32,6 @@ skip-if = [
   "headless", # bug 2046455 - file dialog can't be exercised headless
 ]
 
-["browser_policy_app_auto_update.js"]
-run-if = [
-  "!msix", # Updater is disabled in MSIX builds
-]
-
-["browser_policy_app_update.js"]
-run-if = [
-  "!msix", # Updater is disabled in MSIX builds
-]
-
-["browser_policy_background_app_update.js"]
-run-if = [
-  "!msix", # Updater is disabled in MSIX builds
-]
-
 ["browser_policy_block_about.js"]
 
 ["browser_policy_block_about_support.js"]
@@ -133,8 +118,6 @@ support-files = [
 ["browser_policy_mv3_force_installed_host_permissions.js"]
 
 ["browser_policy_offertosavelogins.js"]
-
-["browser_policy_override_postupdatepage.js"]
 
 ["browser_policy_pageinfo_permissions.js"]
 

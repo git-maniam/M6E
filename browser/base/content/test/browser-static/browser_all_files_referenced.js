@@ -292,11 +292,6 @@ var allowlist = [
   // dom/xml/nsXMLPrettyPrinter.cpp
   { file: "resource://gre/localization/en-US/dom/XMLPrettyPrint.ftl" },
 
-  // tookit/mozapps/update/BackgroundUpdate.sys.mjs
-  {
-    file: "resource://gre/localization/en-US/toolkit/updates/backgroundupdate.ftl",
-  },
-
   // Bug 1713242 - referenced by aboutThirdParty.html which is only for Windows
   {
     file: "resource://gre/localization/en-US/toolkit/about/aboutThirdParty.ftl",
@@ -390,13 +385,6 @@ if (AppConstants.platform == "android") {
   // Referenced by aboutGlean.html
   allowlist.push({
     file: "resource://gre/localization/en-US/toolkit/about/aboutGlean.ftl",
-  });
-}
-
-if (AppConstants.MOZ_UPDATE_AGENT && !AppConstants.MOZ_BACKGROUNDTASKS) {
-  // Task scheduling is only used for background updates right now.
-  allowlist.push({
-    file: "resource://gre/modules/TaskScheduler.sys.mjs",
   });
 }
 

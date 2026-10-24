@@ -15,10 +15,6 @@ const { CustomizableUITestUtils } = ChromeUtils.importESModule(
   "resource://testing-common/CustomizableUITestUtils.sys.mjs"
 );
 
-const { AppMenuNotifications } = ChromeUtils.importESModule(
-  "resource://gre/modules/AppMenuNotifications.sys.mjs"
-);
-
 // These are brand names, proper names, or other things that we expect to
 // not abide exactly to sentence case. NAMES is for single words, and PHRASES
 // is for words in a specific order.
@@ -90,11 +86,6 @@ function checkToolbarButtons(view) {
   info("Checking toolbarbuttons in subview with id " + view.id);
 
   for (let toolbarbutton of toolbarbuttons) {
-    // Concatenated title + description creates a false positive.
-    // checkUpdateBanner handles the update banner separately.
-    if (toolbarbutton.id === "appMenu-update-banner") {
-      continue;
-    }
     let strings = [
       toolbarbutton.label,
       toolbarbutton.textContent,
@@ -114,37 +105,6 @@ function checkSubheaders(view) {
 
   for (let subheader of subheaders) {
     checkSentenceCase(subheader.textContent, subheader.id);
-  }
-}
-
-async function checkUpdateBanner(view) {
-  let banner = view.querySelector("#appMenu-update-banner");
-
-  const notifications = [
-    "update-downloading",
-    "update-available",
-    "update-manual",
-    "update-unsupported",
-    "update-restart",
-  ];
-
-  for (const notification of notifications) {
-    // Forcibly remove the label in order to wait for the new label.
-    banner.removeAttribute("label");
-
-    let labelPromise = BrowserTestUtils.waitForMutationCondition(
-      banner,
-      { attributes: true, attributeFilter: ["label"] },
-      () => !!banner.getAttribute("label")
-    );
-
-    AppMenuNotifications.showNotification(notification);
-
-    await labelPromise;
-
-    checkSentenceCase(banner.label, banner.id);
-
-    AppMenuNotifications.removeNotification(/.*/);
   }
 }
 
@@ -269,8 +229,6 @@ add_task(async function test_sentence_case_appmenu() {
     checkToolbarButtons(view);
     checkSubheaders(view);
   }
-
-  await checkUpdateBanner(PanelUI.mainView);
 });
 
 /**

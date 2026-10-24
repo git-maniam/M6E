@@ -12,7 +12,6 @@ import { ASRouterTargeting } from "resource:///modules/asrouter/ASRouterTargetin
 // network connections.  Exclude these.
 const EXCLUDED_NAMES = [
   "region", // Queries Mozilla Location Services.
-  "needsUpdate", // Queries Balrog update server.
 ];
 
 /**

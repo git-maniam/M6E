@@ -331,25 +331,6 @@ tags = "overflowable-toolbar"
 
 ["browser_palette_labels.js"]
 
-["browser_panelUINotifications.js"]
-
-["browser_panelUINotifications_bannerVisibility.js"]
-
-["browser_panelUINotifications_fullscreen.js"]
-tags = "fullscreen"
-run-if = [
-  "os != 'mac'",
-]
-
-["browser_panelUINotifications_fullscreen_noAutoHideToolbar.js"]
-tags = "fullscreen"
-
-["browser_panelUINotifications_modals.js"]
-
-["browser_panelUINotifications_multiWindow.js"]
-
-["browser_panelUINotifications_novaUpdateBanner.js"]
-
 ["browser_panel_keyboard_navigation.js"]
 
 ["browser_panel_locationSpecific.js"]

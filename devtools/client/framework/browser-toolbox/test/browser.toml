@@ -46,8 +46,6 @@ skip-if = [
 
 ["browser_browser_toolbox_ruleview_stylesheet.js"]
 
-["browser_browser_toolbox_shouldprocessupdates.js"]
-
 ["browser_browser_toolbox_take_screenshot.js"]
 
 ["browser_browser_toolbox_unavailable_children.js"]

@@ -26,11 +26,10 @@ add_task(function test_macos_shaped_values_validate_and_coerce() {
   // Values as they look after the native reader and unflattening. The original
   // macOS flat keys are noted in comments.
   const policies = {
-    DisableAppUpdate: 1,
-    AppAutoUpdate: 0,
+    DisableTelemetry: 1,
+    DisableFeedbackCommands: 0,
     DisplayMenuBar: 1,
     DisplayBookmarksToolbar: "never",
-    AppUpdateURL: "https://update.example.com/",
     // Homepage__URL, Homepage__Locked
     Homepage: { URL: "https://home.example.com/", Locked: 1 },
     // Cookies__Allow__0, Cookies__Allow__1
@@ -49,12 +48,12 @@ add_task(function test_macos_shaped_values_validate_and_coerce() {
   }
 
   Assert.strictEqual(
-    parse("DisableAppUpdate"),
+    parse("DisableTelemetry"),
     true,
     "An integer 1 boolean policy coerces to true"
   );
   Assert.strictEqual(
-    parse("AppAutoUpdate"),
+    parse("DisableFeedbackCommands"),
     false,
     "An integer 0 boolean policy coerces to false"
   );
@@ -67,10 +66,6 @@ add_task(function test_macos_shaped_values_validate_and_coerce() {
     parse("DisplayBookmarksToolbar"),
     "never",
     "An enumerated string for a boolean-or-enum policy passes through"
-  );
-  Assert.ok(
-    URL.isInstance(parse("AppUpdateURL")),
-    "A URL policy coerces to a URL object"
   );
 
   const homepage = parse("Homepage");

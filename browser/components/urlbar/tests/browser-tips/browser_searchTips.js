@@ -50,19 +50,6 @@ add_setup(async function () {
     ],
   });
 
-  // Remove update history and the current active update so tips are shown.
-  let updateRootDir = Services.dirsvc.get("UpdRootD", Ci.nsIFile);
-  let updatesFile = updateRootDir.clone();
-  updatesFile.append("updates.xml");
-  let activeUpdateFile = updateRootDir.clone();
-  activeUpdateFile.append("active-update.xml");
-  try {
-    updatesFile.remove(false);
-  } catch (e) {}
-  try {
-    activeUpdateFile.remove(false);
-  } catch (e) {}
-
   let defaultEngine = await SearchService.getDefault();
   let defaultEngineName = defaultEngine.name;
   Assert.equal(defaultEngineName, "Google", "Default engine should be Google.");

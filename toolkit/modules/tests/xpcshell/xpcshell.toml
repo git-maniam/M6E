@@ -154,10 +154,6 @@ skip-if = [
 ]
 
 ["test_UpdateUtils_url.js"]
-run-if = [
-  "updater",
-]
-reason = "LOCALE is not defined without MOZ_UPDATER"
 tags = "os_integration"
 
 ["test_UrlUtils.js"]

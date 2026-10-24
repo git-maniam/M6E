@@ -159,9 +159,6 @@ const SNAPSHOT_SCHEMA = {
         vendor: {
           type: "string",
         },
-        updateChannel: {
-          type: "string",
-        },
         supportURL: {
           type: "string",
         },

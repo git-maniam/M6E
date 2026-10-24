@@ -256,10 +256,6 @@ export var TelemetryEnvironmentTesting = {
 
     // Check Glean's values
     lazy.Assert.equal(Glean.xpcom.abi.testGetValue(), expectedInfo.xpcomAbi);
-    lazy.Assert.equal(
-      Glean.updater.available.testGetValue(),
-      AppConstants.MOZ_UPDATER
-    );
   },
 
   checkSettingsSection(data) {
@@ -319,23 +315,6 @@ export var TelemetryEnvironmentTesting = {
     // Check "channel" separately, as it can either be null or string.
     let update = data.settings.update;
     lazy.Assert.ok(this.checkNullOrString(update.channel));
-    lazy.Assert.equal(typeof update.enabled, "boolean");
-    lazy.Assert.equal(
-      update.channel,
-      Glean.updateSettings.channel.testGetValue()
-    );
-    lazy.Assert.equal(
-      update.enabled,
-      Glean.updateSettings.enabled.testGetValue()
-    );
-    lazy.Assert.equal(
-      "boolean",
-      typeof Glean.updateSettings.autoDownload.testGetValue()
-    );
-    lazy.Assert.equal(
-      "boolean",
-      typeof Glean.updateSettings.background.testGetValue()
-    );
 
     if ((gIsWindows || gIsMac) && AppConstants.MOZ_BUILD_APP == "browser") {
       lazy.Assert.equal(typeof data.settings.attribution, "object");
