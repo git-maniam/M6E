@@ -80,10 +80,8 @@
 
     /* A .browserContainer edge is only separated and rounded when it faces chrome.
      * SidebarController.setPosition updates the order of all of #browser's
-     * (flex) children according to the sidebar.position_start pref.
-     * The AI sidebar always docks opposite the browser sidebar. */
-    :root:not([inDOMFullscreen]) #tabbrowser-tabbox:not([sidebar-positionend]):is([sidebar-shown], [sidebar-panel-open]) &,
-    :root:not([inDOMFullscreen]) #tabbrowser-tabbox[sidebar-positionend][ai-window-open] & {
+     * (flex) children according to the sidebar.position_start pref. */
+    :root:not([inDOMFullscreen]) #tabbrowser-tabbox:not([sidebar-positionend]):is([sidebar-shown], [sidebar-panel-open]) & {
       border-inline-start: var(--border-width) solid var(--chrome-content-separator-color);
       border-start-start-radius: var(--content-area-start-radius);
 
@@ -100,7 +98,7 @@
       }
     }
 
-    :root:not([inDOMFullscreen]) #tabbrowser-tabbox:is([sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open]), [ai-window-open]) & {
+    :root:not([inDOMFullscreen]) #tabbrowser-tabbox[sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open]) & {
       border-inline-end: var(--border-width) solid var(--chrome-content-separator-color);
       border-start-end-radius: var(--content-area-start-radius);
 
@@ -109,16 +107,6 @@
 
         :root:dir(ltr) & {
           --content-scrollbar-inset-block: var(--content-area-start-radius) 0;
-        }
-      }
-    }
-
-    :root:not([inDOMFullscreen], [macOSNativeFullscreen]) #tabbrowser-tabbox[sidebar-positionend][ai-window-open]:not([sidebar-shown], [sidebar-panel-open]) & {
-      @media (-moz-platform: macos) {
-        --content-scrollbar-inset-inline-end: var(--border-radius-medium);
-
-        :root:dir(ltr) & {
-          --content-scrollbar-inset-block: var(--content-area-start-radius) var(--border-radius-medium);
         }
       }
     }
@@ -380,11 +368,6 @@
           border-start-end-radius: var(--border-radius-medium);
         }
       }
-
-      :root[ai-window]:not([inDOMFullscreen]) & {
-        border-start-start-radius: var(--border-radius-medium);
-        border-start-end-radius: var(--border-radius-medium);
-      }
     }
   }
 }
@@ -439,9 +422,7 @@
     }
   }
 
-  /* Exclude browsers with smartwindow-content attribute which inherit
-     color-scheme from chrome to follow the browser theme */
-  browser[type="content"]:not([smartwindow-content]) {
+  browser[type="content"] {
     color-scheme: env(-moz-content-preferred-color-scheme);
   }
 
@@ -1136,7 +1117,7 @@ split-view-footer {
       border-start-start-radius: calc(var(--border-radius-medium) - var(--border-width));
     }
 
-    #tabbrowser-tabbox:is([sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open]), [ai-window-open])
+    #tabbrowser-tabbox[sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open])
       #tabbrowser-tabpanels
       > :not(.split-view-panel)
       .dialogOverlay[topmost="true"] {
