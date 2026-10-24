@@ -117,8 +117,6 @@
 ^browser/components/asrouter/content-src/schemas/corpus/PanelTestProvider\.messages\.json
 ^browser/components/asrouter/content-src/schemas/corpus/PanelTestProvider_toast_notification\.messages\.json
 
-# Ignore downloaded thirdparty build artifacts.
-
 # Build directories for js shell
 _DBG\.OBJ/
 _OPT\.OBJ/
