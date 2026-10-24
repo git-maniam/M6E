@@ -32,8 +32,8 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 1 | Debloating: platforms, languages, themes, Mozilla features and services | Done |
 | 2 | Rebranding and macOS UI | Done |
 | 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | Done |
-| 4 | Performance, platform removal, dormant-feature removal, security hardening | **In progress:** P4.1, P4.2a and P4.2b done; P4.2c (PGO) building; then P4.5 to P4.9 (added 2026-10-23). Resume with "Resume from Phase 4"; see the plan's section 4. |
-| 5 | Packaging (`.dmg`) and acceptance | Not started |
+| 4 | Performance, platform removal, dormant-feature removal, security hardening | Done (2026-10-24). Speedometer 3 is about +28% over the Phase 3 build; Windows, Linux and Android code removed; hardening as P4.8; the dormant features marked for deletion in P6.1 (D30). |
+| 5 | Packaging (`.dmg`) and acceptance | **Next.** DMG packaging already works (P4.2c). |
 
 ## 3. Requirements
 

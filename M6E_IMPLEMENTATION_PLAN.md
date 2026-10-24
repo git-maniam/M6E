@@ -90,6 +90,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.7a | 20 platform-only orphan subtrees deleted (193 files); push still works | `596062f662` |
 | P4.7b | Normandy and about:studies removed | `8a3c3fac23` |
 | P3.8 | Page telemetry button: TTFB, FCP, TTI, page size, script parse/execution, TLS | `7e1542f61b` |
+| P4.8 | Security hardening: experimental features off, auto-var-init, sandbox locks, add-on and download prefs, static analysis, dormant pages unregistered | `45bf9d9e22` and earlier |
+| P4.9, P4.3 | Final PGO build, full test pass and profiling; Phase 4 complete | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -287,12 +289,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** P3.8 (page telemetry button), P4.1, P4.2, P4.5, P4.6, P4.7a, P4.7b and P4.8d are done. PGO is off in `mozconfig` for the source work (D24); turn it back on (`ac_add_options MOZ_PGO=1`) for the final build in P4.9. P4.8 is done (a to g).
-- **In progress:** P4.9. PGO is back on in `mozconfig`, and the final three-stage build, including `-ftrivial-auto-var-init=zero`, started on 2026-10-23. If the session drops, rerun `./mach build`.
-- **Then:**
-  1. The test pass: M6E's own tests, the suites for the areas changed today, `push_check.py`, `measure.py`, Speedometer against `artifacts/build-P4.2b`, `scan-strings.py` and lint.
-  2. P4.3, profiling.
-  3. Phase 5. The remaining dormant features are marked for deletion after Phase 5 (D30, step P6.1); P4.8g proves them unreachable until then.
+**Checkpoint:** Phase 4 is complete (2026-10-24), including the user's additions P4.5 to P4.9 and P3.8. Next is Phase 5, packaging and acceptance (section 5), then P6.1, deleting the dormant features (D30). `mozconfig` has PGO on, which is right for the release build; `./mach build faster` is refused with PGO, so for front-end-only changes run `make -C obj-m6e/faster`.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -359,6 +356,52 @@ Don't start the next step until the current one builds and checks out. Split a s
   Each flag is a configure change and a full rebuild. Keep a flag only if it builds reliably and helps.
 - **P4.3 Profile:** take startup and interaction profiles, then defer or remove front-end work.
 - **P4.4 Rust rewrites:** only for a hotspot P4.3 proves, with the user's approval. Prefer native Rust behind XPCOM over WebAssembly.
+
+**P4.9 results (final build: PGO and `-ftrivial-auto-var-init=zero`, 2026-10-24):**
+
+| | P4.2b copy (LTO and CPU tuning, no PGO) | Final build |
+|---|---|---|
+| Speedometer 3 (20 iterations, same session) | 37.98 ± 4.65 (median 39.5) | **44.70 ± 2.97 (median 45.7), +17.7%** |
+| First paint (10 runs) | 631 ms (583–671) | 649 ms (620–686) |
+| Memory: blank tab / five sites | 472 / 1,796 MB | 486 / 1,644 MB |
+| Idle hosts | | 8, the allowed list |
+
+- **Zero-initialisation cost:** PGO alone gave +15% (P4.2c), so zero-initialisation costs nothing measurable.
+- **First paint** is within noise; the ranges overlap.
+- **Against the Phase 3 build:** first paint 681 ms → 649 ms, and Speedometer 34.8 → 44.7 (about +28%, measured in different sessions).
+- **Blank-tab memory** rose from 449 MB (P4.1) to 486 MB. Check this in Phase 5.
+- **Tests on the final build:**
+  - **Passing:**
+    - Privacy Shield, ETP and HTTPS-First: 939 pass.
+    - Page telemetry: 10/10.
+    - Trust panel: 498/0, run alone.
+    - Nimbus: 33/33, after its test head unlocked the prefs M6E locks.
+    - Anti-tracking: 17/17.
+    - Remote Settings: 18/18 plus one skip. `head_settings.js` lets upstream tests see every collection as allowed, `test_m6e_allowed_collections.js` restores the real check, and the startup-bundle test is skipped because P1.12 removed that download.
+    - HTTPS-Only: 8 pass. Reader View: 166 pass.
+    - `push_check.py`: all four cases pass.
+    - `scan-strings.py`: 0. Lint: clean.
+  - **Environmental failures:** this network's DNS resolves nonexistent hosts (`browser_console_logging.js`, `websocket-unexpected`), and the symlinked `_tests` path breaks `browser_localfile_readerMode.js`.
+  - **By design:**
+    - Toolkit modules: fixed GMP URLs (D10) and region lookup off.
+    - Enterprise policies: no updater, no added search engines (D5), and DoH (D11).
+    - One race between parallel runs (`test_Services.js`), which passes 3/3 alone.
+- **Found and fixed in P4.9:**
+  - **P4.8f's locks:**
+    - Locked `extensions.autoDisableScopes` and `enabledScopes` kept the test profiles from enabling the harness add-ons. PGO's profiling run waited about 8 hours for its quitter add-on.
+    - Locked `xpinstall.signatures.required` made every mochitest abort with `ERROR_SIGNEDSTATE_REQUIRED`.
+    - All three are now unlocked defaults.
+  - **P4.8a's WebCodecs line:** turned off WebCodecs, which desktop Release ships. Removed.
+  - **`tools/m6e/profile.py`:** shadowed Python's `profile` module for every tool in that directory. Renamed to `gecko_profile.py`.
+  - **Downloads:** P4.8f's prefs added to `testing/profiles/base/user.js`.
+  - **Lint configs:** entries for files deleted in P4.6 and P4.7 removed.
+- **Running tests in parallel:** mochitest suites must run one at a time (they share port 8888), and the panel suites need the machine to themselves. Even a headless M6E launched alongside made `browser_trust_panel_pages.js` time out. xpcshell suites can run alongside.
+
+**P4.3 results (profiles from `tools/m6e/gecko_profile.py`, final build):**
+- **Startup:** the parent main thread was busy for 1.28 s of the first 10 s of a warm start (87% idle). JS is 13% of the busy time, about 170 ms. The largest native costs are system calls (`mach_timebase_info_trap`, the profiler's own timestamps, and `mach_vm_protect`, JIT memory protection). No front-end module exceeds about 7%: `BrowserUtils` category startup calls, the `<browser>` element, extension startup (`ExtensionParent`, `AddonManager`, `XPIProvider`) and `browser-init`.
+- **Interaction** (two sites, the address bar, the page telemetry panel): 650 ms busy in 10 s, with no hot spot. `Tabbrowser` is 6.5%; the rest is the Marionette harness and the address bar at about 2% each.
+- **Decision:** nothing is worth deferring now. Two of the six built-in extensions that start every time belong to features marked for deletion: `ipp-activator` (the VPN) and `addons-search-detection` (telemetry only). They are added to P6.1, which removes their startup cost too.
+- **P4.4 (Rust rewrites):** skipped. Profiling found no JS hotspot that would justify one.
 
 ### P3.8 Page telemetry button (D29; added 2026-10-23)
 - **C++:**
@@ -548,7 +591,7 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
 
 ### After Phase 5
 - **P6.1 Delete the dormant features (D30):**
-  - **Features:** the VPN (IP protection), Translations, Sync and Mozilla accounts, the updater, AI/ML, the crash reporter (crates included, removed from the cargo workspace) and Nimbus experiments.
+  - **Features:** the VPN (IP protection, including the `ipp-activator` built-in extension), the `addons-search-detection` built-in extension (telemetry only), Translations, Sync and Mozilla accounts, the updater, AI/ML, the crash reporter (crates included, removed from the cargo workspace) and Nimbus experiments.
   - **Method:** as for Normandy in P4.7b. Remove the importers, deleting a feature only if the build and tests pass, and compare the test results with the tree before the change.
 
 ## 6. Risks

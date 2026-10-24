@@ -237,6 +237,7 @@
   "ToolbarDropHandler",
   "ProfilesDatastoreService",
   "gTrustPanelHandler",
+  "gM6EPageTelemetry",
   "ContentSharingUtils",
   "Referrals"
 ]

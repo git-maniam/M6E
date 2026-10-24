@@ -29,7 +29,6 @@ ChromeUtils.defineESModuleGetters(this, {
 const M6E_IS_ALLOWED_COLLECTION = Utils.isAllowedCollection;
 Utils.isAllowedCollection = () => true;
 
-
 const IS_ANDROID = AppConstants.platform == "android";
 
 function arrayEqual(a, b) {
