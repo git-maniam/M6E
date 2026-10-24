@@ -12,5 +12,3 @@ path:python/mozbuild/mozbuild/action/tooltool.py
 
 # Required for the webrender docker image
 path:gfx/wr/ci-scripts/docker-image/setup.sh
-
-# for the system-symbol images

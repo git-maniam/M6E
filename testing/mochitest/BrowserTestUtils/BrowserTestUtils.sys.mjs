@@ -2334,38 +2334,10 @@ export var BrowserTestUtils = {
     browsingContext,
     options = {}
   ) {
-    let extra = {};
+    const extra = {};
 
     if (!browser.isRemoteBrowser) {
       throw new Error("<xul:browser> needs to be remote in order to crash");
-    }
-
-    /**
-     * Returns the directory where crash dumps are stored.
-     *
-     * @return nsIFile
-     */
-    function getMinidumpDirectory() {
-      let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
-      dir.append("minidumps");
-      return dir;
-    }
-
-    /**
-     * Removes a file from a directory. This is a no-op if the file does not
-     * exist.
-     *
-     * @param directory
-     *        The nsIFile representing the directory to remove from.
-     * @param filename
-     *        A string for the file to remove from the directory.
-     */
-    function removeFile(directory, filename) {
-      let file = directory.clone();
-      file.append(filename);
-      if (file.exists()) {
-        file.remove(false);
-      }
     }
 
     let expectedPromises = [];
@@ -2391,46 +2363,11 @@ export var BrowserTestUtils = {
 
         Services.obs.removeObserver(observer, "ipc:content-shutdown");
 
-        const dumpID = subject.get("dumpID");
-        if (AppConstants.MOZ_CRASHREPORTER && !dumpID) {
-          dump("dumpID was not present despite crash reporting being enabled");
-        }
-
-        let removalPromise = Promise.resolve();
-
-        if (dumpID) {
-          removalPromise = Services.crashmanager
-            .ensureCrashIsPresent(dumpID)
-            .then(async () => {
-              let minidumpDirectory = getMinidumpDirectory();
-              let extrafile = minidumpDirectory.clone();
-              extrafile.append(dumpID + ".extra");
-              if (extrafile.exists()) {
-                if (AppConstants.MOZ_CRASHREPORTER) {
-                  extra = await IOUtils.readJSON(extrafile.path);
-                } else {
-                  dump(
-                    "\nCrashReporter not enabled - will not return any extra data\n"
-                  );
-                }
-              } else {
-                dump(`\nNo .extra file for dumpID: ${dumpID}\n`);
-              }
-
-              if (shouldClearMinidumps) {
-                removeFile(minidumpDirectory, dumpID + ".dmp");
-                removeFile(minidumpDirectory, dumpID + ".extra");
-              }
-            });
-        }
-
-        removalPromise.then(() => {
-          dump("\nCrash cleaned up\n");
-          // There might be other ipc:content-shutdown handlers that need to
-          // run before we want to continue, so we'll resolve on the next tick
-          // of the event loop.
-          TestUtils.executeSoon(() => resolve());
-        });
+        dump("\nCrash cleaned up\n");
+        // There might be other ipc:content-shutdown handlers that need to
+        // run before we want to continue, so we'll resolve on the next tick
+        // of the event loop.
+        TestUtils.executeSoon(() => resolve());
       };
 
       Services.obs.addObserver(observer, "ipc:content-shutdown");

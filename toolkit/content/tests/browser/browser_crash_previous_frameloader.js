@@ -116,6 +116,7 @@ add_task(async function test_crash_in_previous_frameloader() {
 
       Assert.ok(dumpID, "There should be a dumpID");
       if (dumpID) {
+        // eslint-disable-next-line mozilla/valid-services
         await Services.crashmanager.ensureCrashIsPresent(dumpID);
         cleanUpMinidump(dumpID);
       }

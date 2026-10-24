@@ -52,13 +52,10 @@ however this is not useful in a bug report.
 
 2 - Tell us the ID of the report you submitted.
 
-```{image} img/crashlist.jpg
-```
-
-To access all of your submitted reports type "<about:crashes>" into the Firefox address bar
-and press enter. Firefox should open a list of IDs for your submitted crash reports.
+The IDs of your submitted crash reports are stored in the `submitted` folder
+described under "Accessing crash report IDs outside of Firefox" below.
 Copy two or three of the IDs for the appropriate crashes and paste them into your
-Bugzilla report. Please check the listed times to avoid copying the ID of an unrelated
+Bugzilla report. Please check the file times to avoid copying the ID of an unrelated
 crash report.
 
 :::{note}
@@ -69,10 +66,8 @@ into a link: bp-a70759c6-1295-4160-aa30-bc4772090918
 ### How to get the crash ID if Firefox crashes on startup
 
 If Firefox crashes on startup you can still access your submitted crash
-reports. Crash reports are accessible from all Firefox profiles, so if a
-[new
-profile](https://support.mozilla.org/kb/profile-manager-create-remove-switch-firefox-profiles)
-does not crash you can use it to access them through "<about:crashes>" as above.
+reports. Crash reports are stored outside the profile, so they are available
+whichever profile crashed.
 
 #### Accessing crash report IDs outside of Firefox
 

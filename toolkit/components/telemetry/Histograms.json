@@ -1835,48 +1835,6 @@
     "releaseChannelCollection": "opt-out",
     "description": "Counts the number of times launching a subprocess fails. Counts are by subprocess-type using the GeckoProcessType enum."
   },
-  "PROCESS_CRASH_SUBMIT_ATTEMPT": {
-    "record_in_processes": ["main", "content"],
-    "products": ["firefox", "fennec", "thunderbird"],
-    "expires_in_version": "never",
-    "kind": "count",
-    "keyed": true,
-    "keys": [
-      "main-crash",
-      "main-hang",
-      "content-crash",
-      "content-hang",
-      "plugin-crash",
-      "plugin-hang",
-      "gmplugin-crash",
-      "gmplugin-hang",
-      "gpu-crash",
-      "gpu-hang",
-      "vr-crash",
-      "vr-hang",
-      "rdd-crash",
-      "rdd-hang",
-      "socket-crash",
-      "socket-hang",
-      "utility-crash",
-      "utility-hang",
-      "sandboxbroker-crash",
-      "sandboxbroker-hang",
-      "forkserver-crash",
-      "forkserver-hang"
-    ],
-    "releaseChannelCollection": "opt-out",
-    "description": "An attempt to submit a crash. Keyed on the CrashManager Crash.type."
-  },
-  "PROCESS_CRASH_SUBMIT_SUCCESS": {
-    "record_in_processes": ["main", "content"],
-    "products": ["firefox", "fennec"],
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "The submission status when main/plugin/content crashes are submitted. 1 is success, 0 is failure. Keyed on the CrashManager Crash.type."
-  },
   "VIDEO_PLAY_TIME_MS": {
     "record_in_processes": ["main", "content"],
     "products": ["firefox"],

@@ -38,6 +38,7 @@ async function crashUtilityProcess(utilityPid) {
   info(`Crashing process ${utilityPid}`);
   SimpleTest.expectChildProcessCrash();
 
+  // eslint-disable-next-line mozilla/valid-services
   const crashMan = Services.crashmanager;
   const utilityProcessGone = TestUtils.topicObserved(
     "ipc:utility-shutdown",

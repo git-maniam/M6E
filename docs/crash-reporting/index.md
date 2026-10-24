@@ -15,9 +15,8 @@ combination of projects:
 Crash data submitted using the Mozilla Crash Reporter is located on
 [crash-stats](https://crash-stats.mozilla.org/). If you want to find
 a specific crash that you submitted, you first need to find the Crash ID
-that the server has assigned your crash. Type `about:crashes` into
-your location bar to get a page listing both submitted and unsubmitted
-crash reports. For more information, see [How to get a stacktrace for a bug report](/contributing/debugging/stacktrace_report.md).
+that the server has assigned your crash. Submitted
+crash IDs are stored in the `Crash Reports/submitted/` folder. For more information, see [How to get a stacktrace for a bug report](/contributing/debugging/stacktrace_report.md).
 
 ## Reports and queries
 

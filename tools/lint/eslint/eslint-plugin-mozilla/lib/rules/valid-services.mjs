@@ -28,7 +28,6 @@ export default {
       "geckoviewBridge",
       // These are defined without interfaces and hence are not in the services map.
       "cpmm",
-      "crashmanager",
       "mm",
       "ppmm",
       // The new xulStore also does not have an interface.
