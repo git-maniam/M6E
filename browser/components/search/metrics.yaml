@@ -175,8 +175,6 @@ sap:
           `errorpage`,
           `newtab_searchbar`,
           `searchbar`,
-          `smartbar`,
-          `smartwindow_assistant`,
           `system`,
           `text_selection`,
           `urlbar`,
@@ -271,7 +269,7 @@ sap:
       source:
         description: |
           The search access point from which the user initiated the search.
-          Possible values are `newtab_searchbar`, `searchbar`, `smartbar` and
+          Possible values are `newtab_searchbar`, `searchbar` and
           `urlbar`.
         type: string
       provider_id:
@@ -377,8 +375,6 @@ serp:
           `reload`,
           `searchbar`,
           `newtab_searchbar`,
-          `smartbar`,
-          `smartwindow_assistant`,
           `newtab_search_widget`,
           `system`,
           `text_selection`,
@@ -973,34 +969,6 @@ browser.engagement.navigation:
       - rev-data@mozilla.com
     expires: never
     telemetry_mirror: BROWSER_ENGAGEMENT_NAVIGATION_WEBEXTENSION
-
-  smartwindow_assistant:
-    type: labeled_counter
-    description: |
-      The count of URI loads triggered from the AI window assistant
-      search handoff button.
-    bugs:
-      - https://bugzil.la/2001519
-    data_reviews:
-      - https://bugzil.la/2001519
-    notification_emails:
-      - fx-search-telemetry@mozilla.com
-      - rev-data@mozilla.com
-    expires: never
-
-  smartbar:
-    type: labeled_counter
-    description: |
-      The count of URI loads triggered from the smartbar,
-      broken down by the originating action.
-    bugs:
-      - https://bugzil.la/2008925
-    data_reviews:
-      - https://bugzil.la/2008925
-    notification_emails:
-      - fx-search-telemetry@mozilla.com
-      - rev-data@mozilla.com
-    expires: never
 
   newtab_searchbar:
     type: labeled_counter

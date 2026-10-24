@@ -39,7 +39,7 @@ var localProviderModules = [
     name: "UrlbarProviderAboutPages",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderAboutPages.sys.mjs",
-    supportedSAPs: ["smartbar", "urlbar"],
+    supportedSAPs: ["urlbar"],
   },
   {
     name: "UrlbarProviderActionsSearchMode",
@@ -51,7 +51,7 @@ var localProviderModules = [
     name: "UrlbarProviderGlobalActions",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderGlobalActions.sys.mjs",
-    supportedSAPs: ["searchbar", "urlbar", "smartbar"],
+    supportedSAPs: ["searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderAddonsShortcutMoved",
@@ -69,7 +69,7 @@ var localProviderModules = [
     name: "UrlbarProviderAutofill",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderAutofill.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderBookmarkKeywords",
@@ -81,12 +81,7 @@ var localProviderModules = [
     name: "UrlbarProviderCalculator",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderCalculator.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "searchbar", "smartbar", "urlbar"],
-  },
-  {
-    name: "UrlbarProviderAiChat",
-    module: "moz-src:///browser/components/urlbar/UrlbarProviderAiChat.sys.mjs",
-    supportedSAPs: ["smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderClipboard",
@@ -98,19 +93,19 @@ var localProviderModules = [
     name: "UrlbarProviderHeuristicFallback",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderHeuristicFallback.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "searchbar", "smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderHistoryUrlHeuristic",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderHistoryUrlHeuristic.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderInputHistory",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderInputHistory.sys.mjs",
-    supportedSAPs: ["smartbar", "urlbar"],
+    supportedSAPs: ["urlbar"],
   },
   {
     name: "UrlbarProviderInterventions",
@@ -127,7 +122,7 @@ var localProviderModules = [
   {
     name: "UrlbarProviderPlaces",
     module: "moz-src:///browser/components/urlbar/UrlbarProviderPlaces.sys.mjs",
-    supportedSAPs: ["smartbar", "urlbar"],
+    supportedSAPs: ["urlbar"],
   },
   {
     name: "UrlbarProviderPrivateSearch",
@@ -139,19 +134,19 @@ var localProviderModules = [
     name: "UrlbarProviderQuickSuggest",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderQuickSuggest.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderRecentSearches",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderRecentSearches.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "searchbar", "smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderRemoteTabs",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderRemoteTabs.sys.mjs",
-    supportedSAPs: ["smartbar", "urlbar"],
+    supportedSAPs: ["urlbar"],
   },
   {
     name: "UrlbarProviderRestrictKeywords",
@@ -175,13 +170,13 @@ var localProviderModules = [
     name: "UrlbarProviderSearchSuggestions",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderSearchSuggestions.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "searchbar", "smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "searchbar", "urlbar"],
   },
   {
     name: "UrlbarProviderSemanticHistorySearch",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderSemanticHistorySearch.sys.mjs",
-    supportedSAPs: ["smartbar", "urlbar"],
+    supportedSAPs: ["urlbar"],
   },
   {
     name: "UrlbarProviderTabToSearch",
@@ -205,7 +200,7 @@ var localProviderModules = [
     name: "UrlbarProviderUnitConversion",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderUnitConversion.sys.mjs",
-    supportedSAPs: ["newtab_searchbar", "searchbar", "smartbar", "urlbar"],
+    supportedSAPs: ["newtab_searchbar", "searchbar", "urlbar"],
   },
 ];
 

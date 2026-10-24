@@ -35,8 +35,7 @@ class ProviderTabGroups extends ActionsProvider {
    */
   isActive(queryContext, _controller) {
     return (
-      (queryContext.sapName == "urlbar" ||
-        queryContext.sapName == "smartbar") &&
+      queryContext.sapName == "urlbar" &&
       Services.prefs.getBoolPref("browser.tabs.groups.enabled") &&
       (!queryContext.restrictSource ||
         queryContext.restrictSource == lazy.UrlbarShared.RESULT_SOURCE.TABS) &&

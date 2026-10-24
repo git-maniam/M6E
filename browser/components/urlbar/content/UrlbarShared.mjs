@@ -270,7 +270,6 @@ export const UrlbarShared = {
     GENERAL_PARENT: "generalParent",
     FORM_HISTORY: "formHistory",
     HEURISTIC_AUTOFILL: "heuristicAutofill",
-    HEURISTIC_AI_CHAT: "heuristicAiChat",
     HEURISTIC_ENGINE_ALIAS: "heuristicEngineAlias",
     HEURISTIC_EXTENSION: "heuristicExtension",
     HEURISTIC_FALLBACK: "heuristicFallback",
@@ -1093,8 +1092,6 @@ export const UrlbarShared = {
     }
     if (result.heuristic) {
       switch (result.providerName) {
-        case "UrlbarProviderAiChat":
-          return UrlbarShared.RESULT_GROUP.HEURISTIC_AI_CHAT;
         case "UrlbarProviderAliasEngines":
           return UrlbarShared.RESULT_GROUP.HEURISTIC_ENGINE_ALIAS;
         case "UrlbarProviderAutofill":
@@ -1340,9 +1337,6 @@ export const UrlbarShared = {
           return result.providerName == "UrlbarProviderRecentSearches"
             ? "recent_search"
             : "search_history";
-        }
-        if (result.providerName === "UrlbarProviderAiChat") {
-          return "ai_search_fallback";
         }
         if (result.payload.suggestion) {
           let type = result.payload.trending

@@ -269,14 +269,6 @@ const PREF_URLBAR_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   // for mdn suggestions.
   ["mdn.showLessFrequentlyCount", 0],
 
-  // The maximum number of tab mentions the Smartbar suggests.
-  ["mentions.maxResults", 5],
-
-  // The maximum number of tab group mentions the Smartbar suggests. Capped
-  // separately from mentions.maxResults so groups and tabs are limited
-  // independently.
-  ["mentions.maxGroupResults", 5],
-
   // Comma-separated list of client variants to send to Merino
   ["merino.clientVariants", ""],
 
@@ -511,12 +503,6 @@ const PREF_URLBAR_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   // Global toggle for whether the show search terms feature
   // can be used at all, and enabled/disabled by the user.
   ["showSearchTerms.featureGate", false],
-
-  // The maximum number of results in the smartbar popup.
-  ["smartbar.maxResults", 7],
-
-  // Whether to show search suggestions before general results in the smartbar.
-  ["smartbar.showSearchSuggestionsFirst", false],
 
   // Whether speculative connections should be enabled.
   ["speculativeConnect.enabled", true],
@@ -785,8 +771,6 @@ const PREF_OTHER_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   ["browser.search.suggest.enabled.private", false],
   ["browser.search.widget.new", true],
   ["browser.settings-redesign.enabled", true],
-  ["browser.smartwindow.agent.enabled", false],
-  ["browser.smartwindow.smartbarMentions.loglevel", "Error"],
   ["keyword.enabled", true],
   ["privacy.query_stripping.strip_on_share.enabled", true],
   ["privacy.userContext.enabled", true],
@@ -1017,133 +1001,6 @@ function makeDefaultResultGroups({
 }
 
 /**
- * @param {object} options
- * @param {boolean} options.showSearchSuggestionsFirst
- *   If true, the suggestions group will come before the general group.
- * @param {boolean} [options.separateSemanticGroup]
- *   If true, semantic history results get their own group that fills only the
- *   space left after the other general groups.
- */
-function makeSmartBarGroups({
-  showSearchSuggestionsFirst,
-  separateSemanticGroup = false,
-}) {
-  // See makeDefaultResultGroups for the rationale of this 9:1 split.
-  let generalChild = separateSemanticGroup
-    ? {
-        flex: 2,
-        flexChildren: true,
-        children: [
-          {
-            flex: 9,
-            group: lazy.UrlbarShared.RESULT_GROUP.GENERAL,
-            orderBy: "frecency",
-          },
-          {
-            flex: 1,
-            group: lazy.UrlbarShared.RESULT_GROUP.SEMANTIC_HISTORY,
-            orderBy: "frecency",
-          },
-        ],
-      }
-    : {
-        flex: 2,
-        group: lazy.UrlbarShared.RESULT_GROUP.GENERAL,
-        orderBy: "frecency",
-      };
-
-  let mainGroup = {
-    flexChildren: true,
-    children: [
-      // search suggestions
-      {
-        children: [
-          {
-            availableSpan: 2,
-            group: lazy.UrlbarShared.RESULT_GROUP.AI,
-          },
-          {
-            flexChildren: true,
-            children: [
-              {
-                // If `maxHistoricalSearchSuggestions` == 0, the muxer forces
-                // `maxResultCount` to be zero and flex is ignored, per query.
-                flex: 2,
-                group: lazy.UrlbarShared.RESULT_GROUP.FORM_HISTORY,
-              },
-              {
-                flex: 99,
-                group: lazy.UrlbarShared.RESULT_GROUP.RECENT_SEARCH,
-              },
-              {
-                flex: 4,
-                group: lazy.UrlbarShared.RESULT_GROUP.REMOTE_SUGGESTION,
-              },
-            ],
-          },
-          {
-            group: lazy.UrlbarShared.RESULT_GROUP.TAIL_SUGGESTION,
-          },
-        ],
-      },
-      // general
-      {
-        group: lazy.UrlbarShared.RESULT_GROUP.GENERAL_PARENT,
-        children: [
-          {
-            availableSpan: 3,
-            group: lazy.UrlbarShared.RESULT_GROUP.INPUT_HISTORY,
-          },
-          {
-            flexChildren: true,
-            children: [
-              generalChild,
-              {
-                flex: 1,
-                group: lazy.UrlbarShared.RESULT_GROUP.REMOTE_TAB,
-              },
-              {
-                // We show relatively many about-page results because they're
-                // only added for queries starting with "about:".
-                flex: 2,
-                group: lazy.UrlbarShared.RESULT_GROUP.ABOUT_PAGES,
-              },
-            ],
-          },
-          {
-            group: lazy.UrlbarShared.RESULT_GROUP.INPUT_HISTORY,
-          },
-        ],
-      },
-    ],
-  };
-
-  // The search branch always gets the larger share of results.
-  let [searchBranch, generalBranch] = mainGroup.children;
-  searchBranch.flex = 2;
-  generalBranch.flex = 1;
-  if (!showSearchSuggestionsFirst) {
-    mainGroup.children.reverse();
-  }
-  return {
-    children: [
-      // heuristic
-      {
-        maxResultCount: 1,
-        children: [
-          { group: lazy.UrlbarShared.RESULT_GROUP.HEURISTIC_TEST },
-          { group: lazy.UrlbarShared.RESULT_GROUP.HEURISTIC_AUTOFILL },
-          { group: lazy.UrlbarShared.RESULT_GROUP.HEURISTIC_HISTORY_URL },
-          { group: lazy.UrlbarShared.RESULT_GROUP.HEURISTIC_AI_CHAT },
-          { group: lazy.UrlbarShared.RESULT_GROUP.HEURISTIC_FALLBACK },
-        ],
-      },
-      mainGroup,
-    ],
-  };
-}
-
-/**
  * Preferences class.  The exported object is a singleton instance.
  */
 class Preferences {
@@ -1327,19 +1184,6 @@ class Preferences {
           })
         );
       }
-      case "smartbar": {
-        let showSearchSuggestionsFirst = this.#getShowSearchSuggestionsFirst(
-          context,
-          "smartbar.showSearchSuggestionsFirst"
-        );
-        key += showSearchSuggestionsFirst;
-        return this.#getOrCacheResultGroups(key, () =>
-          makeSmartBarGroups({
-            showSearchSuggestionsFirst,
-            separateSemanticGroup,
-          })
-        );
-      }
       default: {
         throw new Error(`Unknown SAP name: ${context.sapName}`);
       }
@@ -1420,7 +1264,6 @@ class Preferences {
         this._map.delete("autoFillAdaptiveHistoryUseCountThreshold");
         return;
       case "showSearchSuggestionsFirst":
-      case "smartbar.showSearchSuggestionsFirst":
       case "suggest.semanticHistory.separateGroup":
         this.#cachedResultGroups.clear();
         return;

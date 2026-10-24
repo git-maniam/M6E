@@ -8,12 +8,15 @@ import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
  * @import {BrowserSearchTelemetry} from "moz-src:///browser/components/search/BrowserSearchTelemetry.sys.mjs"
  * @import {ProvidersManager} from "moz-src:///browser/components/urlbar/UrlbarProvidersManager.sys.mjs"
  * @import {SearchEngine} from "moz-src:///toolkit/components/search/SearchEngine.sys.mjs"
- * @import {SapLocation} from "moz-src:///browser/components/urlbar/content/SmartbarInput.mjs"
  * @import {UrlbarView} from "chrome://browser/content/urlbar/UrlbarView.mjs"
  * @import {WindowMode} from "moz-src:///browser/components/urlbar/content/UrlbarInputBase.mjs"
  * @import {SearchEngineInfo} from "chrome://browser/content/urlbar/SearchEngineStore.mjs"
  * @import {UrlbarLoadRequest, LoadURLParams} from "chrome://browser/content/urlbar/UrlbarShared.mjs"
  * @import {UrlbarChildControllerProxy, UrlbarInputProxy, UrlbarParent, UrlbarViewProxy} from "moz-src:///browser/components/urlbar/actors/UrlbarParent.sys.mjs"
+ */
+
+/**
+ * @typedef {"fullpage" | "sidebar" | "urlbar"} SapLocation
  */
 
 const lazy = XPCOMUtils.declareLazy({
@@ -1707,10 +1710,6 @@ export class TelemetryEvent {
       "tabswitch",
       "focus",
     ];
-    if (this._controller.sapName === "smartbar") {
-      // The smartbar CTA can start a session when the input is not focused.
-      validEvents.push("aiwindow-input-cta:on-action");
-    }
     if (!validEvents.includes(event.type)) {
       console.error("Can't start recording from event type: ", event.type);
       return;
@@ -1891,7 +1890,7 @@ export class TelemetryEvent {
    *
    * @param {string} searchSource
    *   The search source string to convert.
-   * @returns {null|"urlbar"|"newtab_searchbar"|"searchbar"|"smartbar"|"handoff"|"urlbar_newtab"|"urlbar_addonpage"}
+   * @returns {null|"urlbar"|"newtab_searchbar"|"searchbar"|"handoff"|"urlbar_newtab"|"urlbar_addonpage"}
    *   The sap value for urlbar.* telemetry or null if the browser window
    *   already started closing. In that case, no telemetry should be recorded.
    */
@@ -1905,9 +1904,6 @@ export class TelemetryEvent {
     }
     if (searchSource === "newtab_searchbar") {
       return "newtab_searchbar";
-    }
-    if (searchSource === "smartbar") {
-      return "smartbar";
     }
     let browserWindow = this._controller.browserWindow;
     if (browserWindow.closed) {
@@ -2160,14 +2156,6 @@ export class TelemetryEvent {
       return;
     }
     let engagementData = this.#engagementData;
-    // The extra_key `location` is optional, but required for the smartbar.
-    // TODO (bug 2024631): Support location for all SAPs.
-    if (this._controller.sapName === "smartbar" && !location) {
-      throw new Error(
-        "Telemetry extra_key `location` is required for smartbar"
-      );
-    }
-
     // Distinguish user typed search strings from persisted search terms. The
     // "refined" check compares against the previous session's search words, so
     // thread that state through and store what comes back.
@@ -2237,12 +2225,7 @@ export class TelemetryEvent {
     try {
       const semanticManager =
         lazy.UrlbarProviderSemanticHistorySearch.semanticManager;
-      const isSmartbar = this._controller.sapName === "smartbar";
-      if (
-        isSmartbar
-          ? semanticManager.isEnabledForSmartWindow
-          : semanticManager.canUseSemanticSearch
-      ) {
+      if (semanticManager.canUseSemanticSearch) {
         sources.push("history");
       }
     } catch (e) {

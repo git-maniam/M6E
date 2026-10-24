@@ -370,9 +370,6 @@ export class UrlbarView {
         if (result.providerName == "UrlbarProviderTabToSearch") {
           return "tabtosearch";
         }
-        if (result.providerName == "UrlbarProviderAiChat") {
-          return "ai_search_fallback";
-        }
         if (result.payload.suggestion) {
           let type = result.payload.trending ? "trending" : "searchsuggestion";
           if (result.isRichSuggestion) {
@@ -3435,7 +3432,7 @@ export class UrlbarView {
       // Keep the selected row in view in the inputs whose results list is
       // scrollable. `block: "nearest"` is a no-op when the row is already
       // visible. Scoped to those to avoid changing classic urlbar behavior.
-      if (["smartbar", "newtab_searchbar"].includes(this.input.sapName)) {
+      if (this.input.sapName == "newtab_searchbar") {
         (row ?? element).scrollIntoView({ block: "nearest" });
       }
     }

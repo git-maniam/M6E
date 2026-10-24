@@ -223,8 +223,8 @@ add_task(async function makeResult_whitespace() {
 });
 
 // `makeResult()` returns null outside the urlbar SAP.
-add_task(async function makeResult_smartbar() {
-  let context = createContext("", { isPrivate: false, sapName: "smartbar" });
+add_task(async function makeResult_searchbar() {
+  let context = createContext("", { isPrivate: false, sapName: "searchbar" });
   Assert.equal(await makeResultForContext(context), null);
 });
 

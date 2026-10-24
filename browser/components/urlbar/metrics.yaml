@@ -37,7 +37,7 @@ urlbar:
         type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -248,7 +248,7 @@ urlbar:
         type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -385,7 +385,7 @@ urlbar:
         type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -489,7 +489,7 @@ urlbar:
         type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -1606,7 +1606,6 @@ urlbar.zeroprefix2:
       - urlbar
       - searchbar
       - newtab_searchbar
-      - smartbar
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1806765
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2066165
@@ -1628,7 +1627,6 @@ urlbar.zeroprefix2:
       - urlbar
       - searchbar
       - newtab_searchbar
-      - smartbar
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1806765
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2066165
@@ -1650,7 +1648,6 @@ urlbar.zeroprefix2:
       - urlbar
       - searchbar
       - newtab_searchbar
-      - smartbar
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1806765
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2066165

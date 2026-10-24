@@ -362,7 +362,7 @@ add_task(async function ai_chat_does_not_suppress_tail() {
     source: UrlbarShared.RESULT_SOURCE.OTHER_LOCAL,
     suggestedIndex: 1,
     payload: {
-      icon: "chrome://browser/content/aiwindow/assets/ask-icon.svg",
+      icon: "chrome://global/skin/icons/highlights.svg",
       query: "what time is it in t",
       title: "what time is it in t",
     },

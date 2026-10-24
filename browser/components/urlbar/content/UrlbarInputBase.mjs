@@ -24,7 +24,7 @@ import { UrlbarShared } from "chrome://browser/content/urlbar/UrlbarShared.mjs";
 /**
  * The current window mode.
  *
- * @typedef {"classic" | "private" | "smartwindow"} WindowMode
+ * @typedef {"classic" | "private"} WindowMode
  */
 
 /**
@@ -84,8 +84,6 @@ const { XPCOMUtils } =
     : ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 const lazy = XPCOMUtils?.declareLazy({
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   BrowserUIUtils: "resource:///modules/BrowserUIUtils.sys.mjs",
   CustomizableUI:
     "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
@@ -344,7 +342,6 @@ ${
    * The browser window or null in a child process.
    *
    * For the addressbar and searchbar, this is the same as the global `window`.
-   * For the smartbar, this is the browser window containing its content window.
    * For the newtab search bar, this is null.
    *
    * @type {?BrowserWindow}
@@ -856,9 +853,7 @@ ${
     if (this.isPrivate) {
       return "private";
     }
-    return lazy?.AIWindow.isAIWindowActive(this.browserWindow)
-      ? "smartwindow"
-      : "classic";
+    return "classic";
   }
 
   get parentController() {
@@ -5087,10 +5082,6 @@ ${
    * be naming a stale one, so it's updated right away.
    */
   async #deferUpdatePlaceholder() {
-    if (this.sapName == "smartbar") {
-      return;
-    }
-
     if (!this.value) {
       if (this.inputField.dataset.l10nId == "urlbar-placeholder-with-name") {
         // The switcher icon has no pre-saved value that could be stale, so it

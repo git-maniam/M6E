@@ -64,8 +64,6 @@ class BrowserSearchTelemetryHandler {
     newtab_search_widget: "newtab-search-widget",
     newtab_searchbar: "newtab-searchbar",
     searchbar: "searchbar",
-    smartbar: "smartbar",
-    smartwindow_assistant: "smartwindow_assistant",
     system: "system",
     text_selection: "text_selection",
     urlbar: "urlbar",
@@ -259,7 +257,6 @@ class BrowserSearchTelemetryHandler {
         case "errorpage":
         case "newtab_searchbar":
         case "searchbar":
-        case "smartbar":
         case "urlbar":
         case "urlbar_handoff":
         case "urlbar_persisted":

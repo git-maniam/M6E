@@ -11,15 +11,12 @@
  * @import {UrlbarLoadRequest, URIFixupPrimitives} from "chrome://browser/content/urlbar/UrlbarShared.mjs"
  * @import {Query} from "./UrlbarProvidersManager.sys.mjs"
  * @import {SearchEngine} from "moz-src:///toolkit/components/search/SearchEngine.sys.mjs"
- * @import {SmartbarInput} from "chrome://browser/content/urlbar/SmartbarInput.mjs"
  */
 
 import { UrlbarShared } from "chrome://browser/content/urlbar/UrlbarShared.mjs";
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const lazy = XPCOMUtils.declareLazy({
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   ContextualIdentityService:
     "moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs",
   CustomizableUI:
@@ -1327,28 +1324,14 @@ export var UrlbarUtils = {
 
   /**
    * Gets the URL bar element that should be focused for the given window.
-   * Returns window.gURLBar for regular browser windows, or the smartbar
-   * for AI windows in immersive view.
    *
    * @param {BrowserWindow} window
    *   The window to get the URL bar for.
-   * @returns {UrlbarInput | SmartbarInput }
+   * @returns {UrlbarInput}
    *   The URL bar element that should be focused.
    */
   getURLBarForFocus(window) {
-    /** @type {UrlbarInput | SmartbarInput} */
-    let urlbar = window.gURLBar;
-    // Check if we're in an AI window with immersive view (no address bar visible)
-    if (
-      lazy.AIWindow.isAIWindowActive(window) &&
-      lazy.AIWindow.shouldUseImmersiveView(window.gBrowser.currentURI)
-    ) {
-      let smartbar = lazy.AIWindow.getSmartbarForWindow(window);
-      if (smartbar) {
-        urlbar = smartbar;
-      }
-    }
-    return urlbar;
+    return window.gURLBar;
   },
 
   /**

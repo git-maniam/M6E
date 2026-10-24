@@ -16,7 +16,6 @@ const lazy = XPCOMUtils?.declareLazy({
 });
 
 /**
- * @import {SmartbarInput} from "moz-src:///browser/components/urlbar/content/SmartbarInput.mjs"
  */
 
 /**
@@ -247,7 +246,7 @@ export class UrlbarTelemetryUtils {
    * and ships it; the parent recorder is fed the shipped copy.
    *
    * @param {object} input
-   *   The `UrlbarInput`/`SmartbarInput`.
+   *   The `UrlbarInput`.
    * @param {?object} view
    *   The `UrlbarView`, if any.
    * @returns {{searchMode: object, visibleResults: object[], viewIsOpen: boolean, searchSource: string}}
@@ -262,21 +261,17 @@ export class UrlbarTelemetryUtils {
   }
 
   /**
-   * The smartbar-only telemetry fields, gathered from the live input. Only call
-   * this when the SAP is `smartbar`, so the input is a `SmartbarInput`.
+   * The chat telemetry fields, gathered from the live input.
    *
-   * @param {object} input
-   *   The `SmartbarInput`.
+   * @param {any} input
+   *   The input.
    * @returns {{chatId: string, intent: string, model: string}}
    */
   static smartbarData(input) {
-    const smartbar = /** @type {SmartbarInput} */ (
-      /** @type {unknown} */ (input)
-    );
     return {
-      chatId: smartbar.conversationTelemetryInfo?.chat_id ?? "",
-      intent: smartbar.smartbarAction ?? "",
-      model: smartbar.modelName ?? "",
+      chatId: input.conversationTelemetryInfo?.chat_id ?? "",
+      intent: input.smartbarAction ?? "",
+      model: input.modelName ?? "",
     };
   }
 
@@ -583,7 +578,7 @@ export class UrlbarTelemetryUtils {
    * @param {number} [data.viewTime]
    *   The bounce view time in milliseconds.
    * @param {?object} [data.location]
-   *   The interaction location; required when the sap is `smartbar`.
+   *   The interaction location.
    * @param {string} [data.chatId]
    *   Smartbar-only chat session id.
    * @param {string} [data.intent]
@@ -591,7 +586,7 @@ export class UrlbarTelemetryUtils {
    * @param {string} [data.model]
    *   Smartbar-only selected model.
    * @param {string} data.windowMode
-   *   The window mode: classic, private, or smartwindow.
+   *   The window mode: classic or private.
    * @returns {?{metric: string, eventInfo: object}} The Glean metric name and
    *   the partial event, or null for an unknown method.
    */

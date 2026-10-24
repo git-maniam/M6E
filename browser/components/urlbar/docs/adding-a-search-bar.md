@@ -132,8 +132,6 @@ name records wrong or missing data without an error.
   An input in a page gets its own browser automatically; an input with no
   browser records no bounce events, while the other engagement events still
   record.
-- **`location`.** The `location` extra is required for `smartbar` only. Don't
-  add it for a new input.
 - **Data classification.** The revision needs the data classification tag that
   matches the `data_sensitivity` of the metrics it touches.
 - **Checking it.** On a real profile, open `about:glean`, then perform an

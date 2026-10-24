@@ -23,7 +23,6 @@ const lazy = XPCOMUtils?.declareLazy({
 /**
  * @import {TelemetryEvent} from "moz-src:///browser/components/urlbar/UrlbarParentController.sys.mjs"
  * @import {UrlbarView} from "chrome://browser/content/urlbar/UrlbarView.mjs"
- * @import {SmartbarInput} from "moz-src:///browser/components/urlbar/content/SmartbarInput.mjs"
  * @import {UrlbarParent} from "moz-src:///browser/components/urlbar/actors/UrlbarParent.sys.mjs"
  */
 
@@ -479,44 +478,6 @@ export class UrlbarChildController {
         if (!this.view.visibleRowCount) {
           // Leave it to the default behaviour if there are not results.
           break;
-        }
-
-        // In smartbar mode, mirror the urlbar's circular Tab pattern: cycle
-        // through results, then continue into the action buttons (Add Tab,
-        // memories, Submit), then wrap back to the first result. Shift+Tab
-        // mirrors the cycle in reverse. The view stays open the whole time;
-        // Tab from the action buttons back into the result list is handled
-        // by SmartbarInput.#onActionButtonsKeyDown.
-        if (
-          this.input.sapName == "smartbar" &&
-          this.view.isOpen &&
-          !event.ctrlKey &&
-          !event.altKey
-        ) {
-          const atEnd =
-            !event.shiftKey &&
-            this.view.selectedElement == this.view.getLastSelectableElement();
-          const atStart =
-            event.shiftKey &&
-            this.view.selectedElement == this.view.getFirstSelectableElement();
-
-          if (atEnd || atStart) {
-            if (executeAction) {
-              this.view.selectedRowIndex = -1;
-              // SAP is `smartbar`, so we can safely cast to SmartbarInput.
-              const smartbar = /** @type {SmartbarInput} */ (
-                /** @type {unknown} */ (this.input)
-              );
-              if (atEnd) {
-                smartbar.focusFirstActionButton();
-              } else {
-                smartbar.focusLastActionButton();
-              }
-            }
-            event.preventDefault();
-            break;
-          }
-          // Otherwise, fall through to the default cycling behaviour.
         }
 
         // Change the tab behavior when urlbar view is open.
