@@ -39,7 +39,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   AddressComponent: "resource://gre/modules/shared/AddressComponent.sys.mjs",
   AutocompleteRemoveRecord:
     "resource://gre/modules/AutocompleteRemoveRecord.sys.mjs",
-  FormAutofillML: "resource://gre/modules/shared/FormAutofillML.sys.mjs",
   FormAutofillHeuristics:
     "resource://gre/modules/shared/FormAutofillHeuristics.sys.mjs",
   FormAutofillSection:
@@ -306,8 +305,6 @@ ChromeUtils.defineLazyGetter(lazy, "gFormAutofillStorage", () => {
 });
 
 export class FormAutofillParent extends JSWindowActorParent {
-  static #mlFeature;
-
   constructor() {
     super();
     FormAutofillStatus.init();
@@ -558,30 +555,6 @@ export class FormAutofillParent extends JSWindowActorParent {
   }
 
   /**
-   * When ML inference is enabled, we skip the regular expression-based heuristics
-   * in the child process, so some field names may be missing by the time the
-   * fields reach the parent process. This function runs ML inference to fill in
-   * those missing field names.
-   *
-   * @param {Array<FieldDetail>} fieldDetails
-   *        An array of the identified fields.
-   */
-  async runMLInference(fieldDetails) {
-    if (!FormAutofillUtils.useMLInference) {
-      return;
-    }
-
-    // Don't check ML inference if the section is not valid to avoid loading
-    // the model when it likely won't be needed.
-    if (!FormAutofillUtils.isValidSection(fieldDetails)) {
-      return;
-    }
-
-    FormAutofillParent.#mlFeature ??= new lazy.FormAutofillML();
-    await FormAutofillParent.#mlFeature.detectFields(fieldDetails);
-  }
-
-  /**
    * When a field is detected, identify fields in other frames, if they exist.
    * To ensure that the identified fields across frames still follow the document
    * order, we traverse from the top-level window and recursively identify fields
@@ -614,8 +587,6 @@ export class FormAutofillParent extends JSWindowActorParent {
       focusedBCId,
       fieldsIncludeIframe
     );
-
-    await this.runMLInference(fieldDetails);
 
     // Now we have collected all the fields for the form, run parsing heuristics
     // to update the field name based on surrounding fields.
@@ -1683,8 +1654,6 @@ export class FormAutofillParent extends JSWindowActorParent {
         formFields,
         msg
       );
-
-      await this.runMLInference(fieldDetails);
 
       fieldDetails.forEach(field => {
         const overwriteField = overwriteFieldDetails.find(

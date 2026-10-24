@@ -47,33 +47,12 @@ suites:
         tests:
             "browser_link_preview_perf.js": ""
 
-    toolkit/components/pdfjs/test:
-        description: "Performance tests for PDF.js features on Firefox Desktop"
-        tests:
-            "browser_pdfjs_alttext_perf.js": ""
-
-    browser/components/urlbar/tests/browser-ml:
-        description: "Performance tests for urlbar features on Firefox Desktop"
-        tests:
-            "browser_urlbar_semantic_history_perf.js": ""
-            "browser_quicksuggest_ml_perf.js": ""
-
-    browser/components/tabbrowser/test/browser/smarttabgrouping/performance:
-        description: "End-to-end performance tests for Smart Tab Grouping"
-        tests:
-            "browser_smart_tab_grouping_perf.js": ""
-
     browser/components/translations/tests/browser:
         description: "Performance tests for Translations models on Firefox Desktop"
         tests:
             "Full-Page Translations Base Model": ""
             "Full-Page Translations BaseMemory Model": ""
             "Full-Page Translations Tiny Model": ""
-
-    browser/extensions/formautofill/test/browser/performance:
-        description: "Performance tests for Form Autofill on Firefox Desktop"
-        tests:
-            "browser_formautofill_ml_perf.js": ""
 
     dom/serviceworkers/test/performance:
         description: "Performance tests running through Mochitest for Service Workers"
@@ -82,25 +61,6 @@ suites:
             "Service Worker Fetch": ""
             "Service Worker Registration": ""
             "Service Worker Update": ""
-
-    dom/media/webspeech/recognition/test:
-        description: "Performance tests for on-device speech recognition"
-        tests:
-            "browser_speech_recognition_perf.js": ""
-
-    toolkit/components/ml/tests/browser:
-        description: "Performance tests running through Mochitest for ML Models"
-        tests:
-            "browser_ml_engine_perf.js": ""
-            "browser_ml_engine_multi_perf.js": ""
-            "ML Semantic History Search": ""
-            "browser_ml_suggest_feature_perf.js": ""
-            "browser_ml_suggest_inference.js": ""
-            "browser_ml_autofill_perf.js": ""
-            "ML Smart Tab Clustering": ""
-            "browser_ml_smart_tab_perf.js": ""
-            "browser_ml_llama_smollm2_smoke.js": ""
-            "browser_ml_llama_summarizer_perf.js": ""
 
     intl/benchmarks/test/xpcshell:
         description: "Performance tests running through XPCShell for Intl code"

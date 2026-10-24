@@ -28,7 +28,6 @@ pdfjs.jar:
  content/web/viewer.mjs (content/web/viewer-geckoview.mjs)
  content/web/images/gv-toolbarButton-download.svg	(content/web/images/gv-toolbarButton-download.svg)
 #else
- content/PdfJsAIFeature.sys.mjs (content/PdfJsAIFeature.sys.mjs)
  content/PdfJsParent.sys.mjs (content/PdfJsParent.sys.mjs)
  content/PdfJsChild.sys.mjs (content/PdfJsChild.sys.mjs)
  content/PdfJsContextMenu.sys.mjs (content/PdfJsContextMenu.sys.mjs)

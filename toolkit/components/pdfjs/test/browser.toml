@@ -7,23 +7,6 @@ support-files = [
 # Suppress the notification in unrelated PDF viewer tests.
 prefs = ["pdfjs.featuresNotificationImpressionCount=99"]
 
-["browser_pdfjs_aifeature_settings.js"]
-
-["browser_pdfjs_alttext_load_engine.js"]
-run-if = [
-  "nightly_build", # Bug 1890946
-]
-
-["browser_pdfjs_alttext_telemetry.js"]
-run-if = [
-  "nightly_build", # Bug 1890946
-]
-
-["browser_pdfjs_alttext_two_tabs.js"]
-run-if = [
-  "nightly_build", # Bug 1890946
-]
-
 ["browser_pdfjs_brotli_large_window.js"]
 support-files = [
   "file_pdfjs_brotli_large_window.pdf",
@@ -149,9 +132,6 @@ support-files = ["file_pdfjs_js.pdf"]
 ["browser_pdfjs_main.js"]
 
 ["browser_pdfjs_minimum_font_size.js"]
-
-["browser_pdfjs_mlguess_validation.js"]
-support-files = ["file_pdf_download_link.html"]
 
 ["browser_pdfjs_multipart_response.js"]
 support-files = ["pdf_multipart.sjs"]

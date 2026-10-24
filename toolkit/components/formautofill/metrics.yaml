@@ -1089,15 +1089,6 @@ address:
         description: >
           telephone
         type: string
-      mlversion:
-        description: >
-          Revision of the ML field classifier configured for this client, or
-          empty when the feature is off. Recorded on every detection, including
-          forms the classifier did not label, so that version cohorts are not
-          conditioned on the model having succeeded. The two-engine classifier
-          reports both revisions joined by "/", the single-engine one reports a
-          single revision.
-        type: string
 
   filled_address_form_ext:
     type: event
@@ -1693,7 +1684,7 @@ passport:
       When the value is "false", the field is not detected in the form.
       When the value is 0, the field is identified by regexp-based heuristic.
       Note: passport fields have no standard autocomplete attribute, so they are
-      only identified by ML or regexp-based heuristics; the "true" value is not
+      only identified by regexp-based heuristics; the "true" value is not
       expected for passport forms.
     bugs: &passport_form_bugs
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2044946
