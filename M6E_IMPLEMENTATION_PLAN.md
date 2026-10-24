@@ -280,9 +280,9 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Manual check:** the native banner and the macOS permission prompt on first use (System Settings, Notifications, M6E), because headless runs can't show them.
   - **Not done:** the optional "open at login, hidden" login item. It's native code and needs the user's agreement first.
 
-## 4. Next step: Phase 4, performance (P4.2 build flags)
+## 4. Next step: Phase 5, packaging and acceptance
 
-**Resuming:** the user starts a session with "Resume from Phase 4". Before continuing:
+**Resuming:** the user starts a session with "Resume from Phase 5". Before continuing:
 1. Read `CLAUDE.md`, the spec (`m6e_browser_agent_instructions.md`) and this plan, and run `git log --oneline -15`.
 2. Run `git status` and `git fetch`. If `origin/main` is ahead (the user sometimes commits from the IDE), pull first.
 3. Build with `./mach build`. The objdir `obj-m6e` normally survives between sessions, so this is incremental; a clean objdir or a mozconfig change means a full build.
