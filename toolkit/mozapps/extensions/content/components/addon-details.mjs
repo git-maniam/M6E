@@ -92,9 +92,6 @@ export class AddonDetails extends AboutAddonsHTMLElement {
             <div class="addon-detail-sitepermissions">
               <addon-sitepermissions-list></addon-sitepermissions-list>
             </div>
-            <div class="addon-detail-mlmodel">
-              <addon-mlmodel-details></addon-mlmodel-details>
-            </div>
             <div
               class="addon-detail-row addon-detail-row-updates"
               role="group"
@@ -486,13 +483,6 @@ export class AddonDetails extends AboutAddonsHTMLElement {
     }
     this.querySelector(".addon-detail-sitepermissions").hidden =
       addon.type !== "sitepermission";
-
-    // Set the add-on for the mlmodel details.
-    if (addon.type == "mlmodel") {
-      this.mlModelDetails = this.querySelector("addon-mlmodel-details");
-      this.mlModelDetails.setAddon(addon);
-      this.querySelector(".addon-detail-mlmodel").hidden = false;
-    }
 
     // Set the add-on for the preferences section.
     this.inlineOptions = this.querySelector("inline-options-browser");

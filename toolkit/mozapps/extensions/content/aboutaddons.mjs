@@ -23,9 +23,6 @@ const { XPCOMUtils } = ChromeUtils.importESModule(
 );
 
 const lazy = {};
-ChromeUtils.defineESModuleGetters(lazy, {
-  recordDetailsViewTelemetry: "chrome://global/content/ml/Utils.sys.mjs",
-});
 
 XPCOMUtils.defineLazyPreferenceGetter(
   lazy,
@@ -112,10 +109,6 @@ gViewController.defineView("detail", async param => {
 
   if (!addon) {
     return null;
-  }
-
-  if (addon.type === "mlmodel") {
-    lazy.recordDetailsViewTelemetry(addon);
   }
 
   let card = document.createElement("addon-card");

@@ -31,9 +31,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   Extension: "resource://gre/modules/Extension.sys.mjs",
   ExtensionCommon: "resource://gre/modules/ExtensionCommon.sys.mjs",
   ExtensionPermissions: "resource://gre/modules/ExtensionPermissions.sys.mjs",
-  recordListItemManageTelemetry: "chrome://global/content/ml/Utils.sys.mjs",
-  recordRemoveConfirmationTelemetry: "chrome://global/content/ml/Utils.sys.mjs",
-  recordRemoveInitiatedTelemetry: "chrome://global/content/ml/Utils.sys.mjs",
 });
 
 const PLUGIN_ICON_URL = "chrome://global/skin/icons/plugin.svg";
@@ -162,7 +159,6 @@ export class AddonCard extends AboutAddonsHTMLElement {
                   data-l10n-id="extension-enable-addon-button-label"
                   hidden
                 ></moz-toggle>
-                <mlmodel-card-header-additions></mlmodel-card-header-additions>
                 <moz-button
                   type="ghost"
                   size="small"
@@ -171,7 +167,6 @@ export class AddonCard extends AboutAddonsHTMLElement {
                   data-l10n-id="addon-options-button"
                 ></moz-button>
               </div>
-              <mlmodel-card-list-additions></mlmodel-card-list-additions>
               <span class="addon-description" tabindex="-1"></span>
             </div>
           </div>
@@ -386,16 +381,9 @@ export class AddonCard extends AboutAddonsHTMLElement {
               this.sendEvent("remove-disabled");
               return;
             }
-            if (addon.type == "mlmodel") {
-              const source = e.target.nodeName == "BUTTON" ? "details" : "list";
-              lazy.recordRemoveInitiatedTelemetry(addon, source);
-            }
             let { BrowserAddonUI } = windowRoot.window;
             let { remove, report } =
               await BrowserAddonUI.promptRemoveExtension(addon);
-            if (addon.type == "mlmodel") {
-              lazy.recordRemoveConfirmationTelemetry(addon, remove);
-            }
             if (remove) {
               await addon.uninstall(true);
               this.sendEvent("remove");
@@ -411,9 +399,6 @@ export class AddonCard extends AboutAddonsHTMLElement {
           }
           break;
         case "expand":
-          if (addon.type == "mlmodel") {
-            lazy.recordListItemManageTelemetry(addon);
-          }
           gViewController.loadView(`detail/${this.addon.id}`);
           break;
         case "report":
@@ -635,21 +620,6 @@ export class AddonCard extends AboutAddonsHTMLElement {
     // Update the details if they're shown.
     if (this.details) {
       this.details.update();
-    }
-
-    if (addon.type == "mlmodel") {
-      this.optionsButton.hidden = this.expanded;
-      const mlmodelHeaderAdditions = this.card.querySelector(
-        "mlmodel-card-header-additions"
-      );
-      mlmodelHeaderAdditions.setAddon(addon);
-      mlmodelHeaderAdditions.expanded = this.expanded;
-
-      const mlmodelListAdditions = this.card.querySelector(
-        "mlmodel-card-list-additions"
-      );
-      mlmodelListAdditions.setAddon(addon);
-      mlmodelListAdditions.expanded = this.expanded;
     }
 
     this.sendEvent("update");

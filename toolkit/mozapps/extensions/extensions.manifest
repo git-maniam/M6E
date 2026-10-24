@@ -3,6 +3,5 @@ category update-timer amGleanDaily @mozilla.org/addons/glean-daily-ping;1,getSer
 category update-timer addonManager @mozilla.org/addons/integration;1,getService,addon-background-update-timer,extensions.update.interval,86400
 #ifndef MOZ_THUNDERBIRD
 category addon-provider-module GMPProvider resource://gre/modules/addons/GMPProvider.sys.mjs
-category addon-provider-module ModelHubProvider resource://gre/modules/addons/ModelHubProvider.sys.mjs
 category addon-provider-module SitePermsAddonProvider resource://gre/modules/addons/SitePermsAddonProvider.sys.mjs
 #endif
