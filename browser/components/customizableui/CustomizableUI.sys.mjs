@@ -373,7 +373,6 @@ var CustomizableUIInternal = {
       "downloads-button",
       AppConstants.MOZ_DEV_EDITION ? "developer-button" : null,
       lazy.ippEnabled ? "ipprotection-button" : null,
-      "fxa-toolbar-menu-button",
       lazy.resetPBMToolbarButtonEnabled ? "reset-pbm-toolbar-button" : null,
       lazy.fireButtonEnabled ? "fire-button" : null,
     ].filter(name => name);
@@ -764,15 +763,6 @@ var CustomizableUIInternal = {
         if (!this.builtinAreas.has(area)) {
           delete gSavedState.placements[area];
         }
-      }
-    }
-
-    // Add the FxA toolbar menu as the right most button item
-    if (currentVersion < 16) {
-      let navbarPlacements = gSavedState.placements[CustomizableUI.AREA_NAVBAR];
-      // Place the menu item as the first item to the left of the hamburger menu
-      if (navbarPlacements) {
-        navbarPlacements.push("fxa-toolbar-menu-button");
       }
     }
 

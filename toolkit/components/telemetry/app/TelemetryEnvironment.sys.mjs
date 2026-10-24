@@ -28,12 +28,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   WindowsRegistry: "resource://gre/modules/WindowsRegistry.sys.mjs",
 });
 
-ChromeUtils.defineLazyGetter(lazy, "fxAccounts", () => {
-  return ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton();
-});
-
 if (AppConstants.MOZ_UPDATER) {
   XPCOMUtils.defineLazyServiceGetter(
     lazy,
@@ -401,7 +395,6 @@ const AUTO_UPDATE_PREF_CHANGE_TOPIC =
 const BACKGROUND_UPDATE_PREF_CHANGE_TOPIC =
   UpdateUtils.PER_INSTALLATION_PREFS["app.update.background.enabled"]
     .observerTopic;
-const SERVICES_INFO_CHANGE_TOPIC = "sync-ui-state:update";
 
 /**
  * Get the current browser locale.
@@ -970,7 +963,6 @@ EnvironmentCache.prototype = {
     Services.obs.addObserver(this, SEARCH_SERVICE_TOPIC);
     Services.obs.addObserver(this, AUTO_UPDATE_PREF_CHANGE_TOPIC);
     Services.obs.addObserver(this, BACKGROUND_UPDATE_PREF_CHANGE_TOPIC);
-    Services.obs.addObserver(this, SERVICES_INFO_CHANGE_TOPIC);
     Services.obs.addObserver(this, TELEMETRY_ENVIRONMENT_ADDONS_CHANGED_TOPIC);
   },
 
@@ -989,7 +981,6 @@ EnvironmentCache.prototype = {
     Services.obs.removeObserver(this, SEARCH_SERVICE_TOPIC);
     Services.obs.removeObserver(this, AUTO_UPDATE_PREF_CHANGE_TOPIC);
     Services.obs.removeObserver(this, BACKGROUND_UPDATE_PREF_CHANGE_TOPIC);
-    Services.obs.removeObserver(this, SERVICES_INFO_CHANGE_TOPIC);
     Services.obs.removeObserver(
       this,
       TELEMETRY_ENVIRONMENT_ADDONS_CHANGED_TOPIC
@@ -1063,9 +1054,6 @@ EnvironmentCache.prototype = {
         break;
       case BACKGROUND_UPDATE_PREF_CHANGE_TOPIC:
         Glean.updateSettings.background.set(aData == "true");
-        break;
-      case SERVICES_INFO_CHANGE_TOPIC:
-        this._updateServicesInfo();
         break;
       case TELEMETRY_ENVIRONMENT_ADDONS_CHANGED_TOPIC:
         this._onAddonsChanged();
@@ -1467,35 +1455,6 @@ EnvironmentCache.prototype = {
     await Policy._browserDelayedStartup();
     recordIntlMetrics();
     Policy._intlLoaded = true;
-  },
-  // This exists as a separate function for testing.
-  async _getFxaSignedInUser() {
-    return lazy.fxAccounts.getSignedInUser();
-  },
-
-  async _updateServicesInfo() {
-    let syncEnabled = false;
-    let accountEnabled = false;
-    let weaveService =
-      Cc["@mozilla.org/weave/service;1"].getService().wrappedJSObject;
-    syncEnabled = weaveService && weaveService.enabled;
-    if (syncEnabled) {
-      // All sync users are account users, definitely.
-      accountEnabled = true;
-    } else {
-      // Not all account users are sync users. See if they're signed into FxA.
-      try {
-        let user = await this._getFxaSignedInUser();
-        if (user) {
-          accountEnabled = true;
-        }
-      } catch (e) {
-        this._log.error("_updateServicesInfo() caught error", e);
-        return;
-      }
-    }
-    Glean.fxa.syncEnabled.set(syncEnabled);
-    Glean.fxa.accountEnabled.set(accountEnabled);
   },
 
   /**

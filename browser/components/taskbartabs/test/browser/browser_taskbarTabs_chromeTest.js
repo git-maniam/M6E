@@ -46,16 +46,6 @@ function checkWindowChrome(win, userContextId) {
     "Bookmark button should not be visible"
   );
 
-  ok(
-    !docElement.hasAttribute("fxatoolbarmenu"),
-    "Firefox accounts menu should not be displayed"
-  );
-
-  ok(
-    docElement.hasAttribute("fxadisabled"),
-    "fxadisabled attribute should exist"
-  );
-
   is(
     win.document.getElementById("userContext-icons").hidden,
     !userContextId,

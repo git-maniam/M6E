@@ -592,109 +592,6 @@ jsonfile:
     record_in_processes: [main]
     notification_emails: ["prathiksha@mozilla.com", "passwords-dev@mozilla.org"]
 
-fxa:
-  connect:
-    objects: ["account"]
-    methods: ["connect", "disconnect"]
-    description: >
-      Records when a Firefox Account, or a Firefox Account service, is explicitly
-      connected or disconnected from the browser via an intentional user action.
-    extra_keys:
-      fxa: Whether the account itself was connected or disconnected.
-      sync: Whether sync was connected or disconnected.
-    products:
-      - "firefox"
-      - "fennec"
-    record_in_processes: ["main"]
-    bug_numbers: [1595954]
-    notification_emails: ["sync-dev@mozilla.org"]
-    release_channel_collection: opt-out
-    expiry_version: never
-
-fxa_avatar_menu:
-  click:
-    objects: [
-      "account_settings",
-      "cad",
-      "login",
-      "send_tab",
-      "sync_now",
-      "sync_settings",
-      "sync_tabs",
-      "sync_tabs_sidebar",
-      "toolbar_icon",
-      "unver_sync_settings",
-      "open_monitor",
-      "open_send",
-      "monitor_cta",
-      "relay_cta",
-      "vpn_cta",
-      "sync_cta"
-      ]
-    methods: ["click"]
-    release_channel_collection: opt-out
-    products:
-      - "firefox"
-    record_in_processes: ["main"]
-    description: This is recorded on interactions with the FxA avatar menu on the toolbar
-    bug_numbers: [1524665, 1585459, 1606203]
-    notification_emails: ["vbudhram@mozilla.com", "loines@mozilla.com"]
-    expiry_version: "never"
-    extra_keys:
-      fxa_status: >
-        The current state of the user. Possible states are "not_configured", "unverified",
-        "signedin" and "login_failed".
-      fxa_avatar: Boolean for whether or not account has set an avatar
-      fxa_sync_on: Boolean for whether or not sync was configured at the time the event fired
-      device_count: >
-        Number of connected devices available to send tabs to (optional, only populated for send_tab)
-      action: >
-        The action selected by the user (optional, only populated for send_tab). Possible values
-        are "device" (sent to specific device), "all_devices" (sent to all devices), or
-        "manage_devices" (opened device management).
-
-fxa_app_menu:
-  click:
-    objects: [
-      "account_settings",
-      "cad",
-      "login",
-      "send_tab",
-      "sync_now",
-      "sync_settings",
-      "sync_tabs",
-      "sync_tabs_sidebar",
-      "toolbar_icon",
-      "unver_sync_settings",
-      "open_monitor",
-      "open_send",
-      "monitor_cta",
-      "relay_cta",
-      "vpn_cta",
-      "sync_cta"
-      ]
-    methods: ["click"]
-    release_channel_collection: opt-out
-    products:
-      - "firefox"
-    record_in_processes: ["main"]
-    description: This is recorded on interactions with the FxA menu in the app (hamburger) menu
-    bug_numbers: [1542334, 1606203]
-    notification_emails: ["vbudhram@mozilla.com", "loines@mozilla.com"]
-    expiry_version: "never"
-    extra_keys:
-      fxa_status: >
-        The current state of the user. Possible states are "not_configured", "unverified",
-        "signedin" and "login_failed".
-      fxa_avatar: Boolean for whether or not account has set an avatar
-      fxa_sync_on: Boolean for whether or not sync was configured at the time the event fired.
-      device_count: >
-        Number of connected devices available to send tabs to (optional, only populated for send_tab)
-      action: >
-        The action selected by the user (optional, only populated for send_tab). Possible values
-        are "device" (sent to specific device), "all_devices" (sent to all devices), or
-        "manage_devices" (opened device management).
-
 messaging_experiments:
   reach:
     objects: [
@@ -1132,8 +1029,6 @@ service_request:
 synced_tabs:
   click:
     objects: [
-      "fxa_avatar_menu",
-      "fxa_app_menu",
       "synced_tabs_sidebar",
       ]
     methods: ["click"]

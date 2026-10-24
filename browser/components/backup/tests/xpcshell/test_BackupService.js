@@ -9,9 +9,6 @@ const { BasePromiseWorker } = ChromeUtils.importESModule(
 const { JsonSchema } = ChromeUtils.importESModule(
   "resource://gre/modules/JsonSchema.sys.mjs"
 );
-const { UIState } = ChromeUtils.importESModule(
-  "resource://services-sync/UIState.sys.mjs"
-);
 const { ClientID } = ChromeUtils.importESModule(
   "resource://gre/modules/ClientID.sys.mjs"
 );
@@ -465,75 +462,11 @@ async function testDeleteLastBackupHelper(taskFn) {
 }
 
 /**
- * Tests that calling BackupService.createBackup will call backup on each
- * registered BackupResource, and that each BackupResource will have a folder
- * created for them to write into. Tests in the signed-out state.
- */
-add_task(async function test_createBackup_signed_out() {
-  let sandbox = sinon.createSandbox();
-
-  sandbox
-    .stub(UIState, "get")
-    .returns({ status: UIState.STATUS_NOT_CONFIGURED });
-  await testCreateBackupHelper(sandbox, (_bs, manifest) => {
-    Assert.equal(
-      manifest.meta.accountID,
-      undefined,
-      "Account ID should be undefined."
-    );
-    Assert.equal(
-      manifest.meta.accountEmail,
-      undefined,
-      "Account email should be undefined."
-    );
-  });
-
-  sandbox.restore();
-});
-
-/**
- * Tests that calling BackupService.createBackup will call backup on each
- * registered BackupResource, and that each BackupResource will have a folder
- * created for them to write into. Tests in the signed-in state.
- */
-add_task(async function test_createBackup_signed_in() {
-  let sandbox = sinon.createSandbox();
-
-  const TEST_UID = "ThisIsMyTestUID";
-  const TEST_EMAIL = "foxy@mozilla.org";
-
-  sandbox.stub(UIState, "get").returns({
-    status: UIState.STATUS_SIGNED_IN,
-    uid: TEST_UID,
-    email: TEST_EMAIL,
-  });
-
-  await testCreateBackupHelper(sandbox, (_bs, manifest) => {
-    Assert.equal(
-      manifest.meta.accountID,
-      TEST_UID,
-      "Account ID should be set properly."
-    );
-    Assert.equal(
-      manifest.meta.accountEmail,
-      TEST_EMAIL,
-      "Account email should be set properly."
-    );
-  });
-
-  sandbox.restore();
-});
-
-/**
  * Tests that createBackup calls maybeAddToEnabledListPref after a successful
  * backup so that legacy-to-selectable profile transitions are tracked.
  */
 add_task(async function test_createBackup_calls_maybeAddToEnabledListPref() {
   let sandbox = sinon.createSandbox();
-
-  sandbox
-    .stub(UIState, "get")
-    .returns({ status: UIState.STATUS_NOT_CONFIGURED });
 
   let spy = sandbox.spy(BackupService, "maybeAddToEnabledListPref");
 
@@ -596,15 +529,6 @@ add_task(
     let sandbox = sinon.createSandbox();
     Services.fog.testResetFOG();
 
-    const TEST_UID = "ThisIsMyTestUID";
-    const TEST_EMAIL = "foxy@mozilla.org";
-
-    sandbox.stub(UIState, "get").returns({
-      status: UIState.STATUS_SIGNED_IN,
-      uid: TEST_UID,
-      email: TEST_EMAIL,
-    });
-
     // Create a read-only fake profile folder to which the backup service
     // won't be able to make writes
     let inaccessibleProfilePath = await IOUtils.createUniqueDirectory(
@@ -650,15 +574,6 @@ add_task(
   },
   async function test_createBackup_override_readonly() {
     let sandbox = sinon.createSandbox();
-
-    const TEST_UID = "ThisIsMyTestUID";
-    const TEST_EMAIL = "foxy@mozilla.org";
-
-    sandbox.stub(UIState, "get").returns({
-      status: UIState.STATUS_SIGNED_IN,
-      uid: TEST_UID,
-      email: TEST_EMAIL,
-    });
 
     // Create a fake profile folder that contains a read-only file.  We do this
     // because Windows does not respect read-only status on folders. The
@@ -786,14 +701,6 @@ async function checkBackupWithUnremovableItems(unremovableItemsLimit) {
 
   let sandbox = sinon.createSandbox();
 
-  const TEST_UID = "ThisIsMyTestUID";
-  const TEST_EMAIL = "foxy@mozilla.org";
-
-  sandbox.stub(UIState, "get").returns({
-    status: UIState.STATUS_SIGNED_IN,
-    uid: TEST_UID,
-    email: TEST_EMAIL,
-  });
   const backupService = new BackupService({});
 
   let profilePath = await IOUtils.createUniqueDirectory(
@@ -881,14 +788,6 @@ add_task(async function test_createBackup_deletesStaleStagingItems() {
 
   let sandbox = sinon.createSandbox();
 
-  const TEST_UID = "ThisIsMyTestUID";
-  const TEST_EMAIL = "foxy@mozilla.org";
-
-  sandbox.stub(UIState, "get").returns({
-    status: UIState.STATUS_SIGNED_IN,
-    uid: TEST_UID,
-    email: TEST_EMAIL,
-  });
   const backupService = new BackupService({});
 
   let profilePath = await IOUtils.createUniqueDirectory(
