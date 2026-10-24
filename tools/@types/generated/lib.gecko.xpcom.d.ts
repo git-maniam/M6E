@@ -2763,14 +2763,6 @@ interface nsISiteContainerService extends nsISupports {
   containerForNavigation(aURI: nsIURI, aBaselineUserContextId: u32): u32;
 }
 
-// https://searchfox.org/firefox-main/source/toolkit/crashreporter/test/test_utils/nsICrashReporterTestUtils.idl
-
-/** <!-- binding_to(idl, interface_name, XPIDL_nsICrashReporterTestUtils) --> */
-interface nsICrashReporterTestUtils extends nsISupports {
-  /** <!-- binding_to(idl, method, XPIDL_nsICrashReporterTestUtils_getCrashHelperPid) --> */
-  getCrashHelperPid(): u32;
-}
-
 // https://searchfox.org/firefox-main/source/toolkit/components/dap/nsIDAPTelemetry.idl
 
 /** <!-- binding_to(idl, interface_name, XPIDL_nsIDAPTelemetry) --> */
@@ -26625,7 +26617,6 @@ interface nsIXPCComponents_Interfaces {
   mozIGeckoMediaPluginChromeService: nsJSIID<mozIGeckoMediaPluginChromeService>;
   mozIGeckoMediaPluginService: nsJSIID<mozIGeckoMediaPluginService>;
   nsISiteContainerService: nsJSIID<nsISiteContainerService>;
-  nsICrashReporterTestUtils: nsJSIID<nsICrashReporterTestUtils>;
   nsIDAPTelemetry: nsJSIID<nsIDAPTelemetry>;
   nsIDocShell: nsJSIID<nsIDocShell, typeof nsIDocShell_DocShellEnumeratorDirection & typeof nsIDocShell_AppType & typeof nsIDocShell_BusyFlags & typeof nsIDocShell_LoadCommand>;
   nsIDocShellTreeItem: nsJSIID<nsIDocShellTreeItem>;

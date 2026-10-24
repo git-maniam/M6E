@@ -1702,7 +1702,6 @@ modules:
     includes:
       - toolkit/crashreporter/**/*
       - toolkit/components/crashes/**/*
-      - tools/crashreporter/**/*
       - ipc/glue/CrashReporter*
       - mobile/android/geckoview/src/main/java/org/mozilla/geckoview/CrashReporter.java
     meta:
@@ -1710,7 +1709,6 @@ modules:
         - Aria Beingessner
         - Kris Wright
       group: dev-platform
-      url: '{doc}`/toolkit/crashreporter/crashreporter/index`'
       components:
         - Toolkit::Crash Reporting
       review_group: crashreporting-reviewers

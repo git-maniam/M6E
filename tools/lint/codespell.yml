@@ -44,7 +44,6 @@ codespell:
         - toolkit/components/search/docs/
         - toolkit/components/search/schema/
         - toolkit/components/telemetry/docs/
-        - toolkit/crashreporter/docs/
         - toolkit/docs/
         - toolkit/locales/en-US/
         - toolkit/modules/docs/

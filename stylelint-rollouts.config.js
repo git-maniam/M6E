@@ -266,7 +266,6 @@ module.exports = [
       "toolkit/content/aboutwebrtc/aboutWebrtc.css",
       "toolkit/content/resetProfile.css",
       "toolkit/content/xul.css",
-      "toolkit/crashreporter/content/crashes.css",
       "toolkit/mozapps/extensions/content/aboutaddons.css",
       "toolkit/mozapps/extensions/content/components/mlmodel-card-header-additions.css",
       "toolkit/mozapps/extensions/content/shortcuts.css",

@@ -3,7 +3,6 @@
 # use MOZ_SRC_FILES instead. Remove entries as files are migrated
 # (./mach lint -l extra-js-modules --fix does this automatically).
 !dom/media/webspeech/recognition/SpeechRecognitionModelDisplayInfo.sys.mjs
-!toolkit/components/crashes/CrashManager.sys.mjs
 !toolkit/components/promiseworker/worker/PromiseWorker.js
 !toolkit/components/promiseworker/worker/PromiseWorker.mjs
 !toolkit/components/resistfingerprinting/RFPTargetConstants.sys.mjs
@@ -299,8 +298,6 @@ toolkit/components/contentprefs/ContentPrefStore.sys.mjs
 toolkit/components/contentprefs/ContentPrefUtils.sys.mjs
 toolkit/components/contentrelevancy/ContentRelevancyManager.sys.mjs
 toolkit/components/contentrelevancy/private/InputUtils.sys.mjs
-toolkit/components/crashes/CrashService.sys.mjs
-toolkit/components/crashes/RemoteSettingsCrashPull.sys.mjs
 toolkit/components/crashmonitor/CrashMonitor.sys.mjs
 toolkit/components/crashmonitor/nsCrashMonitor.sys.mjs
 toolkit/components/credentialmanagement/CredentialChooserService.sys.mjs
@@ -535,7 +532,6 @@ toolkit/components/utils/WindowsInstallsInfo.sys.mjs
 toolkit/components/utils/mozjexl.sys.mjs
 toolkit/components/workerloader/require.js
 toolkit/components/xulstore/XULStore.sys.mjs
-toolkit/crashreporter/networking/BackgroundTask_crashreporterNetworkBackend.sys.mjs
 toolkit/modules/AboutPagesUtils.sys.mjs
 toolkit/modules/ActorManagerParent.sys.mjs
 toolkit/modules/AppConstants.sys.mjs

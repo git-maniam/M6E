@@ -1545,8 +1545,6 @@ toolkit/components/url-classifier/chromium/
 toolkit/components/utils/mozjexl.sys.mjs
 toolkit/content/vendor/react/
 toolkit/content/widgets/vendor/
-toolkit/crashreporter/breakpad-client/
-toolkit/crashreporter/google-breakpad/
 toolkit/modules/third_party/
 tools/fuzzing/libfuzzer/
 tools/lint/eslint/eslint-plugin-sdl-vendored/vendor/

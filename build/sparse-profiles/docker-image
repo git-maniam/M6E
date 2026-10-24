@@ -14,4 +14,3 @@ path:python/mozbuild/mozbuild/action/tooltool.py
 path:gfx/wr/ci-scripts/docker-image/setup.sh
 
 # for the system-symbol images
-path:tools/crashreporter/system-symbols/

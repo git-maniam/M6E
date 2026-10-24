@@ -7,7 +7,6 @@ glean-parser:
         - .
     exclude:
         # Merged into generated_metrics.yaml by glean_metrics.py.
-        - toolkit/crashreporter/crashping/static_metrics.yaml
     extensions:
         - yaml
     support-files:

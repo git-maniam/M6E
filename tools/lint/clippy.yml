@@ -88,18 +88,6 @@ clippy:
         - toolkit/components/kvstore/
         - toolkit/components/processtools/
         - toolkit/components/uniffi-bindgen-gecko-js/
-        - toolkit/crashreporter/client/app/
-        - toolkit/crashreporter/crash_helper_client/
-        - toolkit/crashreporter/crash_helper_common/
-        - toolkit/crashreporter/crash_helper_server/
-        - toolkit/crashreporter/crashping/
-        - toolkit/crashreporter/minidump-analyzer/
-        - toolkit/crashreporter/mozannotation_client/
-        - toolkit/crashreporter/mozannotation_server/
-        - toolkit/crashreporter/mozwer-rust/
-        - toolkit/crashreporter/process_reader/
-        - toolkit/crashreporter/rust_minidump_writer_linux/
-        - toolkit/crashreporter/win32_process_mitigations/
         # - toolkit/library/buildid_reader/
         - toolkit/library/buildid_reader/ffi/
         - toolkit/library/gtest/rust/
