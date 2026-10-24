@@ -426,16 +426,6 @@ onboarding-horizontal-tabs-tooltip =
 onboarding-horizontal-tabs-description =
     .aria-description = A browser window displaying tabs along the top.
 
-# Existing users - additional setup card
-
-# Additional setup card for setting up aichatbot in the sidebar
-onboarding-genai-sidebar-title = Try an AI chatbot in the sidebar
-
-# Setup card for setting up AI chatbot in the sidebar; "Providers" refers to AI chatbot providers (e.g. OpenAI, etc). "Switch anytime" refers to allowing the user to switch to a different chatbot.
-onboarding-genai-sidebar-subtitle = Summarize web content, brainstorm ideas, draft messages — all as you browse. Choose from multiple providers. Switch anytime. <a data-l10n-name="learn-more">Learn more</a>
-onboarding-genai-sidebar-primary-button = Choose a chatbot
-onboarding-genai-sidebar-secondary-button = Start browsing
-
 ## New user onboarding checklist
 
 onboarding-checklist-title = Finish setting up { -brand-short-name }
@@ -642,38 +632,6 @@ onboarding-minimal-tabs-tooltip =
 # Description for minimal tabs image
 onboarding-minimal-tabs-description =
     .aria-description = A browser window displaying tabs as small icons along the side of the screen, in a minimized sidebar.
-
-## Smart window switcher callout
-
-smartwindow-switcher-callout = Switch between Smart and Classic Windows anytime.
-
-## Smart Window ToU modal
-
-# Existing users
-smartwindow-existing-user-fx-tou-title = { -brand-product-name } Terms of Use
-smartwindow-existing-user-fx-tou-body = To use { -smart-window-brand-name }, please accept the <a data-l10n-name="terms_of_use">Terms of Use</a> and updated <a data-l10n-name="privacy_notice">Privacy Notice</a>.
-smartwindow-existing-user-fx-tou-accept = Accept
-smartwindow-existing-user-fx-tou-go-back = Go back
-
-## Smart Window about:welcome screen
-
-smartwindow-onboarding-title = Make { -smart-window-brand-name } your go-to
-smartwindow-onboarding-subtitle = Summarize, compare, and ask questions without missing a beat.
-smartwindow-onboarding-primary-button = Continue
-# Kit is referring to the Firefox mascot
-smartwindow-onboarding-image-alt =
-  .aria-label = { -brand-product-name } mascot (Kit) with star props
-
-## Smart Window Sidebar Auto-Open Pref
-
-smartwindow-sidebar-auto-open-callout-title = Want to keep the assistant closed?
-smartwindow-sidebar-auto-open-callout-body = You can still open it whenever you need it.
-smartwindow-sidebar-auto-open-callout-accept = Yes, keep closed
-smartwindow-sidebar-auto-open-callout-dismiss = No thanks
-smartwindow-sidebar-auto-open-callout-accepted-title = The assistant will stay closed
-smartwindow-sidebar-auto-open-callout-accepted-subtitle = Use Ask to open it on any page. Change this anytime in <a data-l10n-name="settings">Settings</a>.
-smartwindow-sidebar-auto-open-callout-rejected-title = Got it
-smartwindow-sidebar-auto-open-callout-rejected-subtitle = If you change your mind, you can update the default in <a data-l10n-name="settings">Settings</a> anytime.
 
 ## Theme Picker screen strings
 
