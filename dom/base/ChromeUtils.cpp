@@ -1880,7 +1880,6 @@ static WebIDLProcType ProcTypeToWebIDL(mozilla::ProcType aType) {
     PROCTYPE_TO_WEBIDL_CASE(PrivilegedMozilla, Privilegedmozilla);
     PROCTYPE_TO_WEBIDL_CASE(WebCOOPCOEP, WithCoopCoep);
     PROCTYPE_TO_WEBIDL_CASE(WebServiceWorker, WebServiceWorker);
-    PROCTYPE_TO_WEBIDL_CASE(Inference, Inference);
 
 #define GECKO_PROCESS_TYPE(enum_value, enum_name, string_name, proc_typename, \
                            process_bin_type, procinfo_typename,               \
@@ -2067,9 +2066,6 @@ already_AddRefed<Promise> ChromeUtils::RequestProcInfo(GlobalObject& aGlobal,
         break;
       case RemoteType::Kind::Prealloc:
         type = mozilla::ProcType::Preallocated;
-        break;
-      case RemoteType::Kind::Inference:
-        type = mozilla::ProcType::Inference;
         break;
       default: {
         MOZ_CRASH_UNSAFE_PRINTF("Unknown remoteType '%s'",

@@ -2559,8 +2559,6 @@ mozilla::ipc::IPCResult ContentChild::RecvSetRemoteType(
     SetProcessName("Privileged Content"_ns, nullptr, &aProfile);
   } else if (aRemoteType.IsPrivilegedMozilla()) {
     SetProcessName("Privileged Mozilla"_ns, nullptr, &aProfile);
-  } else if (aRemoteType.IsInference()) {
-    SetProcessName("Inference"_ns, nullptr, &aProfile);
   } else if (aRemoteType.IsIsolatedWeb()) {
     nsAutoCString site = mRemoteType.StringifyMeta();
 

@@ -187,8 +187,6 @@ nsCString GetProcessTypeForTelemetry() {
       const auto& remoteType = cc->GetRemoteType();
       if (remoteType.IsExtension()) {
         processType.AssignLiteral("extension");
-      } else if (remoteType.IsInference()) {
-        processType.AssignLiteral("inference");
       }
       // Otherwise keep "tab" for regular content processes
     }

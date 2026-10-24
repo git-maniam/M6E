@@ -288,7 +288,7 @@ class Labeled {
    *
    * Automatically determines the process type and returns the appropriate
    * labeled metric instance. For content processes, distinguishes between
-   * regular "tab" processes, "inference" processes, and "extension" processes.
+   * regular "tab" processes and "extension" processes.
    */
   T ProcessGet() const { return Get(GetProcessTypeForTelemetry()); }
 

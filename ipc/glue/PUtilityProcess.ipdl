@@ -10,10 +10,6 @@ include protocol PProfiler;
 include protocol PUtilityMediaService;
 include protocol PJSOracle;
 
-#ifndef ANDROID
-include protocol PHWInference;
-#endif  // !ANDROID
-
 #if defined(XP_WIN)
 include protocol PWindowsUtils;
 include protocol PWinFileDialog;
@@ -57,10 +53,6 @@ namespace ipc {
 [NeedsOtherPid, ChildProc=Utility]
 protocol PUtilityProcess
 {
-#ifndef ANDROID
-  manages PHWInference;
-#endif  // !ANDROID
-
 parent:
   async InitCrashReporter(CrashReporterInitArgs aInitArgs);
 
@@ -146,10 +138,6 @@ child:
   */
   async UnblockUntrustedModulesThread();
 #endif  // defined(XP_WIN)
-
-#ifndef ANDROID
-  async PHWInference();
-#endif  // !ANDROID
 
   /**
    * Notify the child to shutdown. The child will in turn call FinishShutdown

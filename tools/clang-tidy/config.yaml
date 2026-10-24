@@ -34,7 +34,6 @@ header_skiplist:
   - dom/media/platforms/ffmpeg/FFmpegVulkanVideoDecoder.h
   - dom/media/webrtc/libwebrtc_overrides/rtc_base/trace_event.h
   - dom/media/webrtc/transport/sigslot.h
-  - dom/onnx/onnxruntime_ep_c_api.h
   - dom/quota/DirectoryLockInlines.h
   - gfx/gl/GLContextProviderImpl.h
   - gfx/pixman/pixman/pixman/loongson-mmintrin.h

@@ -151,11 +151,6 @@
 #include "mozilla/glean/IpcMetrics.h"
 #include "mozilla/glean/PFOGTransport.h"
 #include "mozilla/hal_sandbox/PHalParent.h"
-#  include "mozilla/hwinference/HWInferenceParent.h"
-#  include "mozilla/hwinference/HWInferenceProcess.h"
-#  ifdef MOZ_WEBSPEECH
-#    include "mozilla/hwinference/PSpeechRecognitionChild.h"
-#  endif
 #include "mozilla/intl/L10nRegistry.h"
 #include "mozilla/intl/LocaleService.h"
 #include "mozilla/intl/OSPreferences.h"
@@ -1824,10 +1819,6 @@ void ContentParent::ActorDestroy(ActorDestroyReason why) {
   if (fss) {
     fss->Forget(ChildID());
   }
-
-  // A process that dies never sends its ReleaseHWInferenceConnection.
-  mHWInferenceConnections = 0;
-  mHWInferenceKeepAlive = nullptr;
 
   if (why == NormalShutdown && !mCalledClose) {
     // If we shut down normally but haven't called Close, assume somebody
@@ -5054,53 +5045,6 @@ mozilla::ipc::IPCResult ContentParent::RecvCreateAudioIPCConnection(
     result = NS_ERROR_FAILURE;
   }
   aResolver(result);
-  return IPC_OK();
-}
-
-void ContentParent::EnsureHWInferenceConnection() {
-  // Re-acquiring unconditionally: a no-op when the process and its actor are
-  // up, and what recovers when either went away under us.
-  mHWInferenceKeepAlive = hwinference::HWInferenceProcess::Content().Acquire();
-}
-
-mozilla::ipc::IPCResult ContentParent::RecvAcquireHWInferenceProcess() {
-  ++mHWInferenceConnections;
-  EnsureHWInferenceConnection();
-  return IPC_OK();
-}
-
-#  ifdef MOZ_WEBSPEECH
-mozilla::ipc::IPCResult ContentParent::RecvCreateSpeechRecognition(
-    Endpoint<hwinference::PSpeechRecognitionParent>&& aEndpoint) {
-  if (!mHWInferenceConnections) {
-    return IPC_FAIL(this, "Must be holding a HWInference connection");
-  }
-
-  EnsureHWInferenceConnection();
-
-  // Launch failed: dropping the endpoint tears down the child's session actor,
-  // which reports "service-not-allowed" to the page.
-  if (!mHWInferenceKeepAlive) {
-    return IPC_OK();
-  }
-
-  hwinference::HWInferenceProcess::Content()
-      .Actor()
-      ->StartContentSpeechRecognition(std::move(aEndpoint), mChildID);
-  return IPC_OK();
-}
-#  endif  // MOZ_WEBSPEECH
-
-mozilla::ipc::IPCResult ContentParent::RecvReleaseHWInferenceConnection() {
-  if (mHWInferenceConnections == 0) {
-    return IPC_FAIL(this,
-                    "ReleaseHWInferenceConnection without a matching "
-                    "AcquireHWInferenceProcess");
-  }
-
-  if (--mHWInferenceConnections == 0) {
-    mHWInferenceKeepAlive = nullptr;
-  }
   return IPC_OK();
 }
 

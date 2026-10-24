@@ -716,9 +716,6 @@ class ProcessesView extends RowSet {
       case "utility":
         fluentName = "about-processes-utility-process";
         break;
-      case "inference":
-        fluentName = "about-processes-inference-process";
-        break;
       // The following are probably not going to show up for users
       // but let's handle the case anyway to avoid heisenoranges
       // during tests in case of a leftover process from a previous
@@ -1143,10 +1140,6 @@ class ProcessesView extends RowSet {
 
       case "pkcs11Module":
         fluentName = "about-processes-utility-actor-pkcs11-module";
-        break;
-
-      case "hwInference":
-        fluentName = "about-processes-utility-actor-hw-inference";
         break;
 
       default:

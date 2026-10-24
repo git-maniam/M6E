@@ -23,10 +23,6 @@ namespace mozilla {
 
 class MemoryReportingProcess;
 
-namespace hwinference {
-class HWInferenceParent;
-}  // namespace hwinference
-
 namespace dom {
 class JSOracleParent;
 class WindowsUtilsParent;
@@ -91,10 +87,6 @@ class UtilityProcessManager final : public UtilityProcessHost::Listener {
 #if defined(NIGHTLY_BUILD) && !defined(MOZ_NO_SMART_CARDS)
   RefPtr<PKCS11ModulePromise> StartPKCS11Module();
 #endif  // NIGHTLY_BUILD && !MOZ_NO_SMART_CARDS
-
-  // Launches an independent HWInference process and binds aActor to it.
-  already_AddRefed<UtilityProcessKeepAlive> LaunchIndependentHWInferenceProcess(
-      RefPtr<hwinference::HWInferenceParent> aActor);
 
   void OnProcessUnexpectedShutdown(UtilityProcessHost* aHost);
 

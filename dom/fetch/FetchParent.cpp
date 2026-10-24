@@ -111,13 +111,7 @@ IPCResult FetchParent::RecvFetchOp(FetchOpArgs&& aArgs) {
       BackgroundParent::GetContentParentHandle(Manager());
   if (contentHandle &&
       StaticPrefs::dom_fetch_validatePrincipalForRemoteType()) {
-    // The inference process uses ChromeWorkers which have a system principal,
-    // so system principals must be allowed there.
-    EnumSet<ValidatePrincipalOptions> options;
-    if (contentHandle->GetRemoteType().IsInference()) {
-      options += ValidatePrincipalOptions::AllowSystemIfLoaded;
-    }
-    if (!contentHandle->ValidatePrincipal(principal, options)) {
+    if (!contentHandle->ValidatePrincipal(principal)) {
       return IPC_FAIL(this,
                       "RecvFetchOp principal not allowed for remote type");
     }

@@ -26,8 +26,8 @@ bool ClientIsValidPrincipalInfo(const PrincipalInfo& aPrincipalInfo,
   }
   nsCOMPtr<nsIPrincipal> principal = result.unwrap();
 
-  // FIXME: Remove the system allowance once for non-inference processes once we
-  // can load documents with the system principal into content.
+  // FIXME: Remove the system allowance once we can load documents with the
+  // system principal into content.
   if (aLoadedOrigins &&
       NS_WARN_IF(!aLoadedOrigins->ValidatePrincipal(
           principal, {ValidatePrincipalOptions::AllowSystemIfLoaded}))) {

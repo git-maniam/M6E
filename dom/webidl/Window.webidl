@@ -133,9 +133,6 @@ interface nsIPrintSettings;
                     RTCPeerConnectionIceErrorEvent,
                     Sensor,
                     SensorErrorEvent,
-                    SpeechRecognitionAlternative,
-                    SpeechRecognitionResult,
-                    SpeechRecognitionResultList,
                     styleMedia,
                     StylePropertyMap,
                     StylePropertyMapReadOnly,
@@ -167,11 +164,6 @@ interface nsIPrintSettings;
                     webkitRequestFileSystem,
                     webkitResolveLocalFileSystemURL,
                     webkitRTCPeerConnection,
-                    webkitSpeechGrammar,
-                    webkitSpeechGrammarList,
-                    webkitSpeechRecognition,
-                    webkitSpeechRecognitionError,
-                    webkitSpeechRecognitionEvent,
                     webkitStorageInfo)]
 /*sealed*/ interface Window : EventTarget {
   // the current browsing context

@@ -17,14 +17,12 @@ ai:
         and engine-gecko unit on Android.
         Use with --artifact to speed up your trypush.
     paths: &ai-paths
-        - toolkit/components/ml/tests/
         - toolkit/components/pageextractor/
         - browser/components/aiwindow/
         - mobile/android/geckoview/src/androidTest/java/org/mozilla/geckoview/test/
         - mobile/android/android-components/components/browser/engine-gecko/
         - toolkit/components/places/
         - browser/components/urlbar/
-        - browser/components/tabbrowser/test/xpcshell/smarttabgrouping/
         - browser/components/genai/
         - toolkit/components/extensions/
         - toolkit/components/pdfjs/

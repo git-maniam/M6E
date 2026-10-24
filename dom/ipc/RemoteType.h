@@ -78,9 +78,6 @@ struct RemoteType {
     // Process used to host WebExtension content, including background scripts,
     // toplevel documents, and service workers.
     Extension,
-
-    // Process used to host inference models.
-    Inference,
   };
 
   // Static getter for the NotRemote remote type.
@@ -174,7 +171,6 @@ struct RemoteType {
   bool IsPrivilegedAbout() const { return mKind == Kind::PrivilegedAbout; }
   bool IsPrivilegedMozilla() const { return mKind == Kind::PrivilegedMozilla; }
   bool IsExtension() const { return mKind == Kind::Extension; }
-  bool IsInference() const { return mKind == Kind::Inference; }
   bool IsJitDisabled() const { return mDisableJit; }
 
   // Does this RemoteType support being created from a prealloc process?

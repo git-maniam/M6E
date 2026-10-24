@@ -11,8 +11,6 @@ DIRS += [
     "sqlite",
 ]
 
-DIRS += ["mozinference"]
-
 if CONFIG["MOZ_USING_WASM_SANDBOXING"]:
     DIRS += [
         "rlbox_wasm2c_sandbox",

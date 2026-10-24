@@ -2468,8 +2468,6 @@ modules:
       - machine_name: core_machine_learning_platform
         name: 'Machine Learning: Platform'
         includes:
-          - toolkit/components/aboutinference/
-          - toolkit/components/ml/
           - toolkit/components/pageextractor/
           - taskcluster/kinds/toolchain-symbols-upload/kind.yml
         meta:

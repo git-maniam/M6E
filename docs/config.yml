@@ -38,7 +38,6 @@ categories:
         - uriloader
         - widget/cocoa
         - widget/windows
-        - toolkit/components/ml
         - toolkit/components/pageextractor
         - accessible
         - media
@@ -253,7 +252,6 @@ js_source_paths:
     - toolkit/actors
     - toolkit/components/extensions
     - toolkit/components/extensions/parent
-    - toolkit/components/ml/content/backends/ONNXPipeline.mjs
     - toolkit/modules/BrowserUtils.sys.mjs
     - toolkit/mozapps/extensions
     - toolkit/components/prompts/src

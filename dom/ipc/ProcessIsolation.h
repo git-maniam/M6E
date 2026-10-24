@@ -152,8 +152,8 @@ enum class ValidatePrincipalOptions {
 
   // Allow the system principal if it is in the process' LoadedOriginSet.
   //
-  // This should only occur in the inference process, or when a legacy system
-  // principal chrome:// document has been forcibly loaded within this process.
+  // This should only occur when a legacy system principal chrome:// document
+  // has been forcibly loaded within this process.
   AllowSystemIfLoaded,
 
   // Don't check the LoadedOriginSet during this ValidatePrincipal call.

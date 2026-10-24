@@ -856,7 +856,6 @@ WEBIDL_FILES = [
     "OfflineAudioContext.webidl",
     "OffscreenCanvas.webidl",
     "OffscreenCanvasRenderingContext2D.webidl",
-    "ONNX.webidl",
     "OscillatorNode.webidl",
     "PaintRequest.webidl",
     "PaintRequestList.webidl",
@@ -1150,11 +1149,6 @@ WEBIDL_FILES = [
     "XSLTProcessor.webidl",
 ]
 
-# Native llama.cpp for ml engine.
-WEBIDL_FILES += [
-    "LlamaRunner.webidl",
-]
-
 if CONFIG["MOZ_WEBRTC"]:
     WEBIDL_FILES += [
         "PeerConnectionImpl.webidl",
@@ -1196,20 +1190,6 @@ if CONFIG["MOZ_WEBSPEECH"]:
         "SpeechSynthesisEvent.webidl",
         "SpeechSynthesisUtterance.webidl",
         "SpeechSynthesisVoice.webidl",
-    ]
-
-    # The speech recognition backend (mudler/parakeet.cpp, backends/llama)
-    # isn't built on Android; see dom/media/webspeech/moz.build.
-    WEBIDL_FILES += [
-        "SpeechGrammar.webidl",
-        "SpeechGrammarList.webidl",
-        "SpeechRecognition.webidl",
-        "SpeechRecognitionAlternative.webidl",
-        "SpeechRecognitionErrorEvent.webidl",
-        "SpeechRecognitionEvent.webidl",
-        "SpeechRecognitionPhrase.webidl",
-        "SpeechRecognitionResult.webidl",
-        "SpeechRecognitionResultList.webidl",
     ]
 
 WEBIDL_FILES += [
@@ -1331,10 +1311,6 @@ if CONFIG["MOZ_WEBSPEECH"]:
     GENERATED_EVENTS_WEBIDL_FILES += [
         "SpeechSynthesisErrorEvent.webidl",
         "SpeechSynthesisEvent.webidl",
-    ]
-
-    GENERATED_EVENTS_WEBIDL_FILES += [
-        "SpeechRecognitionEvent.webidl",
     ]
 
 if CONFIG["ACCESSIBILITY"]:

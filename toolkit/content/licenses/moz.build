@@ -426,11 +426,6 @@ if CONFIG["MOZ_JXL"]:
     ]
 
 
-# The ONNX Runtime is a prebuilt library with no directory in the tree to hang a
-# LICENSED_UNDER off, so its shipped file name is named here per platform.
-if CONFIG["ONNX_RUNTIME"]:
-    LICENSES["mit"].paths += ["libonnxruntime.dylib"]
-
 LICENSES += ["nicer"]
 LICENSES["nicer"].title = "nICEr License"
 LICENSES["nicer"].text = "nicer.txt"
