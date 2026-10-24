@@ -32,7 +32,6 @@ add_task(async function test_themes_mode_visibility() {
     ["extension", false],
     ["locale", false],
     ["plugin", false],
-    ["mlmodel", false],
     ["dictionary", false],
     ["sitepermission", false],
     ["theme", true],
