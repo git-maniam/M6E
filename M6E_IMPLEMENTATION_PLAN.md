@@ -290,7 +290,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
 **Checkpoint (2026-10-24):** Phase 4 is complete. Phase 5 has started.
-- **Running:** the full profile-guided rebuild for D25 (`artifacts/P5.0-build.log`; `DNSPacket.cpp` changed, so all three stages run). If the session drops, rerun `./mach build`.
+- **Running:** the clean three-stage profile-guided rebuild with the corrected D25 fix (`artifacts/P5.0-build.log`, about 80 minutes). If the session drops, rerun `./mach clobber` and then `./mach build`.
 - **Prepared in parallel** (a workflow of six agents on disjoint files, each independently reviewed; see the P5 results below as they are integrated): DMG layout, ad-hoc signing script, acceptance script, memory investigation, merge tooling, DNS-blocking test.
 - **Saved builds for A/B work:** `artifacts/baseline-P4.1`, `build-P4.2a`, `build-P4.2b` and `build-P4.9` (the finished build before the D25 change).
 - **After the build:** P5.0 (check D25 on the new binary and run its xpcshell test), P5.1 (package, sign, DMG), P5.2 (run `tools/m6e/acceptance.py` on the packaged app), P5.3 (document the merge procedure), then P6.1.
@@ -606,6 +606,12 @@ Each is the recommended option. The user reviews these in the Summary of Complet
 | # | Decision | Alternatives | Why this one |
 |---|---|---|---|
 | A1 | Proceed through Phase 5 without asking questions | Pause for each choice | The user asked for recommended decisions while away |
+| A2 | Reset the build output with `./mach clobber` and rebuild all three PGO stages, after the first Phase 5 build failed at the final ThinLTO link (`ProfileSummary: IDs have conflicting values`) | Delete only the final-stage object files (blocked by the permission classifier as bulk deletion; also hackier); keep the old build and skip the fix | The profile run regenerates the profile data, and make doesn't track it as a dependency, so a partial rebuild mixes objects built against two profiles. A clean build is the only deterministic fix. It costs about 80 minutes of unattended time. |
+| A3 | Apply the D25 DNS fix in `DNSPacket.cpp` as the review agent proposed (skip all-zero A and AAAA answers), instead of keeping my first version | Keep the first version | I verified in the source that the first version never ran: `DOHresp::Add` rejects `0.0.0.0`, and `DecodeInternal` returned that error before reading the extended DNS error. |
+
+### Build notes learned in Phase 5
+- **PGO and incremental builds don't mix.** Any C++ change reruns all three stages, and the profile run regenerates `obj-m6e/instrumented/merged.profdata`. The final stage then compiles only the changed files against the new profile, and the ThinLTO link fails with `ProfileSummary: IDs have conflicting values`. Fix: `./mach clobber` before the build. For front-end-only changes use `make -C obj-m6e/faster`, which needs no compile.
+- **D25 needed two C++ changes.** `hardFail()` has to list the extended errors 15 and 16, and `DecodeInternal` has to skip the all-zero address, or it fails before it reads the error (see the A3 row above).
 
 ### After Phase 5
 - **P6.1 Delete the dormant features (D30):**
