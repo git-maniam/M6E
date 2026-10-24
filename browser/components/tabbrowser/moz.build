@@ -22,7 +22,6 @@ MOZ_SRC_FILES += [
     "GroupsList.sys.mjs",
     "NewTabPagePreloading.sys.mjs",
     "OpenInTabsUtils.sys.mjs",
-    "SmartTabGrouping.sys.mjs",
     "Tabbrowser.sys.mjs",
     "TabMetrics.sys.mjs",
     "TabsList.sys.mjs",
@@ -35,11 +34,7 @@ TESTING_JS_MODULES += [
 
 BROWSER_CHROME_MANIFESTS += [
     "test/browser/dragdrop/browser.toml",
-    "test/browser/smarttabgrouping/browser.toml",
-    "test/browser/smarttabgrouping/performance/perftest.toml",
     "test/browser/statuspanel/browser.toml",
     "test/browser/tabMediaIndicator/browser.toml",
     "test/browser/tabs/browser.toml",
 ]
-
-XPCSHELL_TESTS_MANIFESTS += ["test/xpcshell/smarttabgrouping/xpcshell.toml"]

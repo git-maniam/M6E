@@ -4,8 +4,6 @@
 
 :root {
   --tabstrip-inner-border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-  --tab-group-suggestions-loading-animation-color-1: color-mix(in srgb, currentColor 5%, transparent);
-  --tab-group-suggestions-loading-animation-color-2: color-mix(in srgb, currentColor 35%, transparent);
   --tab-min-height: 32px;
   /* Size and padding shared by the close and audio buttons in .tab-content.
      The padding keeps their 12px icons in a 12px content box. Pinned and
@@ -2383,9 +2381,9 @@ tab-group {
       pointer-events: none;
     }
 
-    /* Hide all toolbarseparators except the tab group suggestions one.
+    /* Hide all toolbarseparators.
      * Remove this rule and the toolbarseparators post-Nova (Bug 2056954). */
-    toolbarseparator:not(#tab-group-suggestions-separator) {
+    toolbarseparator {
       display: none;
     }
 
@@ -2403,10 +2401,6 @@ tab-group {
       margin-block-start: var(--space-small);
       margin-inline: var(--panel-menuitem-margin-inline);
     }
-  }
-
-  &.tab-group-editor-panel-expanded {
-    --panel-width: 25em;
   }
 
   &.tab-group-editor-mode-create .tab-group-edit-mode-only,
@@ -3476,133 +3470,11 @@ toolbar:not(#TabsToolbar) #firefox-view-button {
   padding-top: var(--space-medium);
 }
 
-#tab-group-default-actions,
-#tab-group-suggestions-load-actions,
-#tab-group-suggestion-button,
-#tab-group-suggestions-message-container {
+#tab-group-default-actions {
   display: none;
 }
 
-#tab-group-suggestions-heading,
 #tab-group-main,
-#tab-group-suggestions-separator,
-#tab-group-suggestions-load-actions,
-#tab-group-suggestions-loading,
-#tab-group-default-actions,
-#tab-group-suggestion-button {
+#tab-group-default-actions {
   display: flex;
-}
-
-#tab-group-suggestions-message-container,
-#tab-group-suggestions-container {
-  display: block;
-}
-
-#tab-group-suggestions-disclaimer > a {
-  display: inline;
-  color: inherit;
-}
-
-#tab-group-suggestions-disclaimer {
-  display: initial;
-}
-
-#tab-group-select-checkbox {
-  margin-top: 0.5em;
-}
-
-#tab-group-suggestion-button {
-  --button-border-color-ghost: var(--border-color-selected);
-  color: var(--color-accent-primary);
-  width: auto;
-  padding: 0;
-  @media -moz-pref("browser.nova.enabled") {
-    padding-block-start: var(--space-medium);
-  }
-
-  &:hover {
-    --button-border-color-ghost-hover: var(--border-color-selected);
-  }
-}
-
-#tab-group-suggestions {
-  margin-inline-start: var(--space-xlarge);
-  margin-block-start: var(--space-xlarge);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xlarge);
-}
-
-#tab-group-suggestions-loading {
-  gap: 4px;
-  flex-direction: column;
-  margin: 0 8px 8px;
-}
-
-#tab-group-suggestions-message-container {
-  --button-opacity-disabled: 1;
-  color: inherit;
-  font-size: 0.85em;
-  margin-bottom: var(--space-medium);
-  & > p {
-    margin-top: 0;
-    padding-inline: 35px var(--space-medium);
-  }
-}
-
-#tab-group-suggestions-container,
-#tab-group-suggestions-optin-container {
-  margin: var(--panel-menuitem-margin);
-  @media -moz-pref("browser.nova.enabled") {
-    margin-block-start: var(--space-medium);
-  }
-}
-
-.tab-group-suggestions-loading-header,
-#tab-group-suggestions-header {
-  margin: 8px 0;
-}
-
-@keyframes tab-group-loading-block-animation {
-  0% {
-    background-position: 200% 0;
-  }
-
-  50% {
-    background-position: 0 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.tab-group-suggestions-loading-block:nth-of-type(2) {
-  animation-delay: 0.1s;
-}
-.tab-group-suggestions-loading-block:nth-of-type(3) {
-  animation-delay: 0.2s;
-}
-.tab-group-suggestions-loading-block:nth-of-type(4) {
-  animation-delay: 0.3s;
-}
-
-.tab-group-suggestions-loading-block {
-  animation: tab-group-loading-block-animation 3s infinite;
-  outline-color: var(--tab-group-suggestions-loading-animation-color-1);
-  border-color: var(--tab-group-suggestions-loading-animation-color-2);
-  background: linear-gradient(
-    100deg,
-    color-mix(in srgb, var(--tab-group-suggestions-loading-animation-color-2), transparent 60%) 30%,
-    var(--tab-group-suggestions-loading-animation-color-1) 50%,
-    color-mix(in srgb, var(--tab-group-suggestions-loading-animation-color-2), transparent 60%) 70%
-  );
-  background-size: 200% 100%;
-  border-radius: var(--border-radius-small);
-  height: 1.5em;
-  margin: 0;
-  margin-bottom: 0.5em;
-  padding: 0;
-  white-space: nowrap;
-  width: 100%;
 }
