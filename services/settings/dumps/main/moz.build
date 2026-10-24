@@ -5,7 +5,6 @@
 if CONFIG["MOZ_BUILD_APP"] == "browser":
     # These collections are only referenced from browser/
     FINAL_TARGET_FILES.defaults.settings.main += [
-        "ai-window-prompts.json",
         "language-dictionaries.json",
         "newtab-section-layouts.json",
         "newtab-sections-ordering.json",
