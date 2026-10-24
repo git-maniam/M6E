@@ -19,7 +19,6 @@ tasks-from:
     - python-wheels.yml
     - toolchain-clang-tidy-external.yml
     - toolchains.yml
-    - translations-fetch.yml
     - updatebot.yml
     - onnxruntime.yml
     - onnxruntime-web-fetch.yml
