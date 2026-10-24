@@ -121,7 +121,7 @@ add_task(async function test_no_alltabs_button_with_other_widgets() {
     [CustomizableUI.AREA_TABSTRIP]: [
       "tabbrowser-tabs",
       "new-tab-button",
-      "smartwindow-group-tabs-button",
+      "ext2-browser-action",
       "ext1-browser-action",
     ],
   });
@@ -130,7 +130,7 @@ add_task(async function test_no_alltabs_button_with_other_widgets() {
     [
       "tabbrowser-tabs",
       "new-tab-button",
-      "smartwindow-group-tabs-button",
+      "ext2-browser-action",
       "ext1-browser-action",
       SPRING,
     ],

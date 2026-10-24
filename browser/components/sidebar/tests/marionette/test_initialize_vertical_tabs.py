@@ -142,8 +142,6 @@ class TestInitializeVerticalTabs(MarionetteTestCase):
                 "new-tab-button",
                 "spring",
                 "alltabs-button",
-                "smartwindow-group-tabs-button",
-                "ai-window-toggle",
             ],
             msg="The tabstrip was populated with the expected defaults",
         )

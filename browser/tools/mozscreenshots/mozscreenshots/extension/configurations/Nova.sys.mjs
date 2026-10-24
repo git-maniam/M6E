@@ -199,28 +199,6 @@ export var Nova = {
       },
     },
 
-    // B02 - Classic Window / Smart Window switcher open
-    switcherMenu: {
-      selectors: [":root"],
-      async applyConfig() {
-        let win = await reset();
-        await navigateTo(win, HOME_PAGE);
-        Services.prefs.setBoolPref("browser.smartwindow.enabled", true);
-        await TestUtils.waitForCondition(
-          () => !win.document.getElementById("ai-window-toggle")?.hidden,
-          "waiting for the window switcher button"
-        );
-        let button = win.document.getElementById("ai-window-toggle");
-        let view = win.PanelMultiView.getViewNode(
-          win.document,
-          "ai-window-toggle-view"
-        );
-        let viewShown = lazy.BrowserTestUtils.waitForEvent(view, "ViewShown");
-        button.click();
-        await viewShown;
-      },
-    },
-
     // B04 - Tab chrome: mute control hovered on an audio-playing tab
     tabMuteHover: {
       selectors: [":root"],
@@ -651,7 +629,6 @@ async function reset() {
     "ui.useAccessibilityTheme",
     "browser.display.document_color_use",
     "browser.aboutwelcome.enabled",
-    "browser.smartwindow.enabled",
   ]) {
     Services.prefs.clearUserPref(pref);
   }
