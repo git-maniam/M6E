@@ -2793,20 +2793,6 @@ export var XPIProvider = {
 
       resolveProviderReady(Promise.all(this.startupPromises));
 
-      if (AppConstants.MOZ_CRASHREPORTER) {
-        // Annotate the crash report with relevant add-on information.
-        try {
-          // The `EMCheckCompatibility` annotation represents a boolean, but
-          // we've historically set it as a string so keep doing it for the
-          // time being.
-          Services.appinfo.annotateCrashReport(
-            "EMCheckCompatibility",
-            AddonManager.checkCompatibility.toString()
-          );
-        } catch (e) {}
-        this.addAddonsToCrashReporter();
-      }
-
       try {
         Glean.addonsManager.startupTimeline.XPI_bootstrap_addons_begin.set(
           Services.telemetry.msSinceProcessStart()

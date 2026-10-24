@@ -199,8 +199,6 @@ export var Troubleshoot = {
       }
     });
   },
-
-  kMaxCrashAge: 3 * 24 * 60 * 60 * 1000, // 3 days
 };
 
 // Each data provider is a name => function mapping.  When a snapshot is
@@ -1081,23 +1079,6 @@ var dataProviders = {
     done(inspected);
   },
 };
-
-if (AppConstants.MOZ_CRASHREPORTER) {
-  dataProviders.crashes = function crashes(done) {
-    const { CrashReports } = ChromeUtils.importESModule(
-      "moz-src:///toolkit/crashreporter/CrashReports.sys.mjs"
-    );
-    let reports = CrashReports.getReports();
-    let now = new Date();
-    let reportsNew = reports.filter(
-      report => now - report.date < Troubleshoot.kMaxCrashAge
-    );
-    let reportsSubmitted = reportsNew.filter(report => !report.pending);
-    let reportsPendingCount = reportsNew.length - reportsSubmitted.length;
-    let data = { submitted: reportsSubmitted, pending: reportsPendingCount };
-    done(data);
-  };
-}
 
 if (AppConstants.MOZ_SANDBOX) {
   dataProviders.sandbox = function sandbox(done) {

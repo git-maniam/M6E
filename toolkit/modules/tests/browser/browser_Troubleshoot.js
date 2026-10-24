@@ -214,37 +214,6 @@ const SNAPSHOT_SCHEMA = {
         },
       },
     },
-    crashes: {
-      required: false,
-      type: "object",
-      properties: {
-        pending: {
-          required: true,
-          type: "number",
-        },
-        submitted: {
-          required: true,
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              id: {
-                required: true,
-                type: "string",
-              },
-              date: {
-                required: true,
-                type: "number",
-              },
-              pending: {
-                required: true,
-                type: "boolean",
-              },
-            },
-          },
-        },
-      },
-    },
     addons: {
       required: true,
       type: "array",

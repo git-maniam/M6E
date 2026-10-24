@@ -120,11 +120,6 @@ if (
   );
 }
 
-if (AppConstants.MOZ_CRASHREPORTER) {
-  startupPhases["before handling user events"].denylist.modules.add(
-    "moz-src:///toolkit/crashreporter/CrashSubmit.sys.mjs"
-  );
-}
 // Bug 1798750
 if (AppConstants.platform != "linux") {
   startupPhases["before handling user events"].denylist.modules.add(
