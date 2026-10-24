@@ -1129,18 +1129,6 @@ export var PlacesDBUtils = {
       },
 
       {
-        distribution: Glean.places.databaseSemanticHistoryFilesize,
-        async callback() {
-          let semanticDbPath = PathUtils.join(
-            PathUtils.profileDir,
-            "places_semantic.sqlite"
-          );
-          let info = await IOUtils.stat(semanticDbPath);
-          return Math.floor(info.size / BYTES_PER_MEBIBYTE);
-        },
-      },
-
-      {
         distribution: Glean.places.annosPagesCount,
         query: "SELECT count(*) FROM moz_annos",
       },

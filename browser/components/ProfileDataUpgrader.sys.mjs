@@ -985,15 +985,6 @@ export let ProfileDataUpgrader = {
       Services.prefs.clearUserPref("widget.macos.native-anchored-select");
     }
 
-    if (existingDataVersion < 172) {
-      if (Services.prefs.getBoolPref("browser.smartwindow.enabled", false)) {
-        Services.prefs.setBoolPref(
-          "places.semanticHistory.smartwindow.featureGate",
-          true
-        );
-      }
-    }
-
     // The migration for 173 was applied in Nightly but was removed
     // for causing failures Bug 2043185
 
