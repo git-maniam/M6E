@@ -144,7 +144,6 @@ def subs(ctx):
     processed = [
         # AppConstants.sys.mjs has a (better) manually created declaration file.
         "dist/bin/modules/Readerable.sys.mjs",
-        "toolkit/components/nimbus/FeatureManifest.sys.mjs",
         "toolkit/components/promiseworker/worker/PromiseWorker.js",
         "toolkit/components/promiseworker/worker/PromiseWorker.mjs",
         "toolkit/components/resistfingerprinting/RFPTargetConstants.sys.mjs",

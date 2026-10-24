@@ -205,7 +205,6 @@ export default [
       "testing/**",
       "toolkit/actors/NetErrorParent.sys.mjs",
       "toolkit/components/aboutcheckerboard/content/aboutCheckerboard.js",
-      "toolkit/components/backgroundtasks/BackgroundTask_message.sys.mjs",
       "toolkit/components/backgroundtasks/BackgroundTasksTestUtils.sys.mjs",
       "toolkit/components/credentialmanagement/IdentityCredentialPromptService.sys.mjs",
       "toolkit/components/ml/content/MLEngine.worker.mjs",
