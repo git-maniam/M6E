@@ -104,7 +104,6 @@ user_pref("media.webspeech.synth.dont_notify_on_error", true);
 // Turn off update
 user_pref("app.update.disabledForTesting", true);
 
-// Turn off remote settings improvements and nimbus
-user_pref("nimbus.rollouts.enabled", false);
+// Turn off remote settings improvements
 user_pref("app.shield.optoutstudies.enabled", false);
 user_pref("services.sync.prefs.sync.app.shield.optoutstudies.enabled", false);

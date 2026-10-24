@@ -1407,8 +1407,6 @@ pref("accessibility.typeaheadfind.timeout", 5000);
 pref("accessibility.typeaheadfind.linksonly", false);
 pref("accessibility.typeaheadfind.flashBar", 1);
 
-// Whether we had to hide the "Firefox Labs" section because it would be empty.
-pref("browser.preferences.experimental.hidden", false);
 // Whether we show the "More from Mozilla" section.
 pref("browser.preferences.moreFromMozilla", true);
 // Whether we show the "AI Controls" pane.
@@ -1706,7 +1704,6 @@ pref("services.sync.prefs.sync.media.eme.enabled", true);
 pref("services.sync.prefs.sync-seen.media.eme.enabled", false);
 pref("services.sync.prefs.sync.media.videocontrols.picture-in-picture.video-toggle.enabled", true);
 pref("services.sync.prefs.sync.network.cookie.cookieBehavior", true);
-pref("services.sync.prefs.sync.nimbus.rollouts.enabled", true);
 pref("services.sync.prefs.sync.permissions.default.image", true);
 pref("services.sync.prefs.sync.pref.downloads.disable_button.edit_actions", true);
 pref("services.sync.prefs.sync.pref.privacy.disable_button.cookie_exceptions", true);
@@ -2107,43 +2104,8 @@ pref("browser.nova.enabled", true);
 // Disable singleProfile messaging mitigation (Bug 1963213) for multiProfile feature users
 pref("messaging-system.profile.singleProfileMessaging.disable", true);
 
-// Experiment Manager
 // See Console.sys.mjs LOG_LEVELS for all possible values
 pref("messaging-system.log", "warn");
-pref("messaging-system.rsexperimentloader.collection_id", "nimbus-desktop-experiments");
-pref("nimbus.debug", false);
-pref("nimbus.validation.enabled", true);
-pref("nimbus.firstUpdateComplete", false);
-
-// Should Nimbus write to the shared ProfilesDatastoreService? Only used by tests.
-// TODO(bug 1967779): Require the ProfileDatastoreService by default and remove
-// this pref.
-pref("nimbus.profilesdatastoreservice.enabled", true);
-
-// Should Nimbus read from the shared ProfilesDatastoreService?
-// TODO(bug 2032586): Remove this pref.
-pref("nimbus.profilesdatastoreservice.read.enabled", true);
-
-// Should Nimbus sync experiment unenrollments from other profiles?
-// TODO(bug 2032586): Remove this pref.
-pref("nimbus.profilesdatastoreservice.sync.enabled", true);
-
-// Enable the targeting context telemetry by default, but allow it to be
-// disabled, e.g., for artifact builds.
-// See-also: https://bugzilla.mozilla.org/show_bug.cgi?id=1936317
-// See-also: https://bugzilla.mozilla.org/show_bug.cgi?id=1936319
-#if defined(MOZ_ARTIFACT_BUILDS)
-  pref("nimbus.telemetry.targetingContextEnabled", false);
-#else
-  pref("nimbus.telemetry.targetingContextEnabled", true);
-#endif
-
-// Enable Rollouts by default.
-pref("nimbus.rollouts.enabled", true);
-
-// Nimbus QA prefs. Used to monitor pref-setting test experiments.
-pref("nimbus.qa.pref-1", "default");
-pref("nimbus.qa.pref-2", "default");
 
 // Startup Crash Tracking
 // number of startup crashes that can occur before starting into safe mode automatically
