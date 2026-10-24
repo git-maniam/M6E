@@ -520,3 +520,12 @@ split-view-menuitem-close-both-tabs =
     .label = Close Both Tabs
 
 ##
+
+## Model opt-in component used by tab group suggestions
+
+tabbrowser-model-optin-continue =
+    .label = Continue
+tabbrowser-model-optin-optout =
+    .label = Cancel
+tabbrowser-model-optin-cancel =
+    .label = Cancel

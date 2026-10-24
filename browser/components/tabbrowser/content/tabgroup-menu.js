@@ -25,7 +25,7 @@
   });
 
   ChromeUtils.importESModule(
-    "chrome://browser/content/genai/content/model-optin.mjs",
+    "chrome://browser/content/tabbrowser/model-optin.mjs",
     {
       global: "current",
     }

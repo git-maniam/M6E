@@ -44,9 +44,9 @@ class ModelOptin extends MozLitElement {
     this.isLoading = false;
     this.isHidden = false;
     this.iconAtEnd = false;
-    this.optinButtonL10nId = "genai-model-optin-continue";
-    this.optoutButtonL10nId = "genai-model-optin-optout";
-    this.cancelDownloadButtonL10nId = "genai-model-optin-cancel";
+    this.optinButtonL10nId = "tabbrowser-model-optin-continue";
+    this.optoutButtonL10nId = "tabbrowser-model-optin-optout";
+    this.cancelDownloadButtonL10nId = "tabbrowser-model-optin-cancel";
     this.footerMessageL10nId = "";
   }
 
@@ -91,7 +91,7 @@ class ModelOptin extends MozLitElement {
     return html`
       <link
         rel="stylesheet"
-        href="chrome://browser/content/genai/content/model-optin.css"
+        href="chrome://browser/content/tabbrowser/model-optin.css"
       />
       <section ?hidden=${this.isHidden} class="optin-wrapper">
         ${this.isLoading
