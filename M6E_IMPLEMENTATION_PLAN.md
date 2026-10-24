@@ -292,7 +292,16 @@ Don't start the next step until the current one builds and checks out. Split a s
 
 **Checkpoint (2026-10-24, Phase 6 in progress):** P6.0 is under way. The mozconfig builds without LTO and PGO for this phase. A clean build of the unchanged tree is running (`artifacts/p6/dev-build-0.log`).
 - **Parallel stage running:** the workflow `m6e-phase6-analyse-and-prepare` runs per feature: analyst (`artifacts/p6/analysis/<key>.md`), independent critic (appends an addendum), preparer in a git worktree (branch `m6e-p6/<name>`, notes in `artifacts/p6/prep/<key>.md`), then up to three reviewer/fixer rounds. No builds in this stage. Branches are local only.
-- **Next:** when the baseline build finishes, run the baseline tests (`tools/m6e/run_tests.sh`, results in `artifacts/p6/baseline`). Then integrate one branch at a time in the order of the table below (P6.1a to P6.1i): cherry-pick, build, run the feature's suites, compare with the baseline, commit `M6E P6.1x: …`, push.
+- **P6.0 baseline done (2026-10-24):** the unchanged tree builds (a first build attempt was killed by SIGTERM from outside; `./mach build` resumed it), and `tools/m6e/run_tests.sh` ran into `artifacts/p6/baseline` (summary in `summary.txt`, failing tests in `failures.txt`).
+  - **Clean suites:** m6e-own, nimbus (33 passed), trustpanel (498 passed).
+  - **Failures already present before Phase 6, so not caused by it:**
+    - security: `https-only/test_resource_upgrade.html` and `browser_console_logging.js` (a websocket upgrade test, and a test that reaches `does.not.exist`).
+    - reader: `browser_localfile_readerMode.js` (symlinked test files, known).
+    - modules: `test_GMPInstallManager.js`, `test_Region.js`, `test_Region_geocoding.js`, `test_Services.js`.
+    - policies: 4 failures plus a timeout in `test_extensionsettings.js`; two errors are `Cc['@mozilla.org/updates/update-checker;1'] is undefined` (the updater is absent in this build), so P6.1g must not change the count.
+    - pagetelemetry: `browser_m6e_page_telemetry.js` (3 failed assertions: `test_panel_values`).
+  - **Rule:** a feature passes integration if no suite fails a test that isn't in this list.
+- **Next:** integrate one branch at a time in the order of the table below (P6.1a to P6.1i): cherry-pick, build, run the feature's suites, compare with the baseline, commit `M6E P6.1x: …`, push.
 - **Phases 0 to 5 are complete.** Release artifact: `artifacts/release/M6E-161.0a1-macos-arm64.dmg`, rebuilt by `tools/m6e/package/release.sh`. After Phase 6: upstream merges (P5.3 tooling).
 - **Checked on 2026-10-24 with the screen unlocked:** the DMG in Finder, the app installed from the DMG into `/Applications` and launched through LaunchServices, and the two panel suites (10 + 498 passes, 0 failures). See "Phase 5 results".
 - **Needs the user:** decide on a Developer ID and notarization (US$99 a year); skim `tools/m6e/merge/nightly-prefs-reviewed.txt`; test a real download on a second Mac; look at real macOS Dark Mode (menus, dialogs, PDF). Details in "Phase 5 results" and "Decisions taken while the user was away".
