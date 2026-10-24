@@ -2728,19 +2728,6 @@
       }
     },
 
-    "IPProtectionAvailable": {
-      "type": "boolean",
-      "x-category": "Network security",
-      "x-compatibility": {
-        "firefox": { "version_added": "149" },
-        "firefox_esr": { "version_added": "153" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Control whether Firefox's built-in IP Protection (VPN) is available to users. When disabled, the feature is turned off and cannot be used.",
-      "examples": [false]
-    },
-
     "LegacyProfiles": {
       "type": "boolean",
       "x-category": "Miscellaneous",

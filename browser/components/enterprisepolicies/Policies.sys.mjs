@@ -2448,17 +2448,6 @@ export var Policies = {
     },
   },
 
-  IPProtectionAvailable: {
-    onBeforeAddons(manager, param) {
-      if (!param) {
-        lazy.PoliciesUtils.setAndLockPref(
-          "browser.ipProtection.enabled",
-          false
-        );
-      }
-    },
-  },
-
   LegacyProfiles: {
     // Handled in nsToolkitProfileService.cpp (Windows only)
   },

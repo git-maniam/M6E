@@ -63,7 +63,6 @@ export const BLOCKED_ACTION_ONLY_ACTIONS = new Set([
   "SHOW_FIREFOX_ACCOUNTS",
   "FXA_SIGNIN_FLOW",
   "FXA_AIWINDOW_SIGNIN_FLOW",
-  "IPPROTECTION_ENROLL",
   "CREATE_NEW_SELECTABLE_PROFILE",
 
   // Offers to erase the user's profile data and restart the browser.

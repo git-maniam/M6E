@@ -44,8 +44,6 @@ run-if = [
 
 ["browser_sma_handle_multiaction.js"]
 
-["browser_sma_ipprotection_enroll.js"]
-
 ["browser_sma_launch_on_login.js"]
 run-if = [
   "os == 'win'",

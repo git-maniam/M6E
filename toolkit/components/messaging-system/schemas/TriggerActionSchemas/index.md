@@ -65,9 +65,6 @@ targeting, use separate messages instead.
 - [`onSearch`](#onsearch)
 - [`sidebarToolOpened`](#sidebartoolopened)
 - [`elementClicked`](#elementclicked)
-- [`ipProtectionReady`](#ipprotectionready)
-- [`ipProtectionPanelClosed`](#ipprotectionpanelclosed)
-- [`ipProtectionBandwidthReset`](#ipprotectionbandwidthreset)
 - [`selectableProfilesUpdated`](#selectableprofilesupdated)
 - [`smartWindowNewTab`](#smartwindownewtab)
 - [`nimbusUpdate`](#nimbusupdate)
@@ -597,45 +594,6 @@ The `elementId` string context variable is also available in targeting, and will
     params: ["element1-id", "element2-id"]
   },
   targeting: "elementId == 'element1-id'"
-}
-```
-
-### `ipProtectionReady`
-
-Fired once the IP protection widget is created and available. Used as a trigger for the IP protection feature introduction callout, which anchors to the widget.
-
-Targets users with the `browser.ipProtection.enabled` pref set to true, along with frequency caps.
-
-```js
-
-{
-  trigger: { "ipProtectionReady" },
-  targeting: "'browser.ipProtection.enabled' | preferenceValue && !(messageImpressions.IP_PROTECTION_INTRODUCTION_CALLOUT[messageImpressions.IP_PROTECTION_INTRODUCTION_CALLOUT | length - 1] < currentDate|date - (3600000 * 24))",
-
-}
-```
-
-### `ipProtectionPanelClosed`
-
-Fires on close of the IP Protection Panel. Can be used to trigger messages or actions after the user closes the IP protection panel.
-
-The `hasUsedSiteExceptions` boolean context variable is available in targeting, and will evaluate to true if the user has added a site to their exceptions list either in-panel or at about:settings.
-
-```js
-{
-  trigger: { id: "ipProtectionPanelClosed" },
-  targeting: "!hasUsedSiteExceptions",
-}
-```
-
-### `ipProtectionBandwidthReset`
-
-Fires when the IP protection bandwidth quota resets at the start of a new month.
-
-```js
-{
-  trigger: { id: "ipProtectionBandwidthReset" },
-  targeting: "'browser.ipProtection.userEnableCount' | preferenceValue > 0",
 }
 ```
 

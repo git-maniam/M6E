@@ -22,7 +22,6 @@ pref("browser.aboutwelcome.enabled", false, locked);
 
 // The Mozilla VPN integration (IP Protection) is removed.
 pref("browser.ipProtection.enabled", false, locked);
-pref("browser.ipProtection.blockIPProtectionCallouts", true, locked);
 
 // Telemetry and data collection are off and cannot be turned back on. The
 // upload prefs are defined here because builds without health reporting
