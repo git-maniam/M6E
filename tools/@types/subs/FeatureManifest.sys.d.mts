@@ -6244,37 +6244,6 @@ export const FeatureManifest: {
             };
         };
     };
-    ipProtection: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            enabled: {
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-                description: string;
-            };
-            bandwidthMax: {
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-                description: string;
-            };
-            upgradeNotAvailable: {
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-                description: string;
-            };
-        };
-    };
     webApps: {
         description: string;
         owner: string;

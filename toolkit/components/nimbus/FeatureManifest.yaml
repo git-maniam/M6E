@@ -5927,33 +5927,6 @@ fireButton:
         that can delete everything or open the clear browsing data dialog.
         "direct" opens the clear browsing data dialog.
 
-ipProtection:
-  description: Prefs to control IP Protection feature
-  owner: fchasen@mozilla.com
-  hasExposure: false
-  variables:
-    enabled:
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.ipProtection.enabled
-      description: >-
-        Enables the IP Protection feature.
-    bandwidthMax:
-      type: int
-      setPref:
-        branch: default
-        pref: browser.ipProtection.bandwidth.maxInGb
-      description: >-
-        Maximum bandwidth allowance in GB for messaging.
-    upgradeNotAvailable:
-      type: boolean
-      setPref:
-        branch: default
-        pref: browser.ipProtection.upgradeNotAvailable
-      description: >-
-        Hides Mozilla VPN promotions for users in regions where it is unavailable
-
 webApps:
   description: Enables or disables web apps.
   owner: nrishel@mozilla.com
