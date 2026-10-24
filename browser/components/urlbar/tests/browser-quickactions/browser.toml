@@ -17,5 +17,3 @@ support-files = ["!/toolkit/content/tests/browser/audio.ogg"]
 ["browser_screenshot.js"]
 
 ["browser_tab_refocus.js"]
-
-["browser_translate.js"]
