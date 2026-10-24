@@ -33,7 +33,7 @@ add_task(async function () {
   gBrowser.tabContainer.setAttribute("noshadowfortests", "true");
 
   await ensureNoPreloadedBrowser();
-  await disableFxaBadge();
+  await disableToolbarBadge();
   await ensureSearchIconVisible();
 
   // The test starts on about:blank and opens an about:blank

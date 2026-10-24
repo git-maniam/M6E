@@ -32,8 +32,8 @@ const TEST_DEFAULT_CONTENT = [
       secondary_button_top: {
         label: "link top",
         action: {
-          type: "SHOW_FIREFOX_ACCOUNTS",
-          data: { entrypoint: "test" },
+          type: "OPEN_URL",
+          data: { args: "https://example.com/", where: "tab" },
         },
       },
     },

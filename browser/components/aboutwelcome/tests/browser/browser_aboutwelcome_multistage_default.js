@@ -23,8 +23,8 @@ const TEST_DEFAULT_CONTENT = [
       secondary_button_top: {
         label: "link top",
         action: {
-          type: "SHOW_FIREFOX_ACCOUNTS",
-          data: { entrypoint: "test" },
+          type: "OPEN_URL",
+          data: { args: "https://example.com/", where: "tab" },
         },
       },
       info_text: {
@@ -427,7 +427,7 @@ add_task(async function test_AWMultistage_Secondary_Open_URL_Action() {
   Assert.greaterOrEqual(
     callCount,
     2,
-    `${callCount} Stub called twice to handle FxA open URL and Telemetry`
+    `${callCount} Stub called twice to handle open URL and Telemetry`
   );
 
   let actionCall;
@@ -449,18 +449,13 @@ add_task(async function test_AWMultistage_Secondary_Open_URL_Action() {
   );
   Assert.equal(
     actionCall.args[1].type,
-    "SHOW_FIREFOX_ACCOUNTS",
-    "Special action SHOW_FIREFOX_ACCOUNTS event handled"
+    "OPEN_URL",
+    "Special action OPEN_URL event handled"
   );
   Assert.equal(
-    actionCall.args[1].data.extraParams.utm_term,
+    new URL(actionCall.args[1].data.args).searchParams.get("utm_term"),
     "aboutwelcome-default-screen",
-    "UTMTerm set in FxA URL"
-  );
-  Assert.equal(
-    actionCall.args[1].data.entrypoint,
-    "test",
-    "EntryPoint set in FxA URL"
+    "UTMTerm set in the opened URL"
   );
   Assert.equal(
     eventCall.args[0],
@@ -711,37 +706,7 @@ add_task(async function test_updatesPrefOnAWOpen() {
 
 add_setup(async function () {
   requestLongerTimeout(2);
-  const sandbox = sinon.createSandbox();
-  // This needs to happen before any about:welcome page opens
-  sandbox.stub(FxAccounts.config, "promiseMetricsFlowURI").resolves("");
   await setAboutWelcomeMultiStage("");
-
-  registerCleanupFunction(() => {
-    sandbox.restore();
-  });
-});
-
-add_task(async function test_FxA_metricsFlowURI() {
-  let browser = await openAboutWelcome();
-
-  await SpecialPowers.spawn(browser, [], async () => {
-    Assert.ok(
-      await ContentTaskUtils.waitForCondition(
-        () => content.document.querySelector("div.onboardingContainer"),
-        "Wait for about:welcome to load"
-      ),
-      "about:welcome loaded"
-    );
-  });
-
-  Assert.ok(FxAccounts.config.promiseMetricsFlowURI.called, "Stub was called");
-  Assert.equal(
-    FxAccounts.config.promiseMetricsFlowURI.firstCall.args[0],
-    "aboutwelcome",
-    "Called by AboutWelcomeParent"
-  );
-
-  SpecialPowers.popPrefEnv();
 });
 
 add_task(async function test_send_aboutwelcome_as_page_in_event_telemetry() {

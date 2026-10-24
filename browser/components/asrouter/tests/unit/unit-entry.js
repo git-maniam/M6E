@@ -516,12 +516,6 @@ const TEST_GLOBAL = {
       return Promise.resolve(stringId);
     }
   },
-  FxAccountsConfig: {
-    promiseConnectAccountURI(id) {
-      return Promise.resolve(id);
-    },
-  },
-  FX_MONITOR_OAUTH_CLIENT_ID: "fake_client_id",
   ExperimentAPI: {},
   FeatureCalloutBroker: {
     showFeatureCallout() {},
@@ -559,7 +553,6 @@ const TEST_GLOBAL = {
     removeExpirationFilter() {},
   },
   Logger: FakeLogger,
-  getFxAccountsSingleton() {},
   AWEnsureAddonInstalled() {
     return Promise.resolve("complete");
   },

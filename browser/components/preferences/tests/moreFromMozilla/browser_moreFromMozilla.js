@@ -3,14 +3,6 @@
 
 "use strict";
 
-let mockFxA, unmockFxA;
-
-add_setup(async function () {
-  let { mock, unmock } = await mockDefaultFxAInstance();
-  mockFxA = mock;
-  unmockFxA = unmock;
-});
-
 add_task(async function test_config_renders_with_expected_cards() {
   await clearPolicies();
   let {
@@ -82,17 +74,6 @@ add_task(async function test_vpn_hidden_in_disallowed_region() {
 
   setupRegions(initialHomeRegion, initialCurrentRegion);
   BrowserTestUtils.removeTab(gBrowser.selectedTab);
-});
-
-add_task(async function test_relay_hidden_with_custom_fxa() {
-  await clearPolicies();
-  unmockFxA();
-
-  let { relayPromoCard } = await getPromoCards();
-  ok(!relayPromoCard, "The Relay promo card is not visible");
-
-  BrowserTestUtils.removeTab(gBrowser.selectedTab);
-  mockFxA();
 });
 
 add_task(async function test_when_pref_disabled() {

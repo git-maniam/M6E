@@ -14,7 +14,6 @@ ChromeUtils.defineESModuleGetters(this, {
   ClientID: "resource://gre/modules/ClientID.sys.mjs",
   ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   FormHistory: "resource://gre/modules/FormHistory.sys.mjs",
-  FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   HomePage: "resource:///modules/HomePage.sys.mjs",
   InfoBar: "resource:///modules/asrouter/InfoBar.sys.mjs",
   NewTabUtils: "resource://gre/modules/NewTabUtils.sys.mjs",
@@ -484,87 +483,22 @@ add_task(async function check_usesFirefoxSync() {
   await SpecialPowers.popPrefEnv();
 });
 
-add_task(async function check_isFxAEnabled() {
-  await pushPrefs(["identity.fxaccounts.enabled", false]);
-  is(
-    await ASRouterTargeting.Environment.isFxAEnabled,
-    false,
-    "should return false if fxa is disabled"
+add_task(async function check_fxa_attributes_are_off() {
+  const { Environment } = ASRouterTargeting;
+  is(await Environment.isFxAEnabled, false, "isFxAEnabled is false");
+  is(await Environment.isFxASignedIn, false, "isFxASignedIn is false");
+  is(await Environment.hasAccessedFxAPanel, false, "FxA panel is never used");
+  Assert.deepEqual(
+    await Environment.attachedFxAOAuthClients,
+    [],
+    "No attached OAuth clients"
   );
 
   const message = { id: "foo", targeting: "isFxAEnabled" };
   ok(
     !(await ASRouterTargeting.findMatchingMessage({ messages: [message] })),
-    "should not select a message if fxa is disabled"
+    "should not select a message targeting isFxAEnabled"
   );
-  await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function check_isFxAEnabled() {
-  await pushPrefs(["identity.fxaccounts.enabled", true]);
-  is(
-    await ASRouterTargeting.Environment.isFxAEnabled,
-    true,
-    "should return true if fxa is enabled"
-  );
-
-  const message = { id: "foo", targeting: "isFxAEnabled" };
-  is(
-    await ASRouterTargeting.findMatchingMessage({ messages: [message] }),
-    message,
-    "should select the correct message"
-  );
-  await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function check_isFxASignedIn_false() {
-  await pushPrefs(
-    ["identity.fxaccounts.enabled", true],
-    ["services.sync.username", ""]
-  );
-  const sandbox = sinon.createSandbox();
-  registerCleanupFunction(async () => sandbox.restore());
-  sandbox.stub(FxAccounts.prototype, "getSignedInUser").resolves(null);
-  is(
-    await ASRouterTargeting.Environment.isFxASignedIn,
-    false,
-    "user should not appear signed in"
-  );
-
-  const message = { id: "foo", targeting: "isFxASignedIn" };
-  isnot(
-    await ASRouterTargeting.findMatchingMessage({ messages: [message] }),
-    message,
-    "should not select the message since user is not signed in"
-  );
-
-  sandbox.restore();
-  await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function check_isFxASignedIn_true() {
-  await pushPrefs(
-    ["identity.fxaccounts.enabled", true],
-    ["services.sync.username", ""]
-  );
-  const sandbox = sinon.createSandbox();
-  registerCleanupFunction(async () => sandbox.restore());
-  sandbox.stub(FxAccounts.prototype, "getSignedInUser").resolves({});
-  is(
-    await ASRouterTargeting.Environment.isFxASignedIn,
-    true,
-    "user should appear signed in"
-  );
-
-  const message = { id: "foo", targeting: "isFxASignedIn" };
-  is(
-    await ASRouterTargeting.findMatchingMessage({ messages: [message] }),
-    message,
-    "should select the correct message"
-  );
-
-  sandbox.restore();
-  await SpecialPowers.popPrefEnv();
 });
 
 add_task(async function check_totalBookmarksCount() {
@@ -1763,23 +1697,6 @@ add_task(async function check_tabNotesCount() {
   );
 
   await TabNotes.deinit();
-  await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function check_hasAccessedFxAPanel() {
-  is(
-    await ASRouterTargeting.Environment.hasAccessedFxAPanel,
-    false,
-    "Not accessed yet"
-  );
-
-  await pushPrefs(["identity.fxaccounts.toolbar.accessed", true]);
-
-  is(
-    await ASRouterTargeting.Environment.hasAccessedFxAPanel,
-    true,
-    "Should detect panel access"
-  );
   await SpecialPowers.popPrefEnv();
 });
 

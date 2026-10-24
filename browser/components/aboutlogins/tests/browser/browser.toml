@@ -36,8 +36,6 @@ skip-if = [
 
 ["browser_deleteLogin.js"]
 
-["browser_fxAccounts.js"]
-
 ["browser_loginFilter.js"]
 
 ["browser_loginItemErrors.js"]

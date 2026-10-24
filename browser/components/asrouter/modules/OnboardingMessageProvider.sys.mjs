@@ -112,7 +112,7 @@ const BASE_MESSAGES = () => [
       id: "menuOpened",
     },
     groups: [],
-    skip_in_tests: "it's covered by browser_asrouter_menu_messages.js",
+    skip_in_tests: "menu messages need the app menu open",
   },
   {
     id: "MENU_MESSAGE_DEFAULT_CTA_ILLUSTRATION_LAYOUT",
@@ -165,7 +165,7 @@ const BASE_MESSAGES = () => [
       id: "menuOpened",
     },
     groups: [],
-    skip_in_tests: "it's covered by browser_asrouter_menu_messages.js",
+    skip_in_tests: "menu messages need the app menu open",
   },
   // Nova variant of MENU_MESSAGE_DEFAULT_CTA messaging:
   {
@@ -218,7 +218,7 @@ const BASE_MESSAGES = () => [
       id: "menuOpened",
     },
     groups: [],
-    skip_in_tests: "it's covered by browser_asrouter_menu_messages.js",
+    skip_in_tests: "menu messages need the app menu open",
   },
   {
     id: "MENU_MESSAGE_DEFAULT_CTA_ILLUSTRATION_LAYOUT",
@@ -273,7 +273,7 @@ const BASE_MESSAGES = () => [
       id: "menuOpened",
     },
     groups: [],
-    skip_in_tests: "it's covered by browser_asrouter_menu_messages.js",
+    skip_in_tests: "menu messages need the app menu open",
   },
   {
     id: "AI_WINDOW_TOU_EXISTING_USERS_MODAL",

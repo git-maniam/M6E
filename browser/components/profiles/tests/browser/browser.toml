@@ -33,10 +33,6 @@ run-if = [
 
 ["browser_empty_name_beforeunload_test.js"]
 
-["browser_fxa_menu_profiles.js"]
-
-["browser_fxa_menu_profiles_telemetry.js"]
-
 ["browser_icon_avatar_test.js"]
 
 ["browser_menubar_profiles.js"]

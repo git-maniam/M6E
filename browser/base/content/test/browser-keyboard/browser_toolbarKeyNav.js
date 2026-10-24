@@ -23,13 +23,13 @@ FirefoxViewTestUtils.init(this);
 
 const PERMISSIONS_PAGE =
   "https://example.com/browser/browser/base/content/test/browser-permissions/permissions.html";
-const afterUrlBarButton = "fxa-toolbar-menu-button";
+const afterUrlBarButton = "unified-extensions-button";
 const sidebarRevampEnabled = Services.prefs.getBoolPref(
   "sidebar.revamp",
   false
 );
-// The fire button sits between the FxA button and the app menu button when it
-// is enabled.
+// The fire button sits between the extensions button and the app menu button
+// when it is enabled.
 const fireButtonEnabled = Services.prefs.getBoolPref(
   "browser.fireButton.enabled",
   false
@@ -432,7 +432,6 @@ add_task(async function testArrowsToolbarbuttons() {
       await expectFocusAfterKey("ArrowRight", "sidebar-button");
     }
     await expectFocusAfterKey("ArrowRight", "unified-extensions-button");
-    await expectFocusAfterKey("ArrowRight", "fxa-toolbar-menu-button");
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowRight", "fire-button");
     }
@@ -448,7 +447,6 @@ add_task(async function testArrowsToolbarbuttons() {
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowLeft", "fire-button");
     }
-    await expectFocusAfterKey("ArrowLeft", "fxa-toolbar-menu-button");
     await expectFocusAfterKey("ArrowLeft", "unified-extensions-button");
     if (!sidebarRevampEnabled) {
       await expectFocusAfterKey("ArrowLeft", "sidebar-button");
@@ -542,7 +540,6 @@ add_task(async function testArrowsOverflowButton() {
       await expectFocusAfterKey("ArrowRight", "sidebar-button");
     }
     await expectFocusAfterKey("ArrowRight", "unified-extensions-button");
-    await expectFocusAfterKey("ArrowRight", "fxa-toolbar-menu-button");
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowRight", "fire-button");
     }
@@ -558,7 +555,6 @@ add_task(async function testArrowsOverflowButton() {
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowLeft", "fire-button");
     }
-    await expectFocusAfterKey("ArrowLeft", "fxa-toolbar-menu-button");
   });
   RemoveOldMenuSideButtons();
 });

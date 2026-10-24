@@ -878,7 +878,6 @@ describe("MultiStageAboutWelcome module", () => {
           content: easySetupScreen.content,
           messageId: `${DEFAULT_PROPS.message_id}_${easySetupScreen.id}`,
           UTMTerm: DEFAULT_PROPS.utm_term,
-          flowParams: null,
           totalNumberOfScreens: 1,
           setScreenMultiSelects: sandbox.stub(),
           setActiveMultiSelect: sandbox.stub(),
@@ -914,29 +913,6 @@ describe("MultiStageAboutWelcome module", () => {
         };
         const wrapper = mount(<SecondaryCTA {...SCREEN_PROPS} />);
         assert.ok(wrapper.find("div.secondary-cta.top").exists());
-      });
-
-      it("should render a secondary top 'Sign in' button if user isn't signed in", async () => {
-        globals.set("AWEvaluateAttributeTargeting", expression => {
-          return Promise.resolve(expression.includes("!isFxASignedIn"));
-        });
-
-        const wrapper = mount(<WelcomeScreen {...EASY_SETUP_SCREEN_PROPS} />);
-        await spinEventLoop();
-        wrapper.update();
-
-        const secondaryTopButton = wrapper.find(".secondary-cta.top");
-        assert.ok(secondaryTopButton.exists(), "secondary button top exists");
-
-        const signInButton = secondaryTopButton.find(
-          '[data-l10n-id="mr1-onboarding-sign-in-button-label"]'
-        );
-
-        assert.equal(
-          signInButton.length,
-          1,
-          "One 'Sign in' secondary top button"
-        );
       });
 
       it("should render a secondary top 'Restore Backup' button when backup restore is enabled", async () => {
@@ -1046,7 +1022,6 @@ describe("MultiStageAboutWelcome module", () => {
         navigate: null,
         messageId: `${DEFAULT_PROPS.message_id}_"test-theme-screen"`,
         UTMTerm: DEFAULT_PROPS.utm_term,
-        flowParams: null,
         activeTheme: "automatic",
       };
 
@@ -1361,41 +1336,12 @@ describe("MultiStageAboutWelcome module", () => {
         assert.calledOnce(finishStub);
         assert.calledOnce(telemetrySpy);
       });
-      it("should handle SHOW_FIREFOX_ACCOUNTS", () => {
-        TEST_ACTION.type = "SHOW_FIREFOX_ACCOUNTS";
-        const wrapper = mount(<WelcomeScreen {...SCREEN_PROPS} />);
-
-        wrapper.find(".primary").simulate("click");
-
-        assert.calledWith(MultiStageUtils.handleUserAction, {
-          data: {
-            extraParams: {
-              utm_campaign: "firstrun",
-              utm_medium: "referral",
-              utm_source: "activity-stream",
-              utm_term: "you_tee_emm-screen",
-            },
-          },
-          type: "SHOW_FIREFOX_ACCOUNTS",
-        });
-      });
       it("should handle OPEN_URL", () => {
         TEST_ACTION.type = "OPEN_URL";
         TEST_ACTION.data = {
           args: "https://example.com?utm_campaign=test-campaign",
         };
-        TEST_ACTION.addFlowParams = true;
-        let flowBeginTime = Date.now();
-        const wrapper = mount(
-          <WelcomeScreen
-            {...SCREEN_PROPS}
-            flowParams={{
-              deviceId: "test-device-id",
-              flowId: "test-flow-id",
-              flowBeginTime,
-            }}
-          />
-        );
+        const wrapper = mount(<WelcomeScreen {...SCREEN_PROPS} />);
 
         wrapper.find(".primary").simulate("click");
 
@@ -1406,12 +1352,6 @@ describe("MultiStageAboutWelcome module", () => {
         assert.equal(searchParams.get("utm_medium"), "referral");
         assert.equal(searchParams.get("utm_source"), "activity-stream");
         assert.equal(searchParams.get("utm_term"), "you_tee_emm-screen");
-        assert.equal(searchParams.get("device_id"), "test-device-id");
-        assert.equal(searchParams.get("flow_id"), "test-flow-id");
-        assert.equal(
-          searchParams.get("flow_begin_time"),
-          flowBeginTime.toString()
-        );
       });
       it("should handle SHOW_MIGRATION_WIZARD", () => {
         TEST_ACTION.type = "SHOW_MIGRATION_WIZARD";

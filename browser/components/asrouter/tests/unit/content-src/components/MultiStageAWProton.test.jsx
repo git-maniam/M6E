@@ -1818,24 +1818,6 @@ describe("MultiStageAboutWelcomeProton module", () => {
         "MULTI_ACTION"
       );
     });
-    it("should have a FxA button", async () => {
-      const data = await prepConfig({}, [
-        "AW_WELCOME_BACK",
-        "AW_BACKUP_RESTORE_EMBEDDED_BACKUP_FOUND",
-        "AW_BACKUP_RESTORE_EMBEDDED_MULTIPLE_BACKUPS_FOUND",
-      ]);
-
-      assert.notProperty(data, "skipFxA");
-      assert.property(data.screens[0].content, "secondary_button_top");
-    });
-    it("should remove the FxA button if pref disabled", async () => {
-      global.Services.prefs.getBoolPref.returns(false);
-
-      const data = await prepConfig();
-
-      assert.property(data, "skipFxA", true);
-      assert.notProperty(data.screens[0].content, "secondary_button_top");
-    });
   });
 
   describe("AboutWelcomeDefaults for MR split template proton", () => {
@@ -1948,7 +1930,7 @@ describe("MultiStageAboutWelcomeProton module", () => {
             content: {
               primary_button: {
                 action: {
-                  type: "SHOW_FIREFOX_ACCOUNTS",
+                  type: "OPEN_URL",
                   data: {},
                 },
               },

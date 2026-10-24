@@ -151,7 +151,6 @@ function test() {
         "vertical-spacer",
         "urlbar-container",
         "downloads-button",
-        "fxa-toolbar-menu-button",
         "reset-pbm-toolbar-button",
       ],
       "Nav-bar placements should be correct."
@@ -181,7 +180,6 @@ function test() {
     getSavedStatePlacements("nav-bar"),
     oldNavbarPlacements.concat([
       "downloads-button",
-      "fxa-toolbar-menu-button",
       "reset-pbm-toolbar-button",
     ]),
     "Downloads button inserted in navbar"
@@ -203,7 +201,6 @@ function test() {
     getSavedStatePlacements("nav-bar"),
     oldNavbarPlacements.concat([
       "downloads-button",
-      "fxa-toolbar-menu-button",
       "reset-pbm-toolbar-button",
     ]),
     "Downloads button reinserted in navbar"
@@ -230,7 +227,6 @@ function test() {
     "search-container",
     "downloads-button",
     "other-widget",
-    "fxa-toolbar-menu-button",
     "reset-pbm-toolbar-button",
   ];
   Assert.deepEqual(
@@ -255,7 +251,6 @@ function test() {
         "vertical-spacer",
         "urlbar-container",
         "downloads-button",
-        "fxa-toolbar-menu-button",
       ],
     },
   });
@@ -269,7 +264,6 @@ function test() {
       "vertical-spacer",
       "urlbar-container",
       "downloads-button",
-      "fxa-toolbar-menu-button",
       "reset-pbm-toolbar-button",
     ],
     "Reset PBM button should be added for users upgrading from version 23"
@@ -286,7 +280,6 @@ function test() {
         "vertical-spacer",
         "urlbar-container",
         "downloads-button",
-        "fxa-toolbar-menu-button",
         "reset-pbm-toolbar-button",
       ],
     },
@@ -301,7 +294,6 @@ function test() {
       "vertical-spacer",
       "urlbar-container",
       "downloads-button",
-      "fxa-toolbar-menu-button",
       "reset-pbm-toolbar-button",
     ],
     "Reset PBM button should not be duplicated for users who already have it"

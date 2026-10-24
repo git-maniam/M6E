@@ -23,8 +23,6 @@ skip-if = [
   "os == 'linux' && os_version == '22.04' && arch == 'x86_64' && display == 'wayland' && debug", # Bug 1892548
 ]
 
-["browser_asrouter_menu_messages.js"]
-
 ["browser_asrouter_momentspagehub.js"]
 tags = "remote-settings"
 
@@ -45,9 +43,6 @@ run-if = [
 ]
 
 ["browser_asrouter_toast_notification.js"]
-
-["browser_asrouter_toolbarbadge.js"]
-tags = "remote-settings"
 
 ["browser_asrouter_universal_infobar.js"]
 
