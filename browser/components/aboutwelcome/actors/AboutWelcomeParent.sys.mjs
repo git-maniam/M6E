@@ -17,7 +17,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   BuiltInThemes: "resource:///modules/BuiltInThemes.sys.mjs",
   EnrollmentType: "resource://nimbus/ExperimentAPI.sys.mjs",
   ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   LangPackMatcher: "moz-src:///intl/locale/LangPackMatcher.sys.mjs",
   MessagingSystemAllowlists:
     "resource://messaging-system/lib/MessagingSystemAllowlists.sys.mjs",
@@ -261,8 +260,6 @@ export class AboutWelcomeParent extends JSWindowActorParent {
         break;
       case "AWPage:SPECIAL_ACTION":
         return lazy.SpecialMessageActions.handleAction(data, browser);
-      case "AWPage:FXA_METRICS_FLOW_URI":
-        return lazy.FxAccounts.config.promiseMetricsFlowURI("aboutwelcome");
       case "AWPage:TELEMETRY_EVENT":
         lazy.Telemetry.sendTelemetry(data);
         break;

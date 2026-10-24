@@ -1602,23 +1602,6 @@ const MultiStageUtils = {
       this.sendActionTelemetry(messageId, elementId, "DISMISS", context);
     }
   },
-  async fetchFlowParams(metricsFlowUri) {
-    let flowParams;
-    try {
-      const response = await fetch(metricsFlowUri, {
-        credentials: "omit",
-      });
-      if (response.status === 200) {
-        const { deviceId, flowId, flowBeginTime } = await response.json();
-        flowParams = { deviceId, flowId, flowBeginTime };
-      } else {
-        console.error("Non-200 response", response);
-      }
-    } catch (e) {
-      flowParams = null;
-    }
-    return flowParams;
-  },
   sendEvent(type, detail) {
     document.dispatchEvent(
       new CustomEvent(`AWPage:${type}`, {
@@ -6090,18 +6073,6 @@ const MultiStageAboutWelcome = props => {
     })();
   }, [index, didMount]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [flowParams, setFlowParams] = (0,external_React_namespaceObject.useState)(null);
-  const {
-    metricsFlowUri
-  } = props;
-  (0,external_React_namespaceObject.useEffect)(() => {
-    (async () => {
-      if (metricsFlowUri) {
-        setFlowParams(await MultiStageUtils.fetchFlowParams(metricsFlowUri));
-      }
-    })();
-  }, [metricsFlowUri]);
-
   // Allow "in" style to render to actually transition towards regular state,
   // which also makes using browser back/forward navigation skip transitions.
   const [transition, setTransition] = (0,external_React_namespaceObject.useState)(props.transitions ? "in" : "");
@@ -6343,7 +6314,6 @@ const MultiStageAboutWelcome = props => {
       advanceOnExperimentLoad: currentScreen.advance_on_experiment_load,
       messageId: `${props.message_id}_${order}_${currentScreen.id}`,
       UTMTerm: props.utm_term,
-      flowParams: flowParams,
       activeTheme: activeTheme,
       activeThemeId: activeThemeId,
       initialTheme: initialTheme,
@@ -6558,37 +6528,14 @@ class WelcomeScreen extends (external_React_default()).PureComponent {
     super(props);
     this.handleAction = this.handleAction.bind(this);
   }
-  handleOpenURL(action, flowParams, UTMTerm) {
+  handleOpenURL(action, UTMTerm) {
     let {
       type,
       data
     } = action;
-    if (type === "SHOW_FIREFOX_ACCOUNTS") {
-      let params = {
-        ...BASE_PARAMS,
-        utm_term: `${UTMTerm}-screen`
-      };
-      if (action.addFlowParams && flowParams) {
-        params = {
-          ...params,
-          ...flowParams
-        };
-      }
-      data = {
-        ...data,
-        extraParams: {
-          ...params,
-          ...data?.extraParams
-        }
-      };
-    } else if (type === "OPEN_URL") {
+    if (type === "OPEN_URL") {
       let url = new URL(data.args);
       addUtmParams(url, `${UTMTerm}-screen`);
-      if (action.addFlowParams && flowParams) {
-        url.searchParams.append("device_id", flowParams.deviceId);
-        url.searchParams.append("flow_id", flowParams.flowId);
-        url.searchParams.append("flow_begin_time", flowParams.flowBeginTime);
-      }
       data = {
         ...data,
         args: url.toString()
@@ -6677,8 +6624,8 @@ class WelcomeScreen extends (external_React_default()).PureComponent {
     if (action.collectTextInput && Object.values(props.textInputs).length) {
       this.setTextInputActions(action);
     }
-    if (["OPEN_URL", "SHOW_FIREFOX_ACCOUNTS"].includes(action.type)) {
-      this.handleOpenURL(action, props.flowParams, props.UTMTerm);
+    if (action.type === "OPEN_URL") {
+      this.handleOpenURL(action, props.UTMTerm);
     } else if (action.type === "INSTALL_ADDON_FROM_URL") {
       const url = props.addonURL && props.isRtamo ? props.addonURL : action.data?.url;
       // Set add-on url in action.data.url property from JSON
@@ -6691,9 +6638,6 @@ class WelcomeScreen extends (external_React_default()).PureComponent {
       let actionPromise = MultiStageUtils.handleUserAction(action);
       if (action.needsAwait) {
         actionResult = await actionPromise;
-      }
-      if (action.type === "FXA_SIGNIN_FLOW") {
-        MultiStageUtils.sendActionTelemetry(props.messageId, actionResult ? "sign_in" : "sign_in_cancel", "FXA_SIGNIN_FLOW");
       }
       // Wait until migration closes to complete the action
       await this.handleMigrationIfNeeded(action, props);
