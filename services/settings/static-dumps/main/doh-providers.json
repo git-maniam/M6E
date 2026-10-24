@@ -1,8 +1,8 @@
 {
   "data": [
     {
-      "uri": "https://mozilla.cloudflare-dns.com/dns-query",
-      "UIName": "Cloudflare",
+      "uri": "https://security.cloudflare-dns.com/dns-query",
+      "UIName": "Cloudflare for Families (security)",
       "schema": 1769155849324,
       "http3First": true,
       "autoDefault": true,

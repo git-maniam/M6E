@@ -31,6 +31,10 @@ static uint32_t get32bit(const unsigned char* aData, unsigned int index) {
 bool hardFail(uint16_t code) {
   const uint16_t noFallbackErrors[] = {
       4,   // Forged answer (malware filtering)
+      // M6E: Cloudflare for Families answers blocked names with 0.0.0.0 and
+      // Censored, so these must not fall back to native DNS either (D25).
+      15,  // Blocked
+      16,  // Censored
       17,  // Filtered
   };
 

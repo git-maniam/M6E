@@ -289,7 +289,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint:** Phase 4 is complete (2026-10-24), including the user's additions P4.5 to P4.9 and P3.8. Next is Phase 5, packaging and acceptance (section 5), then P6.1, deleting the dormant features (D30). `mozconfig` has PGO on, which is right for the release build; `./mach build faster` is refused with PGO, so for front-end-only changes run `make -C obj-m6e/faster`.
+**Checkpoint:** Phase 4 is complete (2026-10-24), including the user's additions P4.5 to P4.9 and P3.8. Next is Phase 5, packaging and acceptance (section 5), starting with P5.0: Cloudflare for Families (D25) is committed but not yet built. Then P6.1, deleting the dormant features (D30). `mozconfig` has PGO on, which is right for the release build; `./mach build faster` is refused with PGO, so for front-end-only changes run `make -C obj-m6e/faster`.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -330,7 +330,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | After debloating (P1.14b, 3 runs) | 777 ms | 448 MB | 8 allowed hosts |
 | **P4.1, 10 runs** | **681 ms** (range 664–712; session restored 714 ms) | **449 MB** (8 processes); 1497 MB with five sites | **8 allowed hosts**, none only looked up over DNS |
 
-- **Hosts:** Remote Settings ×3 (`firefox.settings.services.mozilla.com`, `content-signature-2.cdn.mozilla.net`, `firefox-settings-attachments.cdn.mozilla.net`), `push.services.mozilla.com`, `mozilla.cloudflare-dns.com` (DoH), `update.googleapis.com`, `ciscobinary.openh264.org` and `www.google.com` (the Widevine download in `gmp-sources/widevinecdm.json`).
+- **Hosts:** Remote Settings ×3 (`firefox.settings.services.mozilla.com`, `content-signature-2.cdn.mozilla.net`, `firefox-settings-attachments.cdn.mozilla.net`), `push.services.mozilla.com`, `security.cloudflare-dns.com` (DoH, D25; `mozilla.cloudflare-dns.com` before 2026-10-24), `update.googleapis.com`, `ciscobinary.openh264.org` and `www.google.com` (the Widevine download in `gmp-sources/widevinecdm.json`).
 - **Noise:** a 3-run measurement of the same build gave 865 ms (752, 875, 865), so `measure.py` now defaults to 10 startup runs. Compare flags with 10-run medians only.
 - **A/B baseline:** `artifacts/baseline-P4.1/M6E.app` is a standalone copy of this build (`cp -RL`; the copy errors on dangling links to files Phase 1 removed are harmless). Measure it next to each flag build in the same session.
 
@@ -440,7 +440,7 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
     - New pref `network.http.akamai_waf_telemetry.enabled` is locked off.
     - The new onboarding images on Mozilla's CDN are only used by ASRouter's test provider. The new Horoscopes widget was already locked off.
     - `scan-strings.py` finds 0 strings, and the search configuration is unchanged.
-  - **Network:** only the 8 allowed hosts while idle.
+  - **Network:** only the 8 allowed hosts while idle, with `security.cloudflare-dns.com` as the DoH resolver (D25).
   - **Tests** (2,325 + 498 trust-panel passes): ETP settings, HTTPS-First, HTTPS-Only, Reader View, Remote Settings and the trust panel.
     - Two Remote Settings tests synced collections outside the D2 allowlist. They now stub `Utils.isAllowedCollection`. The new `test_m6e_allowed_collections.js` checks what is allowed and what is blocked, and that blocked collections never fetch.
     - Three failures are environmental:
@@ -576,7 +576,7 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - **DMG layout:** regenerate the DMG `dsstore` layout file, which was copied unchanged from Nightly's branding.
   - **Check:** the DMG shows the M6E artwork and the app launches from `/Applications`.
 - **P5.2 Acceptance, on a fresh profile of the packaged app:**
-  - **Network:** only the 8 allowed hosts while idle.
+  - **Network:** only the 8 allowed hosts while idle, with `security.cloudflare-dns.com` as the DoH resolver (D25).
   - **Branding:** `scan-strings.py` reports 0, and the attribution is present.
   - **Theme:** Dark Mode leaves the browser UI light, while web pages still follow it.
   - **Search:** only Google and Bing.
@@ -588,6 +588,11 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - review the Remote Settings allowlist (D2) against upstream's collections;
   - refresh `gmp-sources` (D10);
   - check that the `m6e-tokens.css` import survives in `tokens-shared.css`.
+
+### Phase 5 additions
+- **P5.0 Malware and phishing protection by DNS (D25, 2026-10-24):** `m6e.js` sets `network.trr.default_provider_uri` to `https://security.cloudflare-dns.com/dns-query`. `DNSPacket.cpp` adds extended DNS errors 15 and 16 to `hardFail()`, so blocked names don't fall back to ordinary DNS. The bundled `doh-providers.json` names the default "Cloudflare for Families (security)".
+  - **Checked before the change:** the endpoint answers `example.com` normally and returns `0.0.0.0` with error 16 for `malware.testcategory.com` and `phishing.testcategory.com`.
+  - **Still to do:** build with the Phase 5 release build. Then check that both test domains show the "can't find this site" page (with no fallback to ordinary DNS, logged with `MOZ_LOG=nsHostResolver:5`), that normal sites load, and that the only change in idle hosts is `security.cloudflare-dns.com` in place of `mozilla.cloudflare-dns.com`.
 
 ### After Phase 5
 - **P6.1 Delete the dormant features (D30):**

@@ -84,6 +84,9 @@ pref("media.gmp-manager.url", "", locked);
 // DNS over HTTPS defaults to Increased Protection with the default provider.
 // The user can change or turn it off in Settings.
 pref("network.trr.mode", 2);
+// Cloudflare for Families (security), which also refuses to resolve known
+// malware and phishing domains: free, with no account or API key (D25).
+pref("network.trr.default_provider_uri", "https://security.cloudflare-dns.com/dns-query");
 
 // No captive portal, connectivity or region checks.
 pref("network.captive-portal-service.enabled", false, locked);
