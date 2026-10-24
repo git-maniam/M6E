@@ -264,14 +264,8 @@
   <false/>
   <key>NSPrincipalClass</key>
   <string>GeckoNSApplication</string>
-	<key>SMPrivilegedExecutables</key>
-	<dict>
-		@MOZ_SMPRIVILEGEDEXECUTABLES_REQUIREMENTS@
-	</dict>
-  <key>MozillaDeveloperRepoPath</key>
-  <string>@MOZ_DEVELOPER_REPO_PATH@</string>
-  <key>MozillaDeveloperObjPath</key>
-  <string>@MOZ_DEVELOPER_OBJ_PATH@</string>
+  <!-- M6E: no SMPrivilegedExecutables (Mozilla's helper identities; the
+       updater isn't built) and no developer paths (they name the checkout). -->
 
   <key>NSCameraUsageDescription</key>
   <string>Only sites you allow within @MAC_APP_NAME@ will be able to use the camera.</string>

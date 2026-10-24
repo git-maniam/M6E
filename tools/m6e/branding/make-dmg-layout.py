@@ -883,7 +883,7 @@ def resolve(kind, raw):
     return buf.value.decode()
 
 
-def check_volume(checks, mount, resolve_links):
+def check_volume(checks, mount, resolve_links, require_signed=False):
     checks.attempt(
         f"volume name is {VOLUME_NAME!r}", lambda: volume_name(mount) == VOLUME_NAME
     )
@@ -960,10 +960,10 @@ def check_volume(checks, mount, resolve_links):
         checks.note(
             f"app bundle: {plist.get('CFBundleName')} ({plist.get('CFBundleIdentifier')})"
         )
-    check_signature(checks, mount / APP_NAME)
+    check_signature(checks, mount / APP_NAME, require_signed)
 
 
-def check_signature(checks, app):
+def check_signature(checks, app, required=False):
     """Check the signature of the application on the volume, if it has one.
 
     The check is not --strict: hdiutil makehybrid gives every file on the volume
@@ -971,9 +971,12 @@ def check_signature(checks, app):
     before building the DMG, or on a copy after xattr -cr.
     """
     if not (app / "Contents/_CodeSignature/CodeResources").exists():
-        checks.note(
-            f"{APP_NAME} is not signed (no _CodeSignature), so none was checked"
-        )
+        if required:
+            checks.expect(False, f"{APP_NAME} on the volume is signed")
+        else:
+            checks.note(
+                f"{APP_NAME} is not signed (no _CodeSignature), so none was checked"
+            )
         return
     done = subprocess.run(
         ["codesign", "--verify", "--deep", str(app)],
@@ -990,7 +993,7 @@ def check_signature(checks, app):
     )
 
 
-def verify(dmg):
+def verify(dmg, require_signed=False):
     checks = Checks()
     work = None
     try:
@@ -1000,7 +1003,7 @@ def verify(dmg):
             dmg = build_scratch_dmg(work)
         taken = [n for n in os.listdir("/Volumes") if n.split(" ")[0] == VOLUME_NAME]
         with attached(dmg) as mount:
-            check_volume(checks, mount, resolve_links=not taken)
+            check_volume(checks, mount, not taken, require_signed)
     finally:
         if work:
             shutil.rmtree(work, ignore_errors=True)
@@ -1016,6 +1019,11 @@ def main(argv):
         choices=("generate", "check", "verify", "dump", "build"),
     )
     parser.add_argument("paths", nargs="*")
+    parser.add_argument(
+        "--require-signed",
+        action="store_true",
+        help="verify fails when the application on the volume is not signed",
+    )
     args = parser.parse_args(argv)
     paths = args.paths
     if args.command == "generate":
@@ -1037,7 +1045,7 @@ def main(argv):
             parser.error("build needs the path of M6E.app and the DMG to write")
         build_dmg(*paths)
         return 0
-    return 1 if verify(Path(paths[0]) if paths else None) else 0
+    return 1 if verify(Path(paths[0]) if paths else None, args.require_signed) else 0
 
 
 if __name__ == "__main__":

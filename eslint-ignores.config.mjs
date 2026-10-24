@@ -314,4 +314,5 @@ export default [
   // M6E: function body that tools/m6e/chrome_eval.py wraps, so it has a
   // top-level await and return.
   "tools/m6e/d25_check.js",
+  "tools/m6e/package/check-signed.js",
 ];

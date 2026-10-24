@@ -24,7 +24,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 >
 > Please note: M6E is currently an experimental release, so while it is built for pure performance, you may occasionally encounter bugs or website compatibility issues.
 
-## 2. Status (2026-10-23)
+## 2. Status (2026-10-24)
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -33,7 +33,8 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 2 | Rebranding and macOS UI | Done |
 | 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | Done |
 | 4 | Performance, platform removal, dormant-feature removal, security hardening | Done (2026-10-24). Speedometer 3 is about +28% over the Phase 3 build; Windows, Linux and Android code removed; hardening as P4.8; the dormant features marked for deletion in P6.1 (D30). |
-| 5 | Packaging (`.dmg`) and acceptance | **Next.** DMG packaging already works (P4.2c). |
+| 5 | Packaging (`.dmg`) and acceptance | Done (2026-10-24). Signed ad hoc, release DMG built and verified, acceptance 15 of 15; first paint 579 ms, blank-tab memory 443 MB. |
+| 6 | Delete the dormant features (D30) | **Next** (plan step P6.1). |
 
 ## 3. Requirements
 
@@ -130,6 +131,9 @@ The user added these before Phase 4 can finish:
 
 ### Phase 5: Packaging
 - Produce `M6E.app` and a `.dmg` for Apple Silicon, signed ad hoc (D8), and run the final acceptance checks.
+- **Release artifact:** `M6E-<version>-macos-arm64.dmg`, made by `tools/m6e/package/release.sh`: a window with an "Install M6E" background, the app on the left and the Applications link on the right. The app is signed ad hoc (D8), and its Info.plist carries no developer paths and none of Mozilla's helper identities.
+- **Acceptance** (`tools/m6e/acceptance.py`, on the packaged, signed app with a fresh profile): the 15 checks listed in the plan, including: only the 8 allowed hosts while idle; Dark Mode leaves the browser UI, including the PDF viewer, light; search is Google and Bing only; the removed features are absent; the Phase 3 features work; the blocked test domains of D25 fail without native DNS; and startup and memory are at least as good as the stock Nightly baseline.
+- **Maintenance:** upstream merges follow the procedure in the plan (P5.3), with `tools/m6e/merge/` to filter the diff and check the result.
 
 ## 4. Decision log
 
@@ -144,7 +148,7 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D5 | Users can't add search engines (OpenSearch discovery, custom engines or extension engines). | The spec allows Google and Bing only. |
 | D6 | App identity: `M6E.app`, `org.m6e.browser`, executable `m6e`, vendor M6E, its own profile folder. | M6E never shares a profile with an installed Firefox. |
 | D7 | Hide Mozilla support links; blank `app.support.baseURL`. | No Mozilla URLs in the UI. |
-| D8 | Ad-hoc code signing for local use; notarization only with an Apple Developer ID. | No developer account yet. |
+| D8 | Ad-hoc code signing, hardened runtime on, with Mozilla's release entitlements minus the keys that need an Apple provisioning profile (`tools/m6e/package/sign-adhoc.sh`). The app is signed after packaging and the DMG is built from the signed app (`tools/m6e/package/release.sh`). A downloaded copy needs **Open Anyway** once in System Settings (steps in the plan, P5.1). Notarization only with an Apple Developer ID. | No developer account (US$99 a year), and spending money is the user's decision. Ad-hoc signing is the minimum that lets an arm64 app launch. |
 | D9 | Keep the Nightly 160.0a1 snapshot as the base. Security fixes arrive only through manual upstream merges. | The tree was already built on it; switching would mean re-importing. |
 | D10 | Keep DRM: Widevine and OpenH264 download automatically, from Google and Cisco directly, using the bundled download lists rather than Mozilla's update server. | The user wants DRM sites (streaming) to work. |
 | D11 | DNS over HTTPS on by default (Increased Protection, mode 2), user-adjustable in Settings. The default resolver is Cloudflare for Families (security) (D25, 2026-10-24); the region-based rollout is removed. | Privacy by default, with a fallback for networks where DoH fails. |

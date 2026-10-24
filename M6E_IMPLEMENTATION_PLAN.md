@@ -92,6 +92,7 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P3.8 | Page telemetry button: TTFB, FCP, TTI, page size, script parse/execution, TLS | `7e1542f61b` |
 | P4.8 | Security hardening: experimental features off, auto-var-init, sandbox locks, add-on and download prefs, static analysis, dormant pages unregistered | `45bf9d9e22` and earlier |
 | P4.9, P4.3 | Final PGO build, full test pass and profiling; Phase 4 complete | `ff0b6ab100` |
+| P5.0 to P5.3 | D25 (DoH blocking) verified; app signed, release DMG built and verified; acceptance 15 of 15; merge tooling | this commit |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
 
 ## 3. Results by phase (as built)
@@ -289,13 +290,9 @@ Don't start the next step until the current one builds and checks out. Split a s
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint (2026-10-24):** Phase 4 is complete. Phase 5 has started.
-- **Running:** the clean three-stage profile-guided rebuild with the corrected D25 fix (`artifacts/P5.0-build.log`, about 80 minutes). If the session drops, rerun `./mach clobber` and then `./mach build`.
-- **Prepared in parallel** (a workflow of six agents on disjoint files, each independently reviewed; see the P5 results below as they are integrated): DMG layout, ad-hoc signing script, acceptance script, memory investigation, merge tooling, DNS-blocking test.
-- **Saved builds for A/B work:** `artifacts/baseline-P4.1`, `build-P4.2a`, `build-P4.2b` and `build-P4.9` (the finished build before the D25 change).
-- **After the build:** P5.0 (check D25 on the new binary and run its xpcshell test), P5.1 (package, sign, DMG), P5.2 (run `tools/m6e/acceptance.py` on the packaged app), P5.3 (document the merge procedure), then P6.1.
-- **Autonomous mode (from 2026-10-24):** the user is away for a few hours and asked me to take the recommended option for every decision, and to highlight those decisions in the final "Summary of Completion". Every such decision is logged in "Decisions taken while the user was away" below, with the alternatives and why the recommended one was chosen.
-- **Distribution note:** D8 (ad-hoc signing) means other Macs show a Gatekeeper warning on first open. Because M6E is for everyone, a Developer ID plus notarization (Apple Developer Program, $99 a year) removes it; this is the user's decision.
+**Checkpoint (2026-10-24):** Phases 0 to 5 are complete. Release artifact: `artifacts/release/M6E-161.0a1-macos-arm64.dmg`, rebuilt by `tools/m6e/package/release.sh`. Next is P6.1, deleting the dormant features (D30), then upstream merges (P5.3 tooling).
+- **Needs the user:** look at the DMG once in Finder; decide on a Developer ID and notarization (US$99 a year); skim `tools/m6e/merge/nightly-prefs-reviewed.txt`; test a real download on a second Mac; look at real macOS Dark Mode (menus, dialogs, PDF). Details in "Phase 5 results" and "Decisions taken while the user was away".
+- **Build notes:** with PGO, any C++ change needs `./mach clobber` first; front-end-only changes use `make -C obj-m6e/faster`, then `release.sh`. Don't test app copies under `/tmp`.
 
 **P4.2c results (PGO):** `MOZ_PGO=1` gives an instrumented build in `obj-m6e/instrumented`, a profiling run (120 profiles merged into a 100 MB `merged.profdata`) and the final build, about 1.5 hours in all.
 - **Speedometer 3:** 42.09 ± 8.28 (median 46.41) against P4.2b's 36.55 ± 6.29 (median 39.32), measured in the same session: **+15% mean, +18% median.**
@@ -576,7 +573,7 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
     - **Network:** idle traffic is the 8 allowed hosts (P4.8a).
 - **P4.9 Full test pass:** build, xpcshell and mochitest suites for the changed areas, `push_check.py`, `measure.py`, `speedometer.py`, `scan-strings.py` and the Phase 3 feature checks. Then the final PGO build, measure, and push.
 
-### Phase 5: Packaging and acceptance
+### Phase 5: Packaging and acceptance (done 2026-10-24; results above)
 - **P5.1 Package:** run `./mach package` for `M6E.app` and the `.dmg`.
   - **Signing:** sign ad hoc (D8) with `codesign --force --deep -s -`.
   - **DMG layout:** regenerate the DMG `dsstore` layout file, which was copied unchanged from Nightly's branding.
@@ -595,12 +592,69 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
   - refresh `gmp-sources` (D10);
   - check that the `m6e-tokens.css` import survives in `tokens-shared.css`.
 
-### Phase 5 additions
-- **P5.0 Malware and phishing protection by DNS (D25, 2026-10-24):** `m6e.js` sets `network.trr.default_provider_uri` to `https://security.cloudflare-dns.com/dns-query`. `DNSPacket.cpp` adds extended DNS errors 15 and 16 to `hardFail()`, so blocked names don't fall back to ordinary DNS. The bundled `doh-providers.json` names the default "Cloudflare for Families (security)".
-  - **Checked before the change:** the endpoint answers `example.com` normally and returns `0.0.0.0` with error 16 for `malware.testcategory.com` and `phishing.testcategory.com`.
-  - **Still to do:** build with the Phase 5 release build. Then check that both test domains show the "can't find this site" page (with no fallback to ordinary DNS, logged with `MOZ_LOG=nsHostResolver:5`), that normal sites load, and that the only change in idle hosts is `security.cloudflare-dns.com` in place of `mozilla.cloudflare-dns.com`.
+### Phase 5 results (2026-10-24)
 
-- **P5.0 results (D25 on the new binary):** the default resolver is `security.cloudflare-dns.com`; `example.com` resolves through DoH; `malware.testcategory.com` and `phishing.testcategory.com` fail with `NS_ERROR_UNKNOWN_HOST` and no addresses, although this network's ordinary DNS would answer them. The same test on the previous build with the same resolver gave `162.159.36.12` for both, i.e. native fallback, which is what the C++ fix prevents.
+**P5.0 Malware and phishing protection by DNS (D25).**
+- **Change:** `m6e.js` sets `network.trr.default_provider_uri` to `https://security.cloudflare-dns.com/dns-query`, and locks `network.trr.hard_fail_on_extended_error` (true) and `network.trr.allow-rfc1918` (false). `doh-providers.json` names the default "Cloudflare for Families (security)".
+- **Two C++ changes were needed in `DNSPacket.cpp`:** `hardFail()` lists the extended errors 15 and 16; and `DecodeInternal` skips an all-zero A or AAAA answer. My first version had only the first one, and it never ran: `DOHresp::Add` rejects `0.0.0.0`, and the decoder returned that error before it read the extended error. A review agent proved this by running the real resolver against the build.
+- **Results on the final binary:** the blocked test domains fail with `NS_ERROR_UNKNOWN_HOST` and no addresses, with no native lookup (acceptance check 8: 0 native lookups, 4 DoH lookups each). The previous build, pointed at the same resolver, resolved both through native DNS (`162.159.36.12`). The new xpcshell test `netwerk/test/unit/test_trr_blocked_ede.js` and 13 existing TRR tests pass.
+- **Limits:** blocking works per domain, not per URL; downloads aren't checked; mode 2 falls back to unfiltered DNS if DoH itself is unreachable.
+
+**P5.1 Package, sign, DMG.** One command, `tools/m6e/package/release.sh`, does it all: `./mach package`, copy the app out, `sign-adhoc.sh`, `make-dmg-layout.py build`, `verify --require-signed`, then `check-signed.js`. The output is `artifacts/release/M6E-161.0a1-macos-arm64.dmg` (116.6 MB). It is git-ignored; upload it to a GitHub release.
+- **Signing is required after packaging.** Packaging strips and moves files, so the build's own signatures no longer match (`codesign --verify`: "code has no resources but signature indicates they must be present"), and Apple Silicon refuses to run an invalidly signed binary.
+- **How it signs (D8, ad hoc):**
+  - nested code first, the bundle last, no `--deep`, hardened runtime on (A4);
+  - Mozilla's release entitlements minus the keys that need an Apple provisioning profile (application-identifier, web-browser.public-key-credential, application-groups);
+  - `disable-library-validation` on every helper, because ad-hoc code has no Team ID and macOS would refuse to load the app's own libraries.
+- **Verified:** `codesign --verify --deep --strict` is valid. `check-signed.js` passes 13 of 13 with a real window: JIT in the parent and in a content process, native WebAssembly, content sandbox level 3 (a content process can't read the home folder or `/etc`, write `/tmp` or spawn a process), and the socket, RDD and GPU processes all start. Without `allow-jit` the app dies at startup (exit 139), and one changed byte in a helper makes macOS kill it (exit 137). The app installed from the DMG verifies and launches.
+- **Info.plist (A9):** `SMPrivilegedExecutables` (Mozilla's helper identities and Team ID) and `MozillaDeveloperRepoPath`/`MozillaDeveloperObjPath` (absolute paths into the checkout, which revealed the username) are gone. They are removed at the source (`browser/app` and `ipc/app` `Info.plist.in`), and `finalize-app.sh` removes them from any package built before.
+- **DMG:** the layout (680x460, "Install M6E", an arrow, the app on the left and the Applications link on the right) is written by `tools/m6e/branding/make-dmg-layout.py`, without Finder. 25 checks pass, including the signature of the app on the volume.
+- **Not verified:** the DMG has never been **seen in Finder** (the display was locked for the whole session). Open it once: `open artifacts/release/M6E-161.0a1-macos-arm64.dmg`. If the icons look small, see the A/B steps in `make-dmg-layout.py`'s docstring.
+- **Known limits:**
+  - `hdiutil` puts a `com.apple.FinderInfo` attribute on every file (Mozilla's DMGs too), so `codesign --verify --strict` fails on the mounted app or a plain copy. The non-strict check passes and macOS launches the app. Strict passes after `xattr -cr`.
+  - The ad-hoc identity is the code hash, so macOS may ask again for camera, microphone and location after each update.
+  - Platform passkeys (Touch ID, iCloud Keychain) need a provisioning profile and are unavailable.
+
+**Installing M6E (text for the release notes).** M6E is signed ad hoc, not with an Apple Developer ID, and is not notarized, so macOS treats a download as coming from an unidentified developer the first time you open it. You do this once:
+1. Open `M6E.dmg` and drag M6E onto Applications.
+2. Open M6E from Applications. macOS says it cannot verify the app ("M6E Not Opened"). Click **Done**, not Move to Trash.
+3. Open **System Settings, Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to the message about M6E. Enter your password or use Touch ID, then **Open**. The button is available for about an hour after step 2.
+4. After that M6E opens normally. In Terminal, `xattr -dr com.apple.quarantine /Applications/M6E.app` does the same.
+- Control-click, Open no longer bypasses the check on macOS 15 and later.
+- "M6E is damaged and can't be opened" means the app changed after signing or the download is incomplete: download it again.
+- **Notarization** would remove all of this. It needs the Apple Developer Program (US$99 a year), a Developer ID Application certificate, the hardened runtime and entitlements (already in place), `notarytool` and stapling. The user decides; nothing here blocks it. I could not test `notarytool` (no account; this network's TLS inspection may also break its upload).
+
+**P5.2 Acceptance (`tools/m6e/acceptance.py`) on the signed app: 15 of 15 checks pass,** run from `/Users/Shared` on a quiet machine (load 2.9):
+
+| Check | Result |
+|---|---|
+| App bundle | identifier `org.m6e.browser`, 21 Mach-O files all arm64, codesign valid, no Firefox or Mozilla in user-visible plist strings |
+| Branding | `scan-strings.py` 0; About dialog and `about:license` state the attribution |
+| Network (300 s idle) | 8 allowed hosts; DoH goes to `security.cloudflare-dns.com`; no UDP sockets, nothing listens on a TCP port |
+| Theme | browser window and five `about:` pages stay light with Dark Mode simulated; web content sees dark |
+| Search | exactly Google (default) and Bing; adding engines blocked |
+| Removed features | 29 items absent |
+| Phase 3 | bookmarks toggle, Reader View rules, Privacy Shield, Tracker Blocker, Web Push and the Telemetry button (13 items) |
+| D25 | both blocked domains show the "server not found" page with no native lookup; a normal site loads |
+| Hardening | content sandbox level 3 locked and in effect; Fission on and locked |
+| Performance | first paint **579 ms** (Phase 0: 785; Phase 4: 649); blank-tab memory **443 MB** (Phase 0: 698; Phase 4: 486). Five sites (informational, noise over 100 MB): 1,720 MB, no navigation errors |
+
+- **A real defect the run found and I fixed:** the **PDF viewer followed macOS Dark Mode**, against Phase 1's "always light" (A11). pdf.js runs as web content, so the interface rule didn't reach it. `pdfjs.viewerCssTheme` is now 1 and locked.
+- **Still manual:** real macOS Dark Mode (the script can only simulate it) for menus, dialogs, a context menu, the About dialog and a PDF; the Finder look at the DMG; the Gatekeeper dialog on a second Mac with a real download.
+- **The YouTube hang I chased (A14):** the first acceptance run, from `/tmp`, reported YouTube timing out in the five-site test. I found an intermittent page-load hang, **in every build**, for app copies under `/tmp`: the unsigned new build 0 to 3 of 5 passes, the previous build 3 of 5 in the same place, against 36 of 37 passes in the repository, the home folder, `/Users/Shared` and the DMG-installed copy. Signing, the hardened runtime, DoH, the content sandbox, HTTP/3 and the D25 change were each ruled out by experiment. With the document at `readyState: interactive` and no HTTP request pending, the hang is not DNS or TLS. The root cause is unknown; it needs a Gecko-level look. `acceptance.py` now warns when the app is under `/tmp`.
+
+**P5.3 Maintenance (`tools/m6e/merge/`).** Upstream merges are now repeatable; each tool's docstring has the details. Steps:
+1. Start from a clean committed tree.
+2. Fetch (`git -C ../m6e-upstream.git fetch --depth 1 upstream main`; incremental, a few MB).
+3. `git diff --binary --full-index --no-renames <base> <new>` into a directory per merge. It counts file diffs; git's default diffstat counts 1,576 files for P4.5 because 11 are renames, while the diff has 1,587.
+4. `filter-upstream-diff.py` drops changes to files and directories M6E deleted (P4.5: 1,301 kept, 274 deleted by M6E, 12 new in removed directories).
+5. `git apply --3way` (with `GIT_ALTERNATE_OBJECT_DIRECTORIES` for the upstream objects), then resolve the conflicts, keeping M6E's deletions.
+6. `post-merge-checks.sh --upstream-new <sha>`: 17 read-only checks (conflicts, search config, strings, fox artwork, Remote Settings allowlist, `gmp-sources`, DoH default, tokens import, platform code that came back, lint paths, new Nightly-only prefs, new linkable `about:` pages, new external URLs, `CLOBBER`). A check that can't run reports "needs attention", never "ok".
+7. After the merge, record the merged upstream commit in `tools/m6e/merge/upstream-base.txt`.
+- **Build after a merge:** `./mach clobber`, then `./mach build` (PGO).
+- **Known baselines:** `nightly-prefs-reviewed.txt` (41 Nightly values kept on purpose, each with a reason; skim it); 324 stale lint-config entries (cleanup can go into P6.1); 22 front-end files with non-macOS `#if` lines.
+
+**Memory investigation.** The rise from 449 MB (P4.1) to 472 and 486 MB was **not reproduced**: the same P4.2b binary measured 449, 472, 424 and 434 MB in different sessions. A single `measure.py` launch is noisy by about 30 MB, mostly from the GPU process, so compare the "all but GPU" total, which varies by 2 to 3 MB. The real growth in the parent is 0 to 4 MB (about 1%) with no mechanism found. The final acceptance runs measured 425 to 443 MB. Optional saving (not applied, A8): `browser.newtab.preload=false` saves about 8 MB but makes the first New Tab slower. The `jSOracle` and RDD utility processes (18 MB each) stay. **Open:** in the memory test, the P4.9 build showed 17 or 18 processes with five sites in 4 of 9 runs, other builds 15; the cause is unknown (ad frames are a guess).
 
 ### Decisions taken while the user was away (2026-10-24)
 Each is the recommended option. The user reviews these in the Summary of Completion; any can be reversed.
@@ -616,6 +670,13 @@ Each is the recommended option. The user reviews these in the Summary of Complet
 | A7 | DMG background is a plain designed image (gradient, "Install M6E", arrow); no pictorial artwork | Add the rickshaw or splash artwork | The icon already shows as the app icon; the home-page splash is a busy cartoon with embedded text. Easy to change later with `dmg-background.swift`. |
 | A8 | No memory-saving prefs applied (the 449 to 486 MB blank-tab rise was not reproduced; real parent growth 0 to 4 MB) | `browser.newtab.preload=false` saves about 8 MB but slows the first New Tab | The memory investigation found measurement noise of about 30 MB (GPU process); the build is far below the Phase 0 baseline of 698 MB. |
 | A9 | Strip `MozillaDeveloperObjPath`, `MozillaDeveloperRepoPath` and `SMPrivilegedExecutables` from the packaged app's Info.plist before signing | Ship them | The first two are absolute paths into this checkout (they reveal the username); the third names Mozilla's helper identities and Team ID, and the updater and its helper are not built. |
+| A10 | Test the install-from-DMG launch from a stand-in `Applications` folder, not the real `/Applications` | Copy into `/Applications` | Installing into the user's `/Applications` while they are away is a side effect they didn't ask for. They can drag-install the DMG in a minute. |
+| A11 | Force the PDF viewer light with `pdfjs.viewerCssTheme=1` (locked) | Leave it following Dark Mode | Phase 1's requirement says the PDF viewer is always light; the acceptance run showed it wasn't. |
+| A12 | Also lock `network.trr.allow-rfc1918` to false | Leave it unlocked | The D25 fix only skips the block answer while it is false; with it on, a blocked site shows "unable to connect" instead. It is the default, so nothing changes for users. |
+| A13 | The release DMG is built by `make-dmg-layout.py build` from the signed app, named `M6E-<version>-macos-arm64.dmg`, kept in `artifacts/release/` (git-ignored) | Use the DMG that `./mach package` makes | That DMG holds the unsigned app and a different layout; DMGs don't belong in git. |
+| A14 | Treat the YouTube hang as an environment effect of running copies under `/tmp` (the previous build behaves identically there); no product change, a warning in `acceptance.py` | Hold the release for a root cause | Experiments excluded signing, the hardened runtime, DoH, HTTP/3, the sandbox and the D25 change; the shipped artifact passes in realistic locations (36 of 37). Left open. |
+| A15 | Accept the Finder look of the DMG as unverified, and flag it for the user | Keep trying to wake the display or script Finder | The display stayed locked all session, and Finder scripting triggered a macOS permission prompt on the user's screen; I stopped after that. |
+| A16 | Keep ad-hoc signing (D8) rather than buy a Developer ID | Buy the Developer Program | Spending money is the user's call. The Gatekeeper first-open steps are documented. |
 
 ### Build notes learned in Phase 5
 - **PGO and incremental builds don't mix.** Any C++ change reruns all three stages, and the profile run regenerates `obj-m6e/instrumented/merged.profdata`. The final stage then compiles only the changed files against the new profile, and the ThinLTO link fails with `ProfileSummary: IDs have conflicting values`. Fix: `./mach clobber` before the build. For front-end-only changes use `make -C obj-m6e/faster`, which needs no compile.

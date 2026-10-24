@@ -1741,7 +1741,9 @@ def check_telemetry(ctx, r):
     # leaves responseStart at zero or below; the panel then says Not available.
     consistent = []
     for name in (n for n in data if n.startswith("local")):
-        shown = {row["metric"]: row["value"] for row in data[name]["rows"]}["ttfb"]
+        shown = {row["metric"]: row["value"] for row in data[name]["rows"]}.get(
+            "ttfb", ""
+        )
         start = (data[name]["navigation"] or {}).get("responseStart")
         measured = re.fullmatch(r"([\d,.]+) ms", shown)
         if start is None:
@@ -1872,7 +1874,7 @@ def d25_attempt(ctx, number):
         "mode": trr_mode,
         "provider": provider,
         "confirmation": confirmation,
-        "log_dir": os.path.relpath(log_dir, ROOT),
+        "log_dir": str(log_dir),
     }
 
 
@@ -1995,8 +1997,7 @@ def check_performance(ctx, r):
         f" {PHASE0['blank_mb']} MB and Phase 4 {PHASE4['blank_mb']} MB",
     )
     r.info(
-        "memory with five sites, informational (machine-to-machine noise is about"
-        " 30 MB)",
+        "memory with five sites, informational (run-to-run noise can exceed 100 MB)",
         f"{five:.0f} MB, {five - PHASE0['five_sites_mb']:+.0f} MB against Phase 0"
         f" {PHASE0['five_sites_mb']} MB and {five - PHASE4['five_sites_mb']:+.0f} MB"
         f" against Phase 4 {PHASE4['five_sites_mb']} MB; navigation errors:"
@@ -2113,6 +2114,13 @@ def main():
     ctx = Context(args)
     if not os.access(ctx.binary, os.X_OK):
         parser.error(f"no executable at {ctx.binary}")
+    if os.path.realpath(ctx.app).startswith("/private/tmp/"):
+        print(
+            "warning: the app is under /tmp. Copies there showed intermittent"
+            " page-load hangs in the tests, in every build; test a copy in your home"
+            " folder or /Users/Shared instead.",
+            file=sys.stderr,
+        )
     os.makedirs(ctx.out, exist_ok=True)
     signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
 

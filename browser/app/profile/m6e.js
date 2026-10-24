@@ -89,6 +89,8 @@ pref("network.trr.mode", 2);
 pref("network.trr.default_provider_uri", "https://security.cloudflare-dns.com/dns-query");
 // A name the resolver blocks must not fall back to native DNS, so this stays on.
 pref("network.trr.hard_fail_on_extended_error", true, locked);
+// The block answer is only skipped while private addresses are refused (D25).
+pref("network.trr.allow-rfc1918", false, locked);
 
 // No captive portal, connectivity or region checks.
 pref("network.captive-portal-service.enabled", false, locked);
@@ -372,3 +374,7 @@ pref("browser.download.always_ask_before_handling_new_types", true);
 pref("browser.download.manager.addToRecentDocs", false);
 // Nimbus rollouts can't be turned back on (P4.8g, D30).
 pref("nimbus.rollouts.enabled", false, locked);
+
+// The PDF viewer is part of the always-light interface (Phase 1): pdf.js runs
+// as web content, so the light-theme rule for the interface doesn't reach it.
+pref("pdfjs.viewerCssTheme", 1, locked);

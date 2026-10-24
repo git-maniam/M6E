@@ -6,7 +6,7 @@
 // Cloudflare for Families (security) resolver:
 //
 //   ./mach python tools/m6e/chrome_eval.py --binary <app>/Contents/MacOS/m6e \
-//     --script tools/m6e/d25_check.js --headless --timeout 120
+//     --script tools/m6e/d25_check.js --headless --timeout 150
 //
 // Every entry of `checks` in the printed JSON must be true. Set FORCE_URI only
 // to test a build whose default provider is not yet the security resolver.
@@ -87,14 +87,11 @@ browser.fixupAndLoadURIString("http://malware.testcategory.com/", {
   triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
 });
 // currentURI stays on the failed URL; the error page is the document URI.
-for (
-  let i = 0;
-  i < 40 && !browser.documentURI.spec.startsWith("about:neterror");
-  i++
-) {
+const documentSpec = () => browser.documentURI?.spec ?? "";
+for (let i = 0; i < 40 && !documentSpec().startsWith("about:neterror"); i++) {
   await sleep(500);
 }
-results.navigation = browser.documentURI.spec;
+results.navigation = documentSpec();
 
 results.checks = {
   defaultIsSecurityResolver:
