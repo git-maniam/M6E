@@ -8,7 +8,6 @@ import { BackupResource } from "moz-src:///browser/components/backup/resources/B
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   SearchUtils: "moz-src:///toolkit/components/search/SearchUtils.sys.mjs",
   SelectableProfileService:
     "resource:///modules/profiles/SelectableProfileService.sys.mjs",
@@ -79,19 +78,6 @@ export class PreferencesBackupResource extends BackupResource {
       }
     }
 
-    // Prefs with this prefix are always overriden.
-    const kNimbusMetadataPrefPrefix = "nimbus.";
-    const kNimbusPrefExceptionList = ["nimbus.rollouts.enabled"];
-
-    const nimbusPrefs = Services.prefs.getChildList(kNimbusMetadataPrefPrefix);
-    for (const pref of nimbusPrefs) {
-      if (kNimbusPrefExceptionList.includes(pref)) {
-        continue;
-      }
-
-      prefsOverrideMap.addEntry(pref, null);
-    }
-
     return prefsOverrideMap;
   }
 
@@ -151,16 +137,14 @@ export class PreferencesBackupResource extends BackupResource {
     let prefsDestPath = PathUtils.join(stagingPath, "prefs.js");
     let prefsDestFile = await IOUtils.getFile(prefsDestPath);
 
-    // NB: withUpdateLock() will throw if it is not able to acquire the lock
-    // before shutdown begins.
-    await lazy.ExperimentAPI._rsLoader.withUpdateLock(async () => {
-      await Services.prefs.backupPrefFile(
-        prefsDestFile,
-        PreferencesBackupResource.addPrefsToIgnoreInBackup(
-          lazy.ExperimentAPI.manager.store.getOriginalPrefValuesForAllActiveEnrollments()
+    await Services.prefs.backupPrefFile(
+      prefsDestFile,
+      PreferencesBackupResource.addPrefsToIgnoreInBackup(
+        Cc["@mozilla.org/pref-override-map;1"].createInstance(
+          Ci.nsIPrefOverrideMap
         )
-      );
-    });
+      )
+    );
 
     // During recovery, we need to recompute verification hashes for any
     // custom engines, but only for engines that were originally passing
