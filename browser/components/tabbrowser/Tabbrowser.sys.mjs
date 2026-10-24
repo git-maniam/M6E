@@ -10065,7 +10065,6 @@ export class Tabbrowser {
       let browser = event.originalTarget;
 
       if (!event.isTopFrame) {
-        lazy.TabCrashHandler.onSubFrameCrash(browser, event.childID);
         return;
       }
 

@@ -413,7 +413,6 @@ export const SpecialMessageActions = {
       "browser.smartwindow.sidebar.openByDefault",
       "browser.smartwindow.memories.generateFromConversation",
       "browser.smartwindow.memories.generateFromHistory",
-      "browser.crashReports.unsubmittedCheck.autoSubmit2",
       "browser.dataFeatureRecommendations.enabled",
       "browser.ipProtection.bandwidth.enabled",
       "browser.ipProtection.blockIPProtectionCallouts",

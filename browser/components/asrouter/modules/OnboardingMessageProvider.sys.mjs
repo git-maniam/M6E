@@ -3468,36 +3468,6 @@ const PREONBOARDING_MESSAGES = () => [
                     },
                   },
                 },
-                {
-                  id: "crash-data",
-                  type: "checkbox",
-                  defaultValue: false,
-                  label: {
-                    string_id: "preonboarding-checklist-crash-reports-label",
-                  },
-                  description: {
-                    string_id:
-                      "preonboarding-checklist-crash-reports-description",
-                  },
-                  action: {
-                    type: "SET_PREF",
-                    data: {
-                      pref: {
-                        name: "browser.crashReports.unsubmittedCheck.autoSubmit2",
-                        value: true,
-                      },
-                    },
-                  },
-                  uncheckedAction: {
-                    type: "SET_PREF",
-                    data: {
-                      pref: {
-                        name: "browser.crashReports.unsubmittedCheck.autoSubmit2",
-                        value: false,
-                      },
-                    },
-                  },
-                },
               ],
             },
           ],

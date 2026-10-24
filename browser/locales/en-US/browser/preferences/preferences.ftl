@@ -2223,10 +2223,6 @@ data-collection-run-studies =
     .description = { -brand-short-name } randomly selects users to test features, which helps improve quality for everyone.
 data-collection-studies-link =
     .label = View { -brand-short-name } studies
-data-collection-backlogged-crash-reports =
-    .label = Automatically send crash reports
-    .description = This helps { -vendor-short-name } diagnose and fix issues with the browser. Reports may include personal or sensitive data.
-    .accesskey = c
 data-collection-usage-ping =
     .label = Send daily usage ping to { -vendor-short-name }
     .description = This helps { -vendor-short-name } to estimate active users.
@@ -2245,11 +2241,6 @@ addon-recommendations3 =
 # This message is displayed above disabled data sharing options in developer builds
 # or builds with no Telemetry support available.
 collection-health-report-disabled2 = Data reporting is disabled for this build configuration.
-
-collection-backlogged-crash-reports2 =
-    .label = Automatically send crash reports
-    .accesskey = c
-collection-backlogged-crash-reports-description = This helps { -vendor-short-name } diagnose and fix issues with the browser. Reports may include personal or sensitive data.
 
 privacy-segmentation-section-header = New features that enhance your browsing
 

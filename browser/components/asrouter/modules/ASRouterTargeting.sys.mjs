@@ -571,23 +571,6 @@ export const QueryCache = {
         },
       }
     ),
-    crashData: new CachedTargetingGetter(
-      "getCrashData",
-      null,
-      FRECENT_SITES_UPDATE_INTERVAL,
-      {
-        async getCrashData() {
-          if (!Services.crashmanager) {
-            return [];
-          }
-          const crashes = await Services.crashmanager.getCrashes();
-          return crashes.map(crash => ({
-            id: crash.id,
-            date: crash.crashDate,
-          }));
-        },
-      }
-    ),
   },
 };
 
@@ -1783,61 +1766,6 @@ const TargetingGetters = {
       );
       return false;
     }
-  },
-
-  /**
-   * The total number of crashes the user has experienced, as recorded by the
-   * crash manager at crash time (independent of report submission).
-   *
-   * @returns {Promise<number>}
-   */
-  get crashCount() {
-    return QueryCache.getters.crashData.get().then(crashes => crashes.length);
-  },
-
-  /**
-   * The number of days since the most recent crash, as recorded by the crash
-   * manager at crash time (independent of report submission). If there are no
-   * recorded crashes, returns `null`.
-   *
-   * @returns {Promise<number|null>}
-   */
-  get daysSinceLastCrash() {
-    return QueryCache.getters.crashData.get().then(crashes => {
-      if (!crashes.length) {
-        return null;
-      }
-      const mostRecent = Math.max(...crashes.map(c => c.date));
-      return Math.floor((Date.now() - mostRecent) / (24 * 60 * 60 * 1000));
-    });
-  },
-
-  /**
-   * The number of crashes the user has experienced in the last 24 hours, as
-   * recorded by the crash manager at crash time (independent of report
-   * submission).
-   *
-   * @returns {Promise<number>}
-   */
-  get crashCountInLastDay() {
-    return QueryCache.getters.crashData.get().then(crashes => {
-      const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-      return crashes.filter(c => c.date >= cutoff).length;
-    });
-  },
-
-  /**
-   * The number of crashes the user has experienced in the last 7 days, as
-   * recorded by the crash manager at crash time (independent of report
-   * submission).
-   *
-   * @returns {Promise<number>}
-   */
-  get crashCountInLastWeek() {
-    return QueryCache.getters.crashData.get().then(crashes => {
-      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      return crashes.filter(c => c.date >= cutoff).length;
-    });
   },
 
   /**

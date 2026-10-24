@@ -197,7 +197,6 @@ export const ASRouterTriggerListeners = new Map([
         "datareporting.usage.uploadEnabled",
         "datareporting.policy.dataSubmissionEnabled",
         "app.shield.optoutstudies.enabled",
-        "browser.crashReports.unsubmittedCheck.autoSubmit2",
         "browser.discovery.enabled",
       ],
       _lastValues: null,

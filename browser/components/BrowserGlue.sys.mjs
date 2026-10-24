@@ -116,13 +116,6 @@ ChromeUtils.defineLazyGetter(
   () => Cc["@mozilla.org/weave/service;1"].getService().wrappedJSObject
 );
 
-if (AppConstants.MOZ_CRASHREPORTER) {
-  ChromeUtils.defineESModuleGetters(lazy, {
-    CrashFileCleaner: "resource:///modules/ContentCrashHandlers.sys.mjs",
-    UnsubmittedCrashHandler: "resource:///modules/ContentCrashHandlers.sys.mjs",
-  });
-}
-
 ChromeUtils.defineLazyGetter(lazy, "gBrandBundle", function () {
   return Services.strings.createBundle(
     "chrome://branding/locale/brand.properties"
@@ -834,13 +827,6 @@ BrowserGlue.prototype = {
           }
         }
       });
-    }
-
-    if (AppConstants.MOZ_CRASHREPORTER) {
-      lazy.CrashFileCleaner.init();
-      lazy.CrashFileCleaner.scheduleCleanup();
-      lazy.UnsubmittedCrashHandler.init();
-      lazy.UnsubmittedCrashHandler.scheduleCheckForUnsubmittedCrashReports();
     }
 
     if (AppConstants.ASAN_REPORTER) {
