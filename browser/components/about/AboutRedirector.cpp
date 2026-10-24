@@ -13,7 +13,6 @@
 #include "nsPrintfCString.h"
 #include "nsServiceManagerUtils.h"
 #include "mozilla/Components.h"
-#include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/browser/NimbusFeatures.h"
 
@@ -174,11 +173,6 @@ AboutRedirector::NewChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo,
   NS_ASSERTION(result, "must not be null");
 
   nsAutoCString path = GetAboutModuleName(aURI);
-
-  if (path.EqualsASCII("smartpage") &&
-      !mozilla::StaticPrefs::browser_smartwindow_aitab_enabled()) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
 
   if (path.EqualsASCII("referrals") &&
       !mozilla::Preferences::GetBool(REFERRALS_ENABLED_PREF, false)) {

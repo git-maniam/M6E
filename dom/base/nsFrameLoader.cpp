@@ -2599,8 +2599,6 @@ bool nsFrameLoader::TryRemoteBrowserInternal() {
     if (parentDocShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
       // Allow three exceptions to this rule :
       // - about:addons so it can load remote extension options pages
-      // - smart window (aiWindow.html) so it can load the sandboxed
-      //   about:aichatcontent frame to contain LLM responses.
       // - about:preferences (in Thunderbird only) so it can load remote
       //     extension options pages for FileLink providers
       // - DevTools webext panels if DevTools is loaded in a content frame
@@ -2625,7 +2623,6 @@ bool nsFrameLoader::TryRemoteBrowserInternal() {
       const bool allowed = [&] {
         const nsLiteralCString kAllowedURIs[] = {
             "about:addons"_ns,
-            "chrome://browser/content/aiwindow/aiWindow.html"_ns,
             "chrome://mozapps/content/extensions/aboutaddons.html"_ns,
 #ifdef MOZ_THUNDERBIRD
             "about:3pane"_ns,

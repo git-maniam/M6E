@@ -453,7 +453,6 @@ let JSWINDOWACTORS = {
     messageManagerGroups: [
       "browsers",
       "webext-browsers",
-      "chatbot-browser",
       "",
     ],
     safeForUntrustedWebProcess: true,
@@ -507,7 +506,6 @@ let JSWINDOWACTORS = {
       "moz-extension://*",
       "data:text/html,*",
       "about:reader?*",
-      "about:smartpage?*",
     ],
     messageManagerGroups: ["browsers", "headless-browsers"],
     safeForUntrustedWebProcess: true,

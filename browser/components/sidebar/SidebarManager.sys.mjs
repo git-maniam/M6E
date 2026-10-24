@@ -27,7 +27,7 @@ const DEFAULT_HORIZONTAL_VISIBILITY = "hide-on-close";
 // ensure your feature flag is enabled at the same time you do this and that its the same value as
 // what you added to .
 const DEFAULT_LAUNCHER_TOOLS =
-  "opentabs,bookmarks,aichat,history,syncedtabs,passwords";
+  "opentabs,bookmarks,history,syncedtabs,passwords";
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",

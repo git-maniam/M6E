@@ -26,10 +26,6 @@
     }
   }
 
-  &[sidebarcommand="viewGenaiChatSidebar"] {
-    min-width: 400px;
-  }
-
   &[sidebarcommand="viewCPMSidebar"] {
     min-width: 260px;
   }
