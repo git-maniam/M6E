@@ -5791,9 +5791,6 @@
       "resource://gre/modules/CrashService.sys.mjs": [
         "../../../toolkit/components/crashes/CrashService.sys.mjs"
       ],
-      "resource://gre/modules/Credentials.sys.mjs": [
-        "../../../services/fxaccounts/Credentials.sys.mjs"
-      ],
       "resource://gre/modules/CreditCard.sys.mjs": [
         "../../../toolkit/modules/CreditCard.sys.mjs"
       ],
@@ -5953,9 +5950,6 @@
       "resource://gre/modules/ExtensionStorageSync.sys.mjs": [
         "../../../toolkit/components/extensions/ExtensionStorageSync.sys.mjs"
       ],
-      "resource://gre/modules/ExtensionStorageSyncKinto.sys.mjs": [
-        "../../../toolkit/components/extensions/ExtensionStorageSyncKinto.sys.mjs"
-      ],
       "resource://gre/modules/ExtensionTaskScheduler.sys.mjs": [
         "../../../toolkit/components/extensions/ExtensionTaskScheduler.sys.mjs"
       ],
@@ -6021,54 +6015,6 @@
       ],
       "resource://gre/modules/FormScenarios.sys.mjs": [
         "../../../toolkit/components/satchel/FormScenarios.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccounts.sys.mjs": [
-        "../../../services/fxaccounts/FxAccounts.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsClient.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsClient.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsCommands.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsCommands.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsCommon.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsCommon.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsConfig.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsConfig.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsDevice.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsDevice.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsKeys.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsKeys.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsOAuth.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsOAuth.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsPairing.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsPairing.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsPairingChannel.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsPairingChannel.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsProfile.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsProfile.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsProfileClient.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsProfileClient.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsPush.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsPush.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsStorage.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsStorage.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsTelemetry.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsTelemetry.sys.mjs"
-      ],
-      "resource://gre/modules/FxAccountsWebChannel.sys.mjs": [
-        "../../../services/fxaccounts/FxAccountsWebChannel.sys.mjs"
       ],
       "resource://gre/modules/GMPInstallManager.sys.mjs": [
         "../../../toolkit/modules/GMPInstallManager.sys.mjs"
@@ -7231,12 +7177,6 @@
       "resource://services-common/async.sys.mjs": [
         "../../../services/common/async.sys.mjs"
       ],
-      "resource://services-common/hawkclient.sys.mjs": [
-        "../../../services/common/hawkclient.sys.mjs"
-      ],
-      "resource://services-common/hawkrequest.sys.mjs": [
-        "../../../services/common/hawkrequest.sys.mjs"
-      ],
       "resource://services-common/kinto-http-client.sys.mjs": [
         "../../../services/common/kinto-http-client.sys.mjs"
       ],
@@ -7251,9 +7191,6 @@
       ],
       "resource://services-common/rest.sys.mjs": [
         "../../../services/common/rest.sys.mjs"
-      ],
-      "resource://services-common/tokenserverclient.sys.mjs": [
-        "../../../services/common/tokenserverclient.sys.mjs"
       ],
       "resource://services-settings/Attachments.sys.mjs": [
         "../../../services/settings/Attachments.sys.mjs"

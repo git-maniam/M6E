@@ -5872,27 +5872,6 @@ interface GleanImpl {
     rejectedSyscalls: Record<string, GleanCounter>;
   }
 
-  clientAssociation: {
-    legacyClientId: GleanUuid;
-    uid: GleanString;
-  }
-
-  fxa: {
-    accountEnabled: GleanBoolean;
-    closetabReceived: GleanEventWithExtras<{ flow_id?: string, hashed_device_id?: string, reason?: string, server_time?: string, stream_id?: string }>;
-    closetabSent: GleanEventWithExtras<{ flow_id?: string, hashed_device_id?: string, server_time?: string, stream_id?: string }>;
-    connectAccount: GleanEventWithExtras<{ fxa?: string, sync?: string, value?: string }>;
-    disconnectAccount: GleanEventWithExtras<{ fxa?: string, sync?: string, value?: string }>;
-    sendtabReceived: GleanEventWithExtras<{ flow_id?: string, hashed_device_id?: string, reason?: string, server_time?: string, stream_id?: string }>;
-    sendtabSent: GleanEventWithExtras<{ flow_id?: string, hashed_device_id?: string, server_time?: string, stream_id?: string }>;
-    syncEnabled: GleanBoolean;
-  }
-
-  syncSettings: {
-    openChooseWhatToSyncMenu: GleanEventWithExtras<{ why?: string }>;
-    save: GleanEventWithExtras<{ disabled_engines?: string, enabled_engines?: string }>;
-  }
-
   uptakeRemotecontentResult: {
     uptakeRemotesettings: GleanEventWithExtras<{ age?: string, duration?: string, errorName?: string, source?: string, timestamp?: string, trigger?: string, value?: string }>;
   }
@@ -8193,8 +8172,6 @@ interface GleanPingsImpl {
   contentDecodingError: GleanPingWithReason<"error">;
   localNetworkAccess: GleanPingNoReason;
   urlClassifierHarmfulAddon: GleanPingNoReason;
-  fxAccounts: GleanPingWithReason<"active"|"dirty_startup"|"inactive">;
-  fxAccountsClientInfo: GleanPingNoReason;
   sync: GleanPingWithReason<"idchange"|"schedule"|"shutdown">;
   bounceTrackingProtection: GleanPingNoReason;
   hangReport: GleanPingNoReason;

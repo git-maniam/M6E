@@ -3373,7 +3373,7 @@ pref("browser.shareqrcode.embed_logo", true);
 // keep this list short. This preference (and SVG `context-` keyword support)
 // are expected to go away once a standardized alternative becomes
 // available.
-pref("svg.context-properties.content.allowed-domains", "profile.accounts.firefox.com,profile.stage.mozaws.net");
+pref("svg.context-properties.content.allowed-domains", "");
 
 // Preference that allows individual users to disable Firefox Translations.
 #ifdef NIGHTLY_BUILD
