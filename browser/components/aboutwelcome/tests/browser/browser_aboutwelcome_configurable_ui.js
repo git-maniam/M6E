@@ -1,9 +1,5 @@
 "use strict";
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
-
 add_setup(async function () {
   registerCleanupFunction(function () {
     Services.prefs.clearUserPref("browser.aboutwelcome.didSeeFinalScreen");
@@ -73,12 +69,7 @@ add_task(async function test_aboutwelcome_single_select_icon_styles() {
     }),
   ];
 
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true, screens },
-  });
-
-  let browser = await openAboutWelcome();
+  let browser = await openAboutWelcome(JSON.stringify(screens));
 
   await test_element_styles(
     browser,
@@ -96,7 +87,6 @@ add_task(async function test_aboutwelcome_single_select_icon_styles() {
     }
   );
 
-  await doExperimentCleanup();
   browser.closeBrowser();
 });
 

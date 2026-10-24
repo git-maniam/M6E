@@ -9,4 +9,8 @@ XPCSHELL_TESTS_MANIFESTS += [
     "test/unit/xpcshell.toml",
 ]
 
+TESTING_JS_MODULES += [
+    "test/FeatureOverride.sys.mjs",
+]
+
 JAR_MANIFESTS += ["jar.mn"]

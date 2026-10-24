@@ -3,12 +3,6 @@
 
 "use strict";
 
-const { ExperimentAPI } = ChromeUtils.importESModule(
-  "resource://nimbus/ExperimentAPI.sys.mjs"
-);
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
 const WebProtocolHandlerRegistrar = ChromeUtils.importESModule(
   "moz-src:///browser/components/protocolhandler/WebProtocolHandlerRegistrar.sys.mjs"
 ).WebProtocolHandlerRegistrar.prototype;
@@ -24,8 +18,6 @@ add_setup(async () => {
 
   Services.prefs.clearUserPref("browser.mailto.dualPrompt");
   Services.prefs.clearUserPref("browser.mailto.dualPrompt.onLocationChange");
-
-  await ExperimentAPI.ready();
 
   WebProtocolHandlerRegistrar._addWebProtocolHandler(
     protocol,
@@ -104,24 +96,24 @@ add_task(async function promptShownForLocalHandler() {
   });
 });
 
-function test_rollout(
+async function test_rollout(
   dualPrompt = false,
   onLocationChange = false,
   dismissNotNowMinutes = 15,
   dismissXClickMinutes = 15
 ) {
-  return NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.mailto.featureId,
-      value: {
-        dualPrompt,
-        "dualPrompt.onLocationChange": onLocationChange,
-        "dualPrompt.dismissXClickMinutes": dismissXClickMinutes,
-        "dualPrompt.dismissNotNowMinutes": dismissNotNowMinutes,
-      },
-    },
-    { isRollout: true }
-  );
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["browser.mailto.dualPrompt", dualPrompt],
+      ["browser.mailto.dualPrompt.onLocationChange", onLocationChange],
+      [
+        "browser.mailto.dualPrompt.dismissXClickMinutes",
+        dismissXClickMinutes,
+      ],
+      ["browser.mailto.dualPrompt.dismissNotNowMinutes", dismissNotNowMinutes],
+    ],
+  });
+  return () => SpecialPowers.popPrefEnv();
 }
 
 add_task(async function check_no_button() {

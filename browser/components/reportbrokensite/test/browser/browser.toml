@@ -23,9 +23,6 @@ skip-if = [
 
 ["browser_error_messages.js"]
 
-["browser_experiment_data_sent.js"]
-support-files = [ "send_more_info.js" ]
-
 ["browser_keyboard_navigation.js"]
 
 ["browser_learn_more_link.js"]

@@ -11,9 +11,6 @@ const { EnterprisePolicyTesting, PoliciesPrefTracker } =
     "resource://testing-common/EnterprisePolicyTesting.sys.mjs"
   );
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
 const { PermissionTestUtils } = ChromeUtils.importESModule(
   "resource://testing-common/PermissionTestUtils.sys.mjs"
 );
@@ -30,12 +27,9 @@ ChromeUtils.defineLazyGetter(this, "QuickSuggestTestUtils", () => {
 });
 
 ChromeUtils.defineESModuleGetters(this, {
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   QuickSuggest: "moz-src:///browser/components/urlbar/QuickSuggest.sys.mjs",
   SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
 });
-
-NimbusTestUtils.init(this);
 
 const kDefaultWait = 2000;
 

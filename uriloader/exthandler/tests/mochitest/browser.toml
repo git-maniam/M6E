@@ -2,7 +2,6 @@
 head = "head.js"
 support-files = ["protocolHandler.html"]
 
-
 ["browser_auto_close_window.js"]
 support-files = [
   "download_page.html",
@@ -119,9 +118,6 @@ support-files = ["file_pdf_binary_octet_stream.pdf"]
 
 ["browser_local_files_open_doesnt_duplicate.js"]
 support-files = ["file_pdf_binary_octet_stream.pdf"]
-
-["browser_mailto_handler_picker.js"]
-support-files = ["blank_webmail.html"]
 
 ["browser_mailto_user_activation.js"]
 

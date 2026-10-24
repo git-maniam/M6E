@@ -3,9 +3,6 @@
 
 "use strict";
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
 const { ExperimentAPI } = ChromeUtils.importESModule(
   "resource://nimbus/ExperimentAPI.sys.mjs"
 );
@@ -22,21 +19,18 @@ const { OnboardingMessageProvider } = ChromeUtils.importESModule(
   "resource:///modules/asrouter/OnboardingMessageProvider.sys.mjs"
 );
 
-NimbusTestUtils.init(this);
-
 const EXPERIMENTS_GATE_PREF = "browser.aboutwelcome.experimentsGate.enabled";
 const SKIP_SPLASH_IF_LOADED_PREF =
   "browser.aboutwelcome.experimentsGate.skipSplashIfLoaded";
 const DID_SEE_ABOUT_WELCOME_PREF = "trailhead.firstrun.didSeeAboutWelcome";
 const PREONBOARDING_ENABLED_PREF = "browser.preonboarding.enabled";
+const PREONBOARDING_SCREENS_PREF = "browser.preonboarding.screens";
 const SPLASH_SHOWN_PREF = "browser.preonboarding.splashShown";
 const ABOUT_WELCOME_ENABLED_PREF = "browser.aboutwelcome.enabled";
 const WELCOME_URL_PREF = "startup.homepage_welcome_url";
 
 add_setup(async function () {
   do_get_profile();
-  const { cleanup } = await NimbusTestUtils.setupTest();
-  registerCleanupFunction(cleanup);
 });
 
 // Stub the module's show seam and return the captured stubs plus the fake
@@ -82,6 +76,7 @@ function restoreState() {
   Services.prefs.clearUserPref(EXPERIMENTS_GATE_PREF);
   Services.prefs.clearUserPref(SKIP_SPLASH_IF_LOADED_PREF);
   Services.prefs.clearUserPref(PREONBOARDING_ENABLED_PREF);
+  Services.prefs.clearUserPref(PREONBOARDING_SCREENS_PREF);
   Services.prefs.clearUserPref(DID_SEE_ABOUT_WELCOME_PREF);
   Services.prefs.clearUserPref(SPLASH_SHOWN_PREF);
 }
@@ -348,15 +343,10 @@ add_task(async function test_enabled_false_is_hard_opt_out() {
   const { showSpotlight } = stubShow();
   stubSplashWillShow();
 
-  const doCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: "preonboarding",
-      value: {
-        enabled: false,
-        screens: [{ id: "TOU_ONBOARDING_LOADING", content: {} }],
-      },
-    },
-    { isRollout: false }
+  Services.prefs.setBoolPref(PREONBOARDING_ENABLED_PREF, false);
+  Services.prefs.setStringPref(
+    PREONBOARDING_SCREENS_PREF,
+    JSON.stringify([{ id: "TOU_ONBOARDING_LOADING", content: {} }])
   );
 
   PreonboardingSplash.maybeShowStartupSplash();
@@ -364,10 +354,9 @@ add_task(async function test_enabled_false_is_hard_opt_out() {
   Assert.equal(
     showSpotlight.callCount,
     0,
-    "splash is not shown when preonboarding is explicitly disabled, even with experiment screens"
+    "splash is not shown when preonboarding is explicitly disabled, even with screens"
   );
 
-  await doCleanup();
   restoreState();
 });
 
@@ -400,20 +389,14 @@ add_task(async function test_empty_screens_falls_back_to_default_message() {
   const { showSpotlight } = stubShow();
   stubSplashWillShow();
 
-  const doCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: "preonboarding",
-      value: { enabled: true, screens: [] },
-    },
-    { isRollout: false }
-  );
+  Services.prefs.setStringPref(PREONBOARDING_SCREENS_PREF, "[]");
 
   PreonboardingSplash.maybeShowStartupSplash();
 
   Assert.equal(
     showSpotlight.callCount,
     1,
-    "splash is shown from the default message when an experiment supplies no screens"
+    "splash is shown from the default message when no screens are configured"
   );
   Assert.equal(
     showSpotlight.firstCall.args[0].data.content.screens[0].id,
@@ -421,7 +404,6 @@ add_task(async function test_empty_screens_falls_back_to_default_message() {
     "the default message's loading screen survives an empty screens array"
   );
 
-  await doCleanup();
   restoreState();
 });
 
