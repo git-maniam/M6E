@@ -7,8 +7,6 @@ document.addEventListener(
   () => {
     const lazy = {};
     ChromeUtils.defineESModuleGetters(lazy, {
-      AIWindow:
-        "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
       ContentSharingUtils:
         "moz-src:///browser/components/sharing/ContentSharingUtils.sys.mjs",
       MiniWindowManager:
@@ -130,15 +128,6 @@ document.addEventListener(
           break;
         case "context_shareSelectedTabs":
           lazy.ContentSharingUtils.handleShareTabs(TabContextMenu.contextTabs);
-          break;
-        case "context_createAITab":
-          lazy.AIWindow.createAITab(
-            window,
-            TabContextMenu.contextTabs.map(
-              tab => tab.linkedBrowser.currentURI.spec
-            ),
-            "tab_list"
-          );
           break;
         case "context_bookmarkTab":
           PlacesCommandHook.bookmarkTabs([TabContextMenu.contextTab]);

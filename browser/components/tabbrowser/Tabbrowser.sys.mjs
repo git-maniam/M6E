@@ -6,8 +6,6 @@ import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const lazy = XPCOMUtils.declareLazy({
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   allowTransparentBrowser: {
     pref: "browser.tabs.allow_transparent_browser",
     default: false,
@@ -93,8 +91,6 @@ const FAVICON_DEFAULTS = {
   "about:home": "chrome://branding/content/icon32.png",
   "about:welcome": "chrome://branding/content/icon32.png",
   "about:privatebrowsing": "chrome://browser/skin/privatebrowsing/favicon.svg",
-  "chrome://browser/content/aiwindow/aiWindow.html":
-    "chrome://browser/skin/smart-window-simplified.svg",
 };
 
 const {
@@ -813,23 +809,6 @@ export class Tabbrowser {
     );
     browser.fixupAndLoadURIString =
       URILoadingWrapper.fixupAndLoadURIString.bind(URILoadingWrapper, browser);
-
-    if (lazy.AIWindow.isAIWindowActive(this.documentGlobal)) {
-      let uriToLoad = this.documentGlobal.gBrowserInit.uriToLoadPromise;
-      let firstURI = Array.isArray(uriToLoad) ? uriToLoad[0] : uriToLoad;
-
-      if (!lazy.allowTransparentBrowser) {
-        // firstURI may be a Promise (uriToLoadPromise still resolving while
-        // SessionStore restores) or empty; only build a URI from a real
-        // string, otherwise default to transparent like the no-URI case.
-        browser.toggleAttribute(
-          "transparent",
-          !firstURI ||
-            typeof firstURI != "string" ||
-            lazy.AIWindow.isAIWindowContentPage(Services.io.newURI(firstURI))
-        );
-      }
-    }
 
     let uniqueId = Tabbrowser.#generateUniquePanelID();
     let panel = this.getPanel(browser);
@@ -3238,10 +3217,7 @@ export class Tabbrowser {
       b.setAttribute("name", name);
     }
 
-    if (
-      lazy.AIWindow.isAIWindowActive(this.documentGlobal) ||
-      lazy.allowTransparentBrowser
-    ) {
+    if (lazy.allowTransparentBrowser) {
       b.setAttribute("transparent", "true");
     }
 
@@ -5765,15 +5741,10 @@ export class Tabbrowser {
       return {
         uri,
         userContextId: tab.userContextId,
-        conversationId: lazy.AIWindow.getChatTabConversationId(tab),
       };
     };
     let keyEquals = (a, b) => {
-      return (
-        a.userContextId == b.userContextId &&
-        a.conversationId == b.conversationId &&
-        a.uri.equals(b.uri)
-      );
+      return a.userContextId == b.userContextId && a.uri.equals(b.uri);
     };
     if (aTab.multiselected) {
       for (let tab of this.selectedTabs) {
@@ -5824,11 +5795,8 @@ export class Tabbrowser {
         // Safest to leave it be.
         continue;
       }
-      // Smart Window chat tabs all live at one chrome URL, so the conversation
-      // open in each is what tells them apart.
-      const conversationId = lazy.AIWindow.getChatTabConversationId(tab);
       let userContextIds = userContextIdsPerUri.getOrInsertComputed(
-        conversationId ? `${uri.spec}\n${conversationId}` : uri.spec,
+        uri.spec,
         () => new Set()
       );
       let userContextId = tab.userContextId;
@@ -10911,14 +10879,6 @@ class TabProgressListener {
           !this.#documentGlobal.isBlankPageURL(aRequest.originalURI.spec)
         ) {
           this._browser.originalURI = aRequest.originalURI;
-        }
-
-        if (!lazy.allowTransparentBrowser) {
-          this._browser.toggleAttribute(
-            "transparent",
-            lazy.AIWindow.isAIWindowActive(this.#documentGlobal) &&
-              lazy.AIWindow.isAIWindowContentPage(aLocation)
-          );
         }
       }
 
