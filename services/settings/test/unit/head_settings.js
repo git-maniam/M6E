@@ -23,6 +23,13 @@ ChromeUtils.defineESModuleGetters(this, {
   Utils: "resource://services-settings/Utils.sys.mjs",
 });
 
+// M6E: upstream tests sync collections outside the D2 allowlist, so they see
+// every collection as allowed. test_m6e_allowed_collections.js restores the
+// real check to test the allowlist itself.
+const M6E_IS_ALLOWED_COLLECTION = Utils.isAllowedCollection;
+Utils.isAllowedCollection = () => true;
+
+
 const IS_ANDROID = AppConstants.platform == "android";
 
 function arrayEqual(a, b) {

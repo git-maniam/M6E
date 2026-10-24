@@ -6,6 +6,11 @@
 // M6E: only security and tracking-protection data may sync from Remote
 // Settings (D2).
 
+add_setup(() => {
+  // head_settings.js allows every collection for the upstream tests.
+  Utils.isAllowedCollection = M6E_IS_ALLOWED_COLLECTION;
+});
+
 add_task(function test_allowed_collections() {
   for (let [bucket, collection] of [
     ["security-state", "intermediates"],

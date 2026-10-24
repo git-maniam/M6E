@@ -30,14 +30,6 @@ async function clear_state() {
 }
 
 add_task(() => {
-  // M6E: these upstream tests sync collections outside the D2 allowlist,
-  // which test_m6e_allowed_collections.js covers.
-  const isAllowedCollection = Utils.isAllowedCollection;
-  Utils.isAllowedCollection = () => true;
-  registerCleanupFunction(() => {
-    Utils.isAllowedCollection = isAllowedCollection;
-  });
-
   // Set up an HTTP Server
   server = new HttpServer();
   server.start(-1);

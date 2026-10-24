@@ -33,6 +33,7 @@ environment = ["MOZ_REMOTE_SETTINGS_DISABLED=1"]
 
 ["test_remote_settings_startup_bundle.js"]
 support-files = ["test_remote_settings_startup_bundle/**"]
+skip-if = ["true"] # M6E: the startup bundle download is removed (P1.12, D2)
 
 ["test_remote_settings_sync_history.js"]
 
