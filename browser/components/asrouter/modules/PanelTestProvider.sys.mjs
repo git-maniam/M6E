@@ -3316,62 +3316,6 @@ const MESSAGES = () => [
       "source == 'newtab' && !isMajorUpgrade && !activeNotifications && userPrefs.cfrFeatures && previousSessionEnd && !hasActiveEnterprisePolicies",
   },
   {
-    id: "TEST_CONTENT_ANCHOR",
-    template: "feature_callout",
-    content: {
-      id: "TEST_CONTENT_ANCHOR",
-      padding: "16",
-      template: "multistage",
-      backdrop: "transparent",
-      transitions: false,
-      disableHistoryUpdates: true,
-      screens: [
-        {
-          id: "TEST_CONTENT_ANCHOR_SCREEN",
-          anchors: [
-            {
-              selector:
-                "hbox.deck-selected browser::%document%ai-window::%shadow%context-icon-button::%shadow% .context-icon-button",
-              panel_position: {
-                anchor_attachment: "bottomcenter",
-                callout_attachment: "topright",
-              },
-            },
-          ],
-          content: {
-            position: "callout",
-            width: "400px",
-            padding: 16,
-            title: {
-              raw: "Test Content Anchor",
-            },
-            subtitle: {
-              raw: "This callout is for testing content anchors.",
-            },
-            additional_button: {
-              action: {
-                dismiss: true,
-              },
-              label: {
-                string_id: "dismiss-button-label",
-                fontWeight: "590",
-                fontSize: "11px",
-              },
-              style: "secondary",
-            },
-          },
-        },
-      ],
-    },
-    frequency: {
-      lifetime: 2,
-    },
-    trigger: {
-      id: "smartWindowNewTab",
-    },
-    targeting: "isAIWindow",
-  },
-  {
     id: "WORLD_CUP_TASKBAR_TABS_SPOTLIGHT",
     groups: ["panel-test-provider"],
     template: "spotlight",
@@ -3588,137 +3532,6 @@ const MESSAGES = () => [
     targeting: "true",
   },
   // For manually testing the splitViewUsed trigger. See the "trigger" field.
-  {
-    id: "SPLIT_VIEW_SMART_WINDOW_CALLOUT",
-    template: "feature_callout",
-    groups: [],
-    provider: "panel_local_testing",
-    content: {
-      id: "SPLIT_VIEW_SMART_WINDOW_CALLOUT",
-      template: "multistage",
-      backdrop: "transparent",
-      transitions: false,
-      screens: [
-        {
-          id: "SPLIT_VIEW_SMART_WINDOW_CALLOUT",
-          anchors: [
-            {
-              selector: "#split-view-button",
-              panel_position: {
-                anchor_attachment: "bottomcenter",
-                callout_attachment: "topright",
-              },
-            },
-          ],
-          content: {
-            position: "callout",
-            padding: 16,
-            width: "330px",
-            title: "Working across multiple tabs?",
-            subtitle: "Try Smart Window to compare or reason across them.",
-            primary_button: {
-              label: "Try Smart Window",
-              action: {
-                type: "MULTI_ACTION",
-                dismiss: true,
-                data: {
-                  actions: [
-                    {
-                      type: "OPEN_ABOUT_PAGE",
-                      data: {
-                        args: "newtab",
-                        where: "tab",
-                      },
-                    },
-                    { type: "FXA_AIWINDOW_SIGNIN_FLOW" },
-                  ],
-                },
-              },
-            },
-            dismiss_button: { action: { dismiss: true } },
-          },
-        },
-      ],
-    },
-    // Example of message targeting on the trigger's splitViewCreateCount
-    // context, to exclude users who are creating a Split View for the first
-    // time.
-    targeting: "splitViewCreateCount > 1",
-    trigger: {
-      id: "splitViewUsed",
-    },
-    frequency: {
-      lifetime: 2,
-    },
-  },
-  {
-    id: "SIDEBAR_CHATBOT_PROMO_TEST",
-    template: "sidebar_chatbot_promo",
-    content: {
-      type: "default",
-      heading: "Give your AI the full picture",
-      message:
-        "In Smart Window, AI reads every page and tab you have open, not just this sidebar. Skip the copy-paste and just ask.",
-      primary_button: {
-        label: "Try Smart Window",
-        action: {
-          type: "FXA_AIWINDOW_SIGNIN_FLOW",
-        },
-      },
-      additional_button: {
-        label: "Dismiss",
-        action: {
-          type: "CANCEL",
-        },
-      },
-    },
-    trigger: {
-      id: "sidebarToolOpened",
-    },
-    frequency: {
-      lifetime: 3,
-    },
-  },
-  {
-    id: "SMARTWINDOW_NEWTAB_PROMO_DISMISSABLE_TEST",
-    template: "smart_window_newtab_promo",
-    content: {
-      type: "vibrant",
-      heading: "Smart Window Default Dismiss-able Test Message",
-      message: "Firefox will open in Smart Window every time.",
-      imageSrc:
-        "chrome://browser/content/aiwindow/assets/smart-window-promo-default.svg",
-      imageAlignment: "start",
-      imageWidth: "small",
-      imageDisplay: "padded",
-      dismissable: true,
-      primary_button: {
-        label: "Set as default",
-        action: {
-          type: "SET_PREF",
-          data: {
-            pref: {
-              name: "browser.smartwindow.isDefaultWindow",
-              value: true,
-            },
-          },
-        },
-      },
-      additional_button: {
-        label: "Not now",
-        action: {
-          type: "CANCEL",
-        },
-      },
-    },
-    trigger: {
-      id: "smartWindowNewTab",
-    },
-    targeting: "isAIWindow",
-    frequency: {
-      lifetime: 3,
-    },
-  },
 ];
 
 export const PanelTestProvider = {
@@ -3731,11 +3544,7 @@ export const PanelTestProvider = {
    */
   tagMessageForTesting(message) {
     message.provider = "panel_local_testing";
-    message.targeting =
-      typeof message.targeting === "string" &&
-      message.targeting?.includes("isAIWindow")
-        ? `isAIWindow && providerCohorts.panel_local_testing == "SHOW_TEST"`
-        : `providerCohorts.panel_local_testing == "SHOW_TEST"`;
+    message.targeting = `providerCohorts.panel_local_testing == "SHOW_TEST"`;
     return message;
   },
 

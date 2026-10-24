@@ -52,7 +52,6 @@ describe("ASRTargeting docs", () => {
     // context in when a trigger runs or ASRouter state used in the evaluation.
     const allow = [
       "browserIsSelected",
-      "isAIWindow",
       "isFirstStartup",
       "isNonStubFirstRun",
     ];

@@ -84,7 +84,6 @@ describe("RemoteL10n", () => {
         "browser/policy-messages.ftl",
         "browser/profiles.ftl",
         "browser/termsofuse.ftl",
-        "browser/aiWindow.ftl",
         "toolkit/branding/brandings.ftl",
       ]);
       assert.isFalse(args[1]);
@@ -109,7 +108,6 @@ describe("RemoteL10n", () => {
         "browser/policy-messages.ftl",
         "browser/profiles.ftl",
         "browser/termsofuse.ftl",
-        "browser/aiWindow.ftl",
         "toolkit/branding/brandings.ftl",
       ]);
       assert.isFalse(args[1]);

@@ -2155,7 +2155,6 @@ describe("ASRouter", () => {
       assert.strictEqual(trigger.id, "firstRun");
       assert.strictEqual(trigger.param, undefined);
       assert.isObject(trigger.context);
-      assert.strictEqual(trigger.context.isAIWindow, false);
       assert.strictEqual(trigger.context.browserIsSelected, true);
       assert.strictEqual(trigger.context.onThirdPartyPage, true);
       assert.deepEqual(
@@ -2164,7 +2163,6 @@ describe("ASRouter", () => {
           id: "firstRun",
           param: undefined,
           context: {
-            isAIWindow: false,
             browserIsSelected: true,
             onThirdPartyPage: true,
           },

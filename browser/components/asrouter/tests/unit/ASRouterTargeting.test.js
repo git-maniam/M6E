@@ -395,10 +395,7 @@ describe("ASRouterTargeting", () => {
       false
     );
     assert.calledOnce(fakeTargetingContext.evalWithDefault);
-    assert.include(
-      fakeTargetingContext.evalWithDefault.firstCall.args[0],
-      "!isAIWindow"
-    );
+    assert.calledWith(fakeTargetingContext.evalWithDefault, "true");
     assert.calledWithExactly(
       fakeTargetingContext.setTelemetrySource,
       "message"
@@ -479,53 +476,6 @@ describe("ASRouterTargeting", () => {
     );
 
     assert.calledTwice(evalStub);
-  });
-  it("defaults to Classic-only targeting when no targeting is specified", async () => {
-    evalStub.resolves(true);
-    const targetingContext = new global.TargetingContext();
-    const message = { id: "test-message" };
-
-    await ASRouterTargeting.checkMessageTargeting(
-      message,
-      targetingContext,
-      null,
-      false
-    );
-
-    assert.calledOnce(fakeTargetingContext.evalWithDefault);
-    assert.calledWith(fakeTargetingContext.evalWithDefault, "!isAIWindow");
-  });
-  it("blocks messages in AI windows by default via !isAIWindow", async () => {
-    evalStub.resolves(true);
-    const targetingContext = new global.TargetingContext();
-    targetingContext.isAIWindow = false;
-    const message = { id: "test-message" };
-
-    await ASRouterTargeting.checkMessageTargeting(
-      message,
-      targetingContext,
-      null,
-      false
-    );
-
-    assert.calledOnce(fakeTargetingContext.evalWithDefault);
-    assert.calledWith(fakeTargetingContext.evalWithDefault, "!isAIWindow");
-  });
-  it("does not modify targeting that explicitly references isAIWindow", async () => {
-    evalStub.resolves(true);
-    const targetingContext = new global.TargetingContext();
-    targetingContext.isAIWindow = true;
-    const message = { id: "test-message", targeting: "isAIWindow" };
-
-    await ASRouterTargeting.checkMessageTargeting(
-      message,
-      targetingContext,
-      null,
-      false
-    );
-
-    assert.calledOnce(fakeTargetingContext.evalWithDefault);
-    assert.calledWith(fakeTargetingContext.evalWithDefault, "isAIWindow");
   });
 
   describe("#findMatchingMessage", () => {
