@@ -4,6 +4,11 @@ support-files = [
   "clipboard_helper.js",
 ]
 tags = "os_integration"
+# M6E: m6e.js turns these Nightly features off (P4.8a).
+prefs = [
+  "dom.clipboard.customFormatSupport.enabled=true",
+  "clipboard.readCustomFormatsFromClipboard.enabled=true",
+]
 
 ["test_alwaysontop_focus.xhtml"]
 

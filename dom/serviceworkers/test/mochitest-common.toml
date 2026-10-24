@@ -1,5 +1,9 @@
 [DEFAULT]
-prefs = ["dom.xslt.enabled=true"]
+prefs = [
+  "dom.xslt.enabled=true",
+  "dom.quota_exceeded_error.enabled=true",
+  "layout.css.typed-om.enabled=true",
+]
 tags = "condprof"
 support-files = [
   "abrupt_completion_worker.js",

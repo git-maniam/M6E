@@ -472,8 +472,10 @@ Order: P4.2c, then P4.5 to P4.9, then P4.3 and P4.4 (profile the final code). PG
      - Add-on updates are off, so installed add-ons never get security fixes.
      - Turning a site off with the Shield on also allows plain http for it (D20).
      - The RUSTSEC ignores in `.cargo/audit.toml` need re-checking.
-  - **a results:** `m6e.js` gives Firefox Release's values to 59 of the 73 Nightly-dependent static prefs and to the Nightly blocks in `all.js` and `firefox.js`.
-    - **Now off:** Speculation Rules, streaming fetch uploads, Web Share, the worker remote debugger, Typed OM, compression dictionaries, Reporting API crash reports, experimental RegExp and WebCrypto features, the new clipboard formats, the experimental BiDi features, and Nightly's parallel second SDP parser.
+  - **a results:** `m6e.js` gives Firefox Release's values to the Nightly-only static prefs and to the Nightly blocks in `all.js` and `firefox.js`.
+    - **Correction (P4.9):** the first version also turned off WebCodecs (`dom.media.webcodecs.enabled`), which is Nightly-only on Android but on by default in desktop Release, and two prefs that are already off on macOS (`dom.webshare.enabled`, `network.proxy.detect_system_proxy_changes`). It had read the first `value:` of entries with `#if` blocks inside them. Those three lines are gone, and the list was rechecked against the YAML with the platform conditionals resolved for macOS.
+    - **Tests:** manifests for the features now off set their Nightly values again: `dom/tests/mochitest/general`, `dom/workers/test`, `dom/serviceworkers/test`, `dom/base/test/browser.toml` (Speculation Rules), `widget/tests/chrome.toml` (clipboard), and three WPT Speculation Rules metadata files.
+    - **Now off:** Speculation Rules, streaming fetch uploads, the worker remote debugger, Typed OM, compression dictionaries, Reporting API crash reports, experimental RegExp and WebCrypto features, the new clipboard formats, the experimental BiDi features, and Nightly's parallel second SDP parser.
     - **Nightly values kept:** opaque response blocking, COEP credentialless, schemeful SameSite, DOM-clobbering protection, unused-permission expiry, content-script resource isolation, no `Components` shim, no inline handlers in SVG `<use>`, the MathML and `dragexit` removals, and visible control characters.
     - **Locked:** the SharedArrayBuffer COOP/COEP bypass stays off (as in Release), and the devtools remote debugging server is locked off.
     - **New:** Local Network Access also blocks trackers (`network.lna.block_trackers`).

@@ -121,6 +121,11 @@ support-files = [
   "test_worker_in_background.js",
   "test_worker_in_background_child.js",
 ]
+# M6E: m6e.js turns these Nightly features off (P4.8a).
+prefs = [
+  "dom.quota_exceeded_error.enabled=true",
+  "layout.css.typed-om.enabled=true",
+]
 
 ["test_404.html"]
 

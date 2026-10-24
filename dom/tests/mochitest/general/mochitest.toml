@@ -66,6 +66,13 @@ support-files = [
   "embed_navigate.html",
   "postback.html",
 ]
+# M6E: m6e.js turns these Nightly features off (P4.8a).
+prefs = [
+  "dom.audio_session.enabled=true",
+  "dom.quota_exceeded_error.enabled=true",
+  "layout.css.typed-om.enabled=true",
+  "mathml.a.element.enabled=true",
+]
 
 ["include:mochitest-xslt.toml"]
 
