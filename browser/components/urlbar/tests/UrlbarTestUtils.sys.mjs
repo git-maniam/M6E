@@ -23,11 +23,9 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ContentTaskUtils: "resource://testing-common/ContentTaskUtils.sys.mjs",
   DEFAULT_FORM_HISTORY_PARAM:
     "moz-src:///toolkit/components/search/SearchSuggestionController.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   FormHistoryTestUtils:
     "resource://testing-common/FormHistoryTestUtils.sys.mjs",
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
   ProvidersManager:
     "moz-src:///browser/components/urlbar/UrlbarProvidersManager.sys.mjs",
@@ -1728,76 +1726,83 @@ export class UrlbarInputBaseTestUtils {
   }
 
   /**
-   * Enrolls in a mock Nimbus experiment or rollout.
+   * Overrides Nimbus feature variables by setting their fallback prefs.
+   * Variables without a fallback pref are ignored.
    *
    * @param {?object} value
    *   Define any desired Nimbus variables in this object.
    * @param {?object} options
    * @param {?string} options.featureId
    *   The name of the Nimbus feature.
-   * @param {?boolean} options.isRollout
-   *   True to use a rollout, false to use an experiment.
-   * @param {?string} options.slug
-   *   The experiment/rollout name. `NimbusTestUtils` will generate a name if
-   *   this isn't specified.
-   * @param {?string} options.branch
-   *   The experiment/rollout branch to enroll in. `NimbusTestUtils` will
-   *   generate a branch if this isn't specified.
    * @returns {Function}
-   *   A cleanup function that should be called to unenroll and remove the
-   *   experiment/rollout.
+   *   A cleanup function that restores the prefs.
    */
-  async initNimbusFeature(
-    value = {},
-    {
-      featureId = "urlbar",
-      isRollout = true,
-      slug = undefined,
-      branchSlug = undefined,
-    } = {}
-  ) {
-    this.info("initNimbusFeature awaiting ExperimentAPI.init");
-    const initializedExperimentAPI = await lazy.ExperimentAPI.init();
+  async initNimbusFeature(value = {}, { featureId = "urlbar" } = {}) {
+    const { fallbackPrefs } = lazy.NimbusFeatures[featureId];
+    const originals = new Map();
 
-    this.info("initNimbusFeature awaiting ExperimentAPI.ready");
-    await lazy.ExperimentAPI.ready();
+    for (let [variable, variableValue] of Object.entries(value)) {
+      let pref = fallbackPrefs[variable];
+      if (!pref || variableValue === undefined) {
+        this.info(`initNimbusFeature ignoring ${featureId}.${variable}`);
+        continue;
+      }
+      if (!originals.has(pref)) {
+        originals.set(
+          pref,
+          Services.prefs.prefHasUserValue(pref)
+            ? this.#getUserPref(pref)
+            : undefined
+        );
+      }
+      this.#setUserPref(pref, variableValue);
+    }
 
-    this.info(
-      `initNimbusFeature awaiting NimbusTestUtils.enrollWithFeatureConfig`
-    );
-    const doExperimentCleanup =
-      await lazy.NimbusTestUtils.enrollWithFeatureConfig(
-        {
-          value,
-          featureId: lazy.NimbusFeatures[featureId].featureId,
-        },
-        {
-          branchSlug,
-          isRollout,
-          slug,
-        }
-      );
-
-    this.info("initNimbusFeature done");
-
+    let cleanedUp = false;
     const cleanup = async () => {
-      await doExperimentCleanup();
-      if (initializedExperimentAPI) {
-        // Only reset if we're in an xpcshell-test and actually initialized the
-        // ExperimentAPI.
-        lazy.ExperimentAPI._resetForTests();
+      if (cleanedUp) {
+        return;
+      }
+      cleanedUp = true;
+      for (let [pref, original] of originals) {
+        if (original === undefined) {
+          Services.prefs.clearUserPref(pref);
+        } else {
+          this.#setUserPref(pref, original);
+        }
       }
     };
 
-    this.registerCleanupFunction?.(async () => {
-      // If `cleanup()` has already been called (i.e., by the caller), it will
-      // throw an error here.
-      try {
-        await cleanup();
-      } catch (error) {}
-    });
+    this.registerCleanupFunction?.(cleanup);
 
     return cleanup;
+  }
+
+  #getUserPref(pref) {
+    switch (Services.prefs.getPrefType(pref)) {
+      case Services.prefs.PREF_BOOL:
+        return Services.prefs.getBoolPref(pref);
+      case Services.prefs.PREF_INT:
+        return Services.prefs.getIntPref(pref);
+      default:
+        return Services.prefs.getStringPref(pref);
+    }
+  }
+
+  #setUserPref(pref, value) {
+    switch (typeof value) {
+      case "boolean":
+        Services.prefs.setBoolPref(pref, value);
+        break;
+      case "number":
+        Services.prefs.setIntPref(pref, value);
+        break;
+      case "string":
+        Services.prefs.setStringPref(pref, value);
+        break;
+      default:
+        Services.prefs.setStringPref(pref, JSON.stringify(value));
+    }
   }
 
   /**

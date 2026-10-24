@@ -58,8 +58,6 @@ fail-if = [
 
 ["browser_aboutwelcome_multistage_default.js"]
 
-["browser_aboutwelcome_multistage_experimentAPI.js"]
-
 ["browser_aboutwelcome_multistage_languageSwitcher.js"]
 
 ["browser_aboutwelcome_multistage_mr.js"]
@@ -67,8 +65,6 @@ fail-if = [
 ["browser_aboutwelcome_multistage_transitions.js"]
 
 ["browser_aboutwelcome_navigation.js"]
-
-["browser_aboutwelcome_nimbus_gate.js"]
 
 ["browser_aboutwelcome_observer.js"]
 https_first_disabled = true

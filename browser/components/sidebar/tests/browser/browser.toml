@@ -108,8 +108,6 @@ skip-if = [
 
 ["browser_sidebar_menubar_item_commands.js"]
 
-["browser_sidebar_nimbus.js"]
-
 ["browser_sidebar_panel_header.js"]
 
 ["browser_sidebar_panel_states.js"]

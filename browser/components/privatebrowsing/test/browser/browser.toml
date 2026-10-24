@@ -43,10 +43,6 @@ skip-if = [
 
 ["browser_privatebrowsing_about_kit_intro.js"]
 
-["browser_privatebrowsing_about_nimbus_dismiss.js"]
-
-["browser_privatebrowsing_about_nimbus_impressions.js"]
-
 ["browser_privatebrowsing_about_nova_promo.js"]
 
 ["browser_privatebrowsing_about_search_banner.js"]
