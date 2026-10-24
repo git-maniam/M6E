@@ -15,7 +15,6 @@
 #include "mozilla/Components.h"
 #include "mozilla/StaticPrefs_browser.h"
 #include "mozilla/dom/ContentChild.h"
-#include "mozilla/browser/NimbusFeatures.h"
 
 #define REFERRALS_ENABLED_PREF "browser.referrals.enabled"
 #define PROFILES_ENABLED_PREF "browser.profiles.enabled"
@@ -206,8 +205,8 @@ AboutRedirector::NewChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo,
       nsAutoCString url;
 
       if (path.EqualsLiteral("welcome")) {
-        NimbusFeatures::RecordExposureEvent("aboutwelcome"_ns, true);
-        if (NimbusFeatures::GetBool("aboutwelcome"_ns, "enabled"_ns, true)) {
+        if (mozilla::Preferences::GetBool("browser.aboutwelcome.enabled",
+                                          true)) {
           url.AssignASCII(ABOUT_WELCOME_CHROME_URL);
         } else {
           url.AssignASCII(ABOUT_HOME_URL);
