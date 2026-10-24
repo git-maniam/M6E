@@ -13,7 +13,7 @@
  */
 export class AIFeature {
   /**
-   * The feature identifier (e.g. "linkpreview", "translations").
+   * The feature identifier (e.g. "linkpreview").
    *
    * @returns {string} The feature identifier.
    */
@@ -32,8 +32,6 @@ export class AIFeature {
    * LinkPreview is an example implementor with this configuration set to true.
    *
    * If false, then this feature has no distinct "Enabled" control state.
-   *
-   * TranslationsFeature is an example implementor with this configuration set to false.
    *
    * @returns {boolean} True if this feature has a distinct "Enabled" AI
    *   Controls state.

@@ -20,7 +20,6 @@ ChromeUtils.defineESModuleGetters(
     MLEngine: "moz-src:///toolkit/components/ml/actors/MLEngineParent.sys.mjs",
     EngineProcess: "chrome://global/content/ml/EngineProcess.sys.mjs",
     RemoteSettings: "resource://services-settings/remote-settings.sys.mjs",
-    TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
     FEATURES: "chrome://global/content/ml/EngineProcess.sys.mjs",
     PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
   },
@@ -1019,7 +1018,7 @@ export class RemoteSettingsManager {
     let records = [];
 
     if (majorVersion) {
-      records = await lazy.TranslationsParent.getMaxSupportedVersionRecords(
+      records = await RemoteSettingsManager.getMaxSupportedVersionRecords(
         client,
         {
           filters,
@@ -1045,6 +1044,108 @@ export class RemoteSettingsManager {
     }
 
     return records[0];
+  }
+
+  /**
+   * Retrieves the maximum compatible major version of each record in the RemoteSettingsClient.
+   *
+   * If the client contains two different-version copies of the same record (e.g. 1.0 and 1.1)
+   * then only the 1.1-version record will be returned in the resulting collection.
+   *
+   * @param {RemoteSettingsClient} remoteSettingsClient
+   * @param {object} [options]
+   *   @param {object} [options.filters={}]
+   *     The filters to apply when retrieving the records from RemoteSettings.
+   *   @param {number} options.minSupportedMajorVersion
+   *     The minimum major record version that is supported in this build.
+   *   @param {number} options.maxSupportedMajorVersion
+   *     The maximum major record version that is supported in this build.
+   *   @param {Function} [options.lookupKey=(record => record.name)]
+   *     The function to use to extract a lookup key from each record.
+   * @returns {Promise<Array<object>>}
+   */
+  static async getMaxSupportedVersionRecords(
+    remoteSettingsClient,
+    {
+      filters = {},
+      minSupportedMajorVersion,
+      maxSupportedMajorVersion,
+      lookupKey = record => record.name,
+    } = {}
+  ) {
+    if (!minSupportedMajorVersion || !maxSupportedMajorVersion) {
+      throw new Error(
+        "A minimum and maximum major version must be specified to retrieve records."
+      );
+    }
+    const retrievedRecords = await remoteSettingsClient.get({
+      // Pull the records from the network if empty.
+      syncIfEmpty: true,
+      // Do not load the JSON dump if it is newer.
+      loadDumpIfNewer: false,
+      verifySignature: false,
+      filters,
+    });
+
+    // Create a mapping to only the max version of each record discriminated by
+    // the result of the lookupKey() function.
+    const keyToRecord = new Map();
+
+    for (const record of retrievedRecords) {
+      const key = lookupKey(record);
+      const existing = keyToRecord.get(key);
+
+      if (!record.version) {
+        lazy.console.error(record);
+        throw new Error("Expected the record to have a version.");
+      }
+      if (
+        RemoteSettingsManager.isBetterRecordVersion(
+          minSupportedMajorVersion,
+          maxSupportedMajorVersion,
+          record.version,
+          existing?.version
+        )
+      ) {
+        keyToRecord.set(key, record);
+      }
+    }
+
+    return Array.from(keyToRecord.values());
+  }
+
+  /**
+   * Determines if the contending record version is a better record version than the current best record version.
+   *
+   * For the contending version to be considered better, it must fall within the supported-version range and be
+   * a larger version than the current best version (if a current best version is provided).
+   *
+   * @param {number} minSupportedMajorVersion - The minimum major record version that is supported in this build.
+   * @param {number} maxSupportedMajorVersion - The maximum major record version that is supported in this build.
+   * @param {string} contendingVersion - The version of the contending record that is actively being evaluated.
+   * @param {string} [currentBestVersion] - The version of a previously encountered record that is currently best.
+   */
+  static isBetterRecordVersion(
+    minSupportedMajorVersion,
+    maxSupportedMajorVersion,
+    contendingVersion,
+    currentBestVersion
+  ) {
+    return (
+      // Check that the contending version is within range of the minimum major version.
+      Services.vc.compare(
+        `${minSupportedMajorVersion}.0a`,
+        contendingVersion
+      ) <= 0 &&
+      // Check that the contending version is within range of the maximum major version.
+      Services.vc.compare(
+        `${maxSupportedMajorVersion + 1}.0a`,
+        contendingVersion
+      ) > 0 &&
+      // Check that the new record greater than the current best version.
+      (!currentBestVersion ||
+        Services.vc.compare(currentBestVersion, contendingVersion) < 0)
+    );
   }
 }
 
@@ -1766,7 +1867,6 @@ export class MLUninstallService {
     const modelHub = hub ?? this.#getDefaultHub();
 
     await lazy.EngineProcess.destroyMLEngine();
-    await lazy.EngineProcess.destroyTranslationsEngine();
     await modelHub.purgeDatabase();
   }
 }

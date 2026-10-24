@@ -17,8 +17,8 @@ import { MLTelemetry } from "chrome://global/content/ml/MLTelemetry.sys.mjs";
  *   RemoteSettingsInferenceOptions,
  *   StatusByEngineId,
  *   SyncEvent,
+ *   WasmRecord,
  * } from "../ml.d.ts"
- * @import { WasmRecord } from "../../translations/translations.d.ts"
  * @import { ModelHub } from "chrome://global/content/ml/ModelHub.sys.mjs"
  * @import { ProgressAndStatusCallbackParams } from "chrome://global/content/ml/Utils.sys.mjs"
  * @import { PipelineOptions } from "chrome://global/content/ml/EngineProcess.sys.mjs";
@@ -27,7 +27,6 @@ import { MLTelemetry } from "chrome://global/content/ml/MLTelemetry.sys.mjs";
 const lazy = XPCOMUtils.declareLazy({
   RemoteSettings: "resource://services-settings/remote-settings.sys.mjs",
   Utils: "resource://services-settings/Utils.sys.mjs",
-  TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
   setTimeout: "resource://gre/modules/Timer.sys.mjs",
   clearTimeout: "resource://gre/modules/Timer.sys.mjs",
   ModelHub: "chrome://global/content/ml/ModelHub.sys.mjs",
@@ -36,6 +35,7 @@ const lazy = XPCOMUtils.declareLazy({
   BACKENDS: "chrome://global/content/ml/EngineProcess.sys.mjs",
   EngineProcess: "chrome://global/content/ml/EngineProcess.sys.mjs",
   stringifyForLog: "chrome://global/content/ml/Utils.sys.mjs",
+  RemoteSettingsManager: "chrome://global/content/ml/Utils.sys.mjs",
   console: () =>
     console.createInstance({
       maxLogLevelPref: "browser.ml.logLevel",
@@ -209,7 +209,7 @@ export class MLEngineParent extends JSProcessActorParent {
    *
    * NOTE: Invalidating this keepAlive does not guarantee that the process will
    * exit, and this actor may be re-used if it does not (e.g. because the
-   * inference process was kept alive by TranslationsEngine).
+   * inference process was kept alive by another actor).
    *
    * @type {nsIContentParentKeepAlive | null}
    */
@@ -609,7 +609,7 @@ export class MLEngineParent extends JSProcessActorParent {
    */
   static async #getWasmArrayRecord(client, backend) {
     const wasmRecords = /** @type {WasmRecord[]} */ (
-      await lazy.TranslationsParent.getMaxSupportedVersionRecords(client, {
+      await lazy.RemoteSettingsManager.getMaxSupportedVersionRecords(client, {
         filters: {
           name: MLEngineParent.WASM_FILENAME[
             backend || MLEngineParent.DEFAULT_BACKEND

@@ -435,7 +435,6 @@ export const LogLevel = {
 export const AllowedBoolean = [false, true];
 
 /**
- * @import { TranslationsEngineParent } from "../../translations/actors/TranslationsEngineParent.sys.mjs"
  * @import { StaticEmbeddingsOptions } from "./backends/StaticEmbeddingsPipeline.d.ts"
  * @import { PURPOSES, SERVICE_TYPES } from "../../../../browser/components/aiwindow/models/Utils.sys.mjs"
  */
@@ -1188,8 +1187,8 @@ export class PipelineOptions {
 }
 
 /**
- * This class controls the life cycle of the engine process used both in the
- * Translations engine and the MLEngine component.
+ * This class controls the life cycle of the engine process used by the
+ * MLEngine component.
  */
 export class EngineProcess {
   /**
@@ -1218,13 +1217,6 @@ export class EngineProcess {
    */
   static areAllEnginesTerminated() {
     return !EngineProcess.#inferenceProcesses().length;
-  }
-
-  /**
-   * @returns {Promise<TranslationsEngineParent>}
-   */
-  static async getTranslationsEngineParent() {
-    return EngineProcess.#getEngineActor({ actorName: "TranslationsEngine" });
   }
 
   /**
@@ -1342,16 +1334,6 @@ export class EngineProcess {
         keepAlive.invalidateKeepAlive();
       }
     }
-  }
-
-  /**
-   * Send the `ForceShutdown` message to the TranslationsEngine, terminating
-   * running engines, and potentially leading to "inference" process shutdown.
-   */
-  static destroyTranslationsEngine() {
-    return EngineProcess.#forceShutdownEngine({
-      actorName: "TranslationsEngine",
-    });
   }
 
   /**

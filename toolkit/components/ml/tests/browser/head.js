@@ -3,8 +3,6 @@
 
 /* global TextGenerator */
 
-/// <reference path="../../../../../toolkit/components/translations/tests/browser/shared-head.js" />
-
 // Load the shared-head file first.
 Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/toolkit/components/ml/tests/browser/shared-head.js",
@@ -37,6 +35,7 @@ const IndexedDBCache = TestIndexedDBCache;
  * @type {import("../../../ml/content/EngineProcess.sys.mjs")}
  */
 const {
+  EngineProcess,
   createEngine,
   PipelineOptions,
   QuantizationLevel,
@@ -47,12 +46,328 @@ const {
   "chrome://global/content/ml/EngineProcess.sys.mjs"
 );
 
-// This test suite shares some utility functions with translations as they work in a very
-// similar fashion. Eventually, the plan is to unify these two components.
-Services.scriptloader.loadSubScript(
-  "chrome://mochitests/content/browser/toolkit/components/translations/tests/browser/shared-head.js",
-  this
-);
+/**
+ * Increments each time a remote settings client is created to ensure a unique client
+ * name for each test run.
+ */
+let _remoteSettingsMockId = 0;
+
+/**
+ * @typedef {ReturnType<createAttachmentMock>} AttachmentMock
+ */
+
+/**
+ * Creates a mocked Remote Settings attachments interface for tests.
+ *
+ * @param {RemoteSettingsClient} client
+ * @param {string} mockedCollectionName
+ * @param {boolean} autoDownloadFromRemoteSettings
+ * @param {{ interval?: number, maxTries?: number }} [downloadWaitOptions]
+ * @returns {AttachmentMock}
+ */
+function createAttachmentMock(
+  client,
+  mockedCollectionName,
+  autoDownloadFromRemoteSettings,
+  { interval = 50, maxTries = 50 } = {}
+) {
+  const pendingDownloads = [];
+  // Consumers claim a specific download, removing it from the queue.
+  const pendingDownloadConsumers = [];
+  // Waiters only observe queue length.
+  const pendingDownloadWaiters = [];
+  const downloadedById = new Set();
+  const pendingDownloadWaitOptions = { interval, maxTries };
+
+  client.sync = async () => {
+    info(
+      `Skipping network sync for mocked Remote Settings collection "${client.collectionName}"`
+    );
+    return { ok: true };
+  };
+
+  const realGet = client.get.bind(client);
+  client.get = async opts => {
+    const records = await realGet(opts);
+    for (const record of records) {
+      if (record.attachment) {
+        record.attachment.isDownloaded = downloadedById.has(record.id);
+      }
+    }
+    return records;
+  };
+
+  function markIsDownloaded(record, value) {
+    if (record.attachment) {
+      record.attachment.isDownloaded = value;
+    }
+    if (record.id != null) {
+      if (value) {
+        downloadedById.add(record.id);
+      } else {
+        downloadedById.delete(record.id);
+      }
+    }
+  }
+
+  client.attachments.isDownloaded = async record => {
+    const isDownloaded = !!record?.id && downloadedById.has(record.id);
+    if (record?.attachment) {
+      markIsDownloaded(record, isDownloaded);
+    }
+    return isDownloaded;
+  };
+
+  client.attachments.download = record =>
+    new Promise((resolve, reject) => {
+      info(
+        `Download requested: ${client.collectionName}, ${record.name} v${record.version}`
+      );
+      if (autoDownloadFromRemoteSettings) {
+        const encoder = new TextEncoder();
+        const { buffer } = encoder.encode(
+          `Mocked download: ${mockedCollectionName} ${record.name} ${record.version}`
+        );
+        markIsDownloaded(record, true);
+        resolve({ buffer });
+      } else {
+        const download = {
+          record,
+          resolve: result => {
+            markIsDownloaded(record, true);
+            resolve(result);
+          },
+          reject,
+        };
+        const consumer = pendingDownloadConsumers.shift();
+        if (consumer) {
+          consumer.resolve(download);
+        } else {
+          pendingDownloads.push(download);
+          notifyPendingDownloadsChanged();
+        }
+      }
+    });
+
+  client.attachments.deleteDownloaded = async record => {
+    markIsDownloaded(record, false);
+  };
+
+  client.attachments.deleteAll = async () => {
+    downloadedById.clear();
+  };
+
+  function resolvePendingDownloads(expectedDownloadCount) {
+    info(
+      `Resolving ${expectedDownloadCount} mocked downloads for "${client.collectionName}"`
+    );
+    return downloadHandler(expectedDownloadCount, download =>
+      download.resolve({ buffer: new ArrayBuffer() })
+    );
+  }
+
+  async function rejectPendingDownloads(expectedDownloadCount) {
+    info(
+      `Intentionally rejecting ${expectedDownloadCount} mocked downloads for "${client.collectionName}"`
+    );
+
+    const names = [];
+    const waitTick = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    const rejectNext = download => {
+      if (!download) {
+        return false;
+      }
+      console.log(`Handling download:`, client.collectionName);
+      download.reject(new Error("Intentionally rejecting downloads."));
+      names.push(download.record.name);
+      return true;
+    };
+
+    // Wait for the expected downloads to start arriving and reject them as they do.
+    while (names.length < expectedDownloadCount) {
+      try {
+        rejectNext(await takePendingDownload(pendingDownloadWaitOptions));
+      } catch (error) {
+        // Timeout waiting for downloads. This can happen if downloads aren't
+        // requested or if they complete through a different path. Log and continue.
+        info(
+          `Timeout or error waiting for download ${names.length + 1}: ${error.message}`
+        );
+        break;
+      }
+    }
+
+    // Drain any retries until the queue stays empty for a short idle window.
+    let idleTicks = 0;
+    const idleWindow = 20;
+    while (idleTicks < idleWindow) {
+      await waitTick();
+      if (rejectNext(pendingDownloads.shift())) {
+        idleTicks = 0;
+      } else {
+        idleTicks++;
+      }
+    }
+
+    if (pendingDownloads.length) {
+      throw new Error(
+        `An unexpected download was found, only expected ${expectedDownloadCount} downloads`
+      );
+    }
+
+    return names.sort((a, b) => a.localeCompare(b));
+  }
+
+  async function downloadHandler(expectedDownloadCount, action) {
+    const names = [];
+    while (names.length < expectedDownloadCount) {
+      let download;
+      try {
+        download = await takePendingDownload(pendingDownloadWaitOptions);
+      } catch (error) {
+        info(
+          `Stopped resolving downloads for "${client.collectionName}" after resolving ${names.length} of ${expectedDownloadCount}: ${error.message}`
+        );
+        break;
+      }
+
+      console.log(`Handling download:`, client.collectionName);
+      action(download);
+      names.push(download.record.name);
+    }
+
+    // This next check is not guaranteed to catch an unexpected download, but wait
+    // at least one event loop tick to see if any more downloads were added.
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    if (pendingDownloads.length) {
+      throw new Error(
+        `An unexpected download was found, only expected ${expectedDownloadCount} downloads`
+      );
+    }
+
+    return names.sort((a, b) => a.localeCompare(b));
+  }
+
+  async function assertNoNewDownloads() {
+    await new Promise(resolve => setTimeout(resolve, 0));
+    is(
+      pendingDownloads.length,
+      0,
+      `No downloads happened for "${client.collectionName}"`
+    );
+  }
+
+  /**
+   * Resolves with exactly one download and removes it from the queue.
+   *
+   * If no download is pending yet, this reserves the next download request for
+   * this consumer. This differs from waitForPendingDownloads(), which only
+   * observes queue length without claiming any downloads.
+   */
+  function takePendingDownload({ interval = 100, maxTries = 50 } = {}) {
+    const download = pendingDownloads.shift();
+    if (download) {
+      return Promise.resolve(download);
+    }
+
+    const { promise, resolve, reject } = Promise.withResolvers();
+    let timeoutId;
+    const consumer = {
+      resolve: download => {
+        clearTimeout(timeoutId);
+        resolve(download);
+      },
+    };
+    timeoutId = setTimeout(() => {
+      const consumerIndex = pendingDownloadConsumers.indexOf(consumer);
+      if (consumerIndex >= 0) {
+        pendingDownloadConsumers.splice(consumerIndex, 1);
+      }
+      reject(
+        new Error(
+          `Timed out waiting for a pending download for "${client.collectionName}". Current pending downloads: ${pendingDownloads.length}`
+        )
+      );
+    }, interval * maxTries);
+
+    pendingDownloadConsumers.push(consumer);
+    return promise;
+  }
+
+  function notifyPendingDownloadsChanged() {
+    for (let i = pendingDownloadWaiters.length - 1; i >= 0; i--) {
+      const waiter = pendingDownloadWaiters[i];
+      if (pendingDownloads.length >= waiter.expectedCount) {
+        pendingDownloadWaiters.splice(i, 1);
+        waiter.resolve();
+      }
+    }
+  }
+
+  /**
+   * Resolves once enough downloads are queued, without removing any of them.
+   */
+  function waitForPendingDownloads(
+    expectedCount,
+    { interval = 100, maxTries = 50 } = {}
+  ) {
+    if (pendingDownloads.length >= expectedCount) {
+      return Promise.resolve();
+    }
+
+    const { promise, resolve, reject } = Promise.withResolvers();
+    let timeoutId;
+    const waiter = {
+      expectedCount,
+      resolve: () => {
+        clearTimeout(timeoutId);
+        resolve();
+      },
+    };
+    timeoutId = setTimeout(() => {
+      const waiterIndex = pendingDownloadWaiters.indexOf(waiter);
+      if (waiterIndex >= 0) {
+        pendingDownloadWaiters.splice(waiterIndex, 1);
+      }
+      reject(
+        new Error(
+          `Timed out waiting for ${expectedCount} pending downloads for "${client.collectionName}". Current pending downloads: ${pendingDownloads.length}`
+        )
+      );
+    }, interval * maxTries);
+
+    pendingDownloadWaiters.push(waiter);
+    return promise;
+  }
+
+  return {
+    client,
+    pendingDownloads,
+    resolvePendingDownloads,
+    rejectPendingDownloads,
+    assertNoNewDownloads,
+    waitForPendingDownloads,
+  };
+}
+
+/**
+ * Provide longer defaults for the waitForCondition.
+ *
+ * @param {Function} callback
+ * @param {string} message
+ * @param {number} [interval=100] - Interval in milliseconds between condition checks
+ * @param {number} [maxTries=null] - Maximum number of tries
+ */
+function waitForCondition(callback, message, interval = 100, maxTries = null) {
+  // Use 4 times the defaults to guard against intermittents. Many of the tests rely on
+  // communication between the parent and child process, which is inherently async.
+  if (maxTries === null) {
+    maxTries = 50 * 4;
+  }
+  return TestUtils.waitForCondition(callback, message, interval, maxTries);
+}
 
 /**
  * Mock out remote settings and set some default preferences for the testing environment.
