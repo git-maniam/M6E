@@ -78,7 +78,6 @@ if (typeof Mozilla == "undefined") {
 
   Mozilla.UITour.DEFAULT_THEME_CYCLE_DELAY = 10 * 1000;
 
-  Mozilla.UITour.CONFIGNAME_SYNC = "sync";
   Mozilla.UITour.CONFIGNAME_AVAILABLETARGETS = "availableTargets";
 
   /**
@@ -99,7 +98,6 @@ if (typeof Mozilla == "undefined") {
    *
    * @description Valid values:
    *
-   * - accountStatus
    * - addons
    * - appMenu
    * - backForward
@@ -417,10 +415,6 @@ if (typeof Mozilla == "undefined") {
    * - :js:func:`search <Mozilla.UITour.Configuration.UITourConfigurationSearch>`
    * - :js:func:`selectedSearchEngine <Mozilla.UITour.Configuration.UITourConfigurationSearch>`
    *   DEPRECATED, use 'search'
-   * - :js:func:`sync <Mozilla.UITour.Configuration.UITourConfigurationSync>`
-   *   DEPRECATED, use 'fxa'
-   * - :js:func:`fxa <Mozilla.UITour.Configuration.UITourConfigurationFxA>`
-   * - :js:func:`fxaConnections <Mozilla.UITour.Configuration.UITourConfigurationFxAConnections>`
    */
 
   /**
@@ -479,99 +473,6 @@ if (typeof Mozilla == "undefined") {
    */
 
   /**
-   * Sync status and device counts.
-   *
-   * @typedef {object} UITourConfigurationSync
-   * @memberof Mozilla.UITour.Configuration
-   * @property {boolean} setup - Whether sync is setup
-   * @property {number} desktopDevices - Number of desktop devices
-   * @property {number} mobileDevices - Number of mobile devices
-   * @property {number} totalDevices - Total number of connected devices
-   * @since 50
-   */
-
-  /**
-   * FxA local status, including whether FxA is connected and the general
-   * account state.
-   *
-   * @typedef {object} UITourConfigurationFxA
-   * @memberof Mozilla.UITour.Configuration
-   * @property {boolean} setup - Whether FxA is setup on this device. If false,
-   *    no other properties will exist.
-   * @property {boolean} accountStateOK - Whether the FxA account state is OK.
-   *    If false, it probably means the account is unverified or the user has
-   *    changed their password on another device and needs to update it here.
-   *    In that case many other properties will not exist.
-   * @property {Mozilla.UITour.Configuration.UITourConfigurationBrowserServices} [browserServices] -
-   *    Information about account services attached to this browser, and with
-   *    special support implemented by this browser. You should not expect
-   *    every accountService connected in this browser to get a special entry
-   *    here. Indeed, what services, and in what circumstances they may appear
-   *    here in the future is largely TBD.
-   * @since 71
-   */
-
-  /**
-   * FxA connections status - information about the account which typically
-   * isn't stored locally, so needs to be obtained from the FxA servers. As such,
-   * requesting this information is likely to be high-latency and may return
-   * incomplete data if there is a network or server error.
-   *
-   * @typedef {object} UITourConfigurationFxAConnections
-   * @memberof Mozilla.UITour.Configuration
-   * @property {boolean} setup - Whether FxA is setup on this device. If false,
-   *    no other properties will exist.
-   * @property {number} [numOtherDevices] - Number of devices connected to this
-   *    account, not counting this device.
-   * @property {Record<string, number>} [numDevicesByType] - A count of devices
-   *    connected to the account by device 'type'. Valid values for type are
-   *    defined by the FxA server but roughly correspond to form-factor with
-   *    values like 'desktop', 'mobile', 'vr', etc.
-   * @property {Mozilla.UITour.Configuration.UITourConfigurationAccountServices} [accountServices] -
-   *    Information about services attached to this account. These services
-   *    may be enabled on devices or applications external to this
-   *    browser and should not be confused with devices. For example, if the user
-   *    has enabled Monitor or Lockwise on one or more devices - including on
-   *    this device - that service will have a single entry here.
-   * @since 73
-   */
-
-  /**
-   * Information about clients attached to the account.
-   * An object. The key is a string ID of the attached service. A list of attached
-   * service IDs can be found
-   * `on our telemetry documentation site <https://docs.telemetry.mozilla.org/datasets/fxa_metrics/attribution.html#service-attribution>`_.
-   * The value is a :js:func:`Mozilla.UITour.Configuration.UITourConfigurationAccountService`
-   *
-   * @typedef {Record<string, Mozilla.UITour.Configuration.UITourConfigurationAccountService>} UITourConfigurationAccountServices
-   * @memberof Mozilla.UITour.Configuration
-   * @since 71
-   */
-
-  /**
-   * Information about an account service
-   *
-   * @typedef {object} UITourConfigurationAccountService
-   * @memberof Mozilla.UITour.Configuration
-   * @property {string} id - The service ID. A list of attached
-   * service IDs can be found
-   * `on our telemetry documentation site <https://docs.telemetry.mozilla.org/datasets/fxa_metrics/attribution.html#service-attribution>`_.
-   * @property {number} lastAccessedWeeksAgo - How many weeks ago the service
-   *    was accessed by this account.
-   * @since 71
-   */
-
-  /**
-   * Information about a services attached to the browser. All properties are
-   * optional and only exist if the service is enabled.
-   *
-   * @typedef {object} UITourConfigurationBrowserServices
-   * @memberof Mozilla.UITour.Configuration
-   * @property {Mozilla.UITour.Configuration.UITourConfigurationSync} sync - If sync is configured
-   * @since 71
-   */
-
-  /**
    * Array of UI :js:func:`Targets <Mozilla.UITour.UITourTarget>` currently available to be annotated.
    *
    * @typedef {Mozilla.UITour.UITourTarget[]} UITourConfigurationAvailableTargets
@@ -614,61 +515,6 @@ if (typeof Mozilla == "undefined") {
   };
 
   /**
-   * Request the browser open the Firefox Accounts page.
-   *
-   * @param {object} extraURLParams - An object containing additional
-   * parameters for the URL opened by the browser for reasons of promotional
-   * campaign tracking. Each attribute of the object must have a name that
-   * is a string, is "flow_id", "flow_begin_time", "device_id" or begins
-   * with `utm_` and contains only only alphanumeric characters, dashes or
-   * underscores. The values may be any string and will automatically be encoded.
-   * For Flow metrics, see details at https://mozilla.github.io/ecosystem-platform/docs/fxa-engineering/fxa-metrics#content-server
-   * @param {string} entrypoint - A string containing the entrypoint name.
-   * @param {string} email - A string containing the default email account
-   * for the URL opened by the browser.
-   * @since 31, 47 for `extraURLParams`
-   * @since 79 for "flow_id", "flow_begin_time", "device_id", "entrypoint_experiment",
-   * "entrypoint", "entrypoint_variation" fields.
-   * @example
-   * // Will open https://accounts.firefox.com/signup?entrypoint=uitour
-   * Mozilla.UITour.showFirefoxAccounts();
-   * @example
-   * // Will open:
-   * // https://accounts.firefox.com/signup?entrypoint=uitour&utm_foo=bar&utm_bar=baz
-   * Mozilla.UITour.showFirefoxAccounts({
-   *   'utm_foo': 'bar',
-   *   'utm_bar': 'baz'
-   * });
-   * @example
-   * // Will open:
-   * // https://accounts.firefox.com/?action=email&email=foo%40bar.com&entrypoint=uitour
-   * Mozilla.UITour.showFirefoxAccounts(null, null, "foo@bar.com");
-   * @example
-   * // Will open:
-   * // https://accounts.firefox.com/signup?entrypoint=sample
-   * Mozilla.UITour.showFirefoxAccounts(null, "sample");
-   * @example
-   * // Will open:
-   * // https://accounts.firefox.com/?action=email&email=foo%40bar.com&entrypoint=uitour&flow_id=c5b5ad7c4a94462afe4b9a7fbcca263dbd6c8409fb4539449c50c4a52544b2ed&flow_begin_time=1590680755812
-   * Mozilla.UITour.showFirefoxAccounts({
-   *   flow_id: 'c5b5ad7c4a94462afe4b9a7fbcca263dbd6c8409fb4539449c50c4a52544b2ed',
-   *   flow_begin_time: 1590680755812,
-   *   device_id: '7e450f3337d3479b8582ea1c9bb5ba6c'
-   * }, "foo@bar.com");
-   */
-  Mozilla.UITour.showFirefoxAccounts = function (
-    extraURLParams,
-    entrypoint,
-    email
-  ) {
-    _sendEvent("showFirefoxAccounts", {
-      extraURLParams: JSON.stringify(extraURLParams),
-      entrypoint,
-      email,
-    });
-  };
-
-  /**
    * Trigger the Firefox Accounts sign-in flow for the AI Window feature.
    *
    * This will prompt the user to sign in and then open the AI Window
@@ -679,34 +525,6 @@ if (typeof Mozilla == "undefined") {
    */
   Mozilla.UITour.showFirefoxAccountsForAIWindow = function () {
     _sendEvent("showFirefoxAccountsForAIWindow");
-  };
-
-  /**
-   * Request the browser open the "Connect Another Device" Firefox Accounts page.
-   *
-   * @param {object} extraURLParams - An object containing additional
-   * parameters for the URL opened by the browser for reasons of promotional
-   * campaign tracking. Each attribute of the object must have a name that
-   * is a string, is "flow_id", "flow_begin_time", "device_id" or begins
-   * with `utm_` and contains only only alphanumeric characters, dashes or
-   * underscores. The values may be any string and will automatically be encoded.
-   * For Flow metrics, see details at https://mozilla.github.io/ecosystem-platform/docs/fxa-engineering/fxa-metrics#content-server
-   * @since 59
-   * @example
-   * // Will open https://accounts.firefox.com/connect_another_device?entrypoint=uitour
-   * Mozilla.UITour.showConnectAnotherDevice();
-   * @example
-   * // Will open:
-   * // https://accounts.firefox.com/connect_another_device?entrypoint=uitour&utm_foo=bar&utm_bar=baz
-   * Mozilla.UITour.showConnectAnotherDevice({
-   *   'utm_foo': 'bar',
-   *   'utm_bar': 'baz'
-   * });
-   */
-  Mozilla.UITour.showConnectAnotherDevice = function (extraURLParams) {
-    _sendEvent("showConnectAnotherDevice", {
-      extraURLParams: JSON.stringify(extraURLParams),
-    });
   };
 
   /**

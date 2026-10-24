@@ -16,20 +16,12 @@ ChromeUtils.defineESModuleGetters(lazy, {
   BrowserUsageTelemetry: "resource:///modules/BrowserUsageTelemetry.sys.mjs",
   CustomizableUI:
     "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
-  FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   PanelMultiView:
     "moz-src:///browser/components/customizableui/PanelMultiView.sys.mjs",
   ProfileAge: "resource://gre/modules/ProfileAge.sys.mjs",
   ResetProfile: "resource://gre/modules/ResetProfile.sys.mjs",
   SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
   UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
-});
-
-ChromeUtils.defineLazyGetter(lazy, "fxAccounts", () => {
-  return ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton();
 });
 
 // See LOG_LEVELS in Console.sys.mjs. Common examples: "All", "Info", "Warn", &
@@ -82,15 +74,6 @@ export var UITour = {
 
   highlightEffects: ["random", "wobble", "zoom", "color", "focus-outline"],
   targets: new Map([
-    [
-      "accountStatus",
-      {
-        query: "#appMenu-fxa-label2",
-        // This is a fake widgetName starting with the "appMenu-" prefix so we know
-        // to automatically open the appMenu when annotating this target.
-        widgetName: "appMenu-fxa-label2",
-      },
-    ],
     [
       "addons",
       {
@@ -229,8 +212,6 @@ export var UITour = {
         return listener;
       }, {})
     );
-
-    Services.obs.addObserver(this, lazy.UIState.ON_UPDATE);
   },
 
   getNodeFromDocument(aDocument, aQuery) {
@@ -458,48 +439,6 @@ export var UITour = {
         break;
       }
 
-      case "showFirefoxAccounts": {
-        Promise.resolve()
-          .then(() => {
-            return lazy.FxAccounts.canConnectAccount();
-          })
-          .then(canConnect => {
-            if (!canConnect) {
-              lazy.log.warn("showFirefoxAccounts: can't currently connect");
-              return null;
-            }
-            return data.email
-              ? lazy.FxAccounts.config.promiseEmailURI(
-                  data.email,
-                  "sync",
-                  data.entrypoint || "uitour"
-                )
-              : lazy.FxAccounts.config.promiseConnectAccountURI(
-                  "sync",
-                  data.entrypoint || "uitour"
-                );
-          })
-          .then(uri => {
-            if (!uri) {
-              return;
-            }
-            const url = new URL(uri);
-            // Call our helper to validate extraURLParams and populate URLSearchParams
-            if (!this._populateURLParams(url, data.extraURLParams)) {
-              lazy.log.warn(
-                "showFirefoxAccounts: invalid campaign args specified"
-              );
-              return;
-            }
-            // We want to replace the current tab.
-            browser.loadURI(url.URI, {
-              triggeringPrincipal:
-                Services.scriptSecurityManager.createNullPrincipal({}),
-            });
-          });
-        break;
-      }
-
       case "showFirefoxAccountsForAIWindow": {
         if (AppConstants.IS_ESR) {
           lazy.log.warn(
@@ -524,28 +463,6 @@ export var UITour = {
             );
           }
         });
-        break;
-      }
-
-      case "showConnectAnotherDevice": {
-        lazy.FxAccounts.config
-          .promiseConnectDeviceURI("sync", data.entrypoint || "uitour")
-          .then(uri => {
-            const url = new URL(uri);
-            // Call our helper to validate extraURLParams and populate URLSearchParams
-            if (!this._populateURLParams(url, data.extraURLParams)) {
-              lazy.log.warn(
-                "showConnectAnotherDevice: invalid campaign args specified"
-              );
-              return;
-            }
-
-            // We want to replace the current tab.
-            browser.loadURI(url.URI, {
-              triggeringPrincipal:
-                Services.scriptSecurityManager.createNullPrincipal({}),
-            });
-          });
         break;
       }
 
@@ -744,90 +661,9 @@ export var UITour = {
         }
         break;
       }
-      case lazy.UIState.ON_UPDATE: {
-        let syncState = lazy.UIState.get();
-        this.notify("FxA:SignedInStateChange", { status: syncState.status });
-        break;
-      }
     }
   },
 
-  // Given a string that is a JSONified represenation of an object with
-  // additional "flow_id", "flow_begin_time", "device_id", utm_* URL params
-  // that should be appended, validate and append them to the passed URL object.
-  // Returns true if the params were validated and appended, and false if the
-  // request should be ignored.
-  _populateURLParams(url, extraURLParams) {
-    const FLOW_ID_LENGTH = 64;
-    const FLOW_BEGIN_TIME_LENGTH = 13;
-
-    // We are extra paranoid about what params we allow to be appended.
-    if (typeof extraURLParams == "undefined") {
-      // no params, so it's all good.
-      return true;
-    }
-    if (typeof extraURLParams != "string") {
-      lazy.log.warn("_populateURLParams: extraURLParams is not a string");
-      return false;
-    }
-    let urlParams;
-    try {
-      if (extraURLParams) {
-        urlParams = JSON.parse(extraURLParams);
-        if (typeof urlParams != "object") {
-          lazy.log.warn(
-            "_populateURLParams: extraURLParams is not a stringified object"
-          );
-          return false;
-        }
-      }
-    } catch (ex) {
-      lazy.log.warn("_populateURLParams: extraURLParams is not a JSON object");
-      return false;
-    }
-    if (urlParams) {
-      // Expected to JSON parse the following for FxA flow parameters:
-      //
-      // {String} flow_id - Flow Id, such as '5445b28b8b7ba6cf71e345f8fff4bc59b2a514f78f3e2cc99b696449427fd445'
-      // {Number} flow_begin_time - Flow begin timestamp, such as 1590780440325
-      // {String} device_id - Device Id, such as '7e450f3337d3479b8582ea1c9bb5ba6c'
-      if (
-        (urlParams.flow_begin_time &&
-          urlParams.flow_begin_time.toString().length !==
-            FLOW_BEGIN_TIME_LENGTH) ||
-        (urlParams.flow_id && urlParams.flow_id.length !== FLOW_ID_LENGTH)
-      ) {
-        lazy.log.warn(
-          "_populateURLParams: flow parameters are not properly structured"
-        );
-        return false;
-      }
-
-      // The regex that the name of each param must match - there's no
-      // character restriction on the value - they will be escaped as necessary.
-      let reSimpleString = /^[-_a-zA-Z0-9]*$/;
-      for (let name in urlParams) {
-        let value = urlParams[name];
-        const validName =
-          name.startsWith("utm_") ||
-          name === "entrypoint_experiment" ||
-          name === "entrypoint_variation" ||
-          name === "flow_begin_time" ||
-          name === "flow_id" ||
-          name === "device_id";
-        if (
-          typeof name != "string" ||
-          !validName ||
-          !reSimpleString.test(name)
-        ) {
-          lazy.log.warn("_populateURLParams: invalid campaign param specified");
-          return false;
-        }
-        url.searchParams.append(name, value);
-      }
-    }
-    return true;
-  },
   /**
    * Tear down a tour from a tab e.g. upon switching/closing tabs.
    */
@@ -1641,33 +1477,6 @@ export var UITour = {
             });
           });
         break;
-      case "fxa":
-        this.getFxA(aBrowser, aCallbackID);
-        break;
-      case "fxaConnections":
-        this.getFxAConnections(aBrowser, aCallbackID);
-        break;
-
-      // NOTE: 'sync' is deprecated and should be removed in Firefox 73 (because
-      // by then, all consumers will have upgraded to use 'fxa' in that version
-      // and later.)
-      case "sync":
-        this.sendPageCallback(aBrowser, aCallbackID, {
-          setup: Services.prefs.prefHasUserValue("services.sync.username"),
-          desktopDevices: Services.prefs.getIntPref(
-            "services.sync.clients.devices.desktop",
-            0
-          ),
-          mobileDevices: Services.prefs.getIntPref(
-            "services.sync.clients.devices.mobile",
-            0
-          ),
-          totalDevices: Services.prefs.getIntPref(
-            "services.sync.numClients",
-            0
-          ),
-        });
-        break;
       case "canReset":
         this.sendPageCallback(
           aBrowser,
@@ -1737,109 +1546,6 @@ export var UITour = {
         );
         break;
     }
-  },
-
-  // Get data about the local FxA account. This should be a low-latency request
-  // - everything returned here can be obtained locally without hitting any
-  // remote servers. See also `getFxAConnections()`
-  getFxA(aBrowser, aCallbackID) {
-    (async () => {
-      let setup = !!(await lazy.fxAccounts.getSignedInUser());
-      let result = { setup };
-      if (!setup) {
-        this.sendPageCallback(aBrowser, aCallbackID, result);
-        return;
-      }
-      // We are signed in so need to build a richer result.
-      // Each of the "browser services" - currently only "sync" is supported
-      result.browserServices = {};
-      let hasSync = Services.prefs.prefHasUserValue("services.sync.username");
-      if (hasSync) {
-        result.browserServices.sync = {
-          // We always include 'setup' for b/w compatibility.
-          setup: true,
-          desktopDevices: Services.prefs.getIntPref(
-            "services.sync.clients.devices.desktop",
-            0
-          ),
-          mobileDevices: Services.prefs.getIntPref(
-            "services.sync.clients.devices.mobile",
-            0
-          ),
-          totalDevices: Services.prefs.getIntPref(
-            "services.sync.numClients",
-            0
-          ),
-        };
-      }
-      // And the account state.
-      result.accountStateOK = await lazy.fxAccounts.hasLocalSession();
-      this.sendPageCallback(aBrowser, aCallbackID, result);
-    })().catch(err => {
-      lazy.log.error(err);
-      this.sendPageCallback(aBrowser, aCallbackID, {});
-    });
-  },
-
-  // Get data about the FxA account "connections" (ie, other devices, other
-  // apps, etc. Note that this is likely to be a high-latency request - we will
-  // usually hit the FxA servers to obtain this info.
-  getFxAConnections(aBrowser, aCallbackID) {
-    (async () => {
-      let setup = !!(await lazy.fxAccounts.getSignedInUser());
-      let result = { setup };
-      if (!setup) {
-        this.sendPageCallback(aBrowser, aCallbackID, result);
-        return;
-      }
-      // We are signed in so need to build a richer result.
-      let devices = lazy.fxAccounts.device.recentDeviceList;
-      // A recent device list is fine, but if we don't even have that we should
-      // wait for it to be fetched.
-      if (!devices) {
-        try {
-          await lazy.fxAccounts.device.refreshDeviceList();
-        } catch (ex) {
-          lazy.log.warn("failed to fetch device list", ex);
-        }
-        devices = lazy.fxAccounts.device.recentDeviceList;
-      }
-      if (devices) {
-        // A falsey `devices` should be impossible, so we omit `devices` from
-        // the result object so the consuming page can try to differentiate
-        // between "no additional devices" and "something's wrong"
-        result.numOtherDevices = Math.max(0, devices.length - 1);
-        result.numDevicesByType = devices
-          .filter(d => !d.isCurrentDevice)
-          .reduce((accum, d) => {
-            let type = d.type || "unknown";
-            accum[type] = (accum[type] || 0) + 1;
-            return accum;
-          }, {});
-      }
-
-      try {
-        // Each of the "account services", which we turn into a map keyed by ID.
-        let attachedClients = await lazy.fxAccounts.listAttachedOAuthClients();
-        result.accountServices = attachedClients
-          .filter(c => !!c.id)
-          .reduce((accum, c) => {
-            accum[c.id] = {
-              id: c.id,
-              lastAccessedWeeksAgo: c.lastAccessedDaysAgo
-                ? Math.floor(c.lastAccessedDaysAgo / 7)
-                : null,
-            };
-            return accum;
-          }, {});
-      } catch (ex) {
-        lazy.log.warn("Failed to build the attached clients list", ex);
-      }
-      this.sendPageCallback(aBrowser, aCallbackID, result);
-    })().catch(err => {
-      lazy.log.error(err);
-      this.sendPageCallback(aBrowser, aCallbackID, {});
-    });
   },
 
   getAppInfo(aBrowser, aWindow, aCallbackID) {

@@ -15,7 +15,6 @@ requestLongerTimeout(2);
 
 function getExpectedTargets() {
   return [
-    "accountStatus",
     "addons",
     "appMenu",
     "backForward",
