@@ -965,9 +965,6 @@ export var BrowserUtils = {
       !Services.policies ||
       Services.policies.status !== Services.policies.ACTIVE;
 
-    // Promos may add custom checks that must pass.
-    const passedExtraCheck = !info.extraCheck || info.extraCheck();
-
     return (
       promoEnabled &&
       !avoidAdsRegions?.has(homeRegion.toLowerCase()) &&
@@ -975,8 +972,7 @@ export var BrowserUtils = {
       !info.illegalRegions.includes(homeRegion.toLowerCase()) &&
       !info.illegalRegions.includes(currentRegion.toLowerCase()) &&
       inSupportedRegion &&
-      noActivePolicy &&
-      passedExtraCheck
+      noActivePolicy
     );
   },
 
@@ -1039,19 +1035,6 @@ let PromoInfo = {
     enabledPref: "browser.promo.relay.enabled",
     lazyStringSetPrefs: {},
     illegalRegions: [],
-    // Returns true if user is using the FxA "production" instance, or returns
-    // false for custom FxA instance (such as accounts.firefox.com.cn for the
-    // China repack) which doesn't support authentication for addons like Relay.
-    extraCheck: () =>
-      !Services.prefs.getCharPref("identity.fxaccounts.autoconfig.uri", "") &&
-      [
-        "identity.fxaccounts.remote.root",
-        "identity.fxaccounts.auth.uri",
-        "identity.fxaccounts.remote.oauth.uri",
-        "identity.fxaccounts.remote.profile.uri",
-        "identity.fxaccounts.remote.pairing.uri",
-        "identity.sync.tokenserver.uri",
-      ].every(pref => !Services.prefs.prefHasUserValue(pref)),
   },
 };
 

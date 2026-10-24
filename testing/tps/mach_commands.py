@@ -44,7 +44,6 @@ TPS_PREFERENCES = {
     "services.sync.engine.tabs.filteredSchemes": "about|resource|chrome|file|blob|moz-extension",
     "engine.bookmarks.repair.enabled": False,
     "extensions.experiments.enabled": True,
-    "webextensions.storage.sync.kinto": False,
 }
 TPS_DEBUG_PREFERENCES = {
     "services.sync.log.appender.console": "Trace",

@@ -1913,9 +1913,6 @@ pref("browser.newtabpage.activity-stream.newNewtabExperience.colors", "#004CA4,#
   pref("browser.newtabpage.activity-stream.debug", false);
 #endif
 
-// The remote FxA root content URL for the Activity Stream firstrun page.
-pref("browser.newtabpage.activity-stream.fxaccounts.endpoint", "https://accounts.firefox.com/");
-
 // The pref that controls if the search shortcuts experiment is on
 pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", true);
 
@@ -2368,64 +2365,6 @@ pref("browser.uiCustomization.debug", false);
 
 // CustomizableUI state of the browser's user interface
 pref("browser.uiCustomization.state", "");
-
-// If set to false, FxAccounts and Sync will be unavailable.
-// A restart is mandatory after flipping that preference.
-pref("identity.fxaccounts.enabled", true);
-
-// The remote FxA root content URL. Must use HTTPS.
-pref("identity.fxaccounts.remote.root", "https://accounts.firefox.com/");
-
-// The value of the context query parameter passed in fxa requests.
-pref("identity.fxaccounts.contextParam", "oauth_webchannel_v1");
-
-// The remote URL of the FxA Profile Server
-pref("identity.fxaccounts.remote.profile.uri", "https://profile.accounts.firefox.com/v1");
-
-// The remote URL of the FxA OAuth Server
-pref("identity.fxaccounts.remote.oauth.uri", "https://oauth.accounts.firefox.com/v1");
-
-// Whether FxA pairing using QR codes is enabled.
-pref("identity.fxaccounts.pairing.enabled", true);
-
-// The version of the pairing flow to be used by FxA.
-pref("identity.fxaccounts.pairing.version", 2);
-
-// The remote URI of the FxA pairing server
-pref("identity.fxaccounts.remote.pairing.uri", "wss://channelserver.services.mozilla.com");
-
-// Token server used by the FxA Sync identity.
-pref("identity.sync.tokenserver.uri", "https://token.services.mozilla.com/1.0/sync/1.5");
-
-// Auto-config URL for FxA self-hosters, makes an HTTP request to
-// [identity.fxaccounts.autoconfig.uri]/.well-known/fxa-client-configuration
-// This is now the prefered way of pointing to a custom FxA server, instead
-// of making changes to "identity.fxaccounts.*.uri".
-pref("identity.fxaccounts.autoconfig.uri", "");
-
-// URL for help link about Send Tab.
-pref("identity.sendtabpromo.url", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/send-tab");
-pref("identity.sendtab.deviceissues.url", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/send-tab#w_i-dont-see-my-device-listed");
-
-// URLs for promo links to mobile browsers. Note that consumers are expected to
-// append a value for utm_campaign.
-pref("identity.mobilepromo.android", "https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
-pref("identity.mobilepromo.ios", "https://www.mozilla.org/firefox/ios/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
-
-// How often should we try to fetch missed FxA commands on sync (in seconds).
-// Default is 24 hours.
-pref("identity.fxaccounts.commands.missed.fetch_interval", 86400);
-
-// Controls whether this client can send and receive "close tab"
-// commands from other FxA clients
-pref("identity.fxaccounts.commands.remoteTabManagement.enabled", true);
-
-// Controls whether or not the client association ping has values set on it
-// when the sync-ui-state:update notification fires.
-pref("identity.fxaccounts.telemetry.clientAssociationPing.enabled", true);
-
-// Controls whether the fxAccouintsClientInfo ping is submitted.
-pref("identity.fxaccounts.telemetry.clientInfoPing.enabled", true);
 
 // Note: when media.gmp-*.visible is true, provided we're running on a
 // supported platform/OS version, the corresponding CDM appears in the
@@ -2969,7 +2908,6 @@ pref("browser.discovery.enabled", true);
 
 pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60 (24 hours in seconds)
 pref("browser.engagement.downloads-button.has-used", false);
-pref("browser.engagement.fxa-toolbar-menu-button.has-used", false);
 pref("browser.engagement.home-button.has-used", false);
 pref("browser.engagement.sidebar-button.has-used", false);
 pref("browser.engagement.library-button.has-used", false);
@@ -3003,30 +2941,6 @@ pref("browser.urlbar.share-button.enabled", false);
 pref("browser.toolbars.tab-groups.enabled", false);
 
 pref("security.certerrors.felt-privacy-v1", true);
-
-// Prefs to control the Firefox Account toolbar menu.
-// This pref will surface existing Firefox Account information
-// as a button next to the hamburger menu. It allows
-// quick access to sign-in and manage your Firefox Account.
-pref("identity.fxaccounts.toolbar.enabled", true);
-pref("identity.fxaccounts.toolbar.accessed", false);
-pref("identity.fxaccounts.toolbar.defaultVisible", true);
-
-// Prefs to control Firefox Account panels that shows call to actions
-// for other supported Mozilla products
-pref("identity.fxaccounts.toolbar.pxiToolbarEnabled", true);
-pref("identity.fxaccounts.toolbar.pxiToolbarEnabled.monitorEnabled", true);
-pref("identity.fxaccounts.toolbar.pxiToolbarEnabled.relayEnabled", true);
-pref("identity.fxaccounts.toolbar.pxiToolbarEnabled.vpnEnabled", true);
-
-// Prefs to control Mozilla account panels that shows an updated flow
-// for users who don't have sync enabled
-pref("identity.fxaccounts.toolbar.syncSetup.panelAccessed", false);
-
-// Whether the user dismissed the app menu's sign-in promo. Once dismissed, the
-// promo is never shown again and the compact sign-in row takes its place. Only
-// the app menu's promo is dismissible; the account menu's is not (bug 2070687).
-pref("identity.fxaccounts.toolbar.appMenuSignInPromo.dismissed", false);
 
 // Toolbox preferences
 pref("devtools.toolbox.footer.height", 250);

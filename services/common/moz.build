@@ -21,12 +21,6 @@ EXTRA_JS_MODULES["services-common"] += [
     "utils.sys.mjs",
 ]
 
-EXTRA_JS_MODULES["services-common"] += [
-    "hawkclient.sys.mjs",
-    "hawkrequest.sys.mjs",
-    "tokenserverclient.sys.mjs",
-]
-
 TESTING_JS_MODULES.services.common += [
     "modules-testing/logging.sys.mjs",
 ]

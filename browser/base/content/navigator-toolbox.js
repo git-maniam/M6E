@@ -133,7 +133,6 @@ document.addEventListener(
         #alltabs-button,
         #pageActionButton,
         #downloads-button,
-        #fxa-toolbar-menu-button,
         #unified-extensions-button,
         #library-button
         `);
@@ -156,10 +155,6 @@ document.addEventListener(
 
         case "downloads-button":
           DownloadsIndicatorView.onCommand(event);
-          break;
-
-        case "fxa-toolbar-menu-button":
-          gSync.toggleAccountPanel(element, event);
           break;
 
         case "unified-extensions-button":
@@ -358,7 +353,6 @@ document.addEventListener(
         #alltabs-button,
         #pageActionButton,
         #downloads-button,
-        #fxa-toolbar-menu-button,
         #unified-extensions-button,
         #library-button,
         #ipprotection-button,
@@ -443,10 +437,6 @@ document.addEventListener(
 
         case "downloads-button":
           DownloadsIndicatorView.onCommand(event);
-          break;
-
-        case "fxa-toolbar-menu-button":
-          gSync.toggleAccountPanel(element, event);
           break;
 
         case "unified-extensions-button":

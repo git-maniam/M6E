@@ -1895,7 +1895,7 @@ pref("browser.tabs.remote.separatePrivilegedContentProcess", false);
 
 // The domains we will isolate into the Mozilla Content Process. Comma-separated
 // full domains: any subdomains of the domains listed will also be allowed.
-pref("browser.tabs.remote.separatedMozillaDomains", "addons.mozilla.org,accounts.firefox.com");
+pref("browser.tabs.remote.separatedMozillaDomains", "addons.mozilla.org");
 
 // Default font types and sizes by locale
 pref("font.default.ar", "sans-serif");
@@ -3551,11 +3551,6 @@ pref("webextensions.webRequest.requestBodyMaxRawBytes", 16777216);
 // Enforce a 10MB quota in the storage.session extension API.
 pref("webextensions.storage.session.enforceQuota", true);
 
-// Should we use the old kinto-based implementation of storage.sync? To be removed in bug 1637465.
-pref("webextensions.storage.sync.kinto", false);
-// Server used by the old kinto-based implementation of storage.sync.
-pref("webextensions.storage.sync.serverURL", "https://webextensions.settings.services.mozilla.com/v1");
-
 // Allow customization of the fallback directory for file uploads
 pref("dom.input.fallbackUploadDir", "");
 
@@ -3742,7 +3737,6 @@ pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
 
 pref("services.common.log.logger.rest.request", "Debug");
 pref("services.common.log.logger.rest.response", "Debug");
-pref("services.common.log.logger.tokenserverclient", "Debug");
 
 #ifdef MOZ_SERVICES_SYNC
   pref("services.sync.lastversion", "firstrun");
@@ -3835,13 +3829,6 @@ pref("services.common.log.logger.tokenserverclient", "Debug");
   // The maximum number of immediate resyncs to trigger for changes made during
   // a sync.
   pref("services.sync.maxResyncs", 1);
-
-  // The URL of the Firefox Accounts auth server backend
-  pref("identity.fxaccounts.auth.uri", "https://api.accounts.firefox.com/v1");
-
-  // Authenticate FxA token requests with the auth-server's typed Bearer scheme
-  // instead of Hawk. Kill-switch for the Hawk-to-Bearer migration.
-  pref("identity.fxaccounts.auth.useBearer", true);
 
   // Percentage chance we skip an extension storage sync (kinto life support).
   pref("services.sync.extension-storage.skipPercentageChance", 50);

@@ -136,10 +136,6 @@ export let StartupTelemetry = {
 
     Services.fog.initializeFOG();
 
-    // A ping we schedule ourselves because it depends on the FxA state, but
-    // must enable early so it catches probes recorded early. Bug 2049938.
-    GleanPings.fxAccountsClientInfo.setEnabled(true);
-
     // Register Glean to listen for experiment updates releated to the
     // "gleanInternalSdk" feature defined in the t/c/nimbus/FeatureManifest.yaml
     // This feature is intended for internal Glean use only. For features wishing

@@ -129,12 +129,6 @@ ChromeUtils.defineESModuleGetters(this, {
   ZoomUI: "resource:///modules/ZoomUI.sys.mjs",
 });
 
-ChromeUtils.defineLazyGetter(this, "fxAccounts", () => {
-  return ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton();
-});
-
 XPCOMUtils.defineLazyScriptGetter(
   this,
   ["BrowserCommands", "kSkipCacheFlags"],
@@ -586,26 +580,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 
 XPCOMUtils.defineLazyPreferenceGetter(
   this,
-  "gFxaToolbarEnabled",
-  "identity.fxaccounts.toolbar.enabled",
-  false,
-  (aPref, aOldVal, aNewVal) => {
-    updateFxaToolbarMenu(aNewVal);
-  }
-);
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
-  "gFxaToolbarAccessed",
-  "identity.fxaccounts.toolbar.accessed",
-  false,
-  () => {
-    updateFxaToolbarMenu(gFxaToolbarEnabled);
-  }
-);
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
   "gAddonAbuseReportEnabled",
   "extensions.abuseReport.enabled",
   false
@@ -834,48 +808,6 @@ var gNavigatorBundle = {
     return gBrowserBundle.formatStringFromName(key, array);
   },
 };
-
-function updateFxaToolbarMenu(enable, isInitialUpdate = false) {
-  // We only show the Firefox Account toolbar menu if the feature is enabled and
-  // if sync is enabled.
-  const syncEnabled = Services.prefs.getBoolPref(
-    "identity.fxaccounts.enabled",
-    false
-  );
-
-  const mainWindowEl = document.documentElement;
-  const taskbarTab = mainWindowEl.hasAttribute("taskbartab");
-
-  // To minimize the toolbar button flickering or appearing/disappearing during startup,
-  // we use this pref to anticipate the likely FxA status. Only guess a signed-in
-  // state when accounts are enabled: a device name can be persisted without ever
-  // signing in (e.g. it is written on first read or when creating a backup), so
-  // without gating on syncEnabled a profile with accounts disabled would
-  // incorrectly report "signed_in".
-  const statusGuess =
-    syncEnabled &&
-    !!Services.prefs.getStringPref(
-      "identity.fxaccounts.account.device.name",
-      ""
-    );
-  mainWindowEl.setAttribute(
-    "fxastatus",
-    statusGuess ? "signed_in" : "not_configured"
-  );
-
-  if (enable && syncEnabled && !taskbarTab) {
-    mainWindowEl.setAttribute("fxatoolbarmenu", "visible");
-
-    // We have to manually update the sync state UI when toggling the FxA toolbar
-    // because it could show an invalid icon if the user is logged in and no sync
-    // event was performed yet.
-    if (!isInitialUpdate) {
-      gSync.maybeUpdateUIState();
-    }
-  } else {
-    mainWindowEl.removeAttribute("fxatoolbarmenu");
-  }
-}
 
 function UpdateBackForwardCommands(aWebNavigation) {
   var backCommand = document.getElementById("Browser:Back");
@@ -5197,33 +5129,6 @@ var FirefoxViewHandler = {
         this._onTabForegrounded();
         break;
     }
-  },
-  _closeDeviceConnectedTab() {
-    if (!TabsSetupFlowManager.didFxaTabOpen) {
-      return;
-    }
-    // close the tab left behind after a user pairs a device and
-    // is redirected back to the Firefox View tab
-    const fxaRoot = Services.prefs.getCharPref(
-      "identity.fxaccounts.remote.root"
-    );
-    const fxDeviceConnectedTab = gBrowser.tabs.find(tab =>
-      tab.linkedBrowser.currentURI.displaySpec.startsWith(
-        `${fxaRoot}pair/auth/complete`
-      )
-    );
-
-    if (!fxDeviceConnectedTab) {
-      return;
-    }
-
-    if (gBrowser.tabs.length <= 2) {
-      // if its the only tab besides the Firefox View tab,
-      // open a new tab first so the browser doesn't close
-      gBrowser.addTrustedTab("about:newtab");
-    }
-    gBrowser.removeTab(fxDeviceConnectedTab);
-    TabsSetupFlowManager.didFxaTabOpen = false;
   },
   _onTabForegrounded() {
     if (this.tab?.selected) {

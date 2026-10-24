@@ -245,18 +245,6 @@ skip-if = [
   "os == 'win' && os_version == '11.26200' && verify-standalone",
 ]
 
-["browser_relay_signup_flow.js"]
-support-files = ["browser_relay_utils.js"]
-
-["browser_relay_signup_flow_showToAllBrowsers.js"]
-support-files = ["browser_relay_utils.js"]
-
-["browser_relay_telemetry.js"]
-support-files = ["browser_relay_utils.js"]
-
-["browser_relay_use.js"]
-support-files = ["browser_relay_utils.js"]
-
 ["browser_rust_storage_primary_password.js"]
 skip-if = [
   "os == 'android'", # The Rust storage backend only runs on desktop

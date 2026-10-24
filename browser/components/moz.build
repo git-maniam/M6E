@@ -106,7 +106,6 @@ EXTRA_PP_COMPONENTS += [
 ]
 
 MOZ_SRC_FILES += [
-    "AccountsGlue.sys.mjs",
     "BrowserContentHandler.sys.mjs",
     "BrowserGlue.sys.mjs",
     "distribution.sys.mjs",

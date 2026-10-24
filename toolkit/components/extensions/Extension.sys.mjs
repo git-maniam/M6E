@@ -103,13 +103,6 @@ const lazy = XPCOMUtils.declareLazy({
   // This pref modifies behavior for MV2.  MV3 is enabled regardless.
   eventPagesEnabled: { pref: "extensions.eventPages.enabled", default: true },
 
-  // This pref is used to check if storage.sync is still the Kinto-based backend
-  // (GeckoView should be the only one still using it).
-  storageSyncOldKintoBackend: {
-    pref: "webextensions.storage.sync.kinto",
-    default: true,
-  },
-
   // Deprecation of browser_style, through .supported & .same_as_mv2 prefs:
   // - true true  = warn only: deprecation message only (no behavioral changes).
   // - true false = deprecate: default to false, even if default was true in MV2.
@@ -595,12 +588,10 @@ var ExtensionAddonObserver = {
       // Clear browser.storage.sync rust-based backend.
       // (storage.sync clearOnUninstall will resolve and log an error on the
       // browser console in case of unexpected failures).
-      if (!lazy.storageSyncOldKintoBackend) {
-        addShutdownBlocker(
-          `Clear Extension StorageSync ${addonId}`,
-          lazy.extensionStorageSync.clearOnUninstall(addonId)
-        );
-      }
+      addShutdownBlocker(
+        `Clear Extension StorageSync ${addonId}`,
+        lazy.extensionStorageSync.clearOnUninstall(addonId)
+      );
 
       // Clear any IndexedDB and Cache API storage created by the extension.
       // If LSNG is enabled, this also clears localStorage.

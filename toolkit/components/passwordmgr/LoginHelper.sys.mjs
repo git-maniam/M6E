@@ -433,13 +433,6 @@ export const LoginHelper = {
     // Watch for pref changes to update cached pref values.
     Services.prefs.addObserver("signon.", () => this.updateSignonPrefs());
     this.updateSignonPrefs();
-
-    // Watch for FXA Logout to reset signon.firefoxRelay to 'available'
-    // Using hard-coded value for FxAccountsCommon.ONLOGOUT_NOTIFICATION because
-    // importing FxAccountsCommon here caused hard-to-diagnose crash.
-    Services.obs.addObserver(() => {
-      Services.prefs.clearUserPref("signon.firefoxRelay.feature");
-    }, "fxaccounts:onlogout");
   },
 
   updateSignonPrefs() {
