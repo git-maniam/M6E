@@ -50,15 +50,29 @@ ChromeUtils.defineESModuleGetters(lazy, {
   FxAccountsTelemetry: "resource://gre/modules/FxAccountsTelemetry.sys.mjs",
 });
 
-ChromeUtils.defineLazyGetter(lazy, "mpLocked", () => {
-  return ChromeUtils.importESModule("resource://services-sync/util.sys.mjs")
-    .Utils.mpLocked;
-});
+XPCOMUtils.defineLazyServiceGetter(
+  lazy,
+  "cryptoSDR",
+  "@mozilla.org/login-manager/crypto/SDR;1",
+  Ci.nsILoginManagerCrypto
+);
 
-ChromeUtils.defineLazyGetter(lazy, "ensureMPUnlocked", () => {
-  return ChromeUtils.importESModule("resource://services-sync/util.sys.mjs")
-    .Utils.ensureMPUnlocked;
-});
+function mpLocked() {
+  return !lazy.cryptoSDR.isLoggedIn;
+}
+
+// If the primary password is enabled and locked, present a dialog to unlock it.
+// Return whether the system is unlocked.
+function ensureMPUnlocked() {
+  if (lazy.cryptoSDR.uiBusy) {
+    return false;
+  }
+  try {
+    lazy.cryptoSDR.encrypt("bacon");
+    return true;
+  } catch (e) {}
+  return false;
+}
 
 XPCOMUtils.defineLazyPreferenceGetter(
   lazy,
@@ -737,7 +751,7 @@ export class FxAccounts {
    * async can work without modification of the call-sites.
    */
   static canConnectAccount() {
-    return Promise.resolve(!lazy.mpLocked() || lazy.ensureMPUnlocked());
+    return Promise.resolve(!mpLocked() || ensureMPUnlocked());
   }
 
   /**
@@ -838,15 +852,7 @@ FxAccountsInternal.prototype = {
       // call before sending notifications. Primarily used so parts of Firefox
       // which have yet to load for performance reasons can be force-loaded, and
       // thus not miss notifications.
-      this.observerPreloads = [
-        // Sync
-        () => {
-          let { Weave } = ChromeUtils.importESModule(
-            "resource://services-sync/main.sys.mjs"
-          );
-          return Weave.Service.promiseInitialized;
-        },
-      ];
+      this.observerPreloads = [];
     }
 
     // This holds the list of attached clients from the /account/attached_clients endpoint

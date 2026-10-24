@@ -10,7 +10,7 @@ const { JsonSchema } = ChromeUtils.importESModule(
   "resource://gre/modules/JsonSchema.sys.mjs"
 );
 const { UIState } = ChromeUtils.importESModule(
-  "resource://services-sync/UIState.sys.mjs"
+  "resource://gre/modules/UIState.sys.mjs"
 );
 const { ClientID } = ChromeUtils.importESModule(
   "resource://gre/modules/ClientID.sys.mjs"

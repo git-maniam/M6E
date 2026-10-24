@@ -1149,7 +1149,6 @@ pwmgr:
     expires: never
     send_in_pings:
       - metrics
-      - sync
 
   num_improved_generated_passwords:
     type: labeled_counter
@@ -1191,7 +1190,6 @@ pwmgr:
     expires: never
     send_in_pings:
       - metrics
-      - sync
 
   prompt_update_action:
     type: custom_distribution
@@ -1217,7 +1215,6 @@ pwmgr:
     expires: never
     send_in_pings:
       - metrics
-      - sync
 
   is_username_only_form:
     type: labeled_counter

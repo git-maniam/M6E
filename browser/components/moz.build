@@ -69,7 +69,6 @@ DIRS += [
     "sharing",
     "shell",
     "sidebar",
-    "syncedtabs",
     "tabbrowser",
     "tabnotes",
     "tabunloader",

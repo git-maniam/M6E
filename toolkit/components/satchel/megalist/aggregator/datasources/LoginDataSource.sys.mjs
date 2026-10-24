@@ -17,7 +17,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
     "moz-src:///browser/components/aboutlogins/LoginBreaches.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
+  UIState: "resource://gre/modules/UIState.sys.mjs",
 });
 
 XPCOMUtils.defineLazyPreferenceGetter(

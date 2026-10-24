@@ -8,7 +8,7 @@ const { sinon } = ChromeUtils.importESModule(
 );
 
 const { UIState } = ChromeUtils.importESModule(
-  "resource://services-sync/UIState.sys.mjs"
+  "resource://gre/modules/UIState.sys.mjs"
 );
 
 var gTestTab;

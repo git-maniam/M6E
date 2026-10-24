@@ -17,7 +17,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
     "resource:///modules/firefox-view-synced-tabs-error-handler.sys.mjs",
   TabsSetupFlowManager:
     "resource:///modules/firefox-view-tabs-setup-manager.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
+  UIState: "resource://gre/modules/UIState.sys.mjs",
 });
 
 add_setup(async () => {

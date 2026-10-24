@@ -59,7 +59,6 @@ BROWSER_CHROME_MANIFESTS += [
     "content/test/browser-siteIdentity/browser.toml",
     "content/test/browser-startup/browser.toml",
     "content/test/browser-static/browser.toml",
-    "content/test/browser-sync/browser.toml",
     "content/test/browser-tabcrashed/browser.toml",
     "content/test/browser-tabcrashed/browser_aboutRestartRequired.toml",
     "content/test/browser-tabcrashed/browser_aboutRestartRequired_noForkServer.toml",

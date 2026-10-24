@@ -6,7 +6,6 @@
 /* import-globals-from main.js */
 /* import-globals-from search.js */
 /* import-globals-from privacy.js */
-/* import-globals-from sync.js */
 /* import-globals-from moreFromMozilla.js */
 /* import-globals-from findInPage.js */
 /* import-globals-from /browser/base/content/utilityOverlay.js */
@@ -52,10 +51,6 @@ Integration.downloads.defineESModuleGetter(
 
 var { PrivateBrowsingUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/PrivateBrowsingUtils.sys.mjs"
-);
-
-var { Weave } = ChromeUtils.importESModule(
-  "resource://services-sync/main.sys.mjs"
 );
 
 var { FxAccounts, getFxAccountsSingleton } = ChromeUtils.importESModule(
@@ -116,7 +111,6 @@ ChromeUtils.defineESModuleGetters(this, {
   ShortcutUtils: "resource://gre/modules/ShortcutUtils.sys.mjs",
   SiteDataManager: "resource:///modules/SiteDataManager.sys.mjs",
   TransientPrefs: "resource:///modules/TransientPrefs.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
   UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
 });
 
@@ -477,9 +471,6 @@ const CONFIG_PANES = Object.freeze({
     iconSrc: "chrome://browser/skin/fxa/avatar-empty.svg",
     groupIds: [
       "defaultBrowserSync",
-      "accountDisabled",
-      "account",
-      "sync",
       "importBrowserData",
       "profiles",
       "backup",
@@ -608,20 +599,11 @@ function init_all() {
       );
   }
 
-  // The Sync category needs to be the last of the "real" categories
-  // registered and initialized since many tests wait for the
-  // "sync-pane-loaded" observer notification before starting the test.
-  let accountsEnabled = Services.prefs.getBoolPref(
-    "identity.fxaccounts.enabled"
-  );
   let categorySync = document.getElementById("category-sync");
   if (redesignEnabled) {
     categorySync.setAttribute("data-l10n-id", "pane-account-sync-title2");
     categorySync.iconSrc = "chrome://browser/skin/fxa/avatar-empty.svg";
     categorySync.hidden = false;
-  } else if (accountsEnabled) {
-    categorySync.hidden = false;
-    register_module("paneSync", gSyncPane);
   }
   register_module("paneSearchResults", gSearchResultsPane);
   for (let [id, config] of Object.entries(CONFIG_PANES)) {

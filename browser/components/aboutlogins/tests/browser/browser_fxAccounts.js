@@ -2,7 +2,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 const { UIState } = ChromeUtils.importESModule(
-  "resource://services-sync/UIState.sys.mjs"
+  "resource://gre/modules/UIState.sys.mjs"
 );
 
 const { FxAccounts } = ChromeUtils.importESModule(

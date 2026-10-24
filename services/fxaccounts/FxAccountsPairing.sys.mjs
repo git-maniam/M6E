@@ -25,8 +25,6 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   FxAccountsPairingChannel:
     "resource://gre/modules/FxAccountsPairingChannel.sys.mjs",
-
-  Weave: "resource://services-sync/main.sys.mjs",
 });
 
 const PAIRING_REDIRECT_URI = "urn:ietf:wg:oauth:2.0:oob:pair-auth-webchannel";
@@ -182,7 +180,6 @@ export class FxAccountsPairingFlow {
     const { emitter } = options;
     const fxaConfig = options.fxaConfig || FxAccounts.config;
     const fxa = options.fxAccounts || fxAccounts;
-    const weave = options.weave || lazy.Weave;
     const flowTimeout = options.flowTimeout || FLOW_TIMEOUT_MS;
 
     const contentPairingURI = await fxaConfig.promisePairingURI();
@@ -201,7 +198,6 @@ export class FxAccountsPairingFlow {
       fxa,
       fxaConfig,
       flowTimeout,
-      weave,
     });
     flows.set(channelId, pairingFlow);
 
@@ -215,7 +211,6 @@ export class FxAccountsPairingFlow {
     this._fxa = options.fxa;
     this._fxai = options.fxai || this._fxa._internal;
     this._fxaConfig = options.fxaConfig;
-    this._weave = options.weave;
     this._stateMachine = new PairingStateMachine(this._emitter);
     this._setupListeners();
     this._flowTimeoutId = setTimeout(
@@ -366,7 +361,7 @@ export class FxAccountsPairingFlow {
           const oauthUri = await this._fxaConfig.promiseOAuthURI();
           const { uid, email, avatar, displayName } =
             await this._fxa.getSignedInUser();
-          const deviceName = this._weave.Service.clientsEngine.localName;
+          const deviceName = this._fxa.device.getLocalName();
           await this._pairingChannel.send({
             message: "pair:auth:metadata",
             data: {

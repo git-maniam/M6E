@@ -10,8 +10,7 @@ that encompasses a variety of things.
 - Testing and debugging flags (e.g. `network.dns.native-is-localhost`).
 - Things that might need locking in an enterprise installation.
 - Application data (e.g.
-  `browser.onboarding.tour.onboarding-tour-addons.completed`,
-  `services.sync.clients.lastSync`).
+  `browser.onboarding.tour.onboarding-tour-addons.completed`).
 - A cheap and dirty form of IPC(!) (some devtools prefs).
 
 Some of these (particularly the last two) are not an ideal use of libpref.
@@ -265,7 +264,7 @@ Only prefs whose values have changed from the default are saved to `prefs.js.`
 
 **Problem:** Each time prefs are saved, the entire file is overwritten -- 10s
 or even 100s of KiBs -- even if only a single value has changed. This happens
-at least every 5 minutes, due to sync. Furthermore, various prefs are changed
+at least every 5 minutes. Furthermore, various prefs are changed
 during and shortly after startup, which can result in 10s of MiBs of disk
 activity.
 
@@ -278,34 +277,6 @@ avoid exposing pref values that might be privacy-sensitive.
 
 **Problem:** The allowlist of prefixes is specified separately from the prefs
 themselves. Having an attribute on a pref definition would be better.
-
-### Sync
-
-On desktop, a pref is synced onto a device via Sync if there is an
-accompanying `services.sync.prefs.sync.`-prefixed pref. I.e. the pref
-`foo.bar` is synced if the pref `services.sync.prefs.sync.foo.bar` exists
-and is true.
-
-Previously, one could push prefs onto a device even if a local
-`services.sync.prefs.sync.`-prefixed pref was not present; however this
-behavior changed in [bug 1538015](https://bugzilla.mozilla.org/show_bug.cgi?id=1538015)
-to require the local prefixed pref to be present. The old (insecure) behavior
-can be re-enabled by setting a single pref `services.sync.prefs.dangerously_allow_arbitrary`
-to true on the target browser - subsequently any pref can be pushed there by
-creating a *remote* `services.sync.prefs.sync.`-prefixed pref.
-
-In practice, only a small subset of prefs (about 70) have a `services.sync.prefs.sync.`-prefixed
-pref by default.
-
-**Problem:** This is gross. An attribute on the pref definition would be
-better, but it might be hard to change that at this point.
-
-The number of synced prefs is small because prefs are synced across versions;
-any pref whose meaning might change shouldn't be synced. Also, we don't sync
-prefs that may differ across different devices (such as a desktop machine
-vs. a notebook).
-
-Prefs are not synced on mobile.
 
 ### Rust
 
@@ -332,7 +303,6 @@ reasonably high, and includes the following.
   int vs. float), both of which mean changing the pref value via about:config
   or the API would have no effect (see [bug 1414150](https://bugzilla.mozilla.org/show_bug.cgi?id=1414150) for examples of
   both).
-- Sync cost, for synced prefs.
 
 ### Guidelines
 

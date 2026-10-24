@@ -9,7 +9,6 @@ import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  CLIENT_NOT_CONFIGURED: "resource://services-sync/constants.sys.mjs",
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
   ContentSharingUtils:
@@ -23,7 +22,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   PlacesTransactions: "resource://gre/modules/PlacesTransactions.sys.mjs",
   PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
-  Weave: "resource://services-sync/main.sys.mjs",
   WebNavigationManager: "resource://gre/modules/WebNavigation.sys.mjs",
 });
 const ITEM_CHANGED_BATCH_NOTIFICATION_THRESHOLD = 10;
@@ -1038,13 +1036,6 @@ export var PlacesUIUtils = {
     }
   },
 
-  shouldShowTabsFromOtherComputersMenuitem() {
-    let weaveOK =
-      lazy.Weave.Status.checkSetup() != lazy.CLIENT_NOT_CONFIGURED &&
-      lazy.Weave.Svc.PrefBranch.getCharPref("firstSync", "") != "notReady";
-    return weaveOK;
-  },
-
   /**
    * Helpers for consumers of editBookmarkOverlay which don't have a node as their input.
    *
@@ -1429,7 +1420,6 @@ export var PlacesUIUtils = {
       ![
         "placesContext",
         "sidebar-history-context-menu",
-        "sidebar-synced-tabs-context-menu",
       ].includes(menupopup.id)
     ) {
       // Ignore any popupshowing events from submenus
@@ -1438,7 +1428,6 @@ export var PlacesUIUtils = {
 
     switch (menupopup.id) {
       case "sidebar-history-context-menu":
-      case "sidebar-synced-tabs-context-menu":
         PlacesUIUtils.lastContextMenuTriggerNode =
           menupopup.triggerNode.triggerNode;
         return;
@@ -1495,7 +1484,6 @@ export var PlacesUIUtils = {
       [
         "sidebar-history-context-menu",
         "placesContext",
-        "sidebar-synced-tabs-context-menu",
         "sidebar-bookmarks-context-menu",
       ].includes(menupopup.id)
     ) {

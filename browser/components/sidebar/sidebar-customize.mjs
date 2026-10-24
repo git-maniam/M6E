@@ -18,7 +18,6 @@ const l10nMap = new Map([
   ["viewGenaiChatSidebar", "sidebar-menu-genai-chat-label"],
   ["viewGenaiPageAssistSidebar", "sidebar-menu-genai-page-assist-label"],
   ["viewHistorySidebar", "sidebar-menu-history-label"],
-  ["viewTabsSidebar", "sidebar-menu-synced-tabs-label"],
   ["viewBookmarksSidebar", "sidebar-menu-bookmarks-label"],
   ["viewOpenTabsSidebar", "sidebar-menu-open-tabs-label"],
   ["viewCPMSidebar", "sidebar-menu-contextual-password-manager-label"],
@@ -149,11 +148,6 @@ export class SidebarCustomize extends SidebarPage {
     switch (commandID) {
       case "viewGenaiChatSidebar":
         Glean.sidebarCustomize.chatbotEnabled.record({
-          checked: e.target.checked,
-        });
-        break;
-      case "viewTabsSidebar":
-        Glean.sidebarCustomize.syncedTabsEnabled.record({
           checked: e.target.checked,
         });
         break;

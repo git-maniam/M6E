@@ -4,7 +4,7 @@
 "use strict";
 
 const { UIState } = ChromeUtils.importESModule(
-  "resource://services-sync/UIState.sys.mjs"
+  "resource://gre/modules/UIState.sys.mjs"
 );
 
 const { ON_SERVICE_ENABLED_NOTIFICATION } = ChromeUtils.importESModule(

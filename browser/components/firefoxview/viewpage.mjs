@@ -198,9 +198,7 @@ export class ViewPage extends ViewPageContent {
     let tabLists = [];
     if (!isOpenTabs) {
       cards = this.shadowRoot.querySelectorAll("card-container");
-      tabLists = this.shadowRoot.querySelectorAll(
-        "fxview-tab-list, syncedtabs-tab-list"
-      );
+      tabLists = this.shadowRoot.querySelectorAll("fxview-tab-list");
     } else {
       this.viewCards.forEach(viewCard => {
         if (viewCard.cardEl) {

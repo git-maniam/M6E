@@ -594,10 +594,6 @@ const PREF_URLBAR_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   // recentsearches are turned on.
   ["suggest.recentsearches", true],
 
-  // Whether results will include synced tab results. The syncing of open tabs
-  // must also be enabled, from Sync preferences.
-  ["suggest.remotetab", true],
-
   // Whether results will include search suggestions.
   ["suggest.searches", false],
 

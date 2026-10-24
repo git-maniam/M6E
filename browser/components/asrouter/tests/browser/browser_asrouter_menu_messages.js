@@ -761,7 +761,7 @@ add_task(async function test_default_cta_allowed_sources() {
 
 function stubSignedIn(sandbox, signedIn) {
   const { UIState } = ChromeUtils.importESModule(
-    "resource://services-sync/UIState.sys.mjs"
+    "resource://gre/modules/UIState.sys.mjs"
   );
   return sandbox.stub(UIState, "get").returns({
     status: signedIn ? UIState.STATUS_SIGNED_IN : UIState.STATUS_NOT_CONFIGURED,

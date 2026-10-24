@@ -44,7 +44,6 @@ import {
   log,
   logPII,
 } from "resource://gre/modules/FxAccountsCommon.sys.mjs";
-import { SyncDisconnect } from "resource://services-sync/SyncDisconnect.sys.mjs";
 
 const lazy = {};
 
@@ -54,13 +53,14 @@ ChromeUtils.defineESModuleGetters(lazy, {
   FxAccountsStorageManagerCanStoreField:
     "resource://gre/modules/FxAccountsStorage.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
-  Weave: "resource://services-sync/main.sys.mjs",
   WebChannel: "resource://gre/modules/WebChannel.sys.mjs",
 });
-ChromeUtils.defineLazyGetter(lazy, "mpLocked", () => {
-  return ChromeUtils.importESModule("resource://services-sync/util.sys.mjs")
-    .Utils.mpLocked;
-});
+XPCOMUtils.defineLazyServiceGetter(
+  lazy,
+  "cryptoSDR",
+  "@mozilla.org/login-manager/crypto/SDR;1",
+  Ci.nsILoginManagerCrypto
+);
 ChromeUtils.defineLazyGetter(lazy, "SelectableProfileService", () => {
   try {
     // Only available in Firefox.
@@ -573,7 +573,6 @@ export function FxAccountsWebChannelHelpers(options) {
   options = options || {};
 
   this._fxAccounts = options.fxAccounts || lazy.fxAccounts;
-  this._weaveXPCOM = options.weaveXPCOM || null;
   this._privateBrowsingUtils =
     options.privateBrowsingUtils || lazy.PrivateBrowsingUtils;
 }
@@ -614,42 +613,6 @@ FxAccountsWebChannelHelpers.prototype = {
     return { action: "continue" };
   },
 
-  async _initializeSync() {
-    // A sync-specific hack - we want to ensure sync has been initialized
-    // before we set the signed-in user.
-    // XXX - probably not true any more, especially now we have observerPreloads
-    // in FxAccounts.sys.mjs?
-    let xps =
-      this._weaveXPCOM ||
-      Cc["@mozilla.org/weave/service;1"].getService(Ci.nsISupports)
-        .wrappedJSObject;
-    await xps.whenLoaded();
-    return xps;
-  },
-
-  _setEnabledEngines(offeredEngines, declinedEngines) {
-    if (offeredEngines && declinedEngines) {
-      log.debug("Received offered engines", offeredEngines);
-      CHOOSE_WHAT_TO_SYNC_OPTIONALLY_AVAILABLE.forEach(engine => {
-        if (
-          offeredEngines.includes(engine) &&
-          !declinedEngines.includes(engine)
-        ) {
-          // These extra engines are disabled by default.
-          log.debug(`Enabling optional engine '${engine}'`);
-          Services.prefs.setBoolPref(`services.sync.engine.${engine}`, true);
-        }
-      });
-      log.debug("Received declined engines", declinedEngines);
-      lazy.Weave.Service.engineManager.setDeclined(declinedEngines);
-      declinedEngines.forEach(engine => {
-        Services.prefs.setBoolPref(`services.sync.engine.${engine}`, false);
-      });
-    } else {
-      log.debug("Did not receive any engine selection information");
-    }
-  },
-
   /**
    * Internal function used to configure the requested services.
    *
@@ -664,13 +627,6 @@ FxAccountsWebChannelHelpers.prototype = {
     }
     let services = Object.keys(requestedServices);
     log.debug(`services requested are ${services}`);
-    if (requestedServices.sync) {
-      const xps = await this._initializeSync();
-      const { offeredEngines, declinedEngines } = requestedServices.sync;
-      this._setEnabledEngines(offeredEngines, declinedEngines);
-      log.debug("Webchannel is enabling sync");
-      await xps.Weave.Service.configure();
-    }
     for (let service of services) {
       Services.obs.notifyObservers(
         null,
@@ -926,10 +882,10 @@ FxAccountsWebChannelHelpers.prototype = {
   },
 
   /**
-   * Disconnects the user from Sync and FxA
+   * Disconnects the user from FxA
    */
   _disconnect() {
-    return SyncDisconnect.disconnect(false);
+    return this._fxAccounts.signOut();
   },
 
   /**
@@ -1005,7 +961,7 @@ FxAccountsWebChannelHelpers.prototype = {
    * Sync, `user_data` will be null.
    */
   _isPrimaryPasswordLocked() {
-    return lazy.mpLocked();
+    return !lazy.cryptoSDR.isLoggedIn;
   },
 
   async getFxaStatus(service, sendingContext, isPairing, context) {

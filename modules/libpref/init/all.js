@@ -3551,11 +3551,6 @@ pref("webextensions.webRequest.requestBodyMaxRawBytes", 16777216);
 // Enforce a 10MB quota in the storage.session extension API.
 pref("webextensions.storage.session.enforceQuota", true);
 
-// Should we use the old kinto-based implementation of storage.sync? To be removed in bug 1637465.
-pref("webextensions.storage.sync.kinto", false);
-// Server used by the old kinto-based implementation of storage.sync.
-pref("webextensions.storage.sync.serverURL", "https://webextensions.settings.services.mozilla.com/v1");
-
 // Allow customization of the fallback directory for file uploads
 pref("dom.input.fallbackUploadDir", "");
 
@@ -3744,108 +3739,12 @@ pref("services.common.log.logger.rest.request", "Debug");
 pref("services.common.log.logger.rest.response", "Debug");
 pref("services.common.log.logger.tokenserverclient", "Debug");
 
-#ifdef MOZ_SERVICES_SYNC
-  pref("services.sync.lastversion", "firstrun");
-  pref("services.sync.sendVersionInfo", true);
+// The URL of the Firefox Accounts auth server backend
+pref("identity.fxaccounts.auth.uri", "https://api.accounts.firefox.com/v1");
 
-  pref("services.sync.scheduler.idleInterval", 3600);  // 1 hour
-  pref("services.sync.scheduler.activeInterval", 600);   // 10 minutes
-  pref("services.sync.scheduler.immediateInterval", 90);    // 1.5 minutes
-  pref("services.sync.scheduler.idleTime", 300);   // 5 minutes
-
-  pref("services.sync.scheduler.fxa.singleDeviceInterval", 3600); // 1 hour
-
-  // Note that new engines are typically added with a default of disabled, so
-  // when an existing sync user gets the Firefox upgrade that supports the engine
-  // it starts as disabled until the user has explicitly opted in.
-  // The sync "create account" process typically *will* offer these engines, so
-  // they may be flipped to enabled at that time.
-  pref("services.sync.engine.addons", true);
-  pref("services.sync.engine.addresses", false);
-  pref("services.sync.engine.bookmarks", true);
-  pref("services.sync.engine.creditcards", false);
-  pref("services.sync.engine.history", true);
-  pref("services.sync.engine.passwords", true);
-  pref("services.sync.engine.prefs", true);
-  pref("services.sync.engine.tabs", true);
-  pref("services.sync.engine.tabs.filteredSchemes", "about|resource|chrome|file|blob|moz-extension|data");
-
-  // The addresses and CC engines might not actually be available at all.
-  pref("services.sync.engine.addresses.available", false);
-  pref("services.sync.engine.creditcards.available", false);
-
-  pref("services.sync.perDeviceEngineChoices", false);
-
-  // If true, add-on sync ignores changes to the user-enabled flag. This
-  // allows people to have the same set of add-ons installed across all
-  // profiles while maintaining different enabled states.
-  pref("services.sync.addons.ignoreUserEnabledChanges", false);
-
-  // Comma-delimited list of hostnames to trust for add-on install.
-  pref("services.sync.addons.trustedSourceHostnames", "addons.mozilla.org");
-
-  pref("services.sync.log.appender.console", "Fatal");
-  pref("services.sync.log.appender.dump", "Error");
-  pref("services.sync.log.appender.file.level", "Trace");
-  pref("services.sync.log.appender.file.logOnError", true);
-  #if defined(NIGHTLY_BUILD)
-    pref("services.sync.log.appender.file.logOnSuccess", true);
-  #else
-    pref("services.sync.log.appender.file.logOnSuccess", false);
-  #endif
-  pref("services.sync.log.appender.file.maxErrorAge", 864000); // 10 days
-
-  // The default log level for all "Sync.*" logs. Adjusting this pref will
-  // adjust the level for *all* Sync logs (except engines, and that's only
-  // because we supply a default for the engines below.)
-  pref("services.sync.log.logger", "Debug");
-
-  // Prefs for Sync engines can be controlled globally or per-engine.
-  // We only define the global level here, but manually creating prefs
-  // like "services.sync.log.logger.engine.bookmarks" will control just
-  // that engine.
-  pref("services.sync.log.logger.engine", "Debug");
-  pref("services.sync.log.cryptoDebug", false);
-
-  pref("services.sync.telemetry.submissionInterval", 43200); // 12 hours in seconds
-  pref("services.sync.telemetry.maxPayloadCount", 500);
-
-  #ifdef EARLY_BETA_OR_EARLIER
-    // Enable the (fairly costly) client/server validation through early Beta, but
-    // not release candidates or Release.
-    pref("services.sync.engine.bookmarks.validation.enabled", true);
-    pref("services.sync.engine.passwords.validation.enabled", true);
-  #endif
-
-  // We consider validation this frequently. After considering validation, even
-  // if we don't end up validating, we won't try again unless this much time has passed.
-  pref("services.sync.engine.bookmarks.validation.interval", 86400); // 24 hours in seconds
-  pref("services.sync.engine.passwords.validation.interval", 86400); // 24 hours in seconds
-
-  // We only run validation `services.sync.validation.percentageChance` percent of
-  // the time, even if it's been the right amount of time since the last validation,
-  // and you meet the maxRecord checks.
-  pref("services.sync.engine.bookmarks.validation.percentageChance", 10);
-  pref("services.sync.engine.passwords.validation.percentageChance", 10);
-
-  // We won't validate an engine if it has more than this many records on the server.
-  pref("services.sync.engine.bookmarks.validation.maxRecords", 1000);
-  pref("services.sync.engine.passwords.validation.maxRecords", 1000);
-
-  // The maximum number of immediate resyncs to trigger for changes made during
-  // a sync.
-  pref("services.sync.maxResyncs", 1);
-
-  // The URL of the Firefox Accounts auth server backend
-  pref("identity.fxaccounts.auth.uri", "https://api.accounts.firefox.com/v1");
-
-  // Authenticate FxA token requests with the auth-server's typed Bearer scheme
-  // instead of Hawk. Kill-switch for the Hawk-to-Bearer migration.
-  pref("identity.fxaccounts.auth.useBearer", true);
-
-  // Percentage chance we skip an extension storage sync (kinto life support).
-  pref("services.sync.extension-storage.skipPercentageChance", 50);
-#endif // MOZ_SERVICES_SYNC
+// Authenticate FxA token requests with the auth-server's typed Bearer scheme
+// instead of Hawk. Kill-switch for the Hawk-to-Bearer migration.
+pref("identity.fxaccounts.auth.useBearer", true);
 
 #if defined(ENABLE_WEBDRIVER)
   // WebDriver is a remote control interface that enables introspection and
