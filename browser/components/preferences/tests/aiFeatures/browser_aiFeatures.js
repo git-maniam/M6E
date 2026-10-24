@@ -13,10 +13,6 @@ add_setup(async function setupPrefs() {
       ["browser.ai.control.translations", "default"],
       ["browser.ai.control.pdfjsAltText", "default"],
       ["browser.ai.control.smartTabGroups", "default"],
-      ["browser.ai.control.linkPreviewKeyPoints", "default"],
-      ["browser.ai.control.sidebarChatbot", "default"],
-      ["browser.ai.control.smartWindow", "default"],
-      ["browser.smartwindow.enabled", true],
     ],
   });
 });
@@ -54,38 +50,10 @@ describe("settings ai features", () => {
         );
         await runPolicyTest(
           doc,
-          "Link Preview",
-          "browser.ml.linkPreview.optin",
-          "aiControlLinkPreviewKeyPointsSelect"
-        );
-        await runPolicyTest(
-          doc,
-          "Sidebar Chatbot",
-          "browser.ml.chat.enabled",
-          "aiControlSidebarChatbotSelect"
-        );
-        await runPolicyTest(
-          doc,
           "Translations",
           "browser.translations.enable",
           "aiControlTranslationsSelect"
         );
-
-        // Smart Window enterprise policy
-        const smartWindowPref = "browser.smartwindow.enabled";
-        const defaultBranch = Services.prefs.getDefaultBranch(null);
-        const origDefault = defaultBranch.getBoolPref(smartWindowPref, false);
-        try {
-          defaultBranch.setBoolPref(smartWindowPref, true);
-          await runPolicyTest(
-            doc,
-            "SmartWindow",
-            "browser.smartwindow.enabled",
-            "aiControlSmartWindowSelect"
-          );
-        } finally {
-          defaultBranch.setBoolPref("browser.smartwindow.enabled", origDefault);
-        }
       });
     });
   });

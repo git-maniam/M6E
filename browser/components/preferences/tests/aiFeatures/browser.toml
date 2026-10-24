@@ -5,7 +5,6 @@ prefs = [
 support-files = [
   "head.js",
   "../head-common.js",
-  "head_smart_window.js",
 ]
 tags = "os_integration"
 

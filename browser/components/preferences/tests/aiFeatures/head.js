@@ -5,10 +5,6 @@ Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/browser/components/preferences/tests/head-common.js",
   this
 );
-Services.scriptloader.loadSubScript(
-  "chrome://mochitests/content/browser/browser/components/preferences/tests/aiFeatures/head_smart_window.js",
-  this
-);
 
 async function withPrefsPane(pane, testFn) {
   await openPreferencesViaOpenPreferencesAPI(pane, { leaveOpen: true });
