@@ -17,8 +17,6 @@ support-files = [
 ]
 prefs = ["browser.bookmarks.testing.skipDefaultBookmarksImport=true"]
 
-["browser_glean_telemetry_abandonment_available_semantic.js"]
-
 ["browser_glean_telemetry_abandonment_groups.js"]
 
 ["browser_glean_telemetry_abandonment_interaction.js"]
@@ -52,8 +50,6 @@ skip-if = [
 ]
 
 ["browser_glean_telemetry_disable_sap.js"]
-
-["browser_glean_telemetry_engagement_available_semantic.js"]
 
 ["browser_glean_telemetry_engagement_edge_cases.js"]
 

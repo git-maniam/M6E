@@ -37,8 +37,6 @@ const lazy = XPCOMUtils.declareLazy({
   UrlbarPrefs: "moz-src:///browser/components/urlbar/UrlbarPrefs.sys.mjs",
   UrlbarProviderOpenTabs:
     "moz-src:///browser/components/urlbar/UrlbarProviderOpenTabs.sys.mjs",
-  UrlbarProviderSemanticHistorySearch:
-    "moz-src:///browser/components/urlbar/UrlbarProviderSemanticHistorySearch.sys.mjs",
   UrlbarProviderTopSites:
     "moz-src:///browser/components/urlbar/UrlbarProviderTopSites.sys.mjs",
   UrlbarQueryContext: "chrome://browser/content/urlbar/UrlbarQueryContext.mjs",
@@ -2037,10 +2035,6 @@ export class TelemetryEvent {
     eventInfo.sap = sap;
     eventInfo.search_engine_default_id =
       lazy.SearchService.defaultEngine.telemetryId;
-    if (metric === "engagement" || metric === "abandonment") {
-      eventInfo.available_semantic_sources =
-        this.#getAvailableSemanticSources().join();
-    }
     lazy.logger.info(`${metric} event:`, eventInfo);
     Glean.urlbar[metric].record(eventInfo);
 
@@ -2222,36 +2216,6 @@ export class TelemetryEvent {
       return null;
     }
     return this.#smartbarData;
-  }
-
-  /**
-   * Retrieves available semantic search sources.
-   * Ensure it is the provider initializing the semantic manager, since it
-   * provides the right configuration for the singleton.
-   *
-   * @returns {Array<string>} Array of found sources, will contain just "none"
-   *   if no sources were found.
-   */
-  #getAvailableSemanticSources() {
-    let sources = [];
-    try {
-      const semanticManager =
-        lazy.UrlbarProviderSemanticHistorySearch.semanticManager;
-      const isSmartbar = this._controller.sapName === "smartbar";
-      if (
-        isSmartbar
-          ? semanticManager.isEnabledForSmartWindow
-          : semanticManager.canUseSemanticSearch
-      ) {
-        sources.push("history");
-      }
-    } catch (e) {
-      lazy.logger.error("Error getting the semantic manager:", e);
-    }
-    if (!sources.length) {
-      sources.push("none");
-    }
-    return sources;
   }
 
   /**

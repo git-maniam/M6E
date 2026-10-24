@@ -287,7 +287,6 @@ export const UrlbarShared = {
     REMOTE_SUGGESTION: "remoteSuggestion",
     REMOTE_TAB: "remoteTab",
     RESTRICT_SEARCH_KEYWORD: "restrictSearchKeyword",
-    SEMANTIC_HISTORY: "semanticHistory",
     SUGGESTED_INDEX: "suggestedIndex",
     TAIL_SUGGESTION: "tailSuggestion",
   }),
@@ -1163,16 +1162,6 @@ export const UrlbarShared = {
       case UrlbarShared.RESULT_TYPE.AI_CHAT:
         return UrlbarShared.RESULT_GROUP.AI;
     }
-    // When enabled, semantic history results (both history URLs and
-    // switch-to-tab results) get their own group so they fill only the space
-    // left after, and never evict, the plain (non-semantic) results that would
-    // otherwise share the general group.
-    if (
-      result.providerName == "UrlbarProviderSemanticHistorySearch" &&
-      UrlbarPrefs.get("suggest.semanticHistory.separateGroup")
-    ) {
-      return UrlbarShared.RESULT_GROUP.SEMANTIC_HISTORY;
-    }
     return UrlbarShared.RESULT_GROUP.GENERAL;
   },
 
@@ -1221,10 +1210,7 @@ export const UrlbarShared = {
       case UrlbarShared.RESULT_GROUP.OMNIBOX: {
         return "addon";
       }
-      // Semantic history results have their own group for sorting purposes but
-      // are reported as "general" results, as they were before the group split.
-      case UrlbarShared.RESULT_GROUP.GENERAL:
-      case UrlbarShared.RESULT_GROUP.SEMANTIC_HISTORY: {
+      case UrlbarShared.RESULT_GROUP.GENERAL: {
         return "general";
       }
       // Group of UrlbarProviderQuickSuggest is GENERAL_PARENT.
@@ -1294,8 +1280,6 @@ export const UrlbarShared = {
     function checkForSubType(type, res) {
       if (res.providerName == "UrlbarProviderInputHistory") {
         type += "_adaptive";
-      } else if (res.providerName == "UrlbarProviderSemanticHistorySearch") {
-        type += "_semantic";
       }
       if (
         res.isSERP &&

@@ -2596,8 +2596,6 @@ export class UrlbarView {
       return;
     } else if (result.providerName == "UrlbarProviderTabToSearch") {
       item.setAttribute("type", "tabtosearch");
-    } else if (result.providerName == "UrlbarProviderSemanticHistorySearch") {
-      item.setAttribute("type", "semantic-history");
     } else if (result.providerName == "UrlbarProviderInputHistory") {
       item.setAttribute("type", "adaptive-history");
     } else if (

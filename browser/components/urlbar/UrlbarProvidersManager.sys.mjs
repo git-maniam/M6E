@@ -178,12 +178,6 @@ var localProviderModules = [
     supportedSAPs: ["newtab_searchbar", "searchbar", "smartbar", "urlbar"],
   },
   {
-    name: "UrlbarProviderSemanticHistorySearch",
-    module:
-      "moz-src:///browser/components/urlbar/UrlbarProviderSemanticHistorySearch.sys.mjs",
-    supportedSAPs: ["smartbar", "urlbar"],
-  },
-  {
     name: "UrlbarProviderTabToSearch",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderTabToSearch.sys.mjs",

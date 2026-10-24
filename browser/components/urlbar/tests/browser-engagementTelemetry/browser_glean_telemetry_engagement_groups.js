@@ -353,21 +353,6 @@ add_task(async function actions_search_mode() {
   });
 });
 
-add_task(async function history_semantic() {
-  await doSemanticHistoryTest({
-    trigger: () => doEnter(),
-    assert: () =>
-      assertEngagementTelemetry([
-        {
-          groups: "heuristic,general",
-          results: "search_engine,history_semantic",
-          n_results: 2,
-          selected_result: "history_semantic",
-        },
-      ]),
-  });
-});
-
 add_task(async function history_serp() {
   await doSerpHistoryTest({
     trigger: () => doEnter(),

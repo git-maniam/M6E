@@ -400,9 +400,6 @@
     .urlbarView-row[type="adaptive-history"] > .urlbarView-row-inner > .urlbarView-no-wrap > &::before {
       content: "A";
     }
-    .urlbarView-row[type="semantic-history"] > .urlbarView-row-inner > .urlbarView-no-wrap > &::before {
-      content: "S";
-    }
   }
 }
 

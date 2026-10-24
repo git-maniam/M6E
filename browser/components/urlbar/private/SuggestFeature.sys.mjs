@@ -204,26 +204,6 @@ export class SuggestProvider extends SuggestFeature {
   }
 
   /**
-   * @returns {string}
-   *   If the feature's suggestions are served by the ML backend, the subclass
-   *   should override this getter and return the ML intent name as returned by
-   *   `MLSuggest`. e.g., "yelp_intent"
-   */
-  get mlIntent() {
-    return "";
-  }
-
-  /**
-   * @returns {boolean}
-   *   If the feature's suggestions are served by the ML backend, the subclass
-   *   should override this getter and return true if the ML suggestions should
-   *   be enabled and false otherwise.
-   */
-  get isMlIntentEnabled() {
-    return false;
-  }
-
-  /**
    * Subclasses should typically override this method. It should return the
    * telemetry type for the given suggestion. A telemetry type uniquely
    * identifies a type of Suggest suggestion independent of the backend that

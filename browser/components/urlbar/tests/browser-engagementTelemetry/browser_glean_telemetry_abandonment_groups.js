@@ -265,20 +265,6 @@ add_task(async function suggested_index() {
   });
 });
 
-add_task(async function history_semantic() {
-  await doSemanticHistoryTest({
-    trigger: () => doBlur(),
-    assert: () =>
-      assertAbandonmentTelemetry([
-        {
-          groups: "heuristic,general",
-          results: "search_engine,history_semantic",
-          n_results: 2,
-        },
-      ]),
-  });
-});
-
 add_task(async function history_serp() {
   await doSerpHistoryTest({
     trigger: () => doBlur(),

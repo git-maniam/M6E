@@ -27,8 +27,6 @@ prefs = ["browser.urlbar.suggest.engines=false"]
 
 ["test_UrlbarProviderSearchSuggestions.js"]
 
-["test_UrlbarProviderSemanticHistorySearch.js"]
-
 ["test_UrlbarProviderTopSites.js"]
 
 ["test_UrlbarQueryContext.js"]
