@@ -449,7 +449,6 @@ const CONFIG_PANES = Object.freeze({
       "securityPrivacyStatus",
       "securityPrivacyWarnings",
       "etpStatus",
-      "ipprotection",
       "cookiesAndSiteData2",
       "history2",
       "nonTechnicalPrivacy2",
@@ -521,12 +520,6 @@ const CONFIG_PANES = Object.freeze({
     iconSrc: "chrome://browser/skin/translations.svg",
     module: "chrome://browser/content/preferences/config/translations.mjs",
     visible: () => srdSectionEnabled("translations"),
-  },
-  vpnSiteRules: {
-    parent: "privacy",
-    l10nId: "ip-protection-site-rules-header-1",
-    groupIds: ["vpnSiteRules"],
-    replaces: "privacy",
   },
   containers: {
     parent: srdSectionEnabled("tabsBrowsing") ? "tabsBrowsing" : "general",

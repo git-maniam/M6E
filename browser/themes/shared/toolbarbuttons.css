@@ -694,30 +694,6 @@ toolbar[keyNav]:not([collapsed], [customizing]) toolbartabstop,
   -moz-user-focus: normal;
 }
 
-/* IP Protection */
-#ipprotection-button {
-  --panel-and-palette-icon-size: var(--size-image-small);
-
-  &:not(:is([overflowedItem="true"], [cui-areatype="panel"])) {
-    > .toolbarbutton-icon {
-      width: calc(2 * var(--toolbarbutton-padding-inner) + var(--size-image-small));
-      max-width: var(--size-image-large);
-      padding-block: 0;
-    }
-
-    > .toolbarbutton-badge-stack > .toolbarbutton-icon {
-      width: var(--size-image-small);
-    }
-  }
-
-  toolbarpaletteitem[place="palette"] > & > .toolbarbutton-icon,
-  toolbarpaletteitem[place="palette"] > & > .toolbarbutton-badge-stack > .toolbarbutton-icon {
-    min-height: var(--icon-size-small);
-    max-height: var(--icon-size-small);
-    max-width: var(--size-image-small);
-  }
-}
-
 /* Smart Window toolbar ask button */
 #smartwindow-ask-button {
   align-items: center;

@@ -52,10 +52,6 @@ const permissionExceptionsL10n = {
     window: "permissions-exceptions-addons-window2",
     description: "permissions-exceptions-addons-desc",
   },
-  "ipp-vpn": {
-    window: "ip-protection-exceptions-dialog-window",
-    description: "ip-protection-exclusions-desc",
-  },
   "persist-data-on-shutdown": {
     window: "permissions-exceptions-shutdown-clearing-window",
     description: "permissions-exceptions-shutdown-clearing-desc",

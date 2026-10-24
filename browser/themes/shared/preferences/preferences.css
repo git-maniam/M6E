@@ -584,15 +584,6 @@ html|dialog,
   min-width: 66ch;
 }
 
-.dialogBox.vpnSiteRuleDialogBox {
-  min-width: 24em;
-
-  .dialogFrame {
-    width: 24em;
-    min-width: 24em;
-  }
-}
-
 .dialogTitleBar {
   padding: 0.4em 0.2em;
   border-bottom: 1px solid var(--border-color);

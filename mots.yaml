@@ -3969,28 +3969,6 @@ modules:
           - *janika
         machine_name: form_autofill
 
-      - name: IP Protection
-        description: Built-in IP Protection (VPN) in the browser.
-        includes:
-          - browser/components/ipprotection/**/*
-          - toolkit/components/ipprotection/**/*
-        meta:
-          components:
-            - Firefox::IP Protection
-          url: <https://firefox-source-docs.mozilla.org/toolkit/ipprotection/>
-          review_group: ip-protection-reviewers
-        owners:
-          - *fchasen
-        peers:
-          - *kpatenio
-          - *rking
-          - *niklas
-          - *basti
-          - *artem
-          - *mcleinman
-          - *baku
-        machine_name: ip_protection
-
       - name: In-product Messaging
         description: The system for delivering in-product messaging and onboarding,
           including ASRouter, about:welcome, and reusable messaging templates like

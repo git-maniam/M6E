@@ -196,7 +196,7 @@ add_task(async function test_paneSearch_normalization() {
 /**
  * Assert that legacy names that have mapping entries route to the right pane.
  * Where the destination group has a data-subcategory attribute, we
- * also wait for it to render. For feature-gated groups (ipprotection/vpn) we
+ * also wait for it to render. For feature-gated groups we
  * only assert the hash.
  */
 add_task(async function test_legacy_name_routing_and_subcategory_attr() {
@@ -220,8 +220,6 @@ add_task(async function test_legacy_name_routing_and_subcategory_attr() {
     ["privacy-trackingprotection", "#privacy", "panePrivacy", "etpStatus"],
     ["privacy-doh", "#privacy", "panePrivacy", "dnsOverHttps"],
     ["privacy-sitedata", "#privacy", "panePrivacy", "sitedata"],
-    ["privacy-vpn", "#privacy", "panePrivacy", null],
-    ["privacy-vpnsiterules", "#vpnSiteRules", "paneVpnSiteRules", null],
     ["privacy-logins", "#passwordsAutofill", "panePasswordsAutofill", "logins"],
     ["privacy-permissions", "#permissionsData", "panePermissionsData", null],
     ["search-firefoxSuggest", "#search", "paneSearch", "locationBar"],
