@@ -11,7 +11,6 @@ BROWSER_CHROME_MANIFESTS += [
     "tests/credentials/browser.toml",
     "tests/downloads/browser.toml",
     "tests/etp/browser.toml",
-    "tests/experimental_features/browser.toml",
     "tests/home/browser.toml",
     "tests/languages/browser.toml",
     "tests/moreFromMozilla/browser.toml",
