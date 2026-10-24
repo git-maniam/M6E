@@ -68,7 +68,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 );
 
 ChromeUtils.defineESModuleGetters(this, {
-  AppUpdater: "resource://gre/modules/AppUpdater.sys.mjs",
   DoHConfigController: "moz-src:///toolkit/components/doh/DoHConfig.sys.mjs",
   PreferencesBackupResource:
     "moz-src:///browser/components/backup/resources/PreferencesBackupResource.sys.mjs",

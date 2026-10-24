@@ -498,14 +498,6 @@ localeLanguageCode == "en"
 declare const localeLanguageCode: string;
 ```
 
-### `needsUpdate`
-
-Does the client have the latest available version installed
-
-```ts
-declare const needsUpdate: boolean;
-```
-
 ### `packageFamilyName`
 Provides the package family name as given by the MSIX that Firefox was
 installed from, or the empty string if not installed from MSIX.

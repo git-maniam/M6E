@@ -238,12 +238,6 @@ var dataProviders = {
       }
     }
 
-    if (AppConstants.MOZ_UPDATER) {
-      data.updateChannel = ChromeUtils.importESModule(
-        "resource://gre/modules/UpdateUtils.sys.mjs"
-      ).UpdateUtils.UpdateChannel;
-    }
-
     // eslint-disable-next-line mozilla/use-default-preference-values
     try {
       data.vendor = Services.prefs.getCharPref("app.support.vendor");

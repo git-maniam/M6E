@@ -119,7 +119,6 @@ BROWSER_CHROME_MANIFESTS += [
     "tests/browser-telemetry/browser-proton.toml",
     "tests/browser-tips/browser-nova.toml",
     "tests/browser-tips/browser-proton.toml",
-    "tests/browser-tips/suppress-tips/browser.toml",
     "tests/browser-trustPanel/browser-nova.toml",
     "tests/browser-trustPanel/browser-proton.toml",
     "tests/browser-updateResults/browser-nova.toml",

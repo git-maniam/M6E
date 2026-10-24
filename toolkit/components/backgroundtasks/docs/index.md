@@ -1,6 +1,6 @@
 # Background Task Mode
 
-Gecko supports running privileged JavaScript in a special headless "background task" mode.  Background task mode is intended to be used for periodic maintenance tasks.  The first consumer will be checking for updates, even when Firefox is not running.
+Gecko supports running privileged JavaScript in a special headless "background task" mode.  Background task mode is intended to be used for periodic maintenance tasks.
 
 Support for background task mode is gated on the build flag `MOZ_BACKGROUNDTASKS`.
 
@@ -91,24 +91,6 @@ For Firefox in particular, this means that [`BrowserContentHandler.sys.mjs`](htt
 
 See the {doc}`documentation for defining static components </build/buildsystem/defining-xpcom-components>` for how to change this default behaviour, and [Bug 1675848](https://bugzilla.mozilla.org/show_bug.cgi?id=1675848) for details of the implementation.
 
-### Most background tasks do not process updates
-
-To prevent unexpected interactions between background tasks and the Firefox runtime lifecycle, such as those uncovered by [Bug 1736373](https://bugzilla.mozilla.org/show_bug.cgi?id=1736373), most background tasks do not process application updates.  The startup process decides whether to process updates in [`::ShouldProcessUpdates`](https://searchfox.org/firefox-main/source/toolkit/xre/nsAppRunner.cpp) and the predicate that determines whether a particular background task *does* process updates is [`BackgroundTasks::IsUpdatingTaskName`](https://searchfox.org/firefox-main/source/toolkit/components/backgroundtasks/BackgroundTasks.h).
-
-Background tasks that are launched at shutdown (and that are not updating) do not prevent Firefox from updating.  However, this can result in Firefox updating out from underneath a running background task: see [this summary of the issue](https://bugzilla.mozilla.org/show_bug.cgi?id=1480452#c8).  Generally, background tasks should be minimal and short-lived and are unlikely to launch additional child subprocesses after startup, so they should not witness this issue, but it is still possible.  See the diagram below visualizing process lifetimes.
-
-```{mermaid}
-    gantt
-        title Background tasks launched at Firefox shutdown
-        dateFormat  YYYY-MM-DD
-        axisFormat
-        section Firefox
-        firefox (version N)                      :2014-01-03, 3d
-        updater                                  :2014-01-06, 1d
-        firefox (version N+1)                    :2014-01-07, 3d
-        firefox --backgroundtask ... (version N) :2014-01-05, 3d
-```
-
 ### Most background tasks produce console output
 
 Background tasks are usually scheduled in situations where their output is not user-visible: by the Windows Task Scheduler, at shutdown, etc.  Therefore, it's usually safe to always produce console output.  But some tasks, especially shutdown tasks executed during developer builds, can "pollute" the console even after the Firefox main process has exited.  To avoid this, background tasks can opt-in to producing no output; the predicate that determines whether a particular background task *does* produce output is [`BackgroundTasks::IsNoOutputTaskName`](https://searchfox.org/firefox-main/source/toolkit/components/backgroundtasks/BackgroundTasks.h).  This predicate can be overridden by providing the `--attach-console` command line flag or by setting the `MOZ_BACKGROUNDTASKS_IGNORE_NO_OUTPUT` environment variable to a non-empty value.
@@ -138,4 +120,4 @@ export const backgroundTaskTimeoutSec = <some seconds>;
 export const backgroundTaskMinRuntimeMS = <some millisecs>;
 ```
 
-at [the top of your task definition like here](https://searchfox.org/mozilla-central/rev/f60cf6bfa8bd096efd9bb3a445364f5a0f32897a/toolkit/mozapps/update/BackgroundTask_backgroundupdate.sys.mjs#47-50).
+at the top of your task definition.

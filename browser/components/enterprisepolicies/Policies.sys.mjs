@@ -240,117 +240,6 @@ export var Policies = {
     },
   },
 
-  AppAutoUpdate: {
-    onBeforeUIStartup(manager, param) {
-      // Logic feels a bit reversed here, but it's correct. If AppAutoUpdate is
-      // true, we disallow turning off auto updating, and visa versa.
-      if (param) {
-        manager.disallowFeature("app-auto-updates-off");
-      } else {
-        manager.disallowFeature("app-auto-updates-on");
-      }
-    },
-  },
-
-  AppUpdatePin: {
-    validate(param) {
-      // This is the version when pinning was introduced. Attempting to set a
-      // pin before this will not work, because Balrog's pinning table will
-      // never have the necessary entry.
-      const earliestPinMajorVersion = 102;
-      const earliestPinMinorVersion = 0;
-
-      const pinParts = param.split(".");
-
-      if (pinParts.length < 2) {
-        lazy.log.error("AppUpdatePin has too few dots.");
-        return false;
-      }
-      if (pinParts.length > 3) {
-        lazy.log.error("AppUpdatePin has too many dots.");
-        return false;
-      }
-
-      const trailingPinPart = pinParts.pop();
-      if (trailingPinPart != "") {
-        lazy.log.error("AppUpdatePin does not end with a trailing dot.");
-        return false;
-      }
-
-      const pinMajorVersionStr = pinParts.shift();
-      if (!pinMajorVersionStr.length) {
-        lazy.log.error("AppUpdatePin's major version is empty.");
-        return false;
-      }
-      if (!/^\d+$/.test(pinMajorVersionStr)) {
-        lazy.log.error(
-          "AppUpdatePin's major version contains a non-numeric character."
-        );
-        return false;
-      }
-      if (/^0/.test(pinMajorVersionStr)) {
-        lazy.log.error("AppUpdatePin's major version contains a leading 0.");
-        return false;
-      }
-      const pinMajorVersionInt = parseInt(pinMajorVersionStr, 10);
-      if (isNaN(pinMajorVersionInt)) {
-        lazy.log.error(
-          "AppUpdatePin's major version could not be parsed to an integer."
-        );
-        return false;
-      }
-      if (pinMajorVersionInt < earliestPinMajorVersion) {
-        lazy.log.error(
-          `AppUpdatePin must not be earlier than '${earliestPinMajorVersion}.${earliestPinMinorVersion}.'.`
-        );
-        return false;
-      }
-
-      if (pinParts.length) {
-        const pinMinorVersionStr = pinParts.shift();
-        if (!pinMinorVersionStr.length) {
-          lazy.log.error("AppUpdatePin's minor version is empty.");
-          return false;
-        }
-        if (!/^\d+$/.test(pinMinorVersionStr)) {
-          lazy.log.error(
-            "AppUpdatePin's minor version contains a non-numeric character."
-          );
-          return false;
-        }
-        if (/^0\d/.test(pinMinorVersionStr)) {
-          lazy.log.error("AppUpdatePin's minor version contains a leading 0.");
-          return false;
-        }
-        const pinMinorVersionInt = parseInt(pinMinorVersionStr, 10);
-        if (isNaN(pinMinorVersionInt)) {
-          lazy.log.error(
-            "AppUpdatePin's minor version could not be parsed to an integer."
-          );
-          return false;
-        }
-        if (
-          pinMajorVersionInt == earliestPinMajorVersion &&
-          pinMinorVersionInt < earliestPinMinorVersion
-        ) {
-          lazy.log.error(
-            `AppUpdatePin must not be earlier than '${earliestPinMajorVersion}.${earliestPinMinorVersion}.'.`
-          );
-          return false;
-        }
-      }
-
-      return true;
-    },
-    // No additional implementation needed here. UpdateService.sys.mjs will check
-    // for this policy directly when determining the update URL.
-  },
-
-  AppUpdateURL: {
-    // No implementation needed here. UpdateService.sys.mjs will check for this
-    // policy directly when determining the update URL.
-  },
-
   Authentication: {
     onBeforeAddons(manager, param) {
       // When Authentication was originally implemented, it was always
@@ -447,16 +336,6 @@ export var Policies = {
           `open-protocol-handler^${info.protocol}`,
           info.allowed_origins
         );
-      }
-    },
-  },
-
-  BackgroundAppUpdate: {
-    onBeforeAddons(manager, param) {
-      if (param) {
-        manager.disallowFeature("app-background-update-off");
-      } else {
-        manager.disallowFeature("app-background-update-on");
       }
     },
   },
@@ -1120,14 +999,6 @@ export var Policies = {
           "browser.aboutwelcome.enabled",
           false
         );
-      }
-    },
-  },
-
-  DisableAppUpdate: {
-    onBeforeAddons(manager, param) {
-      if (param) {
-        manager.disallowFeature("appUpdate");
       }
     },
   },
@@ -2560,14 +2431,6 @@ export var Policies = {
 
   ManagedBookmarks: {},
 
-  ManualAppUpdateOnly: {
-    onBeforeAddons(manager, param) {
-      if (param) {
-        manager.disallowFeature("autoAppUpdateChecking");
-      }
-    },
-  },
-
   MicrosoftEntraSSO: {
     onBeforeAddons(manager, param) {
       lazy.PoliciesUtils.setAndLockPref(
@@ -2629,17 +2492,6 @@ export var Policies = {
       const url = param ? param : "";
       lazy.PoliciesUtils.setAndLockPref("startup.homepage_welcome_url", url);
       lazy.PoliciesUtils.setAndLockPref("browser.aboutwelcome.enabled", false);
-    },
-  },
-
-  OverridePostUpdatePage: {
-    onProfileAfterChange(manager, param) {
-      const url = param ? param.href : "";
-      lazy.PoliciesUtils.setAndLockPref("startup.homepage_override_url", url);
-      // The pref startup.homepage_override_url is only used
-      // as a fallback when the update.xml file hasn't provided
-      // a specific post-update URL.
-      manager.disallowFeature("postUpdateCustomPage");
     },
   },
 
@@ -2830,7 +2682,6 @@ export var Policies = {
       const allowedPrefixes = [
         "accessibility.",
         "alerts.",
-        "app.update.",
         "browser.",
         "datareporting.policy.",
         "devtools.",
@@ -2901,9 +2752,6 @@ export var Policies = {
         "security.webauthn.always_allow_direct_attestation",
       ];
       const blockedPrefs = [
-        "app.update.channel",
-        "app.update.lastUpdateTime",
-        "app.update.migrated",
         "browser.vpn_promo.disallowed_regions",
       ];
 
@@ -3079,42 +2927,6 @@ export var Policies = {
       lazy.ProxyPolicies.configureProxySettings(
         param,
         lazy.PoliciesUtils.setDefaultPref
-      );
-    },
-  },
-
-  RelaunchRequired: {
-    onBeforeUIStartup(_manager, param) {
-      let notificationPeriodHours = 24;
-      const restartTimeOfDay = { Hour: 12, Minute: 0 };
-      if (
-        typeof param.NotificationPeriodHours === "number" &&
-        param.NotificationPeriodHours >= 0
-      ) {
-        notificationPeriodHours = param.NotificationPeriodHours;
-      }
-      if (typeof param.RestartTimeOfDay === "object") {
-        try {
-          const timeOfDay = Temporal.PlainTime.from({
-            hour: param.RestartTimeOfDay.Hour,
-            minute: param.RestartTimeOfDay.Minute,
-          });
-          // Looks like it's a valid time.
-          restartTimeOfDay.Hour = timeOfDay.hour;
-          restartTimeOfDay.Minute = timeOfDay.minute;
-        } catch (ex) {
-          lazy.reportFailure(
-            "RelaunchRequired",
-            "Incorrect format for RestartTimeOfDay"
-          );
-        }
-      }
-      lazy.PoliciesUtils.setAndLockPref(
-        "app.update.compulsory_restart",
-        JSON.stringify({
-          NotificationPeriodHours: notificationPeriodHours,
-          RestartTimeOfDay: restartTimeOfDay,
-        })
       );
     },
   },

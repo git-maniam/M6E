@@ -79,8 +79,6 @@ pane-sync-title3 = Sync
 pane-ai-controls-title2 = AI controls
   .title = AI controls
 
-pane-about-firefox-title = About { -brand-short-name }
-  .title = { pane-about-firefox-title }
 
 pane-appearance-title = Appearance
   .title = { pane-appearance-title }
@@ -741,88 +739,6 @@ play-drm-content =
     .accesskey = P
 
 play-drm-content-learn-more = Learn more
-
-## About Firefox
-
-about-firefox-header =
-    .heading = About { -brand-short-name }
-
-## Firefox updates
-
-update-application-heading =
-    .label = { -brand-short-name } updates
-    .description = Updates improve { -brand-short-name }’s speed, stability, and security.
-
-update-application-suppress-prompts-heading =
-    .label = Notifications
-
-update-application-updates-managed-by-os =
-    .message = Updates are managed by your operating system
-
-# Variables:
-# $version (string) - Firefox version
-update-application-version = Version { $version } <a data-l10n-name="learn-more">What’s new</a>
-
-update-history-2 =
-    .label = Show update history
-    .accesskey = p
-
-update-application-installation =
-    .label = Installation
-
-update-application-radio-group =
-    .aria-label = Installation
-
-update-application-auto-2 =
-    .label = Automatically install updates (recommended)
-    .accesskey = A
-
-update-application-check-choose-2 =
-    .label = Check for updates, but choose when to install
-    .accesskey = C
-
-update-application-background-enabled =
-    .label = When { -brand-short-name } is not running
-    .accesskey = W
-
-update-application-warning-cross-user-setting-2 =
-    .message = This setting will apply to all Windows accounts and { -brand-short-name } profiles using this installation of { -brand-short-name }.
-
-update-application-suppress-prompts-2 =
-    .label = Show fewer update reminders
-    .accesskey = n
-
-update-setting-write-failure-title2 = Error saving Update settings
-
-# Variables:
-#   $path (string) - Path to the configuration file
-# The newlines between the main text and the line containing the path is
-# intentional so the path is easier to identify.
-update-setting-write-failure-message2 =
-    { -brand-short-name } encountered an error and didn’t save this change. Note that changing this update setting requires permission to write to the file below. You or a system administrator may be able to resolve the error by granting the Users group full control to this file.
-
-    Could not write to file: { $path }
-
-update-in-progress-title = Update In Progress
-
-update-in-progress-message = Do you want { -brand-short-name } to continue with this update?
-
-update-in-progress-ok-button = &Discard
-# Continue is the cancel button so pressing escape or using a platform standard
-# method of closing the UI will not discard the update.
-update-in-progress-cancel-button = &Continue
-
-## Firefox support
-
-support-application-heading =
-    .label = { -brand-short-name } support
-    .description = Troubleshoot issues or share ideas with the community.
-
-support-get-help =
-    .label = Get help
-
-support-share-ideas =
-    .label = Share ideas and feedback
 
 ## General Section - Performance
 
@@ -2701,13 +2617,6 @@ security-privacy-status-trackers-label = { $trackerCount ->
 security-privacy-status-strict-enabled-label = You have <a data-l10n-name="strict-tracking-protection">strict protection</a>
 # This string appears under "Enhanced Tracking Protection is on" when a user has enabled "Custom" in Enhanced Tracking Protection advanced settings
 security-privacy-status-custom-enabled-label = You have <a data-l10n-name="custom-tracking-protection">custom protection</a>
-security-privacy-status-up-to-date-label = You’ve got the latest, safest version of { -brand-short-name }
-security-privacy-status-update-needed-label = A new version of { -brand-short-name } is available.
-security-privacy-status-update-error-label = { -brand-short-name } is having trouble updating itself
-security-privacy-status-update-checking-label = { -brand-short-name } is checking for updates
-security-privacy-status-update-needed-description = Update for the latest speed, stability, and security updates.
-security-privacy-status-update-button-label =
-  .label = Update { -brand-short-name }
 
 security-privacy-image-warning =
   .alt = A shield with an exclamation mark, expressing concern over your security warnings

@@ -18,7 +18,6 @@ const PrivateBrowsingUtils = ChromeUtils.importESModule(
 const lazy = XPCOMUtils.declareLazy({
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
   AppConstants: "resource://gre/modules/AppConstants.sys.mjs",
-  AppUpdater: "resource://gre/modules/AppUpdater.sys.mjs",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
   DoHConfigController: "moz-src:///toolkit/components/doh/DoHConfig.sys.mjs",
   DownloadUtils: "resource://gre/modules/DownloadUtils.sys.mjs",
@@ -51,7 +50,6 @@ const lazy = XPCOMUtils.declareLazy({
           Ci.nsIParentalControlsService
         )
       : null,
-  isPackagedApp: () => Services.sysinfo.getProperty("isPackagedApp"),
 });
 
 const SANITIZE_ON_SHUTDOWN_PREFS_ONLY_V2 = [
@@ -2064,52 +2062,9 @@ if (SECURITY_PRIVACY_STATUS_CARD_ENABLED) {
     })
   );
 
-  Preferences.addSetting(
-    /** @type {{ cachedValue: any } & SettingConfig} */ ({
-      id: "appUpdateStatus",
-      cachedValue: undefined,
-      setup(emitChange) {
-        if (!lazy.AppConstants.MOZ_UPDATER || lazy.isPackagedApp) {
-          return () => {};
-        }
-        // Reuse the AppUpdater driven by about-firefox.mjs's updateState
-        // setting so we don't kick off a parallel update check and download.
-        let sharedAppUpdater = window.gAppUpdater?._appUpdater;
-        let appUpdater = sharedAppUpdater ?? new lazy.AppUpdater();
-        /**
-         * @param {number} appStatus
-         * @param {any[]} _args
-         */
-        let listener = (appStatus, ..._args) => {
-          this.cachedValue = appStatus;
-          emitChange();
-        };
-        appUpdater.addListener(listener);
-        if (sharedAppUpdater) {
-          this.cachedValue = appUpdater.status;
-        } else {
-          appUpdater.check();
-        }
-        return () => {
-          appUpdater.removeListener(listener);
-          if (!sharedAppUpdater) {
-            appUpdater.stop();
-          }
-        };
-      },
-      get() {
-        return this.cachedValue;
-      },
-      set(value) {
-        this.cachedValue = value;
-      },
-    })
-  );
-
   Preferences.addSetting({
     id: "privacyCard",
     deps: [
-      "appUpdateStatus",
       "trackerCount",
       "etpStrictEnabled",
       "etpCustomEnabled",

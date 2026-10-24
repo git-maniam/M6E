@@ -42,14 +42,6 @@ window.addEventListener("load", function onload() {
     }, console.error);
     populateActionBox();
     setupEventListeners();
-
-    if (
-      AppConstants.MOZ_UPDATER &&
-      Services.sysinfo.getProperty("isPackagedApp")
-    ) {
-      $("update-dir-row").hidden = true;
-      $("update-history-row").hidden = true;
-    }
   } catch (e) {
     console.error("stack of load error for about:support: ", e, ": ", e.stack);
   }
@@ -119,15 +111,6 @@ var snapshotFormatters = {
     $("version-box").textContent = version;
     $("buildid-box").textContent = data.buildID;
     $("distributionid-box").textContent = data.distributionID;
-    if (data.updateChannel) {
-      $("updatechannel-box").textContent = data.updateChannel;
-    }
-    if (AppConstants.MOZ_UPDATER && AppConstants.platform != "android") {
-      $("update-dir-box").textContent = Services.dirsvc.get(
-        "UpdRootD",
-        Ci.nsIFile
-      ).path;
-    }
     if (AppConstants.platform != "android") {
       $("profile-dir-box").textContent = Services.dirsvc.get(
         "ProfD",
@@ -2147,36 +2130,6 @@ function setupEventListeners() {
         safeModeRestart();
       }
     });
-  }
-  if (AppConstants.MOZ_UPDATER) {
-    button = $("update-dir-button");
-    if (button) {
-      button.addEventListener("click", function () {
-        // Get the update directory.
-        let updateDir = Services.dirsvc.get("UpdRootD", Ci.nsIFile);
-        if (!updateDir.exists()) {
-          updateDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
-        }
-        let updateDirPath = updateDir.path;
-        // Show the update directory.
-        let nsLocalFile = Components.Constructor(
-          "@mozilla.org/file/local;1",
-          "nsIFile",
-          "initWithPath"
-        );
-        new nsLocalFile(updateDirPath).reveal();
-      });
-    }
-    button = $("show-update-history-button");
-    if (button) {
-      button.addEventListener("click", function () {
-        window.browsingContext.topChromeWindow.openDialog(
-          "chrome://mozapps/content/update/history.xhtml",
-          "Update:History",
-          "centerscreen,resizable=no,titlebar,modal"
-        );
-      });
-    }
   }
   button = $("verify-place-integrity-button");
   if (button) {

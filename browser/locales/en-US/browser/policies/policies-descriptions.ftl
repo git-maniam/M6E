@@ -17,11 +17,8 @@ policy-AllowedDomainsForApps = Define domains allowed to access Google Workspace
 
 policy-AllowFileSelectionDialogs = Allow file selection dialogs.
 
-policy-AppAutoUpdate = Enable or disable automatic application update.
 
-policy-AppUpdatePin = Prevent { -brand-short-name } from being updated beyond the specified version.
 
-policy-AppUpdateURL = Set custom app update URL.
 
 policy-Authentication = Configure integrated authentication for websites that support it.
 
@@ -31,7 +28,6 @@ policy-AutofillCreditCardEnabled = Enable autofill for payment methods.
 
 policy-AutoLaunchProtocolsFromOrigins = Define a list of external protocols that can be used from listed origins without prompting the user.
 
-policy-BackgroundAppUpdate2 = Enable or disable the background updater.
 
 policy-Backup = Disable backup or restore of profile data.
 
@@ -73,7 +69,6 @@ policy-DefaultDownloadDirectory = Set the default download directory.
 
 policy-DefaultSerialGuardSetting = Control use of the Serial API.
 
-policy-DisableAppUpdate = Prevent the browser from updating.
 
 policy-DisableBuiltinPDFViewer = Disable PDF.js, the built-in PDF viewer in { -brand-short-name }.
 
@@ -193,7 +188,6 @@ policy-LocalNetworkAccess = Enable or disable local network access checks.
 
 policy-ManagedBookmarks = Configures a list of bookmarks managed by an administrator that cannot be changed by the user.
 
-policy-ManualAppUpdateOnly = Allow manual updates only and do not notify the user about updates.
 
 policy-PrimaryPassword = Require or prevent using a Primary Password.
 
@@ -211,7 +205,6 @@ policy-OfferToSaveLoginsDefault = Set the default value for allowing { -brand-sh
 
 policy-OverrideFirstRunPage = Override the first run page. Set this policy to blank if you want to disable the first run page.
 
-policy-OverridePostUpdatePage = Override the post-update “What’s New” page. Set this policy to blank if you want to disable the post-update page.
 
 policy-PasswordManagerEnabled2 = Enable or disable saving passwords to the password manager. If disabled, Passwords (about:logins) is also blocked.
 
@@ -238,7 +231,6 @@ policy-PromptForDownloadLocation = Ask where to save files when downloading.
 
 policy-Proxy = Configure proxy settings.
 
-policy-RelaunchRequired = Require { -brand-short-name } to be relaunched within a given period and notify the user of the upcoming relaunch.
 
 policy-RequestedLocales = Set the list of requested locales for the application in order of preference.
 

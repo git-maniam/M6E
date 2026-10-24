@@ -7,7 +7,6 @@ import { UrlbarProvider } from "moz-src:///browser/components/urlbar/UrlbarUtils
 import { UrlbarShared } from "chrome://browser/content/urlbar/UrlbarShared.mjs";
 
 const lazy = XPCOMUtils.declareLazy({
-  AppUpdater: "resource://gre/modules/AppUpdater.sys.mjs",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
   NLP: "resource://gre/modules/NLP.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
@@ -17,7 +16,6 @@ const lazy = XPCOMUtils.declareLazy({
     "moz-src:///browser/components/urlbar/UrlbarProviderGlobalActions.sys.mjs",
   UrlbarResult: "chrome://browser/content/urlbar/UrlbarResult.mjs",
   UrlUtils: "resource://gre/modules/UrlUtils.sys.mjs",
-  appUpdater: () => new lazy.AppUpdater(),
 });
 
 const EN_LOCALE_MATCH = /^en(-.*)$/;
@@ -59,45 +57,7 @@ const DOCUMENTS = {
     "refresh firefox",
     "reset firefox",
   ],
-  update: [
-    "download firefox",
-    "download mozilla",
-    "firefox browser",
-    "firefox download",
-    "firefox for mac",
-    "firefox for windows",
-    "firefox free download",
-    "firefox install",
-    "firefox installer",
-    "firefox latest version",
-    "firefox mac",
-    "firefox quantum",
-    "firefox update",
-    "firefox version",
-    "firefox windows",
-    "get firefox",
-    "how to update firefox",
-    "install firefox",
-    "mozilla download",
-    "mozilla firefox 2019",
-    "mozilla firefox 2020",
-    "mozilla firefox download",
-    "mozilla firefox for mac",
-    "mozilla firefox for windows",
-    "mozilla firefox free download",
-    "mozilla firefox mac",
-    "mozilla firefox update",
-    "mozilla firefox windows",
-    "mozilla update",
-    "update firefox",
-    "update mozilla",
-    "www.firefox.com",
-  ],
 };
-
-// In order to determine whether we should show an update tip, we check for app
-// updates, but only once per this time period.
-const UPDATE_CHECK_PERIOD_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 /**
  * A node in the QueryScorer's phrase tree.
@@ -365,30 +325,6 @@ function getPayloadForTip(tip) {
         buttons: [{ l10n: { id: "intervention-refresh-profile-confirm" } }],
         helpUrl: baseURL + "refresh-firefox-reset-add-ons-and-settings",
       };
-    case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_ASK:
-      return {
-        titleL10n: { id: "intervention-update-ask" },
-        buttons: [{ l10n: { id: "intervention-update-ask-confirm" } }],
-        helpUrl: baseURL + "update-firefox-latest-release",
-      };
-    case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_REFRESH:
-      return {
-        titleL10n: { id: "intervention-update-refresh" },
-        buttons: [{ l10n: { id: "intervention-update-refresh-confirm" } }],
-        helpUrl: baseURL + "refresh-firefox-reset-add-ons-and-settings",
-      };
-    case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_RESTART:
-      return {
-        titleL10n: { id: "intervention-update-restart" },
-        buttons: [{ l10n: { id: "intervention-update-restart-confirm" } }],
-        helpUrl: baseURL + "update-firefox-latest-release",
-      };
-    case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_WEB:
-      return {
-        titleL10n: { id: "intervention-update-web" },
-        buttons: [{ l10n: { id: "intervention-update-web-confirm" } }],
-        helpUrl: baseURL + "update-firefox-latest-release",
-      };
     default:
       throw new Error("Unknown TIP type.");
   }
@@ -475,15 +411,12 @@ export class UrlbarProviderInterventions extends UrlbarProvider {
 
     // Determine the tip to show, if any. If there are multiple top-score docs,
     // prefer them in the following order.
-    if (topDocIDs.has("update")) {
-      this._setCurrentTipFromAppUpdaterStatus();
-    } else if (topDocIDs.has("clear")) {
+    if (topDocIDs.has("clear")) {
       let window = lazy.BrowserWindowTracker.getTopWindow();
       if (!lazy.PrivateBrowsingUtils.isWindowPrivate(window)) {
         this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.CLEAR;
       }
     } else if (topDocIDs.has("refresh")) {
-      // Note that the "update" case can set currentTip to UrlbarShared.INTERVENTION_TIP_TYPE.REFRESH too.
       this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.REFRESH;
     }
 
@@ -494,57 +427,6 @@ export class UrlbarProviderInterventions extends UrlbarProvider {
     );
   }
 
-  async _setCurrentTipFromAppUpdaterStatus() {
-    // The update tips depend on the app's update status, so check for updates
-    // now (if we haven't already checked within the update-check period).  If
-    // we're running in an xpcshell test, then checkForBrowserUpdate's attempt
-    // to use appUpdater will throw an exception because it won't be available.
-    // In that case, return false to disable the provider.
-    //
-    // This causes synchronous IO within the updater the first time it's called
-    // (at least) so be careful not to do it the first time the urlbar is used.
-    try {
-      UrlbarProviderInterventions.checkForBrowserUpdate();
-    } catch (ex) {
-      return;
-    }
-
-    // There are several update tips. Figure out which one to show.
-    switch (lazy.appUpdater.status) {
-      case lazy.AppUpdater.STATUS.READY_FOR_RESTART:
-        // Prompt the user to restart.
-        this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_RESTART;
-        break;
-      case lazy.AppUpdater.STATUS.DOWNLOAD_AND_INSTALL:
-        // There's an update available, but the user's pref says we should ask
-        // them to download and apply it.
-        this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_ASK;
-        break;
-      case lazy.AppUpdater.STATUS.NO_UPDATES_FOUND:
-        // We show a special refresh tip when the browser is up to date.
-        this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_REFRESH;
-        break;
-      case lazy.AppUpdater.STATUS.CHECKING:
-        // This will be the case the first time we check.  See startQuery for
-        // how this special tip is handled.
-        this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_CHECKING;
-        break;
-      case lazy.AppUpdater.STATUS.NO_UPDATER:
-      case lazy.AppUpdater.STATUS.UPDATE_DISABLED_BY_POLICY:
-        // If the updater is disabled at build time or at runtime, either by
-        // policy or because we're in a package, do not select any update tips.
-        this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.NONE;
-        break;
-      default:
-        // Give up and ask the user to download the latest version from the
-        // web. We default to this case when the update is still downloading
-        // because an update doesn't actually occur if the user were to
-        // restart the browser. See bug 1625241.
-        this.currentTip = UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_WEB;
-        break;
-    }
-  }
-
   /**
    * Starts querying.
    *
@@ -553,55 +435,6 @@ export class UrlbarProviderInterventions extends UrlbarProvider {
    *   Callback invoked by the provider to add a new result.
    */
   async startQuery(queryContext, addCallback) {
-    let instance = this.queryInstance;
-
-    // UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_CHECKING is special, and we never actually show a tip that
-    // reflects a "checking" status.  Instead it's handled like this.  We call
-    // appUpdater.check() to start an update check.  If we haven't called it
-    // before, then when it returns, appUpdater.status will be
-    // AppUpdater.STATUS.CHECKING, and it will remain CHECKING until the check
-    // finishes.  We can add a listener to appUpdater to be notified when the
-    // check finishes.  We don't want to wait for it to finish in isActive
-    // because that would block other providers from adding their results, so
-    // instead we wait here in startQuery.  The results from other providers
-    // will be added while we're waiting.  When the check finishes, we call
-    // addCallback and add our result.  It doesn't matter how long the check
-    // takes because if another query starts, the view is closed, or the user
-    // changes the selection, the query will be canceled.
-    if (this.currentTip == UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_CHECKING) {
-      // First check the status because it may have changed between the time
-      // isActive was called and now.
-      this._setCurrentTipFromAppUpdaterStatus();
-      if (
-        this.currentTip == UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_CHECKING
-      ) {
-        // The updater is still checking, so wait for it to finish.
-        await new Promise(resolve => {
-          this._appUpdaterListener = () => {
-            lazy.appUpdater.removeListener(this._appUpdaterListener);
-            delete this._appUpdaterListener;
-            resolve();
-          };
-          lazy.appUpdater.addListener(this._appUpdaterListener);
-        });
-        if (instance != this.queryInstance) {
-          // The query was canceled before the check finished.
-          return;
-        }
-        // Finally, set the tip from the updater status.  The updater should no
-        // longer be checking, but guard against it just in case by returning
-        // early.
-        this._setCurrentTipFromAppUpdaterStatus();
-        if (
-          this.currentTip == UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_CHECKING
-        ) {
-          return;
-        }
-      }
-    }
-    // At this point, this.currentTip != UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_CHECKING because we
-    // returned early above if it was.
-
     let result = new lazy.UrlbarResult({
       type: UrlbarShared.RESULT_TYPE.TIP,
       source: UrlbarShared.RESULT_SOURCE.OTHER_LOCAL,
@@ -618,18 +451,6 @@ export class UrlbarProviderInterventions extends UrlbarProvider {
     addCallback(this, result);
   }
 
-  /**
-   * Cancels a running query,
-   */
-  cancelQuery() {
-    // If we're waiting for appUpdater to finish its update check,
-    // this._appUpdaterListener will be defined.  We can stop listening now.
-    if (this._appUpdaterListener) {
-      lazy.appUpdater.removeListener(this._appUpdaterListener);
-      delete this._appUpdaterListener;
-    }
-  }
-
   #pickResult(result, window) {
     let tip = result.payload.type;
 
@@ -639,19 +460,7 @@ export class UrlbarProviderInterventions extends UrlbarProvider {
         openClearHistoryDialog(window);
         break;
       case UrlbarShared.INTERVENTION_TIP_TYPE.REFRESH:
-      case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_REFRESH:
         resetBrowser(window);
-        break;
-      case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_ASK:
-        installBrowserUpdateAndRestart();
-        break;
-      case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_RESTART:
-        restartBrowser();
-        break;
-      case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_WEB:
-        window.gBrowser.selectedTab = window.gBrowser.addWebTab(
-          "https://www.mozilla.org/firefox/new/"
-        );
         break;
     }
   }
@@ -670,70 +479,11 @@ export class UrlbarProviderInterventions extends UrlbarProvider {
       this.#pickResult(details.result, controller.browserWindow);
     }
   }
-
-  static _lastUpdateCheckTime;
-  /**
-   * Checks for app updates.
-   *
-   * @param {boolean} force If false, this only checks for updates if we haven't
-   *        already checked within the update-check period.  If true, we check
-   *        regardless.
-   */
-  static checkForBrowserUpdate(force = false) {
-    if (
-      force ||
-      !UrlbarProviderInterventions._lastUpdateCheckTime ||
-      Date.now() - UrlbarProviderInterventions._lastUpdateCheckTime >=
-        UPDATE_CHECK_PERIOD_MS
-    ) {
-      UrlbarProviderInterventions._lastUpdateCheckTime = Date.now();
-      lazy.appUpdater.check();
-    }
-  }
-
-  /**
-   * Resets the provider's app updater state by making a new app updater.  This
-   * is intended to be used by tests.
-   */
-  static resetAppUpdater() {
-    // Reset only if the object has already been initialized.
-    if (!Object.getOwnPropertyDescriptor(lazy, "appUpdater").get) {
-      // eslint-disable-next-line mozilla/valid-lazy
-      Object.defineProperty(lazy, "appUpdater", {
-        value: new lazy.AppUpdater(),
-      });
-    }
-  }
 }
 
 /**
  * Tip callbacks follow.
  */
-
-function installBrowserUpdateAndRestart() {
-  if (lazy.appUpdater.status != lazy.AppUpdater.STATUS.DOWNLOAD_AND_INSTALL) {
-    return Promise.resolve();
-  }
-  return new Promise(resolve => {
-    let listener = () => {
-      // Once we call allowUpdateDownload, there are two possible end
-      // states: DOWNLOAD_FAILED and READY_FOR_RESTART.
-      if (
-        lazy.appUpdater.status != lazy.AppUpdater.STATUS.READY_FOR_RESTART &&
-        lazy.appUpdater.status != lazy.AppUpdater.STATUS.DOWNLOAD_FAILED
-      ) {
-        return;
-      }
-      lazy.appUpdater.removeListener(listener);
-      if (lazy.appUpdater.status == lazy.AppUpdater.STATUS.READY_FOR_RESTART) {
-        restartBrowser();
-      }
-      resolve();
-    };
-    lazy.appUpdater.addListener(listener);
-    lazy.appUpdater.allowUpdateDownload();
-  });
-}
 
 function openClearHistoryDialog(window) {
   // The behaviour of the Clear Recent History dialog in PBM does
@@ -744,30 +494,6 @@ function openClearHistoryDialog(window) {
   lazy.Sanitizer.showUI(window, undefined, {
     entryPoint: lazy.Sanitizer.DIALOG_ENTRY_POINTS.ADDRESS_BAR_SUGGESTION,
   });
-}
-
-function restartBrowser() {
-  // Notify all windows that an application quit has been requested.
-  let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(
-    Ci.nsISupportsPRBool
-  );
-  Services.obs.notifyObservers(
-    cancelQuit,
-    "quit-application-requested",
-    "restart"
-  );
-  // Something aborted the quit process.
-  if (cancelQuit.data) {
-    return;
-  }
-  // If already in safe mode restart in safe mode.
-  if (Services.appinfo.inSafeMode) {
-    Services.startup.restartInSafeMode(Ci.nsIAppStartup.eAttemptQuit);
-  } else {
-    Services.startup.quit(
-      Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart
-    );
-  }
 }
 
 function resetBrowser(window) {

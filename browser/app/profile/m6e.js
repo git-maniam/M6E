@@ -37,7 +37,6 @@ pref("toolkit.telemetry.archive.enabled", false, locked);
 pref("toolkit.telemetry.server", "", locked);
 pref("toolkit.telemetry.newProfilePing.enabled", false, locked);
 pref("toolkit.telemetry.shutdownPingSender.enabled", false, locked);
-pref("toolkit.telemetry.updatePing.enabled", false, locked);
 pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 pref("toolkit.telemetry.firstShutdownPing.enabled", false, locked);
 pref("browser.newtabpage.activity-stream.telemetry", false, locked);

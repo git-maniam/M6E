@@ -85,13 +85,6 @@ const COMMON_PREFERENCES = new Map([
   // Make sure Shield doesn't hit the network.
   ["app.normandy.api_url", ""],
 
-  // Disable automatically upgrading Firefox
-  //
-  // Note: This preference should have already been set by the client when
-  // creating the profile. But if not and to absolutely make sure that updates
-  // of Firefox aren't downloaded and applied, enforce its presence.
-  ["app.update.disabledForTesting", true],
-
   // Disable scroll axis lock, WebDriver should be able to scroll arbitrary
   // directions.
   ["apz.axis_lock.mode", 0],

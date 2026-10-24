@@ -5,12 +5,6 @@
 import { html } from "chrome://global/content/vendor/lit.all.mjs";
 import { MozLitElement } from "chrome://global/content/lit-utils.mjs";
 
-const lazy = {};
-ChromeUtils.defineESModuleGetters(lazy, {
-  AppConstants: "resource://gre/modules/AppConstants.sys.mjs",
-  AppUpdater: "resource://gre/modules/AppUpdater.sys.mjs",
-});
-
 const L10N_IDS = {
   okHeader: "security-privacy-status-ok-header",
   problemHeader: "security-privacy-status-problem-header",
@@ -21,40 +15,12 @@ const L10N_IDS = {
   trackersLabel: "security-privacy-status-trackers-label",
   strictEnabledLabel: "security-privacy-status-strict-enabled-label",
   customEnabledLabel: "security-privacy-status-custom-enabled-label",
-  upToDateLabel: "security-privacy-status-up-to-date-label",
-  updateNeededLabel: "security-privacy-status-update-needed-label",
-  updateErrorLabel: "security-privacy-status-update-error-label",
-  updateCheckingLabel: "security-privacy-status-update-checking-label",
-  updateNeededDescription: "security-privacy-status-update-needed-description",
-  updateButtonLabel: "security-privacy-status-update-button-label",
 };
 
 /**
  * Custom Element for a card holding configuration issues from the user settings
  */
 export default class SecurityPrivacyCard extends MozLitElement {
-  /**
-   * Private member to check the App Updater status
-   *
-   * @returns {boolean} should we NOT warn the user about their app update status
-   */
-  #okUpdateStatus() {
-    if (!lazy.AppConstants.MOZ_UPDATER) {
-      return true;
-    }
-
-    const okStatuses = [
-      lazy.AppUpdater.STATUS.NO_UPDATES_FOUND,
-      lazy.AppUpdater.STATUS.CHECKING,
-      lazy.AppUpdater.STATUS.NO_UPDATER,
-      lazy.AppUpdater.STATUS.UPDATE_DISABLED_BY_POLICY,
-      lazy.AppUpdater.STATUS.OTHER_INSTANCE_HANDLING_UPDATES,
-      undefined,
-    ];
-
-    return okStatuses.includes(this.appUpdateStatus);
-  }
-
   get strictEnabled() {
     return this.setting.deps.etpStrictEnabled.value;
   }
@@ -67,23 +33,11 @@ export default class SecurityPrivacyCard extends MozLitElement {
     return this.setting.deps.trackerCount.value;
   }
 
-  get appUpdateStatus() {
-    return this.setting.deps.appUpdateStatus.value;
-  }
-
-  // This should really only be used for testing, as it
-  // overrides the reported app updater state
-  set appUpdateStatus(value) {
-    this.requestUpdate();
-    this.setting.deps.appUpdateStatus.value = value;
-  }
-
   get configIssueCount() {
     let filteredWarnings = [
       "etpStrictEnabled",
       "etpCustomEnabled",
       "trackerCount",
-      "appUpdateStatus",
     ];
     return Object.values(this.setting.deps).filter(
       warning => !filteredWarnings.includes(warning.id) && warning.visible
@@ -215,81 +169,6 @@ export default class SecurityPrivacyCard extends MozLitElement {
   }
 
   /**
-   * Create the bullet point for the current update status bullet
-   * Really only depends on `this.appUpdateStatus`
-   *
-   * @returns {TemplateResult} the HTML for the "update" bullet of the custom element
-   */
-  buildUpdateElement() {
-    if (!lazy.AppConstants.MOZ_UPDATER) {
-      return html``;
-    }
-
-    switch (this.appUpdateStatus) {
-      case lazy.AppUpdater.STATUS.NO_UPDATES_FOUND:
-        return html`<li class="status-ok">
-          <p data-l10n-id=${L10N_IDS.upToDateLabel}></p>
-        </li>`;
-      case lazy.AppUpdater.STATUS.MANUAL_UPDATE:
-      case lazy.AppUpdater.STATUS.DOWNLOADING:
-      case lazy.AppUpdater.STATUS.DOWNLOAD_AND_INSTALL:
-      case lazy.AppUpdater.STATUS.STAGING:
-      case lazy.AppUpdater.STATUS.READY_FOR_RESTART:
-        return html`<li class="status-alert">
-          <div>
-            <p data-l10n-id=${L10N_IDS.updateNeededLabel}></p>
-            <p>
-              <small
-                ><span data-l10n-id=${L10N_IDS.updateNeededDescription}></span
-              ></small>
-            </p>
-            <moz-box-link
-              href=""
-              @click=${this.#spotlightSubcategoryOnPane(
-                "#about",
-                "update-state"
-              )}
-              data-l10n-id=${L10N_IDS.updateButtonLabel}
-            ></moz-box-link>
-          </div>
-        </li>`;
-      case lazy.AppUpdater.STATUS.NEVER_CHECKED:
-      case lazy.AppUpdater.STATUS.UNSUPPORTED_SYSTEM:
-      case lazy.AppUpdater.STATUS.DOWNLOAD_FAILED:
-      case lazy.AppUpdater.STATUS.INTERNAL_ERROR:
-      case lazy.AppUpdater.STATUS.CHECKING_FAILED:
-        return html`<li class="status-alert">
-          <div>
-            <p data-l10n-id=${L10N_IDS.updateErrorLabel}></p>
-            <p>
-              <small
-                ><span data-l10n-id=${L10N_IDS.updateNeededDescription}></span
-              ></small>
-            </p>
-            <moz-box-link
-              href=""
-              @click=${this.#spotlightSubcategoryOnPane(
-                "#about",
-                "update-state"
-              )}
-              data-l10n-id=${L10N_IDS.updateButtonLabel}
-            ></moz-box-link>
-          </div>
-        </li>`;
-      case lazy.AppUpdater.STATUS.CHECKING:
-        return html`<li class="status-loading">
-          <p data-l10n-id=${L10N_IDS.updateCheckingLabel}></p>
-        </li>`;
-      case lazy.AppUpdater.STATUS.NO_UPDATER:
-      case lazy.AppUpdater.STATUS.UPDATE_DISABLED_BY_POLICY:
-      case lazy.AppUpdater.STATUS.OTHER_INSTANCE_HANDLING_UPDATES:
-      case undefined:
-      default:
-        return html``;
-    }
-  }
-
-  /**
    * Lit invoked callback to render a template for this component.
    * This creates a card for itself, populates it with bullets and headings,
    * and nests a <configuration-issue-card>.
@@ -299,9 +178,7 @@ export default class SecurityPrivacyCard extends MozLitElement {
   render() {
     // Create l10n fields for the card's header
     let headerL10nId = L10N_IDS.okHeader;
-    let trueIssueCount =
-      this.configIssueCount + (this.#okUpdateStatus() ? 0 : 1);
-    if (trueIssueCount > 0) {
+    if (this.configIssueCount > 0) {
       headerL10nId = L10N_IDS.problemHeader;
     }
 
@@ -325,7 +202,6 @@ export default class SecurityPrivacyCard extends MozLitElement {
             ></h3>
             <ul>
               ${this.buildIssuesElement()} ${this.buildTrackersElement()}
-              ${this.buildUpdateElement()}
             </ul>
           </div>
           ${this.getStatusImage()}

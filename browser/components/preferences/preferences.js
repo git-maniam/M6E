@@ -66,11 +66,6 @@ var fxAccounts = getFxAccountsSingleton();
 var TAB_SESSION_ID = crypto.randomUUID();
 
 XPCOMUtils.defineLazyServiceGetters(this, {
-  gApplicationUpdateService: [
-    "@mozilla.org/updates/update-service;1",
-    Ci.nsIApplicationUpdateService,
-  ],
-
   listManager: [
     "@mozilla.org/url-classifier/listmanager;1",
     Ci.nsIUrlListManager,
@@ -117,7 +112,6 @@ ChromeUtils.defineESModuleGetters(this, {
   SiteDataManager: "resource:///modules/SiteDataManager.sys.mjs",
   TransientPrefs: "resource:///modules/TransientPrefs.sys.mjs",
   UIState: "resource://services-sync/UIState.sys.mjs",
-  UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
 });
 
 ChromeUtils.defineLazyGetter(this, "gSubDialog", function () {
@@ -254,13 +248,6 @@ var gCurrentHistoryEntryId = null;
  * @type {Record<string, SettingPaneConfig>}
  */
 const CONFIG_PANES = Object.freeze({
-  about: {
-    l10nId: "about-firefox-header",
-    iconSrc: "chrome://browser/skin/sidebar/firefox.svg",
-    groupIds: ["updates", "support"],
-    module: "chrome://browser/content/preferences/config/about-firefox.mjs",
-    visible: () => srdSectionPrefs.all,
-  },
   accessibility: {
     l10nId: "preferences-accessibility-header",
     groupIds: [

@@ -7,10 +7,6 @@
 <script src="chrome://browser/content/preferences/main.js"/>
 <script src="chrome://browser/content/preferences/translations.js"/>
 
-#ifdef MOZ_UPDATER
-  <script src="chrome://browser/content/aboutDialog-appUpdater.js"/>
-#endif
-
 <script src="chrome://mozapps/content/preferences/fontbuilder.js"/>
 
 <html:template id="template-paneGeneral">
@@ -181,9 +177,6 @@
 
 <!-- DRM Content -->
 <html:setting-group groupid="drm" data-category="paneGeneral" data-subcategory="drm" hidden="true" data-srd-migrated="" />
-
-<!-- Update -->
-<html:setting-group groupid="updates" data-category="paneGeneral" hidden="true" data-srd-migrated="" />
 
 <!-- Performance -->
 <html:setting-group groupid="performance" data-category="paneGeneral" hidden="true" data-srd-migrated="" />

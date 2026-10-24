@@ -2931,40 +2931,6 @@ fxms-message-25:
     path: "browser/components/asrouter/content-src/schemas/MessagingExperiment.schema.json"
   variables: {}
 
-whatsNewPage:
-  description: "A Firefox Messaging System message for the What's new page channel"
-  owner: omc-core@mozilla.com
-  hasExposure: true
-  exposureDescription: >-
-    "Exposure is sent if the message is about to be shown after trigger and targeting conditions on the message matched."
-  variables:
-    overrideUrl:
-      description: URL of the What's new page
-      type: string
-      setPref:
-        branch: user
-        pref: startup.homepage_override_url_nimbus
-    maxVersion:
-      description: Maximum Firefox update version
-      type: string
-      setPref:
-        branch: user
-        pref: startup.homepage_override_nimbus_maxVersion
-    minVersion:
-      description: Minimum Firefox update version
-      type: string
-      setPref:
-        branch: user
-        pref: startup.homepage_override_nimbus_minVersion
-    disableWNP:
-      description: >-
-        Block all What's New Pages. Used to compare no-WNP control branches to
-        WNP treatment branches.
-      type: boolean
-      setPref:
-        branch: user
-        pref: startup.homepage_override_nimbus_disable_wnp
-
 pbNewtab:
   description: "A Firefox Messaging System message for the pbNewtab message channel"
   owner: omc-core@mozilla.com
@@ -3021,60 +2987,6 @@ backgroundTaskMessage:
     uri: "chrome://browser/content/asrouter/schemas/BackgroundTaskMessagingExperiment.schema.json"
     path: "browser/components/asrouter/content-src/schemas/BackgroundTaskMessagingExperiment.schema.json"
   variables: {}
-
-backgroundUpdateAutomaticRestart:
-  description: "Whether to automatically restart when the background update task could make more progress."
-  owner: nalexander@mozilla.com
-  applications:
-    - firefox-desktop-background-task
-  hasExposure: false
-  variables:
-    enabled:
-      type: boolean
-      fallbackPref: app.update.background.automaticRestartEnabled
-      description: >-
-        When true, make the background update task restart when the final update state is `READY_FOR_RESTART`.
-        Generally, this will finish applying a staged update, completing the update earlier than it
-        otherwise would have been completed.
-
-backgroundUpdateCheckPolicy:
-  description: >-
-    Control when to 'allow' and when to 'throttle' the background update task so
-    that the task runs but does not necessarily check for updates.  The check
-    policy allows to tell the background update task to not check for, download,
-    and apply, updates in certain situations, thereby reducing update-related
-    operational costs.  It also allows to limit the number of actions taken in
-    any given interval, thereby reducing user resource usage and Nimbus-related
-    operational costs.
-  owner: install-update@mozilla.com
-  applications:
-    - firefox-desktop-background-task
-  hasExposure: false
-  variables:
-    throttleEnabled:
-      type: boolean
-      fallbackPref: app.update.background.checkPolicy.throttleEnabled
-      description: >-
-        When true, the background update task will 'throttle' itself and not
-        necessarily check for updates.
-    throttleAfterDays:
-      type: int
-      fallbackPref: app.update.background.checkPolicy.throttleAfterDays
-      description: >-
-        When greater than or equal to 0, the number of consecutive days that the
-        background update task will run and check for updates when the task has
-        not witnessed a Firefox browsing profile running.  N.b.: when 0, this
-        will disable the background update task checking for updates entirely.
-    throttleDebouncePeriodInHours:
-      type: int
-      fallbackPref: app.update.background.checkPolicy.throttleDebouncePeriodInHours
-      description: >-
-        When greater than 0, limit the background update task, when it is
-        throttled, from taking any action at all to at most one (1) time in
-        every "period" hours.  That is, if `throttledDebouncePeriodInHours=24`
-        and the background update task executes at time `t0`, then the
-        background update task will exit without further action every invocation
-        at time `t1 < t0 + 24 hours`.
 
 pictureinpicture:
   description: Message for first time Picture-in-Picture users
@@ -4894,26 +4806,6 @@ powerSaver:
         pref: "dom.timeout.background_budget_regeneration_rate"
       description: >-
         Limit how quickly the background tab timer budget regenerates.
-
-backgroundUpdate:
-  description: Prefs to control aspects of the background update process.
-  owner: install-update@mozilla.com
-  hasExposure: true
-  exposureDescription: >-
-    The exposure event is sent when scheduling the background task and both the
-    feature is enabled and the service registry key (Mozilla Maintenance
-    Service) is *not* available for this installation. That is the first time
-    the feature can impact Firefox behaviour and the user experience.
-  variables:
-    enableUpdatesForUnelevatedInstallations:
-      description: >-
-        Allow the background update process to download and apply updates when
-        the Mozilla Maintenance Service is unavailable but the installation
-        directory can be written.
-      type: boolean
-      setPref:
-        branch: user
-        pref: app.update.background.allowUpdatesForUnelevatedInstallations
 
 bookmarks:
   description: Prefs to control aspects of the bookmarks system.

@@ -10,7 +10,6 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AIWindow:
     "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
-  AsyncShutdown: "resource://gre/modules/AsyncShutdown.sys.mjs",
   AuthProvider:
     "moz-src:///browser/components/aiwindow/models/AuthProvider.sys.mjs",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
@@ -53,7 +52,6 @@ function canOpenAsSmartWindow(forcePrivate = false) {
 }
 
 XPCOMUtils.defineLazyServiceGetters(lazy, {
-  UpdateManager: ["@mozilla.org/updates/update-manager;1", Ci.nsIUpdateManager],
   WinTaskbar: ["@mozilla.org/windows-taskbar;1", Ci.nsIWinTaskbar],
   WindowsUIUtils: ["@mozilla.org/windows-ui-utils;1", Ci.nsIWindowsUIUtils],
 });
@@ -209,57 +207,6 @@ function needHomepageOverride(updateMilestones = true) {
   }
 
   return OVERRIDE_NONE;
-}
-
-/**
- * Gets the override page for the first run after the application has been
- * updated.
- *
- * @param  update
- *         The nsIUpdate for the update that has been applied.
- * @param  defaultOverridePage
- *         The default override page
- * @param  nimbusOverridePage
- *         Nimbus provided URL
- * @param  disableWnp
- *         Boolean, disables all WNPs if true
- * @return The override page.
- */
-function getPostUpdateOverridePage(
-  update,
-  defaultOverridePage,
-  nimbusOverridePage,
-  disableWnp
-) {
-  if (disableWnp) {
-    return "";
-  }
-
-  update = update.QueryInterface(Ci.nsIWritablePropertyBag);
-  let actions = update.getProperty("actions");
-  // When the update doesn't specify actions fallback to the original behavior
-  // of displaying the default override page.
-  if (!actions) {
-    return defaultOverridePage;
-  }
-
-  // The existence of silent or the non-existence of showURL in the actions both
-  // mean that an override page should not be displayed.
-  if (actions.includes("silent") || !actions.includes("showURL")) {
-    return "";
-  }
-
-  // If a policy was set to not allow the update.xml-provided URL to be used,
-  // use the default fallback (which will also be provided by the policy).
-  if (!Services.policies.isAllowed("postUpdateCustomPage")) {
-    return defaultOverridePage;
-  }
-
-  if (nimbusOverridePage) {
-    return nimbusOverridePage;
-  }
-
-  return update.getProperty("openURL") || defaultOverridePage;
 }
 
 /**
@@ -435,43 +382,6 @@ async function doSearch(searchText, cmdLine) {
     policyContainer: win.gBrowser.selectedBrowser.policyContainer,
     sapSource: "system",
   }).catch(console.error);
-}
-
-function spinForLastUpdateInstalled() {
-  return spinResolve(lazy.UpdateManager.lastUpdateInstalled());
-}
-
-function spinForUpdateInstalledAtStartup() {
-  return spinResolve(lazy.UpdateManager.updateInstalledAtStartup());
-}
-
-function spinResolve(promise) {
-  if (!(promise instanceof Promise)) {
-    return promise;
-  }
-  let done = false;
-  let result = null;
-  let error = null;
-  promise
-    .catch(e => {
-      error = e;
-    })
-    .then(r => {
-      result = r;
-      done = true;
-    });
-
-  Services.tm.spinEventLoopUntil(
-    "BrowserContentHandler.sys.mjs:BCH_spinResolve",
-    () => done
-  );
-  if (!done) {
-    throw new Error("Forcefully exited event loop.");
-  } else if (error) {
-    throw error;
-  } else {
-    return result;
-  }
 }
 
 export function nsBrowserContentHandler() {
@@ -848,17 +758,7 @@ nsBrowserContentHandler.prototype = {
         "browser.startup.homepage_override.mstone",
         "unknown"
       );
-      let old_buildId = Services.prefs.getCharPref(
-        "browser.startup.homepage_override.buildID",
-        "unknown"
-      );
       override = needHomepageOverride();
-      // An object to measure the progress of handleUpdateSuccess
-      let progress = {
-        updateFetched: false,
-        payloadCreated: false,
-        pingFailed: false,
-      };
 
       if (override != OVERRIDE_NONE) {
         switch (override) {
@@ -886,175 +786,9 @@ nsBrowserContentHandler.prototype = {
             overridePage = Services.urlFormatter.formatURLPref(
               "startup.homepage_override_url"
             );
-
-            /*
-            The update manager loads its data asynchronously, off of the main thread.
-            However, making this function asynchronous would be very difficult and
-            wouldn't provide any benefit. This code is part of the sequence of operations
-            that must run before the first tab and its contents can be displayed.
-            The user has to wait for this to complete regardless of the method or thread of execution,
-            and the browser will be practically unusable until it finishes.
-            Therefore, asynchronous execution does not offer any real advantages in this context.
-            */
-            let update = spinForLastUpdateInstalled();
-
-            // Make sure the update is newer than the last WNP version
-            // and the update is not newer than the current Firefox version.
-            if (
-              update &&
-              (Services.vc.compare(update.platformVersion, old_mstone) <= 0 ||
-                Services.vc.compare(
-                  update.appVersion,
-                  Services.appinfo.version
-                ) > 0)
-            ) {
-              update = null;
-              overridePage = null;
-            }
-
-            /**
-             * If the override URL is provided by an experiment, is a valid
-             * Firefox What's New Page URL, and the update version is less than
-             * or equal to the maxVersion set by the experiment, we'll try to use
-             * the experiment override URL instead of the default or the
-             * update-provided URL. Additional policy checks are done in
-             *
-             * @see getPostUpdateOverridePage
-             */
-            const nimbusOverrideUrl = Services.urlFormatter.formatURLPref(
-              "startup.homepage_override_url_nimbus"
-            );
-            // This defines the maximum allowed Fx update version to see the
-            // nimbus WNP. For ex, if maxVersion is set to 127 but user updates
-            // to 128, they will not qualify.
-            const maxVersion = Services.prefs.getCharPref(
-              "startup.homepage_override_nimbus_maxVersion",
-              ""
-            );
-            // This defines the minimum allowed Fx update version to see the
-            // nimbus WNP. For ex, if minVersion is set to 126 but user updates
-            // to 124, they will not qualify.
-            const minVersion = Services.prefs.getCharPref(
-              "startup.homepage_override_nimbus_minVersion",
-              ""
-            );
-            // Pref used to disable all WNPs
-            const disableWNP = Services.prefs.getBoolPref(
-              "startup.homepage_override_nimbus_disable_wnp",
-              false
-            );
-            let nimbusWNP;
-            // minVersion and maxVersion optional variables
-            const versionMatch =
-              (!maxVersion ||
-                Services.vc.compare(update.appVersion, maxVersion) <= 0) &&
-              (!minVersion ||
-                Services.vc.compare(update.appVersion, minVersion) >= 0);
-
-            // The update version should be less than or equal to maxVersion and
-            // greater or equal to minVersion set by the experiment.
-            if (nimbusOverrideUrl && versionMatch) {
-              try {
-                let uri = Services.io.newURI(
-                  nimbusOverrideUrl.split("|")[0].trim()
-                );
-                // Only allow https://www.mozilla.org, https://www.mozilla.com, and https://www.firefox.com
-                if (
-                  uri.scheme === "https" &&
-                  [
-                    "www.mozilla.org",
-                    "www.mozilla.com",
-                    "www.firefox.com",
-                  ].includes(uri.host)
-                ) {
-                  nimbusWNP = nimbusOverrideUrl;
-                } else {
-                  throw new Error("Bad URL");
-                }
-              } catch {
-                console.error("Invalid WNP URL: ", nimbusOverrideUrl);
-              }
-            }
-
-            if (
-              update &&
-              Services.vc.compare(update.appVersion, old_mstone) > 0
-            ) {
-              overridePage = getPostUpdateOverridePage(
-                update,
-                overridePage,
-                nimbusWNP,
-                disableWNP
-              );
-              // Record a Nimbus exposure event for the whatsNewPage feature.
-              // The override page could be set in 3 ways: 1. set by Nimbus; 2.
-              // set by the update file (openURL); 3. defaulting to the
-              // evergreen page (set by the startup.homepage_override_url pref,
-              // value depends on the Fx channel). This is done to record that
-              // the control cohort could have seen the experimental What's New
-              // Page (and will instead see the default What's New Page, or
-              // won't see a WNP if the experiment disabled it by setting
-              // disable_wnp). `recordExposureEvent` only records an event if
-              // the user is enrolled in an experiment or rollout on the
-              // whatsNewPage feature, so it's safe to call it unconditionally.
-              if (overridePage || (versionMatch && disableWNP)) {
-                let nimbusWNPFeature = lazy.NimbusFeatures.whatsNewPage;
-                nimbusWNPFeature
-                  .ready()
-                  .then(() => nimbusWNPFeature.recordExposureEvent());
-              }
-
-              lazy.LaterRun.enable(lazy.LaterRun.ENABLE_REASON_UPDATE_APPLIED);
-            }
-
-            // Send the update ping to signal that the update was successful.
-            // Only do this if the update is installed right now.
-            // The following code is ran asynchronously, but we won't await on it
-            // since the user may be still waiting for the browser to start up at this point.
-            let handleUpdateSuccessTask =
-              lazy.UpdateManager.updateInstalledAtStartup().then(
-                async updateInstalledAtStartup => {
-                  if (updateInstalledAtStartup) {
-                    Glean.update.previousChannel.set(
-                      updateInstalledAtStartup.channel
-                    );
-                    Glean.update.previousVersion.set(old_mstone);
-                    Glean.update.previousBuildId.set(old_buildId);
-                    GleanPings.update.submit("success");
-                    progress.updateFetched = true;
-                    progress.payloadCreated = true;
-                  }
-                }
-              );
-
-            // Adding a shutdown blocker to ensure the
-            // update ping will be sent before Firefox exits.
-            lazy.AsyncShutdown.profileBeforeChange.addBlocker(
-              "BrowserContentHandler: running handleUpdateSuccess",
-              handleUpdateSuccessTask,
-              { fetchState: () => ({ progress }) }
-            );
-
             overridePage = overridePage.replace("%OLD_VERSION%", old_mstone);
-            break;
-          }
-          case OVERRIDE_NEW_BUILD_ID: {
-            // We must spin the events loop because `getFirstWindowArgs` cannot be
-            // easily made asynchronous, having too many synchronous callers. Additionally
-            // we must know the value of `updateInstalledAtStartup` immediately,
-            // in order to properly enable `lazy.LaterRun`, that will be invoked shortly after this.
-            let updateInstalledAtStartup = spinForUpdateInstalledAtStartup();
 
-            if (updateInstalledAtStartup) {
-              Glean.update.previousChannel.set(
-                updateInstalledAtStartup.channel
-              );
-              Glean.update.previousVersion.set(old_mstone);
-              Glean.update.previousBuildId.set(old_buildId);
-              GleanPings.update.submit("success");
-
-              lazy.LaterRun.enable(lazy.LaterRun.ENABLE_REASON_UPDATE_APPLIED);
-            }
+            lazy.LaterRun.enable(lazy.LaterRun.ENABLE_REASON_UPDATE_APPLIED);
             break;
           }
         }

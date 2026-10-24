@@ -102,7 +102,6 @@ gecko_metrics = [
     "toolkit/modules/gecko_metrics.yaml",
     "toolkit/mozapps/extensions/metrics.yaml",
     "toolkit/mozapps/pushnotificationhelper/metrics.yaml",
-    "toolkit/mozapps/update/metrics.yaml",
     "toolkit/profile/metrics.yaml",
     "toolkit/xre/metrics.yaml",
     "widget/metrics.yaml",
@@ -163,16 +162,7 @@ firefox_desktop_metrics = [
     "toolkit/components/search/metrics.yaml",
     "toolkit/components/telemetry/metrics.yaml",
     "toolkit/modules/metrics.yaml",
-    "toolkit/mozapps/update/shared_metrics.yaml",
     "widget/cocoa/metrics.yaml",
-]
-
-# Metrics that are sent by the Firefox Desktop Background Update Task
-# Order is lexicographical, enforced by t/c/glean/tests/pytest/test_yaml_indices.py
-background_update_metrics = [
-    "toolkit/components/crashes/metrics.yaml",
-    "toolkit/mozapps/update/background_task_metrics.yaml",
-    "toolkit/mozapps/update/shared_metrics.yaml",
 ]
 
 # Metrics that are sent by the Firefox Desktop Background Tasks
@@ -196,7 +186,6 @@ metrics_yamls = sorted(
     set(
         gecko_metrics
         + firefox_desktop_metrics
-        + background_update_metrics
         + background_tasks_metrics
         + test_metrics
     )
@@ -236,15 +225,7 @@ firefox_desktop_pings = [
     "toolkit/components/reportbrokensite/pings.yaml",
     "toolkit/components/telemetry/pings.yaml",
     "toolkit/modules/pings.yaml",
-    "toolkit/mozapps/update/shared_pings.yaml",
     "toolkit/profile/pings.yaml",
-]
-
-# Pings that are sent by the Firefox Desktop Background Update Task
-# Order is lexicographical, enforced by t/c/glean/tests/pytest/test_yaml_indices.py
-background_update_pings = [
-    "toolkit/mozapps/update/pings.yaml",
-    "toolkit/mozapps/update/shared_pings.yaml",
 ]
 
 # Pings that are sent by the Firefox Desktop Background Tasks
@@ -265,9 +246,6 @@ test_pings = [
 # Use the app id conjugation passed to initializeFOG (dotted.case).
 pings_by_app_or_lib_id = {
     "firefox.desktop": gecko_pings + firefox_desktop_pings + test_pings,
-    "firefox.desktop.background.update": gecko_pings
-    + background_update_pings
-    + test_pings,
     "firefox.desktop.background.tasks": gecko_pings + background_tasks_pings,
     # Not an _actual_ app ID in use,
     # but needed to differentiate ping registration in geckoview builds
@@ -280,7 +258,6 @@ pings_yamls = sorted(
     set(
         gecko_pings
         + firefox_desktop_pings
-        + background_update_pings
         + background_tasks_pings
         + test_pings
     )

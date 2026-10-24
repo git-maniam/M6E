@@ -8,8 +8,6 @@ import { TelemetryUtils } from "resource://gre/modules/TelemetryUtils.sys.mjs";
 
 import { ObjectUtils } from "resource://gre/modules/ObjectUtils.sys.mjs";
 import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
-import { UpdateUtils } from "resource://gre/modules/UpdateUtils.sys.mjs";
-import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const Utils = TelemetryUtils;
 
@@ -33,15 +31,6 @@ ChromeUtils.defineLazyGetter(lazy, "fxAccounts", () => {
     "resource://gre/modules/FxAccounts.sys.mjs"
   ).getFxAccountsSingleton();
 });
-
-if (AppConstants.MOZ_UPDATER) {
-  XPCOMUtils.defineLazyServiceGetter(
-    lazy,
-    "UpdateServiceStub",
-    "@mozilla.org/updates/update-service-stub;1",
-    Ci.nsIApplicationUpdateServiceStub
-  );
-}
 
 // The maximum length of a string value in the settings.attribution object.
 const MAX_ATTRIBUTION_STRING_LENGTH = 100;
@@ -234,9 +223,6 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["accessibility.browsewithcaret", { what: RECORD_PREF_VALUE }],
   ["accessibility.force_disabled", { what: RECORD_PREF_VALUE }],
   ["app.shield.optoutstudies.enabled", { what: RECORD_PREF_VALUE }],
-  ["app.update.interval", { what: RECORD_PREF_VALUE }],
-  ["app.update.service.enabled", { what: RECORD_PREF_VALUE }],
-  ["app.update.silent", { what: RECORD_PREF_VALUE }],
   ["browser.cache.disk.enable", { what: RECORD_PREF_VALUE }],
   ["browser.cache.disk.capacity", { what: RECORD_PREF_VALUE }],
   ["browser.cache.memory.enable", { what: RECORD_PREF_VALUE }],
@@ -396,11 +382,6 @@ const SEARCH_ENGINE_MODIFIED_TOPIC = "browser-search-engine-modified";
 const SEARCH_SERVICE_TOPIC = "browser-search-service";
 const SESSIONSTORE_WINDOWS_RESTORED_TOPIC = "sessionstore-windows-restored";
 const PREF_CHANGED_TOPIC = "nsPref:changed";
-const AUTO_UPDATE_PREF_CHANGE_TOPIC =
-  UpdateUtils.PER_INSTALLATION_PREFS["app.update.auto"].observerTopic;
-const BACKGROUND_UPDATE_PREF_CHANGE_TOPIC =
-  UpdateUtils.PER_INSTALLATION_PREFS["app.update.background.enabled"]
-    .observerTopic;
 const SERVICES_INFO_CHANGE_TOPIC = "sync-ui-state:update";
 
 /**
@@ -609,7 +590,6 @@ function EnvironmentCache() {
   if (AppConstants.MOZ_BUILD_APP == "browser") {
     p.push(this._loadAttributionAsync());
   }
-  p.push(this._loadAsyncUpdateSettings());
   p.push(this._loadIntlData());
 
   for (const [
@@ -968,8 +948,6 @@ EnvironmentCache.prototype = {
     Services.obs.addObserver(this, GFX_FEATURES_READY_TOPIC);
     Services.obs.addObserver(this, SEARCH_ENGINE_MODIFIED_TOPIC);
     Services.obs.addObserver(this, SEARCH_SERVICE_TOPIC);
-    Services.obs.addObserver(this, AUTO_UPDATE_PREF_CHANGE_TOPIC);
-    Services.obs.addObserver(this, BACKGROUND_UPDATE_PREF_CHANGE_TOPIC);
     Services.obs.addObserver(this, SERVICES_INFO_CHANGE_TOPIC);
     Services.obs.addObserver(this, TELEMETRY_ENVIRONMENT_ADDONS_CHANGED_TOPIC);
   },
@@ -987,8 +965,6 @@ EnvironmentCache.prototype = {
     Services.obs.removeObserver(this, GFX_FEATURES_READY_TOPIC);
     Services.obs.removeObserver(this, SEARCH_ENGINE_MODIFIED_TOPIC);
     Services.obs.removeObserver(this, SEARCH_SERVICE_TOPIC);
-    Services.obs.removeObserver(this, AUTO_UPDATE_PREF_CHANGE_TOPIC);
-    Services.obs.removeObserver(this, BACKGROUND_UPDATE_PREF_CHANGE_TOPIC);
     Services.obs.removeObserver(this, SERVICES_INFO_CHANGE_TOPIC);
     Services.obs.removeObserver(
       this,
@@ -1058,12 +1034,6 @@ EnvironmentCache.prototype = {
         }
         break;
       }
-      case AUTO_UPDATE_PREF_CHANGE_TOPIC:
-        Glean.updateSettings.autoDownload.set(aData == "true");
-        break;
-      case BACKGROUND_UPDATE_PREF_CHANGE_TOPIC:
-        Glean.updateSettings.background.set(aData == "true");
-        break;
       case SERVICES_INFO_CHANGE_TOPIC:
         this._updateServicesInfo();
         break;
@@ -1168,7 +1138,6 @@ EnvironmentCache.prototype = {
     };
 
     Glean.xpcom.abi.set(Services.appinfo.XPCOMABI);
-    Glean.updater.available.set(AppConstants.MOZ_UPDATER);
 
     return buildData;
   },
@@ -1262,23 +1231,16 @@ EnvironmentCache.prototype = {
       locale: getBrowserLocale(),
       update: {
         channel: updateChannel,
-        enabled:
-          AppConstants.MOZ_UPDATER && !lazy.UpdateServiceStub.updateDisabled,
       },
       userPrefs: this._getPrefData(),
     };
     this._recordSandboxMetrics();
-    Glean.updateSettings.channel.set(updateChannel);
-    Glean.updateSettings.enabled.set(
-      this._currentEnvironment.settings.update.enabled
-    );
 
     if (AppConstants.MOZ_BUILD_APP == "browser") {
       this._updateAttribution();
     }
     await this._updateDefaultBrowser();
     this._updateSearchEngine();
-    this._loadAsyncUpdateSettingsFromCache();
 
     Glean.addonsManager.compatibilityCheckEnabled.set(
       AddonManager.checkCompatibility
@@ -1424,37 +1386,6 @@ EnvironmentCache.prototype = {
       attributionData.content
     );
     Glean.gleanAttribution.ext.set(extAttribution);
-  },
-
-  /**
-   * Load the per-installation update settings, cache them, and add them to the
-   * environment.
-   */
-  async _loadAsyncUpdateSettings() {
-    if (AppConstants.MOZ_UPDATER) {
-      this._updateAutoDownloadCache =
-        await UpdateUtils.getAppUpdateAutoEnabled();
-      this._updateBackgroundCache = await UpdateUtils.readUpdateConfigSetting(
-        "app.update.background.enabled"
-      );
-    } else {
-      this._updateAutoDownloadCache = false;
-      this._updateBackgroundCache = false;
-    }
-    this._loadAsyncUpdateSettingsFromCache();
-  },
-
-  /**
-   * Update the environment with the cached values for per-installation update
-   * settings.
-   */
-  _loadAsyncUpdateSettingsFromCache() {
-    if (this._updateAutoDownloadCache !== undefined) {
-      Glean.updateSettings.autoDownload.set(this._updateAutoDownloadCache);
-    }
-    if (this._updateBackgroundCache !== undefined) {
-      Glean.updateSettings.background.set(this._updateBackgroundCache);
-    }
   },
 
   /**

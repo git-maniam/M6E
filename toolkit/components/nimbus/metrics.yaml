@@ -909,7 +909,6 @@ nimbus_events:
       - project-nimbus@mozilla.com
     expires: never
     send_in_pings:
-      - background-update
       - events
   enroll_failed:
     type: event
@@ -940,7 +939,6 @@ nimbus_events:
       - project-nimbus@mozilla.com
     expires: never
     send_in_pings:
-      - background-update
       - events
   unenrollment:
     type: event
@@ -1014,7 +1012,6 @@ nimbus_events:
       - project-nimbus@mozilla.com
     expires: never
     send_in_pings:
-      - background-update
       - events
   unenroll_failed:
     type: event
@@ -1040,7 +1037,6 @@ nimbus_events:
       - project-nimbus@mozilla.com
     expires: never
     send_in_pings:
-      - background-update
       - events
   exposure:
     type: event
@@ -1071,7 +1067,6 @@ nimbus_events:
       - project-nimbus@mozilla.com
     expires: never
     send_in_pings:
-      - background-update
       - events
   validation_failed:
     type: event
@@ -1129,7 +1124,6 @@ nimbus_events:
       - project-nimbus@mozilla.com
     expires: never
     send_in_pings:
-      - background-update
       - events
 
   is_ready:

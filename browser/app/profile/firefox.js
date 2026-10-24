@@ -77,13 +77,6 @@ pref("browser.dictionaries.download.url", "https://addons.mozilla.org/%LOCALE%/f
 // in the about:addons page).
 pref("browser.aboutaddons.novaThemesPickerEnabled", true);
 
-// At startup, should we check to see if the installation
-// date is older than some threshold
-pref("app.update.checkInstallTime", true);
-
-// The number of days a binary is permitted to be old without checking is defined in
-// firefox-branding.js (app.update.checkInstallTime.days)
-
 // The minimum delay in seconds for the timer to fire between the notification
 // of each consumer of the timer manager.
 // minimum=30 seconds, default=120 seconds, and maximum=300 seconds
@@ -93,112 +86,6 @@ pref("app.update.timerMinimumDelay", 120);
 // to notify consumers of the timer manager.
 // minimum=10 seconds, default=30 seconds, and maximum=120 seconds
 pref("app.update.timerFirstInterval", 30000);
-
-// App-specific update preferences
-
-// The interval to check for updates (app.update.interval) is defined in
-// firefox-branding.js
-
-// Enables some extra Application Update Logging (can reduce performance)
-pref("app.update.log", false);
-// Causes Application Update Logging to be sent to a file in the profile
-// directory. This preference is automatically disabled on application start to
-// prevent it from being left on accidentally. Turning this pref on enables
-// logging, even if app.update.log is false.
-pref("app.update.log.file", false);
-
-// The number of general background check failures to allow before notifying the
-// user of the failure. User initiated update checks always notify the user of
-// the failure.
-pref("app.update.backgroundMaxErrors", 10);
-
-// How many times we should let downloads fail before prompting the user to
-// download a fresh installer.
-pref("app.update.download.maxAttempts", 2);
-
-// How many times we should let an elevation prompt fail before prompting the user to
-// download a fresh installer.
-pref("app.update.elevate.maxAttempts", 2);
-
-#ifdef NIGHTLY_BUILD
-  // Whether to delay popup notifications when an update is available and
-  // suppress them when an update is installed and waiting for user to restart.
-  // If set to true, these notifications will immediately be shown as banners in
-  // the app menu and as badges on the app menu button. Update available
-  // notifications will not create popup prompts until a week has passed without
-  // the user installing the update. Update restart notifications will not
-  // create popup prompts at all. This doesn't affect update notifications
-  // triggered by errors/failures or manual install prompts.
-  pref("app.update.suppressPrompts", false);
-#endif
-
-// If set to true, a message will be displayed in the hamburger menu while
-// an update is being downloaded.
-pref("app.update.notifyDuringDownload", false);
-
-// If set to true, the Update Service will automatically download updates if the
-// user can apply updates. This pref is no longer used on Windows, except as the
-// default value to migrate to the new location that this data is now stored
-// (which is in a file in the update directory). Because of this, this pref
-// should no longer be used directly. Instead, getAppUpdateAutoEnabled and
-// getAppUpdateAutoEnabled from UpdateUtils.sys.mjs should be used.
-  pref("app.update.auto", true);
-
-// If set to true, the Update Service will apply updates in the background
-// when it finishes downloading them.
-pref("app.update.staging.enabled", true);
-
-// Update service URL:
-// app.update.url was removed in Bug 1568994
-// app.update.url.manual is in branding section
-// app.update.url.details is in branding section
-
-// app.update.badgeWaitTime is in branding section
-// app.update.interval is in branding section
-// app.update.promptWaitTime is in branding section
-
-// Whether or not to attempt using the service for updates.
-#ifdef MOZ_MAINTENANCE_SERVICE
-  pref("app.update.service.enabled", true);
-#endif
-
-#ifdef MOZ_BITS_DOWNLOAD
-  // If set to true, the Update Service will attempt to use Windows BITS to
-  // download updates and will fallback to downloading internally if that fails.
-  pref("app.update.BITS.enabled", true);
-#endif
-
-pref("app.update.langpack.enabled", true);
-
-#if defined(MOZ_UPDATE_AGENT)
-  pref("app.update.background.loglevel", "error");
-  pref("app.update.background.timeoutSec", 600);
-  // By default, check for updates when the browser is not running every 7 hours.
-  pref("app.update.background.interval", 25200);
-  // By default, snapshot Firefox Messaging System targeting for use by the
-  // background update task every 60 minutes.
-  pref("app.update.background.messaging.targeting.snapshot.intervalSec", 3600);
-  // For historical reasons, the background update process requires the Mozilla
-  // Maintenance Service to be available and enabled via the service registry
-  // key.  When this value is `true`, allow the background update process to
-  // update unelevated installations (that are writeable, etc).
-  //
-  // N.b. This feature impacts the `applications: firefox_desktop` Nimbus
-  // application ID (and not the `firefox_desktop_background_task` application
-  // ID).  However, the pref will be automatically mirrored to the background
-  // update task profile. This means that experiments and enrollment impact the
-  // Firefox Desktop browsing profile that _schedules_ the background update
-  // task, and then the background update task collects telemetry in accordance
-  // with the mirrored pref.
-  pref("app.update.background.allowUpdatesForUnelevatedInstallations", false);
-#endif
-
-  // If set to true, Firefox will automatically restart if it is left running
-  // with no browser windows open.
-  pref("app.update.noWindowAutoRestart.enabled", true);
-  // How long to wait after all browser windows are closed before restarting,
-  // in milliseconds. 5 min = 300000 ms
-  pref("app.update.noWindowAutoRestart.delayMs", 300000);
 
 #if defined(MOZ_BACKGROUNDTASKS)
   // The amount of time, in seconds, before background tasks time out and exit.
@@ -3586,13 +3473,6 @@ pref("browser.profiles.enabled", true);
 pref("browser.profiles.profile-name.updated", false);
 // Whether to allow the user to merge profile data
 pref("browser.profiles.sync.allow-danger-merge", false);
-
-pref("startup.homepage_override_url_nimbus", "");
-// These prefs are referring to the Fx update version
-pref("startup.homepage_override_nimbus_maxVersion", "");
-pref("startup.homepage_override_nimbus_minVersion", "");
-// Pref to disable all What's New pages
-pref("startup.homepage_override_nimbus_disable_wnp", false);
 
 // Pref to enable the content relevancy feature.
 pref("toolkit.contentRelevancy.enabled", false);
