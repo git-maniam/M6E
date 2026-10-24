@@ -42,7 +42,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
   CustomizableUI:
     "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   GenAI: "moz-src:///browser/components/genai/GenAI.sys.mjs",
   ICON_CATALOG:
@@ -824,23 +823,6 @@ export const SpecialMessageActions = {
   async submitOnboardingOptOutPing() {
     // `onboarding-opt-out` pings can always be sent.
     GleanPings.onboardingOptOut.setEnabled(true);
-
-    // The `onboarding-opt-out` ping does not include any info sections, and
-    // therefore needs to capture experiments and rollouts independently.  This
-    // data layout agrees with the `nimbus-targeting-context` ping for ease of
-    // analysis.
-    let ctx = lazy.ExperimentAPI.manager.createTargetingContext();
-
-    Glean.onboardingOptOut.activeExperiments.set(await ctx.activeExperiments);
-    Glean.onboardingOptOut.activeRollouts.set(await ctx.activeRollouts);
-    Glean.onboardingOptOut.enrollmentsMap.set(
-      Object.entries(await ctx.enrollmentsMap).map(
-        ([experimentSlug, branchSlug]) => ({
-          experimentSlug,
-          branchSlug,
-        })
-      )
-    );
 
     GleanPings.onboardingOptOut.submit("set_upload_enabled");
   },
