@@ -4345,96 +4345,6 @@ export const FeatureManifest: {
             };
         };
     };
-    fxaButtonVisibility: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            boolean: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            pxiToolbarEnabled: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            monitorEnabled: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            relayEnabled: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            vpnEnabled: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            avatarIconVariant: {
-                description: string;
-                type: string;
-            };
-        };
-    };
-    fxaClientAssociation: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            pingEnabled: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-        };
-    };
-    fxaAppMenuItem: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        exposureDescription: string;
-        variables: {
-            ctaCopyVariant: {
-                description: string;
-                type: string;
-            };
-        };
-    };
-    fxaAvatarMenuItem: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        exposureDescription: string;
-        variables: {
-            ctaCopyVariant: {
-                description: string;
-                type: string;
-            };
-        };
-    };
     legacyHeartbeat: {
         description: string;
         owner: string;
@@ -5626,18 +5536,6 @@ export const FeatureManifest: {
             };
         };
     };
-    remoteTabManagement: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            closeTabsEnabled: {
-                description: string;
-                type: string;
-                fallbackPref: string;
-            };
-        };
-    };
     crlite: {
         description: string;
         owner: string;
@@ -6170,17 +6068,6 @@ export const FeatureManifest: {
                     branch: string;
                     pref: string;
                 };
-            };
-        };
-    };
-    expandSignInButton: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            ctaCopyVariant: {
-                description: string;
-                type: string;
             };
         };
     };

@@ -54,26 +54,19 @@ function RemoveHomeButton() {
 }
 
 function AddOldMenuSideButtons() {
-  // Make the FxA button visible even though we're signed out.
-  // We'll use oldfxastatus to restore the old state.
-  document.documentElement.setAttribute(
-    "oldfxastatus",
-    document.documentElement.getAttribute("fxastatus")
-  );
-  document.documentElement.setAttribute("fxastatus", "signed_in");
-  // These buttons go immediately before the FxA button. Position them relative
-  // to it rather than to the end of the toolbar, so that buttons added to the
-  // navbar defaults after the FxA button don't shift them.
-  const beforeFxa = () =>
+  // These buttons go immediately before the extensions button. Position them
+  // relative to it rather than to the end of the toolbar, so that buttons
+  // added to the navbar defaults after it don't shift them.
+  const beforeExtensions = () =>
     CustomizableUI.getPlacementOfWidget(afterUrlBarButton).position;
-  CustomizableUI.addWidgetToArea("library-button", "nav-bar", beforeFxa());
+  CustomizableUI.addWidgetToArea("library-button", "nav-bar", beforeExtensions());
   if (!sidebarRevampEnabled) {
-    CustomizableUI.addWidgetToArea("sidebar-button", "nav-bar", beforeFxa());
+    CustomizableUI.addWidgetToArea("sidebar-button", "nav-bar", beforeExtensions());
   }
   CustomizableUI.addWidgetToArea(
     "unified-extensions-button",
     "nav-bar",
-    beforeFxa()
+    beforeExtensions()
   );
 }
 
@@ -82,11 +75,6 @@ function RemoveOldMenuSideButtons() {
   if (!sidebarRevampEnabled) {
     CustomizableUI.removeWidgetFromArea("sidebar-button");
   }
-  document.documentElement.setAttribute(
-    "fxastatus",
-    document.documentElement.getAttribute("oldfxastatus")
-  );
-  document.documentElement.removeAttribute("oldfxastatus");
 }
 
 function startFromUrlBar(aWindow = window) {

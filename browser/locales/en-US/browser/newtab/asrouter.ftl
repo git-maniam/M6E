@@ -197,30 +197,7 @@ annotations-make-default-pdf-next-label = Next
 
 ## FxA sync CFR
 
-fxa-sync-cfr-header = New device in your future?
-fxa-sync-cfr-body = Make sure your latest bookmarks, passwords, and tabs come with you any time you open a new { -brand-product-name } browser.
-fxa-sync-cfr-primary = Learn more
-  .accesskey = L
-fxa-sync-cfr-secondary = Remind me later
-  .accesskey = R
-
 ## Device Migration FxA Spotlight
-
-device-migration-fxa-spotlight-heavy-user-header = Don’t forget to back up your data
-device-migration-fxa-spotlight-heavy-user-body = Make sure important info — like bookmarks and passwords — is updated and protected across all your devices.
-device-migration-fxa-spotlight-heavy-user-primary-button = Get started
-
-device-migration-fxa-spotlight-older-device-header = Peace of mind, from { -brand-product-name }
-device-migration-fxa-spotlight-older-device-body = An account keeps your important info updated and protected on any device you connect.
-device-migration-fxa-spotlight-older-device-primary-button = Create an account
-
-device-migration-fxa-spotlight-getting-new-device-header-2 = New device in your future?
-device-migration-fxa-spotlight-getting-new-device-body-2 = Follow a few simple steps to bring your bookmarks, history, and passwords with you when you get started on a new device.
-device-migration-fxa-spotlight-getting-new-device-primary-button = How to back up my data
-
-device-migration-fxa-spotlight-sync-header = Browse without missing a beat
-device-migration-fxa-spotlight-sync-body = Sync all your important info with encryption — like bookmarks and passwords. You can pull everything up anywhere you use { -brand-product-name }.
-device-migration-fxa-spotlight-sync-primary-button = Get started
 
 ## Set as Default PDF Reader Infobar
 
@@ -287,13 +264,8 @@ fxa-menu-message-close-button =
     .title = Close
     .aria-label = Close
 
-fxa-menu-message-sign-up-button = Sign up
-fxa-menu-message-sign-in-button = Sign in
-fxa-menu-message-sync-button = Start syncing
-
 fxa-menu-message-sync-devices-primary-text = Sync all your devices
 fxa-menu-message-sync-devices-secondary-text = Instantly get your info — like bookmarks and passwords — everywhere you use { -brand-short-name }.
-fxa-menu-message-sync-devices-secondary-text2 = Instantly get your bookmarks, passwords, and more — everywhere you’re signed in to { -brand-short-name }.
 fxa-menu-message-sync-devices-collapsed-text = Sync all your devices
 
 fxa-menu-message-backup-data-primary-text = Back up your browser data
