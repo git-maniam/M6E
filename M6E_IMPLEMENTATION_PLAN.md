@@ -281,16 +281,17 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Manual check:** the native banner and the macOS permission prompt on first use (System Settings, Notifications, M6E), because headless runs can't show them.
   - **Not done:** the optional "open at login, hidden" login item. It's native code and needs the user's agreement first.
 
-## 4. Next step: Phase 5, packaging and acceptance
+## 4. Next step: Phase 6, deleting the dormant features
 
-**Resuming:** the user starts a session with "Resume from Phase 5". Before continuing:
+**Resuming:** the user starts a session with "Resume from Phase 6". Before continuing:
 1. Read `CLAUDE.md`, the spec (`m6e_browser_agent_instructions.md`) and this plan, and run `git log --oneline -15`.
 2. Run `git status` and `git fetch`. If `origin/main` is ahead (the user sometimes commits from the IDE), pull first.
 3. Build with `./mach build`. The objdir `obj-m6e` normally survives between sessions, so this is incremental; a clean objdir or a mozconfig change means a full build.
 4. Commit and push work in progress often, and keep the checkpoint note below current (user rule, connection drops).
 5. Measure on a quiet machine: ask the user to quit their own M6E first.
 
-**Checkpoint (2026-10-24):** Phases 0 to 5 are complete. Release artifact: `artifacts/release/M6E-161.0a1-macos-arm64.dmg`, rebuilt by `tools/m6e/package/release.sh`. Next is P6.1, deleting the dormant features (D30), then upstream merges (P5.3 tooling).
+**Checkpoint (2026-10-24, Phase 6 started):** P6.0 is under way. The mozconfig builds without LTO and PGO for this phase. A clean build of the unchanged tree is running (`artifacts/p6/dev-build-0.log`), and the per-feature analysis is running (reports in `artifacts/p6/analysis/`). Next: the baseline test run, then the parallel preparation in worktrees (see "Phase 6" in section 5).
+- **Phases 0 to 5 are complete.** Release artifact: `artifacts/release/M6E-161.0a1-macos-arm64.dmg`, rebuilt by `tools/m6e/package/release.sh`. After Phase 6: upstream merges (P5.3 tooling).
 - **Checked on 2026-10-24 with the screen unlocked:** the DMG in Finder, the app installed from the DMG into `/Applications` and launched through LaunchServices, and the two panel suites (10 + 498 passes, 0 failures). See "Phase 5 results".
 - **Needs the user:** decide on a Developer ID and notarization (US$99 a year); skim `tools/m6e/merge/nightly-prefs-reviewed.txt`; test a real download on a second Mac; look at real macOS Dark Mode (menus, dialogs, PDF). Details in "Phase 5 results" and "Decisions taken while the user was away".
 - **Build notes:** with PGO, any C++ change needs `./mach clobber` first; front-end-only changes use `make -C obj-m6e/faster`, then `release.sh`. Don't test app copies under `/tmp`.
@@ -691,10 +692,32 @@ Each is the recommended option. The user reviews these in the Summary of Complet
 
 - **A developer build reads the repo path from its Info.plist.** `MozillaDeveloperRepoPath` and `MozillaDeveloperObjPath` are read through a macro (`MAC_DEV_REPO_KEY`), so a text search for the key name finds no reader. Removing them crashes the first content process launch in `obj-m6e/dist/M6E.app` (`MOZ_CRASH("Failed to get path to repo dir")` in `ContentParent.cpp`) and every mochitest with it. The packaged app (it has `omni.ja`) doesn't read them.
 
-### After Phase 5
-- **P6.1 Delete the dormant features (D30):**
-  - **Features:** the VPN (IP protection, including the `ipp-activator` built-in extension), the `addons-search-detection` built-in extension (telemetry only), Translations, Sync and Mozilla accounts, the updater, AI/ML, the crash reporter (crates included, removed from the cargo workspace) and Nimbus experiments.
-  - **Method:** as for Normandy in P4.7b. Remove the importers, deleting a feature only if the build and tests pass, and compare the test results with the tree before the change.
+### Phase 6: Delete the dormant features (D30; started 2026-10-24)
+- **Goal:** remove the dormant Mozilla features under D23. A feature goes only if the build and tests pass without it. Anything that has to stay is proven unreachable: locked prefs, no listening sockets, no network traffic, and no entry points from web content or IPC.
+- **Build configuration:** the phase builds without LTO and PGO (marked `M6E:` in `mozconfig`), so a C++ change costs an incremental build of minutes instead of a clean PGO build of about 80 minutes. P6.3 restores both and rebuilds from clean.
+- **How the work is split:**
+  1. **Analyse, in parallel (read-only):** one analyst per feature maps everything to delete and every reference from code that stays. An independent critic then hunts for missed references with different search angles. Reports: `artifacts/p6/analysis/<key>.md`.
+  2. **Prepare, in parallel (git worktrees):** one agent per feature makes the removal in its own worktree on the branch `m6e-p6/<key>`, without building. An independent reviewer checks each branch for leftover references, and the preparing agent fixes what it finds.
+  3. **Integrate, one at a time (the shared `obj-m6e`):** cherry-pick a branch, build, run the feature's consumer suites and `tools/m6e/run_tests.sh`, and compare with the P6.0 baseline. Then commit `M6E P6.1x: …` and push. Builds and mochitests can't run in parallel: there is one objdir, and mochitests share port 8888.
+- **Steps:**
+
+| Step | What | Main paths |
+|---|---|---|
+| P6.0 | Phase 6 build configuration; baseline test results on the unchanged tree | `mozconfig`, `artifacts/p6/baseline` |
+| P6.1a | The VPN (IP protection) and the `addons-search-detection` built-in extension | `browser/components/ipprotection`, `toolkit/components/ipprotection`, `browser/extensions/ipp-activator`, `browser/extensions/search-detection` |
+| P6.1b | Translations | `toolkit/components/translations`, `browser/components/translations` |
+| P6.1c | The generative AI interface and the AI window | `browser/components/genai`, `browser/components/aiwindow` |
+| P6.1d | The ML engine and its remaining consumers | `toolkit/components/ml` |
+| P6.1e | Sync | `services/sync` |
+| P6.1f | Mozilla accounts | `services/fxaccounts` |
+| P6.1g | The updater | `toolkit/mozapps/update` |
+| P6.1h | The crash reporter, crates included | `toolkit/crashreporter`, `toolkit/components/crashes` |
+| P6.1i | Nimbus experiments | `toolkit/components/nimbus` |
+| P6.2 | Stale lint-config entries (the 324 known and any new ones); the unreachability proof for whatever stays | lint configs |
+| P6.3 | LTO and PGO back on, a clean build, the full regression run, acceptance, measurements and the release DMG | |
+
+- **Order:** features that others depend on go last. The AI interface goes before the ML engine, the VPN and Sync before Mozilla accounts, and Nimbus last, because nearly every feature reads it. The analysis may change the order.
+- **Done when:** every feature is deleted or proven unreachable, the release build passes, the regression suites match the baseline, acceptance passes 15 of 15, and startup, memory and app size are measured against Phase 5.
 
 ## 6. Risks
 

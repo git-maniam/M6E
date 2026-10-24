@@ -17,7 +17,8 @@ M6E_SDK=$(xcrun --sdk macosx --show-sdk-path)
 export CXX="/opt/homebrew/opt/llvm/bin/clang++ -nostdinc++ -isystem $M6E_SDK/usr/include/c++/v1"
 export MOZ_LD64_KNOWN_GOOD=1
 ac_add_options --enable-linker=ld64
-ac_add_options --enable-lto=cross
+# M6E: Phase 6 builds without LTO and PGO to shorten rebuilds; P6.3 restores both.
+# ac_add_options --enable-lto=cross
 # M6E: zero-initialise local variables, so uninitialised reads can't leak
 # memory (P4.8b, D22).
 export CFLAGS="-mcpu=apple-m1 -ftrivial-auto-var-init=zero"
@@ -27,4 +28,4 @@ export RUSTC_OPT_LEVEL=3
 export STRIP=/usr/bin/strip
 export MOZ_PKG_FORMAT=DMG
 export LLVM_PROFDATA=/opt/homebrew/opt/llvm/bin/llvm-profdata
-ac_add_options MOZ_PGO=1
+# ac_add_options MOZ_PGO=1
