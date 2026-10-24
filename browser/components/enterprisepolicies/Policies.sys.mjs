@@ -163,11 +163,6 @@ export var Policies = {
           "browser.ai.control.sidebarChatbot",
         ],
         [
-          "Translations",
-          ["browser.translations.enable"],
-          "browser.ai.control.translations",
-        ],
-        [
           "PDFAltText",
           ["pdfjs.enableAltText"],
           "browser.ai.control.pdfjsAltText",
@@ -3855,23 +3850,6 @@ export var Policies = {
     },
   },
 
-  TranslateEnabled: {
-    onBeforeAddons(manager, param) {
-      const policies = Services.policies.getActivePolicies();
-      if (policies.AIControls?.Translations || policies.AIControls?.Default) {
-        lazy.log.warn(
-          "Ignoring TranslateEnabled policy in favor of AIControls"
-        );
-        return;
-      }
-      lazy.PoliciesUtils.setAndLockPref("browser.translations.enable", param);
-      lazy.PoliciesUtils.setAndLockPref(
-        "browser.ai.control.translations",
-        param ? "enabled" : "blocked"
-      );
-    },
-  },
-
   UserMessaging: {
     onBeforeAddons(manager, param) {
       if ("ExtensionRecommendations" in param) {
@@ -3885,24 +3863,6 @@ export var Policies = {
         lazy.PoliciesUtils.setDefaultPref(
           "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features",
           param.FeatureRecommendations,
-          param.Locked
-        );
-
-        // We use the mostRecentTargetLanguages pref to control the
-        // translations panel intro. Setting a language value simulates a
-        // first translation, which skips the intro panel for users with
-        // FeatureRecommendations disabled.
-        const topWebPreferredLanguage = Services.locale.acceptLanguages
-          .split(",")[0]
-          .trim();
-
-        const preferredLanguage = topWebPreferredLanguage.length
-          ? topWebPreferredLanguage
-          : Services.locale.appLocaleAsBCP47;
-
-        lazy.PoliciesUtils.setDefaultPref(
-          "browser.translations.mostRecentTargetLanguages",
-          param.FeatureRecommendations ? "" : preferredLanguage,
           param.Locked
         );
       }

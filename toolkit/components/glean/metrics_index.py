@@ -95,7 +95,6 @@ gecko_metrics = [
     "toolkit/components/satchel/metrics.yaml",
     "toolkit/components/startup/metrics.yaml",
     "toolkit/components/thumbnails/metrics.yaml",
-    "toolkit/components/translations/metrics.yaml",
     "toolkit/components/url-classifier/metrics.yaml",
     "toolkit/content/metrics.yaml",
     "toolkit/content/widgets/metrics.yaml",

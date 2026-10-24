@@ -131,7 +131,6 @@ pref("toolkit.contentRelevancy.enabled", false, locked);
 // No AI features. These are the prefs the AIControls enterprise policy sets
 // when every feature is blocked, plus the shared machine learning engine.
 pref("browser.ai.control.default", "blocked", locked);
-pref("browser.ai.control.translations", "blocked", locked);
 pref("browser.ai.control.pdfjsAltText", "blocked", locked);
 pref("browser.ai.control.smartTabGroups", "blocked", locked);
 pref("browser.ai.control.linkPreviewKeyPoints", "blocked", locked);
@@ -145,9 +144,9 @@ pref("browser.ml.linkPreview.enabled", false, locked);
 pref("browser.smartwindow.enabled", false, locked);
 pref("browser.tabs.groups.smart.enabled", false, locked);
 pref("browser.tabs.groups.smart.userEnabled", false, locked);
-pref("browser.translations.enable", false, locked);
-pref("browser.translations.select.enable", false, locked);
 pref("pdfjs.enableAltText", false, locked);
+// The int8 matrix multiply wasm builtin has no caller left; keep it off even on Nightly.
+pref("javascript.options.wasm_moz_intgemm", false, locked);
 // With every AI feature removed, there is nothing for the AI settings pane to control.
 pref("browser.preferences.aiControls", false, locked);
 

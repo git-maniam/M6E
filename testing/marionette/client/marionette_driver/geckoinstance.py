@@ -65,8 +65,6 @@ class GeckoInstance:
         "browser.region.network.url": "",
         # Don't pull Top Sites content from the network
         "browser.topsites.contile.enabled": False,
-        # Disable translations
-        "browser.translations.enable": False,
         # Disable UI tour
         "browser.uitour.enabled": False,
         # Defensively disable data reporting systems

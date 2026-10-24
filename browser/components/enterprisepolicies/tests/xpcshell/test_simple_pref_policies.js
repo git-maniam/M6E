@@ -1361,7 +1361,6 @@ const POLICIES_TESTS = [
     policies: {
       AIControls: {
         Default: { Value: "blocked", Locked: true },
-        Translations: { Value: "available" },
         PDFAltText: { Value: "available" },
         SmartTabGroups: { Value: "blocked" },
         LinkPreviewKeyPoints: { Value: "available" },
@@ -1371,8 +1370,6 @@ const POLICIES_TESTS = [
     },
     lockedPrefs: {
       "browser.ai.control.default": "blocked",
-      "browser.ai.control.translations": "available",
-      "browser.translations.enable": true,
       "browser.ai.control.pdfjsAltText": "available",
       "pdfjs.enableAltText": true,
       "browser.ai.control.smartTabGroups": "blocked",
@@ -1391,13 +1388,11 @@ const POLICIES_TESTS = [
     policies: {
       AIControls: {
         Default: { Value: "blocked", Locked: true },
-        Translations: { Value: "available", Locked: false },
+        PDFAltText: { Value: "available", Locked: false },
       },
     },
     lockedPrefs: {
       "browser.ai.control.default": "blocked",
-      "browser.ai.control.pdfjsAltText": "blocked",
-      "pdfjs.enableAltText": false,
       "browser.ai.control.smartTabGroups": "blocked",
       "browser.tabs.groups.smart.userEnabled": false,
       "browser.ai.control.linkPreviewKeyPoints": "blocked",
@@ -1408,8 +1403,8 @@ const POLICIES_TESTS = [
       "browser.ai.control.speechRecognition": "blocked",
     },
     unlockedPrefs: {
-      "browser.ai.control.translations": "available",
-      "browser.translations.enable": true,
+      "browser.ai.control.pdfjsAltText": "available",
+      "pdfjs.enableAltText": true,
     },
   },
 

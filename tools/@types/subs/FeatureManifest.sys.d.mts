@@ -2452,66 +2452,6 @@ export const FeatureManifest: {
             };
         };
     };
-    fullPageTranslation: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            boolean: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-        };
-    };
-    fullPageTranslationAutomaticPopup: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            boolean: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-        };
-    };
-    selectTranslation: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            enabled: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-        };
-    };
-    translationsQuickAction: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        variables: {
-            enabled: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-        };
-    };
     pdfjs: {
         description: string;
         owner: string;
