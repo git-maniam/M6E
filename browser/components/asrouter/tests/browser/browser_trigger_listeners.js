@@ -1144,6 +1144,71 @@ add_task(async function test_elementClicked_trigger() {
   document.documentElement.removeChild(button);
 });
 
+add_task(async function test_tabSwitch() {
+  const sandbox = sinon.createSandbox();
+
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.tabs.splitview.hasUsed", false]],
+  });
+
+  const receivedTrigger = new Promise(resolve => {
+    sandbox.stub(ASRouter, "sendTriggerMessage").callsFake(triggerData => {
+      if (triggerData.id === "tabSwitch") {
+        resolve(triggerData);
+      }
+    });
+  });
+
+  let tab1 = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "https://example.com"
+  );
+  let tab2 = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "https://example.org"
+  );
+
+  await BrowserTestUtils.switchTab(gBrowser, tab1);
+  await BrowserTestUtils.switchTab(gBrowser, tab2);
+  await BrowserTestUtils.switchTab(gBrowser, tab1);
+
+  const triggerData = await receivedTrigger;
+  Assert.ok(
+    ASRouter.sendTriggerMessage.calledWith(sinon.match({ id: "tabSwitch" })),
+    "tabSwitch trigger sent after switching between tabs 3 times"
+  );
+  Assert.ok(
+    triggerData.context &&
+      typeof triggerData.context.currentTabsOpen === "number",
+    "tabSwitch trigger includes currentTabsOpen in context"
+  );
+  Assert.equal(triggerData.context.currentTabsOpen, 3, "currentTabsOpen is 3");
+
+  ASRouter.sendTriggerMessage.resetHistory();
+
+  let aboutTab = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:blank"
+  );
+
+  await BrowserTestUtils.switchTab(gBrowser, tab1);
+  await BrowserTestUtils.switchTab(gBrowser, aboutTab);
+  await BrowserTestUtils.switchTab(gBrowser, tab1);
+
+  await sleepMs(100);
+  Assert.ok(
+    !ASRouter.sendTriggerMessage.calledWith(sinon.match({ id: "tabSwitch" })),
+    "tabSwitch trigger not sent when switching to/from about: pages"
+  );
+
+  BrowserTestUtils.removeTab(tab1);
+  BrowserTestUtils.removeTab(tab2);
+  BrowserTestUtils.removeTab(aboutTab);
+
+  await SpecialPowers.popPrefEnv();
+  sandbox.restore();
+});
+
 add_task(async function test_userBookmarkFolderActivity_folderInsert() {
   const handlerStub = sinon.stub();
   const trigger = ASRouterTriggerListeners.get("userBookmarkFolderActivity");
