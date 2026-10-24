@@ -189,7 +189,6 @@ REMOVED_PREFS = {
 # Build-time switches (AppConstants) that must be off.
 REMOVED_CONSTANTS = {
     "Crash reporter": "MOZ_CRASHREPORTER",
-    "Updater": "MOZ_UPDATER",
     "Studies (Normandy)": "MOZ_NORMANDY",
     "Telemetry reporting": "MOZ_TELEMETRY_REPORTING",
     "Data reporting": "MOZ_DATA_REPORTING",

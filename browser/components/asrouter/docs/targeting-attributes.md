@@ -131,11 +131,6 @@ interface AttributionCode {
 
 #### Examples
 
-* Is updating enabled?
-```java
-browserSettings.update.enabled
-```
-
 * Is beta channel?
 ```js
 browserSettings.update.channel == 'beta'
@@ -160,12 +155,8 @@ declare const browserSettings: {
     content: string;
   },
   update: {
-    // Is auto-downloading enabled?
-    autoDownload: boolean;
     // What release channel, e.g. "nightly"
     channel: string;
-    // Is updating enabled?
-    enabled: boolean;
   }
 }
 ```

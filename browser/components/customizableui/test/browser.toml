@@ -331,6 +331,8 @@ tags = "overflowable-toolbar"
 
 ["browser_palette_labels.js"]
 
+["browser_panelUINotifications.js"]
+
 ["browser_panel_keyboard_navigation.js"]
 
 ["browser_panel_locationSpecific.js"]

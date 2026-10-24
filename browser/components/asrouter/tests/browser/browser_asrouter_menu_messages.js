@@ -717,8 +717,8 @@ add_task(async function test_fxa_cta_notification_precedence() {
   sandbox.spy(AboutWelcomeTelemetry.prototype, "submitGleanPingForPing");
 
   await withTestMessage(sandbox, gTestFxAMessage, async () => {
-    const NOTIFICATION_ID = "update-restart";
-    AppMenuNotifications.showNotification(NOTIFICATION_ID);
+    const NOTIFICATION_ID = "addon-installed";
+    AppMenuNotifications.showBadgeOnlyNotification(NOTIFICATION_ID);
     await reopenMenuSource(MenuMessage.SOURCES.APP_MENU, null);
 
     AppMenuNotifications.removeNotification(NOTIFICATION_ID);

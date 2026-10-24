@@ -533,10 +533,6 @@ html|label[disabled] {
   opacity: 0.4;
 }
 
-#showUpdateHistory {
-  margin-inline-start: 0;
-}
-
 /**
  * Dialog
  */
@@ -1502,17 +1498,6 @@ setting-group[groupid="aiStatesDescription"] {
 
   #OCSPDialogPane {
     font: message-box !important;
-  }
-
-  /**
-   * Update Preferences
-   */
-  #autoInstallOptions {
-    margin-inline-start: 20px;
-  }
-
-  .updateControls {
-    margin-inline-start: 10px;
   }
 }
 

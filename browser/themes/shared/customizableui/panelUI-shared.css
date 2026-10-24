@@ -518,10 +518,8 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
 
 @media -moz-pref("browser.nova.enabled") {
   #appMenu-popup {
-    .panel-banner-item,
     .addon-banner-item {
       --panel-banner-item-color: var(--promo-message-text-color-vibrant);
-      --panel-banner-item-icon-color: light-dark(var(--icon-color-accent-primary-desaturated), var(--icon-color-information));
       --panel-banner-item-background-color: light-dark(var(--promo-background-color-vibrant), var(--background-color-information));
       --panel-banner-item-hover-bgcolor: color-mix(in srgb, var(--panel-banner-item-background-color) 85%, currentColor);
       --panel-banner-item-active-bgcolor: color-mix(in srgb, var(--panel-banner-item-background-color) 70%, currentColor);
@@ -531,13 +529,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
       border-radius: var(--promo-border-radius);
       padding-inline: var(--promo-padding);
       padding-block: var(--space-large);
-    }
-
-    .panel-banner-item > .toolbarbutton-icon {
-      --icon-color: var(--panel-banner-item-icon-color);
-      order: 0;
-      flex-shrink: 0;
-      fill: var(--icon-color);
     }
 
     .addon-banner-item::after {
@@ -571,7 +562,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
 }
 
 #appMenu-popup {
-  .panel-banner-item,
   .addon-banner-item {
     align-items: flex-start;
     color: var(--panel-banner-item-color);
@@ -580,7 +570,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
     font-weight: var(--font-weight-semibold);
   }
 
-  .panel-banner-item,
   .addon-banner-item {
     &:not([disabled]):hover {
       background-color: var(--panel-banner-item-hover-bgcolor);
@@ -598,20 +587,12 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
 }
 
 :root[uidensity="compact"] {
-  .panel-banner-item,
   .addon-banner-item {
     /* Without some padding the button gets too crowded even for compact mode
       when the text wraps to a newline. */
     padding-block: var(--space-xsmall);
     margin-block-start: var(--space-xsmall);
   }
-}
-
-.panel-banner-item > .toolbarbutton-icon {
-  width: var(--icon-size);
-  height: var(--icon-size);
-  /* Move the icon to appear after the text label. */
-  order: 2;
 }
 
 .addon-banner-item {

@@ -44,7 +44,7 @@ export var SandboxUtils = {
 
       let box = aWindow.gNotificationBox;
       const mozXulElement = box.stack.documentGlobal.MozXULElement;
-      mozXulElement.insertFTLIfNeeded("toolkit/updates/elevation.ftl");
+      mozXulElement.insertFTLIfNeeded("toolkit/global/sandbox.ftl");
 
       let buttons = [
         {
@@ -95,7 +95,7 @@ export var SandboxUtils = {
     const box = aWindow.gNotificationBox;
     if (!box.getNotificationWithValue("sandbox-content-disabled")) {
       const mozXulElement = box.stack.documentGlobal.MozXULElement;
-      mozXulElement.insertFTLIfNeeded("toolkit/updates/elevation.ftl");
+      mozXulElement.insertFTLIfNeeded("toolkit/global/sandbox.ftl");
 
       box.appendNotification(
         "sandbox-content-disabled",
