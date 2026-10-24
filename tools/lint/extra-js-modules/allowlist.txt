@@ -36,8 +36,6 @@ browser/components/asrouter/modules/PanelTestProvider.sys.mjs
 browser/components/asrouter/modules/PinnableSitesProvider.sys.mjs
 browser/components/asrouter/modules/PreonboardingSplash.sys.mjs
 browser/components/asrouter/modules/RemoteL10n.sys.mjs
-browser/components/asrouter/modules/SidebarChatBotPromo.sys.mjs
-browser/components/asrouter/modules/SmartWindowNewTabPromo.sys.mjs
 browser/components/asrouter/modules/Spotlight.sys.mjs
 browser/components/asrouter/modules/ToastNotification.sys.mjs
 browser/components/asrouter/modules/ToolbarBadgeHub.sys.mjs

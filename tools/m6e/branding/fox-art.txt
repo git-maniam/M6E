@@ -16,18 +16,9 @@ browser/components/aboutwelcome/assets/fox-doodle-tail.png
 browser/components/aboutwelcome/assets/fox-doodle-waving-static.png
 browser/components/aboutwelcome/assets/fox-doodle-waving.gif
 browser/components/aboutwelcome/assets/kit-sit-look-up.svg
-browser/components/aboutwelcome/assets/mr-kit-smart-window.svg
 browser/components/aboutwelcome/assets/mr-rtamo-background-image.svg
 browser/components/aboutwelcome/assets/person-typing.svg
 browser/components/aboutwelcome/assets/splash-logo.svg
-browser/components/aiwindow/ui/assets/agent-watch-empty.svg
-browser/components/aiwindow/ui/assets/agent-watch-kit.svg
-browser/components/aiwindow/ui/assets/aitab-error-kit.svg
-browser/components/aiwindow/ui/assets/kit-meditating.svg
-browser/components/aiwindow/ui/assets/kit.svg
-browser/components/aiwindow/ui/assets/model-choice-3.svg
-browser/components/aiwindow/ui/assets/set-default-onboarding.svg
-browser/components/aiwindow/ui/assets/smart-window-promo-default.svg
 browser/components/asrouter/content/assets/desktop-to-mobile-banner.svg
 browser/components/asrouter/content/assets/fox-with-box-on-cloud.svg
 browser/components/asrouter/content/assets/fox-with-checkmark.svg
@@ -48,7 +39,6 @@ browser/components/firefoxview/content/history-empty.svg
 browser/components/firefoxview/content/synced-tabs-empty.svg
 browser/components/firefoxview/content/synced-tabs-error.svg
 browser/components/firefoxview/content/view-chats.svg
-browser/components/genai/assets/onboarding-link-preview-image-longpress.svg
 browser/components/ipprotection/assets/vpn-settings-get-started.svg
 browser/components/privatebrowsing/content/assets/focus-logo.svg
 browser/components/profiles/content/assets/kit-profiles-dark.svg

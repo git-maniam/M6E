@@ -2422,36 +2422,6 @@ modules:
       - *rrando
       - *tetchart
     submodules:
-      - machine_name: core_machine_learning_frontend
-        name: 'Machine Learning: Frontend'
-        includes:
-          - browser/components/aiwindow/
-          - browser/components/genai/
-        meta:
-          components:
-            - 'Core::Machine Learning: Frontend'
-          review_group: ai-frontend-reviewers
-        owners:
-          - *Mardak
-        peers:
-          - *flozia
-          - *ngrato
-          - *omarg
-          - *pdahiya
-
-      - machine_name: core_machine_learning_models
-        name: 'Machine Learning: Models'
-        includes:
-          - browser/components/aiwindow/models/
-          - browser/components/aiwindow/services/
-        meta:
-          components:
-            - 'Core::Machine Learning: General'
-          review_group: ai-models-reviewers
-        owners:
-          - *rrando
-          - *tetchart
-
       - machine_name: core_machine_learning_multiline_editor
         name: 'Machine Learning: Multiline Editor'
         includes:
