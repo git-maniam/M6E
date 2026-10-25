@@ -260,9 +260,7 @@ add_task(
           ],
         };
         const actor =
-          browser.browsingContext.currentWindowGlobal.getActor(
-            "FormAutofill"
-          );
+          browser.browsingContext.currentWindowGlobal.getActor("FormAutofill");
         const section = Array.from(actor.sectionsByRootId.values()).flat()[0];
 
         await verifyAutofillResult(
@@ -337,9 +335,7 @@ add_task(
           ],
         };
         const actor =
-          browser.browsingContext.currentWindowGlobal.getActor(
-            "FormAutofill"
-          );
+          browser.browsingContext.currentWindowGlobal.getActor("FormAutofill");
         const section = Array.from(actor.sectionsByRootId.values()).flat()[0];
         await verifyAutofillResult(
           browser,
@@ -397,8 +393,7 @@ add_task(
         );
 
         await SpecialPowers.spawn(browser, [], async () => {
-          const stateSelect =
-            content.document.getElementById("address-level1");
+          const stateSelect = content.document.getElementById("address-level1");
           info("Checking that select element is highlighted");
           await ContentTaskUtils.waitForCondition(
             () => stateSelect.matches(":autofill"),
@@ -423,8 +418,7 @@ add_task(
         await filledOnFormChangePromise;
 
         return await SpecialPowers.spawn(browser, [], async () => {
-          const stateSelect =
-            content.document.getElementById("address-level1");
+          const stateSelect = content.document.getElementById("address-level1");
 
           info("Checking that select element lost highlighting");
           await ContentTaskUtils.waitForCondition(
@@ -483,8 +477,7 @@ add_task(
         );
 
         await SpecialPowers.spawn(browser, [], async () => {
-          const stateSelect =
-            content.document.getElementById("address-level1");
+          const stateSelect = content.document.getElementById("address-level1");
           await ContentTaskUtils.waitForCondition(
             () => !stateSelect.matches(":autofill"),
             `Checking #${stateSelect.id} is highlighted`
@@ -507,8 +500,7 @@ add_task(
         await filledOnFormChangePromise;
 
         return await SpecialPowers.spawn(browser, [], async () => {
-          const stateSelect =
-            content.document.getElementById("address-level1");
+          const stateSelect = content.document.getElementById("address-level1");
           await ContentTaskUtils.waitForCondition(
             () => stateSelect.matches(":autofill"),
             `Checking #${stateSelect.id} gains highlight`

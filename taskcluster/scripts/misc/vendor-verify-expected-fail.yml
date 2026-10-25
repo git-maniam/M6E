@@ -18,7 +18,6 @@ expected-fail:
     third_party/libepoxy/moz.yaml: "TODO bug: re-vendoring fails"
     third_party/opentelemetry-cpp/third_party/opentelemetry-proto/moz.yaml: "TODO bug: re-vendoring fails"
     third_party/sqlite3/moz.yaml: "TODO bug: sources differ after re-vendoring"
-    toolkit/components/ml/vendor/openai/moz.yaml: "TODO bug: re-vendoring fails"
     toolkit/components/pdfjs/moz.yaml: "TODO bug: re-vendoring fails in CI"
     toolkit/components/protobuf/moz.yaml: "TODO bug: re-vendoring fails"
     toolkit/content/vendor/lit/moz.yaml: "Bug 2065242: re-vendoring fails"

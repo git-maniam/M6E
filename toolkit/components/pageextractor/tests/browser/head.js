@@ -4,9 +4,9 @@
 const BLANK_PAGE =
   "data:text/html;charset=utf-8,<!DOCTYPE html><title>Blank</title>Blank page";
 
-/** @type {import("../../../ml/tests/MLTestUtils.sys.mjs")} */
-const { MLTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/MLTestUtils.sys.mjs"
+/** @type {import("../PageExtractorTestUtils.sys.mjs")} */
+const { PageExtractorTestUtils } = ChromeUtils.importESModule(
+  "resource://testing-common/PageExtractorTestUtils.sys.mjs"
 );
 
 /**

@@ -111,9 +111,7 @@ export function filterCertsForView(data) {
 export class PdfJsParent extends JSWindowActorParent {
   #signatureStorageChangedObserver = null;
 
-  #mutablePreferences = new Set([
-    "enableNewAltTextWhenAddingImage",
-  ]);
+  #mutablePreferences = new Set(["enableNewAltTextWhenAddingImage"]);
 
   #nextTextRequestId = 0;
 

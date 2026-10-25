@@ -736,66 +736,6 @@
       "chrome://global/content/megalist/components/virtual-passwords-list/virtual-passwords-list.mjs": [
         "../../../toolkit/components/satchel/megalist/content/components/virtual-passwords-list/virtual-passwords-list.mjs"
       ],
-      "chrome://global/content/ml/AIFeature.sys.mjs": [
-        "../../../toolkit/components/ml/AIFeature.sys.mjs"
-      ],
-      "chrome://global/content/ml/BlockWords.sys.mjs": [
-        "../../../toolkit/components/ml/content/BlockWords.sys.mjs"
-      ],
-      "chrome://global/content/ml/ClusterAlgos.sys.mjs": [
-        "../../../toolkit/components/ml/content/ClusterAlgos.sys.mjs"
-      ],
-      "chrome://global/content/ml/EmbeddingsGenerator.sys.mjs": [
-        "../../../toolkit/components/ml/content/nlp/EmbeddingsGenerator.sys.mjs"
-      ],
-      "chrome://global/content/ml/EngineProcess.sys.mjs": [
-        "../../../toolkit/components/ml/content/EngineProcess.sys.mjs"
-      ],
-      "chrome://global/content/ml/MLEngine.worker.mjs": [
-        "../../../toolkit/components/ml/content/MLEngine.worker.mjs"
-      ],
-      "chrome://global/content/ml/MLTelemetry.sys.mjs": [
-        "../../../toolkit/components/ml/MLTelemetry.sys.mjs"
-      ],
-      "chrome://global/content/ml/ModelHub.sys.mjs": [
-        "../../../toolkit/components/ml/content/ModelHub.sys.mjs"
-      ],
-      "chrome://global/content/ml/OPFS.sys.mjs": [
-        "../../../toolkit/components/ml/content/OPFS.sys.mjs"
-      ],
-      "chrome://global/content/ml/StopWords.sys.mjs": [
-        "../../../toolkit/components/ml/content/nlp/StopWords.sys.mjs"
-      ],
-      "chrome://global/content/ml/backends/LlamaCppPipeline.mjs": [
-        "../../../toolkit/components/ml/content/backends/LlamaCppPipeline.mjs"
-      ],
-      "chrome://global/content/ml/backends/ONNXPipeline.mjs": [
-        "../../../toolkit/components/ml/content/backends/ONNXPipeline.mjs"
-      ],
-      "chrome://global/content/ml/backends/OpenAIPipeline.mjs": [
-        "../../../toolkit/components/ml/content/backends/OpenAIPipeline.mjs"
-      ],
-      "chrome://global/content/ml/backends/Pipeline.mjs": [
-        "../../../toolkit/components/ml/content/backends/Pipeline.mjs"
-      ],
-      "chrome://global/content/ml/backends/StaticEmbeddingsPipeline.mjs": [
-        "../../../toolkit/components/ml/content/backends/StaticEmbeddingsPipeline.mjs"
-      ],
-      "chrome://global/content/ml/openai-dev.mjs": [
-        "../../../toolkit/components/ml/vendor/openai/dist/openai-dev.mjs"
-      ],
-      "chrome://global/content/ml/openai.mjs": [
-        "../../../toolkit/components/ml/vendor/openai/dist/openai.mjs"
-      ],
-      "chrome://global/content/ml/ort.webgpu-dev.mjs": [
-        "../../../toolkit/components/ml/vendor/ort.webgpu-dev.mjs"
-      ],
-      "chrome://global/content/ml/transformers-dev.js": [
-        "../../../toolkit/components/ml/vendor/transformers-dev.js"
-      ],
-      "chrome://global/content/ml/transformers.js": [
-        "../../../toolkit/components/ml/vendor/transformers.js"
-      ],
       "chrome://global/content/net-error-card.mjs": [
         "../../../toolkit/content/net-error-card.mjs"
       ],
@@ -934,9 +874,6 @@
       "chrome://mozapps/content/extensions/components/addon-list.mjs": [
         "../../../toolkit/mozapps/extensions/content/components/addon-list.mjs"
       ],
-      "chrome://mozapps/content/extensions/components/addon-mlmodel-details.mjs": [
-        "../../../toolkit/mozapps/extensions/content/components/addon-mlmodel-details.mjs"
-      ],
       "chrome://mozapps/content/extensions/components/addon-options.mjs": [
         "../../../toolkit/mozapps/extensions/content/components/addon-options.mjs"
       ],
@@ -978,15 +915,6 @@
       ],
       "chrome://mozapps/content/extensions/components/inline-options-browser.mjs": [
         "../../../toolkit/mozapps/extensions/content/components/inline-options-browser.mjs"
-      ],
-      "chrome://mozapps/content/extensions/components/mlmodel-card-header-additions.mjs": [
-        "../../../toolkit/mozapps/extensions/content/components/mlmodel-card-header-additions.mjs"
-      ],
-      "chrome://mozapps/content/extensions/components/mlmodel-card-list-additions.mjs": [
-        "../../../toolkit/mozapps/extensions/content/components/mlmodel-card-list-additions.mjs"
-      ],
-      "chrome://mozapps/content/extensions/components/mlmodel-list-intro.mjs": [
-        "../../../toolkit/mozapps/extensions/content/components/mlmodel-list-intro.mjs"
       ],
       "chrome://mozapps/content/extensions/components/native-theme-colors-checkbox.mjs": [
         "../../../toolkit/mozapps/extensions/content/components/native-theme-colors-checkbox.mjs"
@@ -6307,12 +6235,6 @@
       "resource://gre/modules/PlacesQuery.sys.mjs": [
         "../../../toolkit/components/places/PlacesQuery.sys.mjs"
       ],
-      "resource://gre/modules/PlacesSemanticHistoryDatabase.sys.mjs": [
-        "../../../toolkit/components/places/PlacesSemanticHistoryDatabase.sys.mjs"
-      ],
-      "resource://gre/modules/PlacesSemanticHistoryManager.sys.mjs": [
-        "../../../toolkit/components/places/PlacesSemanticHistoryManager.sys.mjs"
-      ],
       "resource://gre/modules/PlacesSyncUtils.sys.mjs": [
         "../../../toolkit/components/places/PlacesSyncUtils.sys.mjs"
       ],
@@ -6598,9 +6520,6 @@
       "resource://gre/modules/addons/GMPProvider.sys.mjs": [
         "../../../toolkit/mozapps/extensions/internal/GMPProvider.sys.mjs"
       ],
-      "resource://gre/modules/addons/ModelHubProvider.sys.mjs": [
-        "../../../toolkit/mozapps/extensions/internal/ModelHubProvider.sys.mjs"
-      ],
       "resource://gre/modules/addons/ProductAddonChecker.sys.mjs": [
         "../../../toolkit/mozapps/extensions/internal/ProductAddonChecker.sys.mjs"
       ],
@@ -6783,9 +6702,6 @@
       ],
       "resource://gre/modules/shared/FormAutofillHeuristics.sys.mjs": [
         "../../../toolkit/components/formautofill/shared/FormAutofillHeuristics.sys.mjs"
-      ],
-      "resource://gre/modules/shared/FormAutofillML.sys.mjs": [
-        "../../../toolkit/components/formautofill/shared/FormAutofillML.sys.mjs"
       ],
       "resource://gre/modules/shared/FormAutofillNameUtils.sys.mjs": [
         "../../../toolkit/components/formautofill/shared/FormAutofillNameUtils.sys.mjs"
@@ -7164,9 +7080,6 @@
       ],
       "resource://pdf.js/PdfJs.sys.mjs": [
         "../../../toolkit/components/pdfjs/content/PdfJs.sys.mjs"
-      ],
-      "resource://pdf.js/PdfJsAIFeature.sys.mjs": [
-        "../../../toolkit/components/pdfjs/content/PdfJsAIFeature.sys.mjs"
       ],
       "resource://pdf.js/PdfJsContextMenu.sys.mjs": [
         "../../../toolkit/components/pdfjs/content/PdfJsContextMenu.sys.mjs"
@@ -7612,12 +7525,6 @@
       "resource://testing-common/LoginTestUtils.sys.mjs": [
         "../../../toolkit/components/passwordmgr/test/LoginTestUtils.sys.mjs"
       ],
-      "resource://testing-common/MLPerfTestUtils.sys.mjs": [
-        "../../../toolkit/components/ml/tests/MLPerfTestUtils.sys.mjs"
-      ],
-      "resource://testing-common/MLTestUtils.sys.mjs": [
-        "../../../toolkit/components/ml/tests/MLTestUtils.sys.mjs"
-      ],
       "resource://testing-common/MerinoTestUtils.sys.mjs": [
         "../../../browser/components/urlbar/tests/quicksuggest/MerinoTestUtils.sys.mjs"
       ],
@@ -7881,12 +7788,6 @@
       ],
       "resource://webcompat/AboutCompat.sys.mjs": [
         "../../../browser/extensions/webcompat/about-compat/AboutCompat.sys.mjs"
-      ],
-      "chrome://global/content/ml/NLPUtils.sys.mjs": [
-        "../../../toolkit/components/ml/content/nlp/Utils.sys.mjs"
-      ],
-      "chrome://global/content/ml/Utils.sys.mjs": [
-        "../../../toolkit/components/ml/content/Utils.sys.mjs"
       ],
       "chrome://mochikit/content/tests/SimpleTest/SimpleTest.js": [
         "../../../testing/mochitest/tests/SimpleTest/SimpleTest.js"

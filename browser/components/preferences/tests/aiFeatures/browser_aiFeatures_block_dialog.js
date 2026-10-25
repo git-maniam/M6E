@@ -28,9 +28,7 @@ describe("settings ai features", () => {
   describe("block AI confirmation dialog", () => {
     it("closes dialog and does nothing on cancel", async () => {
       await SpecialPowers.pushPrefEnv({
-        set: [
-          ["browser.ai.control.default", "available"],
-        ],
+        set: [["browser.ai.control.default", "available"]],
       });
 
       await openAiFeaturePanel(doc, win);
@@ -64,9 +62,7 @@ describe("settings ai features", () => {
 
     it("blocks AI features on confirm, unblocks on toggle off", async () => {
       await SpecialPowers.pushPrefEnv({
-        set: [
-          ["browser.ai.control.default", "available"],
-        ],
+        set: [["browser.ai.control.default", "available"]],
       });
       Services.fog.testResetFOG();
 
@@ -137,7 +133,9 @@ describe("settings ai features", () => {
         "Key points are blocked after global block"
       );
       await waitForAnimationFrame();
-      const keyPointsControl = doc.getElementById("aiControlLinkPreviewKeyPointsSelect");
+      const keyPointsControl = doc.getElementById(
+        "aiControlLinkPreviewKeyPointsSelect"
+      );
       keyPointsControl.focus();
       let pickerOpened = BrowserTestUtils.waitForSelectPopupShown(
         win.docShell.chromeEventHandler.documentGlobal
@@ -152,7 +150,11 @@ describe("settings ai features", () => {
           EventUtils.sendKey("return");
         }
       });
-      Assert.equal(keyPointsSetting.value, "enabled", "Key points are now enabled");
+      Assert.equal(
+        keyPointsSetting.value,
+        "enabled",
+        "Key points are now enabled"
+      );
 
       // Unblock to confirm reset to available and key points are still enabled
       toggle.buttonEl.scrollIntoView();
@@ -171,7 +173,11 @@ describe("settings ai features", () => {
         "available",
         "Translations are now available"
       );
-      Assert.equal(keyPointsSetting.value, "enabled", "Key points stayed enabled");
+      Assert.equal(
+        keyPointsSetting.value,
+        "enabled",
+        "Key points stayed enabled"
+      );
       telemetryEvents = Glean.browser.globalAiControlToggled.testGetValue();
       Assert.equal(telemetryEvents.length, 2, "Two telemetry events recorded");
       Assert.equal(

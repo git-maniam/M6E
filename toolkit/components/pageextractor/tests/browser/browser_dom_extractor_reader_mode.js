@@ -14,7 +14,9 @@ function normalizeWhitespace(text) {
 }
 
 add_task(async function test_dom_extractor_reader_mode() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const title = "Etymology of Mochitests";
   const article =
     `It's interesting that inside of Mozilla most people call mochitests "moh` +

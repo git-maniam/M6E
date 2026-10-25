@@ -39,8 +39,8 @@ add_setup(async () => {
 });
 
 // Test that an optional-only permission in the "permissions" array is not
-// accepted. Test in MV2 and MV3 to maximize coverage across all manifest
-// versions, since the implementation has subtle differences.
+// accepted. Only MV3 is tested, because the only optional-only permission
+// left, userScripts, requires MV3.
 async function test_optional_only_permission_in_permissions(manifest_version) {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -115,10 +115,6 @@ async function test_optional_only_permission_in_permissions(manifest_version) {
   });
 }
 
-add_task(async function test_optional_only_permission_in_permissions_mv2() {
-  await test_optional_only_permission_in_permissions(2);
-});
-
 add_task(async function test_optional_only_permission_in_permissions_mv3() {
   await test_optional_only_permission_in_permissions(3);
 });
@@ -174,10 +170,6 @@ async function test_optional_only_in_optional_permissions(manifest_version) {
 
   await extension.unload();
 }
-
-add_task(async function test_optional_only_in_optional_permissions_mv2() {
-  await test_optional_only_in_optional_permissions(2);
-});
 
 add_task(async function test_optional_only_in_optional_permissions_mv3() {
   await test_optional_only_in_optional_permissions(3);

@@ -40,7 +40,6 @@
   "extensions.ui.extension.hidden",
   "extensions.ui.lastCategory",
   "extensions.ui.locale.hidden",
-  "extensions.ui.mlmodel.hidden",
   "extensions.ui.sitepermission.hidden",
   "extensions.webextensions.ExtensionStorageIDB.migrated.*",
   "mail.*",

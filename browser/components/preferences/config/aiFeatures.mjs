@@ -64,10 +64,7 @@ Preferences.addSetting({ id: "blockAiDescription" });
 Preferences.addSetting({ id: "onDeviceFieldset" });
 Preferences.addSetting({
   id: "onDeviceGroup",
-  deps: [
-    "aiControlTranslationsSelect",
-    "aiControlLinkPreviewKeyPointsSelect",
-  ],
+  deps: ["aiControlTranslationsSelect", "aiControlLinkPreviewKeyPointsSelect"],
   getControlConfig(config, deps) {
     for (let option of config.options) {
       let control = option.items[0];

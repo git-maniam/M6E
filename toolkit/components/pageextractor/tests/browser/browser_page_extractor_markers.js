@@ -66,7 +66,9 @@ function assertBucketed(recorded, exact, message) {
  */
 add_task(async function test_page_extractor_profiler_markers() {
   Services.fog.testResetFOG();
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Profiler marker test</h1>
@@ -204,7 +206,7 @@ add_task(async function test_page_extractor_headless_markers() {
   const { PageExtractorParent } = ChromeUtils.importESModule(
     "resource://gre/actors/PageExtractorParent.sys.mjs"
   );
-  const { html } = MLTestUtils.serveHTML();
+  const { html } = PageExtractorTestUtils.serveHTML();
   const { url, cleanup } = html`
     <!DOCTYPE html>
     <html>
@@ -301,7 +303,9 @@ add_task(async function test_page_extractor_headless_markers() {
  */
 add_task(async function test_page_extractor_metadata_markers() {
   Services.fog.testResetFOG();
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Metadata marker test</h1>
@@ -377,7 +381,7 @@ add_task(async function test_page_extractor_headless_load_navigate_failure() {
     set: [["browser.ml.pageExtractor.headlessTimeoutMs", 500]],
   });
 
-  const { url, cleanup } = MLTestUtils.serveStalledPage();
+  const { url, cleanup } = PageExtractorTestUtils.serveStalledPage();
   try {
     await Assert.rejects(
       PageExtractorParent.getHeadlessExtractor({
@@ -433,7 +437,7 @@ add_task(async function test_page_extractor_headless_error_page_failure() {
     "resource://gre/actors/PageExtractorParent.sys.mjs"
   );
 
-  const { url, cleanup } = MLTestUtils.serveStalledPage();
+  const { url, cleanup } = PageExtractorTestUtils.serveStalledPage();
   await cleanup();
 
   await Assert.rejects(
@@ -557,7 +561,9 @@ add_task(async function test_page_extractor_headless_teardown_unloads_wait() {
  */
 add_task(async function test_page_extractor_empty_page_is_empty() {
   Services.fog.testResetFOG();
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`<div></div>`;
 
   let extraction;
@@ -636,7 +642,9 @@ add_task(
  * only content-side error handling is under test.
  */
 add_task(async function test_page_extractor_get_text_reports_inner_failure() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { tab, cleanup } = await html`
     <article>
       <h1>Reader failure test</h1>
@@ -746,7 +754,7 @@ add_task(async function test_page_extractor_rejects_a_non_member_phase() {
  * never got the layout/paint guarantee.
  */
 add_task(async function test_page_extractor_repeats_wait_while_still_hidden() {
-  const { html } = MLTestUtils.serveHTML();
+  const { html } = PageExtractorTestUtils.serveHTML();
   const { url, cleanup: cleanupServer } = html`
     <!DOCTYPE html>
     <body>
@@ -856,7 +864,9 @@ add_task(async function test_page_extractor_pdf_markers() {
  */
 add_task(async function test_page_extractor_site_strategy_event() {
   Services.fog.testResetFOG();
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <div class="MjjYud">
       <a href="https://example.com">A search result</a>
@@ -889,7 +899,9 @@ add_task(async function test_page_extractor_site_strategy_event() {
  */
 add_task(async function test_page_extractor_metadata_about_reader_strategy() {
   Services.fog.testResetFOG();
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>About-reader metadata test</h1>
@@ -929,7 +941,9 @@ add_task(async function test_page_extractor_metadata_about_reader_strategy() {
  */
 add_task(async function test_page_extractor_canvas_capture_event() {
   Services.fog.testResetFOG();
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="test" width="200" height="200"></canvas>
     <script>
@@ -1067,7 +1081,9 @@ add_task(async function test_page_extractor_event_finish_is_idempotent() {
  */
 add_task(async function test_page_extractor_ping_submits_on_idle_daily() {
   Services.fog.testResetFOG();
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Ping submission test</h1>

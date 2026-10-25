@@ -33,14 +33,6 @@ ai:
         - "'em-14 'geckoview-junit !shippable !iso"
         - "'test-components 'engine-gecko"
 
-ai-perf:
-    selector: fuzzy
-    description: >-
-        Run ml-* perftests on Linux.
-    query:
-        - "^perftest-linux 'ml-"
-    full: true
-
 android-components:
     selector: fuzzy
     description: >-
@@ -447,16 +439,6 @@ media-full:
         - "'gtest"
     intersect_query:
         - "'debug | '-asan | '-tsan"
-
-ml-perf:
-    selector: fuzzy
-    description: >-
-        Run the ml-* perftests on every desktop platform, rather than Linux
-        only like "ai-perf". ONNX tests run as one job per backend
-        (-native/-wasm task variants).
-    query:
-        - "^perftest 'ml-"
-    full: true
 
 mochitest-bc:
     description: >-
