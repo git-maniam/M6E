@@ -23,6 +23,7 @@ pref("browser.aboutwelcome.enabled", false, locked);
 // Firefox Relay signs in with a Mozilla account, so its email mask offers
 // stay off.
 pref("signon.firefoxRelay.feature", "", locked);
+pref("browser.promo.relay.enabled", false, locked);
 
 // The Mozilla VPN integration (IP Protection) is removed.
 pref("browser.ipProtection.enabled", false, locked);

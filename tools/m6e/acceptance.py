@@ -134,7 +134,10 @@ REMOVED_ELEMENTS = {
 # Prefs that switch removed features off. All must have this value and be locked.
 REMOVED_PREFS = {
     "Mozilla accounts and Sync": {"identity.fxaccounts.enabled": False},
-    "Firefox Relay": {"signon.firefoxRelay.feature": ""},
+    "Firefox Relay": {
+        "signon.firefoxRelay.feature": "",
+        "browser.promo.relay.enabled": False,
+    },
     "VPN": {"browser.ipProtection.enabled": False},
     "Translations": {
         "browser.translations.enable": False,

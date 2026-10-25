@@ -728,6 +728,12 @@ Each is the recommended option. The user reviews these in the Summary of Complet
 | P6.3 | LTO and PGO back on, a clean build, the full regression run, acceptance, measurements and the release DMG | |
 
 - **Order:** features that others depend on go last. The AI interface goes before the ML engine, the VPN and Sync before Mozilla accounts, and Nimbus last, because nearly every feature reads it. The analysis may change the order.
+- **P6.1f notes for P6.2 and later steps:**
+  - **`identity.fxaccounts.enabled` tombstone:** the locked `false` in `browser/app/profile/m6e.js` stays, because `firefox.js` no longer defines the pref and these readers call `getBoolPref("identity.fxaccounts.enabled")` without a default: `CustomizableWidgets.sys.mjs`, `browser/components/preferences/tests/browser_legacy_pane_mappings.js`, `browser/components/preferences/tests/head-common.js`, `browser/components/profiles/tests/browser/browser_preferences.js`, `browser/components/enterprisepolicies/tests/browser/browser_policy_disable_profile_import.js` and `browser/modules/test/browser/browser_UsageTelemetry_interaction.js`. P6.2 may drop the tombstone only after these readers are gone or pass a default.
+  - **Relay:** `signon.firefoxRelay.feature` and `browser.promo.relay.enabled` are locked off in `m6e.js` and checked in `acceptance.py` (`REMOVED_PREFS`, "Firefox Relay").
+  - **Sync-owned FxA names:** `fxa-login-rejected-warning` (`preferences.ftl`), `menu-tools-fxa-sign-in2` and `menu-tools-fxa-re-auth` (`menubar.ftl`, used by `browser-menubar.inc.xhtml`), the `FxAccount indicator bits` comment and the `.PanelUI-fxa-menu-device-entry` rule in `panelUI-shared.css` (used by `browser-sync.js`) go with the Sync tree. After Sync is integrated, re-run `git grep -n -i "fxa"` over `browser/` and delete what has no user left.
+  - **Nimbus fixtures:** `browser/components/asrouter/tests/NimbusRolloutMessageProvider.sys.mjs` still holds `SHOW_FIREFOX_ACCOUNTS` and `FXA_SIGNIN_FLOW` messages and `#fxa-toolbar-menu-button` selectors. It is generated, inert, and removed by P6.1i (listed in the Nimbus analysis).
+  - **`sRestrictFromWebContentProcesses`:** the three `identity.fxaccounts.*` entries in `modules/libpref/Preferences.cpp` stay (inert; they restrict leftover values in migrated profiles).
 - **Done when:** every feature is deleted or proven unreachable, the release build passes, the regression suites match the baseline, acceptance passes 15 of 15, and startup, memory and app size are measured against Phase 5.
 
 ## 6. Risks
