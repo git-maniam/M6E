@@ -2302,8 +2302,7 @@ export var BrowserTestUtils = {
   },
 
   /**
-   * Crashes a remote frame tab and cleans up the generated minidumps.
-   * Resolves with the data from the .extra file (the crash annotations).
+   * Crashes a remote frame tab.
    *
    * @param (Browser) browser
    *        A remote <xul:browser> element. Must not be null.
@@ -2312,7 +2311,7 @@ export var BrowserTestUtils = {
    *        for this browser. If so, the Promise will only resolve once the
    *        tab crash page has loaded.
    * @param (bool) shouldClearMinidumps
-   *        True if the minidumps left behind by the crash should be removed.
+   *        Unused. Kept for call-site compatibility.
    * @param (BrowsingContext) browsingContext
    *        The context where the frame leaves. Default to
    *        top level context if not supplied.
@@ -2324,8 +2323,7 @@ export var BrowserTestUtils = {
    *            If specified and `true`, cause the crash asynchronously.
    *
    * @returns (Promise)
-   *   An Object with key-value pairs representing the data from the crash
-   *   report's extra file (if applicable).
+   *   An empty Object, as no crash report is generated.
    */
   async crashFrame(
     browser,

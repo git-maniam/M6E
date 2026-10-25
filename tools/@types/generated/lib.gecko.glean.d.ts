@@ -6177,21 +6177,6 @@ interface GleanImpl {
     succeed: GleanEventWithExtras<{ input_classified_size?: string|number, input_inconclusive_size?: string|number, input_size?: string|number, interest_top_1_hits?: string|number, interest_top_2_hits?: string|number, interest_top_3_hits?: string|number, output_interest_size?: string|number }>;
   }
 
-  crash: {
-    compressedStoreSize: GleanMemoryDistribution;
-    submitAttempt: Record<"content-crash"|"content-hang"|"forkserver-crash"|"forkserver-hang"|"gmplugin-crash"|"gmplugin-hang"|"gpu-crash"|"gpu-hang"|"main-crash"|"main-hang"|"plugin-crash"|"plugin-hang"|"rdd-crash"|"rdd-hang"|"sandboxbroker-crash"|"sandboxbroker-hang"|"socket-crash"|"socket-hang"|"utility-crash"|"utility-hang"|"vr-crash"|"vr-hang", GleanCounter>;
-    submitSuccess: GleanDualLabeledCounter;
-  }
-
-  crashSubmission: {
-    channelStatus: Record<string, GleanCounter>;
-    collectorErrors: Record<string, GleanCounter>;
-    failure: GleanCounter;
-    failureEvent: GleanEventWithExtras<{ id?: string, reason?: string }>;
-    pending: GleanCounter;
-    success: GleanCounter;
-  }
-
   doh: {
     evaluateV2Heuristics: GleanEventWithExtras<{ canaries?: string, captiveState?: string, enterprise?: string, evaluateReason?: string, filtering?: string, networkID?: string, platform?: string, steeredProvider?: string, value?: string }>;
     regionChanged: GleanEventWithExtras<{ new_region?: string, old_region?: string, trigger?: string }>;
