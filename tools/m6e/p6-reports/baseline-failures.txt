@@ -1,0 +1,19 @@
+== security
+  FAIL dom/security/test/https-only/browser_console_logging.js
+  FAIL dom/security/test/https-only/test_resource_upgrade.html
+dom/security/test/https-only/test_resource_upgrade.html
+fatal condition
+== reader
+== modules
+  FAIL toolkit/modules/tests/xpcshell/test_GMPInstallManager.js
+  FAIL toolkit/modules/tests/xpcshell/test_Region.js
+  FAIL toolkit/modules/tests/xpcshell/test_Region_geocoding.js
+  FAIL toolkit/modules/tests/xpcshell/test_Services.js
+== policies
+  FAIL browser/components/enterprisepolicies/tests/xpcshell/test_appupdatepin.js
+  FAIL browser/components/enterprisepolicies/tests/xpcshell/test_appupdateurl.js
+  FAIL browser/components/enterprisepolicies/tests/xpcshell/test_policy_search_engine.js
+  FAIL browser/components/enterprisepolicies/tests/xpcshell/test_simple_pref_policies.js
+browser/components/enterprisepolicies/tests/xpcshell/test_extensionsettings.js
+== pagetelemetry
+  FAIL browser/components/pagetelemetry/tests/browser/browser_m6e_page_telemetry.js
