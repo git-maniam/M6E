@@ -16,9 +16,6 @@ const lazy = XPCOMUtils?.declareLazy({
 });
 
 /**
- */
-
-/**
  * Stateless helpers for assembling the urlbar's engagement-telemetry snapshot.
  * They're split out so the parent-side recorder and a content-side collector
  * can build the same snapshot from their own `start()`/`record()` orchestration

@@ -130,4 +130,3 @@ suites:
         description: "Performance tests for Toolkit: Places"
         tests:
             "Calculate Frecency Speed": ""
-

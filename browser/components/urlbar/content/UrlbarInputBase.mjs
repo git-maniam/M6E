@@ -808,10 +808,6 @@ ${
     return this.#sapName;
   }
 
-  get isSidebarMode() {
-    return false;
-  }
-
   /**
    * Whether this is a bar dedicated to search.
    *

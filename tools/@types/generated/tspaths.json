@@ -43,12 +43,6 @@
       "chrome://browser/content/firefoxview/card-container.mjs": [
         "../../../browser/components/firefoxview/card-container.mjs"
       ],
-      "chrome://browser/content/firefoxview/chats-tab-list.mjs": [
-        "../../../browser/components/firefoxview/chats-tab-list.mjs"
-      ],
-      "chrome://browser/content/firefoxview/chats.mjs": [
-        "../../../browser/components/firefoxview/chats.mjs"
-      ],
       "chrome://browser/content/firefoxview/fxview-empty-state.mjs": [
         "../../../browser/components/firefoxview/fxview-empty-state.mjs"
       ],
@@ -1521,9 +1515,6 @@
       ],
       "resource:///modules/asrouter/RemoteL10n.sys.mjs": [
         "../../../browser/components/asrouter/modules/RemoteL10n.sys.mjs"
-      ],
-      "resource:///modules/asrouter/SidebarChatBotPromo.sys.mjs": [
-        "../../../browser/components/asrouter/modules/SidebarChatBotPromo.sys.mjs"
       ],
       "resource:///modules/asrouter/Spotlight.sys.mjs": [
         "../../../browser/components/asrouter/modules/Spotlight.sys.mjs"

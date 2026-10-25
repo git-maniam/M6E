@@ -1753,7 +1753,7 @@ export class TelemetryEvent {
    *   "keyword", "searchengine", "searchsuggestion", "switchtab", "remotetab",
    *   "extension", "oneoff", "dismiss".
    * @property {WindowMode} [windowMode]
-   *   The window mode: classic, private, or smartwindow.
+   *   The window mode: classic or private.
    */
 
   /**
@@ -2090,7 +2090,7 @@ export class TelemetryEvent {
    * @param {number} [details.viewTime]
    *   The length of the view time in milliseconds.
    * @param {WindowMode} [details.windowMode]
-   *   The window mode: classic, private, or smartwindow.
+   *   The window mode: classic or private.
    * @param {?string} [details.engagementSap]
    *   The search access point. The address bar's `urlbar`, `urlbar_newtab` and
    *   `urlbar_addonpage` depend on the page loaded at the time the search was

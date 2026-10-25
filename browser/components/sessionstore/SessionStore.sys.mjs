@@ -142,8 +142,6 @@
  * @property {string} [restoreSource]
  *   What started the restore, recorded as the `entry_point` of the
  *   `windowFeaturesMismatchIgnored` telemetry event.
- * @property {string} [trigger]
- *   The reason recorded when the restore opens a Smart Window.
  */
 
 /**
@@ -265,8 +263,8 @@ const ARG_CHROMELESS_WINDOW = "chromeless-window";
 /**
  * @typedef {Partial<Record<WindowArgument, true>>} WindowArgumentsState
  *   Arguments for {@link nsIWindowWatcher.openWindow} that are not managed
- *   by other modules (e.g. AI Window/Smart Window and Taskbar Tabs manage
- *   their own window arguments). Serializes to/from {@link nsIPropertyBag2}.
+ *   by other modules (e.g. Taskbar Tabs manages its own
+ *   window arguments). Serializes to/from {@link nsIPropertyBag2}.
  */
 
 // These are tab events that we listen to.
@@ -4974,7 +4972,6 @@ class _SessionStore {
     WINDOW_SHOWING_PROMISES.get(window).promise.then(win =>
       this.#restoreWindows(win, state, {
         overwriteTabs: true,
-        trigger: "undo_close",
       })
     );
 

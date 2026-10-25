@@ -2171,7 +2171,6 @@ pref("sidebar.openTabsPanel.collapsedWindows", "{}");
 pref("sidebar.openTabsPanel.sortOption", "tabStripOrder");
 pref("sidebar.openTabsPanel.hoverPreview.enabled", true);
 
-
 // Adds the contextual password manager to the launcher for existing sidebar
 // users, as long as browser.contextual-password-manager.enabled is true.
 // See browser/components/sidebar/docs/index.md.

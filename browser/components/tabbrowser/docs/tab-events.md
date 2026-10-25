@@ -211,7 +211,7 @@ element's `connectedCallback` and `disconnectedCallback` rather than from
 two similarly named siblings are not notifications. `TabGroupCreateByUser` is how
 the tabbrowser pops its own "name your group" editor — `on_TabGroupCreateByUser`
 calls `openCreateModal` — so dispatching it performs a UI action rather than
-reporting one, and `AutoTabGrouping` creates its already-named groups with
+reporting one, so code that creates already-named groups passes
 `isUserTriggered: false` to steer around that
 ([Bug 2024819](https://bugzilla.mozilla.org/show_bug.cgi?id=2024819) tracks
 separating the editor trigger from the metrics context it rides on).
