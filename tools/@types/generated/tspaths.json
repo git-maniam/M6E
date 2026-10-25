@@ -1732,9 +1732,6 @@
       "resource:///modules/asrouter/PinnableSitesProvider.sys.mjs": [
         "../../../browser/components/asrouter/modules/PinnableSitesProvider.sys.mjs"
       ],
-      "resource:///modules/asrouter/PreonboardingSplash.sys.mjs": [
-        "../../../browser/components/asrouter/modules/PreonboardingSplash.sys.mjs"
-      ],
       "resource:///modules/asrouter/RemoteL10n.sys.mjs": [
         "../../../browser/components/asrouter/modules/RemoteL10n.sys.mjs"
       ],

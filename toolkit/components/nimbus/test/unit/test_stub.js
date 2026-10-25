@@ -63,6 +63,16 @@ add_task(async function test_onUpdate() {
   Assert.equal(calls.length, 1);
 });
 
+add_task(async function test_notifyUpdate() {
+  let feature = NimbusFeatures.urlbar;
+  let calls = [];
+  let callback = (...args) => calls.push(args);
+  feature.onUpdate(callback);
+  feature.notifyUpdate();
+  feature.offUpdate(callback);
+  Assert.deepEqual(calls, [["featureUpdate:urlbar", "pref-updated"]]);
+});
+
 add_task(async function test_feature_override() {
   const { overrideFeature } = ChromeUtils.importESModule(
     "resource://testing-common/FeatureOverride.sys.mjs"

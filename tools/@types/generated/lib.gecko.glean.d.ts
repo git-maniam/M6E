@@ -6562,38 +6562,6 @@ interface GleanImpl {
     windowClosed: GleanDatetime;
   }
 
-  normandy: {
-    exposeNimbusExperiment: GleanEventWithExtras<{ branchSlug?: string, featureId?: string, value?: string }>;
-    enrollAddonRollout: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, experimentType?: string, value?: string }>;
-    enrollAddonStudy: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, experimentType?: string, value?: string }>;
-    enrollFailedAddonRollout: GleanEventWithExtras<{ addonId?: string, branch?: string, conflictingSlug?: string, detail?: string, enrollmentId?: string, prefBranch?: string, preference?: string, reason?: string, value?: string }>;
-    enrollFailedAddonStudy: GleanEventWithExtras<{ addonId?: string, branch?: string, conflictingSlug?: string, detail?: string, enrollmentId?: string, prefBranch?: string, preference?: string, reason?: string, value?: string }>;
-    enrollFailedNimbusExperiment: GleanEventWithExtras<{ addonId?: string, branch?: string, conflictingSlug?: string, detail?: string, enrollmentId?: string, prefBranch?: string, preference?: string, reason?: string, value?: string }>;
-    enrollFailedPreferenceRollout: GleanEventWithExtras<{ addonId?: string, branch?: string, conflictingSlug?: string, detail?: string, enrollmentId?: string, prefBranch?: string, preference?: string, reason?: string, value?: string }>;
-    enrollFailedPreferenceStudy: GleanEventWithExtras<{ addonId?: string, branch?: string, conflictingSlug?: string, detail?: string, enrollmentId?: string, prefBranch?: string, preference?: string, reason?: string, value?: string }>;
-    enrollNimbusExperiment: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, experimentType?: string, value?: string }>;
-    enrollPreferenceRollout: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, experimentType?: string, value?: string }>;
-    enrollPreferenceStudy: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, experimentType?: string, value?: string }>;
-    expPrefChangedPreferenceStudy: GleanEventWithExtras<{ enrollmentId?: string, preferenceName?: string, reason?: string, value?: string }>;
-    graduatePreferenceRollout: GleanEventWithExtras<{ enrollmentId?: string, reason?: string, value?: string }>;
-    unenrollAddonRollback: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, changedPref?: string, conflictingSlug?: string, didResetValue?: string, enrollmentId?: string, prefName?: string, prefType?: string, reason?: string, value?: string }>;
-    unenrollAddonStudy: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, changedPref?: string, conflictingSlug?: string, didResetValue?: string, enrollmentId?: string, prefName?: string, prefType?: string, reason?: string, value?: string }>;
-    unenrollFailedAddonRollback: GleanEventWithExtras<{ caller?: string, changedPref?: string, enrollmentId?: string, originalReason?: string, reason?: string, value?: string }>;
-    unenrollFailedNimbusExperiment: GleanEventWithExtras<{ caller?: string, changedPref?: string, enrollmentId?: string, originalReason?: string, reason?: string, value?: string }>;
-    unenrollFailedPreferenceRollback: GleanEventWithExtras<{ caller?: string, changedPref?: string, enrollmentId?: string, originalReason?: string, reason?: string, value?: string }>;
-    unenrollFailedPreferenceStudy: GleanEventWithExtras<{ caller?: string, changedPref?: string, enrollmentId?: string, originalReason?: string, reason?: string, value?: string }>;
-    unenrollNimbusExperiment: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, changedPref?: string, conflictingSlug?: string, didResetValue?: string, enrollmentId?: string, prefName?: string, prefType?: string, reason?: string, value?: string }>;
-    unenrollPreferenceRollback: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, changedPref?: string, conflictingSlug?: string, didResetValue?: string, enrollmentId?: string, prefName?: string, prefType?: string, reason?: string, value?: string }>;
-    unenrollPreferenceStudy: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, changedPref?: string, conflictingSlug?: string, didResetValue?: string, enrollmentId?: string, prefName?: string, prefType?: string, reason?: string, value?: string }>;
-    updateAddonRollout: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, enrollmentId?: string, previousState?: string, value?: string }>;
-    updateAddonStudy: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, enrollmentId?: string, previousState?: string, value?: string }>;
-    updateFailedAddonRollout: GleanEventWithExtras<{ branch?: string, detail?: string, enrollmentId?: string, reason?: string, value?: string }>;
-    updateFailedAddonStudy: GleanEventWithExtras<{ branch?: string, detail?: string, enrollmentId?: string, reason?: string, value?: string }>;
-    updateNimbusExperiment: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, enrollmentId?: string, previousState?: string, value?: string }>;
-    updatePreferenceRollout: GleanEventWithExtras<{ addonId?: string, addonVersion?: string, branch?: string, enrollmentId?: string, previousState?: string, value?: string }>;
-    validationFailedNimbusExperiment: GleanEventWithExtras<{ branch?: string, l10n_ids?: string, locale?: string, reason?: string, value?: string }>;
-  }
-
   pageExtractor: {
     phase: GleanEventWithExtras<{ canvas_count?: string|number, duration_ms?: string|number, error_name?: string, flow_id?: string, link_count?: string|number, phase?: string, process?: string, site_strategy?: string, status?: string, strategy?: string, text_length?: string|number }>;
   }

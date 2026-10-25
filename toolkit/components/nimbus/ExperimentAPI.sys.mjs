@@ -340,16 +340,16 @@ export class _ExperimentFeature {
         variable,
         pref,
         null,
-        () => this.#notify(),
+        () => this.notifyUpdate(),
         type === "json" ? parseJSON : val => val
       );
     }
   }
 
-  #notify() {
+  notifyUpdate(reason = "pref-updated") {
     for (let callback of [...this.#callbacks]) {
       try {
-        callback(`featureUpdate:${this.featureId}`, "pref-updated");
+        callback(`featureUpdate:${this.featureId}`, reason);
       } catch (e) {
         console.error(e);
       }

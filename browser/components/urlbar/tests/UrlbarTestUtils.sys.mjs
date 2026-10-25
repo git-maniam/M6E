@@ -26,6 +26,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   FormHistoryTestUtils:
     "resource://testing-common/FormHistoryTestUtils.sys.mjs",
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
+  overrideFeature: "resource://testing-common/FeatureOverride.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
   ProvidersManager:
     "moz-src:///browser/components/urlbar/UrlbarProvidersManager.sys.mjs",
@@ -1726,8 +1727,9 @@ export class UrlbarInputBaseTestUtils {
   }
 
   /**
-   * Overrides Nimbus feature variables by setting their fallback prefs.
-   * Variables without a fallback pref are ignored.
+   * Overrides Nimbus feature variables. Variables with a fallback pref are
+   * applied by setting the pref; the others are applied through the feature
+   * override helper. Feature update callbacks are notified of the change.
    *
    * @param {?object} value
    *   Define any desired Nimbus variables in this object.
@@ -1735,16 +1737,21 @@ export class UrlbarInputBaseTestUtils {
    * @param {?string} options.featureId
    *   The name of the Nimbus feature.
    * @returns {Function}
-   *   A cleanup function that restores the prefs.
+   *   A cleanup function that restores the overrides.
    */
   async initNimbusFeature(value = {}, { featureId = "urlbar" } = {}) {
-    const { fallbackPrefs } = lazy.NimbusFeatures[featureId];
+    const feature = lazy.NimbusFeatures[featureId];
+    const { fallbackPrefs } = feature;
     const originals = new Map();
+    const overrides = {};
 
     for (let [variable, variableValue] of Object.entries(value)) {
+      if (variableValue === undefined) {
+        continue;
+      }
       let pref = fallbackPrefs[variable];
-      if (!pref || variableValue === undefined) {
-        this.info(`initNimbusFeature ignoring ${featureId}.${variable}`);
+      if (!pref) {
+        overrides[variable] = variableValue;
         continue;
       }
       if (!originals.has(pref)) {
@@ -1756,6 +1763,12 @@ export class UrlbarInputBaseTestUtils {
         );
       }
       this.#setUserPref(pref, variableValue);
+    }
+
+    let hasOverrides = !!Object.keys(overrides).length;
+    if (hasOverrides) {
+      this.#addVariableOverrides(featureId, overrides);
+      feature.notifyUpdate();
     }
 
     let cleanedUp = false;
@@ -1771,11 +1784,49 @@ export class UrlbarInputBaseTestUtils {
           this.#setUserPref(pref, original);
         }
       }
+      if (hasOverrides) {
+        await this.#removeVariableOverrides(featureId, overrides);
+        feature.notifyUpdate();
+      }
     };
 
     this.registerCleanupFunction?.(cleanup);
 
     return cleanup;
+  }
+
+  #variableOverrides = new Map();
+
+  #addVariableOverrides(featureId, overrides) {
+    let entry = this.#variableOverrides.get(featureId);
+    if (!entry) {
+      entry = { sets: new Set(), remove: null };
+      this.#variableOverrides.set(featureId, entry);
+    }
+    entry.sets.add(overrides);
+    this.#applyVariableOverrides(featureId, entry);
+  }
+
+  async #removeVariableOverrides(featureId, overrides) {
+    let entry = this.#variableOverrides.get(featureId);
+    entry.sets.delete(overrides);
+    await this.#applyVariableOverrides(featureId, entry);
+    if (!entry.sets.size) {
+      this.#variableOverrides.delete(featureId);
+    }
+  }
+
+  #applyVariableOverrides(featureId, entry) {
+    let remove = entry.remove;
+    entry.remove = null;
+    let cleaned = remove?.();
+    if (entry.sets.size) {
+      entry.remove = lazy.overrideFeature({
+        featureId,
+        value: Object.assign({}, ...entry.sets),
+      });
+    }
+    return cleaned;
   }
 
   #getUserPref(pref) {

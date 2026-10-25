@@ -754,7 +754,6 @@ export interface Modules {
   "resource:///modules/asrouter/PageEventManager.sys.mjs": typeof import("resource:///modules/asrouter/PageEventManager.sys.mjs"),
   "resource:///modules/asrouter/PanelTestProvider.sys.mjs": typeof import("resource:///modules/asrouter/PanelTestProvider.sys.mjs"),
   "resource:///modules/asrouter/PinnableSitesProvider.sys.mjs": typeof import("resource:///modules/asrouter/PinnableSitesProvider.sys.mjs"),
-  "resource:///modules/asrouter/PreonboardingSplash.sys.mjs": typeof import("resource:///modules/asrouter/PreonboardingSplash.sys.mjs"),
   "resource:///modules/asrouter/RemoteL10n.sys.mjs": typeof import("resource:///modules/asrouter/RemoteL10n.sys.mjs"),
   "resource:///modules/asrouter/SidebarChatBotPromo.sys.mjs": typeof import("resource:///modules/asrouter/SidebarChatBotPromo.sys.mjs"),
   "resource:///modules/asrouter/SmartWindowNewTabPromo.sys.mjs": typeof import("resource:///modules/asrouter/SmartWindowNewTabPromo.sys.mjs"),
