@@ -150,7 +150,6 @@ module.exports = [
       "browser/themes/shared/UITour.css",
       "browser/themes/shared/aboutRestartRequired.css",
       "browser/themes/shared/aboutSessionRestore.css",
-      "browser/themes/shared/aboutTabCrashed.css",
       "browser/themes/shared/addon-notification.css",
       "browser/themes/shared/addons/extension-controlled.css",
       "browser/themes/shared/addons/unified-extensions.css",

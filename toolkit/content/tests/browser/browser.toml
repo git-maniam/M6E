@@ -88,11 +88,6 @@ fail-if = [
 
 ["browser_contentTitle.js"]
 
-["browser_crash_previous_frameloader.js"]
-run-if = [
-  "crashreporter",
-]
-
 ["browser_default_audio_filename.js"]
 support-files = ["audio_file.txt"]
 

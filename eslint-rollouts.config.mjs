@@ -1718,7 +1718,6 @@ export default [
       "toolkit/components/viewsource/test/browser/browser_open_docgroup.js",
       "toolkit/components/viewsource/test/browser/browser_validatefilename.js",
       "toolkit/components/windowcreator/test/browser_save_form_input_state.js",
-      "toolkit/content/tests/browser/browser_crash_previous_frameloader.js",
       "toolkit/content/tests/browser/browser_isSynthetic.js",
       "toolkit/content/tests/browser/head.js",
       "toolkit/content/tests/chrome/findbar_window.xhtml",
