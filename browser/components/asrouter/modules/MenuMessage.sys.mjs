@@ -63,7 +63,7 @@ export const MenuMessage = {
       }
 
       case this.SOURCES.PXI_MENU: {
-        this.showPxiMenuMessage(browser, message, force);
+        this.showPxiMenuMessage(browser, message);
         break;
       }
     }
@@ -188,7 +188,7 @@ export const MenuMessage = {
     return msgContainer;
   },
 
-  async showPxiMenuMessage(browser, message, force) {
+  async showPxiMenuMessage(browser, message) {
     const win = browser.documentGlobal;
     const { document } = win;
     const msgContainer = this.hidePxiMenuMessage(browser);

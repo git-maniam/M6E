@@ -68,9 +68,6 @@ var gExceptionPaths = [
   // Localization file added programatically in FormAutofillUtils.sys.mjs
   "resource://gre/localization/en-US/toolkit/formautofill",
 
-  // Exclude all services-automation because they are used through webdriver
-  "resource://gre/modules/services-automation/",
-
   // Paths from this folder are constructed in NetErrorParent.sys.mjs based on
   // the type of cert or net error the user is encountering.
   "chrome://global/content/neterror/supportpages/",

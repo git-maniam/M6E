@@ -14,7 +14,6 @@ import { searchTabList } from "chrome://browser/content/firefoxview/search-helpe
 import { SidebarPage } from "./sidebar-page.mjs";
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   NonPrivateTabs: "resource:///modules/OpenTabs.sys.mjs",
   OpenTabsController: "resource:///modules/OpenTabsController.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
@@ -134,7 +133,7 @@ export class SidebarOpenTabs extends SidebarPage {
     privateWindowItem.hidden = !lazy.PrivateBrowsingUtils.enabled;
   }
 
-  async handleCommandEvent(e) {
+  handleCommandEvent(e) {
     switch (e.target.id) {
       case "sidebar-opentabs-context-close-tab": {
         const { tabElement } = this.triggerNode;
@@ -147,13 +146,6 @@ export class SidebarOpenTabs extends SidebarPage {
       case "sidebar-opentabs-sort-by-recency":
         this.#changeSortOption("recency");
         break;
-      case "sidebar-opentabs-connect-another-device": {
-        const url = await lazy.FxAccounts.config.promisePairingURI({
-          entrypoint: "sidebar",
-        });
-        this.topWindow.openTrustedLinkIn(url, "tab");
-        break;
-      }
       default:
         super.handleCommandEvent(e);
         break;

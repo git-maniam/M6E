@@ -420,10 +420,6 @@ class RustLoginsStoreAdapter {
     return result;
   }
 
-  bridgedEngine() {
-    return this.#store.bridgedEngine();
-  }
-
   shutdown() {
     return this.#store.shutdown();
   }
@@ -655,17 +651,6 @@ export class LoginManagerRustStorage {
    * this storage module with a new instance.
    */
   testSaveForReplace() {}
-
-  /**
-   * Returns the Sync bridged engine backed by the same Rust store instance the
-   * storage layer uses, so that Sync and data access share one database handle.
-   * Assumes the storage is already initialized; the sync engine only reaches it
-   * via the active store, which is set after initialization completes.
-   *
-   */
-  bridgedEngine() {
-    return this.#storageAdapter.bridgedEngine();
-  }
 
   /**
    * Returns the "sync id" used by Sync to know whether the store is current with

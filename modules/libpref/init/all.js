@@ -3737,7 +3737,6 @@ pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
 
 pref("services.common.log.logger.rest.request", "Debug");
 pref("services.common.log.logger.rest.response", "Debug");
-pref("services.common.log.logger.tokenserverclient", "Debug");
 
 // The URL of the Firefox Accounts auth server backend
 pref("identity.fxaccounts.auth.uri", "https://api.accounts.firefox.com/v1");

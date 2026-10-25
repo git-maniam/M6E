@@ -582,8 +582,7 @@ export var BrowserUtils = {
     if (url.spec.length > 65535) {
       return null;
     }
-    // Use the same preference as synced tabs to disable what kind
-    // of tabs we can send to another device
+    // Disallow sharing URLs with schemes that are not shareable.
     return INVALID_SHAREABLE_SCHEMES.has(url.scheme) ? null : url;
   },
 
@@ -1049,7 +1048,6 @@ let PromoInfo = {
         "identity.fxaccounts.remote.oauth.uri",
         "identity.fxaccounts.remote.profile.uri",
         "identity.fxaccounts.remote.pairing.uri",
-        "identity.sync.tokenserver.uri",
       ].every(pref => !Services.prefs.prefHasUserValue(pref)),
   },
 };

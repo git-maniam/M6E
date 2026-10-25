@@ -253,12 +253,6 @@
       "chrome://browser/content/firefoxview/search-helpers.mjs": [
         "../../../browser/components/firefoxview/search-helpers.mjs"
       ],
-      "chrome://browser/content/firefoxview/syncedtabs-tab-list.mjs": [
-        "../../../browser/components/firefoxview/syncedtabs-tab-list.mjs"
-      ],
-      "chrome://browser/content/firefoxview/syncedtabs.mjs": [
-        "../../../browser/components/firefoxview/syncedtabs.mjs"
-      ],
       "chrome://browser/content/genai/content/chatbot-promo.mjs": [
         "../../../browser/components/genai/content/chatbot-promo.mjs"
       ],
@@ -6724,9 +6718,6 @@
       "resource://gre/modules/psm/pippki.sys.mjs": [
         "../../../security/manager/pki/pippki.sys.mjs"
       ],
-      "resource://gre/modules/services-automation/ServicesAutomation.sys.mjs": [
-        "../../../services/automation/ServicesAutomation.sys.mjs"
-      ],
       "resource://gre/modules/sessionstore/PrivacyFilter.sys.mjs": [
         "../../../toolkit/modules/sessionstore/PrivacyFilter.sys.mjs"
       ],
@@ -7282,99 +7273,6 @@
       "resource://services-settings/remote-settings.sys.mjs": [
         "../../../services/settings/remote-settings.sys.mjs"
       ],
-      "resource://services-sync/SyncDisconnect.sys.mjs": [
-        "../../../services/sync/modules/SyncDisconnect.sys.mjs"
-      ],
-      "resource://services-sync/SyncedTabs.sys.mjs": [
-        "../../../services/sync/modules/SyncedTabs.sys.mjs"
-      ],
-      "resource://services-sync/TabsStore.sys.mjs": [
-        "../../../services/sync/modules/TabsStore.sys.mjs"
-      ],
-      "resource://services-sync/UIState.sys.mjs": [
-        "../../../services/sync/modules/UIState.sys.mjs"
-      ],
-      "resource://services-sync/addonsreconciler.sys.mjs": [
-        "../../../services/sync/modules/addonsreconciler.sys.mjs"
-      ],
-      "resource://services-sync/addonutils.sys.mjs": [
-        "../../../services/sync/modules/addonutils.sys.mjs"
-      ],
-      "resource://services-sync/bridged_engine.sys.mjs": [
-        "../../../services/sync/modules/bridged_engine.sys.mjs"
-      ],
-      "resource://services-sync/collection_validator.sys.mjs": [
-        "../../../services/sync/modules/collection_validator.sys.mjs"
-      ],
-      "resource://services-sync/constants.sys.mjs": [
-        "../../../services/sync/modules/constants.sys.mjs"
-      ],
-      "resource://services-sync/doctor.sys.mjs": [
-        "../../../services/sync/modules/doctor.sys.mjs"
-      ],
-      "resource://services-sync/engines.sys.mjs": [
-        "../../../services/sync/modules/engines.sys.mjs"
-      ],
-      "resource://services-sync/engines/addons.sys.mjs": [
-        "../../../services/sync/modules/engines/addons.sys.mjs"
-      ],
-      "resource://services-sync/engines/bookmarks.sys.mjs": [
-        "../../../services/sync/modules/engines/bookmarks.sys.mjs"
-      ],
-      "resource://services-sync/engines/clients.sys.mjs": [
-        "../../../services/sync/modules/engines/clients.sys.mjs"
-      ],
-      "resource://services-sync/engines/extension-storage.sys.mjs": [
-        "../../../services/sync/modules/engines/extension-storage.sys.mjs"
-      ],
-      "resource://services-sync/engines/forms.sys.mjs": [
-        "../../../services/sync/modules/engines/forms.sys.mjs"
-      ],
-      "resource://services-sync/engines/history.sys.mjs": [
-        "../../../services/sync/modules/engines/history.sys.mjs"
-      ],
-      "resource://services-sync/engines/passwords.sys.mjs": [
-        "../../../services/sync/modules/engines/passwords.sys.mjs"
-      ],
-      "resource://services-sync/engines/prefs.sys.mjs": [
-        "../../../services/sync/modules/engines/prefs.sys.mjs"
-      ],
-      "resource://services-sync/engines/tabs.sys.mjs": [
-        "../../../services/sync/modules/engines/tabs.sys.mjs"
-      ],
-      "resource://services-sync/keys.sys.mjs": [
-        "../../../services/sync/modules/keys.sys.mjs"
-      ],
-      "resource://services-sync/main.sys.mjs": [
-        "../../../services/sync/modules/main.sys.mjs"
-      ],
-      "resource://services-sync/policies.sys.mjs": [
-        "../../../services/sync/modules/policies.sys.mjs"
-      ],
-      "resource://services-sync/record.sys.mjs": [
-        "../../../services/sync/modules/record.sys.mjs"
-      ],
-      "resource://services-sync/resource.sys.mjs": [
-        "../../../services/sync/modules/resource.sys.mjs"
-      ],
-      "resource://services-sync/service.sys.mjs": [
-        "../../../services/sync/modules/service.sys.mjs"
-      ],
-      "resource://services-sync/stages/declined.sys.mjs": [
-        "../../../services/sync/modules/stages/declined.sys.mjs"
-      ],
-      "resource://services-sync/stages/enginesync.sys.mjs": [
-        "../../../services/sync/modules/stages/enginesync.sys.mjs"
-      ],
-      "resource://services-sync/status.sys.mjs": [
-        "../../../services/sync/modules/status.sys.mjs"
-      ],
-      "resource://services-sync/sync_auth.sys.mjs": [
-        "../../../services/sync/modules/sync_auth.sys.mjs"
-      ],
-      "resource://services-sync/telemetry.sys.mjs": [
-        "../../../services/sync/modules/telemetry.sys.mjs"
-      ],
       "resource://specialpowers/AppTestDelegate.sys.mjs": [
         "../../../testing/specialpowers/content/AppTestDelegate.sys.mjs"
       ],
@@ -7837,48 +7735,6 @@
       "resource://testing-common/simple_unknown_uri_helpers.sys.mjs": [
         "../../../netwerk/test/browser/simple_unknown_uri_helpers.sys.mjs"
       ],
-      "resource://tps/auth/fxaccounts.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/auth/fxaccounts.sys.mjs"
-      ],
-      "resource://tps/logger.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/logger.sys.mjs"
-      ],
-      "resource://tps/modules/addons.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/addons.sys.mjs"
-      ],
-      "resource://tps/modules/bookmarkValidator.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/bookmarkValidator.sys.mjs"
-      ],
-      "resource://tps/modules/bookmarks.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/bookmarks.sys.mjs"
-      ],
-      "resource://tps/modules/formautofill.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/formautofill.sys.mjs"
-      ],
-      "resource://tps/modules/forms.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/forms.sys.mjs"
-      ],
-      "resource://tps/modules/history.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/history.sys.mjs"
-      ],
-      "resource://tps/modules/passwords.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/passwords.sys.mjs"
-      ],
-      "resource://tps/modules/prefs.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/prefs.sys.mjs"
-      ],
-      "resource://tps/modules/tabs.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/tabs.sys.mjs"
-      ],
-      "resource://tps/modules/windows.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/modules/windows.sys.mjs"
-      ],
-      "resource://tps/quit.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/quit.sys.mjs"
-      ],
-      "resource://tps/tps.sys.mjs": [
-        "../../../services/sync/tps/extensions/tps/resource/tps.sys.mjs"
-      ],
       "resource://webcompat/AboutCompat.sys.mjs": [
         "../../../browser/extensions/webcompat/about-compat/AboutCompat.sys.mjs"
       ],
@@ -7923,9 +7779,6 @@
       ],
       "resource://services-settings/Utils.sys.mjs": [
         "../../../services/settings/Utils.sys.mjs"
-      ],
-      "resource://services-sync/util.sys.mjs": [
-        "../../../services/sync/modules/util.sys.mjs"
       ],
       "resource://test/es6module.js": [
         "../../../js/xpconnect/tests/unit/es6module.js"

@@ -188,11 +188,8 @@ services/common/async.sys.mjs
 services/common/hawkclient.sys.mjs
 services/common/hawkrequest.sys.mjs
 services/common/kinto-http-client.sys.mjs
-services/common/kinto-offline-client.sys.mjs
-services/common/kinto-storage-adapter.sys.mjs
 services/common/observers.sys.mjs
 services/common/rest.sys.mjs
-services/common/tokenserverclient.sys.mjs
 services/common/utils.sys.mjs
 services/fxaccounts/Credentials.sys.mjs
 services/fxaccounts/FxAccounts.sys.mjs

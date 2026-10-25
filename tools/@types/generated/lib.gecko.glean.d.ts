@@ -863,7 +863,6 @@ interface GleanImpl {
   deletionRequest: {
     contextId: GleanString;
     impressionId: GleanString;
-    syncDeviceId: GleanString;
   }
 
   newtab: {
@@ -1372,7 +1371,6 @@ interface GleanImpl {
     sidebarBookmarks: Record<"add_bookmark_cancelled"|"add_bookmark_confirmed"|"add_bookmark_folder_cancelled"|"add_bookmark_folder_confirmed"|"add_separator"|"copy_bookmark_url"|"cut_bookmark"|"edit_bookmark_cancelled"|"edit_bookmark_confirmed"|"open_all_bookmarks"|"open_in_new_container_tab"|"open_in_new_tab"|"open_in_new_window"|"open_in_private_window"|"rename_bookmark_folder_cancelled"|"rename_bookmark_folder_confirmed"|"search"|"sort_bookmarks_by_name", GleanCounter>;
     sidebarHistory: Record<"bookmark_tab_cancelled"|"bookmark_tab_confirmed"|"clear_all_website_data_cancelled"|"clear_all_website_data_confirmed"|"clear_history_cancelled"|"clear_history_confirmed"|"copy_link"|"delete_from_history"|"open_in_new_container_tab"|"open_in_new_tab"|"open_in_new_window"|"open_in_private_window"|"search", GleanCounter>;
     sidebarSortHistory: GleanEventWithExtras<{ sort_type?: string }>;
-    sidebarSyncedTabs: Record<"bookmark_tab_cancelled"|"bookmark_tab_confirmed"|"close_tab_on_connected_device"|"copy_link"|"open_in_new_window"|"open_in_private_window"|"search", GleanCounter>;
     allTabsPanelDragstartTabEventCount: GleanCounter;
     allTabsPanelEntrypoint: Record<string, GleanCounter>;
     listAllTabsAction: Record<"close_all_duplicates"|"search_tabs"|"tabs_from_devices", GleanCounter>;
@@ -5960,11 +5958,6 @@ interface GleanImpl {
     clickSendTab: GleanEventWithExtras<{ action?: string, context_type?: string, device_count?: string }>;
     sendTabExposed: GleanEventWithExtras<{ context_type?: string, device_count?: string }>;
     sendTabOpened: GleanEventWithExtras<{ context_type?: string, device_count?: string }>;
-  }
-
-  sendTabToolbar: {
-    clickSendTab: GleanEventWithExtras<{ action?: string, device_count?: string }>;
-    sendTabOpened: GleanEventWithExtras<{ device_count?: string }>;
   }
 
   sync: {

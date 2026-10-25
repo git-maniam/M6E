@@ -14,8 +14,6 @@ EXTRA_COMPONENTS += [
 EXTRA_JS_MODULES["services-common"] += [
     "async.sys.mjs",
     "kinto-http-client.sys.mjs",
-    "kinto-offline-client.sys.mjs",
-    "kinto-storage-adapter.sys.mjs",
     "observers.sys.mjs",
     "rest.sys.mjs",
     "utils.sys.mjs",
@@ -24,7 +22,6 @@ EXTRA_JS_MODULES["services-common"] += [
 EXTRA_JS_MODULES["services-common"] += [
     "hawkclient.sys.mjs",
     "hawkrequest.sys.mjs",
-    "tokenserverclient.sys.mjs",
 ]
 
 TESTING_JS_MODULES.services.common += [

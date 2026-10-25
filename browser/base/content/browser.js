@@ -820,7 +820,7 @@ var gNavigatorBundle = {
   },
 };
 
-function updateFxaToolbarMenu(enable, isInitialUpdate = false) {
+function updateFxaToolbarMenu(enable) {
   // We only show the Firefox Account toolbar menu if the feature is enabled and
   // if sync is enabled.
   const syncEnabled = Services.prefs.getBoolPref(
