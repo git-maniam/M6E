@@ -138,8 +138,6 @@ extern crate crash_helper_client;
 #[cfg(feature = "webmidi_midir_impl")]
 extern crate midir_impl;
 
-#[cfg(all(target_os = "windows", feature = "backgroundtaskregistrar"))]
-extern crate backgroundtaskregistrar;
 #[cfg(all(target_os = "windows", feature = "shell_windows"))]
 extern crate shell_windows;
 #[cfg(target_os = "windows")]
