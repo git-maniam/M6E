@@ -283,7 +283,53 @@ Don't start the next step until the current one builds and checks out. Split a s
 
 ## 4. Next step: Phase 6, deleting the dormant features
 
-**Resuming:** the user starts a session with "Resume from Phase 6". Before continuing:
+### Sunday bookmark: "Resume from Sunday" (written 2026-10-25, resume Monday 2026-10-26)
+**What the phrase means:** the user ends a session on Sunday and starts the next with "Resume from Sunday". Follow the checklist below, then do "Next action" without asking questions. It is the same work as "Resume from Phase 6", with the exact state recorded here.
+
+**State at the bookmark** (everything below is committed and pushed; `git status` is clean apart from untracked `third_party/application-services/automation/kotlin-components-docs/build/`):
+- **`main` is at the P6.1b commit `d12d905ae2`** (check with `git log --oneline -5`; the head is "M6E P6.1b: Delete Translations"). Done and pushed: P6.0 (baseline), P6.1a (VPN), P6.1b (Translations). The objdir `obj-m6e` holds the P6.1b build, so `./mach build` is incremental. LTO and PGO are still off (P6.3 turns them back on).
+- **P6.1c (genai) was started and abandoned, nothing of it is committed.** `git merge --squash m6e-p6/genai` gives **24 conflicted files** because the VPN and Translations removals edited the same lines. Two are modify/delete (`browser/components/aiwindow/models/PreferencesNavMap.sys.mjs` and `.../scripts/generate_prefs_nav_map.py`: resolve with `git rm`). The others: `browser/base/content/{appmenu-viewcache.inc.xhtml,browser-context.inc.xhtml,browser-context.js,browser-sets.js,navigator-toolbox.js,nsContextMenu.sys.mjs,webext-panels.xhtml}`, `.../test/browser-contextMenu/browser_contextmenu.js` (12 hunks), `.../test/browser-sync/browser_contextmenu_sendpage.js`, `browser/components/{moz.build,preferences/OnDeviceModelManager.mjs,preferences/preferences.xhtml}`, three `preferences/tests/aiFeatures/*.js`, `browser/themes/shared/toolbarbuttons.css`, `stylelint-rollouts.config.js`, `toolkit/components/glean/metrics_index.py`, `toolkit/components/messaging-system/lib/MessagingSystemBlocklists.sys.mjs`, `tools/@types/generated/{lib.gecko.glean.d.ts,lib.gecko.modules.d.ts,tspaths.json}` and `tools/m6e/branding/fox-art.txt`.
+- **Every conflict has the same shape:** `main` already removed block A (VPN or Translations), the genai branch removes the neighbouring block B, so the right result removes both. Method that worked for the first two merges: resolve by hand keeping neither side's block. For genai, try `git -c merge.conflictstyle=diff3 merge --squash m6e-p6/genai` (this shows the base) and then `./mach python tools/m6e/p6-reports/resolve_pure_deletions.py <files>`. That script resolves hunks where both sides only delete lines. **It is untested: it matched nothing today because the markers were not diff3.** Check each result with `node --check` (JS) and by reading. Hunks it leaves need hand work; independent files can go to parallel agents (disjoint files, one shared tree, no builds).
+- **The genai prep notes say:** it needs `./mach build` (C++ changes: `StaticPrefList.yaml`, `AboutRedirector.cpp`, `BaseHistory.cpp`, `nsFrameLoader.cpp`, `nsContentSecurityUtils.cpp`, `DOMSecurityMonitor.cpp`, `ExtensionPolicyService.cpp`, `TestFilenameEvalParser.cpp`) and lists the tests to run (`tools/m6e/p6-reports/prep/p6-1c-genai.md`).
+
+**Removal branches** (all on origin, all prepared by the workflow; tips on 2026-10-25):
+
+| Step | Branch | Tip | Review state |
+|---|---|---|---|
+| P6.1a | `m6e-p6/vpn` | `c589a5c3c4` | Integrated. Do not merge anything else from it |
+| P6.1b | `m6e-p6/translations` | `99175a201c` | Integrated, including the late fix |
+| P6.1c | `m6e-p6/genai` | `47fcc5e0d7` | 2 review rounds; last one failed on a connection reset |
+| P6.1d | `m6e-p6/ml` | `ca3562e374` | Prepared, 1 review round failed on a connection reset |
+| P6.1e | `m6e-p6/sync` | `ad097c01b4` | 1 fix round missing |
+| P6.1f | `m6e-p6/fxaccounts` | `da7362732d` | Never successfully reviewed |
+| P6.1g | `m6e-p6/updater` | `cb7fe0c53e` | 1 fix round missing |
+| P6.1h | `m6e-p6/crashreporter` | `5294fced1b` | 2 of 3 rounds |
+| P6.1i | `m6e-p6/nimbus` | `560e96834d` | 2 of 3 rounds |
+
+The review loop was interrupted on 2026-10-25 when the user paused. A workflow can only be resumed in the session that started it, so a new session cannot resume it. The reviewer and fixer prompts are in the script `/Users/rsubramaniam/.claude/projects/-Users-rsubramaniam-Projects-M6E/b816d54f-fd2d-4874-b9ab-52e9f5d88e30/workflows/scripts/m6e-phase6-analyse-and-prepare-wf_ac9fd114-06e.js` (functions `reviewPrompt`, `fixPrompt`, `reviewLoop`); reuse them in a review-only workflow if the build alone doesn't catch a missed reference. **Before merging a branch, `git log cb002d4874..m6e-p6/<x>` and read any commit you didn't expect.** A resumed run added a commit to the VPN branch that removed the `browser.vpn_promo.enabled` lock; that one is deliberately not merged.
+
+**Checklist**
+1. Read `CLAUDE.md`, the spec, this plan and `git log --oneline -15`. `git fetch`; pull if `origin/main` is ahead.
+2. `git status` must be clean. If `git status` shows a half-finished merge, run `git reset --hard HEAD` (the branches are safe on origin).
+3. Make sure the screen is awake and unlocked before any window-based suite (`trustpanel`, `pagetelemetry`). A locked display shows as "application timed out after 370 seconds with no output" and 0 checks.
+
+**Next action:** integrate P6.1c to P6.1i one at a time, in table order, with this loop per feature:
+1. `git merge --squash m6e-p6/<x>` and resolve conflicts (see above).
+2. `./mach build > artifacts/p6/integ/<x>-build.log` (6 minutes for a front-end plus Glean change without LTO or PGO). Configure changes (updater, crash reporter) rebuild everything; batch those.
+3. Run the feature's consumer suites (the prep note lists them), then `tools/m6e/run_tests.sh artifacts/p6/integ/<x>-regress`.
+4. Compare failures with a baseline, not with memory: the P6.0 baseline for the `run_tests.sh` suites is in `artifacts/p6/baseline` (list in `failures.txt` and in "P6.0 baseline" below). For the six consumer suites (languages, aiFeatures and search preference panes, context menu, UITour aiControls, ML engine) the post-VPN parent baseline is `artifacts/p6/baseline3`; the VPN consumer suites are in `artifacts/p6/baseline2`. A suite with no baseline needs a build of the parent commit (check out the parent, `./mach build`, run the suites, check out `main`, rebuild).
+5. Rerun any timeout alone before blaming the removal. `trustpanel` gives a different flaky timeout on most runs (`browser_trust_panel*.js`); `browser_search_results_back_button.js` is flaky; all pass alone.
+6. Commit one commit `M6E P6.1x: …` (squash any late review fixes into it), add a "P6.1x (done …)" bullet below, push.
+After P6.1i: P6.2 (lint configs and the unreachability proof for what stays, including the `mots.yaml` leftovers) and P6.3 (LTO and PGO back on, clean build, full regressions, acceptance 15 of 15, measurements, release DMG). Estimated remaining: about 7 to 10 hours.
+
+**Things that bit us on 2026-10-24/25**
+- A background `./mach build` was killed by SIGTERM once from outside; `./mach build` resumes it.
+- Mochitests need port 8888 and the objdir, so never run two at once or merge branches while tests run: browser tests read chrome files from the source tree.
+- Agent worktrees under `.claude/worktrees/` hold full copies of the repo; remove them (`git worktree remove --force --force`) when a workflow ends. The VS Code C++ and Java servers crashed on them; `.vscode/settings.json` and `jsconfig.json` (both git-ignored here) now exclude them.
+- Edits of `tools/@types/generated/*` are hand-made in the removal branches; regenerate or resolve carefully.
+
+
+**Resuming (general):** the user starts a session with "Resume from Phase 6" or "Resume from Sunday" (see the bookmark above). Before continuing:
 1. Read `CLAUDE.md`, the spec (`m6e_browser_agent_instructions.md`) and this plan, and run `git log --oneline -15`.
 2. Run `git status` and `git fetch`. If `origin/main` is ahead (the user sometimes commits from the IDE), pull first.
 3. Build with `./mach build`. The objdir `obj-m6e` normally survives between sessions, so this is incremental; a clean objdir or a mozconfig change means a full build.

@@ -10,6 +10,7 @@ This is a Firefox fork being turned into "M6E", a debloated, privacy-first brows
 - `M6E_IMPLEMENTATION_PLAN.md`: how it's built, covering the step loop, tools, a progress log with commits, as-built notes and the next step.
 
 Resuming: when the user says "Resume from Phase N", follow the resuming checklist at the top of the plan's section 4 ("Next step"), then continue with that phase.
+"Resume from Sunday" is a bookmark: open the plan's section 4, read "Sunday bookmark" and follow its checklist and "Next action" without asking questions.
 
 Working rules:
 - **Where M6E changes live:**
