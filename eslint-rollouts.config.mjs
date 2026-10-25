@@ -806,8 +806,6 @@ export default [
       "browser/components/preferences/tests/siteData/browser_siteData_multi_select.js",
       "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_DownloadLastDirWithCPS.js",
       "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_about_nimbus.js",
-      "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_about_nimbus_dismiss.js",
-      "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_about_nimbus_impressions.js",
       "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_about_nimbus_messaging.js",
       "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_cleanup.js",
       "browser/components/privatebrowsing/test/browser/browser_privatebrowsing_downloadLastDir.js",
