@@ -102,13 +102,13 @@ describe("settings ai features", () => {
 
       // Confirm the dialog to block
       let defaultSetting = win.Preferences.getSetting("aiControlDefaultToggle");
-      let translationsSetting = win.Preferences.getSetting(
-        "aiControlTranslationsSelect"
+      let pdfjsSetting = win.Preferences.getSetting(
+        "aiControlPdfjsAltTextSelect"
       );
       Assert.equal(
-        translationsSetting.value,
+        pdfjsSetting.value,
         "available",
-        "Translations are enabled"
+        "PDF.js alt text is enabled"
       );
       await waitForSettingChange(defaultSetting, () =>
         EventUtils.synthesizeMouseAtCenter(dialogEl.confirmButton, {}, win)
@@ -125,9 +125,9 @@ describe("settings ai features", () => {
         "ML enabled pref set to false after confirm"
       );
       Assert.equal(
-        translationsSetting.value,
+        pdfjsSetting.value,
         "blocked",
-        "Translations are now blocked"
+        "PDF.js alt text is now blocked"
       );
       let telemetryEvents = Glean.browser.globalAiControlToggled.testGetValue();
       Assert.equal(telemetryEvents.length, 1, "One telemetry event recorded");
@@ -181,9 +181,9 @@ describe("settings ai features", () => {
         "ML enabled pref set to true after unblocking"
       );
       Assert.equal(
-        translationsSetting.value,
+        pdfjsSetting.value,
         "available",
-        "Translations are now available"
+        "PDF.js alt text is now available"
       );
       Assert.equal(stgSetting.value, "enabled", "STG stayed enabled");
       telemetryEvents = Glean.browser.globalAiControlToggled.testGetValue();

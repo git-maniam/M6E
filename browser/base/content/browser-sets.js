@@ -7,7 +7,6 @@ document.addEventListener(
   () => {
     const lazy = {};
     ChromeUtils.defineESModuleGetters(lazy, {
-      TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
       AIWindowUI:
         "moz-src:///browser/components/aiwindow/ui/modules/AIWindowUI.sys.mjs",
       ContainerCreationPanel:
@@ -147,15 +146,6 @@ document.addEventListener(
             break;
           case "cmd_findSelection":
             gLazyFindCommand("onFindSelectionCommand");
-            break;
-          case "cmd_translate":
-            FullPageTranslationsPanel.open(event);
-            break;
-          case "cmd_openAboutTranslations":
-            lazy.TranslationsParent.openAboutTranslationsPage({
-              browserWindow: window,
-              targetLanguage: "derive",
-            }).catch(console.error);
             break;
           case "cmd_editPDF":
             switchToTabHavingURI("about:pdf", true);

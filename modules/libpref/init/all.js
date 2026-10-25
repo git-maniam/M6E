@@ -540,9 +540,6 @@ pref("toolkit.telemetry.dap.leader.hpke", "ACkAACAAAQABACDk8wgwe2-TqHyaL74uqjVWM
 pref("toolkit.telemetry.dap.helper.url", "https://dap.services.mozilla.com");
 pref("toolkit.telemetry.dap.helper.hpke", "ACkAACAAAQABACAucqWdIQRN6BxumPBRXIlg2JsxcznwWX7vyqzM3cjuQA");
 
-// Controls telemetry logs for the Translations feature throughout Firefox.
-pref("toolkit.telemetry.translations.logLevel", "Error");
-
 // pref for mozilla to induce a new ping from users. This value should only ever be increased
 // and doing so will induce a new data ping from all users, so be careful. Mozilla may edit
 // this pref via our remote update/experimentation system
@@ -3574,51 +3571,8 @@ pref("browser.storageManager.pressureNotification.usageThresholdGB", 5);
 
 pref("browser.sanitizer.loglevel", "Warn");
 
-// Enable Firefox translations powered by the Bergamot translations
-// engine https://browser.mt/. See Bug 971044. Note that this pref can be turned
-// on in different apps like Firefox Desktop, even if it's disabled by default here.
-pref("browser.translations.enable", false);
-// Enable Firefox Select translations powered by the Bergamot translations
-// engine https://browser.mt/. Note that this pref can be turned on in different apps
-// like Firefox Desktop, even if it's disabled by default here.
-pref("browser.translations.select.enable", false);
-// Set to "All" to see all logs, which are useful for debugging. Set to "Info" to see
-// the application logic logs, and not all of the translated messages, which can be
-// slow and overwhelming.
-pref("browser.translations.logLevel", "Error");
-// The BCP-47 language tags of the most recently translated-into target language.
-// This preference is considered when offering a specific language to translate into,
-// but is not considered as a "known" language when deciding whether to offer Translations at all.
-pref("browser.translations.mostRecentTargetLanguages", "");
-// A comma-separated list of BCP-47 language tags that affect the behavior of translations.
-// Languages listed in the alwaysTranslateLanguages list will trigger auto-translate on page load.
-pref("browser.translations.alwaysTranslateLanguages", "");
-// A comma-separated list of BCP-47 language tags that affect the behavior of translations.
-// Languages listed in the neverTranslateLanguages list will signal that the translations button
-// and menus should not be displayed automatically when visiting pages in those languages.
-pref("browser.translations.neverTranslateLanguages", "");
-// By default the translations engine on about:translations uses text for translation,
-// and the full page translations uses HTML. Set this pref to true to use the HTML
-// translation behavior on about:translations. Requires a page refresh.
-pref("browser.translations.useHTML", false);
-// Automatically popup an offer to translate on sites.
-pref("browser.translations.automaticallyPopup", true);
-// Simulate the behavior of using a device that does not support the translations engine.
-// Requires restart.
-// Enables or disables the usage of lexical shortlisting for the translation models.
-// Using a lexical shortlist will increase translation speed, but may reduce quality.
-pref("browser.translations.useLexicalShortlist", false);
-pref("browser.translations.simulateUnsupportedEngine", false);
-// The translations code relies on asynchronous network request. Chaos mode simulates
-// flaky and slow network connections, so that the UI may be manually tested. The
-// "chaos.errors" makes network requests fail, while "timeoutMS" randomly times out
-// between 0ms and the timeoutMS provided.
-pref("browser.translations.chaos.errors", false);
-pref("browser.translations.chaos.timeoutMS", 0);
-
 // AI controls
 pref("browser.ai.control.default", "available");
-pref("browser.ai.control.translations", "default");
 pref("browser.ai.control.pdfjsAltText", "default");
 pref("browser.ai.control.smartTabGroups", "default");
 pref("browser.ai.control.linkPreviewKeyPoints", "default");

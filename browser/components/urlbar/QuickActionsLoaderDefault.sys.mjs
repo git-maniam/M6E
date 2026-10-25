@@ -15,7 +15,6 @@ const lazy = XPCOMUtils.declareLazy({
   Sanitizer: "resource:///modules/Sanitizer.sys.mjs",
   ScreenshotsUtils:
     "moz-src:///browser/components/screenshots/ScreenshotsUtils.sys.mjs",
-  TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
   AUS: {
     service: "@mozilla.org/updates/update-service;1",
     iid: Ci.nsIApplicationUpdateService,
@@ -290,28 +289,6 @@ const DEFAULT_ACTIONS = {
     icon: "chrome://mozapps/skin/extensions/category-themes.svg",
     label: "quickactions-themes",
     onPick: openAddonsUrl("addons://list/theme"),
-  },
-  translate: {
-    l10nCommands: ["quickactions-cmd-translate"],
-    icon: "chrome://browser/skin/translations-companion.svg",
-    label: "quickactions-translate",
-    isUnsupported: () => {
-      return !(
-        lazy.TranslationsParent.AIFeature.isEnabled &&
-        Services.prefs.getBoolPref(
-          "browser.translations.quickAction.enabled",
-          false
-        )
-      );
-    },
-    onPick: async (_queryContext, controller) => {
-      await lazy.TranslationsParent.openAboutTranslationsPage({
-        browserWindow: controller.browserWindow,
-        targetLanguage: "derive",
-      });
-
-      return { focusContent: true };
-    },
   },
   update: {
     l10nCommands: ["quickactions-cmd-update"],

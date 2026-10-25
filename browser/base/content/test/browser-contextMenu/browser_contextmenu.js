@@ -56,10 +56,6 @@ let hasSplitViews = Services.prefs.getBoolPref(
   false
 );
 
-const hasSelectTranslations =
-  Services.prefs.getBoolPref("browser.translations.enable") &&
-  Services.prefs.getBoolPref("browser.translations.select.enable");
-
 const example_base =
   // eslint-disable-next-line sdl/no-insecure-url
   "http://example.com/browser/browser/base/content/test/browser-contextMenu/";
@@ -269,7 +265,6 @@ add_task(async function test_link() {
     "#test-link",
     [
       ...kLinkItems,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -285,7 +280,6 @@ add_task(async function test_link_in_shadow_dom() {
     "#shadow-host",
     [
       ...kLinkItems,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -343,7 +337,6 @@ add_task(async function test_linkpreviewcommand() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -397,7 +390,6 @@ add_task(async function test_linkpreviewcommand_disabled() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -483,7 +475,6 @@ add_task(async function test_mailto() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -506,7 +497,6 @@ add_task(async function test_tel() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -1956,7 +1946,6 @@ add_task(async function test_select_text() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
       "---",
       null,
@@ -2001,9 +1990,6 @@ add_task(async function test_select_text_search_service_not_initialized() {
         true,
         "context-use-mini-window",
         true,
-        ...(hasSelectTranslations
-          ? ["---", null, "context-translate-selection", true]
-          : []),
         ...askChatMenu,
         "---",
         null,
@@ -2079,7 +2065,6 @@ add_task(async function test_select_text_link() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
       "---",
       null,
@@ -2672,7 +2657,6 @@ add_task(async function test_mathml_link() {
     "#mathml-with-link > a",
     [
       ...kLinkItems,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -2690,7 +2674,6 @@ add_task(async function test_mathml_link() {
       "#deprecated-mathml-with-link > mrow",
       [
         ...kLinkItems,
-        ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
         ...askChatMenu,
       ],
       {
@@ -2788,7 +2771,6 @@ add_task(async function test_background_image() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {
@@ -2827,7 +2809,6 @@ add_task(async function test_background_image() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
       "---",
       null,
@@ -2911,7 +2892,6 @@ add_task(async function test_strip_on_share_on_secure_about_page() {
       true,
       "context-searchselect-private",
       true,
-      ...(hasSelectTranslations ? ["context-translate-selection", true] : []),
       ...askChatMenu,
     ],
     {

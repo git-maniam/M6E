@@ -135,10 +135,6 @@ REMOVED_ELEMENTS = {
 REMOVED_PREFS = {
     "Mozilla accounts and Sync": {"identity.fxaccounts.enabled": False},
     "VPN": {"browser.ipProtection.enabled": False},
-    "Translations": {
-        "browser.translations.enable": False,
-        "browser.ai.control.translations": "blocked",
-    },
     "AI": {
         "browser.ml.enable": False,
         "browser.ml.chat.enabled": False,

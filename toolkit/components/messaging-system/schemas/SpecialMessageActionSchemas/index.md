@@ -74,9 +74,9 @@ Opens a given about page.
 
 Only pages in the `ALLOWED_ABOUT_PAGES` allowlist are permitted; any other
 page throws an error. As of writing, the allowed pages are: `addons`,
-`profiles`, `translations`, `keyboard`, `logins`, `preferences`,
-`privatebrowsing`, `protections`, `referrals`, `settings`, `welcome`,
-`newtab`, `home`, and `robots`.
+`profiles`, `keyboard`, `logins`, `preferences`, `privatebrowsing`,
+`protections`, `referrals`, `settings`, `welcome`, `newtab`, `home`, and
+`robots`.
 
 Example:
 

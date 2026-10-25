@@ -47,7 +47,6 @@ signon.storage.rust.enabled  # Nightly stores logins through the Rust component
 # Dormant features that are locked off
 dom.security.unexpected_system_load_telemetry_enabled  # telemetry is off
 extensions.formautofill.useml  # needs browser.ml.enable, which is locked off
-extensions.translations.disabled  # Translations is locked off
 intl.multilingual.liveReload  # the interface is en-US only
-javascript.options.wasm_moz_intgemm  # Translations' matrix builtin; privileged contexts only (IsPrivilegedContext)
+javascript.options.wasm_moz_intgemm  # no caller left; locked off in m6e.js; privileged contexts only (IsPrivilegedContext)
 toolkit.crashreporter.include_context_heap  # no crash reporter

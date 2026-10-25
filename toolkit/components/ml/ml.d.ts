@@ -13,6 +13,51 @@
 import { type PipelineOptions } from "chrome://global/content/ml/EngineProcess.sys.mjs";
 import { MLEngine } from "./actors/MLEngineParent.sys.mjs";
 
+/**
+ * For Remote Settings, the JSON details about the attachment.
+ */
+export interface Attachment {
+  // e.g. "2f7c0f7bbc...ca79f0850c4de",
+  hash: string;
+  // e.g. 5047568,
+  size: number;
+  // e.g. "ort-wasm-simd-threaded.wasm",
+  filename: string;
+  // e.g. "main-workspace/ml-onnx-runtime/316ebb3a-0682-42cc-8e73-a3ba4bbb280f.wasm",
+  location: string;
+  // e.g. "application/octet-stream"
+  mimetype: string;
+}
+
+/**
+ * The JSON that is synced from Remote Settings for the wasm binaries.
+ */
+export interface WasmRecord {
+  // e.g. "0d4db293-a17c-4085-9bd8-e2e146c85000"
+  id: string;
+  // The name of the project, e.g. "onnx-runtime"
+  name: string;
+  // The human readable identifier for the release. e.g. "v0.4.4"
+  release: string;
+  // The commit hash for the project that generated the wasm.
+  revision: string;
+  // The license of the wasm, as a https://spdx.org/licenses/
+  license: string;
+  // The semver number, used for handling future format changes. e.g. 1.0
+  version: string;
+  // The sha256 hash of the decompressed file
+  decompressedHash: string;
+  // The size of the decompressed wasm file (bytes)
+  decompressedSize: number;
+  // The file attachment for this record
+  attachment: Attachment;
+  // e.g. 1673455932527
+  last_modified: string;
+  // A JEXL expression to determine whether this record should be pulled from Remote Settings
+  // See: https://remote-settings.readthedocs.io/en/latest/target-filters.html#filter-expressions
+  filter_expression: string;
+}
+
 export type EngineStatus =
   // The engine is waiting for a previous one to shut down.
   | "SHUTTING_DOWN_PREVIOUS_ENGINE"

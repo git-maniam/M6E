@@ -1262,7 +1262,6 @@ static nsLiteralCString sStyleSrcUnsafeInlineAllowList[] = {
     "chrome://browser/content/preferences/dialogs/siteDataSettings.xhtml"_ns,
     "chrome://browser/content/preferences/dialogs/sitePermissions.xhtml"_ns,
     "chrome://browser/content/preferences/dialogs/syncChooseWhatToSync.xhtml"_ns,
-    "chrome://browser/content/preferences/dialogs/translations.xhtml"_ns,
     "chrome://browser/content/preferences/fxaPairDevice.xhtml"_ns,
     "chrome://browser/content/safeMode.xhtml"_ns,
     "chrome://browser/content/sanitize_v2.xhtml"_ns,

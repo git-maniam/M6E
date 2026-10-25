@@ -111,7 +111,6 @@ ChromeUtils.defineESModuleGetters(this, {
   ToolbarDropHandler:
     "moz-src:///browser/components/customizableui/ToolbarDropHandler.sys.mjs",
   ToolbarIconColor: "moz-src:///browser/themes/ToolbarIconColor.sys.mjs",
-  TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
   UIDensityTelemetry: "moz-src:///browser/modules/UIDensityTelemetry.sys.mjs",
   UITour: "moz-src:///browser/components/uitour/UITour.sys.mjs",
   UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
@@ -215,16 +214,6 @@ XPCOMUtils.defineLazyScriptGetter(
   this,
   "gPermissionPanel",
   "chrome://browser/content/browser-sitePermissionPanel.js"
-);
-XPCOMUtils.defineLazyScriptGetter(
-  this,
-  "SelectTranslationsPanel",
-  "chrome://browser/content/translations/selectTranslationsPanel.js"
-);
-XPCOMUtils.defineLazyScriptGetter(
-  this,
-  "FullPageTranslationsPanel",
-  "chrome://browser/content/translations/fullPageTranslationsPanel.js"
 );
 XPCOMUtils.defineLazyScriptGetter(
   this,
@@ -2021,17 +2010,6 @@ var XULBrowserWindow = {
       "repair-text-encoding"
     ));
   },
-  get _menuItemForTranslations() {
-    delete this._menuItemForTranslations;
-    return (this._menuItemForTranslations =
-      document.getElementById("cmd_translate"));
-  },
-  get _moreToolsTranslateMenuItem() {
-    delete this._moreToolsTranslateMenuItem;
-    return (this._moreToolsTranslateMenuItem = document.getElementById(
-      "cmd_openAboutTranslations"
-    ));
-  },
 
   setDefaultStatus(status) {
     this.defaultStatus = status;
@@ -2469,19 +2447,6 @@ var XULBrowserWindow = {
         element.setAttribute("disabled", "true");
       }
     }
-
-    if (TranslationsParent.isFullPageTranslationsRestrictedForPage(gBrowser)) {
-      this._menuItemForTranslations.setAttribute("disabled", "true");
-    } else {
-      this._menuItemForTranslations.removeAttribute("disabled");
-    }
-
-    const shouldShowTranslationsMenuItems =
-      TranslationsParent.AIFeature.isEnabled &&
-      TranslationsParent.getIsTranslationsEngineSupported();
-
-    this._menuItemForTranslations.hidden = !shouldShowTranslationsMenuItems;
-    this._moreToolsTranslateMenuItem.hidden = !shouldShowTranslationsMenuItems;
   },
 
   /**

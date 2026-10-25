@@ -12,7 +12,6 @@ const NETWORK_TRR_MODE_PREF = "network.trr.mode";
 const ALLOWED_ABOUT_PAGES = new Set([
   "addons",
   "profiles",
-  "translations",
   "keyboard",
   "logins",
   "preferences",

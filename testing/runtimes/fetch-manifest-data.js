@@ -134,7 +134,6 @@ function getArtifactPrefix(jobName) {
     "mochitest-devtools-chrome",
     "mochitest-browser-media",
     "mochitest-browser-a11y",
-    "mochitest-browser-translations",
     "mochitest-plain-gpu",
     "mochitest-plain",
     "mochitest-chrome-gpu",

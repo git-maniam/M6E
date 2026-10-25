@@ -189,10 +189,6 @@ config = {
         ],
         "mochitest-browser-a11y": ["--flavor=browser", "--subsuite=a11y"],
         "mochitest-browser-media": ["--flavor=browser", "--subsuite=media-bc"],
-        "mochitest-browser-translations": [
-            "--flavor=browser",
-            "--subsuite=translations",
-        ],
         "mochitest-browser-chrome-ml-models": [
             "--flavor=browser",
             "--subsuite=ml-models",

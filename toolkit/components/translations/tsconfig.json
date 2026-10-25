@@ -1,5 +1,5 @@
 {
-  "include": ["content/translations-document.sys.mjs", "translations.d.ts"],
+  "include": ["LanguageDetector.sys.mjs", "translations.d.ts"],
   "extends": "../../../tools/@types/tsconfig.json",
 
   "compilerOptions": {

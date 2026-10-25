@@ -208,7 +208,6 @@ linux-tests:
     - mochitest-browser-chrome
     - mochitest-browser-chrome-ml-models
     - mochitest-browser-media
-    - mochitest-browser-translations
     - mochitest-chrome
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
@@ -241,7 +240,6 @@ linux-2404-tsan-tests:
     - mochitest-browser-a11y
     - mochitest-browser-chrome
     - mochitest-browser-media
-    - mochitest-browser-translations
     - mochitest-chrome
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
@@ -282,7 +280,6 @@ linux2204-wayland-tests:
     - mochitest-browser-chrome
     - mochitest-browser-chrome-failures
     - mochitest-browser-media
-    - mochitest-browser-translations
     - mochitest-chrome
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
@@ -363,7 +360,6 @@ windows11-25h2-tests:
     - mochitest-browser-a11y
     - mochitest-browser-chrome
     - mochitest-browser-media
-    - mochitest-browser-translations
     - mochitest-chrome
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
@@ -459,7 +455,6 @@ macosx1500-64-tests:
     - mochitest-browser-a11y
     - mochitest-browser-chrome
     - mochitest-browser-media
-    - mochitest-browser-translations
     - mochitest-chrome
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
@@ -498,7 +493,6 @@ macosx1500-aarch64-tests:
     - mochitest-browser-a11y
     - mochitest-browser-chrome
     - mochitest-browser-media
-    - mochitest-browser-translations
     - mochitest-chrome
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome

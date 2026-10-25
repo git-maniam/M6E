@@ -51,9 +51,6 @@ ChromeUtils.defineESModuleGetters(this, {
   LinkPreview: "moz-src:///browser/components/genai/LinkPreview.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
-  TranslationsParent: "resource://gre/actors/TranslationsParent.sys.mjs",
-  TranslationsUtils:
-    "chrome://global/content/translations/TranslationsUtils.mjs",
   LaunchOnLogin: "resource://gre/modules/LaunchOnLogin.sys.mjs",
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
   FormAutofillPreferences:
@@ -115,7 +112,6 @@ Preferences.addAll([
   // AI Controls, these pref values can affect settings on the main pane and
   // have base Settings here
   { id: "browser.ai.control.default", type: "string" },
-  { id: "browser.ai.control.translations", type: "string" },
   { id: "browser.ai.control.pdfjsAltText", type: "string" },
   { id: "browser.ai.control.smartTabGroups", type: "string" },
   { id: "browser.ai.control.linkPreviewKeyPoints", type: "string" },
@@ -307,14 +303,6 @@ Preferences.addSetting({
 });
 Preferences.addSetting({ id: "containersPlaceholder" });
 Preferences.addSetting({
-  id: "legacyTranslationsVisible",
-  deps: ["aiControlDefault", "aiControlTranslations"],
-  visible: ({ aiControlDefault, aiControlTranslations }) =>
-    !Services.prefs.getBoolPref("browser.settings-redesign.enabled", false) &&
-    canShowAiFeature(aiControlTranslations, aiControlDefault),
-});
-
-Preferences.addSetting({
   id: "connectionSettings",
   onUserClick: () => gMainPane.showConnections(),
   controllingExtensionInfo: {
@@ -391,10 +379,6 @@ Preferences.addSetting({
 Preferences.addSetting({
   id: "aiControlDefault",
   pref: "browser.ai.control.default",
-});
-Preferences.addSetting({
-  id: "aiControlTranslations",
-  pref: "browser.ai.control.translations",
 });
 Preferences.addSetting({
   id: "aiControlPdfjsAltText",
@@ -622,8 +606,6 @@ var gMainPane = {
       gMainPane.initPrimaryBrowserLanguageUI();
     }
 
-    gMainPane.initTranslations();
-
     // Initialize settings groups from the config object.
     initSettingGroup("browserLayout");
     initSettingGroup("appearance");
@@ -637,7 +619,6 @@ var gMainPane = {
     initSettingGroup("keyboardAndScrolling");
     initSettingGroup("motionAndLink");
     initSettingGroup("updates");
-    initSettingGroup("translations");
     initSettingGroup("spellCheck");
     initSettingGroup("performance");
     initSettingGroup("defaultBrowser");
@@ -764,436 +745,6 @@ var gMainPane = {
     var preference = Preferences.get(aPreferenceID);
     button.disabled = !preference.value;
     return undefined;
-  },
-
-  /**
-   * Initialize the translations view.
-   */
-  async initTranslations() {
-    let legacyTranslationsVisible = Preferences.getSetting(
-      "legacyTranslationsVisible"
-    );
-    /**
-     * Which phase a language download is in.
-     *
-     * @typedef {"downloaded" | "loading" | "uninstalled"} DownloadPhase
-     */
-
-    let translationsGroup = document.getElementById("translationsGroup");
-    let setTranslationsGroupVisbility = () => {
-      // Immediately show the group so that the async load of the component does
-      // not cause the layout to jump. The group will be empty initially.
-      translationsGroup.hidden = !legacyTranslationsVisible.visible;
-      translationsGroup.classList.toggle(
-        "setting-hidden",
-        translationsGroup.hidden
-      );
-    };
-    setTranslationsGroupVisbility();
-
-    legacyTranslationsVisible.on("change", setTranslationsGroupVisbility);
-    window.addEventListener(
-      "unload",
-      () =>
-        legacyTranslationsVisible.off("change", setTranslationsGroupVisbility),
-      { once: true }
-    );
-
-    class TranslationsState {
-      /**
-       * The fully initialized state.
-       *
-       * @param {object} supportedLanguages
-       * @param {Array<{ langTag: string, displayName: string}>} languageList
-       * @param {Map<string, DownloadPhase>} downloadPhases
-       */
-      constructor(supportedLanguages, languageList, downloadPhases) {
-        this.supportedLanguages = supportedLanguages;
-        this.languageList = languageList;
-        this.downloadPhases = downloadPhases;
-      }
-
-      /**
-       * Handles all of the async initialization logic.
-       */
-      static async create() {
-        const supportedLanguages =
-          await TranslationsParent.getSupportedLanguages();
-        const languageList =
-          TranslationsParent.getLanguageList(supportedLanguages);
-        const downloadPhases =
-          await TranslationsState.createDownloadPhases(languageList);
-
-        if (supportedLanguages.languagePairs.length === 0) {
-          throw new Error(
-            "The supported languages list was empty. RemoteSettings may not be available at the moment."
-          );
-        }
-
-        return new TranslationsState(
-          supportedLanguages,
-          languageList,
-          downloadPhases
-        );
-      }
-
-      /**
-       * Determine the download phase of each language file.
-       *
-       * @param {Array<{ langTag: string, displayName: string}>} languageList
-       * @returns {Promise<Map<string, DownloadPhase>>} Map the language tag to whether it is downloaded.
-       */
-      static async createDownloadPhases(languageList) {
-        const downloadPhases = new Map();
-        for (const { langTag } of languageList) {
-          downloadPhases.set(
-            langTag,
-            (await TranslationsParent.hasAllFilesForLanguage(langTag))
-              ? "downloaded"
-              : "uninstalled"
-          );
-        }
-        return downloadPhases;
-      }
-    }
-
-    class TranslationsView {
-      /** @type {Map<string, XULButton>} */
-      deleteButtons = new Map();
-      /** @type {Map<string, XULButton>} */
-      downloadButtons = new Map();
-
-      /**
-       * @param {TranslationsState} state
-       */
-      constructor(state) {
-        this.state = state;
-        this.elements = {
-          settingsButton: document.getElementById(
-            "translations-manage-settings-button"
-          ),
-          installList: document.getElementById(
-            "translations-manage-install-list"
-          ),
-          installAll: document.getElementById(
-            "translations-manage-install-all"
-          ),
-          deleteAll: document.getElementById("translations-manage-delete-all"),
-          error: document.getElementById("translations-manage-error"),
-        };
-        this.setup();
-      }
-
-      setup() {
-        this.buildLanguageList();
-
-        this.elements.settingsButton.addEventListener(
-          "command",
-          gMainPane.showTranslationsSettings
-        );
-        this.elements.installAll.addEventListener(
-          "command",
-          this.handleInstallAll
-        );
-        this.elements.deleteAll.addEventListener(
-          "command",
-          this.handleDeleteAll
-        );
-
-        Services.obs.addObserver(this, "intl:app-locales-changed");
-      }
-
-      destroy() {
-        Services.obs.removeObserver(this, "intl:app-locales-changed");
-      }
-
-      handleInstallAll = async () => {
-        this.hideError();
-        this.disableButtons(true);
-        try {
-          await TranslationsParent.downloadAllFiles();
-          this.markAllDownloadPhases("downloaded");
-        } catch (error) {
-          TranslationsView.showError(
-            "translations-manage-error-download",
-            error
-          );
-          await this.reloadDownloadPhases();
-          this.updateAllButtons();
-        }
-        this.disableButtons(false);
-      };
-
-      handleDeleteAll = async () => {
-        this.hideError();
-        this.disableButtons(true);
-        try {
-          await TranslationsUtils.deleteAllLanguageFiles();
-          this.markAllDownloadPhases("uninstalled");
-        } catch (error) {
-          TranslationsView.showError("translations-manage-error-remove", error);
-          // The download phases are invalidated with the error and must be reloaded.
-          await this.reloadDownloadPhases();
-          console.error(error);
-        }
-        this.disableButtons(false);
-      };
-
-      /**
-       * @param {string} langTag
-       * @returns {Function}
-       */
-      getDownloadButtonHandler(langTag) {
-        return async () => {
-          this.hideError();
-          this.updateDownloadPhase(langTag, "loading");
-          try {
-            await TranslationsParent.downloadLanguageFiles(langTag);
-            this.updateDownloadPhase(langTag, "downloaded");
-          } catch (error) {
-            TranslationsView.showError(
-              "translations-manage-error-download",
-              error
-            );
-            this.updateDownloadPhase(langTag, "uninstalled");
-          }
-        };
-      }
-
-      /**
-       * @param {string} langTag
-       * @returns {Function}
-       */
-      getDeleteButtonHandler(langTag) {
-        return async () => {
-          this.hideError();
-          this.updateDownloadPhase(langTag, "loading");
-          try {
-            await TranslationsParent.deleteLanguageFiles(langTag);
-            this.updateDownloadPhase(langTag, "uninstalled");
-          } catch (error) {
-            TranslationsView.showError(
-              "translations-manage-error-remove",
-              error
-            );
-            // The download phases are invalidated with the error and must be reloaded.
-            await this.reloadDownloadPhases();
-          }
-        };
-      }
-
-      buildLanguageList() {
-        const listFragment = document.createDocumentFragment();
-
-        for (const { langTag, displayName } of this.state.languageList) {
-          const hboxRow = document.createXULElement("hbox");
-          hboxRow.classList.add("translations-manage-language");
-          hboxRow.setAttribute("data-lang-tag", langTag);
-
-          const languageLabel = document.createXULElement("label");
-          languageLabel.textContent = displayName; // The display name is already localized.
-
-          const downloadButton = document.createXULElement("button");
-          const deleteButton = document.createXULElement("button");
-
-          downloadButton.addEventListener(
-            "command",
-            this.getDownloadButtonHandler(langTag)
-          );
-          deleteButton.addEventListener(
-            "command",
-            this.getDeleteButtonHandler(langTag)
-          );
-
-          document.l10n.setAttributes(
-            downloadButton,
-            "translations-manage-language-download-button"
-          );
-          document.l10n.setAttributes(
-            deleteButton,
-            "translations-manage-language-remove-button"
-          );
-
-          downloadButton.hidden = true;
-          deleteButton.hidden = true;
-
-          this.deleteButtons.set(langTag, deleteButton);
-          this.downloadButtons.set(langTag, downloadButton);
-
-          hboxRow.appendChild(languageLabel);
-          hboxRow.appendChild(downloadButton);
-          hboxRow.appendChild(deleteButton);
-          listFragment.appendChild(hboxRow);
-        }
-        this.updateAllButtons();
-        this.elements.installList.appendChild(listFragment);
-      }
-
-      /**
-       * Update the DownloadPhase for a single langTag.
-       *
-       * @param {string} langTag
-       * @param {DownloadPhase} downloadPhase
-       */
-      updateDownloadPhase(langTag, downloadPhase) {
-        this.state.downloadPhases.set(langTag, downloadPhase);
-        this.updateButton(langTag, downloadPhase);
-        this.updateHeaderButtons();
-      }
-
-      /**
-       * Recreates the download map when the state is invalidated.
-       */
-      async reloadDownloadPhases() {
-        this.state.downloadPhases =
-          await TranslationsState.createDownloadPhases(this.state.languageList);
-        this.updateAllButtons();
-      }
-
-      /**
-       * Set all the downloads.
-       *
-       * @param {DownloadPhase} downloadPhase
-       */
-      markAllDownloadPhases(downloadPhase) {
-        const { downloadPhases } = this.state;
-        for (const key of downloadPhases.keys()) {
-          downloadPhases.set(key, downloadPhase);
-        }
-        this.updateAllButtons();
-      }
-
-      /**
-       * If all languages are downloaded, or no languages are downloaded then
-       * the visibility of the buttons need to change.
-       */
-      updateHeaderButtons() {
-        let allDownloaded = true;
-        let allUninstalled = true;
-        for (const downloadPhase of this.state.downloadPhases.values()) {
-          if (downloadPhase === "loading") {
-            // Don't count loading towards this calculation.
-            continue;
-          }
-          allDownloaded &&= downloadPhase === "downloaded";
-          allUninstalled &&= downloadPhase === "uninstalled";
-        }
-
-        this.elements.installAll.hidden = allDownloaded;
-        this.elements.deleteAll.hidden = allUninstalled;
-      }
-
-      /**
-       * Update the buttons according to their download state.
-       */
-      updateAllButtons() {
-        this.updateHeaderButtons();
-        for (const [langTag, downloadPhase] of this.state.downloadPhases) {
-          this.updateButton(langTag, downloadPhase);
-        }
-      }
-
-      /**
-       * @param {string} langTag
-       * @param {DownloadPhase} downloadPhase
-       */
-      updateButton(langTag, downloadPhase) {
-        const downloadButton = this.downloadButtons.get(langTag);
-        const deleteButton = this.deleteButtons.get(langTag);
-        switch (downloadPhase) {
-          case "downloaded":
-            downloadButton.hidden = true;
-            deleteButton.hidden = false;
-            downloadButton.removeAttribute("disabled");
-            break;
-          case "uninstalled":
-            downloadButton.hidden = false;
-            deleteButton.hidden = true;
-            downloadButton.removeAttribute("disabled");
-            break;
-          case "loading":
-            downloadButton.hidden = false;
-            deleteButton.hidden = true;
-            downloadButton.setAttribute("disabled", "true");
-            break;
-        }
-      }
-
-      /**
-       * @param {boolean} isDisabled
-       */
-      disableButtons(isDisabled) {
-        this.elements.installAll.disabled = isDisabled;
-        this.elements.deleteAll.disabled = isDisabled;
-        for (const button of this.downloadButtons.values()) {
-          button.disabled = isDisabled;
-        }
-        for (const button of this.deleteButtons.values()) {
-          button.disabled = isDisabled;
-        }
-      }
-
-      /**
-       * This method is static in case an error happens during the creation of the
-       * TranslationsState.
-       *
-       * @param {string} l10nId
-       * @param {Error} error
-       */
-      static showError(l10nId, error) {
-        console.error(error);
-        const errorMessage = document.getElementById(
-          "translations-manage-error"
-        );
-        errorMessage.hidden = false;
-        document.l10n.setAttributes(errorMessage, l10nId);
-      }
-
-      hideError() {
-        this.elements.error.hidden = true;
-      }
-
-      observe(_subject, topic, _data) {
-        if (topic === "intl:app-locales-changed") {
-          this.refreshLanguageListDisplay();
-        }
-      }
-
-      refreshLanguageListDisplay() {
-        try {
-          const languageDisplayNames =
-            TranslationsParent.createLanguageDisplayNames();
-
-          for (const row of this.elements.installList.children) {
-            const rowLangTag = row.getAttribute("data-lang-tag");
-            if (!rowLangTag) {
-              continue;
-            }
-
-            const label = row.querySelector("label");
-            if (label) {
-              const newDisplayName = languageDisplayNames.of(rowLangTag);
-              if (label.textContent !== newDisplayName) {
-                label.textContent = newDisplayName;
-              }
-            }
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    }
-
-    TranslationsState.create().then(
-      state => {
-        this._translationsView = new TranslationsView(state);
-      },
-      error => {
-        // This error can happen when a user is not connected to the internet, or
-        // RemoteSettings is down for some reason.
-        TranslationsView.showError("translations-manage-error-list", error);
-      }
-    );
   },
 
   initPrimaryBrowserLanguageUI() {
@@ -1476,12 +1027,6 @@ var gMainPane = {
     }
   },
 
-  showTranslationsSettings() {
-    gSubDialog.open(
-      "chrome://browser/content/preferences/dialogs/translations.xhtml"
-    );
-  },
-
   // NETWORK
   /**
    * Displays a dialog in which proxy settings may be changed.
@@ -1542,12 +1087,6 @@ var gMainPane = {
 
   destroy() {
     window.removeEventListener("unload", this);
-
-    // Clean up the TranslationsView instance if it exists
-    if (this._translationsView) {
-      this._translationsView.destroy();
-      this._translationsView = null;
-    }
   },
 
   // nsISupports

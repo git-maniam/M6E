@@ -5,7 +5,6 @@
 <!-- General panel -->
 
 <script src="chrome://browser/content/preferences/main.js"/>
-<script src="chrome://browser/content/preferences/translations.js"/>
 
 #ifdef MOZ_UPDATER
   <script src="chrome://browser/content/aboutDialog-appUpdater.js"/>
@@ -100,36 +99,7 @@
             data-l10n-id="use-system-locale"
             data-l10n-args='{"localeName": "und"}'
             preference="intl.regional_prefs.use_os_locales"/>
-
-  <!-- This Translations UI is the pre-settings-redesign UI and should be removed
-       when getting ready for the settings redesign to fully ship. -->
-  <vbox id="translationsGroup" data-srd-groupid="translations" hidden="true" data-subcategory="translations">
-    <label><html:h2 data-l10n-id="translations-manage-header"/></label>
-    <hbox id="translations-manage-description" align="center">
-      <description flex="1" data-l10n-id="translations-manage-intro-2"/>
-      <button id="translations-manage-settings-button"
-              is="highlightable-button"
-              class="accessory-button"
-              data-l10n-id="translations-manage-settings-button"/>
-    </hbox>
-    <vbox>
-      <html:div id="translations-manage-install-list" tabindex="-1">
-        <hbox class="translations-manage-language">
-          <label data-l10n-id="translations-manage-download-description"></label>
-          <button id="translations-manage-install-all"
-                  data-l10n-id="translations-manage-language-download-all-button"></button>
-          <button id="translations-manage-delete-all"
-                  data-l10n-id="translations-manage-language-remove-all-button"></button>
-        </hbox>
-        <!-- The downloadable languages will be listed here. -->
-      </html:div>
-      <description id="translations-manage-error" hidden="true"></description>
-    </vbox>
-  </vbox>
 </groupbox>
-
-<!-- This Translations UI is compatible with the settings redesign -->
-<html:setting-group data-category="paneGeneral" groupid="translations" data-srd-migrated="" hidden="true"/>
 
 <html:setting-group data-category="paneGeneral" groupid="spellCheck" data-srd-migrated="" hidden="true"/>
 

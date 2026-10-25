@@ -488,100 +488,6 @@ browser-language-fallback-label =
 browser-language-install-error =
   .message = { -brand-short-name } can’t update your languages right now. Check that you are connected to the internet or try again.
 
-fx-translate-web-pages = { -translations-brand-name }
-
-translate-exceptions =
-    .label = Exceptions…
-    .accesskey = x
-
-settings-translations-header =
-    .label = Translations
-    .aria-label = Translations
-    .description = Translate pages or selected text. To protect your privacy, translations stay on your device.
-
-settings-translations-offer-to-translate-label =
-    .label = Offer full page translation
-
-settings-translations-more-settings-button =
-    .label = More translation settings
-    .description = Set preferences for languages, websites, and offline translation.
-
-settings-translations-subpage-header =
-    .heading = More translation settings
-
-settings-translations-subpage-speed-up-translation-header =
-    .label = Speed up translation
-    .description = Download complete languages for faster translations and to translate offline.
-
-settings-translations-subpage-automatic-translation-header =
-    .label = Automatic translation
-
-settings-translations-subpage-always-translate-header =
-    .label = Always translate these languages
-
-settings-translations-subpage-never-translate-header =
-    .label = Never translate these languages
-
-settings-translations-subpage-never-translate-sites-header =
-    .label = Never translate these sites
-
-# The icon placeholders show the translations button and the settings gear in the urlbar panel.
-settings-translations-subpage-never-translate-sites-description =
-    To add a site, open the <img data-l10n-name="translations-icon"/> translation panel, select <img data-l10n-name="settings-icon"/> translation settings, then choose “Never translate this site”
-
-settings-translations-subpage-language-select-option =
-    .label = Add language
-
-settings-translations-subpage-language-add-button =
-    .aria-label = Add language
-    .title = Add language
-
-settings-translations-subpage-download-languages-header =
-    .label = Download languages
-
-settings-translations-subpage-download-languages-select-option =
-    .label = Select language
-
-settings-translations-subpage-download-languages-button =
-    .aria-label = Download language
-    .title = Download language
-
-# Variables:
-#   $language (string) - Localized name of the language to download.
-#   $size (string) - Download size in megabytes, formatted for the locale.
-settings-translations-subpage-download-language-option = { $language } ({ $size }MB)
-    .label = { $language } ({ $size }MB)
-
-settings-translations-subpage-no-languages-downloaded =
-    .label = No languages downloaded
-
-settings-translations-subpage-no-languages-added =
-    .label = No languages added
-
-settings-translations-subpage-download-progress = Download in progress…
-
-# Variables:
-#   $language (string) - The localized display name of the language.
-#   $size (string) - The download size of the language in megabytes.
-settings-translations-subpage-download-error = Couldn’t download { $language } ({ $size }MB)
-
-settings-translations-subpage-download-retry-button =
-    .label = Try again
-
-# Variables:
-#   $language (string) - The localized display name of the language.
-#   $size (string) - The download size of the language in megabytes.
-settings-translations-subpage-download-delete-confirm = Delete { $language } ({ $size }MB)?
-
-settings-translations-subpage-download-delete-button =
-    .label = Delete
-
-settings-translations-subpage-download-cancel-button =
-    .label = Cancel
-
-settings-translations-subpage-no-sites-added =
-    .label = No sites added
-
 # Variables:
 #    $localeName (string) - Localized name of the locale to be used.
 use-system-locale =
@@ -2619,11 +2525,6 @@ preferences-ai-controls-on-device-group =
     .label = On-device AI
     .description = These use small AI models that download to your device if you use the feature. This approach helps protect your privacy.
 
-preferences-ai-controls-translations-control =
-    .label = Translations
-    .description = Seamlessly browse the web in your preferred language.
-preferences-ai-controls-translations-more-link = More translations settings
-
 preferences-ai-controls-pdfjs-control =
     .label = Image alt text in { -brand-short-name } PDF viewer
     .description = When you add images to PDFs, this adds descriptions to make them accessible.
@@ -2666,7 +2567,6 @@ preferences-ai-controls-block-confirmation-heading = Block AI enhancements?
 preferences-ai-controls-block-confirmation-description = You won’t see new or current AI enhancements in { -brand-short-name }, or pop-ups about them. Afterwards, you can unblock anything you want to keep using.
 
 preferences-ai-controls-block-confirmation-features-start = What will be blocked:
-preferences-ai-controls-block-confirmation-translations = Translations
 preferences-ai-controls-block-confirmation-pdfjs = Image alt text in { -brand-short-name } PDF viewer
 preferences-ai-controls-block-confirmation-tab-group-suggestions = Tab group suggestions
 preferences-ai-controls-block-confirmation-key-points = Key points in link previews

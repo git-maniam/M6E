@@ -2,14 +2,9 @@
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Smoke test for the top-level Languages settings pane: its sidebar entry
-// exists and the pane hosts the four migrated groups.
+// exists and the pane hosts the three migrated groups.
 
-const LANGUAGE_GROUP_IDS = [
-  "browserLanguage",
-  "websiteLanguage",
-  "translations",
-  "spellCheck",
-];
+const LANGUAGE_GROUP_IDS = ["browserLanguage", "websiteLanguage", "spellCheck"];
 
 add_task(async function testLanguagesPaneHostsAllGroups() {
   let doc = await openLanguagesPrefs();

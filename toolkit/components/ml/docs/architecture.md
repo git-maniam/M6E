@@ -4,10 +4,7 @@
 
 The Firefox AI Runtime supports multiple inference backends, including the ONNX runtime
 with the Transformers.js library, a native llama.cpp backend for Llama-based models,
-and an OpenAI-compatible API backend. The translations
-inference engine lives in the inference process, but
-{doc}`has its own separate architecture </toolkit/components/translations/index>`
-that is not considered here.
+and an OpenAI-compatible API backend.
 
 ```{mermaid}
 flowchart TD

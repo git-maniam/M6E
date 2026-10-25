@@ -212,9 +212,6 @@ document.addEventListener(
           });
           break;
         }
-        case "context-translate-selection":
-          gContextMenu.openSelectTranslationsPanel(event);
-          break;
         case "context-create-aitab":
           gContextMenu.createAITab();
           break;

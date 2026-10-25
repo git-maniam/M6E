@@ -1125,7 +1125,6 @@ class TestInfoReport(TestInfo):
             "mochitest-webgl2-ext",
             "mochitest-webgl1-ext",
             "jittest-1proc",
-            "mochitest-browser-translations",
             "jsreftest",
             "mochitest-browser-screenshots",
             "marionette-unittest",

@@ -94,10 +94,7 @@ function getVisibleMenuItems(aMenu) {
         // it only tests the entries in the context menu by default and the
         // Send Tab entry was originally only in the context menu if the user is
         // signed in. See Bug 2035895.
-        const allowedAccessKeyDuplicates = [
-          "context-translate-selection",
-          "context-sendlinktodevice",
-        ];
+        const allowedAccessKeyDuplicates = ["context-sendlinktodevice"];
 
         if (
           accessKeys[key] &&

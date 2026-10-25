@@ -64,7 +64,7 @@ let JSPROCESSACTORS = {
     },
   },
 
-  // A single process (shared with translations) that manages machine learning engines.
+  // A single process that manages machine learning engines.
   MLEngine: {
     remoteTypes: ["inference"],
     parent: {
@@ -92,18 +92,6 @@ let JSPROCESSACTORS = {
     // implementation is enabled (which is currently only allowed in Nightly
     // and gated by this about:config preference).
     enablePreference: "extensions.backgroundServiceWorker.enabled",
-  },
-
-  // A single process (shared with MLEngine) that controls all of the translations.
-  TranslationsEngine: {
-    remoteTypes: ["inference"],
-    parent: {
-      esModuleURI: "resource://gre/actors/TranslationsEngineParent.sys.mjs",
-    },
-    child: {
-      esModuleURI: "resource://gre/actors/TranslationsEngineChild.sys.mjs",
-    },
-    enablePreference: "browser.translations.enable",
   },
 };
 
@@ -621,35 +609,6 @@ let JSWINDOWACTORS = {
     safeForUntrustedWebProcess: true,
   },
 
-  // Determines if a page can be translated, and coordinates communication with the
-  // translations engine.
-  Translations: {
-    parent: {
-      esModuleURI: "resource://gre/actors/TranslationsParent.sys.mjs",
-    },
-    child: {
-      esModuleURI: "resource://gre/actors/TranslationsChild.sys.mjs",
-    },
-    matches: [
-      "about:blank",
-      "about:srcdoc",
-      "file:///*",
-      "http://*/*",
-      "https://*/*",
-      "moz-extension://*",
-    ],
-    messageManagerGroups: ["browsers"],
-    allFrames: true,
-    enablePreference: "browser.translations.enable",
-    onPreferenceChanged(isEnabled) {
-      const { TranslationsParent } = ChromeUtils.importESModule(
-        "resource://gre/actors/TranslationsParent.sys.mjs"
-      );
-      TranslationsParent.onIsEnabledChanged(isEnabled);
-    },
-    safeForUntrustedWebProcess: true,
-  },
-
   UAWidgets: {
     child: {
       esModuleURI: "moz-src:///toolkit/actors/UAWidgetsChild.sys.mjs",
@@ -811,22 +770,6 @@ if (AppConstants.platform != "android") {
       },
     },
     matches: ["about:pdf", "about:pdf?*", "about:pdf#*"],
-    remoteTypes: ["privilegedabout"],
-  };
-
-  JSWINDOWACTORS.AboutTranslations = {
-    parent: {
-      esModuleURI: "resource://gre/actors/AboutTranslationsParent.sys.mjs",
-    },
-    child: {
-      esModuleURI: "resource://gre/actors/AboutTranslationsChild.sys.mjs",
-      events: {
-        // Run the actor before any content of the page appears to inject functions.
-        DOMDocElementInserted: {},
-        DOMContentLoaded: {},
-      },
-    },
-    matches: ["about:translations"],
     remoteTypes: ["privilegedabout"],
   };
 

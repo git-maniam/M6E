@@ -10,7 +10,6 @@ const { StartupTelemetry } = ChromeUtils.importESModule(
 const GLOBAL_AI_PREF = "browser.ai.control.default";
 const AI_CONTROL_PREFS = {
   [GLOBAL_AI_PREF]: "default",
-  "browser.ai.control.translations": "translations",
   "browser.ai.control.pdfjsAltText": "pdfjsAltText",
   "browser.ai.control.smartTabGroups": "smartTabGroups",
   "browser.ai.control.linkPreviewKeyPoints": "linkPreviewKeyPoints",
@@ -60,7 +59,6 @@ add_task(function test_defaults_no_prefs_set() {
     "Global should be false when no prefs set"
   );
   assertFeatureMetrics({
-    translations: false,
     pdfjsAltText: false,
     smartTabGroups: false,
     linkPreviewKeyPoints: false,
@@ -82,7 +80,6 @@ add_task(function test_global_blocked_features_default() {
     "Global should be true when blocked"
   );
   assertFeatureMetrics({
-    translations: true,
     pdfjsAltText: true,
     smartTabGroups: true,
     linkPreviewKeyPoints: true,
@@ -96,7 +93,7 @@ add_task(function test_global_available_one_feature_blocked() {
   Services.fog.testResetFOG();
   resetPrefs({
     default: "available",
-    translations: "blocked",
+    pdfjsAltText: "blocked",
   });
 
   Assert.equal(
@@ -105,8 +102,7 @@ add_task(function test_global_available_one_feature_blocked() {
     "Global should be false when available"
   );
   assertFeatureMetrics({
-    translations: true,
-    pdfjsAltText: false,
+    pdfjsAltText: true,
     smartTabGroups: false,
     linkPreviewKeyPoints: false,
     sidebarChatbot: false,
@@ -128,7 +124,6 @@ add_task(function test_global_blocked_one_feature_enabled() {
     "Global should be true when blocked"
   );
   assertFeatureMetrics({
-    translations: true,
     pdfjsAltText: true,
     smartTabGroups: false,
     linkPreviewKeyPoints: true,
@@ -150,7 +145,6 @@ add_task(function test_pref_observer_global_change() {
     "Global should be false initially"
   );
   assertFeatureMetrics({
-    translations: false,
     pdfjsAltText: false,
     smartTabGroups: false,
     linkPreviewKeyPoints: false,
@@ -167,7 +161,6 @@ add_task(function test_pref_observer_global_change() {
     "Global should update to true after pref change"
   );
   assertFeatureMetrics({
-    translations: true,
     pdfjsAltText: true,
     smartTabGroups: true,
     linkPreviewKeyPoints: true,

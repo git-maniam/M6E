@@ -222,7 +222,6 @@ document.addEventListener(
         #tracking-protection-icon-container,
         #identity-icon-box,
         #identity-permission-box,
-        #translations-button,
         #split-view-button,
         #smartwindow-ask-button
         `);
@@ -313,10 +312,6 @@ document.addEventListener(
           PageProxyClickHandler(event);
           break;
 
-        case "translations-button":
-          FullPageTranslationsPanel.open(event);
-          break;
-
         case "split-view-button":
           if (isLeftClick) {
             gBrowser.openSplitViewMenu(element);
@@ -354,7 +349,6 @@ document.addEventListener(
         #m6e-page-telemetry-button,
         #identity-icon-box,
         #identity-permission-box,
-        #translations-button,
         #alltabs-button,
         #pageActionButton,
         #downloads-button,
@@ -426,10 +420,6 @@ document.addEventListener(
 
         case "identity-permission-box":
           gPermissionPanel.handleIdentityButtonEvent(event);
-          break;
-
-        case "translations-button":
-          FullPageTranslationsPanel.open(event);
           break;
 
         case "alltabs-button":

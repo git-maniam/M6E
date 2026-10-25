@@ -2541,54 +2541,6 @@ privacySecurityMessaging:
         How often (in milliseconds) we check if the user is eligible for seeing
         a milestone doorhanger. 24 hours by default.
 
-fullPageTranslation:
-  description: This feature opens a popup panel to offer to translate a page.
-  owner: gtatum@mozilla.com
-  hasExposure: false
-  variables:
-    boolean:
-      description: Set to true to enable the translations feature
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.translations.enable
-
-fullPageTranslationAutomaticPopup:
-  description: Controls whether the popup automatically shows for translations.
-  owner: gtatum@mozilla.com
-  hasExposure: false
-  variables:
-    boolean:
-      description: Set to true to automatically popup, and false to only show the button.
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.translations.automaticallyPopup
-
-selectTranslation:
-  description: This feature enables the option to translate selected text from the context menu.
-  owner: enordin@mozilla.com
-  hasExposure: false
-  variables:
-    enabled:
-      description: Set to true to enable the select-translations feature
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.translations.select.enable
-
-translationsQuickAction:
-  description: This feature enables the translations quick action in the URL bar.
-  owner: enordin@mozilla.com
-  hasExposure: false
-  variables:
-    enabled:
-      description: Set to true to enable the translations quick action feature.
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.translations.quickAction.enabled
-
 pdfjs:
   description: The Firefox pdf reader.
   owner: pdfjs-team@mozilla.com

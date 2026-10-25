@@ -55,14 +55,6 @@ export const LEGACY_PANE_MAPPINGS = new Map([
 
   ["general-drm", { category: "tabsBrowsing", subcategory: "drm" }],
 
-  [
-    "general-fxtranslations",
-    { category: "languages", subcategory: "translations" },
-  ],
-  [
-    "general-translations",
-    { category: "languages", subcategory: "translations" },
-  ],
   ["general-netsettings", { category: "privacy", subcategory: "netsettings" }],
 
   [

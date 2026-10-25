@@ -65,7 +65,6 @@ Preferences.addSetting({ id: "onDeviceFieldset" });
 Preferences.addSetting({
   id: "onDeviceGroup",
   deps: [
-    "aiControlTranslationsSelect",
     "aiControlPdfjsAltTextSelect",
     "aiControlSmartTabGroupsSelect",
     "aiControlLinkPreviewKeyPointsSelect",
@@ -195,9 +194,6 @@ class BlockAiConfirmationDialog extends MozLitElement {
         data-l10n-id="preferences-ai-controls-block-confirmation-features-start"
       ></p>
       <ul>
-        <li
-          data-l10n-id="preferences-ai-controls-block-confirmation-translations"
-        ></li>
         <li
           data-l10n-id="preferences-ai-controls-block-confirmation-speech-recognition"
         ></li>
@@ -550,18 +546,6 @@ function makeAiControlSetting({
     },
   });
 }
-makeAiControlSetting({
-  id: "aiControlTranslationsSelect",
-  pref: "browser.ai.control.translations",
-  feature: OnDeviceModelManager.features.Translations,
-  getControlConfig(config, _, setting) {
-    let isBlocked = setting.value == AiControlStates.blocked;
-    let moreSettingsLink = config.options.at(-1);
-    moreSettingsLink.hidden = isBlocked;
-    config.supportPage = isBlocked ? "website-translation" : null;
-    return config;
-  },
-});
 makeAiControlSetting({
   id: "aiControlPdfjsAltTextSelect",
   pref: "browser.ai.control.pdfjsAltText",
@@ -1413,33 +1397,6 @@ SettingGroupManager.registerGroups({
             id: "onDeviceGroup",
             control: "moz-box-group",
             options: [
-              {
-                control: "moz-box-item",
-                items: [
-                  {
-                    id: "aiControlTranslationsSelect",
-                    l10nId: "preferences-ai-controls-translations-control",
-                    control: "moz-select",
-                    controlAttrs: {
-                      inputlayout: "inline-end",
-                    },
-                    options: [
-                      ...AI_CONTROL_OPTIONS.filter(
-                        opt => opt.value != AiControlStates.enabled
-                      ),
-                      {
-                        control: "a",
-                        l10nId:
-                          "preferences-ai-controls-translations-more-link",
-                        slot: "support-link",
-                        controlAttrs: {
-                          href: "#general-translations",
-                        },
-                      },
-                    ],
-                  },
-                ],
-              },
               {
                 control: "moz-box-item",
                 items: [

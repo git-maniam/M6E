@@ -395,8 +395,6 @@ $schema: moz://mozilla.org/schemas/glean/tags/1-0-0
   description: The Bugzilla component which applies to this object.
 'Firefox :: Tours':
   description: The Bugzilla component which applies to this object.
-'Firefox :: Translations':
-  description: The Bugzilla component which applies to this object.
 'Firefox :: about:logins':
   description: The Bugzilla component which applies to this object.
 'Firefox Build System :: Bootstrap Configuration':

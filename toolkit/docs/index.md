@@ -31,7 +31,6 @@ components/extensions/webextensions/index
 mozapps/dmgInstallHelper/docs/index
 mozapps/update/docs/index
 components/antitracking/anti-tracking/index
-components/translations/index
 components/sessionstore/index
 actors/actors/picture-in-picture-child-video-wrapper-api
 components/captchadetection/captcha-detection/index

@@ -8,8 +8,6 @@ import { SettingGroupManager } from "chrome://browser/content/preferences/config
 const {
   LangPackMatcher, // preferences.js
   TAB_SESSION_ID, // preferences.js
-  gotoPref, // preferences.js
-  canShowAiFeature, // main.js
 } = window;
 
 Preferences.addAll([
@@ -19,7 +17,6 @@ Preferences.addAll([
   { id: "intl.accept_languages", type: "string" },
   { id: "privacy.spoof_english", type: "int" },
   { id: "layout.spellcheckDefault", type: "int" },
-  { id: "browser.translations.automaticallyPopup", type: "bool" },
 ]);
 
 /**
@@ -811,14 +808,6 @@ Preferences.addSetting(
 );
 
 Preferences.addSetting({
-  id: "offerTranslations",
-  pref: "browser.translations.automaticallyPopup",
-  deps: ["aiControlDefault", "aiControlTranslations"],
-  visible: ({ aiControlDefault, aiControlTranslations }) =>
-    canShowAiFeature(aiControlTranslations, aiControlDefault),
-});
-
-Preferences.addSetting({
   id: "checkSpelling",
   pref: "layout.spellcheckDefault",
   get: prefVal => prefVal != 0,
@@ -831,17 +820,6 @@ Preferences.addSetting({
 
 Preferences.addSetting({
   id: "spellCheckPromo",
-});
-
-Preferences.addSetting({
-  id: "translationsManageButton",
-  deps: ["aiControlDefault", "aiControlTranslations"],
-  onUserClick(e) {
-    e.preventDefault();
-    gotoPref("paneTranslations");
-  },
-  visible: ({ aiControlDefault, aiControlTranslations }) =>
-    canShowAiFeature(aiControlTranslations, aiControlDefault),
 });
 
 SettingGroupManager.registerGroups({
@@ -928,26 +906,6 @@ SettingGroupManager.registerGroups({
             ],
           },
         ],
-      },
-    ],
-  },
-  translations: {
-    inProgress: true,
-    subcategory: "translations",
-    l10nId: "settings-translations-header",
-    iconSrc: "chrome://browser/skin/translations.svg",
-    supportPage: "website-translation",
-    headingLevel: 2,
-    items: [
-      {
-        id: "offerTranslations",
-        l10nId: "settings-translations-offer-to-translate-label",
-      },
-      {
-        id: "translationsManageButton",
-        loadPane: "translations",
-        l10nId: "settings-translations-more-settings-button",
-        control: "moz-box-button",
       },
     ],
   },

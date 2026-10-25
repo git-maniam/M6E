@@ -210,9 +210,6 @@ const COMMON_PREFERENCES = new Map([
   // Make sure Topsites doesn't hit the network to retrieve tiles from Contile.
   ["browser.topsites.contile.enabled", false],
 
-  // Disable translations
-  ["browser.translations.enable", false],
-
   // Turn off Merino suggestions in the location bar so as not to trigger
   // network connections.
   ["browser.urlbar.merino.endpointURL", ""],

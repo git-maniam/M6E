@@ -3,6 +3,9 @@ Services.scriptloader.loadSubScript(
   this
 );
 
+const BLANK_PAGE =
+  "data:text/html;charset=utf-8,<!DOCTYPE html><title>Blank</title>Blank page";
+
 async function setupRemoteClient() {
   const { removeMocks, remoteClients } = await createAndMockMLRemoteSettings({
     autoDownloadFromRemoteSettings: false,

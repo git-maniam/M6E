@@ -1681,10 +1681,6 @@ export var UITour = {
             "browser.ai.control.default",
             "available"
           ),
-          translations: Services.prefs.getStringPref(
-            "browser.ai.control.translations",
-            "default"
-          ),
           pdfjsAltText: Services.prefs.getStringPref(
             "browser.ai.control.pdfjsAltText",
             "default"
