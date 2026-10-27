@@ -12,7 +12,7 @@ A search bar reads an address bar preference wherever it runs the same code.
 Which preferences apply depends on the results each bar shows. The toolbar
 search bar shows search suggestions, search history and a few built-in results
 such as the calculator. The New Tab search bar adds URL navigation,
-autofill and Firefox Suggest, and the smartbar shows most address bar results.
+autofill and Firefox Suggest.
 
 These preferences affect only the address bar:
 
@@ -29,10 +29,6 @@ Some search bars read a different preference, or ignore one:
 
 - The toolbar search bar reads `browser.search.openintab` instead of
   `browser.urlbar.openintab`.
-- The smartbar reads `browser.urlbar.smartbar.maxResults` and
-  `browser.urlbar.smartbar.showSearchSuggestionsFirst` instead of
-  `browser.urlbar.maxRichResults` and
-  `browser.urlbar.showSearchSuggestionsFirst`.
 - The toolbar and New Tab search bars ignore `keyword.enabled` and
   `browser.urlbar.unifiedSearchButton.always`, and show recent searches
   regardless of `browser.urlbar.suggest.recentsearches`.

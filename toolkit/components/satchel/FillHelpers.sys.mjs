@@ -32,10 +32,6 @@ export class GenericAutocompleteItem {
  *   The adapted autocomplete item.
  */
 export function adaptExternalAutocompleteItem(item) {
-  if (item.style == "smartFormFill") {
-    return item;
-  }
-
   return new GenericAutocompleteItem(
     item.image,
     item.label,

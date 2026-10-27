@@ -514,7 +514,6 @@ export class ASRouterAdminInner extends React.PureComponent {
       "spotlight",
       "feature_callout",
       "pb_newtab",
-      "sidebar_chatbot_promo",
     ].includes(msg.template);
 
     let itemClassName = "message-item";

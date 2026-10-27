@@ -19,7 +19,7 @@ add_task(function test_blocked_action_only_actions() {
     "OPEN_URL",
     "CONFIGURE_HOMEPAGE",
     "FXA_SIGNIN_FLOW",
-    "SUMMARIZE_PAGE",
+    "RESET_PROFILE",
   ]) {
     Assert.ok(
       MessagingSystemBlocklists.isActionOnlyActionBlocked(type),

@@ -99,17 +99,6 @@ if (!Services.prefs.getBoolPref("layout.css.text-decoration-inset.enabled")) {
   });
 }
 
-if (
-  !Services.prefs.getBoolPref("layout.css.scroll-driven-animations.enabled")
-) {
-  ignoreList.push({
-    sourceName: /\b(smartbar|ai-action-confirmation)\.css$/i,
-    errorMessage:
-      /Unknown property .*(animation-range|animation-timeline|scroll-timeline|view-timeline|timeline-scope)/i,
-    isFromDevTools: false,
-  });
-}
-
 if (!Services.prefs.getBoolPref("dom.headingoffset.enabled")) {
   ignoreList.push({
     sourceName: /\b(html)\.css$/i,
@@ -158,11 +147,6 @@ let propNameAllowlist = [
   // These variables are set in host CSS but consumed in shadow DOM CSS
   // (content-search-handoff-ui component), which confuses the test.
   { propName: /^--content-search-handoff-ui-/, isFromDevTools: false },
-
-  // This variable defines the icon background for smart window first run model
-  // cards and is consumed from JS in firstrun.js (built into a `background`
-  // shorthand string), so it isn't referenced via var() in CSS.
-  { propName: "--card-icon-bg", isFromDevTools: false },
 
   // This variable defines the carousel's small layout and is read from JS in
   // CarouselNav.jsx, so it isn't referenced via var() in CSS.

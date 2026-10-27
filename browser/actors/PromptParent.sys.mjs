@@ -106,24 +106,10 @@ export class PromptParent extends JSWindowActorParent {
     }
     // Extensions in the sidebar have more layers of nesting, and this causes
     // window leaks in tests. We would like to fix this at some point (bug 1513656)
-    if (
-      browser.getAttribute("messagemanagergroup") == "webext-browsers" ||
-      browser.getAttribute("messagemanagergroup") == "chatbot-browser"
-    ) {
+    if (browser.getAttribute("messagemanagergroup") == "webext-browsers") {
       return false;
     }
     return true;
-  }
-
-  // Prompts from the AI chatbot browser also need to be hoisted to the sidebar
-  // <browser> so they are shown as tab dialogs (bug 1955250), even though
-  // isEmbeddedInSidebar() excludes it.
-  shouldShowPromptOnSidebarBrowser(browser) {
-    return (
-      this.isEmbeddedInSidebar(browser) ||
-      (this.#isNestedInSidebarBrowser(browser) &&
-        browser.getAttribute("messagemanagergroup") == "chatbot-browser")
-    );
   }
 
   receiveMessage(message) {
@@ -159,7 +145,7 @@ export class PromptParent extends JSWindowActorParent {
 
     let browser = browsingContext.embedderElement;
 
-    let showOnSidebarBrowser = this.shouldShowPromptOnSidebarBrowser(browser);
+    let showOnSidebarBrowser = this.isEmbeddedInSidebar(browser);
     if (
       showOnSidebarBrowser ||
       this.isAboutAddonsOptionsPage(browsingContext)

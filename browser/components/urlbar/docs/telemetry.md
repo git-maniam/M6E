@@ -610,7 +610,7 @@ Changelog
   : Legacy `urlbar.zeroprefix.abandonment` telemetry removed, and the Glean
     metric replaced by `urlbar.zeroprefix2.abandonment`, a labeled counter
     keyed by search access point, so it covers the search bar, New Tab's
-    search bar and the smartbar besides the address bar. (See bug 2066165)
+    search bar besides the address bar. (See bug 2066165)
 
 ### urlbar.zeroprefix.engagement
 
@@ -629,7 +629,7 @@ Changelog
   : Legacy `urlbar.zeroprefix.engagement` telemetry removed, and the Glean
     metric replaced by `urlbar.zeroprefix2.engagement`, a labeled counter
     keyed by search access point, so it covers the search bar, New Tab's
-    search bar and the smartbar besides the address bar. (See bug 2066165)
+    search bar besides the address bar. (See bug 2066165)
 
 ### urlbar.zeroprefix.exposure
 
@@ -648,7 +648,7 @@ Changelog
   : Legacy `urlbar.zeroprefix.exposure` telemetry removed, and the Glean
     metric replaced by `urlbar.zeroprefix2.exposure`, a labeled counter
     keyed by search access point, so it covers the search bar, New Tab's
-    search bar and the smartbar besides the address bar. (See bug 2066165)
+    search bar besides the address bar. (See bug 2066165)
 
 ### urlbar.quickaction.picked
 

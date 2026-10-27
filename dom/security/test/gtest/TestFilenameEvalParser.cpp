@@ -80,7 +80,7 @@ TEST(FilenameEvalParser, ResourceChrome)
   }
   {
     constexpr auto str =
-        "moz-src:///browser/components/genai/LinkPreview.sys.mjs"_ns;
+        "moz-src:///browser/components/urlbar/UrlbarUtils.sys.mjs"_ns;
     FilenameTypeAndDetails ret =
         nsContentSecurityUtils::FilenameToFilenameType(str, false);
     ASSERT_EQ(ret.first, kMozSrcURI);

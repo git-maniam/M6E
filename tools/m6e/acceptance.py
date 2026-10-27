@@ -128,7 +128,6 @@ REMOVED_ELEMENTS = {
     ],
     "VPN": ["ipprotection-button"],
     "Translations": ["translations-button"],
-    "AI": ["ai-window-toggle", "smartwindow-group-tabs-button", "genai-chat-menu"],
 }
 
 # Prefs that switch removed features off. All must have this value and be locked.
@@ -137,8 +136,6 @@ REMOVED_PREFS = {
     "VPN": {"browser.ipProtection.enabled": False},
     "AI": {
         "browser.ml.enable": False,
-        "browser.ml.chat.enabled": False,
-        "browser.smartwindow.enabled": False,
         "browser.ai.control.default": "blocked",
         "browser.ai.control.sidebarChatbot": "blocked",
         "browser.ai.control.smartWindow": "blocked",
@@ -549,7 +546,6 @@ for (const cid in Cc) {
 }
 out.about = { absent: ABOUT.filter(n => !registered.includes(n)), registered: ABOUT.filter(n => registered.includes(n)), allRegistered: registered.sort() };
 out.pocketPref = P.getPrefType("extensions.pocket.enabled") ? P.getBoolPref("extensions.pocket.enabled") : null;
-out.aiWindowEnabled = win.AIWindow?.isAIWindowEnabled?.() ?? null;
 out.sidebarSyncTools = win.SidebarController?.toolsAndExtensions
   ? [...win.SidebarController.toolsAndExtensions.keys()].filter(k => /sync|firefoxview|pocket/i.test(k)) : [];
 const tab = openTab("about:preferences");
@@ -1412,11 +1408,6 @@ def check_removed(ctx, r):
         "Pocket is off",
         data["pocketPref"] in (None, False),
         f"extensions.pocket.enabled={data['pocketPref']}",
-    )
-    r.add(
-        "AI window is disabled",
-        data["aiWindowEnabled"] in (False, None),
-        f"AIWindow.isAIWindowEnabled()={data['aiWindowEnabled']}",
     )
     r.add(
         "sidebar has no Synced Tabs, Firefox View or Pocket tool",

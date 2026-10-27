@@ -5,10 +5,6 @@
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
-  AIWindowMenu:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindowMenu.sys.mjs",
   BrowserSearchTelemetry:
     "moz-src:///browser/components/search/BrowserSearchTelemetry.sys.mjs",
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
@@ -17,8 +13,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
     "moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs",
   DevToolsShim: "chrome://devtools-startup/content/DevToolsShim.sys.mjs",
   E10SUtils: "resource://gre/modules/E10SUtils.sys.mjs",
-  GenAI: "moz-src:///browser/components/genai/GenAI.sys.mjs",
-  LinkPreview: "moz-src:///browser/components/genai/LinkPreview.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   LoginManagerContextMenu:
     "resource://gre/modules/LoginManagerContextMenu.sys.mjs",
@@ -513,15 +507,10 @@ export class nsContextMenu {
       "browser.tabs.splitView.enabled"
     );
     let currentTabInSplitView = !!window.gBrowser?.selectedTab?.splitview;
-    let showSmartWindow = lazy.AIWindow.isAIWindowEnabled();
     this.showItem("context-openlink", shouldShow && !isWindowPrivate);
     this.showItem(
       "context-openlinkprivate",
       shouldShow && lazy.PrivateBrowsingUtils.enabled
-    );
-    this.showItem(
-      "context-openlinksmartwindow",
-      shouldShow && showSmartWindow && !isWindowPrivate
     );
     this.showItem("context-openlinkintab", shouldShow && !inContainer);
     this.showItem("context-openlinkincontainertab", shouldShow && inContainer);
@@ -530,10 +519,6 @@ export class nsContextMenu {
       shouldShow && !isWindowPrivate && showContainers
     );
     this.showItem("context-openlinkincurrent", this.onPlainTextLink);
-    this.showItem(
-      "context-previewlink",
-      lazy.LinkPreview.shouldShowContextMenu(this)
-    );
     let isHiddenTab = !!window.gBrowser?.getTabForBrowser(this.browser)?.hidden;
     let isPinnedTab = !!window.gBrowser?.getTabForBrowser(this.browser)?.pinned;
     this.showItem(
@@ -912,16 +897,6 @@ export class nsContextMenu {
     }
 
     this.showAndFormatSearchContextItem();
-    lazy.GenAI.buildAskChatMenu(document.getElementById("context-ask-chat"), {
-      browser: this.browser,
-      selectionInfo: this.selectionInfo,
-      showItem: this.showItem.bind(this),
-      source: "page",
-    });
-    this.showItem(
-      "context-create-aitab",
-      lazy.AIWindowMenu.canShowAITabMenu(this.window, [this.browser.currentURI])
-    );
 
     // srcdoc cannot be opened separately due to concerns about web
     // content with about:srcdoc in location bar masquerading as trusted
@@ -1546,16 +1521,6 @@ export class nsContextMenu {
       this.linkURL,
       "window",
       this._openLinkInParameters({ private: true })
-    );
-  }
-
-  // Open linked-to URL in a new smart window.
-  openLinkInSmartWindow() {
-    const params = this._getGlobalHistoryOptions();
-    this.window.openLinkIn(
-      this.linkURL,
-      "window",
-      this._openLinkInParameters({ ...params, aiWindow: true })
     );
   }
 
@@ -2311,12 +2276,6 @@ export class nsContextMenu {
     );
   }
 
-  previewLink(url = this.linkURL) {
-    // If we're in a view-source tab, remove the view-source: prefix
-    url = url.replace(/^view-source:/, "");
-    lazy.LinkPreview.handleContextMenuClick(url, this);
-  }
-
   /**
    * Copies a stripped version of a URI to the clipboard.
    * 'Stripped' means that query parameters for tracking/ link decoration
@@ -2644,14 +2603,6 @@ export class nsContextMenu {
       dest = "tab";
     }
     this.window.openTrustedLinkIn(drmInfoURL, dest);
-  }
-
-  createAITab() {
-    lazy.AIWindow.createAITab(
-      this.window,
-      [this.browser.currentURI.spec],
-      "tab_list"
-    );
   }
 
   // Formats the 'Search <engine> for "<selection or link text>"' context menu.

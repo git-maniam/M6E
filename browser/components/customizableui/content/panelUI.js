@@ -126,7 +126,6 @@ const PanelUI = {
     this.menuButton.addEventListener("mousedown", this);
     this.menuButton.addEventListener("keypress", this);
 
-    Services.obs.addObserver(this, "ai-window-state-changed");
     Services.obs.addObserver(this, "fullscreen-nav-toolbox");
     Services.obs.addObserver(this, "appMenu-notifications");
     Services.obs.addObserver(this, "show-update-progress");
@@ -155,36 +154,6 @@ const PanelUI = {
         this.updateNotifications(false);
       },
       autoHidePref => autoHidePref && Services.appinfo.OS !== "Darwin"
-    );
-
-    XPCOMUtils.defineLazyPreferenceGetter(
-      this,
-      "isAIWindowEnabled",
-      "browser.smartwindow.enabled",
-      false,
-      (_pref, _previousValue, _newValue) => {
-        this._showAIMenuItem();
-      }
-    );
-
-    XPCOMUtils.defineLazyPreferenceGetter(
-      this,
-      "AIControlDefault",
-      "browser.ai.control.default",
-      "available",
-      (_pref, _previousValue, _newValue) => {
-        this._showAIMenuItem();
-      }
-    );
-
-    XPCOMUtils.defineLazyPreferenceGetter(
-      this,
-      "AIControlSmartWindow",
-      "browser.ai.control.smartWindow",
-      "default",
-      (_pref, _previousValue, _newValue) => {
-        this._showAIMenuItem();
-      }
     );
 
     XPCOMUtils.defineLazyPreferenceGetter(
@@ -234,7 +203,6 @@ const PanelUI = {
       "refresh"
     );
 
-    this._showAIMenuItem();
     this._showTabGroupsMenuItem();
     this._showReferralsMenuItem();
     this._initialized = true;
@@ -307,7 +275,6 @@ const PanelUI = {
       }
     }
 
-    Services.obs.removeObserver(this, "ai-window-state-changed");
     Services.obs.removeObserver(this, "fullscreen-nav-toolbox");
     Services.obs.removeObserver(this, "appMenu-notifications");
     Services.obs.removeObserver(this, "show-update-progress");
@@ -393,12 +360,6 @@ const PanelUI = {
 
   observe(subject, topic, status) {
     switch (topic) {
-      case "ai-window-state-changed":
-        if (subject == window) {
-          this._showAIMenuItem();
-        }
-        break;
-
       case "fullscreen-nav-toolbox":
         if (this._notifications) {
           this.updateNotifications(false);
@@ -1227,32 +1188,6 @@ const PanelUI = {
 
     popupnotification.notification = notification;
     popupnotification.show();
-  },
-
-  _showAIMenuItem() {
-    const isAIWindowActive = document.documentElement.hasAttribute("ai-window");
-    const isBlocked =
-      (this.AIControlSmartWindow === "default" &&
-        this.AIControlDefault === "blocked") ||
-      this.AIControlSmartWindow === "blocked";
-    const isSmartWindowAvailable = this.isAIWindowEnabled && !isBlocked;
-    const aiMenuItem = PanelMultiView.getViewNode(
-      document,
-      "appMenu-new-ai-window-button"
-    );
-    const classicWindowMenuItem = PanelMultiView.getViewNode(
-      document,
-      "appMenu-new-classic-window-button"
-    );
-    const chatHistoryMenuItem = PanelMultiView.getViewNode(
-      document,
-      "appMenu-chats-history-button"
-    );
-
-    aiMenuItem.hidden = !isSmartWindowAvailable || isAIWindowActive;
-    classicWindowMenuItem.hidden = !isSmartWindowAvailable || !isAIWindowActive;
-
-    chatHistoryMenuItem.hidden = !isSmartWindowAvailable || !isAIWindowActive;
   },
 
   _showTabGroupsMenuItem() {

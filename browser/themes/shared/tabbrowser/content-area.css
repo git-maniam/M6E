@@ -80,10 +80,8 @@
 
     /* A .browserContainer edge is only separated and rounded when it faces chrome.
      * SidebarController.setPosition updates the order of all of #browser's
-     * (flex) children according to the sidebar.position_start pref.
-     * The AI sidebar always docks opposite the browser sidebar. */
-    :root:not([inDOMFullscreen]) #tabbrowser-tabbox:not([sidebar-positionend]):is([sidebar-shown], [sidebar-panel-open]) &,
-    :root:not([inDOMFullscreen]) #tabbrowser-tabbox[sidebar-positionend][ai-window-open] & {
+     * (flex) children according to the sidebar.position_start pref. */
+    :root:not([inDOMFullscreen]) #tabbrowser-tabbox:not([sidebar-positionend]):is([sidebar-shown], [sidebar-panel-open]) & {
       border-inline-start: var(--border-width) solid var(--chrome-content-separator-color);
       border-start-start-radius: var(--content-area-start-radius);
 
@@ -100,7 +98,7 @@
       }
     }
 
-    :root:not([inDOMFullscreen]) #tabbrowser-tabbox:is([sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open]), [ai-window-open]) & {
+    :root:not([inDOMFullscreen]) #tabbrowser-tabbox[sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open]) & {
       border-inline-end: var(--border-width) solid var(--chrome-content-separator-color);
       border-start-end-radius: var(--content-area-start-radius);
 
@@ -109,16 +107,6 @@
 
         :root:dir(ltr) & {
           --content-scrollbar-inset-block: var(--content-area-start-radius) 0;
-        }
-      }
-    }
-
-    :root:not([inDOMFullscreen], [macOSNativeFullscreen]) #tabbrowser-tabbox[sidebar-positionend][ai-window-open]:not([sidebar-shown], [sidebar-panel-open]) & {
-      @media (-moz-platform: macos) {
-        --content-scrollbar-inset-inline-end: var(--border-radius-medium);
-
-        :root:dir(ltr) & {
-          --content-scrollbar-inset-block: var(--content-area-start-radius) var(--border-radius-medium);
         }
       }
     }
@@ -380,11 +368,6 @@
           border-start-end-radius: var(--border-radius-medium);
         }
       }
-
-      :root[ai-window]:not([inDOMFullscreen]) & {
-        border-start-start-radius: var(--border-radius-medium);
-        border-start-end-radius: var(--border-radius-medium);
-      }
     }
   }
 }
@@ -439,9 +422,7 @@
     }
   }
 
-  /* Exclude browsers with smartwindow-content attribute which inherit
-     color-scheme from chrome to follow the browser theme */
-  browser[type="content"]:not([smartwindow-content]) {
+  browser[type="content"] {
     color-scheme: env(-moz-content-preferred-color-scheme);
   }
 
@@ -807,134 +788,6 @@ split-view-footer {
   --panel-text-color: FieldText;
 }
 
-/* Shortcuts */
-
-#selection-shortcut-action-panel {
-  --panel-subview-body-padding: 0;
-
-  /* panel-subview-body stacks its children, but the actions sit in a row. */
-  & > .panel-subview-body {
-    flex-direction: row;
-  }
-
-  &[ime-hiding] {
-    opacity: 0;
-    pointer-events: none;
-    -moz-window-shadow: none;
-  }
-
-  &[copy-fading] {
-    opacity: 0;
-    transition: opacity 240ms ease-out;
-
-    @media (prefers-reduced-motion: reduce) {
-      transition: none;
-    }
-  }
-
-  moz-button {
-    --button-min-height: 34px;
-    --button-size-icon: 34px;
-    --button-border-radius: 7px;
-    margin: 1px;
-
-    @media -moz-pref("browser.nova.enabled") {
-      --button-border-radius: var(--border-radius-xlarge);
-    }
-  }
-
-  .more-actions-separator {
-    align-self: center;
-    width: 1px;
-    height: 18px;
-    margin-inline: var(--space-xsmall);
-    background-color: var(--border-color);
-  }
-
-  #ai-action-button::part(button) {
-    --button-background-color-selected: var(--button-background-color);
-    --button-border-color-selected: var(--button-border-color);
-    --button-text-color-selected: var(--button-text-color);
-
-    width: auto;
-    padding-inline: calc((var(--button-size-icon) - var(--icon-size)) / 2) var(--space-small);
-  }
-
-  #ai-action-button::part(button)::after {
-    content: "";
-    width: var(--icon-size-xsmall);
-    height: var(--icon-size-xsmall);
-    margin-inline-start: var(--space-small);
-    background-image: url("chrome://global/skin/icons/arrow-down-12.svg");
-    background-position: center;
-    background-repeat: no-repeat;
-    -moz-context-properties: fill;
-    fill: var(--button-icon-fill);
-  }
-
-  .copy-action-confirmation {
-    display: flex;
-    align-items: center;
-    flex: none;
-    block-size: var(--icon-size-xlarge);
-    margin-block: 2px;
-    white-space: nowrap;
-
-    &[copied] {
-      margin-inline-end: 2px;
-      padding-inline-end: var(--space-medium);
-      border-radius: var(--border-radius-circle);
-      background-color: var(--color-accent-primary);
-      color: var(--button-text-color-primary);
-      font-size: var(--font-size-root);
-      font-weight: var(--font-weight-semibold);
-    }
-  }
-
-  .copy-action-confirmation-icon {
-    display: none;
-    flex: none;
-    inline-size: var(--icon-size-xlarge);
-    block-size: var(--icon-size-xlarge);
-    background-image: url("chrome://global/skin/icons/check.svg");
-    background-size: var(--icon-size-default);
-    background-position: center;
-    background-repeat: no-repeat;
-    -moz-context-properties: fill;
-    fill: currentColor;
-  }
-
-  .copy-action-confirmation[copied] .copy-action-confirmation-icon {
-    display: block;
-  }
-
-  &[copied] {
-    #more-actions-button,
-    #more-actions-separator {
-      display: none;
-    }
-  }
-}
-
-#selection-more-actions-panel > .panel-subview-body {
-  gap: var(--space-medium);
-}
-
-#ask-chat-shortcuts {
-  font: menu;
-  max-width: 345px;
-}
-
-.ask-chat-shortcut-warning {
-  margin: var(--panel-menuitem-margin);
-  margin-bottom: var(--space-xsmall);
-}
-
-.ask-chat-shortcuts-custom-prompt {
-  margin: var(--panel-menuitem-margin);
-  margin-top: var(--space-small);
-}
-
 /* Dialogs */
 
 .dialogStack {
@@ -1136,7 +989,7 @@ split-view-footer {
       border-start-start-radius: calc(var(--border-radius-medium) - var(--border-width));
     }
 
-    #tabbrowser-tabbox:is([sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open]), [ai-window-open])
+    #tabbrowser-tabbox[sidebar-positionend]:is([sidebar-shown], [sidebar-panel-open])
       #tabbrowser-tabpanels
       > :not(.split-view-panel)
       .dialogOverlay[topmost="true"] {

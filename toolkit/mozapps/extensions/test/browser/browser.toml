@@ -129,8 +129,6 @@ https_first_disabled = true
 
 ["browser_html_sitepermission_addons.js"]
 
-["browser_html_smartwindow_themes_notice.js"]
-
 ["browser_html_themes_mode.js"]
 
 ["browser_html_themes_picker.js"]

@@ -96,19 +96,6 @@
                      data-l10n-id="appmenuitem-new-window"
                      key="key_newNavigator"
                      command="cmd_newNavigator"/>
-      <toolbarbutton id="appMenu-new-ai-window-button"
-                     class="subviewbutton"
-                     command="Tools:AIWindow"
-                     aria-describedby="appMenu-new-ai-window-badge">
-        <label class="toolbarbutton-text" crop="end"
-               data-l10n-id="appmenuitem-new-ai-window"/>
-        <html:moz-badge id="appMenu-new-ai-window-badge"
-                        type="beta"/>
-      </toolbarbutton>
-      <toolbarbutton id="appMenu-new-classic-window-button"
-                     class="subviewbutton"
-                     data-l10n-id="appmenuitem-new-classic-window"
-                     command="Tools:ClassicWindow"/>
       <toolbarbutton id="appMenu-new-private-window-button2"
                      class="subviewbutton"
                      data-l10n-id="appmenuitem-new-private-window"
@@ -131,10 +118,6 @@
                      closemenu="none"
                      hidden="true"
                      />
-      <toolbarbutton id="appMenu-chats-history-button"
-                     class="subviewbutton"
-                     data-l10n-id="menu-history-chats"
-                     command="Tools:ChatsHistory"/>
       <toolbarbutton id="appMenu-downloads-button"
                      class="subviewbutton"
                      data-l10n-id="appmenuitem-downloads"
@@ -1044,42 +1027,6 @@
                 class="learnMore"
                 support-page="data-loss-prevention"/>
       </description>
-    </vbox>
-  </panelview>
-
-  <panelview id="ai-window-toggle-view" class="PanelUI-subView">
-    <vbox class="panel-subview-body">
-      <toolbarbutton id="ai-window-switch-classic"
-                    class="subviewbutton"
-                    type="radio"
-                    hidden="true"
-                    data-l10n-attrs="label">
-        <image class="toolbarbutton-icon"/>
-        <vbox>
-          <label class="toolbarbutton-text"
-                data-l10n-id="ai-window-toggleview-switch-classic" crop="end"/>
-          <label class="ai-window-switch-description toolbarbutton-text"
-                data-l10n-id="ai-window-toggleview-switch-classic-description" crop="end"/>
-        </vbox>
-      </toolbarbutton>
-      <toolbarbutton id="ai-window-switch-ai"
-                    class="subviewbutton"
-                    type="radio"
-                    hidden="true"
-                    data-l10n-attrs="label"
-                    aria-describedby="ai-window-switch-ai-badge">
-        <image class="toolbarbutton-icon"/>
-        <vbox>
-          <hbox>
-            <label class="toolbarbutton-text"
-                  data-l10n-id="ai-window-toggleview-switch-ai" crop="end"/>
-            <html:moz-badge id="ai-window-switch-ai-badge"
-                  type="beta"/>
-          </hbox>
-          <label class="ai-window-switch-description toolbarbutton-text"
-                data-l10n-id="ai-window-toggleview-switch-ai-description" crop="end"/>
-        </vbox>
-      </toolbarbutton>
     </vbox>
   </panelview>
 

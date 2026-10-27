@@ -42,11 +42,6 @@ suites:
         tests:
             Dom-size: ""
 
-    browser/components/genai/tests/browser:
-        description: "Performance tests for GenAI features on Firefox Desktop"
-        tests:
-            "browser_link_preview_perf.js": ""
-
     toolkit/components/pdfjs/test:
         description: "Performance tests for PDF.js features on Firefox Desktop"
         tests:
@@ -92,7 +87,6 @@ suites:
             "browser_ml_autofill_perf.js": ""
             "ML Smart Tab Clustering": ""
             "browser_ml_smart_tab_perf.js": ""
-            "browser_ml_llama_smollm2_smoke.js": ""
             "browser_ml_llama_summarizer_perf.js": ""
 
     intl/benchmarks/test/xpcshell:
@@ -129,9 +123,3 @@ suites:
         description: "Performance tests for Toolkit: Places"
         tests:
             "Calculate Frecency Speed": ""
-
-    browser/components/aiwindow/ui/test/browser_perf:
-        description: "Performance tests for Smart Window on Firefox Desktop"
-        tests:
-            "browser_smartwindow_intent_perf.js": ""
-            "browser_smartwindow_perf.js": ""

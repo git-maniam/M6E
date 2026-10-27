@@ -370,9 +370,6 @@ export class UrlbarView {
         if (result.providerName == "UrlbarProviderTabToSearch") {
           return "tabtosearch";
         }
-        if (result.providerName == "UrlbarProviderAiChat") {
-          return "ai_search_fallback";
-        }
         if (result.payload.suggestion) {
           let type = result.payload.trending ? "trending" : "searchsuggestion";
           if (result.isRichSuggestion) {
@@ -444,8 +441,6 @@ export class UrlbarView {
           return "restrict_keyword_actions";
         }
         break;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return "ai_chat";
     }
     return "unknown";
   }
@@ -1320,12 +1315,6 @@ export class UrlbarView {
   }
 
   #openPanel() {
-    // The Smart Window sidebar deliberately hides the suggestions dropdown to
-    // reduce visual disruption; queries (and the intent classifier) still run
-    // so Enter routes to chat/search/navigate correctly on the first turn.
-    if (this.input.isSidebarMode) {
-      return;
-    }
     if (this.isOpen) {
       this.input.updatePopover();
       return;
@@ -2683,13 +2672,6 @@ export class UrlbarView {
         };
         setURL = true;
         break;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        actionSetter = () => {
-          this.#l10nCache.setElementL10n(action, {
-            id: "urlbar-result-action-ai-chat",
-          });
-        };
-        break;
       case UrlbarShared.RESULT_TYPE.SEARCH:
         if (
           result.payload.suggestionObject?.suggestionType == "important_dates"
@@ -3435,7 +3417,7 @@ export class UrlbarView {
       // Keep the selected row in view in the inputs whose results list is
       // scrollable. `block: "nearest"` is a no-op when the row is already
       // visible. Scoped to those to avoid changing classic urlbar behavior.
-      if (["smartbar", "newtab_searchbar"].includes(this.input.sapName)) {
+      if (this.input.sapName == "newtab_searchbar") {
         (row ?? element).scrollIntoView({ block: "nearest" });
       }
     }

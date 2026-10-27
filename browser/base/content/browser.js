@@ -12,8 +12,6 @@ var { AppConstants } = ChromeUtils.importESModule(
 // lazy module getters
 
 ChromeUtils.defineESModuleGetters(this, {
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   AMTelemetry: "resource://gre/modules/AddonManager.sys.mjs",
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   AboutReaderParent: "resource:///actors/AboutReaderParent.sys.mjs",
@@ -654,29 +652,6 @@ customElements.setElementCreationCallback(
     );
   }
 );
-
-// The "Tasks" panel (Smart Window) renders its content with this custom
-// element, which pulls in agent-monitor-item for the create form.
-customElements.setElementCreationCallback("agent-monitor-panel", () => {
-  ChromeUtils.importESModule(
-    "chrome://browser/content/aiwindow/components/agent-monitor-panel.mjs",
-    { global: "current" }
-  );
-});
-
-// The "Group my tabs" panel and flyout (Smart Window) render their content with
-// these light-DOM custom elements; both live in one module.
-for (const smartwindowGroupTabsTag of [
-  "smartwindow-group-tabs-card",
-  "smartwindow-group-tabs-flyout",
-]) {
-  customElements.setElementCreationCallback(smartwindowGroupTabsTag, () => {
-    ChromeUtils.importESModule(
-      "chrome://browser/content/aiwindow/components/smartwindow-group-tabs.mjs",
-      { global: "current" }
-    );
-  });
-}
 
 var gBrowser;
 var gContextMenu = null; // nsContextMenu instance
@@ -1927,16 +1902,6 @@ let gFileMenu = {
       );
     }
     PrintUtils.updatePrintSetupMenuHiddenState();
-
-    const aiWindowMenu = event.target.querySelector("#menu_newAIWindow");
-    const classicWindowMenu = event.target.querySelector(
-      "#menu_newClassicWindow"
-    );
-
-    aiWindowMenu.hidden =
-      !AIWindow.isAIWindowEnabled() || AIWindow.isAIWindowActive(window);
-    classicWindowMenu.hidden =
-      !AIWindow.isAIWindowEnabled() || !AIWindow.isAIWindowActive(window);
   },
 };
 
@@ -2329,7 +2294,6 @@ var XULBrowserWindow = {
     // If we've actually changed document, update the toolbar visibility.
     if (!isSameDocument) {
       updateBookmarkToolbarVisibility();
-      AIWindow.updateImmersiveView(gBrowser.currentURI, window);
     }
 
     let closeOpenPanels = selector => {

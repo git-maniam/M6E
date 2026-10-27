@@ -81,12 +81,6 @@ SCHEMAS = [
             "NewtabMessage": (
                 SCHEMA_DIR / "OnboardingMessage" / "NewtabMessage.schema.json"
             ),
-            "SidebarChatBotPromo": (
-                SCHEMA_DIR / "OnboardingMessage" / "SidebarChatBotPromo.schema.json"
-            ),
-            "SmartWindowNewtabPromo": (
-                SCHEMA_DIR / "OnboardingMessage" / "SmartWindowNewtabPromo.schema.json"
-            ),
             "Spotlight": SCHEMA_DIR / "OnboardingMessage" / "Spotlight.schema.json",
             "ToastNotification": (
                 SCHEMA_DIR / "ToastNotification" / "ToastNotification.schema.json"

@@ -379,13 +379,6 @@ const CONFIG_PANES = Object.freeze({
     module:
       "chrome://browser/content/preferences/config/passwords-autofill.mjs",
   },
-  manageMemories: {
-    parent: "personalizeSmartWindow",
-    l10nId: "ai-window-manage-memories-header",
-    groupIds: ["manageMemories"],
-    module: "chrome://browser/content/preferences/config/aiFeatures.mjs",
-    supportPage: "smart-window-memories",
-  },
   managePayments: {
     parent: "passwordsAutofill",
     l10nId: "autofill-payment-methods-manage-payments-title",
@@ -419,14 +412,6 @@ const CONFIG_PANES = Object.freeze({
         ? ["websiteNotifications"]
         : [],
     module: "chrome://browser/content/preferences/config/notifications.mjs",
-  },
-  personalizeSmartWindow: {
-    parent: "ai",
-    l10nId: "ai-window-personalize-header",
-    iconSrc: "chrome://browser/skin/smart-window-mono-32.svg",
-    badge: "beta",
-    groupIds: ["assistantDefaultGroup", "assistantModelGroup", "memoriesGroup"],
-    module: "chrome://browser/content/preferences/config/aiFeatures.mjs",
   },
   passwordsAutofill: {
     l10nId: "preferences-passwords-autofill-header",

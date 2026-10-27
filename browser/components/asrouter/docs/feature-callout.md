@@ -220,8 +220,7 @@ interface FeatureCallout {
           // traversing into a content document, such as an iframe. It
           // can be chained with ::%shadow% to cross both document and
           // shadow DOM boundaries. For example:
-          // "hbox.deck-selected browser::%document%
-          //  ai-window::%shadow%context-icon-button"
+          // "hbox.deck-selected browser::%document% body"
           selector: string;
           // panel_position is an object representing how the callout should be
           // positioned relative to the anchor element.

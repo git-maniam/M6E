@@ -102,10 +102,6 @@ export class UrlbarChildTelemetry {
       "tabswitch",
       "focus",
     ];
-    if (this.#controller.input.sapName === "smartbar") {
-      // The smartbar CTA can start a session when the input is not focused.
-      validEvents.push("aiwindow-input-cta:on-action");
-    }
     if (!validEvents.includes(event.type)) {
       console.error("Can't start recording from event type: ", event.type);
       return;
@@ -154,13 +150,11 @@ export class UrlbarChildTelemetry {
       if (snapshot) {
         let { input, view } = this.#controller;
         let engagementData = UrlbarTelemetryUtils.engagementData(input, view);
-        let smartbarData = UrlbarTelemetryUtils.smartbarData(input);
 
         let { built, previousSearchWords } =
           UrlbarTelemetryUtils.buildRecordedEngagement(
             snapshot,
             engagementData,
-            smartbarData,
             this.#previousSearchWords
           );
         this.#previousSearchWords = previousSearchWords;
@@ -174,7 +168,6 @@ export class UrlbarChildTelemetry {
           ? UrlbarTelemetryUtils.buildRecordedDisableCandidate(
               snapshot,
               engagementData,
-              smartbarData,
               this.#previousSearchWords
             )
           : null;
@@ -321,7 +314,6 @@ export class UrlbarChildTelemetry {
   async startTrackingBounceEvent(browserId, event, details) {
     let { input, view } = this.#controller;
     let engagementData = UrlbarTelemetryUtils.engagementData(input, view);
-    let smartbarData = UrlbarTelemetryUtils.smartbarData(input);
 
     let snapshot = UrlbarTelemetryUtils.collectBounceSnapshot(
       event,
@@ -352,16 +344,11 @@ export class UrlbarChildTelemetry {
       numChars: snapshot.numChars,
       numWords: snapshot.numWords,
       provider: snapshot.provider,
-      searchSource,
       searchMode,
       selIndex: snapshot.selIndex,
       visibleResults: snapshot.visibleResults,
       viewIsOpen: engagementData.viewIsOpen,
       selType: snapshot.selType,
-      location: snapshot.location,
-      chatId: smartbarData.chatId,
-      intent: smartbarData.intent,
-      model: smartbarData.model,
       windowMode: snapshot.windowMode,
     });
 

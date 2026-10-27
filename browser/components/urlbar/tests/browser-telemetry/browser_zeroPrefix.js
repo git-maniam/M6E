@@ -15,7 +15,7 @@ ChromeUtils.defineESModuleGetters(this, {
 });
 
 const METRICS = ["abandonment", "engagement", "exposure"];
-const SAPS = ["urlbar", "searchbar", "newtab_searchbar", "smartbar"];
+const SAPS = ["urlbar", "searchbar", "newtab_searchbar"];
 
 add_setup(async function () {
   await PlacesUtils.history.clear();

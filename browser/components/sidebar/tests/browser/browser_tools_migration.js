@@ -8,11 +8,11 @@ add_setup(async () => {
     set: [
       ["sidebar.main.tools", "syncedtabs,bookmarks,history"],
       ["sidebar.newTool.migration.bookmarks", "{}"],
-      ["browser.ml.chat.enabled", false],
+      ["browser.contextual-password-manager.enabled", false],
       [
-        "sidebar.newTool.migration.aichat",
+        "sidebar.newTool.migration.passwords",
         JSON.stringify({
-          visibilityPref: "browser.ml.chat.enabled",
+          visibilityPref: "browser.contextual-password-manager.enabled",
         }),
       ],
     ],
@@ -98,28 +98,28 @@ add_task(async function test_check_visibility_enabled() {
   is(sidebar.toolButtons.length, 2, "Two tools are shown in the launcher");
 
   let prefValue = JSON.parse(
-    Services.prefs.getStringPref("sidebar.newTool.migration.aichat")
+    Services.prefs.getStringPref("sidebar.newTool.migration.passwords")
   );
 
-  ok(!prefValue.alreadyShown, "aichat pref property was not already shown.");
+  ok(!prefValue.alreadyShown, "passwords pref property was not already shown.");
 
-  // enable aichat panel visibility
+  // enable passwords panel visibility
   await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.chat.enabled", true]],
+    set: [["browser.contextual-password-manager.enabled", true]],
   });
 
   let customizeDocument = SidebarController.browser.contentDocument;
   const customizeComponent =
     customizeDocument.querySelector("sidebar-customize");
 
-  let aichatInput = Array.from(customizeComponent.toolInputs).find(
-    input => input.id === "viewGenaiChatSidebar"
+  let passwordsInput = Array.from(customizeComponent.toolInputs).find(
+    input => input.id === "viewCPMSidebar"
   );
 
   await BrowserTestUtils.waitForMutationCondition(
-    aichatInput,
+    passwordsInput,
     { attributes: true, attributeFilter: ["checked"] },
-    () => aichatInput.checked
+    () => passwordsInput.checked
   );
 
   let bookmarksInput = Array.from(customizeComponent.toolInputs).find(
@@ -137,12 +137,12 @@ add_task(async function test_check_visibility_enabled() {
   );
 
   prefValue = JSON.parse(
-    Services.prefs.getStringPref("sidebar.newTool.migration.aichat")
+    Services.prefs.getStringPref("sidebar.newTool.migration.passwords")
   );
 
   ok(
     prefValue.alreadyShown,
-    "aichat pref property is now marked as already shown."
+    "passwords pref property is now marked as already shown."
   );
 });
 

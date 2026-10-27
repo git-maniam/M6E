@@ -366,12 +366,10 @@ already_AddRefed<Promise> ExtensionPolicyService::ExecuteContentScripts(
 // Use browser's MessageManagerGroup to decide if we care about it, to inject
 // extension APIs or content scripts.  Tabs use "browsers", all custom
 // extension browsers use "webext-browsers", including popups & sidebars,
-// background & options pages, and xpcshell tests, and chatbot sidebar browsers
-// use "chatbot-browser".
+// background & options pages, and xpcshell tests.
 static bool IsTabOrExtensionBrowser(dom::BrowsingContext* aBC) {
   const auto& group = aBC->Top()->GetMessageManagerGroup();
-  bool rv = group == u"browsers"_ns || group == u"webext-browsers"_ns ||
-            group == u"chatbot-browser"_ns;
+  bool rv = group == u"browsers"_ns || group == u"webext-browsers"_ns;
 
 #ifdef MOZ_THUNDERBIRD
   // ...unless it's Thunderbird, which has extra groups for unrelated reasons.

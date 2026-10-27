@@ -204,7 +204,7 @@ export default class ASRouterNewTabMessage extends MozLitElement {
    * @example
    * this.specialMessageAction({
    *   type: "OPEN_SIDEBAR",
-   *   data: "viewGenaiChatSidebar"
+   *   data: "viewBookmarksSidebar"
    * });
    */
   specialMessageAction(action) {

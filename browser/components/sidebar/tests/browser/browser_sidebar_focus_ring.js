@@ -8,8 +8,7 @@ add_setup(async () => {
     set: [
       [VERTICAL_TABS_PREF, true],
       [SIDEBAR_VISIBILITY_PREF, "always-show"],
-      ["browser.ml.chat.enabled", true],
-      ["sidebar.main.tools", "aichat,syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "syncedtabs,history,bookmarks"],
     ],
   });
   await SidebarTestUtils.waitForTabstripOrientation(window, "vertical");

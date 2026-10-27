@@ -31,13 +31,9 @@ urlbar:
           , `handoff`, `urlbar_newtab`, `urlbar_addonpage`, `newtab_searchbar`,
           and `searchbar`.
         type: string
-      location:
-        description: |
-          Which input was used: fullpage, sidebar, or urlbar.
-        type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -98,7 +94,7 @@ urlbar:
           `search_suggest`, `search_suggest_rich`, `trending_search`,
           `trending_search_rich`, `top_pick`, `top_site`, `remote_tab`,
           `addon`, `general`, `suggest`, `about_page`, `suggested_index`,
-          `restrict_keyword`, `ai`.
+          `restrict_keyword`.
           If the group did not fall into any of these,
           this will be `unknown` and a bug should be filed to investigate it.
         type: string
@@ -110,8 +106,6 @@ urlbar:
           `action`,
           `addon`,
           `addons_shortcut_moved`,
-          `ai_chat`,
-          `ai_search_fallback`,
           `autofill_about`,
           `autofill_adaptive_origin`,
           `autofill_adaptive_url`,
@@ -195,20 +189,6 @@ urlbar:
           queried.
           The possible values are: `history`, `none`.
         type: string
-      chat_id: &chat_id
-        description: |
-          UUID for this smart window session. Unique identifier for each chat
-          conversation. Only set when sap is `smartbar`.
-        type: string
-      intent: &intent
-        description: |
-          What was the detected intent for the request: navigate, search,
-          chat, or empty string. Only set when sap is `smartbar`.
-        type: string
-      model: &model
-        description: |
-          Model selected by the user. Only set when sap is `smartbar`.
-        type: string
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1800414
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1805717
@@ -242,13 +222,9 @@ urlbar:
           , `handoff`, `urlbar_newtab`, `urlbar_addonpage`, `newtab_searchbar`,
           and `searchbar`.
         type: string
-      location:
-        description: |
-          Which input was used: fullpage, sidebar, or urlbar.
-        type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -346,9 +322,6 @@ urlbar:
         description: |
           The view time threshold for bounce detection, in seconds.
         type: quantity
-      chat_id: *chat_id
-      intent: *intent
-      model: *model
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1959741
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2009615
@@ -379,13 +352,9 @@ urlbar:
           , `handoff`, `urlbar_newtab`, `urlbar_addonpage`, `newtab_searchbar`,
           and `searchbar`.
         type: string
-      location:
-        description: |
-          Which input was used: fullpage, sidebar, or urlbar.
-        type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -455,9 +424,6 @@ urlbar:
           `suggest`
           More values may be added in the future.
         type: string
-      chat_id: *chat_id
-      intent: *intent
-      model: *model
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1960836
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2009615
@@ -483,13 +449,9 @@ urlbar:
           , `handoff`, `urlbar_newtab`, `urlbar_addonpage`, `newtab_searchbar`,
           and `searchbar`.
         type: string
-      location:
-        description: |
-          Which input was used: fullpage, sidebar, or urlbar.
-        type: string
       window_mode:
         description: |
-          The window mode: classic, private, or smartwindow.
+          The window mode: classic or private.
         type: string
       interaction:
         description: |
@@ -548,8 +510,6 @@ urlbar:
           `action`,
           `addon`,
           `addons_shortcut_moved`,
-          `ai_chat`,
-          `ai_search_fallback`,
           `autofill_about`,
           `autofill_adaptive_origin`,
           `autofill_adaptive_url`,
@@ -691,7 +651,7 @@ urlbar:
           `search_suggest`, `search_suggest_rich`, `trending_search`,
           `trending_search_rich`, `top_pick`, `top_site`, `recent_search`,
           `remote_tab`, `addon`, `general`, `suggest`, `about_page`,
-          `suggested_index`, `restrict_keyword`, `ai`.
+          `suggested_index`, `restrict_keyword`.
           If the group did not fall into any of these, this will be `unknown`
           and a bug should be filed to investigate it. If engagement_type is
           `drop_go` or `paste_go`, this  will be empty string because no results
@@ -705,8 +665,6 @@ urlbar:
           `action`,
           `addon`,
           `addons_shortcut_moved`,
-          `ai_chat`,
-          `ai_search_fallback`,
           `autofill_about`,
           `autofill_adaptive_origin`,
           `autofill_adaptive_url`,
@@ -790,9 +748,6 @@ urlbar:
           queried.
           The possible values are: `history`, `none`.
         type: string
-      chat_id: *chat_id
-      intent: *intent
-      model: *model
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1797265
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1805717
@@ -1606,7 +1561,6 @@ urlbar.zeroprefix2:
       - urlbar
       - searchbar
       - newtab_searchbar
-      - smartbar
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1806765
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2066165
@@ -1628,7 +1582,6 @@ urlbar.zeroprefix2:
       - urlbar
       - searchbar
       - newtab_searchbar
-      - smartbar
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1806765
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2066165
@@ -1650,7 +1603,6 @@ urlbar.zeroprefix2:
       - urlbar
       - searchbar
       - newtab_searchbar
-      - smartbar
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1806765
       - https://bugzilla.mozilla.org/show_bug.cgi?id=2066165

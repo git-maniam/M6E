@@ -249,7 +249,7 @@ export class UrlbarChild extends JSWindowActorChild {
    * id the child controller pairs with the proxy it builds.
    *
    * @param {object} input
-   *   The `UrlbarInput`/`SmartbarInput` that owns the child controller.
+   *   The `UrlbarInput` that owns the child controller.
    * @returns {number} The instance id to construct the proxy with.
    */
   registerMessagePathInput(input) {

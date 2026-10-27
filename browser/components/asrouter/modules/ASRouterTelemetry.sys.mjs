@@ -104,12 +104,6 @@ export class ASRouterTelemetry {
       case "menu_message_user_event":
         event = await this.applyMenuMessagePolicy(event);
         break;
-      case "smart_window_promo_user_event":
-        event = await this.applySmartWindowPromoPolicy(event);
-        break;
-      case "sidebar_chatbot_promo_user_event":
-        event = await this.applySidebarChatBotPromoPolicy(event);
-        break;
       case "action_only_user_event":
         event = await this.applyActionOnlyPolicy(event);
         break;
@@ -189,20 +183,6 @@ export class ASRouterTelemetry {
     return { ping, pingType: "menu" };
   }
 
-  async applySmartWindowPromoPolicy(ping) {
-    ping.client_id = await this.telemetryClientId;
-    ping.browser_session_id = lazy.browserSessionId;
-    delete ping.action;
-    return { ping, pingType: "smart_window_promo" };
-  }
-
-  async applySidebarChatBotPromoPolicy(ping) {
-    ping.client_id = await this.telemetryClientId;
-    ping.browser_session_id = lazy.browserSessionId;
-    delete ping.action;
-    return { ping, pingType: "sidebar_chatbot_promo" };
-  }
-
   async applyMomentsPolicy(ping) {
     ping.client_id = await this.telemetryClientId;
     ping.browser_session_id = lazy.browserSessionId;
@@ -271,10 +251,6 @@ export class ASRouterTelemetry {
       case msg.MENU_MESSAGE_TELEMETRY:
       // Intentional fall-through
       case msg.NEWTAB_MESSAGE_TELEMETRY:
-      // Intentional fall-through
-      case msg.SMART_WINDOW_PROMO_TELEMETRY:
-      // Intentional fall-through
-      case msg.SIDEBAR_CHATBOT_PROMO_TELEMETRY:
       // Intentional fall-through
       case msg.ACTION_ONLY_TELEMETRY:
       // Intentional fall-through

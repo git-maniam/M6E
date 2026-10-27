@@ -3,12 +3,6 @@
 
 "use strict";
 
-const lazy = {};
-
-ChromeUtils.defineESModuleGetters(lazy, {
-  GenAI: "moz-src:///browser/components/genai/GenAI.sys.mjs",
-});
-
 async function focusAndActivateElement(elem, activateMethod) {
   elem.setAttribute("tabindex", "-1");
   elem.focus();
@@ -21,10 +15,7 @@ async function focusAndActivateElement(elem, activateMethod) {
 
 add_setup(async () => {
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["browser.ml.chat.enabled", true],
-      ["sidebar.main.tools", "aichat,syncedtabs,history,bookmarks"],
-    ],
+    set: [["sidebar.main.tools", "syncedtabs,history,bookmarks"]],
   });
 
   const sidebarLauncher = document.querySelector("sidebar-main");
@@ -219,38 +210,6 @@ add_task(async function test_menu_items_labeled() {
     }
     ok(!button.hasVisibleLabel, `Collapsed ${view} button has no label.`);
   }
-});
-
-add_task(async function test_genai_chat_sidebar_tooltip() {
-  const chatbotButton = document
-    .querySelector("sidebar-main")
-    .shadowRoot.querySelector("[view=viewGenaiChatSidebar]");
-
-  await SidebarController.updateUIState({ launcherExpanded: false });
-
-  const view = chatbotButton.getAttribute("view");
-  ok(
-    chatbotButton.title,
-    `${view} chatbot button (${chatbotButton.title}) has a tooltip.`
-  );
-  const sandbox = sinon.createSandbox();
-
-  const mockTooltipName = "test-tooltip-name";
-
-  sandbox.stub(lazy.GenAI, "currentChatProviderInfo").value({
-    name: mockTooltipName,
-    iconUrl: "chrome://global/skin/icons/highlights.svg",
-  });
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.chat.provider", "https://localhost"]],
-  });
-
-  Assert.ok(
-    chatbotButton.title.includes(mockTooltipName),
-    `${chatbotButton.title} should include ${mockTooltipName}.`
-  );
-
-  sandbox.restore();
 });
 
 add_task(async function test_keyboard_navigation_vertical_tabs() {

@@ -15,8 +15,6 @@ const { DeferredTask } = ChromeUtils.importESModule(
 const toolsNameMap = {
   viewOpenTabsSidebar: "opentabs",
   viewBookmarksSidebar: "bookmarks",
-  viewGenaiChatSidebar: "aichat",
-  viewGenaiPageAssistSidebar: "aipageassist",
   viewHistorySidebar: "history",
   viewTabsSidebar: "syncedtabs",
   viewCPMSidebar: "passwords",
@@ -103,15 +101,10 @@ var SidebarController = {
       () => sidebar._updateMenus?.()
     );
     Object.defineProperty(sidebar, "visible", {
-      get: () =>
-        sidebar._prefVisible && !(config.hideInAIWindow && this.isAIWindow()),
+      get: () => sidebar._prefVisible,
       configurable: true,
     });
     this.promiseInitialized.then(() => sidebar._updateMenus?.());
-  },
-
-  isAIWindow() {
-    return this.AIWindow.isAIWindowActive(window);
   },
 
   get sidebars() {
@@ -194,41 +187,6 @@ var SidebarController = {
     if (!Services.prefs.getBoolPref("identity.fxaccounts.enabled")) {
       this._sidebars.delete("viewTabsSidebar");
     }
-
-    this.registerPrefSidebar(
-      "browser.ml.chat.enabled",
-      "viewGenaiChatSidebar",
-      {
-        name: "aichat",
-        elementId: "sidebar-switcher-genai-chat",
-        url: "chrome://browser/content/genai/chat.html",
-        keyId: "viewGenaiChatSidebarKb",
-        menuId: "menu_genaiChatSidebar",
-        menuL10nId: "menu-view-genai-chat",
-        // Bug 1900915 to expose as conditional tool
-        revampL10nId: "sidebar-menu-genai-chat-label",
-        iconUrl: "chrome://global/skin/icons/highlights.svg",
-        gleanClickEvent: Glean.sidebar.chatbotIconClick,
-        toolContextMenuId: "aichat",
-        hasCustomHeader: true,
-        permissions: true,
-        hideInAIWindow: true,
-      }
-    );
-
-    this.registerPrefSidebar(
-      "browser.ml.pageAssist.enabled",
-      "viewGenaiPageAssistSidebar",
-      {
-        name: "aipageassist",
-        elementId: "sidebar-switcher-genai-page-assist",
-        url: "chrome://browser/content/genai/pageAssist.html",
-        menuId: "menu_genaiPageAssistSidebar",
-        menuL10nId: "menu-view-genai-page-assist",
-        revampL10nId: "sidebar-menu-genai-page-assist-label",
-        iconUrl: "chrome://browser/skin/reader-mode.svg",
-      }
-    );
 
     this.registerPrefSidebar(
       "browser.contextual-password-manager.enabled",
@@ -389,7 +347,6 @@ var SidebarController = {
   _verticalNewTabListenerAdded: false,
   _localesObserverAdded: false,
   _mainResizeObserverAdded: false,
-  _aiWindowObserverAdded: false,
   _windowRestoredObserverAdded: false,
   _mainResizeObserver: null,
   _activeViewTransition: null,
@@ -666,10 +623,6 @@ var SidebarController = {
       Services.obs.addObserver(this, "tabstrip-orientation-change");
       this._tabstripOrientationObserverAdded = true;
     }
-    if (!this._aiWindowObserverAdded) {
-      Services.obs.addObserver(this, "ai-window-state-changed");
-      this._aiWindowObserverAdded = true;
-    }
     if (!this._windowRestoredObserverAdded) {
       Services.obs.addObserver(this, "sessionstore-single-window-restored");
       this._windowRestoredObserverAdded = true;
@@ -702,10 +655,8 @@ var SidebarController = {
     this._sidebarMainKeydownHandler = null;
     Services.obs.removeObserver(this, "intl:app-locales-changed");
     Services.obs.removeObserver(this, "tabstrip-orientation-change");
-    Services.obs.removeObserver(this, "ai-window-state-changed");
     Services.obs.removeObserver(this, "sessionstore-single-window-restored");
     delete this._tabstripOrientationObserverAdded;
-    delete this._aiWindowObserverAdded;
     delete this._windowRestoredObserverAdded;
 
     CustomizableUI.removeListener(this);
@@ -860,15 +811,6 @@ var SidebarController = {
       }
       case "tabstrip-orientation-change": {
         this.promiseInitialized.then(() => this.toggleTabstrip());
-        break;
-      }
-      case "ai-window-state-changed": {
-        if (subject == window) {
-          // Update menus and hide sidebars that depend on the type of window
-          for (const sidebar of this.sidebars.values()) {
-            sidebar._updateMenus?.();
-          }
-        }
         break;
       }
     }
@@ -2779,8 +2721,6 @@ var SidebarController = {
 };
 
 ChromeUtils.defineESModuleGetters(SidebarController, {
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   SidebarManager:
     "moz-src:///browser/components/sidebar/SidebarManager.sys.mjs",
   SidebarState: "moz-src:///browser/components/sidebar/SidebarState.sys.mjs",

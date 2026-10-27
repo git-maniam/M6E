@@ -90,11 +90,11 @@ pin-tabs-callout-4-title = Pin sites you visit the most
 ## Sidebar Onboarding Strings
 
 sidebar-customization-callout-1-title = Sidebar: your spot for tools and tabs
-sidebar-customization-callout-1-subtitle = The { -brand-product-name } sidebar gives you quick access to your browsing history, tabs from other devices, and an AI chatbot — all without leaving your main view.
+sidebar-customization-callout-1-subtitle = The { -brand-product-name } sidebar gives you quick access to your browsing history and tabs from other devices — all without leaving your main view.
 sidebar-customization-callout-callout-button = Customize sidebar
 sidebar-customization-callout-dismiss-button = Hide sidebar
 sidebar-customization-callout-2-title = Make the { -brand-product-name } sidebar your own
-sidebar-customization-callout-2-subtitle = Add and remove tools. Place your tabs in the sidebar. Give an AI chatbot a try. How you customize your sidebar is up to you.
+sidebar-customization-callout-2-subtitle = Add and remove tools. Place your tabs in the sidebar. How you customize your sidebar is up to you.
 
 ## Sidebar Callout Survey Strings
 
@@ -121,13 +121,6 @@ sidebar-callout-survey-saved-websites-2 = Quick access to your bookmarks
 sidebar-callout-survey-none-of-above = None of the above
 sidebar-callout-survey-submit = Submit
 sidebar-callout-survey-thank-you = Thank you for your feedback!
-
-# Sidebar GenAI Survey Strings
-
-sidebar-genai-survey-satisfaction-question = How satisfied are you with having access to an AI chatbot in the sidebar?
-sidebar-genai-survey-productive-question =
-    To what extent do you agree or disagree with this statement:<br/>
-    “The AI chatbot in the sidebar helps me be more productive”?
 
 # Split View Onboarding Strings
 
@@ -301,11 +294,6 @@ windows-10-eos-sync-split-dismiss-button-show-fewer-option =
     .label = Show fewer recommendations
 windows-10-eos-sync-dismiss-button-label = Dismiss
 windows-10-eos-sync-callout-primary-advance-button-label = Next
-
-## Link Preview Onboarding message callout strings
-
-link-preview-onboarding-callout-title = New: Click and hold to preview links
-link-preview-onboarding-callout-description = See a short description, reading time, and more to decide if a link is worth the click. Also available on right-click.
 
 ## Tab Groups Onboarding Strings
 ## These strings appear in a callout shown to users to introduce tab groups,

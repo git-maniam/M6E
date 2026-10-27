@@ -13,14 +13,6 @@ const chrome_base =
 const HTTP_URL = example_base + "subtst_contextmenu_add_search_engine.html";
 const CHROME_URL = chrome_base + "subtst_contextmenu_add_search_engine.html";
 
-const askChatMenu = [
-  "context-ask-chat",
-  true,
-  // Need a blank entry here because the Ask Chat submenu is dynamically built with no ids.
-  "",
-  null,
-];
-
 add_task(async function test_setup() {
   await BrowserTestUtils.openNewForegroundTab(gBrowser, HTTP_URL);
   const contextmenu_common = chrome_base + "contextmenu_common.js";
@@ -51,9 +43,6 @@ add_task(async function test_text_input_spellcheck_noform() {
       null,
       "---",
       null,
-      ...askChatMenu,
-      "---",
-      null,
       "spell-check-enabled",
       true,
       "spell-dictionaries",
@@ -81,9 +70,6 @@ add_task(async function test_text_input_spellcheck_noform() {
             input.clientTop; // force layout flush
           }
         );
-      },
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
       },
     }
   );
@@ -116,9 +102,6 @@ add_task(async function test_text_input_spellcheck_loginform() {
       null,
       "---",
       null,
-      ...askChatMenu,
-      "---",
-      null,
       "spell-check-enabled",
       true,
       "spell-dictionaries",
@@ -146,9 +129,6 @@ add_task(async function test_text_input_spellcheck_loginform() {
             input.clientTop; // force layout flush
           }
         );
-      },
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
       },
     }
   );
@@ -179,7 +159,6 @@ add_task(async function test_text_input_spellcheck_searchform() {
       null,
       "context-add-engine",
       null,
-      ...askChatMenu,
       "---",
       null,
       "spell-check-enabled",
@@ -209,9 +188,6 @@ add_task(async function test_text_input_spellcheck_searchform() {
             input.clientTop; // force layout flush
           }
         );
-      },
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
       },
     }
   );
@@ -249,9 +225,6 @@ add_task(async function test_searchform_non_http() {
       null,
       "---",
       null,
-      ...askChatMenu,
-      "---",
-      null,
       "spell-check-enabled",
       true,
       "spell-dictionaries",
@@ -279,9 +252,6 @@ add_task(async function test_searchform_non_http() {
             input.clientTop; // force layout flush
           }
         );
-      },
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
       },
     }
   );

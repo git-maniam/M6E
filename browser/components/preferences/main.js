@@ -48,7 +48,6 @@ const { DefaultBrowserHelper } = importIntoWindow(
 ChromeUtils.defineESModuleGetters(this, {
   BackgroundUpdate: "resource://gre/modules/BackgroundUpdate.sys.mjs",
   UpdateListener: "resource://gre/modules/UpdateListener.sys.mjs",
-  LinkPreview: "moz-src:///browser/components/genai/LinkPreview.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
   LaunchOnLogin: "resource://gre/modules/LaunchOnLogin.sys.mjs",
@@ -114,11 +113,7 @@ Preferences.addAll([
   { id: "browser.ai.control.default", type: "string" },
   { id: "browser.ai.control.pdfjsAltText", type: "string" },
   { id: "browser.ai.control.smartTabGroups", type: "string" },
-  { id: "browser.ai.control.linkPreviewKeyPoints", type: "string" },
   { id: "browser.ai.control.speechRecognition", type: "string" },
-  { id: "browser.ai.control.sidebarChatbot", type: "string" },
-  { id: "browser.ai.control.smartWindow", type: "string" },
-  { id: "browser.ml.chat.provider", type: "string" },
 
   // Update
   { id: "browser.preferences.advanced.selectedTabIndex", type: "int" },
@@ -387,22 +382,6 @@ Preferences.addSetting({
 Preferences.addSetting({
   id: "aiControlSmartTabGroups",
   pref: "browser.ai.control.smartTabGroups",
-});
-Preferences.addSetting({
-  id: "aiControlLinkPreviews",
-  pref: "browser.ai.control.linkPreviewKeyPoints",
-});
-Preferences.addSetting({
-  id: "aiControlSidebarChatbot",
-  pref: "browser.ai.control.sidebarChatbot",
-});
-Preferences.addSetting({
-  id: "aiControlSmartWindow",
-  pref: "browser.ai.control.smartWindow",
-});
-Preferences.addSetting({
-  id: "chatbotProvider",
-  pref: "browser.ml.chat.provider",
 });
 
 function createDefaultBrowserConfig({

@@ -131,8 +131,8 @@ the same observer.
 
 A consequence worth noting: pref families that pack sub-levels into a single
 segment using `_` or camelCase (e.g. `network.proxy.socks` alongside
-`network.proxy.socks_port`, or `…linkPreview.shift` alongside
-`…linkPreview.shiftAlt`) are *not* covered by a parent-segment prefix, because
+`network.proxy.socks_port`, or `…feature.shift` alongside
+`…feature.shiftAlt`) are *not* covered by a parent-segment prefix, because
 `_` and camelCase are intra-segment characters rather than separators. An
 observer that wants such pseudo-children must register their names explicitly.
 

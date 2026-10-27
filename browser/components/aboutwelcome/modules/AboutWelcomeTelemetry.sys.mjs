@@ -13,8 +13,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
     "resource://gre/modules/components-utils/ClientEnvironment.sys.mjs",
   ClientID: "resource://gre/modules/ClientID.sys.mjs",
   TelemetrySession: "resource://gre/modules/TelemetrySession.sys.mjs",
-  normalizeChatLog:
-    "moz-src:///browser/components/aiwindow/ui/modules/ChatUtils.sys.mjs",
 });
 
 ChromeUtils.defineLazyGetter(lazy, "telemetryClientId", () =>
@@ -220,16 +218,6 @@ export class AboutWelcomeTelemetry {
     // Delete the value in event_context, because it should only be recorded in
     // the dedicated metric above, in the microsurvey ping.
     delete event_context?.value;
-    if (event_context?.smart_window_user_feedback_data && writeInMicrosurvey) {
-      const { chat, ...userFeedbackData } =
-        event_context.smart_window_user_feedback_data;
-      Glean.microsurveySmartWindow.userFeedbackData.set(userFeedbackData);
-      const normalizedChat = lazy.normalizeChatLog(chat);
-      if (normalizedChat) {
-        Glean.microsurveySmartWindow.chat.set(normalizedChat);
-      }
-    }
-    delete event_context?.smart_window_user_feedback_data;
     // Screen_index was being coerced into a boolean value
     // which resulted in 0 (first screen index) being ignored.
     if (Number.isInteger(event_context?.screen_index)) {

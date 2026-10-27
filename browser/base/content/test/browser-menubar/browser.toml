@@ -7,8 +7,6 @@ tags = "os_integration"
 head = "head.js"
 support-files = ["file_shareurl.html"]
 
-["browser_aiwindow_options.js"]
-
 ["browser_file_close_tabs.js"]
 
 ["browser_file_menu_import_wizard.js"]

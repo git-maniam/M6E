@@ -671,18 +671,18 @@ add_task(async function test_external_entries_order() {
     );
   }
 
-  const smartFormFill = makeExternalEntry("smartFormFill", "Smart Form Fill");
+  const other = makeExternalEntry("other", "Other entry");
   const generic = makeExternalEntry("generic", "Use Firefox Relay");
 
   info("An external entry sits between the profile rows and the footer");
-  let result = newResult([smartFormFill]);
+  let result = newResult([other]);
   Assert.deepEqual(stylesOf(result), [
     "autofill",
     "autofill",
-    "smartFormFill",
+    "other",
     "action",
   ]);
-  equal(result.getLabelAt(2), "Smart Form Fill");
+  equal(result.getLabelAt(2), "Other entry");
   equal(
     result.getTypeOfIndex(3),
     "manage",
@@ -690,12 +690,12 @@ add_task(async function test_external_entries_order() {
   );
 
   info("The footer stays last whatever the external entries are");
-  result = newResult([generic, smartFormFill]);
+  result = newResult([generic, other]);
   Assert.deepEqual(stylesOf(result), [
     "autofill",
     "autofill",
     "generic",
-    "smartFormFill",
+    "other",
     "action",
   ]);
   equal(result.matchCount, 5, "Reordering does not change the match count");

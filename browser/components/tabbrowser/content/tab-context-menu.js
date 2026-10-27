@@ -72,19 +72,8 @@ var TabContextMenu = {
           ],
         },
         {
-          name: "ai",
-          /*
-           * #context_askChatSummarize is the alt layout's flat summarize item;
-           * placed after the separator (hidden here) so #context_askChat keeps
-           * #context_aiSeparator as its next sibling, which buildTabMenu toggles
-           * together with the submenu.
-           */
-          items: [
-            "#context_askChat",
-            "#context_aiSeparator",
-            "#context_askChatSummarize",
-            "#context_createAITab",
-          ],
+          name: "unused",
+          items: ["#context_aiSeparator"],
         },
         {
           name: "tab-tools",
@@ -230,10 +219,8 @@ var TabContextMenu = {
             ],
             "#context_reopenInContainer",
             /*
-             * The AI submenu separator is unused in this layout (the AI feature is
-             * the flat "Summarize Page" item in remembering-items), so reuse it
-             * as the divider after the open-and-organize group. Shown by the AI
-             * branch of updateContextMenu.
+             * Reused as the divider after the open-and-organize group. Shown by
+             * updateContextMenu.
              */
             "#context_aiSeparator",
           ],
@@ -243,8 +230,6 @@ var TabContextMenu = {
           items: [
             ["#context_bookmarkSelectedTabs", "#context_bookmarkTab"],
             ["#context_addNote", "#context_editNote"],
-            "#context_askChatSummarize",
-            "#context_createAITab",
             "#context_tabToolsSeparator",
           ],
         },
@@ -279,11 +264,6 @@ var TabContextMenu = {
             "#context_fullscreenAutohide",
             "#context_fullscreenExit",
           ],
-        },
-        {
-          /* Items that have no place in this layout and should always be hidden */
-          name: "unused",
-          items: ["#context_askChat"],
         },
         {
           /*
@@ -867,33 +847,9 @@ var TabContextMenu = {
     contextUnpinSelectedTabs.hidden =
       !this.contextTab.pinned || !this.multiselected;
 
-    // Build Ask Chat items. The classic layout shows the full ask-chat submenu
-    // (#context_askChat); the alt layout shows only a flat "Summarize Page" item
-    // (#context_askChatSummarize). Hide whichever one this layout doesn't use so
-    // a pref toggle reverses cleanly.
-    if (!this._altTabContextMenu) {
-      document.getElementById("context_askChatSummarize").hidden = true;
-      TabContextMenu.GenAI.buildTabMenu(
-        document.getElementById("context_askChat"),
-        this
-      );
-    } else {
-      document.getElementById("context_askChat").hidden = true;
-      // In the alt layout #context_aiSeparator is reused as the divider after
-      // the open-and-organize group, so keep it shown (the classic ask-chat
-      // path would otherwise hide it together with #context_askChat).
+    if (this._altTabContextMenu) {
       document.getElementById("context_aiSeparator").hidden = false;
-      TabContextMenu.GenAI.buildTabSummarizeItem(
-        document.getElementById("context_askChatSummarize"),
-        this
-      );
     }
-
-    document.getElementById("context_createAITab").hidden =
-      !TabContextMenu.AIWindowMenu.canShowAITabMenu(
-        window,
-        this.contextTabs.map(tab => tab.linkedBrowser.currentURI)
-      );
 
     // Move Tab items
     let contextMoveTabOptions = document.getElementById(
@@ -1509,11 +1465,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 );
 
 ChromeUtils.defineESModuleGetters(TabContextMenu, {
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
-  AIWindowMenu:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindowMenu.sys.mjs",
-  GenAI: "moz-src:///browser/components/genai/GenAI.sys.mjs",
   MenuSectionLayout: "resource:///modules/MenuSectionLayout.sys.mjs",
   MiniWindowManager:
     "moz-src:///browser/components/miniwindow/MiniWindowManager.sys.mjs",

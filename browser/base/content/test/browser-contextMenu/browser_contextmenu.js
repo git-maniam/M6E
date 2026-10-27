@@ -38,13 +38,6 @@ let NAVIGATION_ITEMS =
         null,
       ];
 
-const askChatMenu = [
-  "context-ask-chat",
-  true,
-  // Need a blank entry here because the Ask Chat submenu is dynamically built with no ids.
-  "",
-  null,
-];
 let hasStripOnShare = Services.prefs.getBoolPref(
   "privacy.query_stripping.strip_on_share.enabled"
 );
@@ -101,52 +94,41 @@ add_task(async function test_xul_text_link_label() {
     waitForStateStop: true,
   });
 
-  await test_contextmenu(
-    "#test-xul-text-link-label",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-xul-text-link-label", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 
   // Clean up so won't affect HTML element test cases.
   lastElementSelector = null;
@@ -207,9 +189,6 @@ add_task(async function test_plaintext() {
     true,
     "---",
     null,
-    ...askChatMenu,
-    "---",
-    null,
     "context-viewsource",
     true,
     "---",
@@ -233,8 +212,6 @@ const kLinkItems = [
   "context-openlink",
   true,
   "context-openlinkprivate",
-  true,
-  "context-previewlink",
   true,
   "---",
   null,
@@ -261,250 +238,47 @@ const kLinkItems = [
 ];
 
 add_task(async function test_link() {
-  await test_contextmenu(
-    "#test-link",
-    [
-      ...kLinkItems,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-link", [...kLinkItems]);
 });
 
 add_task(async function test_link_in_shadow_dom() {
-  await test_contextmenu(
-    "#shadow-host",
-    [
-      ...kLinkItems,
-      ...askChatMenu,
-    ],
-    {
-      offsetX: 6,
-      offsetY: 6,
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
-});
-
-add_task(async function test_linkpreviewcommand() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.linkPreview.prefetchOnEnable", false]],
+  await test_contextmenu("#shadow-host", [...kLinkItems], {
+    offsetX: 6,
+    offsetY: 6,
   });
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.linkPreview.enabled", true]],
-  });
-  await test_contextmenu(
-    "#test-link",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
-
-  await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function test_linkpreviewcommand_disabled() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.linkPreview.enabled", false]],
-  });
-  await test_contextmenu(
-    "#test-link",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      //missing context-previewlink is expected
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
-  await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function test_linkpreviewcommand_not_on_text() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.linkPreview.prefetchOnEnable", false]],
-  });
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.ml.linkPreview.enabled", true]],
-  });
-
-  // Verify that context-previewlink doesn't appear in the context menu for text elements
-  await test_contextmenu(
-    "#test-text",
-    [
-      ...NAVIGATION_ITEMS,
-      "context-savepage",
-      true,
-      "context-selectall",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-      "---",
-      null,
-      "context-viewsource",
-      true,
-      "---",
-      null,
-      "context-sendpagetodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
-
-  await SpecialPowers.popPrefEnv();
 });
 
 add_task(async function test_link_over_shadow_dom() {
-  await test_contextmenu(
-    "#shadow-host-in-link",
-    [...kLinkItems, ...askChatMenu],
-    {
-      offsetX: 6,
-      offsetY: 6,
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#shadow-host-in-link", kLinkItems, {
+    offsetX: 6,
+    offsetY: 6,
+  });
 });
 
 add_task(async function test_mailto() {
-  await test_contextmenu(
-    "#test-mailto",
-    [
-      "context-copyemail",
-      true,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-mailto", [
+    "context-copyemail",
+    true,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 });
 
 add_task(async function test_tel() {
-  await test_contextmenu(
-    "#test-tel",
-    [
-      "context-copyphone",
-      true,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-tel", [
+    "context-copyphone",
+    true,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 });
 
 add_task(async function test_image() {
@@ -541,9 +315,6 @@ add_task(async function test_image() {
         true,
         "context-use-mini-window",
         true,
-        "---",
-        null,
-        ...askChatMenu,
       ],
       {
         onContextMenuShown() {
@@ -558,48 +329,34 @@ add_task(async function test_image() {
             "Should have width"
           );
         },
-        awaitOnMenuBuilt: {
-          id: "context-ask-chat",
-        },
       }
     );
   }
 });
 
 add_task(async function test_canvas() {
-  await test_contextmenu(
-    "#test-canvas",
-    [
-      "context-viewimage",
-      true,
-      "context-saveimage",
-      true,
-      "context-copyimage-contents",
-      true,
-      "---",
-      null,
-      "context-setDesktopBackground",
-      true,
-      "---",
-      null,
-      "context-selectall",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-canvas", [
+    "context-viewimage",
+    true,
+    "context-saveimage",
+    true,
+    "context-copyimage-contents",
+    true,
+    "---",
+    null,
+    "context-setDesktopBackground",
+    true,
+    "---",
+    null,
+    "context-selectall",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 });
 
 add_task(async function test_video_ok() {
@@ -607,66 +364,55 @@ add_task(async function test_video_ok() {
     set: [["media.videocontrols.picture-in-picture.enabled", true]],
   });
 
-  await test_contextmenu(
-    "#test-video-ok",
+  await test_contextmenu("#test-video-ok", [
+    "context-media-play",
+    true,
+    "context-media-mute",
+    true,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       true,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       true,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        true,
-        "context-media-playbackrate-100x",
-        true,
-        "context-media-playbackrate-125x",
-        true,
-        "context-media-playbackrate-150x",
-        true,
-        "context-media-playbackrate-200x",
-        true,
-      ],
-      null,
-      "context-media-loop",
+      "context-media-playbackrate-125x",
       true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-150x",
       true,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-200x",
       true,
-      "---",
-      null,
-      "context-viewvideo",
-      true,
-      "context-video-pictureinpicture",
-      true,
-      "---",
-      null,
-      "context-video-saveimage",
-      true,
-      "context-savevideo",
-      true,
-      "context-copyvideourl",
-      true,
-      "context-sendvideo",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    true,
+    "context-media-hidecontrols",
+    true,
+    "---",
+    null,
+    "context-viewvideo",
+    true,
+    "context-video-pictureinpicture",
+    true,
+    "---",
+    null,
+    "context-video-saveimage",
+    true,
+    "context-savevideo",
+    true,
+    "context-copyvideourl",
+    true,
+    "context-sendvideo",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 
@@ -674,64 +420,53 @@ add_task(async function test_video_ok() {
     set: [["media.videocontrols.picture-in-picture.enabled", false]],
   });
 
-  await test_contextmenu(
-    "#test-video-ok",
+  await test_contextmenu("#test-video-ok", [
+    "context-media-play",
+    true,
+    "context-media-mute",
+    true,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       true,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       true,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        true,
-        "context-media-playbackrate-100x",
-        true,
-        "context-media-playbackrate-125x",
-        true,
-        "context-media-playbackrate-150x",
-        true,
-        "context-media-playbackrate-200x",
-        true,
-      ],
-      null,
-      "context-media-loop",
+      "context-media-playbackrate-125x",
       true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-150x",
       true,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-200x",
       true,
-      "---",
-      null,
-      "context-viewvideo",
-      true,
-      "---",
-      null,
-      "context-video-saveimage",
-      true,
-      "context-savevideo",
-      true,
-      "context-copyvideourl",
-      true,
-      "context-sendvideo",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    true,
+    "context-media-hidecontrols",
+    true,
+    "---",
+    null,
+    "context-viewvideo",
+    true,
+    "---",
+    null,
+    "context-video-saveimage",
+    true,
+    "context-savevideo",
+    true,
+    "context-copyvideourl",
+    true,
+    "context-sendvideo",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 });
@@ -744,115 +479,93 @@ add_task(async function test_video_with_overlay() {
     ],
   });
 
-  await test_contextmenu(
-    "#test-video-overlay",
+  await test_contextmenu("#test-video-overlay", [
+    "context-media-play",
+    true,
+    "context-media-mute",
+    true,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       true,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       true,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        true,
-        "context-media-playbackrate-100x",
-        true,
-        "context-media-playbackrate-125x",
-        true,
-        "context-media-playbackrate-150x",
-        true,
-        "context-media-playbackrate-200x",
-        true,
-      ],
-      null,
-      "context-media-loop",
+      "context-media-playbackrate-125x",
       true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-150x",
       true,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-200x",
       true,
-      "---",
-      null,
-      "context-viewvideo",
-      true,
-      "context-video-pictureinpicture",
-      true,
-      "---",
-      null,
-      "context-video-saveimage",
-      true,
-      "context-savevideo",
-      true,
-      "context-copyvideourl",
-      true,
-      "context-sendvideo",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    true,
+    "context-media-hidecontrols",
+    true,
+    "---",
+    null,
+    "context-viewvideo",
+    true,
+    "context-video-pictureinpicture",
+    true,
+    "---",
+    null,
+    "context-video-saveimage",
+    true,
+    "context-savevideo",
+    true,
+    "context-copyvideourl",
+    true,
+    "context-sendvideo",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 });
 
 add_task(async function test_audio_in_video() {
-  await test_contextmenu(
-    "#test-audio-in-video",
+  await test_contextmenu("#test-audio-in-video", [
+    "context-media-play",
+    true,
+    "context-media-mute",
+    true,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       true,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       true,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        true,
-        "context-media-playbackrate-100x",
-        true,
-        "context-media-playbackrate-125x",
-        true,
-        "context-media-playbackrate-150x",
-        true,
-        "context-media-playbackrate-200x",
-        true,
-      ],
-      null,
-      "context-media-loop",
+      "context-media-playbackrate-125x",
       true,
-      "context-media-showcontrols",
+      "context-media-playbackrate-150x",
       true,
-      "---",
-      null,
-      "context-saveaudio",
+      "context-media-playbackrate-200x",
       true,
-      "context-copyaudiourl",
-      true,
-      "context-sendaudio",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-media-showcontrols",
+    true,
+    "---",
+    null,
+    "context-saveaudio",
+    true,
+    "context-copyaudiourl",
+    true,
+    "context-sendaudio",
+    true,
+  ]);
 });
 
 add_task(async function test_video_bad() {
@@ -860,64 +573,53 @@ add_task(async function test_video_bad() {
     set: [["media.videocontrols.picture-in-picture.enabled", true]],
   });
 
-  await test_contextmenu(
-    "#test-video-bad",
+  await test_contextmenu("#test-video-bad", [
+    "context-media-play",
+    false,
+    "context-media-mute",
+    false,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       false,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       false,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        false,
-        "context-media-playbackrate-100x",
-        false,
-        "context-media-playbackrate-125x",
-        false,
-        "context-media-playbackrate-150x",
-        false,
-        "context-media-playbackrate-200x",
-        false,
-      ],
-      null,
-      "context-media-loop",
-      true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-125x",
       false,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-150x",
       false,
-      "---",
-      null,
-      "context-viewvideo",
-      true,
-      "---",
-      null,
-      "context-video-saveimage",
+      "context-media-playbackrate-200x",
       false,
-      "context-savevideo",
-      true,
-      "context-copyvideourl",
-      true,
-      "context-sendvideo",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    false,
+    "context-media-hidecontrols",
+    false,
+    "---",
+    null,
+    "context-viewvideo",
+    true,
+    "---",
+    null,
+    "context-video-saveimage",
+    false,
+    "context-savevideo",
+    true,
+    "context-copyvideourl",
+    true,
+    "context-sendvideo",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 
@@ -925,67 +627,53 @@ add_task(async function test_video_bad() {
     set: [["media.videocontrols.picture-in-picture.enabled", false]],
   });
 
-  await test_contextmenu(
-    "#test-video-bad",
+  await test_contextmenu("#test-video-bad", [
+    "context-media-play",
+    false,
+    "context-media-mute",
+    false,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       false,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       false,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        false,
-        "context-media-playbackrate-100x",
-        false,
-        "context-media-playbackrate-125x",
-        false,
-        "context-media-playbackrate-150x",
-        false,
-        "context-media-playbackrate-200x",
-        false,
-      ],
-      null,
-      "context-media-loop",
-      true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-125x",
       false,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-150x",
       false,
-      "---",
-      null,
-      "context-viewvideo",
-      true,
-      "---",
-      null,
-      "context-video-saveimage",
+      "context-media-playbackrate-200x",
       false,
-      "context-savevideo",
-      true,
-      "context-copyvideourl",
-      true,
-      "context-sendvideo",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      "context-ask-chat",
-      true,
-      "",
-      null,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    false,
+    "context-media-hidecontrols",
+    false,
+    "---",
+    null,
+    "context-viewvideo",
+    true,
+    "---",
+    null,
+    "context-video-saveimage",
+    false,
+    "context-savevideo",
+    true,
+    "context-copyvideourl",
+    true,
+    "context-sendvideo",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 });
@@ -995,64 +683,53 @@ add_task(async function test_video_bad2() {
     set: [["media.videocontrols.picture-in-picture.enabled", true]],
   });
 
-  await test_contextmenu(
-    "#test-video-bad2",
+  await test_contextmenu("#test-video-bad2", [
+    "context-media-play",
+    false,
+    "context-media-mute",
+    false,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       false,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       false,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        false,
-        "context-media-playbackrate-100x",
-        false,
-        "context-media-playbackrate-125x",
-        false,
-        "context-media-playbackrate-150x",
-        false,
-        "context-media-playbackrate-200x",
-        false,
-      ],
-      null,
-      "context-media-loop",
-      true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-125x",
       false,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-150x",
       false,
-      "---",
-      null,
-      "context-viewvideo",
+      "context-media-playbackrate-200x",
       false,
-      "---",
-      null,
-      "context-video-saveimage",
-      false,
-      "context-savevideo",
-      false,
-      "context-copyvideourl",
-      false,
-      "context-sendvideo",
-      false,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    false,
+    "context-media-hidecontrols",
+    false,
+    "---",
+    null,
+    "context-viewvideo",
+    false,
+    "---",
+    null,
+    "context-video-saveimage",
+    false,
+    "context-savevideo",
+    false,
+    "context-copyvideourl",
+    false,
+    "context-sendvideo",
+    false,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 
@@ -1060,135 +737,115 @@ add_task(async function test_video_bad2() {
     set: [["media.videocontrols.picture-in-picture.enabled", false]],
   });
 
-  await test_contextmenu(
-    "#test-video-bad2",
+  await test_contextmenu("#test-video-bad2", [
+    "context-media-play",
+    false,
+    "context-media-mute",
+    false,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       false,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       false,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        false,
-        "context-media-playbackrate-100x",
-        false,
-        "context-media-playbackrate-125x",
-        false,
-        "context-media-playbackrate-150x",
-        false,
-        "context-media-playbackrate-200x",
-        false,
-      ],
-      null,
-      "context-media-loop",
-      true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-125x",
       false,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-150x",
       false,
-      "---",
-      null,
-      "context-viewvideo",
+      "context-media-playbackrate-200x",
       false,
-      "---",
-      null,
-      "context-video-saveimage",
-      false,
-      "context-savevideo",
-      false,
-      "context-copyvideourl",
-      false,
-      "context-sendvideo",
-      false,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    false,
+    "context-media-hidecontrols",
+    false,
+    "---",
+    null,
+    "context-viewvideo",
+    false,
+    "---",
+    null,
+    "context-video-saveimage",
+    false,
+    "context-savevideo",
+    false,
+    "context-copyvideourl",
+    false,
+    "context-sendvideo",
+    false,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 });
 
 add_task(async function test_iframe() {
-  await test_contextmenu(
-    "#test-iframe",
-    [
-      ...NAVIGATION_ITEMS,
-      "context-savepage",
+  await test_contextmenu("#test-iframe", [
+    ...NAVIGATION_ITEMS,
+    "context-savepage",
+    true,
+    "context-selectall",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+    "---",
+    null,
+    "frame",
+    null,
+    getThisFrameSubMenu([
+      "context-showonlythisframe",
       true,
-      "context-selectall",
+      "context-openframeintab",
       true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-      "frame",
-      null,
-      getThisFrameSubMenu([
-        "context-showonlythisframe",
-        true,
-        "context-openframeintab",
-        true,
-        "context-openframe",
-        true,
-        "---",
-        null,
-        "context-reloadframe",
-        true,
-        "---",
-        null,
-        "context-bookmarkframe",
-        true,
-        "context-saveframe",
-        true,
-        "---",
-        null,
-        "context-printframe",
-        true,
-        "---",
-        null,
-        "context-viewframesource",
-        true,
-        "context-viewframeinfo",
-        true,
-      ]),
-      null,
-      "---",
-      null,
-      "context-viewsource",
+      "context-openframe",
       true,
       "---",
       null,
-      "context-sendpagetodevice",
+      "context-reloadframe",
       true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
+      "---",
       null,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+      "context-bookmarkframe",
+      true,
+      "context-saveframe",
+      true,
+      "---",
+      null,
+      "context-printframe",
+      true,
+      "---",
+      null,
+      "context-viewframesource",
+      true,
+      "context-viewframeinfo",
+      true,
+    ]),
+    null,
+    "---",
+    null,
+    "context-viewsource",
+    true,
+    "---",
+    null,
+    "context-sendpagetodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+  ]);
 });
 
 add_task(async function test_video_in_iframe() {
@@ -1196,95 +853,86 @@ add_task(async function test_video_in_iframe() {
     set: [["media.videocontrols.picture-in-picture.enabled", true]],
   });
 
-  await test_contextmenu(
-    "#test-video-in-iframe",
+  await test_contextmenu("#test-video-in-iframe", [
+    "context-media-play",
+    true,
+    "context-media-mute",
+    true,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       true,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       true,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        true,
-        "context-media-playbackrate-100x",
-        true,
-        "context-media-playbackrate-125x",
-        true,
-        "context-media-playbackrate-150x",
-        true,
-        "context-media-playbackrate-200x",
-        true,
-      ],
-      null,
-      "context-media-loop",
+      "context-media-playbackrate-125x",
       true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-150x",
       true,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-200x",
       true,
-      "---",
-      null,
-      "context-viewvideo",
-      true,
-      "context-video-pictureinpicture",
-      true,
-      "---",
-      null,
-      "context-video-saveimage",
-      true,
-      "context-savevideo",
-      true,
-      "context-copyvideourl",
-      true,
-      "context-sendvideo",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-      "frame",
-      null,
-      getThisFrameSubMenu([
-        "context-showonlythisframe",
-        true,
-        "context-openframeintab",
-        true,
-        "context-openframe",
-        true,
-        "---",
-        null,
-        "context-reloadframe",
-        true,
-        "---",
-        null,
-        "context-bookmarkframe",
-        true,
-        "context-saveframe",
-        true,
-        "---",
-        null,
-        "context-printframe",
-        true,
-        "---",
-        null,
-        "context-viewframeinfo",
-        true,
-      ]),
-      null,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    true,
+    "context-media-hidecontrols",
+    true,
+    "---",
+    null,
+    "context-viewvideo",
+    true,
+    "context-video-pictureinpicture",
+    true,
+    "---",
+    null,
+    "context-video-saveimage",
+    true,
+    "context-savevideo",
+    true,
+    "context-copyvideourl",
+    true,
+    "context-sendvideo",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+    "---",
+    null,
+    "frame",
+    null,
+    getThisFrameSubMenu([
+      "context-showonlythisframe",
+      true,
+      "context-openframeintab",
+      true,
+      "context-openframe",
+      true,
+      "---",
+      null,
+      "context-reloadframe",
+      true,
+      "---",
+      null,
+      "context-bookmarkframe",
+      true,
+      "context-saveframe",
+      true,
+      "---",
+      null,
+      "context-printframe",
+      true,
+      "---",
+      null,
+      "context-viewframeinfo",
+      true,
+    ]),
+    null,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 
@@ -1292,241 +940,214 @@ add_task(async function test_video_in_iframe() {
     set: [["media.videocontrols.picture-in-picture.enabled", false]],
   });
 
-  await test_contextmenu(
-    "#test-video-in-iframe",
+  await test_contextmenu("#test-video-in-iframe", [
+    "context-media-play",
+    true,
+    "context-media-mute",
+    true,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       true,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       true,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        true,
-        "context-media-playbackrate-100x",
-        true,
-        "context-media-playbackrate-125x",
-        true,
-        "context-media-playbackrate-150x",
-        true,
-        "context-media-playbackrate-200x",
-        true,
-      ],
-      null,
-      "context-media-loop",
+      "context-media-playbackrate-125x",
       true,
-      "context-video-fullscreen",
+      "context-media-playbackrate-150x",
       true,
-      "context-media-hidecontrols",
+      "context-media-playbackrate-200x",
       true,
-      "---",
-      null,
-      "context-viewvideo",
-      true,
-      "---",
-      null,
-      "context-video-saveimage",
-      true,
-      "context-savevideo",
-      true,
-      "context-copyvideourl",
-      true,
-      "context-sendvideo",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-      "frame",
-      null,
-      getThisFrameSubMenu([
-        "context-showonlythisframe",
-        true,
-        "context-openframeintab",
-        true,
-        "context-openframe",
-        true,
-        "---",
-        null,
-        "context-reloadframe",
-        true,
-        "---",
-        null,
-        "context-bookmarkframe",
-        true,
-        "context-saveframe",
-        true,
-        "---",
-        null,
-        "context-printframe",
-        true,
-        "---",
-        null,
-        "context-viewframeinfo",
-        true,
-      ]),
-      null,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "context-video-fullscreen",
+    true,
+    "context-media-hidecontrols",
+    true,
+    "---",
+    null,
+    "context-viewvideo",
+    true,
+    "---",
+    null,
+    "context-video-saveimage",
+    true,
+    "context-savevideo",
+    true,
+    "context-copyvideourl",
+    true,
+    "context-sendvideo",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+    "---",
+    null,
+    "frame",
+    null,
+    getThisFrameSubMenu([
+      "context-showonlythisframe",
+      true,
+      "context-openframeintab",
+      true,
+      "context-openframe",
+      true,
+      "---",
+      null,
+      "context-reloadframe",
+      true,
+      "---",
+      null,
+      "context-bookmarkframe",
+      true,
+      "context-saveframe",
+      true,
+      "---",
+      null,
+      "context-printframe",
+      true,
+      "---",
+      null,
+      "context-viewframeinfo",
+      true,
+    ]),
+    null,
+  ]);
 
   await SpecialPowers.popPrefEnv();
 });
 
 add_task(async function test_audio_in_iframe() {
-  await test_contextmenu(
-    "#test-audio-in-iframe",
+  await test_contextmenu("#test-audio-in-iframe", [
+    "context-media-play",
+    true,
+    "context-media-mute",
+    true,
+    "context-media-playbackrate",
+    null,
     [
-      "context-media-play",
+      "context-media-playbackrate-050x",
       true,
-      "context-media-mute",
+      "context-media-playbackrate-100x",
       true,
-      "context-media-playbackrate",
-      null,
-      [
-        "context-media-playbackrate-050x",
-        true,
-        "context-media-playbackrate-100x",
-        true,
-        "context-media-playbackrate-125x",
-        true,
-        "context-media-playbackrate-150x",
-        true,
-        "context-media-playbackrate-200x",
-        true,
-      ],
-      null,
-      "context-media-loop",
+      "context-media-playbackrate-125x",
       true,
-      "---",
-      null,
-      "context-saveaudio",
+      "context-media-playbackrate-150x",
       true,
-      "context-copyaudiourl",
+      "context-media-playbackrate-200x",
       true,
-      "context-sendaudio",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-      "frame",
-      null,
-      getThisFrameSubMenu([
-        "context-showonlythisframe",
-        true,
-        "context-openframeintab",
-        true,
-        "context-openframe",
-        true,
-        "---",
-        null,
-        "context-reloadframe",
-        true,
-        "---",
-        null,
-        "context-bookmarkframe",
-        true,
-        "context-saveframe",
-        true,
-        "---",
-        null,
-        "context-printframe",
-        true,
-        "---",
-        null,
-        "context-viewframeinfo",
-        true,
-      ]),
-      null,
     ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+    null,
+    "context-media-loop",
+    true,
+    "---",
+    null,
+    "context-saveaudio",
+    true,
+    "context-copyaudiourl",
+    true,
+    "context-sendaudio",
+    true,
+    "---",
+    null,
+    "frame",
+    null,
+    getThisFrameSubMenu([
+      "context-showonlythisframe",
+      true,
+      "context-openframeintab",
+      true,
+      "context-openframe",
+      true,
+      "---",
+      null,
+      "context-reloadframe",
+      true,
+      "---",
+      null,
+      "context-bookmarkframe",
+      true,
+      "context-saveframe",
+      true,
+      "---",
+      null,
+      "context-printframe",
+      true,
+      "---",
+      null,
+      "context-viewframeinfo",
+      true,
+    ]),
+    null,
+  ]);
 });
 
 add_task(async function test_image_in_iframe() {
-  await test_contextmenu(
-    "#test-image-in-iframe",
-    [
-      "context-viewimage",
+  await test_contextmenu("#test-image-in-iframe", [
+    "context-viewimage",
+    true,
+    "context-saveimage",
+    true,
+    "context-copyimage-contents",
+    true,
+    "context-copyimage",
+    true,
+    "context-sendimage",
+    true,
+    ...getTextRecognitionItems(),
+    ...(Services.prefs.getBoolPref("browser.menu.showViewImageInfo", false)
+      ? ["context-viewimageinfo", true]
+      : []),
+    ...(Services.prefs.getBoolPref("browser.search.visualSearch.featureGate")
+      ? ["context-visual-search", true]
+      : []),
+    "---",
+    null,
+    "context-setDesktopBackground",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+    "---",
+    null,
+    "frame",
+    null,
+    getThisFrameSubMenu([
+      "context-showonlythisframe",
       true,
-      "context-saveimage",
+      "context-openframeintab",
       true,
-      "context-copyimage-contents",
+      "context-openframe",
       true,
-      "context-copyimage",
-      true,
-      "context-sendimage",
-      true,
-      ...getTextRecognitionItems(),
-      ...(Services.prefs.getBoolPref("browser.menu.showViewImageInfo", false)
-        ? ["context-viewimageinfo", true]
-        : []),
-      ...(Services.prefs.getBoolPref("browser.search.visualSearch.featureGate")
-        ? ["context-visual-search", true]
-        : []),
       "---",
       null,
-      "context-setDesktopBackground",
+      "context-reloadframe",
       true,
       "---",
       null,
-      "context-take-screenshot",
+      "context-bookmarkframe",
       true,
-      "context-use-mini-window",
+      "context-saveframe",
       true,
       "---",
       null,
-      ...askChatMenu,
-      "frame",
+      "context-printframe",
+      true,
+      "---",
       null,
-      getThisFrameSubMenu([
-        "context-showonlythisframe",
-        true,
-        "context-openframeintab",
-        true,
-        "context-openframe",
-        true,
-        "---",
-        null,
-        "context-reloadframe",
-        true,
-        "---",
-        null,
-        "context-bookmarkframe",
-        true,
-        "context-saveframe",
-        true,
-        "---",
-        null,
-        "context-printframe",
-        true,
-        "---",
-        null,
-        "context-viewframeinfo",
-        true,
-      ]),
-      null,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+      "context-viewframeinfo",
+      true,
+    ]),
+    null,
+  ]);
 });
 
 add_task(async function test_pdf_viewer_in_iframe() {
@@ -1546,7 +1167,6 @@ add_task(async function test_pdf_viewer_in_iframe() {
       true,
       "---",
       null,
-      ...askChatMenu,
       "frame",
       null,
       getThisFrameSubMenu([
@@ -1590,9 +1210,6 @@ add_task(async function test_pdf_viewer_in_iframe() {
     ],
     {
       shiftkey: true,
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
     }
   );
 });
@@ -1787,9 +1404,6 @@ add_task(async function test_dom_full_screen() {
     true,
     "---",
     null,
-    ...askChatMenu,
-    "---",
-    null,
     "context-viewsource",
     true,
     "---",
@@ -1854,9 +1468,6 @@ add_task(async function test_dom_full_screen() {
         }
       );
     },
-    awaitOnMenuBuilt: {
-      id: "context-ask-chat",
-    },
   });
   await exited;
 
@@ -1896,9 +1507,6 @@ add_task(async function test_pagemenu2() {
       true,
       "---",
       null,
-      ...askChatMenu,
-      "---",
-      null,
       "context-viewsource",
       true,
       "---",
@@ -1911,9 +1519,6 @@ add_task(async function test_pagemenu2() {
     ],
     {
       shiftkey: true,
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
     }
   );
 });
@@ -1946,7 +1551,6 @@ add_task(async function test_select_text() {
       true,
       "context-searchselect-private",
       true,
-      ...askChatMenu,
       "---",
       null,
       "context-viewpartialsource-selection",
@@ -1957,9 +1561,6 @@ add_task(async function test_select_text() {
       offsetY: 6,
       async preCheckContextMenuFn() {
         await selectText("#test-select-text");
-      },
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
       },
     }
   );
@@ -1990,7 +1591,6 @@ add_task(async function test_select_text_search_service_not_initialized() {
         true,
         "context-use-mini-window",
         true,
-        ...askChatMenu,
         "---",
         null,
         "context-viewpartialsource-selection",
@@ -2001,9 +1601,6 @@ add_task(async function test_select_text_search_service_not_initialized() {
         offsetY: 6,
         async preCheckContextMenuFn() {
           await selectText("#test-select-text");
-        },
-        awaitOnMenuBuilt: {
-          id: "context-ask-chat",
         },
       }
     );
@@ -2028,8 +1625,6 @@ add_task(async function test_select_text_link() {
       "context-openlink",
       true,
       "context-openlinkprivate",
-      true,
-      "context-previewlink",
       true,
       "---",
       null,
@@ -2065,7 +1660,6 @@ add_task(async function test_select_text_link() {
       true,
       "context-searchselect-private",
       true,
-      ...askChatMenu,
       "---",
       null,
       "context-viewpartialsource-selection",
@@ -2087,79 +1681,63 @@ add_task(async function test_select_text_link() {
           }
         );
       },
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
     }
   );
 });
 
 add_task(async function test_imagelink() {
-  await test_contextmenu(
-    "#test-image-link",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-viewimage",
-      true,
-      "context-saveimage",
-      true,
-      "context-copyimage-contents",
-      true,
-      "context-copyimage",
-      true,
-      "context-sendimage",
-      true,
-      ...getTextRecognitionItems(),
-      ...(Services.prefs.getBoolPref("browser.menu.showViewImageInfo", false)
-        ? ["context-viewimageinfo", true]
-        : []),
-      ...(Services.prefs.getBoolPref("browser.search.visualSearch.featureGate")
-        ? ["context-visual-search", true]
-        : []),
-      "---",
-      null,
-      "context-setDesktopBackground",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-image-link", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-viewimage",
+    true,
+    "context-saveimage",
+    true,
+    "context-copyimage-contents",
+    true,
+    "context-copyimage",
+    true,
+    "context-sendimage",
+    true,
+    ...getTextRecognitionItems(),
+    ...(Services.prefs.getBoolPref("browser.menu.showViewImageInfo", false)
+      ? ["context-viewimageinfo", true]
+      : []),
+    ...(Services.prefs.getBoolPref("browser.search.visualSearch.featureGate")
+      ? ["context-visual-search", true]
+      : []),
+    "---",
+    null,
+    "context-setDesktopBackground",
+    true,
+  ]);
 });
 
 add_task(async function test_select_input_text() {
@@ -2245,107 +1823,87 @@ add_task(async function test_select_input_text_password() {
 });
 
 add_task(async function test_longdesc() {
-  await test_contextmenu(
-    "#test-longdesc",
-    [
-      "context-viewimage",
-      true,
-      "context-saveimage",
-      true,
-      "context-copyimage-contents",
-      true,
-      "context-copyimage",
-      true,
-      "context-sendimage",
-      true,
-      ...getTextRecognitionItems(),
-      ...(Services.prefs.getBoolPref("browser.menu.showViewImageInfo", false)
-        ? ["context-viewimageinfo", true]
-        : []),
-      "context-viewimagedesc",
-      true,
-      ...(Services.prefs.getBoolPref("browser.search.visualSearch.featureGate")
-        ? ["context-visual-search", true]
-        : []),
-      "---",
-      null,
-      "context-setDesktopBackground",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-longdesc", [
+    "context-viewimage",
+    true,
+    "context-saveimage",
+    true,
+    "context-copyimage-contents",
+    true,
+    "context-copyimage",
+    true,
+    "context-sendimage",
+    true,
+    ...getTextRecognitionItems(),
+    ...(Services.prefs.getBoolPref("browser.menu.showViewImageInfo", false)
+      ? ["context-viewimageinfo", true]
+      : []),
+    "context-viewimagedesc",
+    true,
+    ...(Services.prefs.getBoolPref("browser.search.visualSearch.featureGate")
+      ? ["context-visual-search", true]
+      : []),
+    "---",
+    null,
+    "context-setDesktopBackground",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+  ]);
 });
 
 add_task(async function test_srcdoc() {
-  await test_contextmenu(
-    "#test-srcdoc",
-    [
-      ...NAVIGATION_ITEMS,
-      "context-savepage",
-      true,
-      "context-selectall",
-      true,
-      "---",
-      null,
-      "context-take-screenshot",
-      true,
-      "context-use-mini-window",
-      true,
-      "---",
-      null,
-      ...askChatMenu,
-      "frame",
-      null,
-      getThisFrameSubMenu([
-        "context-reloadframe",
-        true,
-        "---",
-        null,
-        "context-saveframe",
-        true,
-        "---",
-        null,
-        "context-printframe",
-        true,
-        "---",
-        null,
-        "context-viewframesource",
-        true,
-        "context-viewframeinfo",
-        true,
-      ]),
-      null,
-      "---",
-      null,
-      "context-viewsource",
+  await test_contextmenu("#test-srcdoc", [
+    ...NAVIGATION_ITEMS,
+    "context-savepage",
+    true,
+    "context-selectall",
+    true,
+    "---",
+    null,
+    "context-take-screenshot",
+    true,
+    "context-use-mini-window",
+    true,
+    "---",
+    null,
+    "frame",
+    null,
+    getThisFrameSubMenu([
+      "context-reloadframe",
       true,
       "---",
       null,
-      "context-sendpagetodevice",
+      "context-saveframe",
       true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
+      "---",
       null,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+      "context-printframe",
+      true,
+      "---",
+      null,
+      "context-viewframesource",
+      true,
+      "context-viewframeinfo",
+      true,
+    ]),
+    null,
+    "---",
+    null,
+    "context-viewsource",
+    true,
+    "---",
+    null,
+    "context-sendpagetodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+  ]);
 });
 
 add_task(async function test_input_spell_false() {
@@ -2367,321 +1925,235 @@ add_task(async function test_input_spell_false() {
 });
 
 add_task(async function test_svg_link() {
-  await test_contextmenu(
-    "#svg-with-link > a",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#svg-with-link > a", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 
-  await test_contextmenu(
-    "#svg-with-link2 > a",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#svg-with-link2 > a", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 
-  await test_contextmenu(
-    "#svg-with-link3 > a",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#svg-with-link3 > a", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 });
 
 add_task(async function test_svg_relative_link() {
-  await test_contextmenu(
-    "#svg-with-relative-link > a",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#svg-with-relative-link > a", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 
-  await test_contextmenu(
-    "#svg-with-relative-link2 > a",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#svg-with-relative-link2 > a", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 
-  await test_contextmenu(
-    "#svg-with-relative-link3 > a",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#svg-with-relative-link3 > a", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 });
 
 add_task(async function test_mathml_link() {
-  await test_contextmenu(
-    "#mathml-with-link > a",
-    [
-      ...kLinkItems,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#mathml-with-link > a", [...kLinkItems]);
   if (
     !Services.prefs.getBoolPref(
       "mathml.href_link_on_non_anchor_element.disabled"
     )
   ) {
-    await test_contextmenu(
-      "#deprecated-mathml-with-link > mrow",
-      [
-        ...kLinkItems,
-        ...askChatMenu,
-      ],
-      {
-        awaitOnMenuBuilt: {
-          id: "context-ask-chat",
-        },
-      }
-    );
+    await test_contextmenu("#deprecated-mathml-with-link > mrow", [
+      ...kLinkItems,
+    ]);
   }
 });
 
@@ -2707,9 +2179,6 @@ add_task(async function test_background_image() {
     true,
     "---",
     null,
-    ...askChatMenu,
-    "---",
-    null,
     "context-viewsource",
     true,
     "---",
@@ -2733,52 +2202,37 @@ add_task(async function test_background_image() {
   } else {
     bgImageItems = NAVIGATION_ITEMS.concat(bgImageItems);
   }
-  await test_contextmenu("#test-background-image", bgImageItems, {
-    awaitOnMenuBuilt: {
-      id: "context-ask-chat",
-    },
-  });
+  await test_contextmenu("#test-background-image", bgImageItems, {});
 
   // Don't show image related context menu commands for links with background images.
-  await test_contextmenu(
-    "#test-background-image-link",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#test-background-image-link", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    ...(hasStripOnShare ? ["context-stripOnShareLink", false] : []),
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 
   // Don't show image related context menu commands when there is a selection
   // with background images.
@@ -2809,7 +2263,6 @@ add_task(async function test_background_image() {
       true,
       "context-searchselect-private",
       true,
-      ...askChatMenu,
       "---",
       null,
       "context-viewpartialsource-selection",
@@ -2818,9 +2271,6 @@ add_task(async function test_background_image() {
     {
       async preCheckContextMenuFn() {
         await selectText("#test-background-image");
-      },
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
       },
     }
   );
@@ -2855,51 +2305,40 @@ add_task(async function test_strip_on_share_on_secure_about_page() {
 
   // the Copy without Site Tracking option should not
   // show up within internal about: pages
-  await test_contextmenu(
-    "#link-test-strip",
-    [
-      "context-openlinkintab",
-      true,
-      ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
-      ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
-      // We need a blank entry here because the containers submenu is
-      // dynamically generated with no ids.
-      ...(hasContainers ? ["", null] : []),
-      "context-openlink",
-      true,
-      "context-openlinkprivate",
-      true,
-      "context-previewlink",
-      true,
-      "---",
-      null,
-      "context-bookmarklink",
-      true,
-      "context-savelink",
-      true,
-      "context-copylink",
-      true,
-      "---",
-      null,
-      "context-sendlinktodevice",
-      true,
-      // This entry will be blank because the submenu is dynamically generated.
-      [],
-      null,
-      "---",
-      null,
-      "context-searchselect",
-      true,
-      "context-searchselect-private",
-      true,
-      ...askChatMenu,
-    ],
-    {
-      awaitOnMenuBuilt: {
-        id: "context-ask-chat",
-      },
-    }
-  );
+  await test_contextmenu("#link-test-strip", [
+    "context-openlinkintab",
+    true,
+    ...(hasSplitViews ? ["context-openlinkinsplitview", true] : []),
+    ...(hasContainers ? ["context-openlinkinusercontext-menu", true] : []),
+    // We need a blank entry here because the containers submenu is
+    // dynamically generated with no ids.
+    ...(hasContainers ? ["", null] : []),
+    "context-openlink",
+    true,
+    "context-openlinkprivate",
+    true,
+    "---",
+    null,
+    "context-bookmarklink",
+    true,
+    "context-savelink",
+    true,
+    "context-copylink",
+    true,
+    "---",
+    null,
+    "context-sendlinktodevice",
+    true,
+    // This entry will be blank because the submenu is dynamically generated.
+    [],
+    null,
+    "---",
+    null,
+    "context-searchselect",
+    true,
+    "context-searchselect-private",
+    true,
+  ]);
 
   // Clean up
   lastElementSelector = null;

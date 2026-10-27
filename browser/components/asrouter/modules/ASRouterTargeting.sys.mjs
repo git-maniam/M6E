@@ -57,10 +57,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   AboutNewTabResourceMapping:
     "resource:///modules/AboutNewTabResourceMapping.sys.mjs",
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
-  AgentPageDetector:
-    "moz-src:///browser/components/aiwindow/ui/modules/AgentPageDetector.sys.mjs",
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
   AppProvidedConfigEngine:
     "moz-src:///toolkit/components/search/ConfigSearchEngine.sys.mjs",
@@ -69,8 +65,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
     "resource:///modules/asrouter/ASRouterPreferences.sys.mjs",
   AttributionCode:
     "moz-src:///browser/components/attribution/AttributionCode.sys.mjs",
-  AutoTabGroupingSuggestions:
-    "moz-src:///browser/components/aiwindow/ui/modules/AutoTabGroupingSuggestions.sys.mjs",
   BackupService: "moz-src:///browser/components/backup/BackupService.sys.mjs",
   BrowserInitState: "moz-src:///browser/components/BrowserGlue.sys.mjs",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
@@ -768,19 +762,6 @@ async function getPinStatus() {
   return await ShellService.doesAppNeedPin();
 }
 
-function getSelectedTabURI() {
-  const win = lazy.BrowserWindowTracker.getTopWindow({
-    private: false,
-    allowFromInactiveWorkspace: true,
-  });
-
-  // null in private windows
-  if (!win || lazy.PrivateBrowsingUtils.isWindowPrivate(win)) {
-    return null;
-  }
-  return win.gBrowser?.selectedBrowser?.currentURI ?? null;
-}
-
 const TargetingGetters = {
   get locale() {
     return Services.locale.appLocaleAsBCP47;
@@ -803,12 +784,6 @@ const TargetingGetters = {
   },
   get currentDate() {
     return new Date();
-  },
-  // The category of the page open in the active tab ("product-detail",
-  // "shopping-home", "news-home"), or null when it is in none of them.
-  get currentTabPageCategory() {
-    const uri = getSelectedTabURI();
-    return uri ? lazy.AgentPageDetector.getPageCategory(uri) : null;
   },
   get canCreateSelectableProfiles() {
     if (!AppConstants.MOZ_SELECTABLE_PROFILES) {
@@ -1078,12 +1053,6 @@ const TargetingGetters = {
     }
 
     return false;
-  },
-  get hasActiveAIWindow() {
-    return !!lazy.AIWindow?.hasActiveAIWindows?.();
-  },
-  get isAutoTabGroupingAvailable() {
-    return !!lazy.AutoTabGroupingSuggestions?.isAvailable;
   },
   get hasAccessedFxAPanel() {
     return lazy.hasAccessedFxAPanel;
@@ -1521,18 +1490,6 @@ const TargetingGetters = {
   },
 
   /**
-   * Whether the user installed via the Smart Window marketing site.
-   *
-   * @return {boolean} `true` when the link to download the browser was part
-   * of the Smart Window campaign. `false` otherwise.
-   */
-  get isSmartWindowOnboarding() {
-    const { attributionData } = this;
-
-    return attributionData?.campaign === "smart_window";
-  },
-
-  /**
    * Whether the user opted into a special message action represented by an
    * installer attribution campaign and this choice still needs to be honored.
    *
@@ -1859,19 +1816,6 @@ const TargetingGetters = {
   },
 };
 
-function addAIWindowTargeting(targeting) {
-  if (!targeting || targeting === "true") {
-    // Default behavior: Classic-only if no targeting is specified
-    return `!isAIWindow`;
-  }
-
-  if (/\bisAIWindow\b/.test(targeting)) {
-    return targeting;
-  }
-
-  return `((${targeting}) && !isAIWindow)`;
-}
-
 /**
  * Sentinel rejection thrown by per-property promises in
  * `ASRouterTargeting.getEnvironmentSnapshot` when `quit-application`
@@ -2072,8 +2016,7 @@ export const ASRouterTargeting = {
       Array.from(arguments) // eslint-disable-line prefer-rest-params
     );
 
-    let { targeting } = message;
-    targeting = addAIWindowTargeting(targeting);
+    const { targeting } = message;
 
     let result;
     try {

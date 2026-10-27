@@ -227,7 +227,6 @@ export function LightweightThemeConsumer(aDocument) {
   this._doc = aDocument;
   this._win = aDocument.defaultView;
   this._winId = this._win.docShell.outerWindowID;
-  this._isAIWindow = this._doc.documentElement.hasAttribute("ai-window");
   this._isPrivateWindow = lazy.PrivateBrowsingUtils.isWindowPrivate(this._win);
 
   XPCOMUtils.defineLazyPreferenceGetter(
@@ -246,18 +245,6 @@ export function LightweightThemeConsumer(aDocument) {
     () => this._update(this._lastData)
   );
 
-  XPCOMUtils.defineLazyPreferenceGetter(
-    this,
-    "_toolbarTheme",
-    "browser.theme.toolbar-theme",
-    2,
-    () => {
-      if (this._isAIWindow) {
-        this._update(this._lastData);
-      }
-    }
-  );
-
   // Whether we should switch to a dark theme variant in private windows
   XPCOMUtils.defineLazyPreferenceGetter(
     this,
@@ -274,13 +261,6 @@ export function LightweightThemeConsumer(aDocument) {
 
   this.forcedColorsMediaQuery = this._win.matchMedia("(forced-colors)");
   this.forcedColorsMediaQuery.addListener(this);
-
-  this._aiWindowObserver = new this._win.MutationObserver(() => {
-    this.toggleAIWindowMode(this._win);
-  });
-  this._aiWindowObserver.observe(this._doc.documentElement, {
-    attributeFilter: ["ai-window"],
-  });
 
   this._update(lazy.LightweightThemeManager.themeData);
 
@@ -316,8 +296,6 @@ LightweightThemeConsumer.prototype = {
       case "unload":
         Services.obs.removeObserver(this, "lightweight-theme-styling-update");
         Services.ppmm.sharedData.delete(`theme/${this._winId}`);
-        this._aiWindowObserver?.disconnect();
-        this._aiWindowObserver = null;
         this._win = this._doc = null;
         this.darkThemeMediaQuery?.removeListener(this);
         this.darkThemeMediaQuery = null;
@@ -330,7 +308,7 @@ LightweightThemeConsumer.prototype = {
   _update(themeData) {
     const manager = lazy.LightweightThemeManager;
 
-    // Store user's theme before replacing with aiThemeData or privateThemeData.
+    // Store user's theme before replacing with privateThemeData.
     this._lastData = themeData;
     let isPrivateThemeActive = false;
 
@@ -340,30 +318,11 @@ LightweightThemeConsumer.prototype = {
       this.BROWSER_THEME_DARK_PRIVATE_WINDOWS;
     const themeId = themeData.theme?.id ?? DEFAULT_THEME_ID;
     // Used to set a `theme-in-app` attribute to allow rules to apply to default/in-app themes only
-    let isDefaultOrInApp =
+    const isDefaultOrInApp =
       DEFAULT_THEME_ID === themeId ||
       !!lazy.BuiltInThemeConfig.get(themeId)?.inApp;
 
-    if (this._isAIWindow) {
-      const useNova = this.BROWSER_NOVA_ENABLED;
-      const cachedData = useNova
-        ? manager.aiNovaThemeData
-        : manager.aiThemeData;
-      if (cachedData) {
-        themeData = cachedData;
-        isDefaultOrInApp = true;
-      } else {
-        const promise = useNova
-          ? manager.promiseAINovathemeData()
-          : manager.promiseAIThemeData();
-        promise.then(() => {
-          if (this._isAIWindow && this._win && !this._win.closed) {
-            this._update(this._lastData);
-          }
-        });
-        return;
-      }
-    } else if (
+    if (
       shouldMakePrivateWindowDark &&
       this.BROWSER_NOVA_ENABLED &&
       isDefaultOrInApp
@@ -409,7 +368,7 @@ LightweightThemeConsumer.prototype = {
       return true;
     })();
 
-    if (this._isAIWindow || isPrivateThemeActive) {
+    if (isPrivateThemeActive) {
       updateGlobalThemeData = false;
     }
 
@@ -608,11 +567,6 @@ LightweightThemeConsumer.prototype = {
       this._doc.head.appendChild(stylesheet);
       this._lastExperimentData.stylesheet = stylesheet;
     }
-  },
-
-  toggleAIWindowMode(win) {
-    this._isAIWindow = win.document.documentElement.hasAttribute("ai-window");
-    this._update(lazy.LightweightThemeManager.themeData);
   },
 };
 

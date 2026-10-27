@@ -406,13 +406,6 @@ pref("browser.urlbar.newtab.variantB", false);
 // ConsoleInstance.webidl.
 pref("browser.urlbar.loglevel", "Error");
 
-// The maximum number of mentions to show.
-pref("browser.urlbar.mentions.maxResults", 5);
-
-// The maximum number of tab groups to show in the mentions panel. Capped
-// separately from maxResults so groups and tabs are limited independently.
-pref("browser.urlbar.mentions.maxGroupResults", 5);
-
 // the maximum number of results to show in autocomplete when doing richResults
 pref("browser.urlbar.maxRichResults", 10);
 
@@ -600,13 +593,6 @@ pref("browser.urlbar.unitConversion.enabled", true);
 // Whether to show search suggestions before general results like history and
 // bookmarks.
 pref("browser.urlbar.showSearchSuggestionsFirst", true);
-
-// Whether to show search suggestions before general results like history and
-// bookmarks in the smartbar.
-pref("browser.urlbar.smartbar.showSearchSuggestionsFirst", false);
-
-// The maximum number of results to show in the smartbar.
-pref("browser.urlbar.smartbar.maxResults", 7);
 
 // As a user privacy measure, don't fetch search suggestions if a pasted string
 // is longer than this.
@@ -929,15 +915,6 @@ pref("browser.search.totalSearches", 0);
 
 // Feature gate for visual search.
 pref("browser.search.visualSearch.featureGate", true);
-
-pref("browser.highlightToSearch.featureGate", false);
-
-// Whether the actions menu is shown when text is selected on a page.
-pref("browser.highlightToSearch.enabled", true);
-
-// Which actions the menu offers. Set from the menu's own settings.
-pref("browser.highlightToSearch.search.enabled", true);
-pref("browser.highlightToSearch.copy.enabled", true);
 
 // Spin the cursor while the page is loading
 pref("browser.spin_cursor_while_busy", false);
@@ -1672,11 +1649,6 @@ pref("services.sync.prefs.sync.browser.tabs.warnOnOpen", true);
 pref("services.sync.prefs.sync.browser.taskbar.previews.enable", true);
 pref("services.sync.prefs.sync.browser.urlbar.maxRichResults", true);
 pref("services.sync.prefs.sync.browser.urlbar.showSearchSuggestionsFirst", true);
-pref("services.sync.prefs.sync.browser.urlbar.smartbar.maxResults", true);
-pref(
-  "services.sync.prefs.sync.browser.urlbar.smartbar.showSearchSuggestionsFirst",
-  true
-);
 pref("services.sync.prefs.sync.browser.urlbar.suggest.bookmark", true);
 pref("services.sync.prefs.sync.browser.urlbar.suggest.history", true);
 pref("services.sync.prefs.sync.browser.urlbar.suggest.openpage", true);
@@ -2199,8 +2171,6 @@ pref("sidebar.openTabsPanel.collapsedWindows", "{}");
 pref("sidebar.openTabsPanel.sortOption", "tabStripOrder");
 pref("sidebar.openTabsPanel.hoverPreview.enabled", true);
 
-pref("sidebar.notification.badge.aichat", false);
-
 // Adds the contextual password manager to the launcher for existing sidebar
 // users, as long as browser.contextual-password-manager.enabled is true.
 // See browser/components/sidebar/docs/index.md.
@@ -2217,140 +2187,6 @@ pref(
   "sidebar.newTool.migration.resourcemonitor",
   '{"visibilityPref":"browser.resourceMonitor.enabled"}'
 );
-
-pref("browser.ml.chat.enabled", true);
-pref("browser.ml.chat.hideLocalhost", true);
-pref("browser.ml.chat.maxLength", 7000);
-pref("browser.ml.chat.menu", true);
-pref("browser.ml.chat.page", true);
-pref("browser.ml.chat.page.footerBadge", true);
-pref("browser.ml.chat.page.menuBadge", true);
-pref("browser.ml.chat.prompt.prefix", '{"l10nId":"genai-prompt-prefix-selection"}');
-pref("browser.ml.chat.prompts.0", '{"id":"summarize","l10nId":"genai-prompts-summarize"}');
-pref("browser.ml.chat.prompts.1", '{"id":"explain","l10nId":"genai-prompts-explain","targeting":"contentType != \'page\'"}');
-pref("browser.ml.chat.prompts.3", '{"id":"quiz","l10nId":"genai-prompts-quiz","targeting":"(!provider|regExpMatch(\'gemini\') || region == \'US\') && contentType != \'page\'"}');
-pref("browser.ml.chat.prompts.4", '{"id":"proofread", "l10nId":"genai-prompts-proofread","targeting":"contentType != \'page\'"}');
-pref("browser.ml.chat.provider", "");
-pref("browser.ml.chat.shortcuts", true);
-pref("browser.ml.chat.shortcuts.custom", true);
-pref("browser.ml.chat.shortcuts.smartwindow", true);
-pref("browser.ml.chat.shortcuts.longPress", 60000);
-pref("browser.ml.chat.shortcuts.debounce", 200);
-pref("browser.ml.chat.shortcut.onboardingMouseoverCount", 0);
-pref("browser.ml.chat.sidebar", true);
-
-pref("browser.ml.linkPreview.allowedLanguages", "en");
-pref("browser.ml.linkPreview.blockListEnabled", true);
-pref("browser.ml.linkPreview.collapsed", false);
-pref("browser.ml.linkPreview.enabled", true);
-pref("browser.ml.linkPreview.ignoreMs", 2000);
-pref("browser.ml.linkPreview.longPress", true);
-pref("browser.ml.linkPreview.longPressMs", 1000);
-pref("browser.ml.linkPreview.noKeyPointsRegions", "");
-pref("browser.ml.linkPreview.optin", false);
-pref("browser.ml.linkPreview.outputSentences", 3);
-pref("browser.ml.linkPreview.recentTypingMs", 1000);
-pref("browser.ml.linkPreview.shift", false);
-pref("browser.ml.linkPreview.shiftAlt", false);
-pref("browser.ml.linkPreview.smokeTest.lastBuildID", "");
-pref("browser.ml.linkPreview.supportedLocales", "en");
-
-pref("browser.ml.pageAssist.enabled", false);
-
-// Smart Window Feature
-pref("browser.smartwindow.enabled", false);
-// Default endpoint for preset models
-pref("browser.smartwindow.endpoint", "https://mlpa-prod-prod-mozilla.freetls.fastly.net/v1");
-pref("browser.smartwindow.memories.generateFromHistory", true);
-pref("browser.smartwindow.memories.generateFromConversation", true);
-pref("browser.smartwindow.memories.hasSeenMemories", false);
-pref("browser.smartwindow.memoriesLogLevel", "Warn");
-// Gates resume-activity ("pick up where you left off") starter generation.
-pref("browser.smartwindow.resumeActivity.enabled", true);
-// TODO Bug 2067871: remove once journey store is available.
-pref("browser.smartwindow.resumeCards.enabled", true);
-pref("browser.smartwindow.firstrun.autoAdvanceMS", 3000);
-pref("browser.smartwindow.firstrun.hasCompleted", false);
-pref("browser.smartwindow.showThemesNotice", true);
-pref("browser.smartwindow.sidebar.openByDefault", true);
-pref("browser.smartwindow.isDefaultWindow", false);
-pref("browser.smartwindow.firstrun.explainerURL", "https://www.firefox.com/smart-window/?v=product");
-pref("places.semanticHistory.smartwindow.featureGate", false);
-// TODO Bug 2053495: remove with mistral release pref
-pref("browser.smartwindow.mistralRelease", true);
-
-// Semantic distance threshold for Smart Window history search only.
-pref("places.semanticHistory.smartwindow.distanceThreshold", "0.6");
-
-// Smart Window: Auto Tab Grouping (bug 2054500).
-pref("browser.smartwindow.autoTabGrouping.enabled", true);
-pref("browser.smartwindow.autoTabGrouping.preloadModels", true);
-pref("browser.smartwindow.autoTabGrouping.maxGroups", 3);
-pref("browser.smartwindow.autoTabGrouping.minTabsPerGroup", 2);
-pref("browser.smartwindow.autoTabGrouping.minCandidateTabs", 2);
-pref("browser.smartwindow.autoTabGrouping.maxCandidateTabs", 200);
-pref("browser.smartwindow.autoTabGrouping.minCohesion", "0.15");
-pref("browser.smartwindow.autoTabGrouping.timeoutMs", 8000);
-pref("browser.smartwindow.autoTabGrouping.supportedLocales", "en,fr");
-pref("browser.smartwindow.autoTabGrouping.nonEnglishThresholdInt", 550);
-pref("browser.smartwindow.autoTabGrouping.loglevel", "Warn");
-
-// Smart Window: Smart Form Fill (bug 2055009).
-pref("browser.smartwindow.smartformfill.enabled", true);
-
-// Comma-separated ISO 3166-1 region codes where the feature is unavailable.
-pref("browser.smartwindow.smartformfill.disallowedRegions", "FR");
-
-// How many fields a form needs before Smart Form Fill offers itself for it,
-// which keeps the feature away from the stray inputs a page uses for
-// something other than a form the user fills in.
-pref("browser.smartwindow.smartformfill.minFormFields", 4);
-
-#ifdef NIGHTLY_BUILD
-pref("browser.smartwindow.aitab.menus", true);
-#else
-pref("browser.smartwindow.aitab.menus", false);
-#endif
-
-// Smart Window Agent
-pref("browser.smartwindow.agent.enabled", true);
-pref("browser.smartwindow.agent.supportedRegions", "US,CA");
-// Toolbar button that opens the monitor creation panel (bug 2062113).
-pref("browser.smartwindow.agent.toolbar.enabled", true);
-// Announces the monitor agent as a new feature with a dot on the toolbar
-// button, for as long as the rollout runs. Set on the default branch by Nimbus
-// so that dismissing it, which writes the user branch, survives the rollout
-// being re-applied (bug 2066576).
-pref("browser.smartwindow.agent.monitorAnnouncement", false);
-// Monitors pause themselves after this many days without their condition
-// being met, and after this many days in total. Zero disables the rule.
-pref("browser.smartwindow.agent.expiry.noMatchDays", 60);
-pref("browser.smartwindow.agent.expiry.maxAgeDays", 90);
-
-
-// Smart Window: Exa search endpoint, used by the search_the_web agentic flow (bug 2037948)
-pref("browser.smartwindow.searchQuery.endpointURL", "https://mlpa-prod-prod-mozilla.freetls.fastly.net/v1/search");
-pref("browser.smartwindow.searchQuery.apiKey", "");
-
-// Smart Window: when true, search_the_web returns Exa snippets straight to the
-// main assistant instead of generating an answer from background page reads.
-pref("browser.smartwindow.searchTheWebFast", true);
-
-// Smart Window: when true, search_the_web asks Exa's /answers service for a
-// written answer and its citations in one call. Takes precedence over
-// browser.smartwindow.searchTheWebFast.
-pref("browser.smartwindow.searchTheWebAnswers", false);
-
-// Smart Window Logging
-pref("browser.smartwindow.aiTabHistory.logLevel", "Error");
-pref("browser.smartwindow.aiTabStore.logLevel", "Error");
-pref("browser.smartwindow.chatHistory.loglevel", "Error");
-pref("browser.smartwindow.chatStore.loglevel", "Error");
-pref("browser.smartwindow.conversation.logLevel", "Error");
-pref("browser.smartwindow.conversationHistory.logLevel", "Error");
-pref("browser.smartwindow.conversationStore.logLevel", "Error");
-pref("browser.smartwindow.smartbarMentions.loglevel", "Error");
-pref("browser.smartwindow.telemetryLogLevel", "Error");
 
 // Block insecure active content on https pages
 pref("security.mixed_content.block_active_content", true);

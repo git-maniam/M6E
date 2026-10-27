@@ -753,31 +753,10 @@ add_task(function test_external_autocomplete_items() {
     fillMessageName: "PasswordManager:Test",
     fillMessageData: { value: "generic" },
   };
-  const smartFormFillComment = {
-    type: "smartFormFill",
-    sources: [
-      { label: "Source tab", favicon: "page-icon:https://example.com" },
-    ],
-    sourcesLabel: "Sources:",
-    ariaLabel: "Smart Form Fill",
-    loading: false,
-    loadingLabel: "Loading...",
-    emptySourcesLabel: null,
-    fillMessageName: "SmartFormFill:Start",
-    fillMessageData: {},
-  };
-  const smartFormFillItem = {
-    style: "smartFormFill",
-    value: "",
-    image: "smart-form-fill.svg",
-    label: "Smart Form Fill",
-    comment: JSON.stringify(smartFormFillComment),
-  };
-
   const result = new LoginAutoCompleteResult(
     "",
     [],
-    [genericItem, smartFormFillItem],
+    [genericItem],
     "https://mochi.test:8888",
     {
       hostname: "mochi.test",
@@ -787,7 +766,7 @@ add_task(function test_external_autocomplete_items() {
     }
   );
 
-  equal(result.matchCount, 3, "External entries and the footer are present");
+  equal(result.matchCount, 2, "External entries and the footer are present");
   equal(result.getStyleAt(0), "generic", "Generic entries are adapted");
   Assert.deepEqual(JSON.parse(result.getCommentAt(0)), {
     secondary: genericItem.secondary,
@@ -796,16 +775,6 @@ add_task(function test_external_autocomplete_items() {
   });
   equal(
     result.getStyleAt(1),
-    "smartFormFill",
-    "Smart Form Fill retains its specialized style"
-  );
-  Assert.deepEqual(
-    JSON.parse(result.getCommentAt(1)),
-    smartFormFillComment,
-    "Smart Form Fill retains its specialized metadata"
-  );
-  equal(
-    result.getStyleAt(2),
     "loginsFooter",
     "External entries appear before the LoginManager footer"
   );

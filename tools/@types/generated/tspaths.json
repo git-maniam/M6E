@@ -7,183 +7,6 @@
       "chrome://browser/content/aboutlogins/components/login-message-popup.mjs": [
         "../../../browser/components/aboutlogins/content/components/login-message-popup.mjs"
       ],
-      "chrome://browser/content/aiwindow/components/SmartwindowOverflowRow.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-overflow-row/SmartwindowOverflowRow.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/agent-monitor-item.mjs": [
-        "../../../browser/components/aiwindow/ui/components/agent-monitor-item/agent-monitor-item.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/agent-monitor-panel.mjs": [
-        "../../../browser/components/aiwindow/ui/components/agent-monitor-panel/agent-monitor-panel.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-action-confirmation.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-action-confirmation/ai-action-confirmation.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-action-result.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-action-result/ai-action-result.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-chat-card.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-card/ai-chat-card.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-chat-content.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-content/ai-chat-content.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-chat-grid.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-grid/ai-chat-grid.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-chat-message.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-message/ai-chat-message.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-chat-table.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-table/ai-chat-table.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-grouped-chip-container.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-grouped-chip-container/ai-grouped-chip-container.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-sff-form-review.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-sff-form-review/ai-sff-form-review.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-sff-tab-selector.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-sff-tab-selector/ai-sff-tab-selector.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-website-chip.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-website-chip/ai-website-chip.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-website-confirmation.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-website-confirmation/ai-website-confirmation.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-website-select.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-website-select/ai-website-select.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/ai-window/ai-window.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-window/ai-window.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-error.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-error/aitab-error.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-footer.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-footer/aitab-footer.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-header.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-header/aitab-header.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-highlights.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-highlights/aitab-highlights.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-list.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-list/aitab-list.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-page-actions.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-page-actions/aitab-page-actions.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-table.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-table/aitab-table.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-text-block.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-text-block/aitab-text-block.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-timeline.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-page/aitab-timeline/aitab-timeline.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/aitab-tool-ui.mjs": [
-        "../../../browser/components/aiwindow/ui/components/aitab-tool-ui/aitab-tool-ui.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/applied-memories-button.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-content/chat-assistant-footer/applied-memories-button.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/assistant-message-footer.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-content/chat-assistant-footer/assistant-message-footer.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/chat-assistant-citations.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-content/chat-assistant-citations/chat-assistant-citations.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/chat-assistant-error.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-content/chat-assistant-error/chat-assistant-error.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/chat-assistant-loader.mjs": [
-        "../../../browser/components/aiwindow/ui/components/ai-chat-content/chat-assistant-loader/chat-assistant-loader.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/context-icon-button.mjs": [
-        "../../../browser/components/aiwindow/ui/components/context-icon-button/context-icon-button.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/input-cta.mjs": [
-        "../../../browser/components/aiwindow/ui/components/input-cta/input-cta.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/input-model-select.mjs": [
-        "../../../browser/components/aiwindow/ui/components/input-model-select/input-model-select.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/kit-mention.mjs": [
-        "../../../browser/components/aiwindow/ui/components/kit-mention/kit-mention.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/memories-icon-button.mjs": [
-        "../../../browser/components/aiwindow/ui/components/memories-icon-button/memories-icon-button.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/monitor-error-copy.mjs": [
-        "../../../browser/components/aiwindow/ui/components/agent-monitor-item/monitor-error-copy.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/monitor-icon.mjs": [
-        "../../../browser/components/aiwindow/ui/components/monitors-display/monitor-icon.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/monitor-status-chip.mjs": [
-        "../../../browser/components/aiwindow/ui/components/monitors-display/monitor-status-chip.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/monitors-display.mjs": [
-        "../../../browser/components/aiwindow/ui/components/monitors-display/monitors-display.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-footer.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-footer/smartwindow-footer.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-group-tabs.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-group-tabs/smartwindow-group-tabs.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-history-menu.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-history-menu/smartwindow-history-menu.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-panel-list.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-panel-list/smartwindow-panel-list.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-promo.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-promo/smartwindow-promo.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-prompts.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-prompts/smartwindow-prompts.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-resume-card.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-resume-card/smartwindow-resume-card.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-resume-section.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-resume-section/smartwindow-resume-section.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-smartbar-glow.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-smartbar-glow/smartwindow-smartbar-glow.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/smartwindow-topsites.mjs": [
-        "../../../browser/components/aiwindow/ui/components/smartwindow-topsites/smartwindow-topsites.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/tab-group-icon.mjs": [
-        "../../../browser/components/aiwindow/ui/components/tab-group-icon/tab-group-icon.mjs"
-      ],
-      "chrome://browser/content/aiwindow/components/website-chip-container.mjs": [
-        "../../../browser/components/aiwindow/ui/components/website-chip-container/website-chip-container.mjs"
-      ],
-      "chrome://browser/content/aiwindow/modules/AITabUtils.mjs": [
-        "../../../browser/components/aiwindow/ui/modules/AITabUtils.mjs"
-      ],
-      "chrome://browser/content/aiwindow/modules/AgentCommands.mjs": [
-        "../../../browser/components/aiwindow/ui/modules/AgentCommands.mjs"
-      ],
-      "chrome://browser/content/aiwindow/modules/ChatMarkdownParser.mjs": [
-        "../../../browser/components/aiwindow/ui/modules/ChatMarkdownParser.mjs"
-      ],
-      "chrome://browser/content/aiwindow/modules/ClientErrorTelemetry.mjs": [
-        "../../../browser/components/aiwindow/ui/modules/ClientErrorTelemetry.mjs"
-      ],
-      "chrome://browser/content/aiwindow/modules/SmartFormFillConstants.mjs": [
-        "../../../browser/components/aiwindow/ui/modules/SmartFormFillConstants.mjs"
-      ],
-      "chrome://browser/content/aiwindow/modules/TrustedInternalURLs.mjs": [
-        "../../../browser/components/aiwindow/ui/modules/TrustedInternalURLs.mjs"
-      ],
       "chrome://browser/content/asrouter/components/menu-message.mjs": [
         "../../../browser/components/asrouter/content/components/menu-message/menu-message.mjs"
       ],
@@ -220,12 +43,6 @@
       "chrome://browser/content/firefoxview/card-container.mjs": [
         "../../../browser/components/firefoxview/card-container.mjs"
       ],
-      "chrome://browser/content/firefoxview/chats-tab-list.mjs": [
-        "../../../browser/components/firefoxview/chats-tab-list.mjs"
-      ],
-      "chrome://browser/content/firefoxview/chats.mjs": [
-        "../../../browser/components/firefoxview/chats.mjs"
-      ],
       "chrome://browser/content/firefoxview/fxview-empty-state.mjs": [
         "../../../browser/components/firefoxview/fxview-empty-state.mjs"
       ],
@@ -258,18 +75,6 @@
       ],
       "chrome://browser/content/firefoxview/syncedtabs.mjs": [
         "../../../browser/components/firefoxview/syncedtabs.mjs"
-      ],
-      "chrome://browser/content/genai/content/chatbot-promo.mjs": [
-        "../../../browser/components/genai/content/chatbot-promo.mjs"
-      ],
-      "chrome://browser/content/genai/content/link-preview-card-onboarding.mjs": [
-        "../../../browser/components/genai/content/link-preview-card-onboarding.mjs"
-      ],
-      "chrome://browser/content/genai/content/link-preview-card.mjs": [
-        "../../../browser/components/genai/content/link-preview-card.mjs"
-      ],
-      "chrome://browser/content/genai/content/model-optin.mjs": [
-        "../../../browser/components/genai/content/model-optin.mjs"
       ],
       "chrome://browser/content/migration/migration-wizard-constants.mjs": [
         "../../../browser/components/migration/content/migration-wizard-constants.mjs"
@@ -412,6 +217,9 @@
       "chrome://browser/content/sidebar/sidebar-tab-list.mjs": [
         "../../../browser/components/sidebar/sidebar-tab-list.mjs"
       ],
+      "chrome://browser/content/tabbrowser/model-optin.mjs": [
+        "../../../browser/components/tabbrowser/content/model-optin.mjs"
+      ],
       "chrome://browser/content/tabbrowser/tab-groups-list.mjs": [
         "../../../browser/components/tabbrowser/content/tab-groups-list.mjs"
       ],
@@ -441,18 +249,6 @@
       ],
       "chrome://browser/content/urlbar/SearchbarInput.mjs": [
         "../../../browser/components/urlbar/content/SearchbarInput.mjs"
-      ],
-      "chrome://browser/content/urlbar/SmartbarInput.mjs": [
-        "../../../browser/components/urlbar/content/SmartbarInput.mjs"
-      ],
-      "chrome://browser/content/urlbar/SmartbarInputController.mjs": [
-        "../../../browser/components/urlbar/content/SmartbarInputController.mjs"
-      ],
-      "chrome://browser/content/urlbar/SmartbarInputUtils.mjs": [
-        "../../../browser/components/urlbar/content/SmartbarInputUtils.mjs"
-      ],
-      "chrome://browser/content/urlbar/SmartbarMentionUtils.mjs": [
-        "../../../browser/components/urlbar/content/SmartbarMentionUtils.mjs"
       ],
       "chrome://browser/content/urlbar/UrlbarChildController.mjs": [
         "../../../browser/components/urlbar/content/UrlbarChildController.mjs"
@@ -814,12 +610,6 @@
       "chrome://mochitests/content/browser/accessible/tests/browser/Layout.sys.mjs": [
         "../../../accessible/tests/browser/Layout.sys.mjs"
       ],
-      "chrome://mochitests/content/browser/browser/components/aiwindow/models/tests/browser_eval/prompts/basic_quality.sys.mjs": [
-        "../../../browser/components/aiwindow/models/tests/browser_eval/prompts/basic_quality.sys.mjs"
-      ],
-      "chrome://mochitests/content/browser/browser/components/aiwindow/models/tests/browser_eval/tests/basic_quality.sys.mjs": [
-        "../../../browser/components/aiwindow/models/tests/browser_eval/tests/basic_quality.sys.mjs"
-      ],
       "chrome://mochitests/content/browser/devtools/client/debugger/test/mochitest/examples/worker-esm-dep.mjs": [
         "../../../devtools/client/debugger/test/mochitest/examples/worker-esm-dep.mjs"
       ],
@@ -969,9 +759,6 @@
       ],
       "chrome://mozapps/content/extensions/components/search-addons.mjs": [
         "../../../toolkit/mozapps/extensions/content/components/search-addons.mjs"
-      ],
-      "chrome://mozapps/content/extensions/components/smartwindow-themes-notice.mjs": [
-        "../../../toolkit/mozapps/extensions/content/components/smartwindow-themes-notice.mjs"
       ],
       "chrome://mozapps/content/extensions/components/taar-notice.mjs": [
         "../../../toolkit/mozapps/extensions/content/components/taar-notice.mjs"
@@ -1483,9 +1270,6 @@
       "resource:///modules/BuiltInThemes.sys.mjs": [
         "../../../browser/themes/BuiltInThemes.sys.mjs"
       ],
-      "resource:///modules/ChatsController.sys.mjs": [
-        "../../../browser/components/firefoxview/ChatsController.sys.mjs"
-      ],
       "resource:///modules/ContentCrashHandlers.sys.mjs": [
         "../../../browser/modules/ContentCrashHandlers.sys.mjs"
       ],
@@ -1515,9 +1299,6 @@
       ],
       "resource:///modules/FirefoxBridgeExtensionUtils.sys.mjs": [
         "../../../browser/modules/FirefoxBridgeExtensionUtils.sys.mjs"
-      ],
-      "resource:///modules/GenAI.sys.mjs": [
-        "../../../browser/components/genai/GenAI.sys.mjs"
       ],
       "resource:///modules/HistoryController.sys.mjs": [
         "../../../browser/components/firefoxview/HistoryController.sys.mjs"
@@ -1606,9 +1387,6 @@
       "resource:///modules/aboutwelcome/AboutWelcomeTelemetry.sys.mjs": [
         "../../../browser/components/aboutwelcome/modules/AboutWelcomeTelemetry.sys.mjs"
       ],
-      "resource:///modules/aiwindow/ui/modules/ChatStore.sys.mjs": [
-        "../../../browser/components/aiwindow/ui/modules/ChatStore.sys.mjs"
-      ],
       "resource:///modules/asrouter/ASRouter.sys.mjs": [
         "../../../browser/components/asrouter/modules/ASRouter.sys.mjs"
       ],
@@ -1686,12 +1464,6 @@
       ],
       "resource:///modules/asrouter/RemoteL10n.sys.mjs": [
         "../../../browser/components/asrouter/modules/RemoteL10n.sys.mjs"
-      ],
-      "resource:///modules/asrouter/SidebarChatBotPromo.sys.mjs": [
-        "../../../browser/components/asrouter/modules/SidebarChatBotPromo.sys.mjs"
-      ],
-      "resource:///modules/asrouter/SmartWindowNewTabPromo.sys.mjs": [
-        "../../../browser/components/asrouter/modules/SmartWindowNewTabPromo.sys.mjs"
       ],
       "resource:///modules/asrouter/Spotlight.sys.mjs": [
         "../../../browser/components/asrouter/modules/Spotlight.sys.mjs"
@@ -7470,9 +7242,6 @@
       ],
       "resource://test/webextension-helpers.js": [
         "../../../devtools/server/tests/xpcshell/webextension-helpers.js"
-      ],
-      "resource://testing-common/AIWindowTestUtils.sys.mjs": [
-        "../../../browser/components/aiwindow/ui/test/AIWindowTestUtils.sys.mjs"
       ],
       "resource://testing-common/AboutAddonsTestUtils.sys.mjs": [
         "../../../toolkit/mozapps/extensions/internal/AboutAddonsTestUtils.sys.mjs"

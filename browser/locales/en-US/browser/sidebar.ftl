@@ -2,9 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-menu-view-genai-chat =
-  .label = AI Chatbot
-
 menu-view-contextual-password-manager =
   .label = Passwords
 
@@ -203,8 +200,6 @@ sidebar-opentabs-preview-unmute-tab =
 
 ## Labels for sidebar menu items.
 
-sidebar-menu-genai-chat-label =
-  .label = AI chatbot
 sidebar-menu-history-label =
   .label = History
 sidebar-menu-synced-tabs-label =
@@ -246,17 +241,6 @@ sidebar-menu-open-bookmarks-tooltip = Open bookmarks ({ $shortcut })
 # Variables:
 #   $shortcut (String) - The OS specific keyboard shortcut.
 sidebar-menu-close-bookmarks-tooltip = Close bookmarks ({ $shortcut })
-
-## Tooltips displayed over the AI chatbot icon.
-## Variables:
-##   $shortcut (String) - The OS specific keyboard shortcut.
-##   $provider (String) - The name of the AI chatbot provider (if available).
-
-sidebar-menu-open-ai-chatbot-tooltip-generic = Open AI chatbot ({ $shortcut })
-sidebar-menu-open-ai-chatbot-provider-tooltip = Open { $provider } ({ $shortcut })
-
-sidebar-menu-close-ai-chatbot-tooltip-generic = Close AI chatbot ({ $shortcut })
-sidebar-menu-close-ai-chatbot-provider-tooltip = Close { $provider } ({ $shortcut })
 
 ## Headings for sidebar menu panels.
 

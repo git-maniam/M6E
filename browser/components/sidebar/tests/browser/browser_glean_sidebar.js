@@ -350,16 +350,6 @@ async function testCustomizeToggle(commandID, gleanEvent) {
   SidebarController.hide();
 }
 
-add_task(async function test_customize_chatbot_enabled() {
-  await SpecialPowers.pushPrefEnv({ set: [["browser.ml.chat.enabled", true]] });
-  await testCustomizeToggle(
-    "viewGenaiChatSidebar",
-    Glean.sidebarCustomize.chatbotEnabled
-  );
-  await SpecialPowers.popPrefEnv();
-  await SidebarController.waitUntilStable();
-});
-
 add_task(async function test_customize_synced_tabs_enabled() {
   await testCustomizeToggle(
     "viewTabsSidebar",
@@ -630,7 +620,6 @@ async function testIconClick(expanded) {
 
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.ml.chat.enabled", true],
       [VERTICAL_TABS_PREF, true],
       ["browser.contextual-password-manager.enabled", true],
     ],
@@ -659,7 +648,6 @@ async function testIconClick(expanded) {
   await toolAddedPromise;
 
   const gleanEvents = new Map([
-    ["viewGenaiChatSidebar", Glean.sidebar.chatbotIconClick],
     ["viewTabsSidebar", Glean.sidebar.syncedTabsIconClick],
     ["viewHistorySidebar", Glean.sidebar.historyIconClick],
     ["viewOpenTabsSidebar", Glean.sidebar.openTabsIconClick],

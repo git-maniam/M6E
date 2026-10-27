@@ -57,9 +57,3 @@
 # The "Labs" portion can be localized, “Firefox” must be treated as a brand
 # and kept in English.
 -firefoxlabs-brand-name = { -brand-short-name } Labs
-
--smart-window-brand-name =
-    { $plural-form ->
-        [true] Smart Windows
-       *[false] Smart Window
-    }

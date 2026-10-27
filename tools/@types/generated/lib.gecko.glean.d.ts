@@ -250,124 +250,6 @@ interface GleanImpl {
     openProtectionspopupCfr: GleanEventWithExtras<{ message?: string, value?: string }>;
   }
 
-  smartWindow: {
-    addTabsClick: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, tabs_available?: string|number, tabs_preselected?: string|number }>;
-    addTabsSelection: GleanEventWithExtras<{ chat_id?: string, location?: string, mention_type?: string, message_seq?: string|number, tabs_available?: string|number, tabs_preselected?: string|number, tabs_selected?: string|number }>;
-    agentActiveActions: Record<"monitor", GleanQuantity>;
-    agentCommandRemove: GleanEventWithExtras<{ agent?: string, chat_id?: string, location?: string, message_seq?: string|number, source?: string }>;
-    agentCommandSelect: GleanEventWithExtras<{ agent?: string, chat_id?: string, commands_available?: string|number, location?: string, message_seq?: string|number, source?: string }>;
-    agentCommandStart: GleanEventWithExtras<{ chat_id?: string, commands_available?: string|number, location?: string, message_seq?: string|number, source?: string }>;
-    agentPausedActions: Record<"monitor", GleanQuantity>;
-    agenticActionCreateComplete: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, chat_id?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, error_code?: string, length?: string|number, message_seq?: string|number, monitors?: string|number, prompt_version?: string, schedule_type?: string, source?: string, success?: string|boolean, urls?: string|number }>;
-    agenticActionCreateSubmit: GleanEventWithExtras<{ agent?: string, chat_id?: string, check_time?: string, check_weekday?: string|number, length?: string|number, message_seq?: string|number, monitors?: string|number, schedule_type?: string, source?: string, urls?: string|number }>;
-    agenticActionDelete: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, chat_id?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, length?: string|number, message_seq?: string|number, monitors?: string|number, prompt_version?: string, schedule_type?: string, source?: string, urls?: string|number }>;
-    agenticActionEditComplete: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, chat_id?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, length?: string|number, message_seq?: string|number, monitors?: string|number, prompt_version?: string, schedule_type?: string, source?: string, urls?: string|number }>;
-    agenticActionExecuteCancel: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, check_time?: string, check_weekday?: string|number, duration?: string|number, enabled?: string|boolean, error_code?: string, execution_seq?: string|number, length?: string|number, model?: string, monitors?: string|number, prompt_version?: string, reason?: string, schedule_type?: string, urls?: string|number }>;
-    agenticActionExecuteComplete: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, check_time?: string, check_weekday?: string|number, delay?: string|number, duration?: string|number, enabled?: string|boolean, error_code?: string, execution_seq?: string|number, latency?: string|number, length?: string|number, model?: string, monitors?: string|number, outcome?: string|boolean, prompt_version?: string, reason?: string, schedule_type?: string, success?: string|boolean, urls?: string|number }>;
-    agenticActionExecuteRequest: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, check_time?: string, check_weekday?: string|number, delay?: string|number, enabled?: string|boolean, execution_seq?: string|number, length?: string|number, monitors?: string|number, prompt_version?: string, reason?: string, schedule_type?: string, urls?: string|number }>;
-    agenticActionExecuteStart: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, execution_seq?: string|number, length?: string|number, model?: string, monitors?: string|number, prompt_version?: string, reason?: string, schedule_type?: string, urls?: string|number }>;
-    agenticActionNotificationClose: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, execution_seq?: string|number, length?: string|number, monitors?: string|number, notification_type?: string, outcome?: string|boolean, prompt_version?: string, reason?: string, schedule_type?: string, urls?: string|number }>;
-    agenticActionNotificationDisplay: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, execution_seq?: string|number, length?: string|number, monitors?: string|number, notification_type?: string, outcome?: string|boolean, prompt_version?: string, schedule_type?: string, urls?: string|number }>;
-    agenticActionPause: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, chat_id?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, length?: string|number, message_seq?: string|number, monitors?: string|number, prompt_version?: string, reason?: string, schedule_type?: string, source?: string, urls?: string|number }>;
-    agenticActionResume: GleanEventWithExtras<{ action_id?: string, active_age?: string|number, age?: string|number, agent?: string, chat_id?: string, check_time?: string, check_weekday?: string|number, enabled?: string|boolean, length?: string|number, message_seq?: string|number, monitors?: string|number, prompt_version?: string, schedule_type?: string, source?: string, urls?: string|number }>;
-    aitabCreateComplete: GleanEventWithExtras<{ components_used?: string, error?: string, is_success?: string|boolean, num_chars_out?: string|number, num_chars_read?: string|number, seconds_elapsed?: string|number }>;
-    aitabCreateInitiate: GleanEventWithExtras<{ how_initiated?: string, num_tabs?: string|number, num_tabs_total_attempted?: string|number, raw_content_len?: string|number }>;
-    aitabEditComplete: GleanEventWithExtras<{ components_used?: string, error?: string, is_success?: string|boolean, num_chars_out?: string|number, num_chars_read?: string|number, seconds_elapsed?: string|number }>;
-    aitabEditInitiate: GleanEventWithExtras<{ how_initiated?: string, num_tabs?: string|number, raw_content_len?: string|number }>;
-    autoTabGroupAccepted: GleanEventWithExtras<{ grouped_id?: string|number, grouped_tabs?: string|number, source?: string }>;
-    autoTabGroupCompleted: GleanEventWithExtras<{ error_type?: string, grouped_id?: string|number, grouped_tabs?: string|number, source?: string, success?: string|boolean }>;
-    autoTabGroupMenuOpened: GleanEventWithExtras<{ source?: string, tabs?: string|number }>;
-    autoTabGroupSuggested: GleanEventWithExtras<{ grouped_id?: string|number, grouped_tabs?: string|number, total_length?: string|number }>;
-    autoTabGroupWindowDisplay: GleanEventWithExtras<{ groups?: string|number, suggested_groups?: string|number, time?: string|number, waited_out?: string|boolean }>;
-    autoTabGroupingCompleted: GleanEventWithExtras<{ error_type?: string, grouped_tabs?: string|number, groups?: string|number, success?: string|boolean, tabs?: string|number, time?: string|number, total_length?: string|number }>;
-    autoTabGroupingRequested: GleanEventWithExtras<{ tabs?: string|number }>;
-    autoTabGroupingStarted: GleanEventWithExtras<{ tabs?: string|number, total_length?: string|number }>;
-    autoTabUngroupCompleted: GleanEventWithExtras<{ error_type?: string, grouped_id?: string|number, grouped_tabs?: string|number, source?: string, success?: string|boolean }>;
-    autoTabUngroupRequested: GleanEventWithExtras<{ grouped_id?: string|number, grouped_tabs?: string|number, source?: string }>;
-    bookmarkbar: Record<"opened", GleanCounter>;
-    browserActionComplete: GleanEventWithExtras<{ action?: string, chat_id?: string, error?: string, location?: string, message_seq?: string|number, model?: string, prompt_version?: string, result?: string, tabs_affected?: string|number, trigger?: string, undo_available?: string|boolean }>;
-    browserActionPrompt: GleanEventWithExtras<{ action?: string, candidates?: string|number, chat_id?: string, location?: string, message_seq?: string|number, preselected?: string|number, prompt_type?: string, reason?: string }>;
-    browserActionPromptResponse: GleanEventWithExtras<{ action?: string, chat_id?: string, location?: string, message_seq?: string|number, prompt_type?: string, reason?: string, response?: string, selected?: string|number }>;
-    browserActionSubmit: GleanEventWithExtras<{ action?: string, chat_id?: string, location?: string, mentions?: string|number, message_seq?: string|number, model?: string, prompt_version?: string, submit_type?: string, tabs_open?: string|number, trigger?: string }>;
-    browserActionUndo: GleanEventWithExtras<{ action?: string, chat_id?: string, error?: string, location?: string, message_seq?: string|number, result?: string, tabs_restored?: string|number, time_delta?: string|number }>;
-    chatPreviousSession: GleanEventWithExtras<{ tabs?: string|number }>;
-    chatRetrieved: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, time_delta?: string|number }>;
-    chatStorage: GleanQuantity;
-    chatSubmit: GleanEventWithExtras<{ chat_id?: string, chat_version?: string, detected_intent?: string, length?: string|number, location?: string, mentions?: string|number, message_seq?: string|number, model?: string, submit_type?: string, tabs?: string|number, turn_number?: string|number }>;
-    classicSwitch: GleanEventWithExtras<{ duration_ms?: string|number, opened_tabs?: string|number }>;
-    clientError: GleanEventWithExtras<{ chat_id?: string, filename?: string, lineno?: string|number, location?: string, message?: string, message_seq?: string|number, model?: string, name?: string, source?: string }>;
-    closeDuplicateTabsCompleted: GleanEventWithExtras<{ duplicate_tabs?: string|number, error_type?: string, success?: string|boolean, tabs?: string|number, time?: string|number }>;
-    closeDuplicateTabsRequested: GleanEventWithExtras<{ tabs?: string|number }>;
-    closeDuplicateTabsStarted: GleanEventWithExtras<{ tabs?: string|number, total_length?: string|number }>;
-    closeWindow: GleanEventWithExtras<{ duration_ms?: string|number, opened_tabs?: string|number }>;
-    duplicateTabsClosed: GleanEventWithExtras<{ duplicate_tabs?: string|number, error_type?: string, success?: string|boolean }>;
-    enabled: GleanBoolean;
-    formFillClassifyRequest: GleanEventWithExtras<{ fields_total?: string|number, flow_id?: string, model?: string, prompt_version?: string, trigger?: string }>;
-    formFillClassifyResponse: GleanEventWithExtras<{ error?: string|boolean, error_message?: string, fields_typed?: string|number, fields_unknown?: string|number, flow_id?: string, latency_ms?: string|number, page_type?: string }>;
-    formFillField: GleanEventWithExtras<{ confidence?: string, field_kind?: string, field_seq?: string|number, filled?: string|boolean, flow_id?: string, input_type?: string, pre_llm_confidence?: string|number, pre_llm_field_kind?: string, pre_llm_source?: string, source?: string, token_available?: string|boolean, token_kind?: string }>;
-    formFillFieldOutcome: GleanEventWithExtras<{ confidence?: string, field_kind?: string, field_seq?: string|number, filled_length?: string|number, final_length?: string|number, flow_id?: string, outcome?: string, source?: string }>;
-    formFillFieldReviewOutcome: GleanEventWithExtras<{ field_seq?: string|number, flow_id?: string, generated_length?: string|number, outcome?: string, reviewed_length?: string|number }>;
-    formFillGenerateRequest: GleanEventWithExtras<{ flow_id?: string, memories?: string|number, memories_similarity_avg?: string|number, memories_similarity_max?: string|number, memories_similarity_min?: string|number, model?: string, prompt_version?: string, tabs?: string|number, threshold?: string, tokens_available?: string|number }>;
-    formFillGenerateResponse: GleanEventWithExtras<{ batches_failed?: string|number, batches_total?: string|number, error?: string|boolean, error_message?: string, fields_filled?: string|number, flow_id?: string, latency_ms?: string|number, memories_used?: string|number, memories_used_similarity_avg?: string|number, memories_used_similarity_max?: string|number, memories_used_similarity_min?: string|number, tabs_used?: string|number }>;
-    formRelevantTabsOutcome: GleanEventWithExtras<{ editor_opens?: string|number, editor_result?: string, flow_id?: string, tabs_added?: string|number, tabs_final?: string|number, tabs_kept?: string|number, tabs_removed?: string|number }>;
-    formRelevantTabsRequest: GleanEventWithExtras<{ flow_id?: string, model?: string, prompt_version?: string, tabs_sent?: string|number, threshold?: string }>;
-    formRelevantTabsResponse: GleanEventWithExtras<{ error?: string|boolean, error_message?: string, flow_id?: string, latency_ms?: string|number, tabs_high?: string|number, tabs_low?: string|number, tabs_medium?: string|number, tabs_selected?: string|number, tabs_used?: string|number }>;
-    getPageContent: GleanEventWithExtras<{ chat_id?: string, length?: string|number, location?: string, message_seq?: string|number, time?: string|number }>;
-    historyClick: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, position?: string|number, total?: string|number }>;
-    historyDisplayed: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, reason?: string, total?: string|number }>;
-    intentChangePreview: GleanEventWithExtras<{ chat_id?: string, current_intent?: string, location?: string, message_seq?: string|number }>;
-    launchCommandInvoked: GleanEventWithExtras<{ fxa?: string|boolean, new_window?: string|boolean, trigger?: string }>;
-    linkClick: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number }>;
-    llmajBasedTelemetry: GleanEventWithExtras<{ attribute_name?: string, attribute_value?: string, chat_id?: string, chat_version?: string, model?: string, record_type?: string, telemetry_name?: string, telemetry_version?: string, trigger_sampled?: string|boolean, trigger_sampling_probability?: string|number, triggers?: string, turn_number?: string|number, uniform_sampled?: string|boolean, uniform_sampling_probability?: string|number }>;
-    memoriesCount: Record<"conversation"|"history"|"session", GleanQuantity>;
-    memoriesLastUpdated: GleanDatetime;
-    memoriesNuke: GleanEventNoExtras;
-    memoriesOptin: Record<"generate_from_conversation"|"generate_from_history", GleanBoolean>;
-    memoriesPanelDisplayed: GleanEventWithExtras<{ memories?: string|number, source?: string }>;
-    memoriesToggle: GleanEventWithExtras<{ chat_id?: string, location?: string, memories?: string|number, message_seq?: string|number, toggle?: string|boolean }>;
-    memoryApplied: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number }>;
-    memoryAppliedClick: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number }>;
-    memoryRemovedPanel: GleanEventWithExtras<{ in_use?: string|number, memories?: string|number, trigger?: string }>;
-    mentionRemove: GleanEventWithExtras<{ chat_id?: string, location?: string, mentions?: string|number, message_seq?: string|number }>;
-    mentionSelect: GleanEventWithExtras<{ chat_id?: string, length?: string|number, location?: string, mention_type?: string, mentions_available?: string|number, message_seq?: string|number }>;
-    mentionStart: GleanEventWithExtras<{ chat_id?: string, location?: string, mentions_available?: string|number, message_seq?: string|number }>;
-    model: GleanString;
-    modelRequest: GleanEventWithExtras<{ chat_id?: string, detected_intent?: string, intent?: string, location?: string, memories?: string|number, message_seq?: string|number, request_id?: string, tokens?: string|number }>;
-    modelResponse: GleanEventWithExtras<{ chat_id?: string, duration?: string|number, error?: string, http_status?: string|number, intent?: string, is_retry?: string|boolean, latency?: string|number, location?: string, memories?: string|number, message_seq?: string|number, model?: string, request_id?: string, tokens?: string|number }>;
-    navigateSubmit: GleanEventWithExtras<{ chat_id?: string, detected_intent?: string, length?: string|number, location?: string, message_seq?: string|number, model?: string, submit_type?: string }>;
-    onboardingBackNavigate: GleanEventWithExtras<{ message_id?: string }>;
-    onboardingComplete: GleanEventWithExtras<{ memory_source?: string, model?: string, setdefault_source?: string }>;
-    onboardingMemoriesNavigate: GleanEventWithExtras<{ source?: string }>;
-    onboardingMemoriesSettings: GleanEventWithExtras<{ source?: string }>;
-    onboardingModelNavigate: GleanEventWithExtras<{ model?: string }>;
-    onboardingModelSelected: GleanEventWithExtras<{ model?: string }>;
-    onboardingScreenImpression: GleanEventWithExtras<{ message_id?: string }>;
-    onboardingSetdefaultNavigate: GleanEventWithExtras<{ source?: string }>;
-    onboardingSetdefaultSettings: GleanEventWithExtras<{ source?: string }>;
-    openWindow: GleanEventWithExtras<{ fxa?: string|boolean, onboarding?: string|boolean, opened_tabs?: string|number, trigger?: string }>;
-    quickPromptClicked: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, starter?: string|boolean, starter_type?: string }>;
-    quickPromptDismissed: GleanEventWithExtras<{ chat_id?: string }>;
-    quickPromptDisplayed: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, prompts?: string|number, resume_prompts?: string|number }>;
-    removeTab: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, tabs_selected?: string|number }>;
-    retryNoMemories: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number }>;
-    searchHandoff: GleanEventWithExtras<{ chat_id?: string, location?: string, message_seq?: string|number, model?: string, provider?: string }>;
-    searchSubmit: GleanEventWithExtras<{ chat_id?: string, detected_intent?: string, length?: string|number, location?: string, message_seq?: string|number, model?: string, provider?: string, submit_type?: string }>;
-    searchTheWeb: GleanEventWithExtras<{ chat_id?: string, error?: string, http_status?: string|number, location?: string, message_seq?: string|number, processing_duration?: string|number, results_retrieved?: string|number, results_returned?: string|number, retrieval_duration?: string|number, snippet_chars_returned?: string|number, snippet_chars_truncated?: string|number, total_duration?: string|number }>;
-    setDefaultOptin: GleanBoolean;
-    settingsMemories: GleanEventWithExtras<{ enabled?: string|boolean, type?: string }>;
-    settingsModel: GleanEventWithExtras<{ new_model?: string, previous_model?: string }>;
-    sidebarClose: GleanEventWithExtras<{ chat_id?: string, message_seq?: string|number }>;
-    sidebarOpen: GleanEventWithExtras<{ chat_id?: string, message_seq?: string|number }>;
-    signinFlowCompleted: GleanEventWithExtras<{ outcome?: string }>;
-    signinFlowStarted: GleanEventWithExtras<{ reason?: string }>;
-    tabsOpened: GleanCounter;
-    toolCall: GleanEventWithExtras<{ chat_id?: string, error?: string, location?: string, message_seq?: string|number, model?: string, prompt_version?: string, tool_name?: string }>;
-    topsitesClick: GleanEventWithExtras<{ position?: string|number, visible_topsites?: string|number }>;
-    topsitesEnabled: GleanBoolean;
-    topsitesImpression: GleanEventWithExtras<{ visible_topsites?: string|number }>;
-    uriLoad: GleanEventWithExtras<{ model?: string }>;
-  }
-
   messagingSystem: {
     addonVersion: GleanString;
     browserSessionId: GleanUuid;
@@ -455,11 +337,6 @@ interface GleanImpl {
     ua: GleanString;
     unknownKeys: Record<string, GleanCounter>;
     variation: GleanString;
-  }
-
-  microsurveySmartWindow: {
-    chat: GleanObject;
-    userFeedbackData: GleanObject;
   }
 
   gleanAttribution: {
@@ -588,61 +465,6 @@ interface GleanImpl {
     sortHistoryTabs: GleanEventWithExtras<{ search_start?: string, sort_type?: string }>;
     syncedTabsTabs: GleanEventWithExtras<{ page?: string }>;
     tabSelectedToolbarbutton: GleanEventNoExtras;
-  }
-
-  genaiChatbot: {
-    badges: GleanString;
-    contextmenuChoose: GleanEventWithExtras<{ provider?: string }>;
-    contextmenuPromptClick: GleanEventWithExtras<{ prompt?: string, provider?: string, selection?: string|number }>;
-    contextmenuRemove: GleanEventWithExtras<{ provider?: string }>;
-    enabled: GleanBoolean;
-    keyboardShortcut: GleanEventWithExtras<{ enabled?: string|boolean, sidebar?: string }>;
-    menu: GleanBoolean;
-    onboardingClose: GleanEventWithExtras<{ provider?: string, step?: string|number }>;
-    onboardingFinish: GleanEventWithExtras<{ provider?: string, step?: string|number }>;
-    onboardingLearnMore: GleanEventWithExtras<{ provider?: string, step?: string|number }>;
-    onboardingProviderChoiceDisplayed: GleanEventWithExtras<{ provider?: string, step?: string|number }>;
-    onboardingProviderSelection: GleanEventWithExtras<{ provider?: string, step?: string|number }>;
-    onboardingProviderTerms: GleanEventWithExtras<{ provider?: string, step?: string|number, text?: string }>;
-    page: GleanBoolean;
-    promptClick: GleanEventWithExtras<{ content_type?: string, prompt?: string, provider?: string, selection?: string|number, smart_window?: string|boolean, source?: string }>;
-    provider: GleanString;
-    providerChange: GleanEventWithExtras<{ current?: string, previous?: string, surface?: string }>;
-    shortcuts: GleanBoolean;
-    shortcutsCustom: GleanBoolean;
-    shortcutsDisplayed: GleanEventWithExtras<{ delay?: string|number, inputType?: string, selection?: string|number }>;
-    shortcutsExpanded: GleanEventWithExtras<{ provider?: string, selection?: string|number, warning?: string|boolean }>;
-    shortcutsHideClick: GleanEventWithExtras<{ selection?: string|number }>;
-    shortcutsPromptClick: GleanEventWithExtras<{ prompt?: string, provider?: string, selection?: string|number }>;
-    sidebar: GleanBoolean;
-    sidebarCloseClick: GleanEventWithExtras<{ provider?: string }>;
-    sidebarMoreMenuClick: GleanEventWithExtras<{ action?: string, provider?: string }>;
-    sidebarMoreMenuDisplay: GleanEventWithExtras<{ provider?: string }>;
-    sidebarProviderMenuClick: GleanEventWithExtras<{ action?: string, provider?: string }>;
-    sidebarToggle: GleanEventWithExtras<{ opened?: string|boolean, provider?: string, reason?: string, version?: string }>;
-    summarizePage: GleanEventWithExtras<{ provider?: string, source?: string }>;
-  }
-
-  genaiLinkpreview: {
-    aiOptin: GleanBoolean;
-    cardAiConsent: GleanEventWithExtras<{ option?: string }>;
-    cardClose: GleanEventWithExtras<{ duration?: string|number, tab?: string }>;
-    cardLink: GleanEventWithExtras<{ key_points?: string|boolean, source?: string, tab?: string }>;
-    enabled: GleanBoolean;
-    fetch: GleanEventWithExtras<{ description?: string|boolean, image?: string|boolean, length?: string|number, outcome?: string, sitename?: string|boolean, skipped?: string|boolean, tab?: string, time?: string|number, title?: string|boolean }>;
-    generate: GleanEventWithExtras<{ delay?: string|number, download?: string|number, latency?: string|number, outcome?: string, sentences?: string|number, time?: string|number }>;
-    keyPoints: GleanBoolean;
-    keyPointsToggle: GleanEventWithExtras<{ expand?: string|boolean }>;
-    onboardingCard: GleanEventWithExtras<{ action?: string, type?: string }>;
-    prefChanged: GleanEventWithExtras<{ enabled?: string|boolean, pref?: string }>;
-    shortcut: GleanString;
-    smokeTest: GleanEventWithExtras<{ flow_id?: string, matches_pinned?: string|boolean, model_id?: string, model_revision?: string, output_hash?: string }>;
-    start: GleanEventWithExtras<{ cached?: string|boolean, source?: string, tab?: string }>;
-  }
-
-  selectionMenu: {
-    actionClick: GleanEventWithExtras<{ action?: string, selection?: string|number, smart_window?: string|boolean }>;
-    displayed: GleanEventWithExtras<{ delay?: string|number, selection?: string|number, smart_window?: string|boolean }>;
   }
 
 
@@ -1183,8 +1005,6 @@ interface GleanImpl {
     newtabSearchWidget: Record<string, GleanCounter>;
     newtabSearchbar: Record<string, GleanCounter>;
     searchbar: Record<string, GleanCounter>;
-    smartbar: Record<string, GleanCounter>;
-    smartwindowAssistant: Record<string, GleanCounter>;
     textSelection: Record<string, GleanCounter>;
     urlbar: Record<string, GleanCounter>;
     urlbarHandoff: Record<string, GleanCounter>;
@@ -1422,7 +1242,6 @@ interface GleanImpl {
   sidebar: {
     addonIconClick: GleanEventWithExtras<{ addon_id?: string, sidebar_open?: string|boolean }>;
     bookmarksIconClick: GleanEventWithExtras<{ sidebar_open?: string|boolean }>;
-    chatbotIconClick: GleanEventWithExtras<{ sidebar_open?: string|boolean }>;
     displaySettings: GleanString;
     expand: GleanEventNoExtras;
     historyIconClick: GleanEventWithExtras<{ sidebar_open?: string|boolean }>;
@@ -1440,7 +1259,6 @@ interface GleanImpl {
 
   sidebarCustomize: {
     bookmarksEnabled: GleanEventWithExtras<{ checked?: string|boolean }>;
-    chatbotEnabled: GleanEventWithExtras<{ checked?: string|boolean }>;
     expandOnHoverEnabled: GleanEventWithExtras<{ checked?: string|boolean }>;
     extensionsClicked: GleanEventNoExtras;
     firefoxSettingsClicked: GleanEventNoExtras;
@@ -1627,9 +1445,9 @@ interface GleanImpl {
   }
 
   urlbarZeroprefix2: {
-    abandonment: Record<"newtab_searchbar"|"searchbar"|"smartbar"|"urlbar", GleanCounter>;
-    engagement: Record<"newtab_searchbar"|"searchbar"|"smartbar"|"urlbar", GleanCounter>;
-    exposure: Record<"newtab_searchbar"|"searchbar"|"smartbar"|"urlbar", GleanCounter>;
+    abandonment: Record<"newtab_searchbar"|"searchbar"|"urlbar", GleanCounter>;
+    engagement: Record<"newtab_searchbar"|"searchbar"|"urlbar", GleanCounter>;
+    exposure: Record<"newtab_searchbar"|"searchbar"|"urlbar", GleanCounter>;
   }
 
 

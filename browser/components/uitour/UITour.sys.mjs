@@ -8,8 +8,6 @@ const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
   AboutReaderParent: "resource:///actors/AboutReaderParent.sys.mjs",
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   AppProvidedConfigEngine:
     "moz-src:///toolkit/components/search/ConfigSearchEngine.sys.mjs",
   ASRouter: "resource:///modules/asrouter/ASRouter.sys.mjs",
@@ -497,33 +495,6 @@ export var UITour = {
                 Services.scriptSecurityManager.createNullPrincipal({}),
             });
           });
-        break;
-      }
-
-      case "showFirefoxAccountsForAIWindow": {
-        if (AppConstants.IS_ESR) {
-          lazy.log.warn(
-            "showFirefoxAccountsForAIWindow: Smart Window is not available on ESR"
-          );
-          break;
-        }
-
-        // if user "Blocked" Smart Window feature from AI Control or global AI Control default
-        // override Smart Window feature to "available"
-        if (lazy.AIWindow.isBlocked) {
-          Services.prefs.setStringPref(
-            "browser.ai.control.smartWindow",
-            "available"
-          );
-        }
-
-        lazy.AIWindow.launchWindow(browser, false, "bedrock").then(success => {
-          if (!success) {
-            lazy.log.warn(
-              "showFirefoxAccountsForAIWindow: Failed to launch Smart Window"
-            );
-          }
-        });
         break;
       }
 
@@ -1687,18 +1658,6 @@ export var UITour = {
           ),
           smartTabGroups: Services.prefs.getStringPref(
             "browser.ai.control.smartTabGroups",
-            "default"
-          ),
-          linkPreviewKeyPoints: Services.prefs.getStringPref(
-            "browser.ai.control.linkPreviewKeyPoints",
-            "default"
-          ),
-          sidebarChatbot: Services.prefs.getStringPref(
-            "browser.ai.control.sidebarChatbot",
-            "default"
-          ),
-          smartWindow: Services.prefs.getStringPref(
-            "browser.ai.control.smartWindow",
             "default"
           ),
           speechRecognition: Services.prefs.getStringPref(

@@ -99,7 +99,6 @@ user_pref("browser.newtabpage.activity-stream.widgets.system.crossword.enabled",
 user_pref("browser.newtabpage.activity-stream.newtabWallpapers.enabled", false);
 // Don't pull sponsored Top Sites content from the network
 user_pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false);
-user_pref("browser.smartwindow.autoTabGrouping.preloadModels", false);
 // Default Glean to "record but don't report" mode, and to never trigger
 // activity-based ping submission. Docs:
 // https://firefox-source-docs.mozilla.org/toolkit/components/glean/dev/preferences.html

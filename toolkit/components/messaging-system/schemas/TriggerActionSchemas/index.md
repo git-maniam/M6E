@@ -66,7 +66,6 @@ targeting, use separate messages instead.
 - [`sidebarToolOpened`](#sidebartoolopened)
 - [`elementClicked`](#elementclicked)
 - [`selectableProfilesUpdated`](#selectableprofilesupdated)
-- [`smartWindowNewTab`](#smartwindownewtab)
 - [`nimbusUpdate`](#nimbusupdate)
 - [`lastWindowClose`](#lastwindowclose)
 
@@ -412,16 +411,6 @@ Happens when the user closes n or more tabs in a session
   targeting: "currentTabsOpen >= 4"
 }
 ```
-```js
-// The trigger also includes an optional action context variable
-// when a caller marks the tab.smartWindowActionSource before close.
-// Here, the message triggers when the close was attributed to a specific source
-// (e.g., "close_current_tab" set by a toolcall)
-{
-  trigger: { id: "nthTabClosed" },
-  targeting: "actionSource == 'close_current_tab'"
-}
-```
 
 ### `nthTabOpened`
 
@@ -572,12 +561,12 @@ Happens when the user opens a tool or extension panel in the sidebar
 
 The `view` string context variable is available in targeting, and will correspond with which sidebar tool/extension has been opened (ex: "viewHistorySidebar", "viewBookmarksSidebar", etc).
 
-The `clickCounts` object context variable is also available in targeting, and information about how many time a specific tool or extensions has been opened. The `SIDEBAR_TOOL_SURVEY` callout will be targeted to show if any tool/extension (excluding GenAI chatbot) has been clicked 5 times per-window and per-session. The `SIDEBAR_GENAI_SURVEY` callout will be targeted to show if the GenAI chatbot panel has been opened 2 times per-window and per-session.
+The `clickCounts` object context variable is also available in targeting, and information about how many time a specific tool or extensions has been opened. The `SIDEBAR_TOOL_SURVEY` callout will be targeted to show if any tool/extension has been clicked 5 times per-window and per-session.
 
 ```js
 {
   trigger: { id: "sidebarToolOpened" },
-  targeting: `'sidebar.position_start'|preferenceValue && view != 'viewGenaiChatSidebar' && clickCounts.totalToolsMinusGenai == 5 && !'messaging-system-action.sidebar-tools-microsurvey-complete-or-dismissed'|preferenceValue`
+  targeting: `'sidebar.position_start'|preferenceValue && clickCounts.totalToolsMinusGenai == 5 && !'messaging-system-action.sidebar-tools-microsurvey-complete-or-dismissed'|preferenceValue`
 }
 ```
 
@@ -618,17 +607,6 @@ A currentTabsOpen context variable is included to be used in the targeting
 {
   trigger: { id: "tabSwitch" },
   targeting: `!'browser.tab.splitview.hasUsed'|preferenceValue && currentTabsOpen >=5`
-}
-```
-
-### `smartWindowNewTab`
-
-Occurs every time a user opens a new Smart Window tab.
-
-```js
-{
-  trigger: { id: "smartWindowNewTab" },
-  targeting: "isAIWindow && 'browser.smartwindow.firstrun.hasCompleted' | preferenceValue",
 }
 ```
 

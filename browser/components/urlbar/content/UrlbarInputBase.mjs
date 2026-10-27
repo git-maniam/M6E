@@ -24,7 +24,7 @@ import { UrlbarShared } from "chrome://browser/content/urlbar/UrlbarShared.mjs";
 /**
  * The current window mode.
  *
- * @typedef {"classic" | "private" | "smartwindow"} WindowMode
+ * @typedef {"classic" | "private"} WindowMode
  */
 
 /**
@@ -84,8 +84,6 @@ const { XPCOMUtils } =
     : ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 const lazy = XPCOMUtils?.declareLazy({
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
   BrowserUIUtils: "resource:///modules/BrowserUIUtils.sys.mjs",
   CustomizableUI:
     "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
@@ -344,7 +342,6 @@ ${
    * The browser window or null in a child process.
    *
    * For the addressbar and searchbar, this is the same as the global `window`.
-   * For the smartbar, this is the browser window containing its content window.
    * For the newtab search bar, this is null.
    *
    * @type {?BrowserWindow}
@@ -811,10 +808,6 @@ ${
     return this.#sapName;
   }
 
-  get isSidebarMode() {
-    return false;
-  }
-
   /**
    * Whether this is a bar dedicated to search.
    *
@@ -856,9 +849,7 @@ ${
     if (this.isPrivate) {
       return "private";
     }
-    return lazy?.AIWindow.isAIWindowActive(this.browserWindow)
-      ? "smartwindow"
-      : "classic";
+    return "classic";
   }
 
   get parentController() {
@@ -2256,18 +2247,6 @@ ${
 
         return;
       }
-      case UrlbarShared.RESULT_TYPE.AI_CHAT: {
-        // AI Chat results handle their own navigation.
-        this.controller.engagementEvent.record(event, {
-          result,
-          element,
-          searchString: this._lastSearchString,
-          selType: this.view.telemetryTypeFromElement(result, element),
-          searchSource: this.getSearchSource(event),
-          windowMode: this.windowMode,
-        });
-        return;
-      }
     }
 
     if (!loadRequest) {
@@ -3616,8 +3595,6 @@ ${
         );
       case UrlbarShared.RESULT_TYPE.RESTRICT:
         return result.payload.autofillKeyword + " ";
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return result.payload.query ?? "";
       case UrlbarShared.RESULT_TYPE.TIP: {
         let value = element?.dataset.url || element?.dataset.input;
         if (value) {
@@ -5087,10 +5064,6 @@ ${
    * be naming a stale one, so it's updated right away.
    */
   async #deferUpdatePlaceholder() {
-    if (this.sapName == "smartbar") {
-      return;
-    }
-
     if (!this.value) {
       if (this.inputField.dataset.l10nId == "urlbar-placeholder-with-name") {
         // The switcher icon has no pre-saved value that could be stale, so it

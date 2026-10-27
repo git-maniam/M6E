@@ -11,10 +11,6 @@ const XPCOMUtils = ChromeUtils.importESModule(
   "resource://gre/modules/XPCOMUtils.sys.mjs"
 ).XPCOMUtils;
 const lazy = XPCOMUtils.declareLazy({
-  AIWindow:
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
-  GenAI: "moz-src:///browser/components/genai/GenAI.sys.mjs",
-  LinkPreview: "moz-src:///browser/components/genai/LinkPreview.sys.mjs",
   PdfJsGuessAltTextFeature: "resource://pdf.js/PdfJsAIFeature.sys.mjs",
   SmartTabGroupingManager:
     "moz-src:///browser/components/tabbrowser/SmartTabGrouping.sys.mjs",
@@ -27,10 +23,7 @@ const lazy = XPCOMUtils.declareLazy({
  */
 const OnDeviceModelFeatures = Object.freeze({
   TabGroups: "smartTabGroups",
-  KeyPoints: "linkPreviewKeyPoints",
   PdfAltText: "pdfjsAltText",
-  SidebarChatbot: "sidebarChatbot",
-  SmartWindow: "smartWindow",
   SpeechRecognition: "speechRecognition",
 });
 
@@ -41,29 +34,11 @@ const FeaturePrefs = Object.freeze({
     "pdfjs.enableAltTextModelDownload",
     "pdfjs.enableAltText",
   ],
-  [OnDeviceModelFeatures.KeyPoints]: [
-    "browser.ml.linkPreview.enabled",
-    "browser.ml.linkPreview.optin",
-  ],
   [OnDeviceModelFeatures.TabGroups]: [
     "browser.tabs.groups.enabled",
     "browser.tabs.groups.smart.enabled",
     "browser.tabs.groups.smart.userEnabled",
     "browser.tabs.groups.smart.optin",
-  ],
-  [OnDeviceModelFeatures.SidebarChatbot]: [
-    "browser.ml.chat.provider",
-    "browser.ml.chat.enabled",
-  ],
-  [OnDeviceModelFeatures.SmartWindow]: [
-    "browser.smartwindow.enabled",
-    "browser.smartwindow.tos.consentTime",
-    // makeAiControlSetting's get() calls AIWindow.isBlocked which reads a
-    // cached value of this pref. Without this entry get() can run before
-    // AIWindow's cache is refreshed since pref observers fire in
-    // unpredictable order. This is triggered e.g. when UITour overrides
-    // this pref externally.
-    "browser.ai.control.smartWindow",
   ],
   // Speech recognition has no separate feature pref: the AI Controls pref is
   // the source of truth, and the C++ SpeechRecognition implementation reads it
@@ -127,18 +102,11 @@ export const OnDeviceModelManager = {
    */
   getAIFeature(feature) {
     switch (feature) {
-      case OnDeviceModelFeatures.KeyPoints:
-        // @ts-expect-error: LinkPreview implements more than AIFeature
-        return lazy.LinkPreview;
       case OnDeviceModelFeatures.PdfAltText:
         return lazy.PdfJsGuessAltTextFeature;
       case OnDeviceModelFeatures.TabGroups:
         // @ts-expect-error: SmartTabGroupingManager implements more than AIFeature
         return lazy.SmartTabGroupingManager;
-      case OnDeviceModelFeatures.SidebarChatbot:
-        return lazy.GenAI;
-      case OnDeviceModelFeatures.SmartWindow:
-        return lazy.AIWindow;
       case OnDeviceModelFeatures.SpeechRecognition:
         return lazy.SpeechRecognitionFeature;
       default:
@@ -153,16 +121,10 @@ export const OnDeviceModelManager = {
    */
   getFeaturePref(feature) {
     switch (feature) {
-      case OnDeviceModelFeatures.KeyPoints:
-        return "browser.ai.control.linkPreviewKeyPoints";
       case OnDeviceModelFeatures.PdfAltText:
         return "browser.ai.control.pdfjsAltText";
       case OnDeviceModelFeatures.TabGroups:
         return "browser.ai.control.smartTabGroups";
-      case OnDeviceModelFeatures.SidebarChatbot:
-        return "browser.ai.control.sidebarChatbot";
-      case OnDeviceModelFeatures.SmartWindow:
-        return "browser.ai.control.smartWindow";
       case OnDeviceModelFeatures.SpeechRecognition:
         return "browser.ai.control.speechRecognition";
       default:

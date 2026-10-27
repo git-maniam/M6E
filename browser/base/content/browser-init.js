@@ -107,7 +107,7 @@ var gBrowserInit = {
         toolbarMenubar.setAttribute("data-l10n-attrs", "toolbarname");
       }
     }
-    // If opening a Taskbar Tab or AI window, add an attribute to the top-level element
+    // If opening a Taskbar Tab, add an attribute to the top-level element
     // to inform window styling.
     if (window.arguments?.[1] instanceof Ci.nsIPropertyBag2) {
       let extraOptions = window.arguments[1];
@@ -125,12 +125,6 @@ var gBrowserInit = {
           taskbarTabId
         );
         window.document.documentElement.id = "taskbartab-" + taskbarTabId;
-      }
-      if (extraOptions.hasKey("ai-window")) {
-        document.documentElement.setAttribute("ai-window", true);
-      }
-      if (extraOptions.hasKey("aiwindow-immersive-view")) {
-        document.documentElement.setAttribute("aiwindow-immersive-view", true);
       }
       if (extraOptions.hasKey("chromeless-window")) {
         document.documentElement.setAttribute("chromeless-window", true);
@@ -1014,11 +1008,6 @@ var gBrowserInit = {
       gBrowser.removeProgressListener(window.XULBrowserWindow);
       gBrowser.removeTabsProgressListener(window.TabsProgressListener);
     } catch (ex) {}
-
-    // Bug 1952900 to allow switching to unload category without leaking
-    ChromeUtils.importESModule(
-      "moz-src:///browser/components/genai/LinkPreview.sys.mjs"
-    ).LinkPreview.teardown(window);
 
     BrowserUtils.callModulesFromCategory(
       { categoryName: "browser-window-unload", jsGlobal: globalThis },

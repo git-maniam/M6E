@@ -36,8 +36,6 @@ browser/components/asrouter/modules/PanelTestProvider.sys.mjs
 browser/components/asrouter/modules/PinnableSitesProvider.sys.mjs
 browser/components/asrouter/modules/PreonboardingSplash.sys.mjs
 browser/components/asrouter/modules/RemoteL10n.sys.mjs
-browser/components/asrouter/modules/SidebarChatBotPromo.sys.mjs
-browser/components/asrouter/modules/SmartWindowNewTabPromo.sys.mjs
 browser/components/asrouter/modules/Spotlight.sys.mjs
 browser/components/asrouter/modules/ToastNotification.sys.mjs
 browser/components/asrouter/modules/ToolbarBadgeHub.sys.mjs
@@ -51,7 +49,6 @@ browser/components/enterprisepolicies/schemas/schema.sys.mjs
 browser/components/extensions/ExtensionBrowsingData.sys.mjs
 browser/components/extensions/ExtensionControlledPopup.sys.mjs
 browser/components/extensions/ExtensionPopups.sys.mjs
-browser/components/firefoxview/ChatsController.sys.mjs
 browser/components/firefoxview/HistoryController.sys.mjs
 browser/components/firefoxview/OpenTabs.sys.mjs
 browser/components/firefoxview/OpenTabsController.sys.mjs

@@ -232,8 +232,6 @@ export const UrlbarShared = {
     DYNAMIC: 8,
     // A restrict keyword result, could be @bookmarks, @history, or @tabs.
     RESTRICT: 9,
-    // An AI chat result.
-    AI_CHAT: 10,
 
     // When you add a new type, also add its schema to
     // UrlbarUtils.RESULT_PAYLOAD_SCHEMA. Also consider checking if
@@ -265,12 +263,10 @@ export const UrlbarShared = {
   // because we don't want to make downgrades unnecessarily hard.
   RESULT_GROUP: Object.freeze({
     ABOUT_PAGES: "aboutPages",
-    AI: "ai",
     GENERAL: "general",
     GENERAL_PARENT: "generalParent",
     FORM_HISTORY: "formHistory",
     HEURISTIC_AUTOFILL: "heuristicAutofill",
-    HEURISTIC_AI_CHAT: "heuristicAiChat",
     HEURISTIC_ENGINE_ALIAS: "heuristicEngineAlias",
     HEURISTIC_EXTENSION: "heuristicExtension",
     HEURISTIC_FALLBACK: "heuristicFallback",
@@ -1093,8 +1089,6 @@ export const UrlbarShared = {
     }
     if (result.heuristic) {
       switch (result.providerName) {
-        case "UrlbarProviderAiChat":
-          return UrlbarShared.RESULT_GROUP.HEURISTIC_AI_CHAT;
         case "UrlbarProviderAliasEngines":
           return UrlbarShared.RESULT_GROUP.HEURISTIC_ENGINE_ALIAS;
         case "UrlbarProviderAutofill":
@@ -1160,8 +1154,6 @@ export const UrlbarShared = {
         return UrlbarShared.RESULT_GROUP.REMOTE_TAB;
       case UrlbarShared.RESULT_TYPE.RESTRICT:
         return UrlbarShared.RESULT_GROUP.RESTRICT_SEARCH_KEYWORD;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return UrlbarShared.RESULT_GROUP.AI;
     }
     // When enabled, semantic history results (both history URLs and
     // switch-to-tab results) get their own group so they fill only the space
@@ -1239,9 +1231,6 @@ export const UrlbarShared = {
       }
       case UrlbarShared.RESULT_GROUP.RESTRICT_SEARCH_KEYWORD: {
         return "restrict_keyword";
-      }
-      case UrlbarShared.RESULT_GROUP.AI: {
-        return "ai";
       }
     }
 
@@ -1341,9 +1330,6 @@ export const UrlbarShared = {
             ? "recent_search"
             : "search_history";
         }
-        if (result.providerName === "UrlbarProviderAiChat") {
-          return "ai_search_fallback";
-        }
         if (result.payload.suggestion) {
           let type = result.payload.trending
             ? "trending_search"
@@ -1420,8 +1406,6 @@ export const UrlbarShared = {
           return "restrict_keyword_actions";
         }
         break;
-      case UrlbarShared.RESULT_TYPE.AI_CHAT:
-        return "ai_chat";
     }
 
     return "unknown";

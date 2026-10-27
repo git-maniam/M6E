@@ -62,7 +62,6 @@ export const BLOCKED_ACTION_ONLY_ACTIONS = new Set([
   // service, or creates a profile.
   "SHOW_FIREFOX_ACCOUNTS",
   "FXA_SIGNIN_FLOW",
-  "FXA_AIWINDOW_SIGNIN_FLOW",
   "CREATE_NEW_SELECTABLE_PROFILE",
 
   // Offers to erase the user's profile data and restart the browser.
@@ -70,7 +69,6 @@ export const BLOCKED_ACTION_ONLY_ACTIONS = new Set([
 
   // Sends data off the device, or fabricates a record that the user consented
   // to something.
-  "SUMMARIZE_PAGE",
   "SUBMIT_ONBOARDING_OPT_OUT_PING",
   "SET_TERMS_OF_USE_INTERACTED",
   "GET_REFERRAL_CODE",

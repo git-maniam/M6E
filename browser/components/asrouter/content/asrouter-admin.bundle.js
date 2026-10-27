@@ -154,8 +154,6 @@ const MESSAGE_TYPE_LIST = [
   "TOAST_NOTIFICATION_TELEMETRY",
   "MENU_MESSAGE_TELEMETRY",
   "NEWTAB_MESSAGE_TELEMETRY",
-  "SMART_WINDOW_PROMO_TELEMETRY",
-  "SIDEBAR_CHATBOT_PROMO_TELEMETRY",
   "ACTION_ONLY_TELEMETRY",
   "AS_ROUTER_TELEMETRY_USER_EVENT",
 
@@ -985,7 +983,7 @@ class ASRouterAdminInner extends (react__WEBPACK_IMPORTED_MODULE_1___default().P
     if (msg.template === "menu_message") {
       previewWarnings.push('To preview this message, add "testingTriggerContext" to the JSON set to either ' + '"app_menu" or "pxi_menu" to select which menu it renders in.');
     }
-    const aboutMessagePreviewSupported = ["infobar", "spotlight", "feature_callout", "pb_newtab", "sidebar_chatbot_promo"].includes(msg.template);
+    const aboutMessagePreviewSupported = ["infobar", "spotlight", "feature_callout", "pb_newtab"].includes(msg.template);
     let itemClassName = "message-item";
     if (isBlocked) {
       itemClassName += " blocked";

@@ -624,13 +624,12 @@ export class PanelList extends HTMLElement {
    * matches, having no message to take an accesskey from.
    *
    * Label matches stand aside while an editable field outside the panel has
-   * focus. A panel-list that stays open over a focused field, as the
-   * Smartbar's mention panel does, filters itself from what the field
-   * receives, so the keystroke belongs to the field. Any other focus outside
-   * the panel, such as the anchor button or the document body after a XUL
-   * panel took focus on a mouse open, does not claim the letter. With focus
-   * outside every list, an open submenu takes the key and its outer list
-   * stands aside.
+   * focus. A panel-list that stays open over a focused field filters itself
+   * from what the field receives, so the keystroke belongs to the field. Any
+   * other focus outside the panel, such as the anchor button or the document
+   * body after a XUL panel took focus on a mouse open, does not claim the
+   * letter. With focus outside every list, an open submenu takes the key and
+   * its outer list stands aside.
    *
    * @param {string} key
    *   The pressed key.

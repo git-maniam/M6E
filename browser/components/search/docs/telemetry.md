@@ -98,8 +98,6 @@ SAP names can be:
 > - `newtab-searchbar` Used when searching from the New Tab search bar.
 > - `newtab-search-widget` Used when searching from the New Tab search widget.
 > - `searchbar`
-> - `smartbar` Used when searching from Smart Window.
-> - `smartwindow_assistant` Used when searching from Smart Window assistant.
 > - `system`
 > - `urlbar` Except aliases and search mode.
 > - `urlbar-handoff` Used when searching from `about:newtab`.
@@ -126,8 +124,6 @@ Possible SAPs are:
 > - `newtab_searchbar` Used when searching from the New Tab search bar.
 > - `newtab_search_widget` Used when searching from the New Tab search widget.
 > - `searchbar`
-> - `smartbar` Used when searching from Smart Window.
-> - `smartwindow_assistant` Used when searching from Smart Window assistant.
 > - `system` Indicates a search from the command line.
 > - `text_selection` Used when searching from the actions menu shown when
 >   text is selected on a page.

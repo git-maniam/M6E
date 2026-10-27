@@ -2533,20 +2533,9 @@ preferences-ai-controls-tab-group-suggestions-control =
     .label = Tab group suggestions
     .description = Get suggestions to name and organize your tabs.
 
-preferences-ai-controls-key-points-control =
-    .label = Key points in link previews
-    .description = See a quick summary before opening a link.
-
 preferences-ai-controls-speech-recognition-control =
     .label = Speech recognition
     .description = Transcribe speech locally.
-
-preferences-ai-controls-sidebar-chatbot-group-3 =
-    .label = AI chatbot providers in sidebar
-    .description = Keep a chatbot in view as you browse. Choose from multiple providers and switch anytime.
-
-preferences-ai-controls-sidebar-chatbot-control =
-    .label = Chatbot in sidebar
 
 # This option means that a user will see the feature and can use it.
 preferences-ai-controls-state-available =
@@ -2569,8 +2558,6 @@ preferences-ai-controls-block-confirmation-description = You won’t see new or 
 preferences-ai-controls-block-confirmation-features-start = What will be blocked:
 preferences-ai-controls-block-confirmation-pdfjs = Image alt text in { -brand-short-name } PDF viewer
 preferences-ai-controls-block-confirmation-tab-group-suggestions = Tab group suggestions
-preferences-ai-controls-block-confirmation-key-points = Key points in link previews
-preferences-ai-controls-block-confirmation-sidebar-chatbot = Chatbot providers in sidebar
 preferences-ai-controls-block-confirmation-speech-recognition = Speech recognition
 preferences-ai-controls-block-confirmation-features-after = Blocking also affects extensions that use AI provided by { -brand-short-name }.
 

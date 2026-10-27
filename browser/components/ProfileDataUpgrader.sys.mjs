@@ -793,31 +793,13 @@ export let ProfileDataUpgrader = {
     }
 
     if (
-      existingDataVersion < 152 &&
-      Services.prefs.getBoolPref("sidebar.revamp") &&
-      !Services.prefs.getBoolPref("browser.ml.chat.enabled")
-    ) {
-      let tools = Services.prefs.getCharPref("sidebar.main.tools");
-      if (tools?.includes("aichat")) {
-        let updatedTools = tools
-          .split(",")
-          .filter(t => t != "aichat")
-          .join(",");
-        Services.prefs.setCharPref("sidebar.main.tools", updatedTools);
-      }
-    }
-
-    if (
       existingDataVersion < 153 &&
       Services.prefs.getBoolPref("sidebar.revamp") &&
       !Services.prefs.prefHasUserValue("sidebar.main.tools")
     ) {
       // This pref will now be a user set branch but we want to preserve the previous
       // default value for existing sidebar.revamp users who hadn't changed it.
-      Services.prefs.setCharPref(
-        "sidebar.main.tools",
-        "aichat,syncedtabs,history"
-      );
+      Services.prefs.setCharPref("sidebar.main.tools", "syncedtabs,history");
     }
 
     if (existingDataVersion < 154) {
@@ -923,30 +905,6 @@ export let ProfileDataUpgrader = {
       Services.prefs.setBoolPref("signon.reencryptionNeeded", true);
     }
 
-    if (existingDataVersion < 164) {
-      const { PREF_BOOL, PREF_INT, PREF_STRING } = Services.prefs;
-      const METHODS = {
-        [PREF_BOOL]: ["getBoolPref", "setBoolPref"],
-        [PREF_INT]: ["getIntPref", "setIntPref"],
-        [PREF_STRING]: ["getStringPref", "setStringPref"],
-      };
-      const OLD_PREFIX = "browser.aiwindow.";
-      for (let oldPref of Services.prefs.getChildList(OLD_PREFIX)) {
-        let prefType = Services.prefs.getPrefType(oldPref);
-        if (
-          !Services.prefs.prefHasUserValue(oldPref) ||
-          !Object.hasOwn(METHODS, prefType)
-        ) {
-          continue;
-        }
-        let newPref =
-          "browser.smartwindow." + oldPref.substring(OLD_PREFIX.length);
-        let [getter, setter] = METHODS[prefType];
-        Services.prefs[setter](newPref, Services.prefs[getter](oldPref));
-        Services.prefs.clearUserPref(oldPref);
-      }
-    }
-
     if (existingDataVersion < 166) {
       // Bug 1978550: Migrate Local Network Access permissions from old
       // "localhost" type to new "loopback-network" type.
@@ -983,15 +941,6 @@ export let ProfileDataUpgrader = {
       // Clear prefs removed by bug 2018089 and bug 2018516.
       Services.prefs.clearUserPref("widget.macos.native-anchored-menulists");
       Services.prefs.clearUserPref("widget.macos.native-anchored-select");
-    }
-
-    if (existingDataVersion < 172) {
-      if (Services.prefs.getBoolPref("browser.smartwindow.enabled", false)) {
-        Services.prefs.setBoolPref(
-          "places.semanticHistory.smartwindow.featureGate",
-          true
-        );
-      }
     }
 
     // The migration for 173 was applied in Nightly but was removed

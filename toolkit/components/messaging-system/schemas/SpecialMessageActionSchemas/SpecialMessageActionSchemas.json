@@ -212,18 +212,6 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["OPEN_SMARTWINDOW_MONITOR_CREATE"]
-            }
-          },
-          "required": ["type"],
-          "additionalProperties": false,
-          "description": "Opens the Smart Window monitor panel straight to the create form"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
               "enum": ["OPEN_PROTECTION_REPORT"]
             }
           },
@@ -984,44 +972,6 @@
           "type": "object",
           "properties": {
             "data": {
-              "type": "string",
-              "description": "Optional entry location from which the action initiated."
-            },
-            "type": {
-              "type": "string",
-              "enum": ["SUMMARIZE_PAGE"]
-            }
-          },
-          "required": ["type"],
-          "additionalProperties": false,
-          "description": "Summarize current page content."
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["OPEN_ORGANIZE_TABS_PANEL"]
-            },
-            "data": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string",
-                  "description": "Identifies the surface that opened the panel, recorded as the `source` extra key on the panel's telemetry. Defaults to \"message\"."
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "required": ["type"],
-          "additionalProperties": false,
-          "description": "Opens the Smart Window \"Organize Tabs\" panel."
-        },
-        {
-          "type": "object",
-          "properties": {
-            "data": {
               "anchor_id": {
                 "type": "string",
                 "description": "Anchor to attach the panel to, if set will override widget_id"
@@ -1043,28 +993,6 @@
           "required": ["data", "type"],
           "additionalProperties": true,
           "description": "Opens a given panel based on ID"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": ["FXA_AIWINDOW_SIGNIN_FLOW"]
-            },
-            "data": {
-              "type": "object",
-              "properties": {
-                "source": {
-                  "type": "string",
-                  "description": "Identifies the surface that requested the launch, recorded as the `trigger` extra key on Smart Window telemetry. Defaults to \"asrouter\"."
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "required": ["type"],
-          "additionalProperties": false,
-          "description": "Opens AI Window after successful authentication with Accounts sign-in flow"
         },
         {
           "type": "object",

@@ -155,24 +155,6 @@ window or tab closed before sign-in could be completed. In messaging surfaces us
 
 Encodes some information that the origin was from about:welcome by default.
 
-### `FXA_AIWINDOW_SIGNIN_FLOW`
-
-Opens a customized AI Window Firefox accounts sign-up or sign-in flow, and redirects user to AI Window after successful authentication.
-
-Returns a Promise that resolves to `true` if sign-in succeeded, or to `false` if the sign-in
-window or tab closed before sign-in could be completed.
-
-- args:
-```ts
-{
-  data?: {
-    // Identifies the surface that requested the launch, recorded as the
-    // `trigger` extra key on Smart Window telemetry. Defaults to "asrouter".
-    source?: string;
-  }
-}
-```
-
 ### `SHOW_MIGRATION_WIZARD`
 
 * args:
@@ -212,12 +194,6 @@ Opens `about:protections`
 ### `OPEN_PROTECTION_PANEL`
 
 Opens the protection panel behind on the lock icon of the awesomebar
-
-### `OPEN_SMARTWINDOW_MONITOR_CREATE`
-
-Opens the Smart Window Monitor toolbar panel straight to the create form.
-
-* args: (none)
 
 ### `DISABLE_STP_DOORHANGERS`
 
@@ -603,28 +579,6 @@ interface SearchMode {
     "source": 3,
     "entry": "messagingSystem",
     "isPreview": false,
-  }
-}
-```
-
-### `SUMMARIZE_PAGE`
-
-Summarize current page content.
-
-* args: optional `string` entry value to identify initiator default "message"
-
-### `OPEN_ORGANIZE_TABS_PANEL`
-
-Opens the Smart Window "Organize Tabs" panel. Unlike `OPEN_PANEL`, the panel is
-built on demand rather than already present in the DOM.
-
-- args:
-```ts
-{
-  data?: {
-    // Identifies the surface that opened the panel, recorded as the `source`
-    // extra key on the panel's telemetry. Defaults to "message".
-    source?: string;
   }
 }
 ```

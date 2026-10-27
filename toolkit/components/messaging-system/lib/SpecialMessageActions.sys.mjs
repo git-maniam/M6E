@@ -29,12 +29,6 @@ const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
-  AIWindow:
-    // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindow.sys.mjs",
-  AIWindowUI:
-    // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
-    "moz-src:///browser/components/aiwindow/ui/modules/AIWindowUI.sys.mjs",
   CustomIconManager:
     // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
     "moz-src:///browser/components/shell/CustomIconManager.sys.mjs",
@@ -43,7 +37,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
     "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs",
   ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
-  GenAI: "moz-src:///browser/components/genai/GenAI.sys.mjs",
   ICON_CATALOG:
     // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
     "moz-src:///browser/components/shell/CustomIconManager.sys.mjs",
@@ -401,14 +394,6 @@ export const SpecialMessageActions = {
     const allowedPrefs = [
       "browser.aboutwelcome.didSeeFinalScreen",
       "browser.sessionstore.newTabOnRestore",
-      "browser.smartwindow.agent.monitorAnnouncement",
-      "browser.smartwindow.enabled",
-      "browser.smartwindow.firstrun.hasCompleted",
-      "browser.smartwindow.firstrun.modelChoice",
-      "browser.smartwindow.isDefaultWindow",
-      "browser.smartwindow.sidebar.openByDefault",
-      "browser.smartwindow.memories.generateFromConversation",
-      "browser.smartwindow.memories.generateFromHistory",
       "browser.crashReports.unsubmittedCheck.autoSubmit2",
       "browser.dataFeatureRecommendations.enabled",
       "browser.migrate.content-modal.about-welcome-behavior",
@@ -1086,16 +1071,6 @@ export const SpecialMessageActions = {
       case "FXA_SIGNIN_FLOW":
         /** @returns {Promise<boolean>} */
         return this.fxaSignInFlow(action.data, browser);
-      case "FXA_AIWINDOW_SIGNIN_FLOW":
-        /** @returns {Promise<boolean>} */
-        return lazy.AIWindow.launchWindow(
-          browser,
-          false,
-          action.data?.source ?? "asrouter"
-        );
-      case "OPEN_SMARTWINDOW_MONITOR_CREATE":
-        lazy.AIWindowUI.showMonitorCreateForm(window);
-        break;
       case "OPEN_PROTECTION_PANEL": {
         let { gProtectionsHandler } = window;
         gProtectionsHandler.showProtectionsPopup({});
@@ -1179,16 +1154,6 @@ export const SpecialMessageActions = {
       case "SET_SEARCH_MODE":
         window.gURLBar.searchMode = action.data;
         window.gURLBar.focus();
-        break;
-      case "SUMMARIZE_PAGE": {
-        const entry = action.data ?? "message";
-        await lazy.GenAI.summarizeCurrentPage(window, entry);
-        break;
-      }
-      case "OPEN_ORGANIZE_TABS_PANEL":
-        lazy.AIWindowUI.toggleGroupTabsPanel(window, {
-          source: action.data?.source ?? "message",
-        });
         break;
       case "OPEN_PANEL": {
         let { anchor_id, widget_id, panel_id, fallback_to_app_menu } =

@@ -1224,44 +1224,12 @@ panel#feature-callout[arrow-position=inline-start-bottom] {
   margin-left: calc(-1 * (var(--panel-box-shadow-margin) + var(--arrow-overlap-magnitude)));
 }
 
-:root[ai-window] #feature-callout {
-  --smart-window-callout-drop-shadow: none;
-}
-:root[ai-window] #feature-callout .shadow-arrow {
-  filter: var(--smart-window-callout-drop-shadow);
-}
-:root[ai-window] #feature-callout:has(.screen[class*=SMARTWINDOW_]) .shadow-arrow {
-  outline-color: #F90;
-}
-:root[ai-window] #feature-callout .screen[pos=callout] .main-content {
-  border-radius: var(--border-radius-medium);
-  filter: var(--smart-window-callout-drop-shadow);
-}
-:root[ai-window] #feature-callout .screen[pos=callout][class*=SMARTWINDOW_] .main-content {
-  border: 0;
-}
-:root[ai-window] #feature-callout .screen[pos=callout][class*=SMARTWINDOW_] .main-content::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: 1px;
-  border-radius: inherit;
-  background: linear-gradient(116.61deg, #321BFD -17.87%, #CF30E2 52.93%, #F90 89.02%, #F5C451 109.44%);
-  mask: linear-gradient(#FFF, #FFF) content-box, linear-gradient(#FFF, #FFF);
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-:root[ai-window][lwt-popup=light] #feature-callout {
-  --smart-window-callout-drop-shadow: drop-shadow(0px 2px 4px rgba(120, 68, 240, 15%)) drop-shadow(0px 1px 1px rgba(40, 25, 83, 8%));
-}
-
 html {
   height: 100%;
 }
 
 .dummy {
-  background: var(--mr-welcome-background-color) var(--mr-welcome-background-gradient) var(--mr-secondary-position) var(--mr-screen-background-color) var(--mr-smart-window-background-gradient);
+  background: var(--mr-welcome-background-color) var(--mr-welcome-background-gradient) var(--mr-secondary-position) var(--mr-screen-background-color);
 }
 
 :root[dialogroot] {
@@ -1446,7 +1414,6 @@ html {
     light-dark(rgba(144, 89, 255, 20%), rgba(144, 89, 255, 30%)) 0%,
     light-dark(rgba(2, 144, 238, 20%), rgba(2, 144, 238, 30%)) 100%
   );
-  --mr-smart-window-background-gradient: radial-gradient(190% 105% at 50% 90%, light-dark(#FDF3F2, #4E243F) 0%, light-dark(#ECE4FB, #311764) 100%);
   --mr-screen-background-color: light-dark(var(--color-gray-0), var(--color-gray-70));
   --single-select-border-color: var(--color-gray-60);
   --single-select-hover-color: light-dark(var(--color-gray-20), var(--color-gray-70));
@@ -6012,54 +5979,4 @@ html {
 }
 .onboardingContainer .main-content:has(> .animation-play-pause-button) {
   position: relative;
-}
-
-.SMARTWINDOW_FEEDBACK_SCREEN .welcome-text {
-  align-items: start;
-  margin: 0 0 8px;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN .main-content-inner {
-  justify-content: flex-start;
-  padding: 32px;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN .main-content.no-steps {
-  padding-bottom: 0;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN #content-tiles-container {
-  margin: 0 8px;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN #content-tiles-container .content-tile,
-.SMARTWINDOW_FEEDBACK_SCREEN #content-tiles-container .textarea-container {
-  margin-inline: 0;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN #content-tiles-container .tile-title-container {
-  margin-block: 0 8px;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN #content-tiles-container .content-tile .multi-select-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  justify-items: start;
-  align-items: start;
-  gap: 8px;
-  margin-inline: 0;
-  padding: 12px;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN #content-tiles-container .content-tile .multi-select-container .checkbox-container {
-  align-items: flex-start;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN .tile-subtitle {
-  font-size: 13px;
-  font-weight: 600;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN .link-paragraph {
-  text-align: start;
-  padding: 0 8px;
-  margin-block: 12px 20px;
-}
-.SMARTWINDOW_FEEDBACK_SCREEN .action-buttons {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: center;
-  padding: 0 4px;
-  gap: 8px;
 }

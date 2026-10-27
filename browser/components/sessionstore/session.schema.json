@@ -201,9 +201,6 @@
           "deprecated": true,
           "type": "string"
         },
-        "isAIWindow": {
-          "type": "boolean"
-        },
         "isPopup": {
           "type": "boolean"
         },

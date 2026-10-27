@@ -28,7 +28,7 @@ type UrlbarResult = import("../content/UrlbarResult.mjs").UrlbarResult;
  * values are a different superset of UrlbarSapName, see return value of
  * `#searchSourceToSap`.
  */
-type UrlbarSapName = "newtab_searchbar" | "searchbar" | "smartbar" | "urlbar";
+type UrlbarSapName = "newtab_searchbar" | "searchbar" | "urlbar";
 
 /**
  * A structure that holds the details of commands for results.

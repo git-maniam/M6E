@@ -15,8 +15,6 @@ const lazy = XPCOMUtils.declareLazy({
   InfoBar: "resource:///modules/asrouter/InfoBar.sys.mjs",
   JsonSchema: "resource://gre/modules/JsonSchema.sys.mjs",
   MessageLoaderUtils: "resource:///modules/asrouter/ASRouter.sys.mjs",
-  SidebarChatBotPromo:
-    "resource:///modules/asrouter/SidebarChatBotPromo.sys.mjs",
   SpecialMessageActions:
     "resource://messaging-system/lib/SpecialMessageActions.sys.mjs",
   Spotlight: "resource:///modules/asrouter/Spotlight.sys.mjs",
@@ -116,9 +114,6 @@ const MESSAGE_HANDLERS = Object.freeze({
 
   pb_newtab: (message, browser) =>
     lazy.ASRouter.forcePBWindow(browser, message),
-
-  sidebar_chatbot_promo: (message, browser) =>
-    lazy.SidebarChatBotPromo.showPromo(browser, message, true),
 });
 
 export class AboutMessagePreviewParent extends JSWindowActorParent {
