@@ -1851,31 +1851,6 @@
   value: false
   mirror: always
 
-# When set, the HWInference parent resolves model availability and install
-# requests from an in-process mock instead of the ModelHub (no network,
-# IndexedDB or downloads). The full content->utility->parent IPC chain is
-# still exercised. Used by tests.
-- name: browser.ml.modelHub.testing
-  type: bool
-  value: false
-  mirror: always
-
-# How many times a crashed HWInference process is restarted before giving up,
-# leaving the features relying on it unavailable. Reset once the process is
-# shut down cleanly, i.e. because its last consumer went away.
-- name: browser.ml.hwinference.max_restarts
-  type: uint32_t
-  value: 3
-  mirror: always
-
-# How long the HWInference process the browser's own features run in outlives
-# its last consumer, in milliseconds, so that the next one skips the launch.
-# Zero shuts it down at once.
-- name: browser.ml.hwinference.browser_idle_shutdown_grace_ms
-  type: uint32_t
-  value: 120000
-  mirror: always
-
 - name: browser.navigation.requireUserInteraction
   type: bool
   value: true
@@ -13603,52 +13578,6 @@
 - name: media.webspeech.test.enable
   type: bool
   value: false
-  mirror: always
-
-- name: media.webspeech.recognition.enable
-  type: bool
-  value: @IS_NOT_ANDROID@
-  mirror: always
-
-# Whether start() offers to download the on-device model for its language when
-# that model is supported but not installed yet, instead of failing the session
-# with service-not-allowed. The prompt and the download are install()'s; every
-# event, "start" included, waits for the model. Pages predating install() only
-# ever call start(), hence the default.
-- name: media.webspeech.recognition.install_on_start
-  type: bool
-  value: true
-  mirror: always
-
-# How long the HWInference connection (and with it the utility process, when
-# nothing else holds it) is kept alive after the last recognition session ends
-# and the last availability/install call settles. Absorbs stop()/start()
-# cycles and bursts of static calls, which would otherwise pay for a process
-# relaunch each time. 0 tears it down immediately, which is what tests want.
-- name: media.webspeech.recognition.idle_shutdown_grace_ms
-  type: uint32_t
-  value: 5000
-  mirror: always
-
-# How long the decoder must emit nothing before that counts as the end of an
-# utterance, for an engine that marks no boundary itself (the multilingual
-# model, which has no <EOU> token). Counted in audio decoded, not wall clock.
-# The model's own blank output is the signal, so this needs no noise-floor
-# tuning: what a word was committed is not usable here, since a transducer
-# withholds an utterance's trailing word until the next one starts. 0 makes the
-# whole session one utterance.
-- name: media.webspeech.recognition.endpoint_blank_ms
-  type: RelaxedAtomicUint32
-  value: 800
-  mirror: always
-
-# Delays the recognition thread, right before it acquires the parent actor's
-# lock during session init, by this many milliseconds. Used by tests to
-# deterministically land actor teardown in that window instead of relying on
-# scheduling luck. 0 (default) means no delay.
-- name: media.webspeech.recognition.testing.parakeet_init_delay_ms
-  type: RelaxedAtomicInt32
-  value: 0
   mirror: always
 
 - name: media.webspeech.synth.enabled

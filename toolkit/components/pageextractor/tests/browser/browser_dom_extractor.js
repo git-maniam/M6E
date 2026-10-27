@@ -9,7 +9,9 @@
  */
 
 add_task(async function test_dom_extractor_default_options() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Hello World</h1>
@@ -39,7 +41,9 @@ add_task(async function test_dom_extractor_default_options() {
 });
 
 add_task(async function test_dom_extractor_sufficient_length_option() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Hello World</h1>
@@ -89,7 +93,9 @@ add_task(async function test_dom_extractor_sufficient_length_option() {
 
 add_task(
   async function test_dom_extractor_sufficient_length_with_boilerplate_removal() {
-    const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+    const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+      browser: gBrowser,
+    });
     const { getPageExtractor, cleanup } = await html`
       <article>
         <p>
@@ -177,7 +183,9 @@ add_task(function test_whitespace_collapse() {
 });
 
 add_task(async function test_dom_extractor_whitespace_collapse_reader_mode() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   // prettier-ignore
   const { getPageExtractor, cleanup } = await html`
       <article>
@@ -234,7 +242,9 @@ add_task(async function test_dom_extractor_whitespace_collapse_reader_mode() {
  * Test whitespace collapse behavior.
  */
 add_task(async function test_dom_extractor_normalize_whitespace() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   // Ignore prettier since newlines get rewritten making this test case harder to read.
   // prettier-ignore
   const { getPageExtractor, cleanup } = await html`
@@ -279,7 +289,9 @@ add_task(async function test_dom_extractor_normalize_whitespace() {
 
 add_task(
   async function test_dom_extractor_ignores_hidden_and_collapsed_nodes() {
-    const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+    const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+      browser: gBrowser,
+    });
     const { getPageExtractor, cleanup } = await html`
       <article>
         <!-- Visible header -->
@@ -373,7 +385,9 @@ add_task(
 );
 
 add_task(async function test_dom_extractor_inline_batching() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <div>This is a simple section.</div>
     <div>
@@ -400,7 +414,9 @@ add_task(async function test_dom_extractor_inline_batching() {
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/a
 
 add_task(async function test_dom_extractor_link_anchors() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Comprehensive Anchor Test</h1>
@@ -482,7 +498,9 @@ add_task(async function test_dom_extractor_link_anchors() {
 
 // Test that empty href resolves to current page URL via .href property
 add_task(async function test_dom_extractor_empty_href() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <p><a href="">Empty Href Link</a></p>
@@ -508,7 +526,9 @@ add_task(async function test_dom_extractor_empty_href() {
 
 // Original test case from Bug 1995618 - validates the core requirement
 add_task(async function test_dom_extractor_links() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Example of Links</h1>
@@ -547,7 +567,9 @@ add_task(async function test_dom_extractor_links() {
 });
 
 add_task(async function test_dom_extractor_inline_block_styling() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     Bare text is sent in a batch.
     <span>Inline text at the root is sent in a <b>batch</b>.</span>
@@ -572,7 +594,9 @@ add_task(async function test_dom_extractor_inline_block_styling() {
 });
 
 add_task(async function test_extractor_edge_cases() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <p>
@@ -645,7 +669,9 @@ add_task(async function test_extractor_edge_cases() {
 // becomes effectively:
 //   <a href="outer">text1</a><a href="inner">text2</a>
 add_task(async function test_extractor_nested_anchors() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <div>
@@ -721,7 +747,9 @@ async function assertSnapshotPixel(
 }
 
 add_task(async function test_canvas_snapshot_basic() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="test" width="200" height="200"></canvas>
     <script>
@@ -753,7 +781,9 @@ add_task(async function test_canvas_snapshot_basic() {
 });
 
 add_task(async function test_canvas_snapshot_multiple_limited() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="c1" width="100" height="100"></canvas>
     <canvas id="c2" width="100" height="100"></canvas>
@@ -779,7 +809,9 @@ add_task(async function test_canvas_snapshot_multiple_limited() {
 });
 
 add_task(async function test_canvas_snapshot_scaling() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="large" width="2000" height="1000"></canvas>
     <script>
@@ -802,7 +834,9 @@ add_task(async function test_canvas_snapshot_scaling() {
 });
 
 add_task(async function test_canvas_snapshot_viewport_filtering() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas
       id="visible"
@@ -836,7 +870,9 @@ add_task(async function test_canvas_snapshot_viewport_filtering() {
 });
 
 add_task(async function test_canvas_snapshot_min_size_filter() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="large" width="100" height="100"></canvas>
     <canvas id="small" width="30" height="30"></canvas>
@@ -861,7 +897,9 @@ add_task(async function test_canvas_snapshot_min_size_filter() {
 });
 
 add_task(async function test_canvas_snapshot_shadow_dom() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <div id="host"></div>
     <script>
@@ -897,7 +935,9 @@ add_task(async function test_canvas_snapshot_shadow_dom() {
 });
 
 add_task(async function test_canvas_snapshot_closed_shadow_dom() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <div id="host"></div>
     <script>
@@ -933,7 +973,9 @@ add_task(async function test_canvas_snapshot_closed_shadow_dom() {
 });
 
 add_task(async function test_canvas_snapshot_crossorigin() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, tab, cleanup } = await html`
     <canvas id="crossorigin" width="200" height="200"></canvas>
     <img
@@ -976,7 +1018,9 @@ add_task(async function test_canvas_snapshot_crossorigin() {
 });
 
 add_task(async function test_canvas_snapshot_empty() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="empty" width="100" height="100"></canvas>
   `;
@@ -992,7 +1036,9 @@ add_task(async function test_canvas_snapshot_empty() {
 });
 
 add_task(async function test_canvas_snapshot_webp_format() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="test" width="100" height="100"></canvas>
     <script>
@@ -1015,7 +1061,9 @@ add_task(async function test_canvas_snapshot_webp_format() {
 });
 
 add_task(async function test_canvas_snapshot_quality_impact() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="test" width="200" height="200"></canvas>
     <script>
@@ -1052,7 +1100,9 @@ add_task(async function test_canvas_snapshot_quality_impact() {
 });
 
 add_task(async function test_canvas_snapshot_webgl() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="webgl" width="100" height="100"></canvas>
     <script>
@@ -1083,7 +1133,9 @@ add_task(async function test_canvas_snapshot_webgl() {
 });
 
 add_task(async function test_canvas_snapshot_disabled_by_default() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <canvas id="test" width="100" height="100"></canvas>
     <script>
@@ -1101,7 +1153,9 @@ add_task(async function test_canvas_snapshot_disabled_by_default() {
 });
 
 add_task(async function test_canvas_snapshot_with_text_extraction() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <h1>Page Title</h1>
     <p>Some text content</p>
@@ -1128,7 +1182,9 @@ add_task(async function test_canvas_snapshot_with_text_extraction() {
 // useSimpleText
 
 add_task(async function test_dom_extractor_simple_text_anchors() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   // The same markup as test_dom_extractor_link_anchors, so this asserts the
   // simplified form of an output that is already pinned down above.
   const { getPageExtractor, cleanup } = await html`
@@ -1204,7 +1260,9 @@ add_task(async function test_dom_extractor_simple_text_anchors() {
 });
 
 add_task(async function test_dom_extractor_simple_text_whitespace() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   // The same markup as test_dom_extractor_normalize_whitespace, which asserts
   // this document extracts as "aaaa aaaa\nbbbb cccc\ndddd      dddd\neeee\n\n\nffff".
   // prettier-ignore
@@ -1235,7 +1293,9 @@ add_task(async function test_dom_extractor_simple_text_whitespace() {
 });
 
 add_task(async function test_dom_extractor_simple_text_with_site_strategy() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <div>
       <a href="https://example.com/result">

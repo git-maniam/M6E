@@ -170,7 +170,6 @@ In-tree examples:
   ([bug 1299271](https://bugzilla.mozilla.org/show_bug.cgi?id=1299271))
 - **browser-chrome**: [accessible/tests/browser/performance/](https://searchfox.org/mozilla-central/source/accessible/tests/browser/performance)
   ([bug 1963174](https://bugzilla.mozilla.org/show_bug.cgi?id=1963174))
-- **browser-chrome**: [toolkit/components/ml/tests/browser/](https://searchfox.org/mozilla-central/source/toolkit/components/ml/tests/browser)
 
 **Test file** ([dom/serviceworkers/test/performance/test_caching.html](https://searchfox.org/mozilla-central/source/dom/serviceworkers/test/performance/test_caching.html)):
 

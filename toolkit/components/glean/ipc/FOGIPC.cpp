@@ -134,7 +134,6 @@ enum ProcessType {
   eContentForeground,
   eContentBackground,
   eGpuProcess,
-  eInferenceProcess,
   eUnknown,
 };
 
@@ -226,10 +225,6 @@ void RecordThreadCpuUse(const nsACString& aThreadName, uint64_t aCpuTimeMs,
         power_cpu_ms_per_thread::gpu_process.Get(threadName)
             .Add(int32_t(aCpuTimeMs));
         break;
-      case eInferenceProcess:
-        power_cpu_ms_per_thread::inference_process.Get(threadName)
-            .Add(int32_t(aCpuTimeMs));
-        break;
       case eUnknown:
         // Nothing to do.
         break;
@@ -257,10 +252,6 @@ void RecordThreadCpuUse(const nsACString& aThreadName, uint64_t aCpuTimeMs,
         break;
       case eGpuProcess:
         power_wakeups_per_thread::gpu_process.Get(threadName)
-            .Add(int32_t(aWakeCount));
-        break;
-      case eInferenceProcess:
-        power_wakeups_per_thread::inference_process.Get(threadName)
             .Add(int32_t(aWakeCount));
         break;
       case eUnknown:
@@ -394,9 +385,6 @@ void RecordPowerMetrics() {
             MOZ_ASSERT_UNREACHABLE("Unsuppored process type for cpu time");
             break;
         }
-      } else if (cc->GetRemoteType().IsInference()) {
-        type.AssignLiteral("inference");
-        gThisProcessType = ProcessType::eInferenceProcess;
       } else {
         type = cc->GetRemoteType().StringifyKind();
       }

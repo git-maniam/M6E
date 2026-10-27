@@ -83,8 +83,6 @@ head = "head_addressComponent.js"
 
 ["test_migrateRecords.js"]
 
-["test_ml_regex_hint.js"]
-
 ["test_nameUtils.js"]
 
 ["test_parseAddressFormat.js"]

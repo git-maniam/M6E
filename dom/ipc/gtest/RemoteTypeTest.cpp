@@ -34,7 +34,6 @@ TEST(RemoteTypeTest, FormatSimple)
   formatSimple(RemoteType::Kind::PrivilegedAbout, "privilegedabout"_ns);
   formatSimple(RemoteType::Kind::PrivilegedMozilla, "privilegedmozilla"_ns);
   formatSimple(RemoteType::Kind::Extension, "extension"_ns);
-  formatSimple(RemoteType::Kind::Inference, "inference"_ns);
 }
 
 TEST(RemoteTypeTest, FormatCompound)
@@ -89,8 +88,6 @@ TEST(RemoteTypeTest, ParseValid)
             RemoteType(RemoteType::Kind::PrivilegedMozilla));
   EXPECT_EQ(RemoteType::Parse("extension"_ns),
             RemoteType(RemoteType::Kind::Extension));
-  EXPECT_EQ(RemoteType::Parse("inference"_ns),
-            RemoteType(RemoteType::Kind::Inference));
 
   EXPECT_EQ(RemoteType::Parse("web"_ns),
             RemoteType(RemoteType::Kind::WebContent));

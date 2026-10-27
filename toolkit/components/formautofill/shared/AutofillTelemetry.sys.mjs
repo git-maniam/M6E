@@ -5,11 +5,6 @@
 import { FormAutofillUtils } from "resource://gre/modules/shared/FormAutofillUtils.sys.mjs";
 import { AutofillDataTypes } from "resource://gre/modules/shared/AutofillDataTypes.sys.mjs";
 
-const lazy = {};
-ChromeUtils.defineESModuleGetters(lazy, {
-  FormAutofillML: "resource://gre/modules/shared/FormAutofillML.sys.mjs",
-});
-
 const { FIELD_STATES } = FormAutofillUtils;
 
 class AutofillTelemetryBase {
@@ -281,10 +276,6 @@ export class AddressTelemetry extends AutofillTelemetryBase {
           extExtra[key] = value;
           delete extra[key];
         }
-      }
-
-      if (method == "detected") {
-        extExtra.mlversion = lazy.FormAutofillML.getModelVersion();
       }
     }
 

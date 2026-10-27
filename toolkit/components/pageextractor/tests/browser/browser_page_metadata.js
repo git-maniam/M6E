@@ -10,7 +10,9 @@
 // Structured data - @type extraction
 
 add_task(async function test_page_metadata_structured_data_single_type() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       { "@context": "https://schema.org", "@type": "Article" }
@@ -29,7 +31,9 @@ add_task(async function test_page_metadata_structured_data_single_type() {
 });
 
 add_task(async function test_page_metadata_structured_data_array_type() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -51,7 +55,9 @@ add_task(async function test_page_metadata_structured_data_array_type() {
 });
 
 add_task(async function test_page_metadata_structured_data_multiple_scripts() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       { "@context": "https://schema.org", "@type": "WebPage" }
@@ -73,7 +79,9 @@ add_task(async function test_page_metadata_structured_data_multiple_scripts() {
 });
 
 add_task(async function test_page_metadata_structured_data_deduplication() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       { "@context": "https://schema.org", "@type": "Article" }
@@ -95,7 +103,9 @@ add_task(async function test_page_metadata_structured_data_deduplication() {
 });
 
 add_task(async function test_page_metadata_structured_data_invalid_json() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       { this is not valid json }
@@ -117,7 +127,9 @@ add_task(async function test_page_metadata_structured_data_invalid_json() {
 });
 
 add_task(async function test_page_metadata_structured_data_no_json_ld() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <p>A page with no structured data.</p>
   `;
@@ -136,7 +148,9 @@ add_task(async function test_page_metadata_structured_data_no_json_ld() {
 // Word count
 
 add_task(async function test_page_metadata_word_count() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <p>one two three four five</p>
   `;
@@ -149,7 +163,9 @@ add_task(async function test_page_metadata_word_count() {
 });
 
 add_task(async function test_page_metadata_word_count_empty() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html``;
 
   const { wordCount } = await getPageExtractor().getPageMetadata();
@@ -162,7 +178,9 @@ add_task(async function test_page_metadata_word_count_empty() {
 // Language detection
 
 add_task(async function test_page_metadata_language_valid() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script>
       document.documentElement.lang = "en-US";
@@ -177,7 +195,9 @@ add_task(async function test_page_metadata_language_valid() {
 });
 
 add_task(async function test_page_metadata_language_invalid() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script>
       document.documentElement.lang = "!!!invalid!!!";
@@ -192,7 +212,9 @@ add_task(async function test_page_metadata_language_invalid() {
 });
 
 add_task(async function test_page_metadata_language_missing() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <p>No lang attribute on this page.</p>
   `;
@@ -205,7 +227,9 @@ add_task(async function test_page_metadata_language_missing() {
 });
 
 add_task(async function test_page_metadata_no_document() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { tab, cleanup } = await html`<p>Test</p>`;
 
   const result = await SpecialPowers.spawn(
@@ -251,7 +275,9 @@ const READERABLE_ARTICLE = `
 
 add_task(
   async function test_page_metadata_reader_mode_structured_data_is_empty() {
-    const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+    const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+      browser: gBrowser,
+    });
     const { cleanup, getPageExtractor } = await html`
       <script type="application/ld+json">
         { "@context": "https://schema.org", "@type": "Article" }
@@ -281,7 +307,9 @@ add_task(
 );
 
 add_task(async function test_page_metadata_reader_mode_language() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { cleanup, getPageExtractor } = await html`
     <script>
       document.documentElement.lang = "fr";
@@ -307,7 +335,9 @@ add_task(async function test_page_metadata_reader_mode_language() {
 // isReaderable
 
 add_task(async function test_page_metadata_is_readerable_true() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <article>
       <h1>Etymology of Mochitests</h1>
@@ -323,7 +353,9 @@ add_task(async function test_page_metadata_is_readerable_true() {
 });
 
 add_task(async function test_page_metadata_is_readerable_false() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`<p>Short page.</p>`;
 
   const { isReaderable } = await getPageExtractor().getPageMetadata();
@@ -337,7 +369,9 @@ add_task(async function test_page_metadata_is_readerable_false() {
 });
 
 add_task(async function test_page_metadata_reader_mode_is_readerable_true() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { cleanup, getPageExtractor } = await html`
     <article>
       <h1>Etymology of Mochitests</h1>
@@ -357,7 +391,9 @@ add_task(async function test_page_metadata_reader_mode_is_readerable_true() {
 // isGated
 
 add_task(async function test_page_metadata_is_gated_no_json_ld() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <p>A page with no structured data.</p>
   `;
@@ -370,7 +406,9 @@ add_task(async function test_page_metadata_is_gated_no_json_ld() {
 });
 
 add_task(async function test_page_metadata_is_gated() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -389,7 +427,9 @@ add_task(async function test_page_metadata_is_gated() {
 });
 
 add_task(async function test_page_metadata_is_gated_schema_org_url() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -411,7 +451,9 @@ add_task(async function test_page_metadata_is_gated_schema_org_url() {
 });
 
 add_task(async function test_page_metadata_is_not_gated_schema_org_url() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -433,7 +475,9 @@ add_task(async function test_page_metadata_is_not_gated_schema_org_url() {
 });
 
 add_task(async function test_page_metadata_is_not_gated() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -452,7 +496,9 @@ add_task(async function test_page_metadata_is_not_gated() {
 });
 
 add_task(async function test_page_metadata_is_gated_has_part() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -475,7 +521,9 @@ add_task(async function test_page_metadata_is_gated_has_part() {
 });
 
 add_task(async function test_page_metadata_is_gated_in_graph() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -496,7 +544,9 @@ add_task(async function test_page_metadata_is_gated_in_graph() {
 });
 
 add_task(async function test_page_metadata_is_gated_on_graph_wrapper() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       {
@@ -518,7 +568,9 @@ add_task(async function test_page_metadata_is_gated_on_graph_wrapper() {
 });
 
 add_task(async function test_page_metadata_is_gated_multiple_scripts() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <script type="application/ld+json">
       { "@context": "https://schema.org", "@type": "Organization" }

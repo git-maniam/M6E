@@ -379,9 +379,6 @@
     .urlbarView-row[type="adaptive-history"] > .urlbarView-row-inner > &::before {
       content: "A";
     }
-    .urlbarView-row[type="semantic-history"] > .urlbarView-row-inner > &::before {
-      content: "S";
-    }
   }
 }
 
@@ -400,7 +397,7 @@
   }
 }
 
-.urlbarView-row:is([type="adaptive-history"], [type="history"], [type^="history_"], [type="semantic-history"]) > .urlbarView-row-inner {
+.urlbarView-row:is([type="adaptive-history"], [type="history"], [type^="history_"]) > .urlbarView-row-inner {
   > .urlbarView-favicon {
     mask-image: url(chrome://browser/skin/urlbar/badge-history.svg#ltr-mask);
     &:dir(rtl) {

@@ -4,21 +4,15 @@
 "use strict";
 
 describe("AI Controls telemetry", () => {
-  let doc;
-
   beforeEach(async function setup() {
     await SpecialPowers.pushPrefEnv({
       set: [
         ["browser.preferences.aiControls", true],
         ["browser.ai.control.default", "available"],
-        ["browser.ai.control.pdfjsAltText", "default"],
-        ["browser.ai.control.smartTabGroups", "default"],
-        ["browser.tabs.groups.smart.optin", true],
       ],
     });
     Services.fog.testResetFOG();
     await openPreferencesViaOpenPreferencesAPI("ai", { leaveOpen: true });
-    doc = gBrowser.selectedBrowser.contentDocument;
   });
 
   afterEach(() => {
@@ -31,19 +25,5 @@ describe("AI Controls telemetry", () => {
       null,
       "No events recorded before any interaction"
     );
-  });
-
-  it("records event when smartTabGroups set to enabled", async () => {
-    let selectEl = doc.getElementById("aiControlSmartTabGroupsSelect");
-    await changeMozSelectValue(selectEl, "enabled");
-
-    let events = Glean.browser.aiControlChanged.testGetValue();
-    Assert.equal(events.length, 1, "One event recorded");
-    Assert.equal(
-      events[0].extra.feature,
-      "smartTabGroups",
-      "Feature is smartTabGroups"
-    );
-    Assert.equal(events[0].extra.selection, "enabled", "Selection is enabled");
   });
 });

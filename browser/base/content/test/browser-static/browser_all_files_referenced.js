@@ -106,9 +106,6 @@ var gExceptionPaths = [
   // CSS file is referenced inside JS in login-form.mjs
   "chrome://global/content/megalist/LoginFormComponent/",
 
-  // The ONNX runtime picks files to run programmaticaly
-  "chrome://global/content/ml/",
-
   // The profile avatars are directly referenced.
   "chrome://browser/content/profiles/assets/",
 

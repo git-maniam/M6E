@@ -51,7 +51,6 @@ DIRS += [
     "grid",
     "html",
     "jsurl",
-    "onnx",
     "mathml",
     "media",
     "midi",

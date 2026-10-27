@@ -2,7 +2,6 @@
 # FINAL_TARGET[_PP]_FILES.modules. New files must not be added to this list;
 # use MOZ_SRC_FILES instead. Remove entries as files are migrated
 # (./mach lint -l extra-js-modules --fix does this automatically).
-!dom/media/webspeech/recognition/SpeechRecognitionModelDisplayInfo.sys.mjs
 !toolkit/components/crashes/CrashManager.sys.mjs
 !toolkit/components/promiseworker/worker/PromiseWorker.js
 !toolkit/components/promiseworker/worker/PromiseWorker.mjs
@@ -388,7 +387,6 @@ toolkit/components/formautofill/shared/CreditCardRuleset.sys.mjs
 toolkit/components/formautofill/shared/FieldScanner.sys.mjs
 toolkit/components/formautofill/shared/FormAutofillHandler.sys.mjs
 toolkit/components/formautofill/shared/FormAutofillHeuristics.sys.mjs
-toolkit/components/formautofill/shared/FormAutofillML.sys.mjs
 toolkit/components/formautofill/shared/FormAutofillNameUtils.sys.mjs
 toolkit/components/formautofill/shared/FormAutofillSection.sys.mjs
 toolkit/components/formautofill/shared/FormAutofillUtils.sys.mjs
@@ -448,8 +446,6 @@ toolkit/components/places/PlacesExpiration.sys.mjs
 toolkit/components/places/PlacesFrecencyRecalculator.sys.mjs
 toolkit/components/places/PlacesPreviews.sys.mjs
 toolkit/components/places/PlacesQuery.sys.mjs
-toolkit/components/places/PlacesSemanticHistoryDatabase.sys.mjs
-toolkit/components/places/PlacesSemanticHistoryManager.sys.mjs
 toolkit/components/places/PlacesSyncUtils.sys.mjs
 toolkit/components/places/PlacesTransactions.sys.mjs
 toolkit/components/places/PlacesUtils.sys.mjs
@@ -648,7 +644,6 @@ toolkit/mozapps/extensions/internal/AddonRepository.sys.mjs
 toolkit/mozapps/extensions/internal/AddonSettings.sys.mjs
 toolkit/mozapps/extensions/internal/AddonUpdateChecker.sys.mjs
 toolkit/mozapps/extensions/internal/GMPProvider.sys.mjs
-toolkit/mozapps/extensions/internal/ModelHubProvider.sys.mjs
 toolkit/mozapps/extensions/internal/ProductAddonChecker.sys.mjs
 toolkit/mozapps/extensions/internal/SitePermsAddonProvider.sys.mjs
 toolkit/mozapps/extensions/internal/ThemesBundledLocalization.sys.mjs

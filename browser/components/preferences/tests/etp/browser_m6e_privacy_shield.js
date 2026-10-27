@@ -170,7 +170,10 @@ add_task(async function test_site_override_after_shield_switch() {
     Services.prefs.clearUserPref(M6EPrivacyShield.PREF_ENABLED);
     M6EPrivacyShield.setSiteProtected(browser, true);
     await reload(browser);
-    ok(M6EPrivacyShield.isSiteProtected(browser), "Protected with the Shield on");
+    ok(
+      M6EPrivacyShield.isSiteProtected(browser),
+      "Protected with the Shield on"
+    );
     is(
       Services.perms.testExactPermissionFromPrincipal(
         browser.contentPrincipal,

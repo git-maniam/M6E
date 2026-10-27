@@ -28,9 +28,10 @@ add_task(async function test_page_extractor_marker_colors() {
   await ProfilerTestUtils.startProfilerForMarkerTests();
   try {
     info("Blue marker: extracting a normal foreground page, which succeeds.");
-    const { html: foregroundHtml } = await MLTestUtils.serveHTMLInTab({
-      browser: gBrowser,
-    });
+    const { html: foregroundHtml } =
+      await PageExtractorTestUtils.serveHTMLInTab({
+        browser: gBrowser,
+      });
     const { getPageExtractor, cleanup: cleanupForeground } =
       await foregroundHtml`
       <article>
@@ -46,7 +47,7 @@ add_task(async function test_page_extractor_marker_colors() {
         'is genuinely true, so wait-for-ready finishes as "document-hidden" ' +
         'rather than "success".'
     );
-    const { html } = MLTestUtils.serveHTML();
+    const { html } = PageExtractorTestUtils.serveHTML();
     const { url: bgUrl, cleanup: cleanupBgServer } = html`
       <!DOCTYPE html>
       <body>
@@ -73,7 +74,7 @@ add_task(async function test_page_extractor_marker_colors() {
     });
     cleanups.push(() => SpecialPowers.popPrefEnv());
     const { url: stalledUrl, cleanup: cleanupStalled } =
-      MLTestUtils.serveStalledPage();
+      PageExtractorTestUtils.serveStalledPage();
     cleanups.push(cleanupStalled);
     await Assert.rejects(
       PageExtractorParent.getHeadlessExtractor({

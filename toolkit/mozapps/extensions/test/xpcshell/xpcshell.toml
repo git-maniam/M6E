@@ -44,14 +44,6 @@ run-if = [
 
 ["test_EnvironmentAddonBuilder_telemetry.js"]
 
-["test_ModelHubProvider.js"]
-run-if = [
-  "appname != 'thunderbird'", # Disabled in extensions.manifest
-]
-skip-if = [
-  "os == 'android'", # ModelHubProvider.sys.mjs is not included on Android
-]
-
 ["test_ProductAddonChecker.js"]
 
 ["test_ProductAddonChecker_signatures.js"]

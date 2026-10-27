@@ -79,11 +79,7 @@ FileSystemBackgroundRequestHandler::CreateFileSystemManagerChild(
   using mozilla::ipc::PBackgroundChild;
 
   // Throw if this process wouldn't be allowed to access storage.
-  EnumSet<ValidatePrincipalOptions> options;
-  if (CurrentRemoteType().IsInference()) {
-    options += ValidatePrincipalOptions::AllowSystemIfLoaded;
-  }
-  if (!BackgroundChild::ValidatePrincipalInfo(aPrincipalInfo, options)) {
+  if (!BackgroundChild::ValidatePrincipalInfo(aPrincipalInfo, {})) {
     MOZ_ASSERT_UNREACHABLE(
         "ValidatePrincipalInfo failure in CreateFileSystemManagerChild");
     return FileSystemManagerChild::ActorPromise::CreateAndReject(

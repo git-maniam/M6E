@@ -198,12 +198,6 @@ const PREF_URLBAR_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   // future.
   ["groupLabels.enabled", true],
 
-  // Whether semantic history results are placed in their own result group that
-  // fills only the space left after the other (non-semantic) result groups, so
-  // semantic results never evict them. When false, semantic results share the
-  // general group with plain history results.
-  ["suggest.semanticHistory.separateGroup", false],
-
   // Feature gate pref for important-dates suggestions in the urlbar.
   ["importantDates.featureGate", false],
 
@@ -372,9 +366,6 @@ const PREF_URLBAR_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   // pref will have a user-branch value that records the latest prefs version.
   // See `QuickSuggest` for details on each version.
   ["quicksuggest.migrationVersion", 0],
-
-  // Whether Suggest will use the ML backend in addition to Rust.
-  ["quicksuggest.mlEnabled", false],
 
   // NOTE: You should most likely access this pref via its Nimbus variable
   // instead: `UrlbarPrefs.get("quickSuggestOnlineAvailable"). It's listed here
@@ -625,9 +616,6 @@ const PREF_URLBAR_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   // will be deduplicated.
   ["deduplication.enabled", true],
 
-  // semanticHistory search query minLength threshold to be enabled.
-  ["suggest.semanticHistory.minLength", 5],
-
   // When using switch to tabs, if set to true this will move the tab into the
   // active window.
   ["switchTabs.adoptIntoActiveWindow", false],
@@ -728,10 +716,6 @@ const PREF_URLBAR_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   // the suggestion. 0 means the min length should be taken from Nimbus.
   ["yelp.minKeywordLength", 4],
 
-  // Whether Yelp suggestions will be served from the Suggest ML backend instead
-  // of Rust.
-  ["yelp.mlEnabled", false],
-
   // Whether Yelp suggestions should be shown as top picks. This is a fallback
   // pref for the `yelpSuggestPriority` Nimbus variable.
   ["yelp.priority", false],
@@ -764,7 +748,6 @@ const PREF_URLBAR_DEFAULTS_MAP = new Map(PREF_URLBAR_DEFAULTS);
 
 const PREF_OTHER_DEFAULTS = /** @type {PreferenceDefinition[]} */ ([
   ["browser.fixup.dns_first_for_single_words", false],
-  ["browser.ml.enable", false],
   ["browser.nova.enabled", false],
   ["browser.search.openintab", false],
   ["browser.search.suggest.enabled", true],
@@ -853,14 +836,8 @@ let inParent =
  * @param {object} options
  * @param {boolean} options.showSearchSuggestionsFirst
  *   If true, the suggestions group will come before the general group.
- * @param {boolean} [options.separateSemanticGroup]
- *   If true, semantic history results get their own group that fills only the
- *   space left after the other general groups.
  */
-function makeDefaultResultGroups({
-  showSearchSuggestionsFirst,
-  separateSemanticGroup = false,
-}) {
+function makeDefaultResultGroups({ showSearchSuggestionsFirst }) {
   /**
    * @type {ResultGroup}
    */
@@ -895,34 +872,6 @@ function makeDefaultResultGroups({
       },
     ],
   };
-
-  // When semantic history has its own group, split the general slot so that
-  // semantic history takes roughly 1 of every 10 of these results (9:1) and
-  // otherwise yields to general results, while filling the space when there
-  // are no general results. Nesting keeps the general group's weight relative
-  // to its siblings (remote tabs, about pages) unchanged.
-  let generalChild = separateSemanticGroup
-    ? {
-        flex: 2,
-        flexChildren: true,
-        children: [
-          {
-            flex: 9,
-            group: lazy.UrlbarShared.RESULT_GROUP.GENERAL,
-            orderBy: "frecency",
-          },
-          {
-            flex: 1,
-            group: lazy.UrlbarShared.RESULT_GROUP.SEMANTIC_HISTORY,
-            orderBy: "frecency",
-          },
-        ],
-      }
-    : {
-        flex: 2,
-        group: lazy.UrlbarShared.RESULT_GROUP.GENERAL,
-        orderBy: "frecency",
-      };
 
   // Prepare the parent group for suggestions and general.
   let mainGroup = {
@@ -970,7 +919,11 @@ function makeDefaultResultGroups({
                 flex: 1,
                 group: lazy.UrlbarShared.RESULT_GROUP.REMOTE_TAB,
               },
-              generalChild,
+              {
+                flex: 2,
+                group: lazy.UrlbarShared.RESULT_GROUP.GENERAL,
+                orderBy: "frecency",
+              },
               {
                 // We show relatively many about-page results because they're
                 // only added for queries starting with "about:".
@@ -1158,30 +1111,20 @@ class Preferences {
     // This key may be modified per each SAP, and will track the cached groups,
     // any additionally used condition must be added to the key.
     let key = context.sapName;
-    let separateSemanticGroup = this.get(
-      "suggest.semanticHistory.separateGroup"
-    );
-    key += separateSemanticGroup;
     switch (context.sapName) {
       case "urlbar": {
         let showSearchSuggestionsFirst =
           this.#getShowSearchSuggestionsFirst(context);
         key += showSearchSuggestionsFirst;
         return this.#getOrCacheResultGroups(key, () =>
-          makeDefaultResultGroups({
-            showSearchSuggestionsFirst,
-            separateSemanticGroup,
-          })
+          makeDefaultResultGroups({ showSearchSuggestionsFirst })
         );
       }
       case "searchbar":
       case "newtab_searchbar": {
         // This is a temporary placeholder until searchbar gets its own config.
         return this.#getOrCacheResultGroups(key, () =>
-          makeDefaultResultGroups({
-            showSearchSuggestionsFirst: true,
-            separateSemanticGroup,
-          })
+          makeDefaultResultGroups({ showSearchSuggestionsFirst: true })
         );
       }
       default: {
@@ -1264,7 +1207,6 @@ class Preferences {
         this._map.delete("autoFillAdaptiveHistoryUseCountThreshold");
         return;
       case "showSearchSuggestionsFirst":
-      case "suggest.semanticHistory.separateGroup":
         this.#cachedResultGroups.clear();
         return;
     }

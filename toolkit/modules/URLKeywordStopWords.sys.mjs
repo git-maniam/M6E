@@ -4,22 +4,15 @@
 
 /**
  * Stopword list for the online dnsNotFound Search CTA keyword extractor
- * (bug 2057648). This is a deliberate fork of the shared ENGLISH_STOP_WORDS
- * (chrome://global/content/ml/NLPUtils.sys.mjs), owned by URLKeywordAnalyzer,
- * for two reasons:
+ * (bug 2057648), owned by URLKeywordAnalyzer. For URL -> query recovery the
+ * list is tuned for path segments rather than prose: it keeps content words a
+ * general English list over-aggressively drops, and folds in URL-structure
+ * words that only ever describe page plumbing.
  *
- *   1. Decoupling. The shared list is also consumed by Smart Tab Grouping; a
- *      retune there would otherwise silently shift the CTA's derived queries,
- *      and our content-free telemetry could not detect the regression.
- *   2. Curation. For URL -> query recovery the list is tuned for path segments
- *      rather than prose: it keeps content words the general list
- *      over-aggressively drops, and folds in URL-structure words that only
- *      ever describe page plumbing.
- *
- * The curated list was settled in bug 2055619 comment 3. Words present in the
- * shared list but intentionally OMITTED here, so they survive into a query:
- * "fire", "interest", "name", "part", "system", and the spelled-out numbers
- * ("one" through "twelve", "twenty", "fifty", "hundred", ...).
+ * The curated list was settled in bug 2055619 comment 3. Words from the general
+ * list intentionally OMITTED here, so they survive into a query: "fire",
+ * "interest", "name", "part", "system", and the spelled-out numbers ("one"
+ * through "twelve", "twenty", "fifty", "hundred", ...).
  */
 
 export const SEARCH_CTA_STOP_WORDS = Object.freeze([

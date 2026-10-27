@@ -502,9 +502,6 @@
         "media.captureStream.enabled": {
           "type": "boolean"
         },
-        "media.webspeech.recognition.enable": {
-          "type": "boolean"
-        },
         "timer.auto_increase_timer_resolution": {
           "type": "boolean"
         }

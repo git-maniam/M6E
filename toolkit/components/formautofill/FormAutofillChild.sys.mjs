@@ -298,18 +298,15 @@ export class FormAutofillChild extends JSWindowActorChild {
         handler.form
       );
 
-      if (!lazy.FormAutofillUtils.useMLInference) {
-        // If none of the detected fields belong to a known data type, there's
-        // no need to notify the parent because nothing will change.
-        if (
-          !detectedFields.some(
-            fd =>
-              lazy.AutofillDataTypes.typeIdForFieldName(fd.fieldName) != null
-          )
-        ) {
-          handler.setIdentifiedFieldDetails(detectedFields);
-          return null;
-        }
+      // If none of the detected fields belong to a known data type, there's
+      // no need to notify the parent because nothing will change.
+      if (
+        !detectedFields.some(
+          fd => lazy.AutofillDataTypes.typeIdForFieldName(fd.fieldName) != null
+        )
+      ) {
+        handler.setIdentifiedFieldDetails(detectedFields);
+        return null;
       }
 
       return new Promise(resolve => {

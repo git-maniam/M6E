@@ -10148,66 +10148,6 @@ interface nsIMIMEService extends nsISupports {
   validateFileNameForSaving(aFileName: string, aType: string, aFlags: u32): string;
 }
 
-// https://searchfox.org/firefox-main/source/toolkit/components/ml/nsIMLModelHub.idl
-
-/** <!-- binding_to(idl, interface_name, XPIDL_nsIMLModelDownloadProgressCallback) --> */
-type nsIMLModelDownloadProgressCallback = Callable<{
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelDownloadProgressCallback_onProgress) --> */
-  onProgress(aProgress: i32, aCurrentLoaded: i64, aTotalLoaded: i64, aTotal: i64): void;
-}>
-
-/** <!-- binding_to(idl, interface_name, XPIDL_nsIMLModelDownloadCompletionCallback) --> */
-interface nsIMLModelDownloadCompletionCallback extends nsISupports {
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelDownloadCompletionCallback_onSuccess) --> */
-  onSuccess(aModel: string, aRevision: string): void;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelDownloadCompletionCallback_onError) --> */
-  onError(aError: string): void;
-}
-
-/** <!-- binding_to(idl, interface_name, XPIDL_nsIMLModelHub) --> */
-interface nsIMLModelHub extends nsISupports {
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelHub_isModelAvailable) --> */
-  isModelAvailable(aEngineId: string, aModel: string, aRevision: string, aFilename: string): Promise<any>;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelHub_isModelInstalled) --> */
-  isModelInstalled(aEngineId: string, aModel: string, aRevision: string, aFilename: string): Promise<any>;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelHub_downloadModel) --> */
-  downloadModel(aEngineId: string, aTaskName: string, aModel: string, aRevision: string, aFiles: string[], aProgressToken: string, aProgressCallback: nsIMLModelDownloadProgressCallback, aCompletionCallback: nsIMLModelDownloadCompletionCallback): string;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelHub_cancelDownload) --> */
-  cancelDownload(aProgressToken: string): void;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelHub_getModelBlob) --> */
-  getModelBlob(aEngineId: string, aTaskName: string, aModel: string, aRevision: string, aFile: string): Promise<any>;
-}
-
-// https://searchfox.org/firefox-main/source/toolkit/components/ml/nsIMLModelResolver.idl
-
-/** <!-- binding_to(idl, interface_name, XPIDL_nsIMLModelDownloadAuthorizationCallback) --> */
-type nsIMLModelDownloadAuthorizationCallback = Callable<{
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelDownloadAuthorizationCallback_resolve) --> */
-  resolve(aAllow: boolean): void;
-}>
-
-/** <!-- binding_to(idl, interface_name, XPIDL_nsIMLModelResolver) --> */
-interface nsIMLModelResolver extends nsISupports {
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelResolver_resolve) --> */
-  resolve(aId: string, aEngine: OutParam<string>, aModel: OutParam<string>, aRevision: OutParam<string>, aFilename: OutParam<string>): void;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLModelResolver_authorizeDownload) --> */
-  authorizeDownload(aModel: string, aRevision: string, aFilename: string, aWindow: WindowGlobalParent, aProgressToken: string, aCallback: nsIMLModelDownloadAuthorizationCallback): void;
-}
-
-// https://searchfox.org/firefox-main/source/toolkit/components/ml/nsIMLUtils.idl
-
-/** <!-- binding_to(idl, interface_name, XPIDL_nsIMLUtils) --> */
-interface nsIMLUtils extends nsISupports {
-  /** <!-- binding_to(idl, attribute, XPIDL_nsIMLUtils_totalPhysicalMemory) --> */
-  readonly totalPhysicalMemory: u64;
-  /** <!-- binding_to(idl, attribute, XPIDL_nsIMLUtils_availablePhysicalMemory) --> */
-  readonly availablePhysicalMemory: u64;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLUtils_getOptimalCPUConcurrency) --> */
-  getOptimalCPUConcurrency(): u8;
-  /** <!-- binding_to(idl, method, XPIDL_nsIMLUtils_canUseLlamaCpp) --> */
-  canUseLlamaCpp(): boolean;
-}
-
 // https://searchfox.org/firefox-main/source/toolkit/components/find/nsIFind.idl
 
 /** <!-- binding_to(idl, interface_name, XPIDL_nsIFind) --> */
@@ -26935,12 +26875,6 @@ interface nsIXPCComponents_Interfaces {
   nsIWebHandlerApp: nsJSIID<nsIWebHandlerApp>;
   nsIDBusHandlerApp: nsJSIID<nsIDBusHandlerApp>;
   nsIMIMEService: nsJSIID<nsIMIMEService>;
-  nsIMLModelDownloadProgressCallback: nsJSIID<nsIMLModelDownloadProgressCallback>;
-  nsIMLModelDownloadCompletionCallback: nsJSIID<nsIMLModelDownloadCompletionCallback>;
-  nsIMLModelHub: nsJSIID<nsIMLModelHub>;
-  nsIMLModelDownloadAuthorizationCallback: nsJSIID<nsIMLModelDownloadAuthorizationCallback>;
-  nsIMLModelResolver: nsJSIID<nsIMLModelResolver>;
-  nsIMLUtils: nsJSIID<nsIMLUtils>;
   nsIFind: nsJSIID<nsIFind>;
   nsIFindService: nsJSIID<nsIFindService>;
   nsIWebBrowserFind: nsJSIID<nsIWebBrowserFind>;

@@ -92,14 +92,6 @@ const CATEGORIES = [
     defaultHidden: true,
   },
   {
-    name: "mlmodel",
-    viewId: "addons://list/mlmodel",
-    iconSrc: "chrome://global/skin/icons/highlights.svg",
-    l10nId: "addon-category-mlmodel",
-    titleL10nId: "addon-category-mlmodel-title",
-    defaultHidden: true,
-  },
-  {
     name: "available-updates",
     viewId: "addons://updates/available",
     iconSrc: "chrome://mozapps/skin/extensions/category-available.svg",

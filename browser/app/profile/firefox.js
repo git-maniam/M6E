@@ -576,13 +576,6 @@ pref("browser.urlbar.quicksuggest.ampMatchingStrategy", 0);
 // Comma-separated list of Suggest dynamic suggestion types to enable.
 pref("browser.urlbar.quicksuggest.dynamicSuggestionTypes", "");
 
-// Whether Suggest will use the ML backend in addition to Rust.
-pref("browser.urlbar.quicksuggest.mlEnabled", false);
-
-// How long to wait in seconds after startup before initializing the Suggest ML
-// backend.
-pref("browser.urlbar.quicksuggest.mlInitDelaySeconds", 0);
-
 // Which Suggest settings to show in the settings UI, when Suggest is enabled.
 // See `QuickSuggest.SETTINGS_UI` for values.
 pref("browser.urlbar.quicksuggest.settingsUi", 1);
@@ -688,31 +681,6 @@ pref("browser.urlbar.contextualSearch.enabled", true);
 // Feature gate pref for addon suggestions in the urlbar.
 pref("browser.urlbar.addons.featureGate", false);
 
-// Feature gate pref for semanticHistory
-#if defined(EARLY_BETA_OR_EARLIER) || defined(MOZ_DEV_EDITION)
-pref("places.semanticHistory.featureGate", true);
-#else
-pref("places.semanticHistory.featureGate", false);
-#endif
-pref("places.semanticHistory.supportedRegions", "[[\"AU\",[\"en-*\"]],[\"CA\",[\"en-*\"]],[\"GB\",[\"en-*\"]],[\"IE\",[\"en-*\"]],[\"NZ\",[\"en-*\"]],[\"PH\",[\"en-*\"]],[\"US\",[\"en-*\"]],[\"FR\",[\"en-*\",\"fr-*\"]]]");
-
-// Embedding family used by Places semantic history. "static" or "contextual".
-// Settable via Nimbus (semanticHistoryEmbeddingType). An empty (or invalid)
-// value lets the family be picked from the home region, the locale and the OS.
-pref("places.semanticHistory.embeddingType", "");
-
-// Region / locale pairs that get multilingual (contextual) embeddings. Same
-// format as supportedRegions, except a "*" region matches any region, so the
-// entries below read as "France in English or French, or French anywhere".
-pref("places.semanticHistory.multilingualEmbeddingRegions", "[[\"FR\",[\"en-*\",\"fr-*\"]],[\"*\",[\"fr-*\"]]]");
-
-// Dev / debug overrides for the contextual engine. Not exposed via Nimbus.
-pref("browser.ml.embedGen.textEmbeddingSize", 384);
-pref("browser.ml.embedGen.textEmbeddingFeatureModel", "");
-
-// Minimum length threshold for semantic history search
-pref("browser.urlbar.suggest.semanticHistory.minLength", 5);
-
 // If `browser.urlbar.addons.featureGate` is true, this controls whether
 // addons suggestions are turned on.
 pref("browser.urlbar.suggest.addons", true);
@@ -737,10 +705,6 @@ pref("browser.urlbar.yelp.minKeywordLength", 4);
 
 // Whether Yelp suggestions should be shown as top picks.
 pref("browser.urlbar.yelp.priority", false);
-
-// Whether Yelp suggestions will be served from the Suggest ML backend instead
-// of Rust.
-pref("browser.urlbar.yelp.mlEnabled", false);
 
 // Whether to distinguish service type subjects. If true, we show special titile
 // for the suggestion.
@@ -1083,22 +1047,7 @@ pref("browser.tabs.groups.onboardingCallouts.enabled", false);
 // Number of times the "Tab group saved" confirmation hint has been shown
 pref("browser.tabs.groups.saveHintShownCount", 0);
 
-pref("browser.tabs.groups.smart.enabled", true);
-
 pref("browser.tabs.notes.enabled", false);
-
-// KMEANS_WITH_ANCHOR or NEAREST_NEIGHBOR or LOGISTIC_REGRESSION
-pref("browser.tabs.groups.smart.suggestOtherTabsMethod", "LOGISTIC_REGRESSION");
-pref("browser.tabs.groups.smart.topicModelRevision", "latest");
-pref("browser.tabs.groups.smart.embeddingModelRevision", "latest");
-// value should be <= 1000 to be correctly converted (275 -> 0.275)
-pref("browser.tabs.groups.smart.nearestNeighborThresholdInt", 275);
-// Clustering method: KMEANS or AGGLOMERATIVE (hierarchical, average-linkage).
-pref("browser.tabs.groups.smart.clusterMethod", "AGGLOMERATIVE");
-// AGGLOMERATIVE cosine-distance cutoff in thousandths (825 -> 0.825). Lower is
-// stricter (more, smaller groups); higher is more lenient (fewer, larger).
-pref("browser.tabs.groups.smart.agglomerativeThresholdInt", 650);
-pref("browser.tabs.groups.smart.optin", false);
 
 pref("browser.tabs.dragDrop.createGroup.enabled", true);
 pref("browser.tabs.dragDrop.createGroup.delayMS", 240);
@@ -1108,11 +1057,6 @@ pref("browser.tabs.dragDrop.pinInteractionCue.delayMS", 500);
 pref("browser.tabs.dragDrop.moveOverThresholdPercent", 80);
 
 pref("browser.tabs.firefox-view.logLevel", "Warn");
-
-// Special case to use search term when making a group from a single page search
-pref("browser.tabs.groups.smart.searchTopicEnabled", true);
-
-pref("browser.tabs.groups.smart.userEnabled", true);
 
 pref("security.allow_parent_unrestricted_js_loads", false);
 

@@ -142,10 +142,6 @@
 #endif
 #endif
 
-#ifdef ONNX_RUNTIME
-@BINPATH@/@DLL_PREFIX@onnxruntime@DLL_SUFFIX@
-#endif
-
 [browser]
 ; [Base Browser Files]
 #ifndef XP_UNIX
@@ -178,7 +174,6 @@
 @BINPATH@/@DLL_PREFIX@gkcodecs@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@mozavutil@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@mozavcodec@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@mozinference@DLL_SUFFIX@
 
 ; [Components]
 #ifdef ACCESSIBILITY

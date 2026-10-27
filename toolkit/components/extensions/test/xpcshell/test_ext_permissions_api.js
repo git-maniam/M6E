@@ -68,7 +68,6 @@ add_setup(async () => {
     "search",
     "tabHide",
     "tabs",
-    "trialML",
     "webRequestAuthProvider",
     "webRequestBlocking",
     "webRequestFilterResponse",

@@ -12,7 +12,6 @@
 #include "mozilla/ProfilerMarkers.h"
 #include "mozilla/StaticPrefs_media.h"
 #include "mozilla/SyncRunnable.h"  // for LaunchUtilityProcess
-#  include "mozilla/hwinference/HWInferenceParent.h"
 #include "mozilla/ipc/UtilityProcessParent.h"
 #include "mozilla/ipc/UtilityMediaServiceChild.h"
 #include "mozilla/ipc/UtilityMediaServiceParent.h"
@@ -361,18 +360,6 @@ UtilityProcessManager::LaunchIndependentProcess(SandboxingKind aSandbox) {
         return RetPromise::CreateAndReject(std::move(error), __func__);
       });
 
-  return keepAlive.forget();
-}
-
-already_AddRefed<UtilityProcessKeepAlive>
-UtilityProcessManager::LaunchIndependentHWInferenceProcess(
-    RefPtr<hwinference::HWInferenceParent> aActor) {
-  RefPtr<UtilityProcessKeepAlive> keepAlive =
-      LaunchIndependentProcess(SandboxingKind::HW_INFERENCE);
-  if (keepAlive) {
-    StartUtilityOnProcess(std::move(aActor), keepAlive->mProcess,
-                          keepAlive->mProcess->mLaunchPromise);
-  }
   return keepAlive.forget();
 }
 

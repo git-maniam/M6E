@@ -29,34 +29,6 @@ const MULTI_N_FIELD_NAMES = {
 const CC_TYPE = 1;
 const ADDR_TYPE = 2;
 
-// Regular expression to match a word of text.
-const WORD_RE = /\s*([\p{L}\p{N}]+)/u;
-
-const HINT_PREFIX = "**hint";
-
-// strip_common / strip_frequent apply only to forms with at least this many
-// fields -- below it, a "shared" token is likely coincidental and removing it is
-// risky (see _stripSharedTokens).
-const MIN_FIELDS_FOR_STRIP = 3;
-// strip_frequent removes a token present in at least this fraction of a form's
-// fields; strip_common uses 1.0 (present in every field).
-const STRIP_FREQUENT_FRACTION = 0.85;
-
-// Max characters kept from each side of a <select>'s option-value range token
-// (see tokenizeSelectOptionRange).
-const SELECT_OPTION_RANGE_MAX = 16;
-
-// Only emit a "**maxlen<N>" token for explicit small maxlength values (below
-// this cap); larger/unset limits carry little field-type signal and add noise
-// (see tokenizeInputAttributes).
-const INPUT_MAXLENGTH_CAP = 16;
-
-// A "pattern" made only of a digit character class plus quantifiers/anchors is
-// treated as a numeric hint; a bare "{N}" quantifier gives a fixed length. Any
-// other (rarer) pattern is ignored.
-const DIGIT_PATTERN_RE =
-  /^\^?(?:\\d|\[0-9\]|\[\\d\])(?:(\{(\d+)(?:,\d*)?\})|[+*])?\$?$/;
-
 /**
  * Returns the autocomplete information of fields according to heuristics.
  */
@@ -884,291 +856,6 @@ export const FormAutofillHeuristics = {
     }
   },
 
-  //
-  // Functions related to ML inference
-  //
-
-  tokenizeWords(text, words) {
-    if (!text) {
-      return;
-    }
-
-    text = text.toLowerCase().replace(/\s+/g, " ");
-
-    let match = text.match(WORD_RE);
-    if (!match) {
-      return;
-    }
-
-    while (match) {
-      let word = match[1];
-      // Ignore short words
-      if (word.length >= 3) {
-        words.push(word);
-      }
-
-      text = text.substring(match.index + match[0].length);
-      match = text.match(WORD_RE);
-    }
-  },
-
-  splitMixedCase(text) {
-    // For ids and names, we try to split mixed case words
-    // (such as addressLine) into two separate words.
-    return text.replaceAll(/([\p{Lower}\p{N}]*)(\p{Upper}*)/gu, "$1 $2");
-  },
-
-  tokenizeAttributes(element, words) {
-    //    stringText.add(element.autocompleteInfo.fieldName, prefix);
-    this.tokenizeWords(this.splitMixedCase(element.id), words);
-    this.tokenizeWords(this.splitMixedCase(element.name), words);
-    this.tokenizeWords(element.placeholder, words);
-
-    const labels = this._getElementLabelStrings(element);
-    for (const label of labels) {
-      this.tokenizeWords(label, words);
-    }
-
-    let elementType = element.type;
-    if (elementType != "text") {
-      words.push("**" + elementType);
-    }
-
-    const features = FormAutofill.mlFeatures;
-    if (features.has("select_option")) {
-      this.tokenizeSelectOptionRange(element, words);
-    }
-
-    if (features.has("input_attributes")) {
-      this.tokenizeInputAttributes(element, words);
-    }
-  },
-
-  /**
-   * Append discrete input-attribute tokens that carry field-type signal but are
-   * otherwise lost by word tokenization: a small explicit maxlength and a
-   * non-text inputmode. The most common digit-only "pattern" values are mapped
-   * onto these two signals (numeric inputmode, plus a fixed {N} length when
-   * maxlength is not set); rarer patterns are ignored. Especially useful for the
-   * split telephone subfields (area code=3, prefix=3, suffix=4, country code).
-   *
-   * @param {Element} element The field element being tokenized.
-   * @param {Array<string>} words The token list to append to.
-   */
-  tokenizeInputAttributes(element, words) {
-    // maxLength is -1 when unset (and undefined for elements without it).
-    let maxLength = element.maxLength;
-    // inputMode reflects the inputmode content attribute ("" when unset).
-    let inputMode = (element.inputMode || "").toLowerCase();
-
-    // Map the common digit-only patterns onto inputmode/maxLength; ignore the
-    // rest so we don't emit noisy free-form pattern tokens.
-    const pattern = element.getAttribute?.("pattern")?.trim();
-    if (pattern) {
-      const match = pattern.match(DIGIT_PATTERN_RE);
-      if (match) {
-        if (!inputMode) {
-          inputMode = "numeric";
-        }
-        // A fixed "{N}" length fills in for a missing maxlength attribute.
-        if (match[2] && !(maxLength > 0)) {
-          maxLength = parseInt(match[2], 10);
-        }
-      }
-    }
-
-    if (inputMode && inputMode != "text") {
-      words.push("**inputmode" + inputMode);
-    }
-
-    if (maxLength > 0 && maxLength < INPUT_MAXLENGTH_CAP) {
-      words.push("**maxlen" + maxLength);
-    }
-  },
-
-  /**
-   * For a <select>, append a single token describing its option-value range:
-   * "<first>...<last>", built from each option's visible text (falling back to
-   * its value), lowercased and truncated to SELECT_OPTION_RANGE_MAX chars per
-   * side. This surfaces the field's value domain (e.g. a month dropdown ->
-   * "1...12") in the exported mlData. No-op for non-selects or empty selects.
-   *
-   * @param {Element} element The field element being tokenized.
-   * @param {Array<string>} words The token list to append to.
-   */
-  tokenizeSelectOptionRange(element, words) {
-    if (!HTMLSelectElement.isInstance(element)) {
-      return;
-    }
-    const options = element.options;
-    if (!options?.length) {
-      return;
-    }
-    // Collapse all internal whitespace so the range stays a single token: the
-    // aa/bb neighbor-context system space-joins and re-splits token lists, so a
-    // token containing a space would fragment (and lose its prefix) in
-    // neighbors' context.
-    const label = option =>
-      (option?.text || option?.value || "")
-        .toLowerCase()
-        .replace(/\s+/g, "")
-        .slice(0, SELECT_OPTION_RANGE_MAX);
-    // Skip leading/trailing options that are blank after normalization (both
-    // text and value empty) -- e.g. the placeholder <option value=""></option>
-    // most dropdowns start with, which would otherwise waste half the range
-    // token. Non-blank placeholders ("please select") are kept, since their
-    // text can still carry signal.
-    let lo = 0;
-    let hi = options.length - 1;
-    while (lo < hi && !label(options[lo])) {
-      lo++;
-    }
-    while (hi > lo && !label(options[hi])) {
-      hi--;
-    }
-    const first = label(options[lo]);
-    const last = label(options[hi]);
-    if (first || last) {
-      words.push(`${first}...${last}`);
-    }
-  },
-
-  /**
-   * Remove form-wide boilerplate tokens (e.g. "form1", "ctl00") from every
-   * field's own token list, so they don't dilute each field's representation. A
-   * token is stripped when it appears in enough of the form's fields:
-   *   strip_common   -> in ALL fields
-   *   strip_frequent -> in >= STRIP_FREQUENT_FRACTION of fields
-   * Only applies to forms with >= MIN_FIELDS_FOR_STRIP fields. Structural markers
-   * ("**<type>", "**maxlen<N>", option-range "a...b") are never counted or
-   * stripped. Mutates the `words` arrays in `elementDataList` in place, before
-   * neighbor (aa/bb) context is built, so own and neighbor copies stay in sync.
-   *
-   * @param {Array<{words: string[]}>} elementDataList
-   */
-  _stripSharedTokens(elementDataList) {
-    const features = FormAutofill.mlFeatures;
-    const stripCommon = features.has("strip_common");
-    const stripFrequent = features.has("strip_frequent");
-    if (
-      (!stripCommon && !stripFrequent) ||
-      elementDataList.length < MIN_FIELDS_FOR_STRIP
-    ) {
-      return;
-    }
-
-    const isStructural = token =>
-      token.startsWith("**") || token.includes("...");
-
-    // Count how many fields each non-structural token appears in (once per field).
-    const fieldCount = new Map();
-    for (const { words } of elementDataList) {
-      for (const token of new Set(words)) {
-        if (!isStructural(token)) {
-          fieldCount.set(token, (fieldCount.get(token) || 0) + 1);
-        }
-      }
-    }
-
-    // Lowest per-field count at which a token is stripped. strip_frequent is the
-    // broader (lower) threshold, so it wins when both flags are set.
-    const total = elementDataList.length;
-    let minCount = Infinity;
-    if (stripCommon) {
-      minCount = total;
-    }
-    if (stripFrequent) {
-      minCount = Math.min(minCount, STRIP_FREQUENT_FRACTION * total);
-    }
-
-    const toStrip = new Set();
-    for (const [token, count] of fieldCount) {
-      if (count >= minCount) {
-        toStrip.add(token);
-      }
-    }
-    if (!toStrip.size) {
-      return;
-    }
-    for (const data of elementDataList) {
-      data.words = data.words.filter(token => !toStrip.has(token));
-    }
-  },
-
-  tokenizeElements(elements) {
-    // If ML inference is disabled or not yet ready, revert to heuristics.
-    if (!lazy.FormAutofillUtils.useMLInference) {
-      return null;
-    }
-
-    let elementDataList = [];
-    for (let element of elements) {
-      let words = [];
-      this.tokenizeAttributes(element, words);
-
-      elementDataList.push({ element, words: words.join(" ") });
-    }
-
-    // Optionally drop form-wide boilerplate tokens before building neighbor
-    // context (gated by the strip_common / strip_frequent features).
-    this._stripSharedTokens(elementDataList);
-
-    let resultsMap = new Map();
-
-    // Each field's tokens plus its immediate neighbors' tokens.
-    for (let e = 0; e < elementDataList.length; e++) {
-      let words = elementDataList[e].words;
-      let previousWords = e > 0 ? elementDataList[e - 1].words : "";
-      let nextWords =
-        e < elementDataList.length - 1 ? elementDataList[e + 1].words : "";
-
-      resultsMap.set(elementDataList[e].element, [
-        words,
-        previousWords,
-        nextWords,
-      ]);
-    }
-
-    return resultsMap;
-  },
-
-  getHintToken(fieldDetail) {
-    const name =
-      lazy.FormAutofillUtils.canUseML(fieldDetail) ||
-      fieldDetail.reason == "autocomplete"
-        ? fieldDetail.fieldName
-        : "";
-
-    if (!name || !FormAutofill.mlHintFields.has(name)) {
-      return HINT_PREFIX + "none";
-    }
-
-    return HINT_PREFIX + name.replaceAll("-", "");
-  },
-
-  addHintTokens(fieldDetail, previousHint, nextHint) {
-    if (!fieldDetail.mlData) {
-      return;
-    }
-
-    const currentHint = this.getHintToken(fieldDetail);
-    previousHint ??= HINT_PREFIX + "none";
-    nextHint ??= HINT_PREFIX + "none";
-
-    // Reassign a fresh array rather than mutating elements in place: mlData can
-    // reach this point as a read-only array (e.g. a frozen/IPC-cloned copy via
-    // the inspectFields path), so `mlData[0] = ...` would throw "0 is read-only".
-    fieldDetail.mlData = [
-      currentHint + " " + fieldDetail.mlData[0],
-      fieldDetail.mlData[1]
-        ? previousHint + " " + fieldDetail.mlData[1]
-        : fieldDetail.mlData[1],
-      fieldDetail.mlData[2]
-        ? nextHint + " " + fieldDetail.mlData[2]
-        : fieldDetail.mlData[2],
-    ];
-  },
-
   /**
    * This function should provide all field details of a form which are placed
    * in the belonging section. The details contain the autocomplete info
@@ -1186,37 +873,6 @@ export const FormAutofillHeuristics = {
       lazy.FormAutofillUtils.isCreditCardOrAddressFieldType(element)
     );
 
-    // The "regex_hint" mlFeature prepends each field's regex-heuristic
-    // recommendation as a "**hint" token.
-    const shouldAddHints = FormAutofill.mlFeatures.has("regex_hint");
-
-    // Because we include information about the adjacent fields, it is
-    // easier to  perform all of the tokenization at once and insert the
-    // results into a map first, keyed by element. The tokens can then be
-    // retrieved later within inferFieldInfo.
-    let mlTokensMap = this.tokenizeElements(elements);
-
-    // As we iterate, we store details about the previous details and hints,
-    // so that we can update the hints for that and surrounding fields. The
-    // previous detail is used, because by then we know the hints for the
-    // current and next fields
-    let previousDetail = null;
-    let currentHint, previousHint;
-
-    let addHintsToPrevious = fieldDetail => {
-      if (!shouldAddHints) {
-        return;
-      }
-
-      const nextHint = fieldDetail ? this.getHintToken(fieldDetail) : null;
-      if (previousDetail) {
-        this.addHintTokens(previousDetail, previousHint, nextHint);
-      }
-      previousHint = currentHint;
-      currentHint = nextHint;
-      previousDetail = fieldDetail;
-    };
-
     const fieldDetails = [];
     for (let idx = 0; idx < elements.length; idx++) {
       const element = elements[idx];
@@ -1232,15 +888,10 @@ export const FormAutofillHeuristics = {
         // keep track of them. This way they will also be cleared on a form clearing action.
         element.autofillState != lazy.FormAutofillUtils.FIELD_STATES.AUTO_FILLED
       ) {
-        addHintsToPrevious(null);
         continue;
       }
 
-      const [fieldName, inferInfo, mlData] = this.inferFieldInfo(
-        element,
-        elements,
-        mlTokensMap
-      );
+      const [fieldName, inferInfo] = this.inferFieldInfo(element, elements);
 
       const attributes = this.parseAdditionalAttributes(element, fieldName);
 
@@ -1253,15 +904,10 @@ export const FormAutofillHeuristics = {
           fathomConfidence: inferInfo.fathomConfidence,
           isVisible,
           isLookup: attributes.isLookup,
-          mlData,
         }
       );
       fieldDetails.push(fieldDetail);
-
-      addHintsToPrevious(fieldDetail);
     }
-
-    addHintsToPrevious(null);
 
     this.parseAndUpdateFieldNamesContent(fieldDetails);
 
@@ -1395,14 +1041,12 @@ export const FormAutofillHeuristics = {
    *
    * @param {HTMLElement} element - The input element to infer information about.
    * @param {Array<HTMLElement>} elements - See `getFathomField` for details
-   * @param {Map} mlTokens map of elements to words to use for ml inference.
    * @returns {Array} - An array containing:
    *                    [0]the inferred field name
    *                    [1]information collected during the inference process. The possible values includes:
    *                       'autocompleteInfo' and 'fathomConfidence'.
-   *                    [2] tokens used for ML inference.
    */
-  inferFieldInfo(element, elements = [], mlTokens) {
+  inferFieldInfo(element, elements = []) {
     const inferredInfo = {};
     const autocompleteInfo = element.getAutocompleteInfo();
 
@@ -1438,7 +1082,7 @@ export const FormAutofillHeuristics = {
     // "email" type of input is accurate for heuristics to determine its Email
     // field or not. However, "tel" type is used for ZIP code for some web site
     // (e.g. HomeDepot, BestBuy), so "tel" type should be not used for "tel"
-    // prediction. We also allow this in ML mode since email is likely correct.
+    // prediction.
     if (element.type == "email" && fields.includes("email")) {
       return ["email", inferredInfo];
     }
@@ -1480,23 +1124,19 @@ export const FormAutofillHeuristics = {
       // valid cc form; hence both cc-number & cc-name are identified.
     }
 
-    // Passport fields are not covered by the ML model yet, so detect them with
-    // a dedicated regex heuristic. This runs before the ML path on purpose, so
-    // passport detection works whether or not ML is enabled.
+    // Passport fields are detected with a dedicated regex heuristic.
     const passportFieldName = this._inferPassportField(element);
     if (passportFieldName) {
       return [passportFieldName, inferredInfo];
     }
 
-    let mlToken = mlTokens?.get(element);
-
     // Check every select for options that
     // match credit card network names in value or label.
     if (HTMLSelectElement.isInstance(element)) {
       if (this._isExpirationMonthLikely(element)) {
-        return ["cc-exp-month", inferredInfo, mlToken];
+        return ["cc-exp-month", inferredInfo];
       } else if (this._isExpirationYearLikely(element)) {
-        return ["cc-exp-year", inferredInfo, mlToken];
+        return ["cc-exp-year", inferredInfo];
       }
 
       const options = Array.from(element.querySelectorAll("option"));
@@ -1507,7 +1147,7 @@ export const FormAutofillHeuristics = {
             lazy.CreditCard.getNetworkFromName(option.text)
         )
       ) {
-        return ["cc-type", inferredInfo, mlToken];
+        return ["cc-type", inferredInfo];
       }
 
       // At least two options match the country name, otherwise some state name might
@@ -1530,8 +1170,8 @@ export const FormAutofillHeuristics = {
         // one we settled on is a field name we may match.
         return this._findMatchedFieldNames(element, ["tel-country-code"])
           ?.length
-          ? ["tel-country-code", inferredInfo, mlToken]
-          : ["country", inferredInfo, mlToken];
+          ? ["tel-country-code", inferredInfo]
+          : ["country", inferredInfo];
       }
     }
 
@@ -1549,7 +1189,7 @@ export const FormAutofillHeuristics = {
       return ["tel", inferredInfo];
     }
 
-    return [matchedFieldNames, inferredInfo, mlToken];
+    return [matchedFieldNames, inferredInfo];
   },
 
   /**

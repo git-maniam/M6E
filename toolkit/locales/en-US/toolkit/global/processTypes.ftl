@@ -52,9 +52,6 @@ process-type-socket = Socket
 # process used to decode media
 process-type-rdd = RDD
 
-# process used to run inference
-process-type-inference = Inference
-
 # process used to run some IPC actor in their own sandbox
 process-type-utility = Sandboxed IPC Actor
 process-type-utility-actor-audio-decoder-generic = Utility Generic Audio Decoder
@@ -64,7 +61,6 @@ process-type-utility-actor-mf-media-engine = Utility Media Foundation Engine
 process-type-utility-actor-js-oracle = Utility JavaScript Oracle
 process-type-utility-actor-windows-utils = Utility Windows Utils
 process-type-utility-actor-windows-file-dialog = Utility Windows File Dialog
-process-type-utility-actor-hw-inference = Utility Hardware Accelerated Inference
 
 ##
 ## Other

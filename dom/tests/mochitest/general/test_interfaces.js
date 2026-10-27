@@ -1567,66 +1567,6 @@ let interfaceNamesInGlobalScope = [
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "SpecialPowers", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechGrammar",
-    insecureContext: true,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechGrammarList",
-    insecureContext: true,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognition",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognitionAlternative",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognitionErrorEvent",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognitionErrorEvent",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognitionEvent",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognitionPhrase",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognitionResult",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "SpeechRecognitionResultList",
-    insecureContext: false,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "SpeechSynthesis", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "SpeechSynthesisErrorEvent", insecureContext: true },
@@ -2335,24 +2275,6 @@ let interfaceNamesInGlobalScope = [
   { name: "updateCommands", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "visualViewport", insecureContext: true },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "webkitSpeechGrammar",
-    insecureContext: true,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "webkitSpeechGrammarList",
-    insecureContext: true,
-    android: false,
-  },
-  // IMPORTANT: Do not change this list without review from a DOM peer!
-  {
-    name: "webkitSpeechRecognition",
-    insecureContext: false,
-    android: false,
-  },
   // IMPORTANT: Do not change this list without review from a DOM peer!
   { name: "webkitURL", insecureContext: true },
   // IMPORTANT: Do not change this list without review from a DOM peer!

@@ -135,16 +135,6 @@ skip-if = [
 
 ["browser_managePersonalInfoSubpage.js"]
 
-["browser_ml_heuristics.js"]
-
-["browser_ml_ignore_field_types.js"]
-
-["browser_ml_mldata_features.js"]
-
-["browser_ml_native_onnx_availability.js"]
-
-["browser_ml_nimbus.js"]
-
 ["browser_nested_forms.js"]
 
 ["browser_page_navigation_in_subtree.js"]

@@ -41,9 +41,6 @@ include protocol PURLClassifierLocal;
 include protocol PURLClassifierLocalByName;
 include protocol PVRManager;
 include protocol PRemoteMediaManager;
-#if !defined(ANDROID) && defined(MOZ_WEBSPEECH)
-include protocol PSpeechRecognition;
-#endif  // !ANDROID && MOZ_WEBSPEECH
 include protocol PRemoteWorkerDebuggerManager;
 include protocol PRemoteWorkerService;
 include protocol PProfiler;
@@ -1219,17 +1216,6 @@ parent:
 #endif
 
     async CreateAudioIPCConnection() returns (FileDescOrError fd);
-
-#ifndef ANDROID
-    async AcquireHWInferenceProcess();
-#ifdef MOZ_WEBSPEECH
-    async CreateSpeechRecognition(Endpoint<PSpeechRecognitionParent> endpoint);
-#endif
-
-    // One call per AcquireHWInferenceProcess. The process is shut down once
-    // nothing holds it anymore.
-    async ReleaseHWInferenceConnection();
-#endif  // !ANDROID
 
     sync PURLClassifier(nullable nsIPrincipal principal)
         returns (bool success);

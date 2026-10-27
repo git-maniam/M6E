@@ -17,13 +17,11 @@ ai:
         and engine-gecko unit on Android.
         Use with --artifact to speed up your trypush.
     paths: &ai-paths
-        - toolkit/components/ml/tests/
         - toolkit/components/pageextractor/
         - mobile/android/geckoview/src/androidTest/java/org/mozilla/geckoview/test/
         - mobile/android/android-components/components/browser/engine-gecko/
         - toolkit/components/places/
         - browser/components/urlbar/
-        - browser/components/tabbrowser/test/xpcshell/smarttabgrouping/
         - toolkit/components/extensions/
         - toolkit/components/pdfjs/
     test_paths: *ai-paths
@@ -32,14 +30,6 @@ ai:
         - "'xpcshell 'linux !nofis !asan !tsan !condprof !ioi"
         - "'em-14 'geckoview-junit !shippable !iso"
         - "'test-components 'engine-gecko"
-
-ai-perf:
-    selector: fuzzy
-    description: >-
-        Run ml-* perftests on Linux.
-    query:
-        - "^perftest-linux 'ml-"
-    full: true
 
 android-components:
     selector: fuzzy
@@ -447,16 +437,6 @@ media-full:
         - "'gtest"
     intersect_query:
         - "'debug | '-asan | '-tsan"
-
-ml-perf:
-    selector: fuzzy
-    description: >-
-        Run the ml-* perftests on every desktop platform, rather than Linux
-        only like "ai-perf". ONNX tests run as one job per backend
-        (-native/-wasm task variants).
-    query:
-        - "^perftest 'ml-"
-    full: true
 
 mochitest-bc:
     description: >-

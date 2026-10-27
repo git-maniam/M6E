@@ -272,16 +272,6 @@ mozilla::ipc::IPCResult UtilityProcessChild::RecvStartJSOracleService(
   return IPC_OK();
 }
 
-already_AddRefed<hwinference::PHWInferenceChild>
-UtilityProcessChild::AllocPHWInferenceChild() {
-  PROFILER_MARKER_UNTYPED(
-      "UtilityProcessChild::AllocPHWInferenceChild", OTHER,
-      MarkerOptions(MarkerTiming::IntervalUntilNowFrom(mChildStartTime)));
-
-  mHWInferenceInstance = MakeRefPtr<hwinference::HWInferenceChild>();
-  return do_AddRef(mHWInferenceInstance);
-}
-
 
 mozilla::ipc::IPCResult UtilityProcessChild::RecvShutdown() {
   // Send the last bits of Glean data over to the main process. Doing this in
@@ -345,11 +335,6 @@ void UtilityProcessChild::ActorDestroy(ActorDestroyReason aWhy) {
   }
 
   mJSOracleInstance = nullptr;
-
-  // A managed actor holds its manager; keeping it alive here would keep this
-  // process' toplevel alive too.
-  mHWInferenceInstance = nullptr;
-
 
 #  if defined(NIGHTLY_BUILD) && !defined(MOZ_NO_SMART_CARDS)
   mPKCS11ModuleInstance = nullptr;

@@ -11,9 +11,6 @@
 #ifdef MOZ_LAYOUT_DEBUGGER
   layoutdebug/layoutdebug.ftl                      (../../layout/tools/layout-debug/ui/content/layoutdebug.ftl)
 #endif
-#if defined(NIGHTLY_BUILD)
-  preview/aboutInference.ftl                       (../components/aboutinference/content/aboutInference.ftl)
-#endif
 
 @AB_CD@.jar:
 % locale global @AB_CD@ %locale/@AB_CD@/global/

@@ -4,7 +4,9 @@
 "use strict";
 
 add_task(async function test_viewport_extraction() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup, tab } = await html`
     <style>
       body {

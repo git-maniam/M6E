@@ -649,25 +649,6 @@ tasks:
                 - "--setpref=layout.css.devPixelsPerPx=1.0"
         allow-software-gl-layers: false
 
-    mochitest-browser-chrome-ml-models:
-        description: "Mochitest browser-chrome tests that download real ML models from model-hub.mozilla.org"
-        suite:
-            name: mochitest-browser-chrome-ml-models
-        treeherder-symbol: M(bc-ml)
-        schedules-component: mochitest-browser-chrome-ml-models
-        loopback-video: true
-        run-on-projects:
-            by-test-platform:
-                # Shippable Linux opt only. The `.*` glob previously also
-                # matched sanitizer variants (asan/tsan), which abort on
-                # upstream ggml UB in the native llama.cpp backend.
-                linux2404-64-shippable/opt: ['mozilla-central']
-                default: []
-        max-run-time: 1800
-        mozharness:
-            mochitest-flavor: browser
-        allow-software-gl-layers: false
-
     mochitest-chrome:
         description: "Mochitest chrome run"
         treeherder-symbol: M(c)
@@ -973,32 +954,6 @@ tasks:
             by-test-platform:
                 linux.*64-tsan/opt: xlarge-noscratch  # runs out of memory using 8GB of memory
                 default: default
-
-    mochitest-speech-recognition:
-        description: "Mochitest speech recognition (parakeet) run"
-        suite:
-            name: mochitest-speech-recognition
-        treeherder-symbol: M(sr)
-        schedules-component: mochitest-plain
-        loopback-video: true
-        run-on-projects:
-            by-test-platform:
-                # ASR is impractical on debug and instrumented builds; opt only.
-                android.*: []
-                .*-asan.*: []
-                .*-tsan.*: []
-                .*-ccov.*: []
-                .*/debug: []
-                default: built-projects
-        tier: default
-        max-run-time: 1800
-        instance-size: default
-        allow-software-gl-layers: false
-        virtualization: virtual
-        fetches:
-            fetch:
-                - parakeet-eou-120m
-                - parakeet-nemotron-0.6b
 
     mochitest-media:
         description: "Mochitest media run"

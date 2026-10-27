@@ -21,11 +21,6 @@ prefs = [
   "sidebar.revamp=false",
 ]
 
-["browser_MLSuggest_integration.js"]
-support-files = [
-  "!/toolkit/components/ml/tests/browser/head.js",
-]
-
 ["browser_aboutHomeLoading.js"]
 
 ["browser_autoOpen.js"]

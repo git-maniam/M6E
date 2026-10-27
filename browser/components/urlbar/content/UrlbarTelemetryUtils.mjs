@@ -520,10 +520,9 @@ export class UrlbarTelemetryUtils {
    * Builds the Glean event object for an engagement/abandonment/disable/bounce
    * from data available wherever the input and view live (so it runs child-side
    * on the message path). Everything here is derived from the picked result, the
-   * search string, the visible results, and the session; the three fields that
-   * need parent-only services -- `sap`, `search_engine_default_id`, and (for
-   * engagement/abandonment) `available_semantic_sources` -- are filled in by the
-   * recorder, which also makes the actual `Glean` call.
+   * search string, the visible results, and the session; the two fields that
+   * need parent-only services -- `sap` and `search_engine_default_id` -- are
+   * filled in by the recorder, which also makes the actual `Glean` call.
    *
    * @param {object} data
    *   The event fields.

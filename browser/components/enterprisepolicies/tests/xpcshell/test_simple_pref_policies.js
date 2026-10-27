@@ -1361,25 +1361,17 @@ const POLICIES_TESTS = [
     policies: {
       AIControls: {
         Default: { Value: "blocked", Locked: true },
-        PDFAltText: { Value: "available" },
-        SmartTabGroups: { Value: "blocked" },
         LinkPreviewKeyPoints: { Value: "available" },
         SidebarChatbot: { Value: "blocked" },
-        SpeechRecognition: { Value: "available" },
       },
     },
     lockedPrefs: {
       "browser.ai.control.default": "blocked",
-      "browser.ai.control.pdfjsAltText": "available",
-      "pdfjs.enableAltText": true,
-      "browser.ai.control.smartTabGroups": "blocked",
-      "browser.tabs.groups.smart.userEnabled": false,
       "browser.ai.control.linkPreviewKeyPoints": "available",
       "browser.ml.linkPreview.enabled": true,
       "browser.ai.control.sidebarChatbot": "blocked",
       "browser.ml.chat.enabled": false,
       "browser.ml.chat.page": false,
-      "browser.ai.control.speechRecognition": "available",
     },
   },
 
@@ -1393,14 +1385,11 @@ const POLICIES_TESTS = [
     },
     lockedPrefs: {
       "browser.ai.control.default": "blocked",
-      "browser.ai.control.smartTabGroups": "blocked",
-      "browser.tabs.groups.smart.userEnabled": false,
       "browser.ai.control.linkPreviewKeyPoints": "blocked",
       "browser.ml.linkPreview.enabled": false,
       "browser.ai.control.sidebarChatbot": "blocked",
       "browser.ml.chat.enabled": false,
       "browser.ml.chat.page": false,
-      "browser.ai.control.speechRecognition": "blocked",
     },
     unlockedPrefs: {
       "browser.ai.control.pdfjsAltText": "available",
@@ -1421,7 +1410,6 @@ const POLICIES_TESTS = [
       "browser.ml.chat.enabled": true,
       "browser.ml.chat.page": true,
       "browser.ml.linkPreview.optin": false,
-      "browser.tabs.groups.smart.userEnabled": false,
     },
   },
 ];

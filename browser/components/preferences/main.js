@@ -111,9 +111,6 @@ Preferences.addAll([
   // AI Controls, these pref values can affect settings on the main pane and
   // have base Settings here
   { id: "browser.ai.control.default", type: "string" },
-  { id: "browser.ai.control.pdfjsAltText", type: "string" },
-  { id: "browser.ai.control.smartTabGroups", type: "string" },
-  { id: "browser.ai.control.speechRecognition", type: "string" },
 
   // Update
   { id: "browser.preferences.advanced.selectedTabIndex", type: "int" },
@@ -375,14 +372,7 @@ Preferences.addSetting({
   id: "aiControlDefault",
   pref: "browser.ai.control.default",
 });
-Preferences.addSetting({
-  id: "aiControlPdfjsAltText",
-  pref: "browser.ai.control.pdfjsAltText",
-});
-Preferences.addSetting({
-  id: "aiControlSmartTabGroups",
-  pref: "browser.ai.control.smartTabGroups",
-});
+Preferences.addSetting({});
 
 function createDefaultBrowserConfig({
   includeIsDefaultPane = true,

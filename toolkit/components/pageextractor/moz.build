@@ -6,6 +6,10 @@ SPHINX_TREES["/toolkit/components/pageextractor"] = "docs"
 
 BROWSER_CHROME_MANIFESTS += ["tests/browser/browser.toml"]
 
+TESTING_JS_MODULES += [
+    "tests/PageExtractorTestUtils.sys.mjs",
+]
+
 FINAL_TARGET_FILES.actors += [
     "PageExtractorChild.sys.mjs",
     "PageExtractorParent.sys.mjs",

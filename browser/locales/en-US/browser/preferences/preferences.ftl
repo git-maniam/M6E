@@ -2525,18 +2525,6 @@ preferences-ai-controls-on-device-group =
     .label = On-device AI
     .description = These use small AI models that download to your device if you use the feature. This approach helps protect your privacy.
 
-preferences-ai-controls-pdfjs-control =
-    .label = Image alt text in { -brand-short-name } PDF viewer
-    .description = When you add images to PDFs, this adds descriptions to make them accessible.
-
-preferences-ai-controls-tab-group-suggestions-control =
-    .label = Tab group suggestions
-    .description = Get suggestions to name and organize your tabs.
-
-preferences-ai-controls-speech-recognition-control =
-    .label = Speech recognition
-    .description = Transcribe speech locally.
-
 # This option means that a user will see the feature and can use it.
 preferences-ai-controls-state-available =
     .label = Available
@@ -2556,9 +2544,6 @@ preferences-ai-controls-block-confirmation-heading = Block AI enhancements?
 preferences-ai-controls-block-confirmation-description = You won’t see new or current AI enhancements in { -brand-short-name }, or pop-ups about them. Afterwards, you can unblock anything you want to keep using.
 
 preferences-ai-controls-block-confirmation-features-start = What will be blocked:
-preferences-ai-controls-block-confirmation-pdfjs = Image alt text in { -brand-short-name } PDF viewer
-preferences-ai-controls-block-confirmation-tab-group-suggestions = Tab group suggestions
-preferences-ai-controls-block-confirmation-speech-recognition = Speech recognition
 preferences-ai-controls-block-confirmation-features-after = Blocking also affects extensions that use AI provided by { -brand-short-name }.
 
 preferences-ai-controls-block-confirmation-cancel =

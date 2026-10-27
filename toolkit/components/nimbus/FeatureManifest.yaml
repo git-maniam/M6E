@@ -502,17 +502,6 @@ urlbar:
       type: boolean
       fallbackPref: browser.urlbar.quicksuggest.impressionCaps.nonSponsoredEnabled
       description: Whether non-sponsored suggestions are subject to impression frequency caps. If false, non-sponsored suggestions can be shown an unlimited number of times over any given period. If true, non-sponsored suggestion impressions will be subject to the caps in the remote settings configuration.
-    quickSuggestMlInitDelaySeconds:
-      type: int
-      fallbackPref: browser.urlbar.quicksuggest.mlInitDelaySeconds
-      description: >-
-        How long to wait in seconds after startup before initializing the
-        Suggest ML backend.
-    quickSuggestMlEnabled:
-      type: boolean
-      fallbackPref: browser.urlbar.quicksuggest.mlEnabled
-      description: >-
-        Whether Suggest will use the ML backend in addition to Rust.
     quickSuggestNonSponsoredEnabled:
       type: boolean
       description: >-
@@ -615,115 +604,6 @@ urlbar:
       description: >-
         When selecting and hovering over certain types of urlbar results,
         replace their URLs with strings that explain why they're shown.
-    semanticHistoryEnable:
-      type: boolean
-      setPref:
-        branch: user
-        pref: places.semanticHistory.featureGate
-      description: use semanticHistory Search feature.
-    semanticHistoryDefaultBatchChunksize:
-      type: int
-      setPref:
-        branch: user
-        pref: places.semanticHistory.defaultBatchChunksize
-      description: >-
-        The batch chunk size for updates for vectorDB
-        defaulted at 25.
-    semanticHistoryMaxChunkTimeMs:
-      type: int
-      setPref:
-        branch: user
-        pref: places.semanticHistory.maxChunkTimeMs
-      description: >-
-        Soft per-chunk time threshold (ms) for background indexing. If the
-        median of the last 9 chunk durations exceeds this and the database
-        already holds more than `semanticHistoryMinEntriesBeforeThrottle`
-        embeddings, indexing stops advancing until next places event.
-    semanticHistoryMaxChunkTimeMsFailsafe:
-      type: int
-      setPref:
-        branch: user
-        pref: places.semanticHistory.maxChunkTimeMsFailsafe
-      description: >-
-        Failsafe per-chunk time threshold (ms) for background indexing. If half
-        or more of the last 9 chunk durations exceed this, indexing stops
-        advancing, regardless of how many embeddings exist, until restart.
-    semanticHistoryMinEntriesBeforeThrottle:
-      type: int
-      setPref:
-        branch: user
-        pref: places.semanticHistory.minEntriesBeforeThrottle
-      description: >-
-        Minimum number of embeddings that must exist before the soft
-        `semanticHistoryMaxChunkTimeMs` threshold can stop indexing. Below this
-        count indexing keeps going even when slow, so the feature reaches a
-        usable state. Defaulted at 1000.
-    semanticHistoryDistanceThreshold:
-      type: string
-      setPref:
-        branch: user
-        pref: places.semanticHistory.distanceThreshold
-      description: >-
-        semantic similarity distance threshold (0.0 - 1.0)
-        defaulted at 0.6.
-    semanticHistorySmartwindowDistanceThreshold:
-      type: string
-      setPref:
-        branch: user
-        pref: places.semanticHistory.smartwindow.distanceThreshold
-      description: >-
-        semantic similarity distance threshold (0.0 - 1.0) for Smart Window
-        history search only.
-    semanticHistorySupportedRegions:
-      type: string
-      setPref:
-        branch: user
-        pref: places.semanticHistory.supportedRegions
-      description: >-
-        map-like JSON of regions and locales for which the feature is supported.
-        When `semanticHistoryEnable` is false, this list is ignored and the
-        feature is disabled everywhere. When true, the feature is enabled only
-        in the regions/locales listed here.
-        The format is like: '[["AU",["en-*"]],["CA",["en-*"]], …]' where `-*`
-        can be used as a wildcard to match any locale that starts with the given
-        prefix.
-    semanticHistoryEmbeddingType:
-      type: string
-      setPref:
-        branch: user
-        pref: places.semanticHistory.embeddingType
-      description: >-
-        Embedding family used by Places semantic history: "static"
-        (lightweight) or "contextual" (transformer-based, larger). When unset
-        or empty, the family is derived from the home region, the app locale
-        and the OS: contextual in the markets listed in
-        `semanticHistoryMultilingualEmbeddingRegions` on Mac/Windows, static
-        everywhere else. Changing this on a live profile drops the embedding
-        tables and rebuilds them on next startup. Contextual model details
-        (dimension, modelId) are controlled by the browser.ml.embedGen.* prefs
-        and are intentionally not exposed via Nimbus.
-    semanticHistoryMultilingualEmbeddingRegions:
-      type: string
-      setPref:
-        branch: user
-        pref: places.semanticHistory.multilingualEmbeddingRegions
-      description: >-
-        map-like JSON of regions and locales that get multilingual (contextual)
-        embeddings, used when `semanticHistoryEmbeddingType` is unset or empty.
-        Same format as `semanticHistorySupportedRegions`, except that a "*"
-        region matches any region. The entries are OR-ed, so
-        '[["FR",["en-*","fr-*"]],["*",["fr-*"]]]' means France in English or
-        French, or a French locale anywhere. An empty value disables
-        multilingual embeddings everywhere.
-    semanticHistoryInSeparateGroup:
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.urlbar.suggest.semanticHistory.separateGroup
-      description: >-
-        Whether semantic history results are placed in their own result group
-        that fills only the space left after the other result groups, so
-        semantic results never evict non-semantic results. Off by default.
     showDebuggingIcons:
       type: boolean
       setPref:
@@ -737,14 +617,6 @@ urlbar:
       description: >-
         Feature gate that controls whether all aspects of the sports suggestions
         feature are exposed to the user.
-    suggestSemanticHistoryMinLength:
-      type: int
-      setPref:
-        branch: user
-        pref: browser.urlbar.suggest.semanticHistory.minLength
-      description: >-
-        Minimum length of search query when history semantic
-        search will be enabled.
     suggestCalculator:
       type: boolean
       setPref:
@@ -809,12 +681,6 @@ urlbar:
       description: >-
         The minimum prefix length of a Yelp keyword the user must type to
         trigger the suggestion.
-    yelpMlEnabled:
-      type: boolean
-      fallbackPref: browser.urlbar.yelp.mlEnabled
-      description: >-
-        Whether Yelp suggestions will be served from the Suggest ML backend
-        instead of Rust.
     yelpFeatureGate:
       type: boolean
       fallbackPref: browser.urlbar.yelp.featureGate
@@ -2253,75 +2119,6 @@ creditcards-cvv-capture:
         branch: default
         pref: extensions.formautofill.creditCards.cvv.supported
 
-autofill-ml:
-  description: Machine-learning based form field detection for autofill
-  owner: dlee@mozilla.com
-  hasExposure: false
-  variables:
-    enabled:
-      description: >-
-        If true, use the ML model instead of the regular expression based
-        heuristics to classify form fields. Has no effect on Android.
-      type: boolean
-      setPref:
-        branch: default
-        pref: extensions.formautofill.useml
-    twoHeadEnabled:
-      type: boolean
-      setPref:
-        branch: default
-        pref: extensions.formautofill.useml.twoHead
-      description: >-
-        If true, classify form fields with the two-engine encoder + fusion head
-        model instead of the single text-classification model.
-    engineTimeoutMS:
-      type: int
-      setPref:
-        branch: default
-        pref: extensions.formautofill.useml.timeoutMS
-      description: >-
-        How long an idle ML autofill engine is kept alive, in milliseconds.
-        Applies to every engine the active classifier creates. -1 means never
-        time out. Defaults to 120000.
-    features:
-      description: >-
-        JSON array of mlData tokenizer feature keys to enable, e.g.
-        ["select_option", "input_attributes"]. Must match the model in use.
-      type: string
-      setPref:
-        branch: default
-        pref: extensions.formautofill.useml.features
-    modelVersion:
-      description: >-
-        Pin the ML model revision to load. Empty keeps the Remote Settings default.
-      type: string
-      setPref:
-        branch: default
-        pref: extensions.formautofill.useml.modelVersion
-
-# Deliberately a feature of its own rather than a variable of autofill-ml: a
-# field type that turns out to be badly classified needs a rollout of its own,
-# and Nimbus allows a single enrollment per feature.
-autofill-ml-ignore-field-types:
-  description: Field types excluded from machine-learning based form field detection
-  owner: dlee@mozilla.com
-  hasExposure: false
-  variables:
-    ignoreFieldTypes:
-      type: string
-      setPref:
-        branch: default
-        pref: extensions.formautofill.useml.ignoreFieldTypes
-      description: >-
-        Comma separated list of field types (for example
-        "cc-exp, cc-exp-month, cc-exp-year"; spaces after the commas are
-        ignored) the ML model is not trusted with. Those types are classified
-        by the regular expression based heuristics instead, and any prediction
-        the model makes for one of them is discarded. List related field types
-        together, as in the example: the heuristics only try the rules of the
-        listed types, so leaving one out can let a broader rule win over the
-        more specific one it would normally lose to.
-
 autofill-suppress-unrecognized-autocomplete:
   description: >-
     Leave fields whose autocomplete attribute is present but cannot be parsed
@@ -2560,12 +2357,6 @@ pdfjs:
       setPref:
         branch: default
         pref: pdfjs.enableUpdatedAddImage
-    browserMlEnable:
-      description: Set to true to enable local inference engine
-      type: boolean
-      setPref:
-        branch: default
-        pref: browser.ml.enable
     enableSignatureEditor:
       description: Set to true to enable the signature editor
       type: boolean
@@ -5467,48 +5258,6 @@ tabGroups:
         pref: browser.tabs.groups.enabled
       description: Controls whether users can create new tab groups via drag and drop or the tab context menu
 
-smartTabGroups:
-  description: Prefs to control Smart Tab Groups
-  owner: rrando@mozilla.com
-  hasExposure: false
-  variables:
-    enabled:
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.tabs.groups.smart.enabled
-      description: Controls whether users can use ml features for suggesting tab group names or similar tabs
-    suggestOtherTabsMethod:
-      type: string
-      setPref:
-        branch: user
-        pref: browser.tabs.groups.smart.suggestOtherTabsMethod
-      description: Controls clustering method used to suggest similar tabs feature
-    topicModelRevision:
-      type: string
-      setPref:
-        branch: user
-        pref: browser.tabs.groups.smart.topicModelRevision
-      description: Controls topic model version used by the feature
-    embeddingModelRevision:
-      type: string
-      setPref:
-        branch: user
-        pref: browser.tabs.groups.smart.embeddingModelRevision
-      description: Controls embedding model version used by the feature
-    nearestNeighborThresholdInt:
-      type: int
-      setPref:
-        branch: user
-        pref: browser.tabs.groups.smart.nearestNeighborThresholdInt
-      description: Controls the threshold, less than or equal to 1000, for the nearest neighbor cluster method
-    searchTopicEnabled:
-      type: boolean
-      setPref:
-        branch: user
-        pref: browser.tabs.groups.smart.searchTopicEnabled
-      description: For single tab groupings, use the search query as the topic rather than use ML
-
 tabContextMenu:
   description: Prefs to control the behavior and structure of the tab context menu
   owner: sfoster@mozilla.com
@@ -6325,15 +6074,6 @@ autoTabGrouping:
       description: >-
         Comma-separated languages Auto Tab Grouping is offered in, matched
         against the app locale by language ("en,fr" allows en-US and fr).
-    thresholdInt:
-      type: int
-      setPref:
-        branch: default
-        pref: browser.tabs.groups.smart.agglomerativeThresholdInt
-      description: >-
-        Clustering cosine-distance cutoff, in thousandths (650 = 0.65). Lower =
-        stricter groups. Applies to English, and to other locales when
-        nonEnglishThresholdInt is 0.
     nonEnglishThresholdInt:
       type: int
       setPref:
@@ -6341,7 +6081,8 @@ autoTabGrouping:
         pref: browser.smartwindow.autoTabGrouping.nonEnglishThresholdInt
       description: >-
         Clustering cosine-distance cutoff for non-English locales, in
-        thousandths (550 = 0.55). Lower = stricter groups. 0 uses thresholdInt.
+        thousandths (550 = 0.55). Lower = stricter groups. 0 keeps the default
+        cutoff.
 
 contentSharing:
   description: Controls the content sharing feature, which allows users to share browser content.

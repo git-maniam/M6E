@@ -23,7 +23,6 @@ Library("mozsandbox")
 
 SOURCE_HEADERS += [
     "SandboxPolicyGPU.h",
-    "SandboxPolicyHWInference.h",
     "SandboxPolicyPGO.h",
     "SandboxPolicySocket.h",
 ]

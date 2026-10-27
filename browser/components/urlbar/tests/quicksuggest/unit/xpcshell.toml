@@ -87,13 +87,9 @@ requesttimeoutfactor = 2  # Slow on Mac in verify mode
 ["test_quicksuggest_yelp.js"]
 requesttimeoutfactor = 2  # Slow on Linux and Windows
 
-["test_quicksuggest_yelp_ml.js"]
-
 ["test_quicksuggest_yelp_realtime.js"]
 
 ["test_rust_ingest.js"]
-
-["test_suggestBackendMl.js"]
 
 ["test_weather.js"]
 

@@ -213,7 +213,6 @@ decision.
 | --- | --- | --- |
 | `WebContent`, `WebCoopCoep`, `WebServiceWorker`, `Prealloc` | Sanitized | Sanitized |
 | `PrivilegedMozilla` | Sanitized if taken from the preallocated pool | Sanitized |
-| `Inference` | Sanitized if taken from the preallocated pool | Unsanitized |
 | `PrivilegedAbout`, `File`, `Extension` | Unsanitized | Unsanitized |
 
 ### Loading and Saving

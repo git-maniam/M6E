@@ -39,19 +39,21 @@ add_setup(async () => {
 });
 
 // Test that an optional-only permission in the "permissions" array is not
-// accepted. Test in MV2 and MV3 to maximize coverage across all manifest
-// versions, since the implementation has subtle differences.
+// accepted. Only MV3 is tested, because the only optional-only permission
+// left, userScripts, requires MV3.
 async function test_optional_only_permission_in_permissions(manifest_version) {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       manifest_version,
-      permissions: ["trialML", "webNavigation"],
+      permissions: ["userScripts", "webNavigation"],
     },
     background() {
       browser.test.onMessage.addListener(async msg => {
         if (msg === "check_permissions") {
           browser.test.assertEq(
-            await browser.permissions.contains({ permissions: ["trialML"] }),
+            await browser.permissions.contains({
+              permissions: ["userScripts"],
+            }),
             false,
             "Optional-only permission not granted when in permissions[]."
           );
@@ -64,8 +66,8 @@ async function test_optional_only_permission_in_permissions(manifest_version) {
         }
         if (msg === "request") {
           await browser.test.assertRejects(
-            browser.permissions.request({ permissions: ["trialML"] }),
-            "Cannot request permission trialML since it was not declared in optional_permissions",
+            browser.permissions.request({ permissions: ["userScripts"] }),
+            "Cannot request permission userScripts since it was not declared in optional_permissions",
             "Cannot request permission not listed in optional_permissions"
           );
           browser.test.sendMessage("request:done");
@@ -92,7 +94,7 @@ async function test_optional_only_permission_in_permissions(manifest_version) {
   });
 
   Assert.ok(
-    !extension.extension.hasPermission("trialML"),
+    !extension.extension.hasPermission("userScripts"),
     "extension.hasPermission() of optional-only permission is false"
   );
 
@@ -107,15 +109,11 @@ async function test_optional_only_permission_in_permissions(manifest_version) {
     expected: [
       {
         message:
-          /Reading manifest: Warning processing permissions: Error processing permissions.0: Value "trialML" must either:/,
+          /Reading manifest: Warning processing permissions: Error processing permissions.0: Value "userScripts" must either:/,
       },
     ],
   });
 }
-
-add_task(async function test_optional_only_permission_in_permissions_mv2() {
-  await test_optional_only_permission_in_permissions(2);
-});
 
 add_task(async function test_optional_only_permission_in_permissions_mv3() {
   await test_optional_only_permission_in_permissions(3);
@@ -127,12 +125,12 @@ async function test_optional_only_in_optional_permissions(manifest_version) {
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
       manifest_version,
-      optional_permissions: ["trialML"],
+      optional_permissions: ["userScripts"],
     },
     background() {
       browser.runtime.onInstalled.addListener(async () => {
         browser.test.assertEq(
-          await browser.permissions.contains({ permissions: ["trialML"] }),
+          await browser.permissions.contains({ permissions: ["userScripts"] }),
           false,
           "Optional-only permission not granted at first."
         );
@@ -141,7 +139,7 @@ async function test_optional_only_in_optional_permissions(manifest_version) {
       browser.test.onMessage.addListener(async msg => {
         browser.test.assertEq("request", msg);
         let granted = await browser.permissions.request({
-          permissions: ["trialML"],
+          permissions: ["userScripts"],
         });
         browser.test.sendMessage("request:result", granted);
       });
@@ -173,10 +171,6 @@ async function test_optional_only_in_optional_permissions(manifest_version) {
   await extension.unload();
 }
 
-add_task(async function test_optional_only_in_optional_permissions_mv2() {
-  await test_optional_only_in_optional_permissions(2);
-});
-
 add_task(async function test_optional_only_in_optional_permissions_mv3() {
   await test_optional_only_in_optional_permissions(3);
 });
@@ -204,8 +198,6 @@ add_task(
           // Note: cookies permission does not have a permission warning.
           "cookies",
           // Optional-only permission:
-          "trialML",
-          // Optional-only permission:
           "userScripts",
           // Regular permission with warning:
           "webNavigation",
@@ -217,7 +209,7 @@ add_task(
       },
       async background() {
         const ERROR_ONLY_ONE_PERM_ALLOWED =
-          "Cannot request permission trialML with another permission";
+          "Cannot request permission userScripts with another permission";
 
         async function testPermissionsRequest(permissions) {
           return new Promise(resolve => {
@@ -228,45 +220,30 @@ add_task(
         }
 
         await browser.test.assertRejects(
-          testPermissionsRequest({ permissions: ["webNavigation", "trialML"] }),
+          testPermissionsRequest({
+            permissions: ["webNavigation", "userScripts"],
+          }),
           ERROR_ONLY_ONE_PERM_ALLOWED,
           "Should reject regular permission + optional-only permission"
         );
 
         await browser.test.assertRejects(
-          testPermissionsRequest({ permissions: ["trialML", "cookies"] }),
+          testPermissionsRequest({ permissions: ["userScripts", "cookies"] }),
           ERROR_ONLY_ONE_PERM_ALLOWED,
           "Should reject optional-only permission + permission without warning"
         );
 
         await browser.test.assertRejects(
-          testPermissionsRequest({ permissions: ["trialML", "webNavigation"] }),
+          testPermissionsRequest({
+            permissions: ["userScripts", "webNavigation"],
+          }),
           ERROR_ONLY_ONE_PERM_ALLOWED,
           "Should reject optional-only permissions + regular permission"
         );
 
         await browser.test.assertRejects(
-          testPermissionsRequest({ permissions: ["trialML", "userScripts"] }),
-          ERROR_ONLY_ONE_PERM_ALLOWED,
-          "Should reject optional-only permissions (trialML, userScripts)"
-        );
-
-        // The UI logic (isUserScriptsRequest in ExtensionsUI.sys.mjs) assumes
-        // that "userScripts" is the only permission if present in a permission
-        // request. That is the case because "userScripts" is an
-        // OptionalOnlyPermission, which the following check confirms:
-        await browser.test.assertRejects(
-          testPermissionsRequest({ permissions: ["userScripts", "trialML"] }),
-          // Note: this is comparable to the ["trialML", "userScripts"] test
-          // above, but the error message differs because the message includes
-          // the first optional-only permission, "userScripts" in this case.
-          "Cannot request permission userScripts with another permission",
-          "Should reject optional-only permissions (userScripts, trialML)"
-        );
-
-        await browser.test.assertRejects(
           testPermissionsRequest({
-            permissions: ["trialML"],
+            permissions: ["userScripts"],
             origins: ["https://example.com/*"],
           }),
           ERROR_ONLY_ONE_PERM_ALLOWED,
@@ -279,7 +256,7 @@ add_task(
           // Our implementation does not deduplicate, and there is no reason
           // for supporting it, so we just reject it.
           testPermissionsRequest({
-            permissions: ["trialML", "trialML"],
+            permissions: ["userScripts", "userScripts"],
             origins: ["https://example.com/*"],
           }),
           ERROR_ONLY_ONE_PERM_ALLOWED,
@@ -316,8 +293,6 @@ add_task(
         manifest_version: 3,
         optional_permissions: [
           // Optional-only permission:
-          "trialML",
-          // Optional-only permission:
           "userScripts",
         ],
         browser_specific_settings: {
@@ -336,15 +311,6 @@ add_task(
             );
           });
         }
-
-        await browser.test.assertRejects(
-          testPermissionsRequest({
-            permissions: ["trialML"],
-            data_collection: ["technicalAndInteraction"],
-          }),
-          "Cannot request permission trialML with another permission",
-          "Should reject data collection permission + optional-only permission"
-        );
 
         await browser.test.assertRejects(
           testPermissionsRequest({

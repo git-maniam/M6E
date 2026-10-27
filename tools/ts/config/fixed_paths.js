@@ -12,12 +12,6 @@
  * `tools/@types/generated/tspaths.json` try running `mach ts paths` first.
  */
 exports.fixed = {
-  "chrome://global/content/ml/NLPUtils.sys.mjs": [
-    "toolkit/components/ml/content/nlp/Utils.sys.mjs",
-  ],
-  "chrome://global/content/ml/Utils.sys.mjs": [
-    "toolkit/components/ml/content/Utils.sys.mjs",
-  ],
   "chrome://mochikit/content/tests/SimpleTest/SimpleTest.js": [
     "testing/mochitest/tests/SimpleTest/SimpleTest.js",
   ],

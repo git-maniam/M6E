@@ -19,7 +19,7 @@ add_task(async function test_headless_extraction() {
   const { PageExtractorParent } = ChromeUtils.importESModule(
     "resource://gre/actors/PageExtractorParent.sys.mjs"
   );
-  const { html } = MLTestUtils.serveHTML();
+  const { html } = PageExtractorTestUtils.serveHTML();
   const { url, cleanup } = html`
     <!DOCTYPE html>
     <html>
@@ -54,7 +54,7 @@ add_task(async function test_headless_extraction_404() {
   const { PageExtractorParent } = ChromeUtils.importESModule(
     "resource://gre/actors/PageExtractorParent.sys.mjs"
   );
-  const { html } = MLTestUtils.serveHTML({ code: 404 });
+  const { html } = PageExtractorTestUtils.serveHTML({ code: 404 });
   const { url, cleanup } = html`
     <!DOCTYPE html>
     <html>
@@ -94,7 +94,7 @@ add_task(async function test_headless_extraction_never_loads() {
     set: [["browser.ml.pageExtractor.headlessTimeoutMs", 500]],
   });
 
-  const { url, cleanup } = MLTestUtils.serveStalledPage();
+  const { url, cleanup } = PageExtractorTestUtils.serveStalledPage();
   await Assert.rejects(
     PageExtractorParent.getHeadlessExtractor({
       urlString: url,
@@ -574,7 +574,7 @@ add_task(async function test_headless_extraction_settle_delay() {
   );
   const SETTLE_DELAY_MS = 150;
   const NEVER_MS = 60 * 60 * 1000;
-  const { html } = MLTestUtils.serveHTML();
+  const { html } = PageExtractorTestUtils.serveHTML();
   // Each server answers a single request, so every load gets its own page.
   const readLatePage = async (lateContentMs, settleDelayMs) => {
     const { url, cleanup } = html`
@@ -622,7 +622,7 @@ add_task(
         ["browser.ml.pageExtractor.headlessTimeoutMs", HEADLESS_TIMEOUT_MS],
       ],
     });
-    const { url, cleanup } = MLTestUtils.serveStalledPage();
+    const { url, cleanup } = PageExtractorTestUtils.serveStalledPage();
 
     try {
       const start = ChromeUtils.now();
@@ -660,7 +660,7 @@ add_task(async function test_headless_extraction_settle_delay_abort() {
     "resource://gre/actors/PageExtractorParent.sys.mjs"
   );
   const SETTLE_DELAY_MS = 60 * 60 * 1000;
-  const { html } = MLTestUtils.serveHTML();
+  const { html } = PageExtractorTestUtils.serveHTML();
   const { url, cleanup } = html`<div>A page that never settles</div>`;
   const controller = new AbortController();
 

@@ -20,10 +20,9 @@
  *   - Host viability is checked first: IP literals, single-label hosts, and
  *     reserved, special-use or private-use intranet suffixes yield
  *     { none, null, host-unusable } (no CTA).
- *   - Keywords are extracted from the path: the in-tree CountVectorizer does the
- *     tokenizing only (lowercasing, digit stripping, Unicode-aware splitting)
- *     with its stopword filtering disabled, and we apply our own stopword list
- *     (SEARCH_CTA_STOP_WORDS, forked from the shared list; see bug 2057648).
+ *   - Keywords are extracted from the path: tokenizing is lowercasing, digit
+ *     stripping and splitting on non-word characters, and we apply our own
+ *     stopword list (SEARCH_CTA_STOP_WORDS; see bug 2057648).
  *     When the path yields keywords, the query leads with the host's tokens
  *     (non-www subdomains kept, public suffix dropped) so it is anchored to the
  *     site, followed by the path's, capped at MAX_SEARCH_KEYWORDS. The host's
@@ -37,12 +36,6 @@
  */
 
 import { SEARCH_CTA_STOP_WORDS } from "resource://gre/modules/URLKeywordStopWords.sys.mjs";
-
-const lazy = {};
-
-ChromeUtils.defineESModuleGetters(lazy, {
-  CountVectorizer: "chrome://global/content/ml/NLPUtils.sys.mjs",
-});
 
 /**
  * What the caller should do with the failed URL. "keywords" and "host" both
@@ -94,8 +87,7 @@ const RESERVED_SUFFIXES = new Set([
 ]);
 
 // Everything removed from derived keywords: function words plus URL-structure
-// words, both carried by our forked list. Built once at load; the CTA
-// deliberately does not use CountVectorizer's shared stopwords (bug 2057648).
+// words, both carried by our list. Built once at load (bug 2057648).
 const STOP_WORDS = new Set(SEARCH_CTA_STOP_WORDS);
 
 /**
@@ -142,20 +134,19 @@ function getRegistrableDomain(uri) {
 }
 
 /**
- * Tokenize a string into ordered, de-duplicated keywords. CountVectorizer does
- * the tokenizing only (lowercasing, digit stripping, Unicode-aware splitting)
- * with its stopword filtering disabled; stopwords are then removed with our own
- * STOP_WORDS list.
+ * Tokenize a string into ordered, de-duplicated keywords: digits are removed,
+ * the text is split on non-word characters and lowercased, and stopwords are
+ * removed with STOP_WORDS.
  *
  * @param {string} text The text to tokenize.
  * @returns {string[]} Keywords in first-appearance order.
  */
 function keywordsFrom(text) {
-  // Pass an empty stopword arg so CountVectorizer acts as a pure tokenizer; we
-  // own the stopword filtering (bug 2057648).
-  const cv = new lazy.CountVectorizer([]);
-  cv.fit([text]);
-  return cv.getFeatureNamesOut().filter(word => word && !STOP_WORDS.has(word));
+  const tokens = text
+    .replace(/[0-9]/g, "")
+    .split(/\W+/)
+    .map(token => token.toLowerCase());
+  return [...new Set(tokens)].filter(word => word && !STOP_WORDS.has(word));
 }
 
 /**

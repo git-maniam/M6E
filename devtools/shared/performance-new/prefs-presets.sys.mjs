@@ -85,11 +85,6 @@ export const presets = {
       "Renderer",
       "SwComposite",
       "DOM Worker",
-      // On-device machine learning threads:
-      "onnx_worker",
-      "llama.cpp",
-      "Parakeet",
-      "TextGenerator",
     ],
     duration: 0,
     l10nIds: {
@@ -181,32 +176,6 @@ export const presets = {
       devtools: {
         label: "perftools-presets-media-label",
         description: "perftools-presets-media-description2",
-      },
-    },
-  },
-  ml: {
-    entries: 128 * 1024 * 1024,
-    interval: 1,
-    features: ["js", "stackwalk", "ipcmessages", "processcpu", "memory"],
-    threads: [
-      "BackgroundThreadPool",
-      "DOM Worker",
-      "GeckoMain",
-      "IPDL Background",
-      "onnx_worker",
-      "llama.cpp",
-      "Parakeet",
-      "TextGenerator",
-    ],
-    duration: 0,
-    l10nIds: {
-      popup: {
-        label: "profiler-popup-presets-ml-label",
-        description: "profiler-popup-presets-ml-description",
-      },
-      devtools: {
-        label: "perftools-presets-ml-label",
-        description: "perftools-presets-ml-description2",
       },
     },
   },

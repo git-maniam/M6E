@@ -2602,54 +2602,6 @@ interface ImportNodeOptions {
     selfOnly?: boolean;
 }
 
-interface InferenceSessionRunOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionRunOptions_logSeverityLevel) --> */
-    logSeverityLevel?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionRunOptions_logVerbosityLevel) --> */
-    logVerbosityLevel?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionRunOptions_tag) --> */
-    tag?: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionRunOptions_terminate) --> */
-    terminate?: boolean;
-}
-
-interface InferenceSessionSessionOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_enableCpuMemArena) --> */
-    enableCpuMemArena?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_enableGraphCapture) --> */
-    enableGraphCapture?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_enableMemPattern) --> */
-    enableMemPattern?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_enableProfiling) --> */
-    enableProfiling?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_executionMode) --> */
-    executionMode?: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_executionProviders) --> */
-    executionProviders?: any[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_extra) --> */
-    extra?: Record<string, any>;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_freeDimensionOverrides) --> */
-    freeDimensionOverrides?: Record<string, number>;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_graphOptimizationLevel) --> */
-    graphOptimizationLevel?: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_interOpNumThreads) --> */
-    interOpNumThreads?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_intraOpNumThreads) --> */
-    intraOpNumThreads?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_logId) --> */
-    logId?: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_logSeverityLevel) --> */
-    logSeverityLevel?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_logVerbosityLevel) --> */
-    logVerbosityLevel?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_optimizedModelFilePath) --> */
-    optimizedModelFilePath?: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_preferredOutputLocation) --> */
-    preferredOutputLocation?: TensorDataLocation | Record<string, TensorDataLocation>;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSessionSessionOptions_profileFilePrefix) --> */
-    profileFilePrefix?: string;
-}
-
 interface InputEventInit extends UIEventInit {
     /** <!-- binding_to(idl, attribute, WEBIDL_InputEventInit_data) --> */
     data?: string | null;
@@ -2949,157 +2901,6 @@ interface LibcConstants {
     PR_CAPBSET_READ?: number;
     /** <!-- binding_to(idl, attribute, WEBIDL_LibcConstants_WNOHANG) --> */
     WNOHANG?: number;
-}
-
-interface LlamaChatMessage {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatMessage_content) --> */
-    content: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatMessage_role) --> */
-    role: string;
-}
-
-interface LlamaChatOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_deTokenizationOptions) --> */
-    deTokenizationOptions?: LlamaDeTokenizationOptions;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_maxGeneratedTokens) --> */
-    maxGeneratedTokens?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_minOutputBufferSize) --> */
-    minOutputBufferSize?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_prompt) --> */
-    prompt: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_samplers) --> */
-    samplers?: LlamaSamplerConfig[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_stopOnEndOfGenerationTokens) --> */
-    stopOnEndOfGenerationTokens?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_stopTokens) --> */
-    stopTokens?: number[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaChatOptions_tokenizationOptions) --> */
-    tokenizationOptions?: LlamaTokenizationOptions;
-}
-
-interface LlamaContextOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_flashAttn) --> */
-    flashAttn?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_kCacheDtype) --> */
-    kCacheDtype?: LlamaKVCacheDtype;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_nBatch) --> */
-    nBatch?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_nCtx) --> */
-    nCtx?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_nSeqMax) --> */
-    nSeqMax?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_nThreads) --> */
-    nThreads: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_nThreadsBatch) --> */
-    nThreadsBatch: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_nUbatch) --> */
-    nUbatch?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_noPerf) --> */
-    noPerf?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_offloadKqv) --> */
-    offloadKqv?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_opOffload) --> */
-    opOffload?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_swaFull) --> */
-    swaFull?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaContextOptions_vCacheDtype) --> */
-    vCacheDtype?: LlamaKVCacheDtype;
-}
-
-interface LlamaDeTokenizationOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaDeTokenizationOptions_maxCharsPerToken) --> */
-    maxCharsPerToken?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaDeTokenizationOptions_renderSpecialTokens) --> */
-    renderSpecialTokens?: boolean;
-}
-
-interface LlamaFormatChatOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaFormatChatOptions_addAssistant) --> */
-    addAssistant?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaFormatChatOptions_messages) --> */
-    messages: LlamaChatMessage[];
-}
-
-interface LlamaLogitBias {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaLogitBias_bias) --> */
-    bias: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaLogitBias_token) --> */
-    token: number;
-}
-
-interface LlamaModelOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaModelOptions_checkTensors) --> */
-    checkTensors?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaModelOptions_context) --> */
-    context?: LlamaContextOptions;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaModelOptions_nGpuLayers) --> */
-    nGpuLayers?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaModelOptions_useMlock) --> */
-    useMlock?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaModelOptions_useMmap) --> */
-    useMmap?: boolean;
-}
-
-interface LlamaSamplerConfig {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_dryAllowedLength) --> */
-    dryAllowedLength?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_dryBase) --> */
-    dryBase?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_dryMultiplier) --> */
-    dryMultiplier?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_dryPenaltyLastN) --> */
-    dryPenaltyLastN?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_dynatempExponent) --> */
-    dynatempExponent?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_dynatempRange) --> */
-    dynatempRange?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_logitBias) --> */
-    logitBias?: LlamaLogitBias[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_minKeep) --> */
-    minKeep?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_minP) --> */
-    minP?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_mirostat) --> */
-    mirostat?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_mirostatEta) --> */
-    mirostatEta?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_mirostatTau) --> */
-    mirostatTau?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_noPerf) --> */
-    noPerf?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_penaltyFreq) --> */
-    penaltyFreq?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_penaltyLastN) --> */
-    penaltyLastN?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_penaltyPresent) --> */
-    penaltyPresent?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_penaltyRepeat) --> */
-    penaltyRepeat?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_seed) --> */
-    seed?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_temp) --> */
-    temp?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_topK) --> */
-    topK?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_topNSigma) --> */
-    topNSigma?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_topP) --> */
-    topP?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_typP) --> */
-    typP?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_type) --> */
-    type: LlamaSamplerType;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_xtcProbability) --> */
-    xtcProbability?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaSamplerConfig_xtcThreshold) --> */
-    xtcThreshold?: number;
-}
-
-interface LlamaTokenizationOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaTokenizationOptions_addBosAndEos) --> */
-    addBosAndEos?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaTokenizationOptions_parseSpecilControlTokens) --> */
-    parseSpecilControlTokens?: boolean;
 }
 
 interface LoadURIOptions {
@@ -6487,46 +6288,6 @@ interface SocketOptions {
     useSecureTransport?: boolean;
 }
 
-interface SpeechRecognitionErrorEventInit extends EventInit {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionErrorEventInit_error) --> */
-    error: SpeechRecognitionErrorCode;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionErrorEventInit_message) --> */
-    message?: string;
-}
-
-interface SpeechRecognitionEventInit extends EventInit {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEventInit_emma) --> */
-    emma?: Document | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEventInit_interpretation) --> */
-    interpretation?: any;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEventInit_resultIndex) --> */
-    resultIndex?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEventInit_results) --> */
-    results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionOptions_langs) --> */
-    langs: string[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionOptions_processLocally) --> */
-    processLocally?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionOptions_quality) --> */
-    quality?: SpeechRecognitionQuality;
-}
-
-interface SpeechRecognitionPerfStats {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPerfStats_engineReadyDuration) --> */
-    engineReadyDuration?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPerfStats_fedAudioDuration) --> */
-    fedAudioDuration?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPerfStats_finalizationDuration) --> */
-    finalizationDuration?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPerfStats_firstResultDuration) --> */
-    firstResultDuration?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPerfStats_inferenceDuration) --> */
-    inferenceDuration?: number;
-}
-
 interface SpeechSynthesisErrorEventInit extends SpeechSynthesisEventInit {
     /** <!-- binding_to(idl, attribute, WEBIDL_SpeechSynthesisErrorEventInit_error) --> */
     error: SpeechSynthesisErrorCode;
@@ -6825,112 +6586,6 @@ interface TextFormatInit {
 interface TextFormatUpdateEventInit extends EventInit {
     /** <!-- binding_to(idl, attribute, WEBIDL_TextFormatUpdateEventInit_textFormats) --> */
     textFormats?: TextFormat[];
-}
-
-interface TextGenerationLogitBias {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationLogitBias_bias) --> */
-    bias: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationLogitBias_token) --> */
-    token: number;
-}
-
-interface TextGenerationMessage {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationMessage_content) --> */
-    content: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationMessage_role) --> */
-    role: TextGenerationRole;
-}
-
-interface TextGenerationRequest {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationRequest_bufferLength) --> */
-    bufferLength?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationRequest_maxTokens) --> */
-    maxTokens?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationRequest_messages) --> */
-    messages: TextGenerationMessage[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationRequest_samplers) --> */
-    samplers?: TextGenerationSampler[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationRequest_stopOnEndOfGenerationTokens) --> */
-    stopOnEndOfGenerationTokens?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationRequest_stopTokens) --> */
-    stopTokens?: number[];
-}
-
-interface TextGenerationResourceSnapshot {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResourceSnapshot_cpuTimeMs) --> */
-    cpuTimeMs: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResourceSnapshot_memoryBytes) --> */
-    memoryBytes: number;
-}
-
-interface TextGenerationResources {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResources_after) --> */
-    after: TextGenerationResourceSnapshot;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResources_before) --> */
-    before: TextGenerationResourceSnapshot;
-}
-
-interface TextGenerationResult {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResult_content) --> */
-    content: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResult_reason) --> */
-    reason: TextGenerationFinishReason;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResult_resources) --> */
-    resources: TextGenerationResources;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationResult_usage) --> */
-    usage: TextGenerationUsage;
-}
-
-interface TextGenerationSampler {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationSampler_logitBias) --> */
-    logitBias?: TextGenerationLogitBias[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationSampler_seed) --> */
-    seed?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationSampler_temp) --> */
-    temp?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationSampler_topK) --> */
-    topK?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationSampler_topP) --> */
-    topP?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationSampler_type) --> */
-    type: TextGenerationSamplerType;
-}
-
-interface TextGenerationTimings {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationTimings_decodeMs) --> */
-    decodeMs: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationTimings_prefillMs) --> */
-    prefillMs: number;
-}
-
-interface TextGenerationUsage {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationUsage_generatedTokens) --> */
-    generatedTokens: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationUsage_promptCharacters) --> */
-    promptCharacters: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationUsage_promptTokens) --> */
-    promptTokens: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerationUsage_timings) --> */
-    timings: TextGenerationTimings;
-}
-
-interface TextGeneratorCreateOptions {
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_batchSize) --> */
-    batchSize?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_contextSize) --> */
-    contextSize?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_featureId) --> */
-    featureId?: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_flashAttn) --> */
-    flashAttn?: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_kvCacheDtype) --> */
-    kvCacheDtype?: TextGenerationKVCacheDtype;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_numThreads) --> */
-    numThreads?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_numThreadsDecoding) --> */
-    numThreadsDecoding?: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGeneratorCreateOptions_ubatchSize) --> */
-    ubatchSize?: number;
 }
 
 interface TextUpdateEventInit extends EventInit {
@@ -14783,8 +14438,6 @@ interface Document extends Node, ARIANotifyMixin, DocumentOrShadowRoot, FontFace
     createEvent(eventInterface: "ScrollAreaEvent"): ScrollAreaEvent;
     createEvent(eventInterface: "SecurityPolicyViolationEvent"): SecurityPolicyViolationEvent;
     createEvent(eventInterface: "SimpleGestureEvent"): SimpleGestureEvent;
-    createEvent(eventInterface: "SpeechRecognitionErrorEvent"): SpeechRecognitionErrorEvent;
-    createEvent(eventInterface: "SpeechRecognitionEvent"): SpeechRecognitionEvent;
     createEvent(eventInterface: "SpeechSynthesisErrorEvent"): SpeechSynthesisErrorEvent;
     createEvent(eventInterface: "SpeechSynthesisEvent"): SpeechSynthesisEvent;
     createEvent(eventInterface: "StorageEvent"): StorageEvent;
@@ -22169,33 +21822,6 @@ declare var ImageTrackList: {
     isInstance: IsInstance<ImageTrackList>;
 };
 
-/** <!-- binding_to(idl, class, WEBIDL_InferenceSession) --> */
-interface InferenceSession {
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSession_inputNames) --> */
-    readonly inputNames: string[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSession_outputNames) --> */
-    readonly outputNames: string[];
-    /** <!-- binding_to(idl, method, WEBIDL_InferenceSession_endProfiling) --> */
-    endProfiling(): void;
-    /** <!-- binding_to(idl, method, WEBIDL_InferenceSession_release) --> */
-    release(): Promise<void>;
-    /** <!-- binding_to(idl, method, WEBIDL_InferenceSession_run) --> */
-    run(feeds: InferenceSessionFeedsType, options?: InferenceSessionRunOptions): Promise<InferenceSessionReturnType>;
-    /** <!-- binding_to(idl, method, WEBIDL_InferenceSession_startProfiling) --> */
-    startProfiling(): void;
-}
-
-declare var InferenceSession: {
-    prototype: InferenceSession;
-    new(): InferenceSession;
-    /** <!-- binding_to(idl, attribute, WEBIDL_InferenceSession_isInstance) --> */
-    isInstance: IsInstance<InferenceSession>;
-    /** <!-- binding_to(idl, method, WEBIDL_InferenceSession_create) --> */
-    create(uriOrBuffer: string | Uint8Array, options?: InferenceSessionSessionOptions): Promise<InferenceSession>;
-    /** <!-- binding_to(idl, method, WEBIDL_InferenceSession_isAvailable) --> */
-    isAvailable(): boolean;
-};
-
 /** <!-- binding_to(idl, class, WEBIDL_InputEvent) --> */
 interface InputEvent extends UIEvent {
     /** <!-- binding_to(idl, attribute, WEBIDL_InputEvent_data) --> */
@@ -23830,23 +23456,6 @@ interface LinkStyle {
     /** <!-- binding_to(idl, attribute, WEBIDL_LinkStyle_sheet) --> */
     readonly sheet: StyleSheet | null;
 }
-
-/** <!-- binding_to(idl, class, WEBIDL_LlamaRunner) --> */
-interface LlamaRunner {
-    /** <!-- binding_to(idl, method, WEBIDL_LlamaRunner_createGenerationStream) --> */
-    createGenerationStream(options: LlamaChatOptions): ReadableStream;
-    /** <!-- binding_to(idl, method, WEBIDL_LlamaRunner_formatChat) --> */
-    formatChat(options: LlamaFormatChatOptions): Promise<string>;
-    /** <!-- binding_to(idl, method, WEBIDL_LlamaRunner_initialize) --> */
-    initialize(options: LlamaModelOptions, modelBlob: Blob): Promise<void>;
-}
-
-declare var LlamaRunner: {
-    prototype: LlamaRunner;
-    new(): LlamaRunner;
-    /** <!-- binding_to(idl, attribute, WEBIDL_LlamaRunner_isInstance) --> */
-    isInstance: IsInstance<LlamaRunner>;
-};
 
 /** <!-- binding_to(idl, class, WEBIDL_LoadContextMixin) --> */
 interface LoadContextMixin {
@@ -33129,240 +32738,6 @@ declare var SourceBufferList: {
     isInstance: IsInstance<SourceBufferList>;
 };
 
-/** <!-- binding_to(idl, class, WEBIDL_SpeechGrammar) --> */
-interface SpeechGrammar {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechGrammar_src) --> */
-    src: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechGrammar_weight) --> */
-    weight: number;
-}
-
-declare var SpeechGrammar: {
-    prototype: SpeechGrammar;
-    new(): SpeechGrammar;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechGrammar_isInstance) --> */
-    isInstance: IsInstance<SpeechGrammar>;
-};
-
-/** <!-- binding_to(idl, class, WEBIDL_SpeechGrammarList) --> */
-interface SpeechGrammarList {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechGrammarList_length) --> */
-    readonly length: number;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechGrammarList_addFromString) --> */
-    addFromString(string: string, weight?: number): void;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechGrammarList_addFromURI) --> */
-    addFromURI(src: string, weight?: number): void;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechGrammarList_item) --> */
-    item(index: number): SpeechGrammar | null;
-    [index: number]: SpeechGrammar;
-}
-
-declare var SpeechGrammarList: {
-    prototype: SpeechGrammarList;
-    new(): SpeechGrammarList;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechGrammarList_isInstance) --> */
-    isInstance: IsInstance<SpeechGrammarList>;
-};
-
-interface SpeechRecognitionEventMap {
-    "audioend": Event;
-    "audiostart": Event;
-    "end": Event;
-    "error": Event;
-    "nomatch": Event;
-    "result": Event;
-    "soundend": Event;
-    "soundstart": Event;
-    "speechend": Event;
-    "speechstart": Event;
-    "start": Event;
-}
-
-/**
- * <!-- binding_to(idl, class, WEBIDL_SpeechRecognition) -->
- * Available only in secure contexts.
- */
-interface SpeechRecognition extends EventTarget {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_continuous) --> */
-    continuous: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_grammars) --> */
-    grammars: SpeechGrammarList;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_interimResults) --> */
-    interimResults: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_lang) --> */
-    lang: string;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_maxAlternatives) --> */
-    maxAlternatives: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onaudioend) --> */
-    onaudioend: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onaudiostart) --> */
-    onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onend) --> */
-    onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onerror) --> */
-    onerror: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onnomatch) --> */
-    onnomatch: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onresult) --> */
-    onresult: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onsoundend) --> */
-    onsoundend: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onsoundstart) --> */
-    onsoundstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onspeechend) --> */
-    onspeechend: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onspeechstart) --> */
-    onspeechstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_onstart) --> */
-    onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_phrases) --> */
-    phrases: SpeechRecognitionPhrase[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_processLocally) --> */
-    processLocally: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_unspokenPunctuation) --> */
-    unspokenPunctuation: boolean;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognition_abort) --> */
-    abort(): void;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognition_getPerfStats) --> */
-    getPerfStats(): Promise<SpeechRecognitionPerfStats>;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognition_start) --> */
-    start(): void;
-    start(audioTrack: MediaStreamTrack): void;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognition_stop) --> */
-    stop(): void;
-    addEventListener<K extends keyof SpeechRecognitionEventMap>(type: K, listener: (this: SpeechRecognition, ev: SpeechRecognitionEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
-    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
-    removeEventListener<K extends keyof SpeechRecognitionEventMap>(type: K, listener: (this: SpeechRecognition, ev: SpeechRecognitionEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
-    removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
-}
-
-declare var SpeechRecognition: {
-    prototype: SpeechRecognition;
-    new(): SpeechRecognition;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognition_isInstance) --> */
-    isInstance: IsInstance<SpeechRecognition>;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognition_available) --> */
-    available(options: SpeechRecognitionOptions): Promise<AvailabilityStatus>;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognition_install) --> */
-    install(options: SpeechRecognitionOptions): Promise<boolean>;
-};
-
-/**
- * <!-- binding_to(idl, class, WEBIDL_SpeechRecognitionAlternative) -->
- * Available only in secure contexts.
- */
-interface SpeechRecognitionAlternative {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionAlternative_confidence) --> */
-    readonly confidence: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionAlternative_transcript) --> */
-    readonly transcript: string;
-}
-
-declare var SpeechRecognitionAlternative: {
-    prototype: SpeechRecognitionAlternative;
-    new(): SpeechRecognitionAlternative;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionAlternative_isInstance) --> */
-    isInstance: IsInstance<SpeechRecognitionAlternative>;
-};
-
-/**
- * <!-- binding_to(idl, class, WEBIDL_SpeechRecognitionErrorEvent) -->
- * Available only in secure contexts.
- */
-interface SpeechRecognitionErrorEvent extends Event {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionErrorEvent_error) --> */
-    readonly error: SpeechRecognitionErrorCode;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionErrorEvent_message) --> */
-    readonly message: string;
-}
-
-declare var SpeechRecognitionErrorEvent: {
-    prototype: SpeechRecognitionErrorEvent;
-    new(type: string, eventInitDict: SpeechRecognitionErrorEventInit): SpeechRecognitionErrorEvent;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionErrorEvent_isInstance) --> */
-    isInstance: IsInstance<SpeechRecognitionErrorEvent>;
-};
-
-/**
- * <!-- binding_to(idl, class, WEBIDL_SpeechRecognitionEvent) -->
- * Available only in secure contexts.
- */
-interface SpeechRecognitionEvent extends Event {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEvent_emma) --> */
-    readonly emma: Document | null;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEvent_interpretation) --> */
-    readonly interpretation: any;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEvent_resultIndex) --> */
-    readonly resultIndex: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEvent_results) --> */
-    readonly results: SpeechRecognitionResultList | null;
-}
-
-declare var SpeechRecognitionEvent: {
-    prototype: SpeechRecognitionEvent;
-    new(type: string, eventInitDict: SpeechRecognitionEventInit): SpeechRecognitionEvent;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionEvent_isInstance) --> */
-    isInstance: IsInstance<SpeechRecognitionEvent>;
-};
-
-/**
- * <!-- binding_to(idl, class, WEBIDL_SpeechRecognitionPhrase) -->
- * Available only in secure contexts.
- */
-interface SpeechRecognitionPhrase {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPhrase_boost) --> */
-    readonly boost: number;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPhrase_phrase) --> */
-    readonly phrase: string;
-}
-
-declare var SpeechRecognitionPhrase: {
-    prototype: SpeechRecognitionPhrase;
-    new(phrase: string, boost?: number): SpeechRecognitionPhrase;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionPhrase_isInstance) --> */
-    isInstance: IsInstance<SpeechRecognitionPhrase>;
-};
-
-/**
- * <!-- binding_to(idl, class, WEBIDL_SpeechRecognitionResult) -->
- * Available only in secure contexts.
- */
-interface SpeechRecognitionResult {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionResult_isFinal) --> */
-    readonly isFinal: boolean;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionResult_length) --> */
-    readonly length: number;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognitionResult_item) --> */
-    item(index: number): SpeechRecognitionAlternative | null;
-    [index: number]: SpeechRecognitionAlternative;
-}
-
-declare var SpeechRecognitionResult: {
-    prototype: SpeechRecognitionResult;
-    new(): SpeechRecognitionResult;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionResult_isInstance) --> */
-    isInstance: IsInstance<SpeechRecognitionResult>;
-};
-
-/**
- * <!-- binding_to(idl, class, WEBIDL_SpeechRecognitionResultList) -->
- * Available only in secure contexts.
- */
-interface SpeechRecognitionResultList {
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionResultList_length) --> */
-    readonly length: number;
-    /** <!-- binding_to(idl, method, WEBIDL_SpeechRecognitionResultList_item) --> */
-    item(index: number): SpeechRecognitionResult | null;
-    [index: number]: SpeechRecognitionResult;
-}
-
-declare var SpeechRecognitionResultList: {
-    prototype: SpeechRecognitionResultList;
-    new(): SpeechRecognitionResultList;
-    /** <!-- binding_to(idl, attribute, WEBIDL_SpeechRecognitionResultList_isInstance) --> */
-    isInstance: IsInstance<SpeechRecognitionResultList>;
-};
-
 interface SpeechSynthesisEventMap {
     "voiceschanged": Event;
 }
@@ -34088,29 +33463,6 @@ declare var TaskSignal: {
     any(signals: AbortSignal[], init?: TaskSignalAnyInit): TaskSignal;
 };
 
-/** <!-- binding_to(idl, class, WEBIDL_Tensor) --> */
-interface Tensor {
-    /** <!-- binding_to(idl, attribute, WEBIDL_Tensor_data) --> */
-    readonly data: ArrayBufferView;
-    /** <!-- binding_to(idl, attribute, WEBIDL_Tensor_dims) --> */
-    dims: number[];
-    /** <!-- binding_to(idl, attribute, WEBIDL_Tensor_location) --> */
-    readonly location: TensorDataLocation;
-    /** <!-- binding_to(idl, attribute, WEBIDL_Tensor_type) --> */
-    readonly type: string;
-    /** <!-- binding_to(idl, method, WEBIDL_Tensor_dispose) --> */
-    dispose(): void;
-    /** <!-- binding_to(idl, method, WEBIDL_Tensor_getData) --> */
-    getData(releaseData?: boolean): Promise<any>;
-}
-
-declare var Tensor: {
-    prototype: Tensor;
-    new(type: string, data: ArrayBufferView | any[], dims: number[]): Tensor;
-    /** <!-- binding_to(idl, attribute, WEBIDL_Tensor_isInstance) --> */
-    isInstance: IsInstance<Tensor>;
-};
-
 /** <!-- binding_to(idl, class, WEBIDL_TestChromeOnlyInterface) --> */
 interface TestChromeOnlyInterface {
 }
@@ -34754,27 +34106,6 @@ declare var TextFormatUpdateEvent: {
     new(type: string, options?: TextFormatUpdateEventInit): TextFormatUpdateEvent;
     /** <!-- binding_to(idl, attribute, WEBIDL_TextFormatUpdateEvent_isInstance) --> */
     isInstance: IsInstance<TextFormatUpdateEvent>;
-};
-
-/** <!-- binding_to(idl, class, WEBIDL_TextGenerator) --> */
-interface TextGenerator {
-    /** <!-- binding_to(idl, method, WEBIDL_TextGenerator_cancel) --> */
-    cancel(): void;
-    /** <!-- binding_to(idl, method, WEBIDL_TextGenerator_clear) --> */
-    clear(): void;
-    /** <!-- binding_to(idl, method, WEBIDL_TextGenerator_generate) --> */
-    generate(request: TextGenerationRequest, onDelta?: TextGenerationDeltaCallback): Promise<TextGenerationResult>;
-    /** <!-- binding_to(idl, method, WEBIDL_TextGenerator_terminate) --> */
-    terminate(): void;
-}
-
-declare var TextGenerator: {
-    prototype: TextGenerator;
-    new(): TextGenerator;
-    /** <!-- binding_to(idl, attribute, WEBIDL_TextGenerator_isInstance) --> */
-    isInstance: IsInstance<TextGenerator>;
-    /** <!-- binding_to(idl, method, WEBIDL_TextGenerator_create) --> */
-    create(model: Blob, options?: TextGeneratorCreateOptions): Promise<TextGenerator>;
 };
 
 /** <!-- binding_to(idl, class, WEBIDL_TextMetrics) --> */
@@ -43737,11 +43068,6 @@ interface TestThrowingCallback {
     (): void;
 }
 
-interface TextGenerationDeltaCallback {
-    /** <!-- binding_to(idl, method, WEBIDL_TextGenerationDeltaCallback) --> */
-    (text: string): void;
-}
-
 interface ToolExecuteCallback {
     /** <!-- binding_to(idl, method, WEBIDL_ToolExecuteCallback) --> */
     (input: any, client: ModelContextClient): any;
@@ -43978,15 +43304,6 @@ declare var Image: {
 };
 declare var Option: {
     new(text?: string, value?: string, defaultSelected?: boolean, selected?: boolean): HTMLOptionElement;
-};
-declare var webkitSpeechGrammar: {
-    new(): SpeechGrammar;
-};
-declare var webkitSpeechGrammarList: {
-    new(): SpeechGrammarList;
-};
-declare var webkitSpeechRecognition: {
-    new(): SpeechRecognition;
 };
 /** <!-- binding_to(idl, attribute, WEBIDL_Window_Glean) --> */
 declare var Glean: GleanImpl;
@@ -44754,12 +44071,6 @@ type HeadersInit = string[][] | Record<string, string>;
 type ImageBitmapSource = CanvasImageSource | Blob | CanvasRenderingContext2D | ImageData;
 /** <!-- binding_to(idl, class, WEBIDL_ImageBufferSource) --> */
 type ImageBufferSource = AllowSharedBufferSource | ReadableStream;
-/** <!-- binding_to(idl, class, WEBIDL_InferenceSessionFeedsType) --> */
-type InferenceSessionFeedsType = InferenceSessionTensorMapType;
-/** <!-- binding_to(idl, class, WEBIDL_InferenceSessionReturnType) --> */
-type InferenceSessionReturnType = InferenceSessionTensorMapType;
-/** <!-- binding_to(idl, class, WEBIDL_InferenceSessionTensorMapType) --> */
-type InferenceSessionTensorMapType = Record<string, Tensor>;
 /** <!-- binding_to(idl, class, WEBIDL_InputStream) --> */
 type InputStream = nsIInputStream;
 /** <!-- binding_to(idl, class, WEBIDL_Int32List) --> */
@@ -44902,7 +44213,6 @@ type AudioSessionType = "ambient" | "auto" | "play-and-record" | "playback" | "t
 type AutoKeyword = "auto";
 type AutoplayPolicy = "allowed" | "allowed-muted" | "disallowed";
 type AutoplayPolicyMediaType = "audiocontext" | "mediaelement";
-type AvailabilityStatus = "available" | "downloadable" | "downloading" | "unavailable";
 type AvcBitstreamFormat = "annexb" | "avc";
 type Base64URLDecodePadding = "ignore" | "reject" | "require";
 type BinaryType = "arraybuffer" | "blob";
@@ -45029,8 +44339,6 @@ type JSRFPTarget = "CSSPrefersColorScheme" | "HttpUserAgent" | "JSLocalePrompt" 
 type L10nFileSourceHasFileStatus = "missing" | "present" | "unknown";
 type LatencyMode = "quality" | "realtime";
 type LineAlignSetting = "center" | "end" | "start";
-type LlamaKVCacheDtype = "f16" | "f32" | "q4_0" | "q4_1" | "q5_0" | "q5_1" | "q8_0";
-type LlamaSamplerType = "dist" | "dry" | "infill" | "logit-bias" | "min-p" | "mirostat" | "penalties" | "temperature" | "temperature-ext" | "top-k" | "top-n-sigma" | "top-p" | "typical" | "xtc";
 type LockMode = "exclusive" | "shared";
 type LoginStatus = "logged-in" | "logged-out";
 type MIDIPortConnectionState = "closed" | "open" | "pending";
@@ -45147,8 +44455,6 @@ type ShadowRootMode = "closed" | "open";
 type SlotAssignmentMode = "manual" | "named";
 type SocketReadyState = "closed" | "closing" | "halfclosed" | "open" | "opening";
 type SourceBufferAppendMode = "segments" | "sequence";
-type SpeechRecognitionErrorCode = "aborted" | "audio-capture" | "bad-grammar" | "language-not-supported" | "network" | "no-speech" | "not-allowed" | "phrases-not-supported" | "service-not-allowed";
-type SpeechRecognitionQuality = "command" | "conversation" | "dictation";
 type SpeechSynthesisErrorCode = "audio-busy" | "audio-hardware" | "canceled" | "interrupted" | "invalid-argument" | "language-unavailable" | "network" | "synthesis-failed" | "synthesis-unavailable" | "text-too-long" | "voice-unavailable";
 type StreamFilterStatus = "closed" | "disconnected" | "failed" | "finishedtransferringdata" | "suspended" | "transferringdata" | "uninitialized";
 type StringType = "inline" | "literal" | "other" | "stringbuffer";
@@ -45156,11 +44462,6 @@ type SupportedType = "application/xhtml+xml" | "application/xml" | "image/svg+xm
 type TCPReadyState = "closed" | "closing" | "connecting" | "open";
 type TCPSocketBinaryType = "arraybuffer" | "string";
 type TaskPriority = "background" | "user-blocking" | "user-visible";
-type TensorDataLocation = "cpu" | "cpu-pinned" | "gpu-buffer" | "ml-tensor" | "none" | "texture";
-type TextGenerationFinishReason = "cancelled" | "eos" | "length" | "stop-token";
-type TextGenerationKVCacheDtype = "f16" | "f32" | "q4_0" | "q4_1" | "q5_0" | "q5_1" | "q8_0";
-type TextGenerationRole = "assistant" | "system" | "user";
-type TextGenerationSamplerType = "dist" | "logit-bias" | "temperature" | "top-k" | "top-p";
 type TextTrackKind = "captions" | "chapters" | "descriptions" | "metadata" | "subtitles";
 type TextTrackMode = "disabled" | "hidden" | "showing";
 type TouchEventsOverride = "disabled" | "enabled" | "none";
@@ -45620,18 +44921,6 @@ interface ServiceWorker {
 
 interface SourceBufferList {
     [Symbol.iterator](): IterableIterator<SourceBuffer>;
-}
-
-interface SpeechGrammarList {
-    [Symbol.iterator](): IterableIterator<SpeechGrammar>;
-}
-
-interface SpeechRecognitionResult {
-    [Symbol.iterator](): IterableIterator<SpeechRecognitionAlternative>;
-}
-
-interface SpeechRecognitionResultList {
-    [Symbol.iterator](): IterableIterator<SpeechRecognitionResult>;
 }
 
 interface StylePropertyMapReadOnly {

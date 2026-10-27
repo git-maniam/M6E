@@ -253,11 +253,6 @@ class PrefObserver {
         type: "bool",
         dispatchToParent: true,
       });
-      this.#prefs.set("browser.ml.enable", {
-        name: "browser.ml.enable",
-        type: "bool",
-        dispatchToParent: true,
-      });
       // Reaching the impression limit must not close open bars.
       this.#prefs.set(lazy.PdfJsFeaturesNotification.IMPRESSION_COUNT_PREF, {
         name: "featuresNotificationDismissed",
@@ -441,35 +436,6 @@ class ChromeActions {
     } catch (err) {
       return {};
     }
-  }
-
-  async mlDelete(data, sendResponse) {
-    const actor = getActor(this.domWindow);
-    if (!actor) {
-      sendResponse(null);
-      return;
-    }
-    const response = await actor.sendQuery("PDFJS:Parent:mlDelete", data);
-    sendResponse(response);
-  }
-
-  async mlGuess(data, sendResponse) {
-    const actor = getActor(this.domWindow);
-    if (!actor) {
-      sendResponse(null);
-      return;
-    }
-    const response = await actor.sendQuery("PDFJS:Parent:mlGuess", data);
-    sendResponse(response);
-  }
-
-  async loadAIEngine(data, sendResponse) {
-    const actor = getActor(this.domWindow);
-    if (!actor) {
-      sendResponse(null);
-      return;
-    }
-    sendResponse(await actor.sendQuery("PDFJS:Parent:loadAIEngine", data));
   }
 
   async verifyPdfSignature(data, sendResponse) {

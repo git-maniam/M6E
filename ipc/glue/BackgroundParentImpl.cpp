@@ -484,13 +484,7 @@ mozilla::ipc::IPCResult BackgroundParentImpl::RecvCreateFileSystemManagerParent(
   AssertIsInMainProcess();
   AssertIsOnBackgroundThread();
 
-  // The inference process uses ChromeWorkers which have a system principal,
-  // so system principals must be allowed there.
-  EnumSet<dom::ValidatePrincipalOptions> options;
-  if (BackgroundParent::GetRemoteType(this).IsInference()) {
-    options += dom::ValidatePrincipalOptions::AllowSystemIfLoaded;
-  }
-  if (!BackgroundParent::ValidatePrincipalInfo(this, aPrincipalInfo, options)) {
+  if (!BackgroundParent::ValidatePrincipalInfo(this, aPrincipalInfo)) {
     aResolver(NS_ERROR_FAILURE);
     return IPC_OK();
   }

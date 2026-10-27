@@ -135,7 +135,9 @@ REMOVED_PREFS = {
     "Mozilla accounts and Sync": {"identity.fxaccounts.enabled": False},
     "VPN": {"browser.ipProtection.enabled": False},
     "AI": {
-        "browser.ml.enable": False,
+        "pdfjs.enableAltText": False,
+        "pdfjs.enableGuessAltText": False,
+        "pdfjs.enableAltTextModelDownload": False,
         "browser.ai.control.default": "blocked",
         "browser.ai.control.sidebarChatbot": "blocked",
         "browser.ai.control.smartWindow": "blocked",

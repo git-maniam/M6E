@@ -206,13 +206,11 @@ linux-tests:
     - mochitest-a11y
     - mochitest-browser-a11y
     - mochitest-browser-chrome
-    - mochitest-browser-chrome-ml-models
     - mochitest-browser-media
     - mochitest-chrome
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
     - mochitest-media
-    - mochitest-speech-recognition
     - mochitest-plain
     - mochitest-plain-gpu
     - mochitest-remote
@@ -244,7 +242,6 @@ linux-2404-tsan-tests:
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
     - mochitest-media
-    - mochitest-speech-recognition
     - mochitest-plain
     - mochitest-plain-gpu
     - mochitest-remote
@@ -284,7 +281,6 @@ linux2204-wayland-tests:
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
     - mochitest-media
-    - mochitest-speech-recognition
     - mochitest-plain
     - mochitest-plain-gpu
     - mochitest-remote
@@ -364,7 +360,6 @@ windows11-25h2-tests:
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
     - mochitest-media
-    - mochitest-speech-recognition
     - mochitest-plain
     - mochitest-plain-gpu
     - mochitest-remote
@@ -459,7 +454,6 @@ macosx1500-64-tests:
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
     - mochitest-media
-    - mochitest-speech-recognition
     - mochitest-plain
     - mochitest-plain-gpu
     - mochitest-remote
@@ -497,7 +491,6 @@ macosx1500-aarch64-tests:
     - mochitest-chrome-gpu
     - mochitest-devtools-chrome
     - mochitest-media
-    - mochitest-speech-recognition
     - mochitest-plain
     - mochitest-plain-gpu
     - mochitest-remote

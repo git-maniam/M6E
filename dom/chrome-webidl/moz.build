@@ -134,10 +134,6 @@ if CONFIG["MOZ_BUILD_APP"] != "mobile/android":
         "UniFFI.webidl",
     ]
 
-WEBIDL_FILES += [
-    "TextGenerator.webidl",
-]
-
 if CONFIG["MOZ_PLACES"]:
     WEBIDL_FILES += [
         "PlacesEvent.webidl",

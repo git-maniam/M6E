@@ -123,7 +123,7 @@ add_task(function test_opaque_path_falls_back_to_registrable_domain() {
   });
 });
 
-// CountVectorizer removes digits before splitting, so an alphanumeric token
+// The tokenizer removes digits before splitting, so an alphanumeric token
 // keeps its letters rather than being dropped whole: "mp3" -> "mp" and
 // "covid19" -> "covid". This documents the current tokenizer behavior.
 add_task(function test_alphanumeric_tokens_strip_digits_in_place() {

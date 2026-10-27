@@ -260,7 +260,6 @@ const extraMochitestTestPaths = [
   "dom/media/test/",
   "dom/media/webaudio/test/",
   "dom/media/webcodecs/test/",
-  "dom/media/webspeech/recognition/test/",
   "dom/media/webspeech/synth/test/",
   "dom/messagechannel/tests/",
   "dom/midi/tests/",

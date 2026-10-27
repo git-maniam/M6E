@@ -118,9 +118,6 @@ static RemoteType::Kind ParseKind(const nsACString& aKindStr) {
   if (aKindStr == "extension"_ns) {
     return RemoteType::Kind::Extension;
   }
-  if (aKindStr == "inference"_ns) {
-    return RemoteType::Kind::Inference;
-  }
   return RemoteType::Kind::Unknown;
 }
 
@@ -216,8 +213,6 @@ nsCString RemoteType::StringifyKind() const {
       return "privilegedmozilla"_ns;
     case RemoteType::Kind::Extension:
       return "extension"_ns;
-    case RemoteType::Kind::Inference:
-      return "inference"_ns;
     case RemoteType::Kind::Unknown:
       // This is not a valid remote type, but we return a string here to avoid
       // crashes in logs if an unknown remote type is printed.

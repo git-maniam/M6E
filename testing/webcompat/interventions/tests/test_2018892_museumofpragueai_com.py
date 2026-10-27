@@ -15,7 +15,6 @@ async def can_click_on_flags(client):
     return not client.is_displayed(overlay)
 
 
-@pytest.mark.disable_speechrecognition
 @pytest.mark.asyncio
 @pytest.mark.with_interventions
 async def test_enabled(client):
@@ -24,7 +23,6 @@ async def test_enabled(client):
     assert client.await_css(MIC_CSS, is_displayed=False)
 
 
-@pytest.mark.disable_speechrecognition
 @pytest.mark.asyncio
 @pytest.mark.without_interventions
 async def test_disabled(client):
@@ -32,12 +30,3 @@ async def test_disabled(client):
     # also check that the mic button is hidden
     assert client.await_css(MIC_CSS, is_displayed=True)
     client.await_text(MISSING_API_TEXT, is_displayed=True)
-
-
-@pytest.mark.enable_speechrecognition
-@pytest.mark.asyncio
-@pytest.mark.without_interventions
-async def test_works_with_pref_on(client):
-    assert await can_click_on_flags(client)
-    # also check that the mic button is NOT hidden
-    assert client.await_css(MIC_CSS, is_displayed=True)

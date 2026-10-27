@@ -24,8 +24,6 @@ const lazy = XPCOMUtils.declareLazy({
   logger: () => lazy.UrlbarShared.getLogger({ prefix: "MuxerUnifiedComplete" }),
 });
 
-const SEMANTIC_HISTORY_PROVIDER_NAME = "UrlbarProviderSemanticHistorySearch";
-
 /**
  * Constructs the map key by joining the url with the userContextId.
  *
@@ -43,22 +41,6 @@ function makeMapKeyForTabResult(result) {
       ? userContextId
       : undefined
   );
-}
-
-/**
- * Returns the scheme- and www-insensitive key used to dedupe a URL across
- * prefix variants (http vs https, www vs non-www).
- *
- * @param {string} url The URL to strip.
- * @returns {string} The stripped URL.
- */
-function stripUrlForDedupe(url) {
-  return lazy.UrlbarShared.stripPrefixAndTrim(url, {
-    stripHttp: true,
-    stripHttps: true,
-    stripWww: true,
-    trimEmptyQuery: true,
-  })[0];
 }
 
 /**
@@ -109,11 +91,6 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
       // The total span of results that have been added so far.
       usedResultSpan: 0,
       strippedUrlToTopPrefixAndTitle: new Map(),
-      // Dedupe keys for every page a non-semantic provider returned, so that
-      // semantic-history results that dupe them can be suppressed. URL results
-      // are keyed by stripped URL (prefix-insensitive); switch-to-tab results
-      // by their exact URL, matching how open tabs are keyed.
-      nonSemanticDupeKeys: new Set(),
       baseAndTitleToTopRef: new Map(),
       urlToTabResultType: new Map(),
       addedRemoteTabUrls: new Set(),
@@ -162,25 +139,6 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
       // We assume sorting is always descending.
       toSort.sort((a, b) => b.payload[sortingField] - a.payload[sortingField]);
       unsortedResults.splice(start, length, ...toSort);
-    }
-
-    // Pre-scan: collect keys for every page a non-semantic provider returned,
-    // keyed by stripped URL (prefix-insensitive) for URL results and by exact
-    // URL for switch-to-tab results. Semantic-history results that dupe these
-    // are suppressed in `_updateStatePreAdd` and `_canAddResult`. This must run
-    // before the first pass so the keys are complete when those checks run.
-    for (let result of unsortedResults) {
-      if (
-        result.providerName == SEMANTIC_HISTORY_PROVIDER_NAME ||
-        !result.payload.url
-      ) {
-        continue;
-      }
-      if (result.type == lazy.UrlbarShared.RESULT_TYPE.URL) {
-        state.nonSemanticDupeKeys.add(stripUrlForDedupe(result.payload.url));
-      } else if (result.type == lazy.UrlbarShared.RESULT_TYPE.TAB_SWITCH) {
-        state.nonSemanticDupeKeys.add(result.payload.url);
-      }
     }
 
     // Do the first pass over all results to build some state.
@@ -302,7 +260,6 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
       strippedUrlToTopPrefixAndTitle: new Map(
         state.strippedUrlToTopPrefixAndTitle
       ),
-      nonSemanticDupeKeys: new Set(state.nonSemanticDupeKeys),
       baseAndTitleToTopRef: new Map(state.baseAndTitleToTopRef),
       urlToTabResultType: new Map(state.urlToTabResultType),
       addedRemoteTabUrls: new Set(state.addedRemoteTabUrls),
@@ -754,38 +711,6 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
   }
 
   /**
-   * Returns whether a result is a semantic-history result that dupes a page
-   * already contributed by a non-semantic provider, and so should be
-   * suppressed. URL results are matched prefix-insensitively (stripped);
-   * switch-to-tab results are matched on their exact URL, the same way open
-   * tabs are keyed.
-   *
-   * @param {UrlbarResult} result
-   *   The result.
-   * @param {object} state
-   *   Global state that we use to make decisions during this sort.
-   * @returns {boolean}
-   *   True if the result is a suppressed semantic-history dupe.
-   */
-  #isSuppressedSemanticDupe(result, state) {
-    if (
-      result.providerName != SEMANTIC_HISTORY_PROVIDER_NAME ||
-      !result.payload.url
-    ) {
-      return false;
-    }
-    if (result.type == lazy.UrlbarShared.RESULT_TYPE.URL) {
-      return state.nonSemanticDupeKeys.has(
-        stripUrlForDedupe(result.payload.url)
-      );
-    }
-    if (result.type == lazy.UrlbarShared.RESULT_TYPE.TAB_SWITCH) {
-      return state.nonSemanticDupeKeys.has(result.payload.url);
-    }
-    return false;
-  }
-
-  /**
    * Returns whether a result can be added to its group given the current sort
    * state.
    *
@@ -849,14 +774,6 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
       }
 
       return true;
-    }
-
-    // Discard semantic-history results that dupe a non-semantic result for the
-    // same page. The non-semantic result is preferred, so the surviving result
-    // is never mislabeled as semantic. Semantic results with no non-semantic
-    // counterpart are left untouched.
-    if (this.#isSuppressedSemanticDupe(result, state)) {
-      return false;
     }
 
     // We expect UrlbarProviderPlaces sent us the highest-ranked www. and non-www
@@ -1258,15 +1175,8 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
       }
     }
 
-    // A semantic-history result that dupes a non-semantic result is suppressed
-    // in `_canAddResult`, so it must not participate in the dedup-state blocks
-    // below, or it could become the recorded winner and evict the non-semantic
-    // result we want to keep.
-    let isSemanticDupe = this.#isSuppressedSemanticDupe(result, state);
-
     // Save some state we'll use later to dedupe URL results.
     if (
-      !isSemanticDupe &&
       (result.type == lazy.UrlbarShared.RESULT_TYPE.URL ||
         result.type == lazy.UrlbarShared.RESULT_TYPE.KEYWORD) &&
       result.payload.url &&
@@ -1308,9 +1218,8 @@ class MuxerUnifiedComplete extends UrlbarMuxer {
     // Even though we are considering tab results and URL results of all sources
     // here to find the top ref, we will only dedupe URL results with history source.
     if (
-      !isSemanticDupe &&
-      (result.type == lazy.UrlbarShared.RESULT_TYPE.URL ||
-        result.type == lazy.UrlbarShared.RESULT_TYPE.TAB_SWITCH)
+      result.type == lazy.UrlbarShared.RESULT_TYPE.URL ||
+      result.type == lazy.UrlbarShared.RESULT_TYPE.TAB_SWITCH
     ) {
       let { base, ref } = UrlbarUtils.extractRefFromUrl(result.payload.url);
 

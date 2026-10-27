@@ -63,7 +63,6 @@ TRAIN_HOP_DLLS = [
     "mozsqlite3",
     "gkcodecs",
     "lgpllibs",
-    "mozinference",
 ]
 
 GMP_TEST_PLUGIN_DIRS = ["gmp-fake/**", "gmp-fakeopenh264/**"]

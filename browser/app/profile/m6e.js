@@ -129,18 +129,14 @@ pref("browser.urlbar.merino.endpointURL", "", locked);
 pref("toolkit.contentRelevancy.enabled", false, locked);
 
 // No AI features. These are the prefs the AIControls enterprise policy sets
-// when every feature is blocked, plus the shared machine learning engine.
+// when every feature is blocked.
 pref("browser.ai.control.default", "blocked", locked);
-pref("browser.ai.control.pdfjsAltText", "blocked", locked);
-pref("browser.ai.control.smartTabGroups", "blocked", locked);
 pref("browser.ai.control.linkPreviewKeyPoints", "blocked", locked);
 pref("browser.ai.control.sidebarChatbot", "blocked", locked);
 pref("browser.ai.control.smartWindow", "blocked", locked);
-pref("browser.ai.control.speechRecognition", "blocked", locked);
-pref("browser.ml.enable", false, locked);
-pref("browser.tabs.groups.smart.enabled", false, locked);
-pref("browser.tabs.groups.smart.userEnabled", false, locked);
 pref("pdfjs.enableAltText", false, locked);
+pref("pdfjs.enableGuessAltText", false, locked);
+pref("pdfjs.enableAltTextModelDownload", false, locked);
 // The int8 matrix multiply wasm builtin has no caller left; keep it off even on Nightly.
 pref("javascript.options.wasm_moz_intgemm", false, locked);
 // With every AI feature removed, there is nothing for the AI settings pane to control.
@@ -325,7 +321,6 @@ pref("devtools.jsonview.size-profiler.enabled", false);
 pref("extensions.formautofill.creditCards.storage.rust.runMigrationTest", false);
 pref("browser.urlbar.autoFill.adaptiveHistory.enabled", false);
 pref("browser.urlbar.newtab.featureGate", false);
-pref("places.semanticHistory.featureGate", false);
 pref("browser.tabs.tooltipsShowPidAndActiveness", false);
 pref("browser.tabs.groups.alternateMenu", false);
 pref("browser.lowMemoryResponseMask", 0);

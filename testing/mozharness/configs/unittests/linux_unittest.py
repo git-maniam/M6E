@@ -155,7 +155,6 @@ config = {
         "mochitest-plain-gpu": ["--subsuite=gpu"],
         "mochitest-plain-coverage": ["--timeout=1200"],
         "mochitest-media": ["--subsuite=media"],
-        "mochitest-speech-recognition": ["--subsuite=speech-recognition"],
         "mochitest-chrome": ["--flavor=chrome", "--disable-e10s"],
         "mochitest-chrome-gpu": ["--flavor=chrome", "--subsuite=gpu", "--disable-e10s"],
         "mochitest-browser-chrome": ["--flavor=browser"],
@@ -189,10 +188,6 @@ config = {
         ],
         "mochitest-browser-a11y": ["--flavor=browser", "--subsuite=a11y"],
         "mochitest-browser-media": ["--flavor=browser", "--subsuite=media-bc"],
-        "mochitest-browser-chrome-ml-models": [
-            "--flavor=browser",
-            "--subsuite=ml-models",
-        ],
         "mochitest-a11y": ["--flavor=a11y", "--disable-e10s"],
         "mochitest-remote": ["--flavor=browser", "--subsuite=remote"],
     },

@@ -123,8 +123,6 @@ urlbar:
           `history_adaptive`,
           `history_adaptive_serp`,
           `history_autofill_fallback_origin`,
-          `history_semantic`,
-          `history_semantic_serp`,
           `history_serp`,
           `intervention_clear`,
           `intervention_refresh`,
@@ -136,7 +134,6 @@ urlbar:
           `merino_market`,
           `merino_top_picks`,
           `merino_wikipedia`,
-          `ml_yelp`,
           `recent_search`,
           `remote_tab`,
           `restrict_keyword_actions`,
@@ -158,8 +155,6 @@ urlbar:
           `tab`,
           `tab_adaptive`,
           `tab_adaptive_serp`,
-          `tab_semantic`,
-          `tab_semantic_serp`,
           `tab_serp`,
           `tab_to_search`,
           `tip_dismissal_acknowledgment`,
@@ -181,13 +176,6 @@ urlbar:
           `refresh`, `restart`, `savepdf`, `screenshot`, `settings`, `tabswitch`,
           `themes`, `update`, `viewsource`.
           If there is no action shown in a position that is denoted with `none`.
-        type: string
-      available_semantic_sources:
-        description: |
-          Comma separated list of semantic sources that were available to search.
-          This indicates general availability of the source, not whether it was
-          queried.
-          The possible values are: `history`, `none`.
         type: string
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1800414
@@ -528,8 +516,6 @@ urlbar:
           `history_adaptive`,
           `history_adaptive_serp`,
           `history_autofill_fallback_origin`,
-          `history_semantic`,
-          `history_semantic_serp`,
           `history_serp`,
           `input_field`,
           `intervention_clear`,
@@ -542,7 +528,6 @@ urlbar:
           `merino_market`,
           `merino_top_picks`,
           `merino_wikipedia`,
-          `ml_yelp`,
           `recent_search`,
           `remote_tab`,
           `restrict_keyword_actions`,
@@ -566,8 +551,6 @@ urlbar:
           `tab`,
           `tab_adaptive`,
           `tab_adaptive_serp`,
-          `tab_semantic`,
-          `tab_semantic_serp`,
           `tab_serp`,
           `tab_to_search`,
           `tip_dismissal_acknowledgment`,
@@ -682,8 +665,6 @@ urlbar:
           `history_adaptive`,
           `history_adaptive_serp`,
           `history_autofill_fallback_origin`,
-          `history_semantic`,
-          `history_semantic_serp`,
           `history_serp`,
           `intervention_clear`,
           `intervention_refresh`,
@@ -695,7 +676,6 @@ urlbar:
           `merino_market`,
           `merino_top_picks`,
           `merino_wikipedia`,
-          `ml_yelp`,
           `recent_search`,
           `remote_tab`,
           `restrict_keyword_actions`,
@@ -717,8 +697,6 @@ urlbar:
           `tab`,
           `tab_adaptive`,
           `tab_adaptive_serp`,
-          `tab_semantic`,
-          `tab_semantic_serp`,
           `tab_serp`,
           `tab_to_search`,
           `tip_dismissal_acknowledgment`,
@@ -740,13 +718,6 @@ urlbar:
           `refresh`, `restart`, `savepdf`, `screenshot`, `settings`, `tabswitch`,
           `themes`, `update`, `viewsource`.
           If there is no action shown in a position that is denoted with `none`.
-        type: string
-      available_semantic_sources:
-        description: |
-          Comma separated list of semantic sources that were available to search.
-          This indicates general availability of the source, not whether it was
-          queried.
-          The possible values are: `history`, `none`.
         type: string
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1797265

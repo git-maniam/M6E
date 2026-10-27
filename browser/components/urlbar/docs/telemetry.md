@@ -701,8 +701,8 @@ Changelog
 : Firefox 141
 
   : New result types have been added, in particular sub-types can now be added
-    to `history` and `tab`, indicating whether they are from semantic history,
-    or SERP, e.g. `history_serp`, `history_semantic`, `tab_semantic_serp`.
+    to `history` and `tab`, indicating whether they are from a SERP, e.g.
+    `history_serp`, `tab_serp`.
     \[Bug [1971534](https://bugzilla.mozilla.org/show_bug.cgi?id=1971534)\]
 
   Firefox 128

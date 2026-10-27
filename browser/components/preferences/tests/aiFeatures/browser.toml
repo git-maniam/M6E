@@ -8,12 +8,6 @@ support-files = [
 ]
 tags = "os_integration"
 
-["browser_aiFeatures.js"]
-
 ["browser_aiFeatures_block_dialog.js"]
 
-["browser_aiFeatures_speech_recognition.js"]
-
 ["browser_aiFeatures_telemetry.js"]
-
-["browser_aiFeatures_visibility.js"]

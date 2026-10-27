@@ -1652,18 +1652,6 @@ export var UITour = {
             "browser.ai.control.default",
             "available"
           ),
-          pdfjsAltText: Services.prefs.getStringPref(
-            "browser.ai.control.pdfjsAltText",
-            "default"
-          ),
-          smartTabGroups: Services.prefs.getStringPref(
-            "browser.ai.control.smartTabGroups",
-            "default"
-          ),
-          speechRecognition: Services.prefs.getStringPref(
-            "browser.ai.control.speechRecognition",
-            "default"
-          ),
         });
         break;
       default:

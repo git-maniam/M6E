@@ -3,51 +3,16 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
- * @import { AIFeature } from "chrome://global/content/ml/AIFeature.sys.mjs"
  * @typedef {typeof OnDeviceModelFeatures[keyof typeof OnDeviceModelFeatures]} OnDeviceModelFeaturesEnum
  */
-
-const XPCOMUtils = ChromeUtils.importESModule(
-  "resource://gre/modules/XPCOMUtils.sys.mjs"
-).XPCOMUtils;
-const lazy = XPCOMUtils.declareLazy({
-  PdfJsGuessAltTextFeature: "resource://pdf.js/PdfJsAIFeature.sys.mjs",
-  SmartTabGroupingManager:
-    "moz-src:///browser/components/tabbrowser/SmartTabGrouping.sys.mjs",
-  SpeechRecognitionFeature:
-    "moz-src:///dom/media/webspeech/recognition/SpeechRecognitionFeature.sys.mjs",
-});
 
 /**
  * Features that support on-device AI models.
  */
-const OnDeviceModelFeatures = Object.freeze({
-  TabGroups: "smartTabGroups",
-  PdfAltText: "pdfjsAltText",
-  SpeechRecognition: "speechRecognition",
-});
+const OnDeviceModelFeatures = Object.freeze({});
 
 /** @type {Record<OnDeviceModelFeaturesEnum, string[]>} */
-const FeaturePrefs = Object.freeze({
-  [OnDeviceModelFeatures.PdfAltText]: [
-    "pdfjs.enableGuessAltText",
-    "pdfjs.enableAltTextModelDownload",
-    "pdfjs.enableAltText",
-  ],
-  [OnDeviceModelFeatures.TabGroups]: [
-    "browser.tabs.groups.enabled",
-    "browser.tabs.groups.smart.enabled",
-    "browser.tabs.groups.smart.userEnabled",
-    "browser.tabs.groups.smart.optin",
-  ],
-  // Speech recognition has no separate feature pref: the AI Controls pref is
-  // the source of truth, and the C++ SpeechRecognition implementation reads it
-  // directly to gate available()/install()/start(). Observe the control pref so
-  // the AI Controls UI reflects state changes; no JS teardown is needed.
-  [OnDeviceModelFeatures.SpeechRecognition]: [
-    "browser.ai.control.speechRecognition",
-  ],
-});
+const FeaturePrefs = Object.freeze({});
 
 export const OnDeviceModelManager = {
   features: OnDeviceModelFeatures,
@@ -98,17 +63,10 @@ export const OnDeviceModelManager = {
    * Get an {@link AIFeature} for a feature id.
    *
    * @param {OnDeviceModelFeaturesEnum} feature
-   * @returns {typeof AIFeature}
+   * @returns {object}
    */
   getAIFeature(feature) {
     switch (feature) {
-      case OnDeviceModelFeatures.PdfAltText:
-        return lazy.PdfJsGuessAltTextFeature;
-      case OnDeviceModelFeatures.TabGroups:
-        // @ts-expect-error: SmartTabGroupingManager implements more than AIFeature
-        return lazy.SmartTabGroupingManager;
-      case OnDeviceModelFeatures.SpeechRecognition:
-        return lazy.SpeechRecognitionFeature;
       default:
         throw new Error(`Unknown feature "${feature}"`);
     }
@@ -121,12 +79,6 @@ export const OnDeviceModelManager = {
    */
   getFeaturePref(feature) {
     switch (feature) {
-      case OnDeviceModelFeatures.PdfAltText:
-        return "browser.ai.control.pdfjsAltText";
-      case OnDeviceModelFeatures.TabGroups:
-        return "browser.ai.control.smartTabGroups";
-      case OnDeviceModelFeatures.SpeechRecognition:
-        return "browser.ai.control.speechRecognition";
       default:
         throw new Error(`Unknown feature "${feature}"`);
     }

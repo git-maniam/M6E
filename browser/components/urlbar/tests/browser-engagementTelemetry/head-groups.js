@@ -372,28 +372,6 @@ async function doRestrictKeywordsTest({ trigger, assert }) {
   await SpecialPowers.popPrefEnv();
 }
 
-async function doSemanticHistoryTest({ trigger, assert }) {
-  const historyUrl = "https://www.example.com/semantic/";
-  await doTestWithSemantic(
-    [
-      {
-        id: 1,
-        title: "Test Page",
-        url: historyUrl,
-        frecency: 100,
-      },
-    ],
-    async () => {
-      // Must be longer than `browser.urlbar.suggest.semanticHistory.minLength`.
-      await openPopup("testing semantic");
-      await selectRowByURL(historyUrl);
-
-      await trigger();
-      await assert();
-    }
-  );
-}
-
 async function doSerpHistoryTest({ trigger, assert }) {
   let defaultEngine = await SearchService.getDefault();
   const searchUrl = defaultEngine.getSubmission("serp history", null).uri.spec;

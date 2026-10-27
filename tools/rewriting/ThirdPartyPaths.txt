@@ -42,9 +42,6 @@ dom/media/webaudio/test/blink/
 dom/media/webrtc/tests/mochitests/helpers_from_wpt/sdp.js
 dom/media/webrtc/transport/third_party/
 dom/media/webvtt/vtt.sys.mjs
-dom/onnx/onnxruntime_c_api.h
-dom/onnx/onnxruntime_ep_c_api.h
-dom/onnx/onnxruntime_error_code.h
 dom/security/sanitizer/safe-default-configuration.json
 dom/tests/mochitest/ajax/
 dom/tests/mochitest/dom-level1-core/
@@ -185,7 +182,6 @@ third_party/
 toolkit/components/contentanalysis/content_analysis/sdk/
 toolkit/components/certviewer/content/vendor/
 toolkit/components/jsoncpp/
-toolkit/components/ml/vendor/
 toolkit/components/normandy/vendor/
 toolkit/components/passwordmgr/shared/PasswordRulesParser.sys.mjs
 toolkit/components/protobuf/src/

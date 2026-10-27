@@ -53,17 +53,6 @@ export class YelpSuggestions extends SuggestProvider {
     return "Yelp";
   }
 
-  get mlIntent() {
-    return "yelp_intent";
-  }
-
-  get isMlIntentEnabled() {
-    // Note that even when ML is enabled, we still leave Yelp Rust suggestions
-    // enabled because we need to fetch the Yelp icon, URL, etc. from Rust, as
-    // well as geonames, and Rust still needs to ingest all of that.
-    return lazy.UrlbarPrefs.get("yelpMlEnabled");
-  }
-
   get showLessFrequentlyCount() {
     const count = lazy.UrlbarPrefs.get("yelp.showLessFrequentlyCount") || 0;
     return Math.max(count, 0);
@@ -85,50 +74,24 @@ export class YelpSuggestions extends SuggestProvider {
     return "yelp";
   }
 
-  enable(enabled) {
-    if (!enabled) {
-      this.#metadataCache = null;
-    }
-  }
-
   async filterSuggestions(suggestions) {
     // Important notes:
     //
-    // Both Rust and ML return at most one Yelp suggestion each.
-    //
-    // We leave Rust Yelp suggestions enabled even when ML Yelp is enabled
-    // because we need to fetch the Yelp icon, URL, etc. from Rust, as well as
-    // geonames, and Rust still needs to ingest all of that. Since we don't have
-    // a way to tell the Rust backend to leave a suggestion type enabled without
-    // querying it, `suggestions` can contain both kinds of suggestions. If ML
-    // is enabled, return the ML suggestion; if it's disabled, return Rust.
+    // Rust returns at most one Yelp suggestion.
     //
     // After this method returns, the Suggest provider will sort suggestions by
     // score and check whether they've been previously dismissed based on their
-    // URLs. So we need to make sure suggestions have scores and URLs now. For
-    // both Rust and ML suggestions, we'll make sure URLs at this point do *not*
-    // contain a location param because we'll likely end up setting a new param
-    // in `makeResult()`. That means for the purpose of dismissal, Yelp URLs
-    // will exclude location.
+    // URLs. So we need to make sure suggestions have scores and URLs now. We'll
+    // make sure URLs at this point do *not* contain a location param because
+    // we'll likely end up setting a new param in `makeResult()`. That means for
+    // the purpose of dismissal, Yelp URLs will exclude location.
     //
     // Since we're doing all the above in this method anyway, we'll also
-    // normalize the suggestion so that `makeResult()` can easily handle either
-    // kind of suggestion.
+    // normalize the suggestion so that `makeResult()` can easily handle it.
 
-    let suggestion;
-    if (!lazy.UrlbarPrefs.get("yelpMlEnabled")) {
-      suggestion = suggestions.find(s => s.source != "ml");
-      if (suggestion) {
-        suggestion = this.#normalizeRustSuggestion(suggestion);
-      }
-    } else {
-      suggestion = suggestions.find(s => s.source == "ml");
-      if (suggestion) {
-        if (!this.#metadataCache) {
-          this.#metadataCache = await this.#makeMetadataCache();
-        }
-        suggestion = this.#normalizeMlSuggestion(suggestion);
-      }
+    let suggestion = suggestions[0];
+    if (suggestion) {
+      suggestion = this.#normalizeRustSuggestion(suggestion);
     }
 
     return suggestion ? [suggestion] : [];
@@ -387,84 +350,6 @@ export class YelpSuggestions extends SuggestProvider {
     return suggestion;
   }
 
-  #normalizeMlSuggestion(ml) {
-    // The ML model can return false positives, including Yelp-intent
-    // suggestions with nothing but a city or region, no subject. Discard them.
-    if (!ml.subject) {
-      return null;
-    }
-
-    let url = new URL(this.#metadataCache.urlOrigin);
-    url.pathname = this.#metadataCache.urlPathname;
-    url.searchParams.set(this.#metadataCache.findDesc, ml.subject);
-
-    return {
-      ...ml,
-      title: ml.subject,
-      url: url.toString(),
-      subjectExactMatch: false,
-      hasLocationSign: false,
-      locationParam: this.#metadataCache.findLoc,
-      icon_blob: this.#metadataCache.iconBlob,
-      score: this.#metadataCache.score,
-      city: ml.location?.city,
-      region: ml.location?.state,
-    };
-  }
-
-  /**
-   * TODO Bug 1926782: ML suggestions don't include an icon, score, or URL, so
-   * for now we directly query the Rust backend with a known Yelp keyword and
-   * location to get all of that information and then cache it in
-   * `#metadataCache`. If the known Yelp suggestion is absent for some reason,
-   * we fall back to hardcoded values. This is a tad hacky and we should come up
-   * with something better.
-   */
-  async #makeMetadataCache() {
-    let cache;
-
-    this.logger.debug("Querying Rust backend to populate metadata cache");
-    let rs = await lazy.QuickSuggest.rustBackend.query("coffee in atlanta", {
-      types: ["Yelp"],
-    });
-    if (!rs.length) {
-      this.logger.debug("Rust didn't return any Yelp suggestions!");
-      cache = {};
-    } else {
-      let suggestion = rs[0];
-      let url = new URL(suggestion.url);
-      let findParamWithValue = value => {
-        let tuple = [...url.searchParams.entries()].find(
-          ([_, v]) => v == value
-        );
-        return tuple?.[0];
-      };
-      cache = {
-        iconBlob: suggestion.icon_blob,
-        score: suggestion.score,
-        urlOrigin: url.origin,
-        urlPathname: url.pathname,
-        findDesc: findParamWithValue("coffee"),
-        findLoc: findParamWithValue("atlanta"),
-      };
-    }
-
-    let defaults = {
-      urlOrigin: "https://www.yelp.com",
-      urlPathname: "/search",
-      findDesc: "find_desc",
-      findLoc: "find_loc",
-      score: 0.25,
-    };
-    for (let [key, value] of Object.entries(defaults)) {
-      if (cache[key] === undefined) {
-        cache[key] = value;
-      }
-    }
-
-    return cache;
-  }
-
   /**
    * Looks up a city-region in the Suggest database and returns the one that
    * best matches the client's geolocation.
@@ -556,12 +441,6 @@ export class YelpSuggestions extends SuggestProvider {
 
     return null;
   }
-
-  _test_invalidateMetadataCache() {
-    this.#metadataCache = null;
-  }
-
-  #metadataCache = null;
 }
 
 /**

@@ -424,7 +424,9 @@ add_task(function test_format_omits_missing_fields() {
  * carrying new-generation transcript segments.
  */
 add_task(async function test_structured_content_new_generation() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`${NEW_GENERATION_SEGMENTS}`;
   const actor = getPageExtractor();
 
@@ -454,7 +456,9 @@ add_task(async function test_transcript_not_duplicated_across_panels() {
     "Only the first transcript panel's segments should be read"
   );
 
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`${DUPLICATE_PANEL_SEGMENTS}`;
   const actor = getPageExtractor();
 
@@ -470,7 +474,9 @@ add_task(async function test_transcript_not_duplicated_across_panels() {
 });
 
 add_task(async function test_structured_content_legacy_generation() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } =
     await html`${LEGACY_GENERATION_SEGMENTS}`;
   const actor = getPageExtractor();
@@ -491,7 +497,9 @@ add_task(async function test_structured_content_legacy_generation() {
  * control and wait for the segments to appear.
  */
 add_task(async function test_transcript_panel_opened_on_click() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <button aria-label="Show transcript">Show transcript</button>
@@ -528,7 +536,9 @@ add_task(async function test_structural_transcript_button_preferred() {
     set: [["browser.pageextractor.youtube.timeoutMs", 200]],
   });
 
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <button aria-label="Transcript" hidden></button>
@@ -571,7 +581,9 @@ add_task(async function test_structural_transcript_button_preferred() {
  * segments have been read so the page is restored to its prior state.
  */
 add_task(async function test_transcript_panel_closed_after_extraction() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { tab, getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <button aria-label="Show transcript">Show transcript</button>
@@ -630,7 +642,9 @@ add_task(async function test_transcript_panel_closed_after_extraction() {
  * panel rather than a target-id match.
  */
 add_task(async function test_untagged_panel_closed_after_extraction() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { tab, getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <button aria-label="Show transcript">Show transcript</button>
@@ -688,7 +702,9 @@ add_task(async function test_untagged_panel_closed_after_extraction() {
  * the segments but must not close a panel it did not open.
  */
 add_task(async function test_already_open_transcript_left_open() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { tab, getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <ytd-engagement-panel-section-list-renderer
@@ -746,7 +762,9 @@ add_task(async function test_transcript_panel_never_loads() {
     set: [["browser.pageextractor.youtube.timeoutMs", 200]],
   });
 
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <button aria-label="Show transcript">Show transcript</button>
@@ -774,7 +792,9 @@ add_task(async function test_panel_closed_when_segments_never_render() {
     set: [["browser.pageextractor.youtube.timeoutMs", 200]],
   });
 
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { tab, getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <button aria-label="Show transcript">Show transcript</button>
@@ -837,7 +857,9 @@ add_task(async function test_ambiguous_panels_not_closed_on_timeout() {
     set: [["browser.pageextractor.youtube.timeoutMs", 200]],
   });
 
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { tab, getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <button aria-label="Show transcript">Show transcript</button>
@@ -885,7 +907,9 @@ add_task(async function test_ambiguous_panels_not_closed_on_timeout() {
  * segment text should flow through the generic extraction unchanged.
  */
 add_task(async function test_no_structured_content_for_non_youtube() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`${NEW_GENERATION_SEGMENTS}`;
   const actor = getPageExtractor();
 
@@ -910,7 +934,9 @@ add_task(async function test_no_structured_content_for_non_youtube() {
  * generic page content.
  */
 add_task(async function test_youtube_without_content() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     <p>A video with captions disabled.</p>
   `;
@@ -932,7 +958,9 @@ add_task(async function test_youtube_without_content() {
  * survives, and the metadata block (header fields + description) is prepended.
  */
 add_task(async function test_no_transcript_prepends_metadata_block() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`
     ${VIDEO_METADATA}
     <p>A viewer comment on the video.</p>
@@ -955,7 +983,9 @@ add_task(async function test_no_transcript_prepends_metadata_block() {
  * emit far more text than the other extractors.
  */
 add_task(async function test_content_truncated_to_sufficient_length() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`${NEW_GENERATION_SEGMENTS}`;
   const actor = getPageExtractor();
 
@@ -979,7 +1009,9 @@ add_task(async function test_content_truncated_to_sufficient_length() {
  * long video's transcript is far longer than a typical article.
  */
 add_task(async function test_transcript_uses_its_own_length_limit() {
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`${NEW_GENERATION_SEGMENTS}`;
   const actor = getPageExtractor();
 
@@ -1007,7 +1039,9 @@ add_task(async function test_disabled_by_pref() {
     set: [["browser.pageextractor.youtube.enabled", false]],
   });
 
-  const { html } = await MLTestUtils.serveHTMLInTab({ browser: gBrowser });
+  const { html } = await PageExtractorTestUtils.serveHTMLInTab({
+    browser: gBrowser,
+  });
   const { getPageExtractor, cleanup } = await html`${NEW_GENERATION_SEGMENTS}`;
   const actor = getPageExtractor();
 

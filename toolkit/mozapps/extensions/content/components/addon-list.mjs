@@ -17,7 +17,6 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
   BuiltInThemes: "resource:///modules/BuiltInThemes.sys.mjs",
-  recordListViewTelemetry: "chrome://global/content/ml/Utils.sys.mjs",
 });
 
 /**
@@ -130,10 +129,6 @@ export class AddonList extends HTMLElement {
 
     if (type == "theme") {
       await lazy.BuiltInThemes.ensureBuiltInThemes();
-    }
-
-    if (type == "mlmodel") {
-      lazy.recordListViewTelemetry(addons.length);
     }
 
     // Put the add-ons into the sections, an add-on goes in the first section
@@ -488,9 +483,8 @@ export class AddonList extends HTMLElement {
       section.setAttribute("class", sectionClass);
     }
 
-    // Render the heading and add-ons if there are any, except for mlmodel list
-    // view which only shows installed models.
-    if (this.type != "mlmodel" && addons.length) {
+    // Render the heading and add-ons if there are any.
+    if (addons.length) {
       section.appendChild(this.createSectionHeading(index));
     }
 
@@ -518,10 +512,6 @@ export class AddonList extends HTMLElement {
     }
     frag.appendChild(this.pendingUninstallStack);
 
-    if (this.type == "mlmodel") {
-      frag.appendChild(document.createElement("mlmodel-list-intro"));
-    }
-
     // Render the sections.
     for (let i = 0; i < sectionedAddons.length; i++) {
       this.sections[i].node = this.renderSection(sectionedAddons[i], i);
@@ -531,16 +521,12 @@ export class AddonList extends HTMLElement {
       }
     }
 
-    // Add the "empty list message" elements (but omit it in the list view
-    // related to the "mlmodel" type).
-    if (this.type != "mlmodel") {
-      // Render the placeholder that is shown when all sections are empty.
-      // This call is after rendering the sections, because its visibility
-      // is controlled through the general sibling combinator relative to
-      // the sections (section ~).
-      let message = this.createEmptyListMessage();
-      frag.appendChild(message);
-    }
+    // Render the placeholder that is shown when all sections are empty.
+    // This call is after rendering the sections, because its visibility
+    // is controlled through the general sibling combinator relative to
+    // the sections (section ~).
+    let message = this.createEmptyListMessage();
+    frag.appendChild(message);
 
     // Make sure fluent has set all the strings before we render. This will
     // avoid the height changing as strings go from 0 height to having text.

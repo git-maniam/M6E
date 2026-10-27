@@ -163,22 +163,11 @@ export var Policies = {
           "browser.ai.control.sidebarChatbot",
         ],
         [
-          "PDFAltText",
-          ["pdfjs.enableAltText"],
-          "browser.ai.control.pdfjsAltText",
-        ],
-        [
           "LinkPreviewKeyPoints",
           ["browser.ml.linkPreview.enabled"],
           "browser.ai.control.linkPreviewKeyPoints",
         ],
-        [
-          "SmartTabGroups",
-          ["browser.tabs.groups.smart.userEnabled"],
-          "browser.ai.control.smartTabGroups",
-        ],
         ["SmartWindow", [], "browser.ai.control.smartWindow"],
-        ["SpeechRecognition", [], "browser.ai.control.speechRecognition"],
       ];
 
       const defaultItem = param.Default;
@@ -2179,11 +2168,6 @@ export var Policies = {
           "SmartWindow",
           ["browser.smartwindow.enabled"],
           "browser.ai.control.smartWindow",
-        ],
-        [
-          "TabGroups",
-          ["browser.tabs.groups.smart.userEnabled"],
-          "browser.ai.control.smartTabGroups",
         ],
       ];
 

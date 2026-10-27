@@ -77,6 +77,3 @@ user_pref("nimbus.profilesdatastoreservice.read.enabled", false);
 // TODO(bug 2032586): Remove this pref.
 user_pref("nimbus.profilesdatastoreservice.sync.enabled", false);
 
-// Turn off semantic history search as it triggers network connections to
-// download ML models.
-user_pref("places.semanticHistory.featureGate", false);

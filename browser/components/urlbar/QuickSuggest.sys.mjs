@@ -281,8 +281,6 @@ const FEATURES = {
     "moz-src:///browser/components/urlbar/private/SportsSuggestions.sys.mjs",
   SuggestBackendMerino:
     "moz-src:///browser/components/urlbar/private/SuggestBackendMerino.sys.mjs",
-  SuggestBackendMl:
-    "moz-src:///browser/components/urlbar/private/SuggestBackendMl.sys.mjs",
   SuggestBackendRust:
     "moz-src:///browser/components/urlbar/private/SuggestBackendRust.sys.mjs",
   TemporalSuggestions:
@@ -370,7 +368,6 @@ class _QuickSuggest {
     return [
       this.rustBackend,
       this.#featuresByName.get("SuggestBackendMerino"),
-      this.#featuresByName.get("SuggestBackendMl"),
     ].filter(b => b?.isEnabled);
   }
 
@@ -410,15 +407,6 @@ class _QuickSuggest {
       ...this.#featuresByRustSuggestionType.values(),
       ...this.#featuresByDynamicRustSuggestionType.values(),
     ]);
-  }
-
-  /**
-   * @returns {Set}
-   *   The set of features that manage ML suggestion types, as determined by
-   *   each feature's `mlIntent`.
-   */
-  get mlFeatures() {
-    return new Set(this.#featuresByMlIntent.values());
   }
 
   get logger() {
@@ -477,9 +465,6 @@ class _QuickSuggest {
           );
         }
       }
-      if (feature.mlIntent) {
-        this.#featuresByMlIntent.set(feature.mlIntent, feature);
-      }
 
       // Update the map from enabling preferences to features.
       let prefs = feature.enablingPreferences;
@@ -514,20 +499,6 @@ class _QuickSuggest {
   }
 
   /**
-   * Returns a Suggest feature by the ML intent name (as defined by
-   * `feature.mlIntent` and `MLSuggest`). Not all features support ML.
-   *
-   * @param {string} intent
-   *   The name of an ML intent.
-   * @returns {SuggestProvider}
-   *   The feature object, an instance of a subclass of `SuggestProvider`, or
-   *   null if no feature corresponds to the intent.
-   */
-  getFeatureByMlIntent(intent) {
-    return this.#featuresByMlIntent.get(intent);
-  }
-
-  /**
    * Gets the Suggest feature that manages suggestions for urlbar result.
    *
    * @param {UrlbarResult} result
@@ -547,14 +518,12 @@ class _QuickSuggest {
    * @param {object} options
    *   Options object.
    * @param {string} options.source
-   *   The suggestion source, one of: "merino", "ml", "rust"
+   *   The suggestion source, one of: "merino", "rust"
    * @param {string} options.provider
    *   This value depends on `source`. The possible values per source are:
    *
    *   merino:
    *     The name of the Merino provider that serves the suggestion type
-   *   ml:
-   *     The name of the intent as determined by `MLSuggest`
    *   rust:
    *     The name of the suggestion type as defined in Rust
    *
@@ -577,8 +546,6 @@ class _QuickSuggest {
           }
         }
         return this.#featuresByRustSuggestionType.get(provider);
-      case "ml":
-        return this.getFeatureByMlIntent(provider);
     }
     return null;
   }
@@ -1270,9 +1237,6 @@ class _QuickSuggest {
   // Features that manage a dynamic Rust suggestion type will be in this map
   // instead of `#featuresByRustSuggestionType`.
   #featuresByDynamicRustSuggestionType = new Map();
-
-  // Maps from ML intent strings to Suggest feature instances.
-  #featuresByMlIntent = new Map();
 
   // Maps from preference names to the `Set` of feature instances they enable.
   #featuresByEnablingPrefs = new Map();
