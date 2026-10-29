@@ -282,7 +282,6 @@ const extraMochitestTestPaths = [
   "dom/smil/test/",
   "dom/svg/test/",
   "dom/system/tests/",
-  "dom/u2f/tests/",
   "dom/url/tests/",
   "dom/webauthn/tests/",
   "dom/websocket/tests/",
