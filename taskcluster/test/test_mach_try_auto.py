@@ -92,10 +92,6 @@ def test_tasks_are_scheduled(optimized_task_graph, filter_tasks, func, min_expec
             id="no build-signing",
             marks=pytest.mark.xfail(reason="some xpcshell tests require signed builds"),
         ),
-        pytest.param(
-            lambda t: t.kind == "upload-symbols",
-            id="no upload-symbols",
-        ),
     ),
 )
 def test_tasks_are_not_scheduled(

@@ -161,8 +161,6 @@ def make_task_description(config, jobs):
             (repackage_deb_name, repackage_deb_name),
             ("repackage-pkg-notarization", "repackage-pkg-notarization"),
             ("repackage-l10n-pkg-notarization", "repackage-l10n-pkg-notarization"),
-            ("upload-symbols", "upload-symbols"),
-            ("upload-symbols-dummy", "upload-symbols-dummy"),
         ]
         for dep_key, upstream_name in optional_deps:
             if upstream_name in upstream_deps:

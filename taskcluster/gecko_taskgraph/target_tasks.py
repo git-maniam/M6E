@@ -69,7 +69,6 @@ UNCOMMON_TRY_TASK_LABELS = [
     r"notarization",
     # not usually needed
     r"^beetmover-integration-",
-    "upload-symbols",
 ]
 
 
@@ -1794,20 +1793,6 @@ def target_tasks_condprof(full_task_graph, parameters, graph_config):
                 yield name
 
 
-@register_target_task("system_symbols")
-def target_tasks_system_symbols(full_task_graph, parameters, graph_config):
-    """
-    Select tasks for scraping and uploading system symbols.
-    """
-    for name, task in full_task_graph.tasks.items():
-        if task.kind in [
-            "system-symbols",
-            "system-symbols-upload",
-            "system-symbols-reprocess",
-        ]:
-            yield name
-
-
 @register_target_task("perftest")
 def target_tasks_perftest(full_task_graph, parameters, graph_config):
     """
@@ -1930,9 +1915,9 @@ def target_tasks_snap_upstream_tasks(full_task_graph, parameters, graph_config):
 def target_tasks_nightly_android(full_task_graph, parameters, graph_config):
     def filter(task, parameters):
         # geckoview
-        if task.attributes.get("shipping_product") == "fennec" and task.kind in (
-            "beetmover-geckoview",
-            "upload-symbols",
+        if (
+            task.attributes.get("shipping_product") == "fennec"
+            and task.kind == "beetmover-geckoview"
         ):
             return True
 
