@@ -152,19 +152,6 @@ interface nsIWindowsShellService extends nsIShellService, Enums<typeof nsIWindow
   enumerateInstallShortcuts(aAppUserModelId: string): Promise<any>;
 }
 
-// https://searchfox.org/firefox-main/source/toolkit/components/taskscheduler/nsIWinTaskSchedulerService.idl
-
-interface nsIWinTaskSchedulerService extends nsISupports {
-  registerTask(aFolderName: string, aTaskName: string, aDefinitionXML: string, aUpdateExisting?: boolean): void;
-  validateTaskDefinition(aDefinitionXML: string): i32;
-  getTaskXML(aFolderName: string, aTaskName: string): string;
-  getCurrentUserSid(): string;
-  deleteTask(aFolderName: string, aTaskName: string): void;
-  getFolderTasks(aFolderName: string): string[];
-  createFolder(aParentFolderName: string, aSubFolderName: string): void;
-  deleteFolder(aParentFolderName: string, aSubFolderName: string): void;
-}
-
 // https://searchfox.org/firefox-main/source/widget/nsIJumpListBuilder.idl
 
 interface nsIJumpListBuilder extends nsISupports {
@@ -352,7 +339,6 @@ interface nsIXPCComponents_Interfaces {
   nsIWindowsMutex: nsJSIID<nsIWindowsMutex>;
   nsIWindowsMutexFactory: nsJSIID<nsIWindowsMutexFactory>;
   nsIWindowsShellService: nsJSIID<nsIWindowsShellService, typeof nsIWindowsShellService_LaunchOnLoginEnabledEnumerator & typeof nsIWindowsShellService_PinResult>;
-  nsIWinTaskSchedulerService: nsJSIID<nsIWinTaskSchedulerService>;
   nsIJumpListBuilder: nsJSIID<nsIJumpListBuilder>;
   nsITaskbarOverlayIconController: nsJSIID<nsITaskbarOverlayIconController>;
   nsITaskbarPreview: nsJSIID<nsITaskbarPreview>;

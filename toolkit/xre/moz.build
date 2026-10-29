@@ -45,7 +45,6 @@ UNIFIED_SOURCES += [
     "MacRunFromDmgUtils.mm",
     "nsCommandLineServiceMac.mm",
     "nsNativeAppSupportCocoa.mm",
-    "updaterfileutils_osx.mm",
 ]
 XPIDL_SOURCES += [
     "nsIASWebAuthSessionRequest.idl",
@@ -61,7 +60,6 @@ SOURCE_HEADERS += [
     "MacApplicationDelegate.h",
     "MacLaunchHelper.h",
     "nsCommandLineServiceMac.h",
-    "updaterfileutils_osx.h",
 ]
 DEFINES["PROXY_PRINTING"] = 1
 LOCAL_INCLUDES += [
@@ -79,10 +77,10 @@ UNIFIED_SOURCES += [
 ]
 
 UNIFIED_SOURCES += [
-    "/toolkit/mozapps/update/common/commonupdatedir.cpp",
     "AutoSQLiteLifetime.cpp",
     "Bootstrap.cpp",
     "CmdLineAndEnvUtils.cpp",
+    "commonupdatedir.cpp",
     "CreateAppData.cpp",
     "GeckoArgs.cpp",
     "nsConsoleWriter.cpp",
@@ -100,18 +98,6 @@ SOURCES += [
     "nsEmbedFunctions.cpp",
     "ProfileReset.cpp",
 ]
-
-if CONFIG["MOZ_UPDATER"]:
-    UNIFIED_SOURCES += [
-        "nsUpdateDriver.cpp",
-        "nsUpdateMutex.cpp",
-        "nsUpdateSyncManager.cpp",
-    ]
-    SOURCE_HEADERS += [
-        "nsUpdateDriver.h",
-        "nsUpdateMutex.h",
-        "nsUpdateSyncManager.h",
-    ]
 
 if CONFIG["MOZ_PDF_PRINTING"]:
     DEFINES["PROXY_PRINTING"] = 1
@@ -140,10 +126,6 @@ for var in (
     DEFINES[var] = '"%s"' % CONFIG[var]
 
 
-if CONFIG["MOZ_UPDATER"] and CONFIG["MOZ_WIDGET_TOOLKIT"] != "android":
-    DEFINES["MOZ_UPDATER"] = True
-
-
 DEFINES["MOZ_DISTRIBUTION_ID"] = '"%s"' % CONFIG["MOZ_DISTRIBUTION_ID"]
 
 if CONFIG["TARGET_XPCOM_ABI"]:
@@ -162,15 +144,11 @@ for var in ("APP_VERSION", "APP_ID"):
 if CONFIG["MOZ_BUILD_APP"] == "browser":
     DEFINES["MOZ_BUILD_APP_IS_BROWSER"] = True
 
-if CONFIG["MOZ_USE_NSS_FOR_MAR"]:
-    DEFINES["MAR_NSS"] = True
-
 LOCAL_INCLUDES += [
     "../../other-licenses/nsis/Contrib/CityHash/cityhash",
     "../components/find",
     "../components/printingui/ipc",
     "../components/windowwatcher",
-    "../mozapps/update/common",
     "../profile",
     "/config",
     "/dom/base",

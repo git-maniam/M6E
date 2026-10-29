@@ -128,7 +128,6 @@ const PanelUI = {
 
     Services.obs.addObserver(this, "fullscreen-nav-toolbox");
     Services.obs.addObserver(this, "appMenu-notifications");
-    Services.obs.addObserver(this, "show-update-progress");
 
     XPCOMUtils.defineLazyPreferenceGetter(
       this,
@@ -275,7 +274,6 @@ const PanelUI = {
 
     Services.obs.removeObserver(this, "fullscreen-nav-toolbox");
     Services.obs.removeObserver(this, "appMenu-notifications");
-    Services.obs.removeObserver(this, "show-update-progress");
 
     window.removeEventListener("MozDOMFullscreen:Entered", this);
     window.removeEventListener("MozDOMFullscreen:Exited", this);
@@ -371,9 +369,6 @@ const PanelUI = {
         this._notifications = AppMenuNotifications.notifications;
         this.updateNotifications(true);
         break;
-      case "show-update-progress":
-        openAboutDialog();
-        break;
     }
   },
 
@@ -450,9 +445,6 @@ const PanelUI = {
   onCommand(aEvent) {
     let { target } = aEvent;
     switch (target.id) {
-      case "appMenu-update-banner":
-        this._onBannerItemSelected(aEvent);
-        break;
       case "appMenu-bookmarks-button":
         BookmarkingUI.showSubView(target);
         break;
@@ -1023,9 +1015,6 @@ const PanelUI = {
         }
       });
       this._hidePopup();
-      if (!notifications[0].options.badgeOnly) {
-        this._showBannerItem(notifications[0]);
-      }
     } else if (doorhangers.length) {
       // Only show the doorhanger if the window is focused and not fullscreen
       if (
@@ -1034,7 +1023,6 @@ const PanelUI = {
       ) {
         this._hidePopup();
         this._showBadge(doorhangers[0]);
-        this._showBannerItem(doorhangers[0]);
       } else {
         this._clearBadge();
         this._showNotificationPanel(doorhangers[0]);
@@ -1042,7 +1030,6 @@ const PanelUI = {
     } else {
       this._hidePopup();
       this._showBadge(notifications[0]);
-      this._showBannerItem(notifications[0]);
     }
   },
 
@@ -1085,7 +1072,6 @@ const PanelUI = {
   _clearAllNotifications() {
     this._clearNotificationPanel();
     this._clearBadge();
-    this._clearBannerItem();
   },
 
   get notificationPanel() {
@@ -1192,71 +1178,8 @@ const PanelUI = {
     this.menuButton.setAttribute("badge-status", badgeStatus);
   },
 
-  // "Banner item" here refers to an item in the hamburger panel menu. They will
-  // typically show up as a colored row in the panel.
-  _showBannerItem(notification) {
-    const supportedIds = [
-      "update-downloading",
-      "update-available",
-      "update-manual",
-      "update-unsupported",
-      "update-restart",
-    ];
-    if (!supportedIds.includes(notification.id)) {
-      return;
-    }
-
-    if (!this._panelBannerItem) {
-      this._panelBannerItem = this.mainView.querySelector(".panel-banner-item");
-    }
-
-    const messageIDs = {
-      "update-downloading": "appmenuitem-banner-update-downloading",
-      "update-available": "appmenuitem-banner-update-available",
-      "update-manual": "appmenuitem-banner-update-manual",
-      "update-unsupported": "appmenuitem-banner-update-unsupported",
-      "update-restart": "appmenuitem-banner-update-restart",
-    };
-
-    document.l10n.setAttributes(
-      this._panelBannerItem,
-      messageIDs[notification.id]
-    );
-
-    const isNovaUpdateRestart =
-      notification.id === "update-restart" &&
-      Services.prefs.getBoolPref("browser.nova.enabled", false);
-
-    // Drop the description in private windows
-    const noDescription =
-      isNovaUpdateRestart && PrivateBrowsingUtils.isWindowPrivate(window);
-    this._panelBannerItem.toggleAttribute("no-description", noDescription);
-
-    if (isNovaUpdateRestart) {
-      this._panelBannerItem.setAttribute(
-        "aria-labelledby",
-        noDescription
-          ? "appMenu-update-banner-title"
-          : "appMenu-update-banner-title appMenu-update-banner-description"
-      );
-    } else {
-      this._panelBannerItem.removeAttribute("aria-labelledby");
-    }
-
-    this._panelBannerItem.setAttribute("notificationid", notification.id);
-    this._panelBannerItem.hidden = false;
-    this._panelBannerItem.notification = notification;
-  },
-
   _clearBadge() {
     this.menuButton.removeAttribute("badge-status");
-  },
-
-  _clearBannerItem() {
-    if (this._panelBannerItem) {
-      this._panelBannerItem.notification = null;
-      this._panelBannerItem.hidden = true;
-    }
   },
 
   _onNotificationButtonEvent(event, type) {
@@ -1283,18 +1206,6 @@ const PanelUI = {
     } else {
       AppMenuNotifications.callMainAction(window, notification, true);
     }
-  },
-
-  _onBannerItemSelected(event) {
-    let target = event.originalTarget;
-    if (!target.notification) {
-      throw new Error(
-        "menucommand target has no associated action/notification"
-      );
-    }
-
-    event.stopPropagation();
-    AppMenuNotifications.callMainAction(window, target.notification, false);
   },
 
   _getPopupId(notification) {

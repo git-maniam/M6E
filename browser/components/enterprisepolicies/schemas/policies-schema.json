@@ -203,45 +203,6 @@
       "examples": [false]
     },
 
-    "AppAutoUpdate": {
-      "type": "boolean",
-      "x-category": "Device update settings",
-      "x-compatibility": {
-        "firefox": { "version_added": "75" },
-        "firefox_esr": { "version_added": "68.7.0" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Enable or disable automatic application update.",
-      "examples": [false]
-    },
-
-    "AppUpdatePin": {
-      "type": "string",
-      "x-category": "Device update settings",
-      "x-compatibility": {
-        "firefox": { "version_added": "102" },
-        "firefox_esr": { "version_added": "102" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Prevent Firefox from being updated beyond the specified version.",
-      "examples": ["106."]
-    },
-
-    "AppUpdateURL": {
-      "x-category": "Device update settings",
-      "x-compatibility": {
-        "firefox": { "version_added": "62" },
-        "firefox_esr": { "version_added": "60.2.0" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Change the URL for application update if you are providing Firefox updates from a custom update server.",
-      "examples": ["https://yoursite.com"],
-      "$ref": "#/definitions/url"
-    },
-
     "Authentication": {
       "type": "object",
       "x-category": "Authentication",
@@ -399,19 +360,6 @@
         },
         "required": ["allowed_origins", "protocol"]
       }
-    },
-
-    "BackgroundAppUpdate": {
-      "type": "boolean",
-      "x-category": "Device update settings",
-      "x-compatibility": {
-        "firefox": { "version_added": "90" },
-        "firefox_esr": { "version_added": "91" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Enable or disable automatic application update in the background, when the application is not running.",
-      "examples": [false]
     },
 
     "BlockAboutAddons": {
@@ -1111,19 +1059,6 @@
       },
       "x-restart-required": true,
       "description": "Disable account-based services, including sync.",
-      "examples": [true]
-    },
-
-    "DisableAppUpdate": {
-      "type": "boolean",
-      "x-category": "Device update settings",
-      "x-compatibility": {
-        "firefox": { "version_added": "60" },
-        "firefox_esr": { "version_added": "60" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Turn off application updates within Firefox.",
       "examples": [true]
     },
 
@@ -2829,19 +2764,6 @@
       "contentMediaType": "application/json"
     },
 
-    "ManualAppUpdateOnly": {
-      "type": "boolean",
-      "x-category": "Device update settings",
-      "x-compatibility": {
-        "firefox": { "version_added": "87" },
-        "firefox_esr": { "version_added": "91" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Switch to manual updates only.",
-      "examples": [true]
-    },
-
     "MicrosoftEntraSSO": {
       "type": "boolean",
       "x-category": "Authentication",
@@ -2932,19 +2854,6 @@
       "x-restart-required": true,
       "description": "Override the first run page.",
       "examples": ["https://example.org"]
-    },
-
-    "OverridePostUpdatePage": {
-      "x-category": "Startup",
-      "x-compatibility": {
-        "firefox": { "version_added": "60" },
-        "firefox_esr": { "version_added": "60" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Override the upgrade page.",
-      "examples": ["http://example.org"],
-      "$ref": "#/definitions/urlOrEmpty"
     },
 
     "PasswordManagerEnabled": {
@@ -3589,43 +3498,6 @@
 
         "AutoLogin": {
           "type": "boolean"
-        }
-      }
-    },
-
-    "RelaunchRequired": {
-      "type": "object",
-      "x-category": "Miscellaneous",
-      "x-compatibility": {
-        "firefox": { "version_added": "150" },
-        "firefox_esr": { "version_added": "153" },
-        "firefox_enterprise": { "version_added": "150" }
-      },
-      "x-restart-required": true,
-      "description": "Control relaunch behavior.",
-      "examples": [
-        {
-          "NotificationPeriodHours": 24,
-          "RestartTimeOfDay": {
-            "Hour": 2,
-            "Minute": 42
-          }
-        }
-      ],
-      "properties": {
-        "NotificationPeriodHours": {
-          "type": "number"
-        },
-        "RestartTimeOfDay": {
-          "type": "object",
-          "properties": {
-            "Hour": {
-              "type": "number"
-            },
-            "Minute": {
-              "type": "number"
-            }
-          }
         }
       }
     },

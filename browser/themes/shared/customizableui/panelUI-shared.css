@@ -12,7 +12,6 @@
   --panel-banner-item-background-color: var(--button-background-color);
   --panel-banner-item-hover-bgcolor: var(--button-background-color-hover);
   --panel-banner-item-active-bgcolor: var(--button-background-color-active);
-  --panel-banner-item-update-supported-bgcolor: var(--color-accent-attention);
   --panel-banner-item-info-icon-bgcolor: light-dark(#0090ed, #80ebff);
 
   --menu-panel-width: 22.35em;
@@ -80,65 +79,6 @@ panel toolbarseparator {
     > .toolbarbutton-badge-stack > .toolbarbutton-badge {
       display: none;
     }
-  }
-
-  &[badge-status="update-available"],
-  &[badge-status="update-downloading"],
-  &[badge-status="update-manual"],
-  &[badge-status="update-other-instance"],
-  &[badge-status="update-restart"],
-  &[badge-status="update-unsupported"] {
-    > .toolbarbutton-badge-stack > .toolbarbutton-badge {
-      box-shadow: none;
-      /* "!important" is necessary to override the rule in toolbarbutton.css */
-      /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-      margin: -5px 0 0 !important;
-      /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-      margin-inline-end: -3px !important;
-      min-width: var(--icon-size-xsmall);
-      min-height: var(--icon-size-xsmall);
-      -moz-context-properties: fill;
-      background: url(chrome://browser/skin/notification-fill-12.svg) no-repeat center;
-      background-size: var(--icon-size-xsmall);
-    }
-  }
-
-  &[badge-status="update-available"],
-  &[badge-status="update-downloading"],
-  &[badge-status="update-manual"],
-  &[badge-status="update-other-instance"],
-  &[badge-status="update-restart"] {
-    > .toolbarbutton-badge-stack > .toolbarbutton-badge {
-      fill: var(--panel-banner-item-update-supported-bgcolor);
-    }
-  }
-
-  &[badge-status="update-unsupported"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
-    background: url(chrome://global/skin/icons/warning-fill-12.svg) no-repeat center;
-    fill: var(--icon-color-warning);
-  }
-}
-
-.panel-banner-item {
-  &[notificationid="update-available"],
-  &[notificationid="update-downloading"],
-  &[notificationid="update-manual"],
-  &[notificationid="update-other-instance"],
-  &[notificationid="update-restart"] {
-    > .toolbarbutton-icon {
-      background-image: url(chrome://browser/skin/update-badge.svg);
-      background-repeat: no-repeat;
-      background-position: center;
-      -moz-context-properties: fill;
-      fill: var(--panel-banner-item-update-supported-bgcolor);
-    }
-  }
-
-  &[notificationid="update-unsupported"] > .toolbarbutton-icon {
-    background: url(chrome://global/skin/icons/warning.svg) no-repeat center;
-    -moz-context-properties: stroke, fill;
-    stroke: var(--icon-color-warning);
-    fill: var(--icon-color-warning);
   }
 }
 
@@ -570,47 +510,10 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
   padding: var(--panel-menuitem-padding);
 }
 
-.appMenu-update-banner-text,
-.appMenu-update-banner-pulse-ring {
-  display: none;
-}
-
-.appMenu-update-banner-text {
-  padding-block: var(--space-xsmall);
-}
-
-.appMenu-update-banner-title {
-  font-weight: var(--font-weight-heading);
-}
-
-@keyframes appMenu-update-banner-pulse {
-  0% {
-    transform: scale(1);
-    opacity: var(--opacity-deemphasized-strong);
-  }
-  85% {
-    transform: scale(1.75);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.75);
-    opacity: 0;
-  }
-}
-
-.appMenu-update-banner-description {
-  font-weight: var(--font-weight);
-  /* Mirrors .text-box-trim-start on the title so bottom padding matches top. */
-  /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-  margin-block-end: calc((1cap - 1lh) / 2);
-}
-
 @media -moz-pref("browser.nova.enabled") {
   #appMenu-popup {
-    .panel-banner-item,
     .addon-banner-item {
       --panel-banner-item-color: var(--promo-message-text-color-vibrant);
-      --panel-banner-item-icon-color: light-dark(var(--icon-color-accent-primary-desaturated), var(--icon-color-information));
       --panel-banner-item-background-color: light-dark(var(--promo-background-color-vibrant), var(--background-color-information));
       --panel-banner-item-hover-bgcolor: color-mix(in srgb, var(--panel-banner-item-background-color) 85%, currentColor);
       --panel-banner-item-active-bgcolor: color-mix(in srgb, var(--panel-banner-item-background-color) 70%, currentColor);
@@ -622,82 +525,20 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
       padding-block: var(--space-large);
     }
 
-    .panel-banner-item > .toolbarbutton-icon {
-      --icon-color: var(--panel-banner-item-icon-color);
-      order: 0;
-      flex-shrink: 0;
-      fill: var(--icon-color);
-    }
-
     .addon-banner-item::after {
       order: -1;
       margin-inline: 0;
       fill: var(--icon-color-warning);
     }
 
-    #appMenu-update-banner:is([notificationid="update-manual"], [notificationid="update-unsupported"]),
     .addon-banner-item {
       --panel-banner-item-color: var(--button-text-color);
       --panel-banner-item-background-color: var(--background-color-warning);
     }
 
-    #appMenu-update-banner:is([notificationid="update-manual"], [notificationid="update-unsupported"]) > .toolbarbutton-icon {
-      background-image: url(chrome://global/skin/icons/warning.svg);
-      -moz-context-properties: fill;
-      fill: var(--icon-color-warning);
-    }
-
-    #appMenu-update-banner[notificationid="update-restart"] {
-      position: relative;
-      align-items: flex-start;
-
-      > .appMenu-update-banner-pulse-ring {
-        --border-color: var(--panel-banner-item-icon-color);
-        display: block;
-        position: absolute;
-        width: var(--icon-size-small);
-        height: var(--icon-size-small);
-        inset-inline-start: var(--promo-padding);
-        inset-block-start: var(--space-large);
-        border: 4px solid var(--border-color);
-        border-radius: var(--border-radius-circle);
-        opacity: 0;
-        pointer-events: none;
-
-        @media (prefers-reduced-motion: no-preference) {
-          animation: appMenu-update-banner-pulse 2s ease-out infinite;
-        }
-      }
-
-      > .toolbarbutton-text {
-        display: none;
-      }
-
-      .appMenu-update-banner-text {
-        display: flex;
-      }
-
-      &[no-description] {
-        align-items: center;
-        padding-block: var(--space-medium);
-
-        .appMenu-update-banner-description {
-          display: none;
-        }
-        .appMenu-update-banner-title {
-          margin-block-start: 0;
-        }
-        > .appMenu-update-banner-pulse-ring {
-          inset-block: 0;
-          margin-block: auto;
-        }
-      }
-    }
-
     /* Inset the top cards by the panel body's block padding so top, inline and
        bottom gaps match at any density. */
     #appMenu-mainView > .panel-subview-body {
-      > #appMenu-update-banner,
       > #appMenu-menu-message,
       > #appMenu-addon-banners > .addon-banner-item {
         margin-inline: var(--panel-separator-padding-inline);
@@ -715,7 +556,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
 }
 
 #appMenu-popup {
-  .panel-banner-item,
   .addon-banner-item {
     align-items: flex-start;
     color: var(--panel-banner-item-color);
@@ -724,7 +564,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
     font-weight: var(--font-weight-semibold);
   }
 
-  .panel-banner-item,
   .addon-banner-item {
     &:not([disabled]):hover {
       background-color: var(--panel-banner-item-hover-bgcolor);
@@ -742,20 +581,12 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
 }
 
 :root[uidensity="compact"] {
-  .panel-banner-item,
   .addon-banner-item {
     /* Without some padding the button gets too crowded even for compact mode
       when the text wraps to a newline. */
     padding-block: var(--space-xsmall);
     margin-block-start: var(--space-xsmall);
   }
-}
-
-.panel-banner-item > .toolbarbutton-icon {
-  width: var(--icon-size);
-  height: var(--icon-size);
-  /* Move the icon to appear after the text label. */
-  order: 2;
 }
 
 .addon-banner-item {

@@ -42,9 +42,6 @@ with Files("tryselect/selectors/release.py"):
 with Files("ts/**"):
     BUG_COMPONENT = ("Developer Infrastructure", "Lint and Formatting")
 
-with Files("update-packaging/**"):
-    BUG_COMPONENT = ("Release Engineering", "General")
-
 with Files("update-verify/**"):
     BUG_COMPONENT = ("Release Engineering", "Release Automation")
 
@@ -74,5 +71,4 @@ PYTHON_UNITTEST_MANIFESTS += [
     "lint/test/python.toml",
     "rb/test/python.toml",
     "tryselect/test/python.toml",
-    "update-packaging/test/python.toml",
 ]

@@ -5,12 +5,7 @@
 # PLEASE DO NOT ADD MORE EXCEPTIONS TO THIS LIST
 #
 
-# updater on osx is bug 1311194
-LaunchServices/org.mozilla.updater
-updater.app/Contents/MacOS/org.mozilla.updater
-
 plugin-container.app/Contents/PkgInfo
-updater.app/Contents/PkgInfo
 media-plugin-helper.app/Contents/PkgInfo
 gpu-helper.app/Contents/PkgInfo
 security-module-helper.app/Contents/PkgInfo

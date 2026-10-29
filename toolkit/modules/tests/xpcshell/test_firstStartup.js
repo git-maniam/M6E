@@ -29,7 +29,7 @@ add_task(async function test_success() {
 
   await GleanPings.firstStartup.testSubmission(
     () => {
-      if (AppConstants.MOZ_NORMANDY || AppConstants.MOZ_UPDATE_AGENT) {
+      if (AppConstants.MOZ_NORMANDY) {
         Assert.equal(FirstStartup.state, FirstStartup.SUCCESS);
         Assert.ok(Glean.firstStartup.newProfile.testGetValue());
         Assert.equal(
@@ -53,10 +53,6 @@ add_task(async function test_success() {
           );
           Assert.greater(Glean.firstStartup.nimbusInitTime.testGetValue(), 0);
         }
-
-        if (AppConstants.MOZ_UPDATE_AGENT) {
-          Assert.greater(Glean.firstStartup.deleteTasksTime.testGetValue(), 0);
-        }
       } else {
         Assert.equal(FirstStartup.state, FirstStartup.UNSUPPORTED);
         Assert.ok(Glean.firstStartup.newProfile.testGetValue());
@@ -77,7 +73,7 @@ add_task(async function test_timeout() {
 
   await GleanPings.firstStartup.testSubmission(
     () => {
-      if (AppConstants.MOZ_NORMANDY || AppConstants.MOZ_UPDATE_AGENT) {
+      if (AppConstants.MOZ_NORMANDY) {
         Assert.equal(FirstStartup.state, FirstStartup.TIMED_OUT);
         Assert.greater(Glean.firstStartup.elapsed.testGetValue(), 0);
         Assert.ok(Glean.firstStartup.newProfile.testGetValue());
@@ -97,10 +93,6 @@ add_task(async function test_timeout() {
             0
           );
           Assert.greater(Glean.firstStartup.nimbusInitTime.testGetValue(), 0);
-        }
-
-        if (AppConstants.MOZ_UPDATE_AGENT) {
-          Assert.greater(Glean.firstStartup.deleteTasksTime.testGetValue(), 0);
         }
       } else {
         Assert.equal(FirstStartup.state, FirstStartup.UNSUPPORTED);

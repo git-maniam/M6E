@@ -4,20 +4,12 @@
 
 "use strict";
 
-/* import-globals-from aboutDialog-appUpdater.js */
 /* import-globals-from utilityOverlay.js */
 
 // Services = object with smart getters for common XPCOM services
 var { AppConstants } = ChromeUtils.importESModule(
   "resource://gre/modules/AppConstants.sys.mjs"
 );
-
-if (AppConstants.MOZ_UPDATER) {
-  Services.scriptloader.loadSubScript(
-    "chrome://browser/content/aboutDialog-appUpdater.js",
-    this
-  );
-}
 
 function init() {
   let defaults = Services.prefs.getDefaultBranch(null);
@@ -97,21 +89,6 @@ function init() {
     }
   }
 
-  if (AppConstants.MOZ_UPDATER) {
-    gAppUpdater = new appUpdater({ buttonAutoFocus: true });
-
-    let channelLabel = document.getElementById("currentChannelText");
-    let channelAttrs = document.l10n.getAttributes(channelLabel);
-    let channel = UpdateUtils.UpdateChannel;
-    document.l10n.setAttributes(channelLabel, channelAttrs.id, { channel });
-    if (
-      /^release($|\-)/.test(channel) ||
-      Services.sysinfo.getProperty("isPackagedApp")
-    ) {
-      channelLabel.hidden = true;
-    }
-  }
-
   if (AppConstants.IS_ESR) {
     document.getElementById("release").hidden = false;
   }
@@ -121,32 +98,6 @@ function init() {
     .addEventListener("command", () => {
       window.close();
     });
-  if (AppConstants.MOZ_UPDATER) {
-    document
-      .getElementById("aboutDialogHelpLink")
-      .addEventListener("click", () => {
-        openHelpLink("firefox-help");
-      });
-    document
-      .getElementById("submit-feedback")
-      .addEventListener("click", openFeedbackPage);
-    document
-      .getElementById("checkForUpdatesButton")
-      .addEventListener("command", () => {
-        gAppUpdater.checkForUpdates();
-      });
-    document
-      .getElementById("downloadAndInstallButton")
-      .addEventListener("command", () => {
-        gAppUpdater.startDownload();
-      });
-    document.getElementById("updateButton").addEventListener("command", () => {
-      gAppUpdater.buttonRestartAfterDownload();
-    });
-    window.addEventListener("unload", e => {
-      onUnload(e);
-    });
-  }
 }
 
 init();

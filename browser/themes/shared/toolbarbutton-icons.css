@@ -156,12 +156,6 @@
   list-style-image: url("chrome://browser/skin/menu.svg");
 }
 
-#PanelUI-menu-button[badge-status="update-available"],
-#PanelUI-menu-button[badge-status="update-downloading"],
-#PanelUI-menu-button[badge-status="update-manual"],
-#PanelUI-menu-button[badge-status="update-other-instance"],
-#PanelUI-menu-button[badge-status="update-restart"],
-#PanelUI-menu-button[badge-status="update-unsupported"],
 #PanelUI-menu-button[badge-status="addon-alert"] {
   list-style-image: url("chrome://browser/skin/menu-badged.svg");
 }

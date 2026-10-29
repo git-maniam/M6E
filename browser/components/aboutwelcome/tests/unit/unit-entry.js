@@ -195,7 +195,6 @@ const TEST_GLOBAL = {
         return {};
       },
     },
-    "@mozilla.org/updates/update-checker;1": { createInstance() {} },
     "@mozilla.org/widget/useridleservice;1": {
       getService() {
         return {

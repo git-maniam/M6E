@@ -97,23 +97,6 @@ first_startup:
     description: >
       Number of milliseconds until Nimbus is fully initialized.
 
-  delete_tasks_time:
-    type: quantity
-    unit: milliseconds
-    description: >
-      Number of milliseconds until TaskScheduler.deleteAllTasks resolved in FirstStartup.
-    bugs:
-      - https://bugzilla.mozilla.org/show_bug.cgi?id=1841138
-    data_reviews:
-      - https://bugzilla.mozilla.org/show_bug.cgi?id=1841138
-    data_sensitivity:
-      - technical
-    notification_emails:
-      - mconley@mozilla.com
-    expires: never
-    send_in_pings:
-      - first-startup
-
   category_tasks_time:
     type: quantity
     unit: milliseconds

@@ -72,7 +72,6 @@ members = [
   "toolkit/crashreporter/mozwer-rust",
   "toolkit/library/gtest/rust",
   "toolkit/library/rust/",
-  "toolkit/components/taskscheduler/rust",
   "services/application-services/components/viaduct-necko",
   "js/src/builtin/normalizer_glue",
 ]

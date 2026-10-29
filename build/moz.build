@@ -19,8 +19,6 @@ if CONFIG["MOZ_STDCXX_COMPAT"]:
 if CONFIG["RUSTC"]:
     DIRS += ["rust/mozbuild"]
 
-DEFINES["ACCEPTED_MAR_CHANNEL_IDS"] = CONFIG["ACCEPTED_MAR_CHANNEL_IDS"]
-
 PYTHON_UNITTEST_MANIFESTS += [
     "compare-mozconfig/python.toml",
     "macosx/python.toml",
@@ -63,7 +61,6 @@ if CONFIG["MOZ_APP_BASENAME"]:
         "MOZ_APP_BASENAME",
         "MOZ_APP_VENDOR",
         "MOZ_APP_ID",
-        "MAR_CHANNEL_ID",
         "MOZ_APP_REMOTINGNAME",
         "MOZ_CRASHREPORTER_URL",
     ):
@@ -78,13 +75,9 @@ if CONFIG["MOZ_APP_BASENAME"]:
     if CONFIG["MOZ_APP_PROFILE"]:
         appini_defines["MOZ_APP_PROFILE"] = CONFIG["MOZ_APP_PROFILE"]
 
-    for var in ("MOZ_CRASHREPORTER", "MOZ_PROFILE_MIGRATOR", "MOZ_UPDATER"):
+    for var in ("MOZ_CRASHREPORTER", "MOZ_PROFILE_MIGRATOR"):
         if CONFIG[var]:
             appini_defines[var] = True
-
-    appini_defines["MOZ_APPUPDATE_HOST"] = "aus5.mozilla.org"
-    if CONFIG["MOZ_APPUPDATE_HOST"]:
-        appini_defines["MOZ_APPUPDATE_HOST"] = CONFIG["MOZ_APPUPDATE_HOST"]
 
     GeneratedFile(
         "application.ini",

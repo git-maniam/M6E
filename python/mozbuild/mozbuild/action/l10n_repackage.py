@@ -39,7 +39,6 @@ _NON_CHROME = frozenset((
     "defaults/profile",
     "defaults/pref*/*-l10n.js",
     "default.locale",
-    "updater.ini",
     "extensions/langpack-*@*",
     "distribution/extensions/langpack-*@*",
     "**/multilocale.txt",

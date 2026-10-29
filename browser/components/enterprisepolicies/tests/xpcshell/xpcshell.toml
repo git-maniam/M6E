@@ -15,10 +15,6 @@ support-files = [
 
 ["test_addon_update.js"]
 
-["test_appupdatepin.js"]
-
-["test_appupdateurl.js"]
-
 ["test_bug1658259.js"]
 
 ["test_cleanup.js"]

@@ -2787,46 +2787,6 @@ export const FeatureManifest: {
         };
         variables: {};
     };
-    whatsNewPage: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        exposureDescription: string;
-        variables: {
-            overrideUrl: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            maxVersion: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            minVersion: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-            disableWNP: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
-            };
-        };
-    };
     pbNewtab: {
         description: string;
         owner: string;
@@ -2865,42 +2825,6 @@ export const FeatureManifest: {
             path: string;
         };
         variables: {};
-    };
-    backgroundUpdateAutomaticRestart: {
-        description: string;
-        owner: string;
-        applications: string[];
-        hasExposure: boolean;
-        variables: {
-            enabled: {
-                type: string;
-                fallbackPref: string;
-                description: string;
-            };
-        };
-    };
-    backgroundUpdateCheckPolicy: {
-        description: string;
-        owner: string;
-        applications: string[];
-        hasExposure: boolean;
-        variables: {
-            throttleEnabled: {
-                type: string;
-                fallbackPref: string;
-                description: string;
-            };
-            throttleAfterDays: {
-                type: string;
-                fallbackPref: string;
-                description: string;
-            };
-            throttleDebouncePeriodInHours: {
-                type: string;
-                fallbackPref: string;
-                description: string;
-            };
-        };
     };
     pictureinpicture: {
         description: string;
@@ -5000,22 +4924,6 @@ export const FeatureManifest: {
                     pref: string;
                 };
                 description: string;
-            };
-        };
-    };
-    backgroundUpdate: {
-        description: string;
-        owner: string;
-        hasExposure: boolean;
-        exposureDescription: string;
-        variables: {
-            enableUpdatesForUnelevatedInstallations: {
-                description: string;
-                type: string;
-                setPref: {
-                    branch: string;
-                    pref: string;
-                };
             };
         };
     };

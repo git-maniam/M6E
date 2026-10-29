@@ -343,3 +343,30 @@ async function loadNetErrorPage(errorType, hostAndPort) {
   await pageLoaded;
   return { browser, tab };
 }
+
+function waitForAboutDialog() {
+  return new Promise(resolve => {
+    let listener = {
+      onOpenWindow(xulWindow) {
+        Services.wm.removeListener(listener);
+        let domwindow = xulWindow.docShell.domWindow;
+        domwindow.addEventListener(
+          "load",
+          () => {
+            is(
+              domwindow.document.location.href,
+              "chrome://browser/content/aboutDialog.xhtml",
+              "About dialog appeared"
+            );
+            resolve(domwindow);
+          },
+          { capture: true, once: true }
+        );
+      },
+      onCloseWindow() {},
+    };
+
+    Services.wm.addListener(listener);
+    openAboutDialog();
+  });
+}

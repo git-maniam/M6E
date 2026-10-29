@@ -8,9 +8,7 @@
 // for automated testing.  We might split these two functions at some point.
 //
 // First, note that the task takes significant configuration from the command
-// line.  This is different than the eventual home for this functionality, the
-// background update task, which will take this configuration from the default
-// browsing profile.
+// line.
 //
 // This task accepts the following command line arguments:
 //
