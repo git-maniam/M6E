@@ -689,24 +689,6 @@ export class SpecialPowersChild extends JSWindowActorChild {
     return PromiseDebugging;
   }
 
-  async waitForCrashes(aExpectingProcessCrash) {
-    if (!aExpectingProcessCrash) {
-      return;
-    }
-
-    var crashIds = this._encounteredCrashDumpFiles
-      .filter(filename => {
-        return filename.length === 40 && filename.endsWith(".dmp");
-      })
-      .map(id => {
-        return id.slice(0, -4); // Strip the .dmp extension to get the ID
-      });
-
-    await this.sendQuery("SPProcessCrashManagerWait", {
-      crashIds,
-    });
-  }
-
   async removeExpectedCrashDumpFiles(aExpectingProcessCrash) {
     var success = true;
     if (aExpectingProcessCrash) {

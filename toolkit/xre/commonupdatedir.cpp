@@ -16,8 +16,6 @@
 #include "commonupdatedir.h"
 #include "updatedefines.h"
 
-
-
 /**
  * Returns a hash of the install path, suitable for uniquely identifying the
  * particular Firefox installation that is running.
@@ -57,4 +55,3 @@ bool GetInstallHash(const char16_t* installPath,
   return !(charsWritten < 1 ||
            static_cast<size_t>(charsWritten) > hashStrSize - 1);
 }
-

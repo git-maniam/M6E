@@ -27,7 +27,7 @@ Windows
 A Firefox nightly or release
 
 : You need a Firefox version for which symbols are available from the
-  {doc}`symbol server </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>`. You
+  symbol server. You
   can use any [official nightly
   build](https://ftp.mozilla.org/pub/firefox/nightly/) or released
   version of Firefox from Mozilla. You can find the latest trunk

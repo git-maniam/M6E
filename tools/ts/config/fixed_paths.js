@@ -35,9 +35,6 @@ exports.fixed = {
   "resource://devtools/server/actors/descriptors/webextension.js": [
     "devtools/server/actors/descriptors/webextension.js",
   ],
-  "resource://gre/modules/CrashManager.sys.mjs": [
-    "toolkit/components/crashes/CrashManager.in.sys.mjs",
-  ],
   "resource://gre/modules/SomeModule.sys.mjs": undefined,
   "resource://gre/modules/components-utils/ClientEnvironment.sys.mjs": [
     "toolkit/components/utils/ClientEnvironment.sys.mjs",

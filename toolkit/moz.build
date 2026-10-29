@@ -33,10 +33,6 @@ DIRS += [
     "system/osxproxy",
 ]
 
-TEST_HARNESS_FILES.testing.mochitest.browser.toolkit.crashreporter.test.browser += [
-    "crashreporter/test/browser/crashreport.sjs",
-]
-
 if CONFIG["ENABLE_TESTS"]:
     DIRS += ["tests/gtest"]
 

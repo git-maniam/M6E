@@ -66,7 +66,6 @@ glean.attribution:
           type: string
     send_in_pings:
       - metrics
-      - update
       - baseline
       - events
     no_lint:
@@ -112,7 +111,6 @@ glean.distribution:
             type: string
     send_in_pings:
       - metrics
-      - update
       - baseline
       - events
     no_lint:

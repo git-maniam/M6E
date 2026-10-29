@@ -473,8 +473,6 @@ $schema: moz://mozilla.org/schemas/glean/tags/1-0-0
   description: The Bugzilla component which applies to this object.
 'Toolkit :: Content Prompts':
   description: The Bugzilla component which applies to this object.
-'Toolkit :: Crash Reporting':
-  description: The Bugzilla component which applies to this object.
 'Toolkit :: Data Sanitization':
   description: The Bugzilla component which applies to this object.
 'Toolkit :: Default Browser Agent':

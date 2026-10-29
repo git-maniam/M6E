@@ -2302,8 +2302,7 @@ export var BrowserTestUtils = {
   },
 
   /**
-   * Crashes a remote frame tab and cleans up the generated minidumps.
-   * Resolves with the data from the .extra file (the crash annotations).
+   * Crashes a remote frame tab.
    *
    * @param (Browser) browser
    *        A remote <xul:browser> element. Must not be null.
@@ -2311,8 +2310,8 @@ export var BrowserTestUtils = {
    *        True if it is expected that the tab crashed page will be shown
    *        for this browser. If so, the Promise will only resolve once the
    *        tab crash page has loaded.
-   * @param (bool) shouldClearMinidumps
-   *        True if the minidumps left behind by the crash should be removed.
+   * @param (bool) _shouldClearMinidumps
+   *        Unused. Kept for call-site compatibility.
    * @param (BrowsingContext) browsingContext
    *        The context where the frame leaves. Default to
    *        top level context if not supplied.
@@ -2324,48 +2323,19 @@ export var BrowserTestUtils = {
    *            If specified and `true`, cause the crash asynchronously.
    *
    * @returns (Promise)
-   *   An Object with key-value pairs representing the data from the crash
-   *   report's extra file (if applicable).
+   *   An empty Object, as no crash report is generated.
    */
   async crashFrame(
     browser,
     shouldShowTabCrashPage = true,
-    shouldClearMinidumps = true,
+    _shouldClearMinidumps = true,
     browsingContext,
     options = {}
   ) {
-    let extra = {};
+    const extra = {};
 
     if (!browser.isRemoteBrowser) {
       throw new Error("<xul:browser> needs to be remote in order to crash");
-    }
-
-    /**
-     * Returns the directory where crash dumps are stored.
-     *
-     * @return nsIFile
-     */
-    function getMinidumpDirectory() {
-      let dir = Services.dirsvc.get("ProfD", Ci.nsIFile);
-      dir.append("minidumps");
-      return dir;
-    }
-
-    /**
-     * Removes a file from a directory. This is a no-op if the file does not
-     * exist.
-     *
-     * @param directory
-     *        The nsIFile representing the directory to remove from.
-     * @param filename
-     *        A string for the file to remove from the directory.
-     */
-    function removeFile(directory, filename) {
-      let file = directory.clone();
-      file.append(filename);
-      if (file.exists()) {
-        file.remove(false);
-      }
     }
 
     let expectedPromises = [];
@@ -2391,46 +2361,11 @@ export var BrowserTestUtils = {
 
         Services.obs.removeObserver(observer, "ipc:content-shutdown");
 
-        const dumpID = subject.get("dumpID");
-        if (AppConstants.MOZ_CRASHREPORTER && !dumpID) {
-          dump("dumpID was not present despite crash reporting being enabled");
-        }
-
-        let removalPromise = Promise.resolve();
-
-        if (dumpID) {
-          removalPromise = Services.crashmanager
-            .ensureCrashIsPresent(dumpID)
-            .then(async () => {
-              let minidumpDirectory = getMinidumpDirectory();
-              let extrafile = minidumpDirectory.clone();
-              extrafile.append(dumpID + ".extra");
-              if (extrafile.exists()) {
-                if (AppConstants.MOZ_CRASHREPORTER) {
-                  extra = await IOUtils.readJSON(extrafile.path);
-                } else {
-                  dump(
-                    "\nCrashReporter not enabled - will not return any extra data\n"
-                  );
-                }
-              } else {
-                dump(`\nNo .extra file for dumpID: ${dumpID}\n`);
-              }
-
-              if (shouldClearMinidumps) {
-                removeFile(minidumpDirectory, dumpID + ".dmp");
-                removeFile(minidumpDirectory, dumpID + ".extra");
-              }
-            });
-        }
-
-        removalPromise.then(() => {
-          dump("\nCrash cleaned up\n");
-          // There might be other ipc:content-shutdown handlers that need to
-          // run before we want to continue, so we'll resolve on the next tick
-          // of the event loop.
-          TestUtils.executeSoon(() => resolve());
-        });
+        dump("\nCrash cleaned up\n");
+        // There might be other ipc:content-shutdown handlers that need to
+        // run before we want to continue, so we'll resolve on the next tick
+        // of the event loop.
+        TestUtils.executeSoon(() => resolve());
       };
 
       Services.obs.addObserver(observer, "ipc:content-shutdown");

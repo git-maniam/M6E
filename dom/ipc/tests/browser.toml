@@ -7,11 +7,6 @@ support-files = [
   "../../media/test/owl.mp3",
 ]
 
-["browser_CrashService_crash.js"]
-run-if = [
-  "crashreporter",
-]
-
 ["browser_ProcessPriorityManager.js"]
 # The Process Priority Manager is only enabled for Windows, Linux, and MacOS so far.
 # Bug 1522879.

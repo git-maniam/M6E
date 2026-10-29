@@ -136,10 +136,6 @@ td.integer {
   overflow: hidden;
 }
 
-#crashes-table th:first-child {
-  width: 50%;
-}
-
 #features-table th:first-child,
 #remote-processes-table th:first-child {
   width: 30%;

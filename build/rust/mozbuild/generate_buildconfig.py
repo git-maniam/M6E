@@ -143,8 +143,6 @@ def generate(output):
     output.write(generate_bool("MOZ_DIAGNOSTIC_ASSERT_ENABLED"))
     output.write(generate_bool("MOZ_CODE_COVERAGE"))
 
-    # Used by toolkit/crashreporter/client
-    output.write(generate_bool("MOZ_CRASHREPORTER_MOCK"))
     output.write(generate_string_array("BINDGEN_SYSTEM_FLAGS"))
     output.write(generate_string_array("MOZ_GTK3_CFLAGS"))
     output.write(generate_string_array("MOZ_GTK3_LIBS"))
@@ -152,11 +150,6 @@ def generate(output):
     output.write(generate_objdir_flags("NSS_CFLAGS"))
     output.write(generate_string_array("MOZ_PIXMAN_CFLAGS"))
     output.write(generate_string_array("MOZ_ICU_CFLAGS"))
-
-    # Used by toolkit/crashreporter/crash_helper_common
-    output.write(generate_string("MOZ_APP_ID"))
-    output.write(generate_string("MOZ_CRASHREPORTER_URL"))
-    output.write(generate_string("MOZ_UPDATE_CHANNEL"))
 
     # NSS shared libraries the megazord and rusttests link against. The list lives
     # in mozbuild.nss_libs so that the libsForTests packaging action can use the

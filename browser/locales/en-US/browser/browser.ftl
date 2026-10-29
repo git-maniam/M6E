@@ -1271,9 +1271,6 @@ plugin-crashed-notification-message = The { $pluginName } plugin has crashed.
 plugin-crashed-notification-reload-button =
     .label = Reload page
     .accesskey = R
-plugin-crashed-notification-submit-button =
-    .label = Submit a crash report
-    .accesskey = S
 
 ## Password save/update panel
 

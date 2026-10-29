@@ -1031,13 +1031,6 @@ export class SpecialPowersParent extends JSWindowActorParent {
           return undefined; // See comment at the beginning of this function.
         }
 
-        case "SPProcessCrashManagerWait": {
-          let promises = aMessage.json.crashIds.map(crashId => {
-            return Services.crashmanager.ensureCrashIsPresent(crashId);
-          });
-          return Promise.all(promises);
-        }
-
         case "SPPermissionManager": {
           let msg = aMessage.data;
           switch (msg.op) {

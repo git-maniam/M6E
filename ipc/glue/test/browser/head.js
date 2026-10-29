@@ -55,11 +55,9 @@ async function checkUtilityExists(actor) {
   return utilityPid;
 }
 
-// "Cleanly stop" a utility process.  This will never leave a crash dump file.
+// "Cleanly stop" a utility process.
 // preferKill will "kill" the process (e.g. SIGABRT) instead of using the
 // UtilityProcessManager.
-// To "crash" -- i.e. shutdown and generate a crash dump -- use
-// crashSomeUtility().
 async function cleanUtilityProcessShutdown(actor, preferKill = false) {
   info(`${preferKill ? "Kill" : "Clean shutdown"} Utility Process ${actor}`);
 
@@ -463,105 +461,6 @@ async function runMochitestUtilityAudio(
 
   info(`Remove media: ${src}`);
   document.body.removeChild(audio);
-}
-
-async function crashSomeUtility(utilityPid, actorsCheck) {
-  SimpleTest.expectChildProcessCrash();
-
-  const crashMan = Services.crashmanager;
-  const utilityProcessGone = TestUtils.topicObserved(
-    "ipc:utility-shutdown",
-    (subject, data) => {
-      info(`ipc:utility-shutdown: data=${data} subject=${subject}`);
-      return parseInt(data, 10) === utilityPid;
-    }
-  );
-
-  info("prune any previous crashes");
-  const future = new Date(Date.now() + 1000 * 60 * 60 * 24);
-  await crashMan.pruneOldCrashes(future);
-
-  info("crash Utility Process");
-  const ProcessTools = Cc["@mozilla.org/processtools-service;1"].getService(
-    Ci.nsIProcessToolsService
-  );
-
-  info(`Crash Utility Process ${utilityPid}`);
-  ProcessTools.crash(utilityPid);
-
-  info(`Waiting for utility process ${utilityPid} to go away.`);
-  let [subject, data] = await utilityProcessGone;
-  Assert.strictEqual(
-    parseInt(data, 10),
-    utilityPid,
-    `Should match the crashed PID ${utilityPid} with ${data}`
-  );
-  ok(
-    subject instanceof Ci.nsIPropertyBag2,
-    "Subject needs to be a nsIPropertyBag2 to clean up properly"
-  );
-
-  // Make sure the process is dead, otherwise there is a risk of race for
-  // writing leak logs
-  utilityProcessTest().noteIntentionalCrash(utilityPid);
-
-  const dumpID = subject.get("dumpID");
-  ok(dumpID, "There should be a dumpID");
-
-  await crashMan.ensureCrashIsPresent(dumpID);
-  await crashMan.getCrashes().then(crashes => {
-    is(crashes.length, 1, "There should be only one record");
-    const crash = crashes[0];
-    ok(
-      crash.isOfType(
-        crashMan.processTypes[Ci.nsIXULRuntime.PROCESS_TYPE_UTILITY],
-        crashMan.CRASH_TYPE_CRASH
-      ),
-      "Record should be a utility process crash"
-    );
-    Assert.strictEqual(crash.id, dumpID, "Record should have an ID");
-    ok(
-      actorsCheck(crash.metadata.UtilityActorsName),
-      `Record should have the correct actors name for: ${crash.metadata.UtilityActorsName}`
-    );
-  });
-
-  let minidumpDirectory = Services.dirsvc.get("ProfD", Ci.nsIFile);
-  minidumpDirectory.append("minidumps");
-
-  let dumpfile = minidumpDirectory.clone();
-  dumpfile.append(dumpID + ".dmp");
-  if (dumpfile.exists()) {
-    info(`Removal of ${dumpfile.path}`);
-    dumpfile.remove(false);
-  }
-
-  let extrafile = minidumpDirectory.clone();
-  extrafile.append(dumpID + ".extra");
-  info(`Removal of ${extrafile.path}`);
-  if (extrafile.exists()) {
-    extrafile.remove(false);
-  }
-}
-
-// Crash a utility process and generate a crash dump.  To close a utility
-// process (forcefully or not) without a generating a crash, use
-// cleanUtilityProcessShutdown.
-async function crashSomeUtilityActor(
-  actor,
-  actorsCheck = () => {
-    return true;
-  }
-) {
-  // Get PID for utility type
-  const procInfos = await getUtilityProcesses(actor);
-  Assert.equal(
-    procInfos.length,
-    1,
-    `exactly one ${actor} utility process should be found`
-  );
-  const utilityPid = procInfos[0].pid;
-  return crashSomeUtility(utilityPid, actorsCheck);
 }
 
 function isNightlyOnly() {

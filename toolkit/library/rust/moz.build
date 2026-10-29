@@ -21,8 +21,6 @@ for feature in gkrust_features:
 # compilation artifacts with gkrust.
 RUST_TESTS = [
     "authenticator",
-    "crashreporter",
-    "crash_helper_common",
     "firefox-on-glean",
     "l10nregistry",
     "noise",
@@ -36,12 +34,7 @@ RUST_TESTS = [
 ]
 
 RUST_TESTS += ["nmhproxy"]
-# Windows linker pulls in FFI symbols despite them not being relevant for the tests.
-RUST_TESTS += ["crash_helper_server"]
 
-
-RUST_TEST_FEATURES.append("crashreporter/mock")
-RUST_TEST_FEATURES.append("crashping/gecko_tests")
 RUST_TEST_FEATURES.append("firefox-on-glean/gecko_tests")
 
 # Code coverage builds link a bunch of Gecko bindings code from the style
@@ -59,12 +52,6 @@ if not CONFIG["MOZ_CODE_COVERAGE"]:
     RUST_TESTS += ["dom_fragmentdirectives"]
     # Likewise for dom_speculationrules.
     RUST_TESTS += ["dom_speculationrules"]
-
-# Code coverage builds time out when executing the crashping tests on windows
-# (see bug 2010162), and it's more consistent to simply disable for all
-# platforms (since bug 2006492 ran into some issues with Linux ccov as well).
-if not CONFIG["MOZ_CODE_COVERAGE"]:
-    RUST_TESTS += ["crashping"]
 
 if CONFIG["TARGET_CPU"] != "x86":
     # malloc_size_of_derive is a build dependency, so if we are doing

@@ -98,4 +98,3 @@ preferences:
             type: string
     send_in_pings:
       - metrics
-      - update

@@ -75,30 +75,6 @@ const startupPhases = {
   // to run before we have even selected the user profile.
   "before profile selection": [
     {
-      // bug 1541200
-      path: "UAppData:Crash Reports/InstallTime20*",
-      condition: AppConstants.MOZ_CRASHREPORTER,
-      stat: 1, // only caught on Windows.
-      read: 1,
-      write: 2,
-      close: 1,
-    },
-    {
-      // bug 1541200
-      path: "UAppData:Crash Reports/LastCrash",
-      condition: WIN && AppConstants.MOZ_CRASHREPORTER,
-      stat: 1, // only caught on Windows.
-      read: 1,
-    },
-    {
-      // bug 1541200
-      path: "UAppData:Crash Reports/LastCrash",
-      condition: !WIN && AppConstants.MOZ_CRASHREPORTER,
-      ignoreIfUnused: true, // only if we ever crashed on this machine
-      read: 1,
-      close: 1,
-    },
-    {
       // At least the read seems unavoidable for a regular startup.
       path: "UAppData:profiles.ini",
       ignoreIfUnused: true,

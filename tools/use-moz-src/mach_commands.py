@@ -59,7 +59,6 @@ excluded_from_convert_re = list(
             "BackgroundTask_.*\\.sys\\.mjs",  # Depend on this resource: path.
             "BrowserUsageTelemetry\\.sys\\.mjs",  # Browser + Android duplicates.
             "BuiltInThemes\\.sys\\.mjs",  # Thunderbird override
-            "CrashManager\\.sys.\\.mjs",  # Preprocessed.
             "ExtensionBrowsingData\\.sys\\.mjs",  # Browser + Android duplicates.
             "policies/schema\\.sys\\.mjs",  # Thunderbird override
             "Policies\\.sys\\.mjs",  # Thunderbird override

@@ -4,20 +4,14 @@
 
 var AboutTabCrashed = {
   /**
-   * This can be set to true once this page receives a message from the
-   * parent saying whether or not a crash report is available.
-   */
-  hasReport: false,
-
-  /**
    * The messages that we might receive from the parent.
    */
-  MESSAGES: ["SetCrashReportAvailable", "CrashReportSent", "UpdateCount"],
+  MESSAGES: ["Ready", "UpdateCount"],
 
   /**
    * Items for which we will listen for click events.
    */
-  CLICK_TARGETS: ["closeTab", "restoreTab", "restoreAll", "sendReport"],
+  CLICK_TARGETS: ["closeTab", "restoreTab", "restoreAll"],
 
   /**
    * Returns information about this crashed tab.
@@ -56,12 +50,9 @@ var AboutTabCrashed = {
         this.setMultiple(message.data.count > 1);
         break;
       }
-      case "SetCrashReportAvailable": {
-        this.onSetCrashReportAvailable(message);
-        break;
-      }
-      case "CrashReportSent": {
-        this.onCrashReportSent();
+      case "Ready": {
+        let event = new CustomEvent("AboutTabCrashedReady", { bubbles: true });
+        document.dispatchEvent(event);
         break;
       }
     }
@@ -113,88 +104,16 @@ var AboutTabCrashed = {
         this.sendMessage("restoreAll");
         break;
       }
-
-      case "sendReport": {
-        this.showCrashReportUI(event.target.checked);
-        break;
-      }
     }
-  },
-
-  /**
-   * After this page tells the parent that it has loaded, the parent
-   * will respond with whether or not a crash report is available. This
-   * method handles that message.
-   *
-   * @param message
-   *        The message from the parent, which should contain a data
-   *        Object property with the following properties:
-   *
-   *        hasReport (bool):
-   *          Whether or not there is a crash report.
-   *
-   *        sendReport (bool):
-   *          Whether or not the the user prefers to send the report
-   *          by default.
-   *
-   *        includeURL (bool):
-   *          Whether or not the user prefers to send the URL of
-   *          the tab that crashed.
-   *
-   *        requestAutoSubmit (bool):
-   *          Whether or not we should ask the user to automatically
-   *          submit backlogged crash reports.
-   */
-  onSetCrashReportAvailable(message) {
-    let data = message.data;
-
-    if (data.hasReport) {
-      this.hasReport = true;
-      document.documentElement.classList.add("crashDumpAvailable");
-
-      document.getElementById("sendReport").checked = data.sendReport;
-      document.getElementById("includeURL").checked = data.includeURL;
-
-      this.showCrashReportUI(data.sendReport);
-    } else {
-      this.showCrashReportUI(false);
-    }
-
-    if (data.requestAutoSubmit) {
-      document.getElementById("requestAutoSubmit").hidden = false;
-    }
-
-    let event = new CustomEvent("AboutTabCrashedReady", { bubbles: true });
-    document.dispatchEvent(event);
-  },
-
-  /**
-   * Handler for when the parent reports that the crash report associated
-   * with this about:tabcrashed page has been sent.
-   */
-  onCrashReportSent() {
-    document.documentElement.classList.remove("crashDumpAvailable");
-    document.documentElement.classList.add("crashDumpSubmitted");
-  },
-
-  /**
-   * Toggles the display of the crash report form.
-   *
-   * @param shouldShow (bool)
-   *        True if the crash report form should be shown
-   */
-  showCrashReportUI(shouldShow) {
-    let options = document.getElementById("options");
-    options.hidden = !shouldShow;
   },
 
   /**
    * Toggles whether or not the page is one of several visible pages
-   * showing the crash reporter. This controls some of the language
+   * showing the crashed tab page. This controls some of the language
    * on the page, along with what the "primary" button is.
    *
    * @param hasMultiple (bool)
-   *        True if there are multiple crash report pages being shown.
+   *        True if there are multiple crashed tab pages being shown.
    */
   setMultiple(hasMultiple) {
     let main = document.getElementById("main");
@@ -213,49 +132,13 @@ var AboutTabCrashed = {
 
   /**
    * Sends a message to the parent in response to the user choosing
-   * one of the actions available on the page. This might also send up
-   * crash report information if the user has chosen to submit a crash
-   * report.
+   * one of the actions available on the page.
    *
    * @param messageName (String)
    *        The message to send to the parent
    */
   sendMessage(messageName) {
-    let comments = "";
-    let URL = "";
-    let sendReport = false;
-    let includeURL = false;
-    let autoSubmit = false;
-
-    if (this.hasReport) {
-      sendReport = document.getElementById("sendReport").checked;
-      if (sendReport) {
-        comments = document.getElementById("comments").value.trim();
-
-        includeURL = document.getElementById("includeURL").checked;
-        if (includeURL) {
-          URL = this.pageData.URL.trim();
-        }
-      }
-    }
-
-    let requestAutoSubmit = document.getElementById("requestAutoSubmit");
-    if (requestAutoSubmit.hidden) {
-      // The checkbox is hidden if the user has already opted in to sending
-      // backlogged crash reports.
-      autoSubmit = true;
-    } else {
-      autoSubmit = document.getElementById("autoSubmit").checked;
-    }
-
-    RPMSendAsyncMessage(messageName, {
-      sendReport,
-      comments,
-      includeURL,
-      URL,
-      autoSubmit,
-      hasReport: this.hasReport,
-    });
+    RPMSendAsyncMessage(messageName);
   },
 };
 

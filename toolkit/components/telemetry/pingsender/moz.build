@@ -9,8 +9,10 @@ UNIFIED_SOURCES += [
 SOURCE_HEADERS += [
     "pingsender.h",
 ]
+# M6E: curl's headers lived in the crash reporter's Breakpad tree; they are
+# kept here for the pingsender.
 LOCAL_INCLUDES += [
-    "/toolkit/crashreporter/google-breakpad/src",
+    "/toolkit/components/telemetry/pingsender",
 ]
 USE_LIBS += [
     "zlib",

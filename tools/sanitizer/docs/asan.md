@@ -132,7 +132,6 @@ ac_add_options --enable-address-sanitizer
 
 # These three are required by ASan
 ac_add_options --disable-jemalloc
-ac_add_options --disable-crashreporter
 ac_add_options --disable-elf-hack
 
 # Keep symbols to symbolize ASan traces later

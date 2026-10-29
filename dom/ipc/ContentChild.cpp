@@ -4159,24 +4159,6 @@ mozilla::ipc::IPCResult ContentChild::RecvLoadURI(
     bc->NotifyNavigationFinished();
   }
 
-#ifdef MOZ_CRASHREPORTER
-  if (CrashReporter::GetEnabled()) {
-    nsCOMPtr<nsIURI> annotationURI;
-
-    nsresult rv = NS_MutateURI(aLoadState->URI())
-                      .SetUserPass(""_ns)
-                      .Finalize(annotationURI);
-
-    if (NS_FAILED(rv)) {
-      // Ignore failures on about: URIs.
-      annotationURI = aLoadState->URI();
-    }
-
-    CrashReporter::RecordAnnotationNSCString(CrashReporter::Annotation::URL,
-                                             annotationURI->GetSpecOrDefault());
-  }
-#endif
-
   return IPC_OK();
 }
 
@@ -4192,24 +4174,6 @@ mozilla::ipc::IPCResult ContentChild::RecvInternalLoad(
   RefPtr<BrowsingContext> context = aLoadState->TargetBrowsingContext().get();
 
   context->InternalLoad(aLoadState);
-
-#ifdef MOZ_CRASHREPORTER
-  if (CrashReporter::GetEnabled()) {
-    nsCOMPtr<nsIURI> annotationURI;
-
-    nsresult rv = NS_MutateURI(aLoadState->URI())
-                      .SetUserPass(""_ns)
-                      .Finalize(annotationURI);
-
-    if (NS_FAILED(rv)) {
-      // Ignore failures on about: URIs.
-      annotationURI = aLoadState->URI();
-    }
-
-    CrashReporter::RecordAnnotationNSCString(CrashReporter::Annotation::URL,
-                                             annotationURI->GetSpecOrDefault());
-  }
-#endif
 
   return IPC_OK();
 }

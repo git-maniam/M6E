@@ -964,7 +964,6 @@ xpcom:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
 system.cpu:
   name:
@@ -984,7 +983,6 @@ system.cpu:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
   vendor:
     type: string
@@ -1002,7 +1000,6 @@ system.cpu:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
   logical_cores:
     type: quantity
@@ -1021,7 +1018,6 @@ system.cpu:
     unit: core
     send_in_pings:
       - metrics
-      - update
 
   physical_cores:
     type: quantity
@@ -1040,7 +1036,6 @@ system.cpu:
     unit: core
     send_in_pings:
       - metrics
-      - update
 
   big_cores:
     type: quantity
@@ -1059,7 +1054,6 @@ system.cpu:
     unit: core
     send_in_pings:
       - metrics
-      - update
 
   medium_cores:
     type: quantity
@@ -1078,7 +1072,6 @@ system.cpu:
     unit: core
     send_in_pings:
       - metrics
-      - update
 
   little_cores:
     type: quantity
@@ -1097,7 +1090,6 @@ system.cpu:
     unit: core
     send_in_pings:
       - metrics
-      - update
 
   family:
     type: quantity
@@ -1116,7 +1108,6 @@ system.cpu:
     unit: cpu family number
     send_in_pings:
       - metrics
-      - update
 
   model:
     type: quantity
@@ -1135,7 +1126,6 @@ system.cpu:
     unit: cpu model number
     send_in_pings:
       - metrics
-      - update
 
   stepping:
     type: quantity
@@ -1154,7 +1144,6 @@ system.cpu:
     unit: cpu stepping number
     send_in_pings:
       - metrics
-      - update
 
   l2_cache:
     type: quantity
@@ -1173,7 +1162,6 @@ system.cpu:
     unit: kilobyte
     send_in_pings:
       - metrics
-      - update
 
   l3_cache:
     type: quantity
@@ -1192,7 +1180,6 @@ system.cpu:
     unit: kilobyte
     send_in_pings:
       - metrics
-      - update
 
   speed:
     type: quantity
@@ -1211,7 +1198,6 @@ system.cpu:
     unit: megahertz
     send_in_pings:
       - metrics
-      - update
 
   extensions:
     type: string_list
@@ -1229,7 +1215,6 @@ system.cpu:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
 hdd:
   profile: &hdd_object
@@ -1261,7 +1246,6 @@ hdd:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
   binary:
     <<: *hdd_object
@@ -1300,7 +1284,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   version:
@@ -1321,7 +1304,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   locale:
@@ -1341,7 +1323,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   distro:
@@ -1362,7 +1343,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   distro_version:
@@ -1383,7 +1363,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   libstdcxx_version:
@@ -1404,7 +1383,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   windows_build_number:
@@ -1427,7 +1405,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   windows_ubr:
@@ -1450,7 +1427,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
 system:
@@ -1472,7 +1448,6 @@ system:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
   virtual_memory:
     type: quantity
@@ -1493,7 +1468,6 @@ system:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
   is_wow_64:
     type: boolean
@@ -1512,7 +1486,6 @@ system:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   is_wow_arm_64:
@@ -1532,7 +1505,6 @@ system:
     expires: never
     send_in_pings:
       - metrics
-      - update
       - third-party-modules
 
   has_win_package_id:
@@ -1552,7 +1524,6 @@ system:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
   win_package_family_name:
     type: string
@@ -1575,7 +1546,6 @@ system:
     expires: never
     send_in_pings:
       - metrics
-      - update
 
   apple_model_id:
     type: string

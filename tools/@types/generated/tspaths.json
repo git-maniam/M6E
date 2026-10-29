@@ -5413,9 +5413,6 @@
       "resource://gre/modules/CrashMonitor.sys.mjs": [
         "../../../toolkit/components/crashmonitor/CrashMonitor.sys.mjs"
       ],
-      "resource://gre/modules/CrashService.sys.mjs": [
-        "../../../toolkit/components/crashes/CrashService.sys.mjs"
-      ],
       "resource://gre/modules/CreditCard.sys.mjs": [
         "../../../toolkit/modules/CreditCard.sys.mjs"
       ],
@@ -5961,9 +5958,6 @@
       ],
       "resource://gre/modules/RemotePageAccessManager.sys.mjs": [
         "../../../toolkit/modules/RemotePageAccessManager.sys.mjs"
-      ],
-      "resource://gre/modules/RemoteSettingsCrashPull.sys.mjs": [
-        "../../../toolkit/components/crashes/RemoteSettingsCrashPull.sys.mjs"
       ],
       "resource://gre/modules/ResetProfile.sys.mjs": [
         "../../../toolkit/modules/ResetProfile.sys.mjs"
@@ -6811,9 +6805,6 @@
       "resource://test/Census.sys.mjs": [
         "../../../devtools/shared/heapsnapshot/tests/xpcshell/Census.sys.mjs"
       ],
-      "resource://test/CrashTestUtils.sys.mjs": [
-        "../../../toolkit/crashreporter/test/CrashTestUtils.sys.mjs"
-      ],
       "resource://test/GlobalObjectsModule.sys.mjs": [
         "../../../dom/indexedDB/test/unit/GlobalObjectsModule.sys.mjs"
       ],
@@ -6984,9 +6975,6 @@
       ],
       "resource://testing-common/CookieXPCShellUtils.sys.mjs": [
         "../../../netwerk/cookie/CookieXPCShellUtils.sys.mjs"
-      ],
-      "resource://testing-common/CrashManagerTest.sys.mjs": [
-        "../../../toolkit/components/crashes/CrashManagerTest.sys.mjs"
       ],
       "resource://testing-common/CustomizableUITestUtils.sys.mjs": [
         "../../../browser/components/customizableui/test/CustomizableUITestUtils.sys.mjs"
@@ -7260,9 +7248,6 @@
       ],
       "resource://devtools/server/actors/descriptors/webextension.js": [
         "../../../devtools/server/actors/descriptors/webextension.js"
-      ],
-      "resource://gre/modules/CrashManager.sys.mjs": [
-        "../../../toolkit/components/crashes/CrashManager.in.sys.mjs"
       ],
       "resource://gre/modules/components-utils/ClientEnvironment.sys.mjs": [
         "../../../toolkit/components/utils/ClientEnvironment.sys.mjs"

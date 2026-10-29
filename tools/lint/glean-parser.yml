@@ -5,9 +5,6 @@ glean-parser:
         using the glean_parser's built-in linter.
     include:
         - .
-    exclude:
-        # Merged into generated_metrics.yaml by glean_metrics.py.
-        - toolkit/crashreporter/crashping/static_metrics.yaml
     extensions:
         - yaml
     support-files:

@@ -60,11 +60,6 @@ if not CONFIG["MOZILLA_OFFICIAL"]:
 if CONFIG["MOZ_ENABLE_DBUS"]:
     gkrust_features += ["with_dbus"]
 
-if CONFIG["MOZ_CRASHREPORTER"]:
-    gkrust_features += ["crashreporter"]
-    if CONFIG["MOZ_OXIDIZED_BREAKPAD"]:
-        gkrust_features += ["oxidized_breakpad"]
-
 if CONFIG["MOZ_WEBMIDI_MIDIR_IMPL"]:
     gkrust_features += ["webmidi_midir_impl"]
 

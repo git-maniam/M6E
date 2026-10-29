@@ -90,11 +90,6 @@ git = "https://github.com/mozilla/happy-eyeballs"
 tag = "v1.0.0"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/mozilla/memtest?rev=ad681ba425beb0aeba95f03e671432b4be932174"]
-git = "https://github.com/mozilla/memtest"
-rev = "ad681ba425beb0aeba95f03e671432b4be932174"
-replace-with = "vendored-sources"
-
 [source."git+https://github.com/mozilla/midir.git?rev=54759f681f3b523e120d047adec2bb1a97152017"]
 git = "https://github.com/mozilla/midir.git"
 rev = "54759f681f3b523e120d047adec2bb1a97152017"
@@ -117,11 +112,6 @@ replace-with = "vendored-sources"
 
 [source."git+https://github.com/mozilla/nss-rs"]
 git = "https://github.com/mozilla/nss-rs"
-replace-with = "vendored-sources"
-
-[source."git+https://github.com/rust-minidump/minidump-writer.git?rev=3ab1604f91db05ec3f3a84d779a2871df7d9afd7"]
-git = "https://github.com/rust-minidump/minidump-writer.git"
-rev = "3ab1604f91db05ec3f3a84d779a2871df7d9afd7"
 replace-with = "vendored-sources"
 
 [source."git+https://github.com/servo/rust-cssparser?rev=9f3ceddf398f5ce4ab76fdad1b42ccb6c578a926"]

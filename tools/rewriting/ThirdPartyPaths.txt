@@ -189,13 +189,12 @@ toolkit/components/protobuf/third_party/
 toolkit/components/reader/readability/
 toolkit/components/reputationservice/chromium/
 toolkit/components/resistfingerprinting/content/gl-matrix.js
+toolkit/components/telemetry/pingsender/third_party/
 toolkit/components/translations/cld2/
 toolkit/components/url-classifier/chromium/
 toolkit/components/utils/mozjexl.sys.mjs
 toolkit/content/vendor/react/
 toolkit/content/widgets/vendor/
-toolkit/crashreporter/breakpad-client/
-toolkit/crashreporter/google-breakpad/
 toolkit/modules/third_party/
 tools/fuzzing/libfuzzer/
 tools/lint/eslint/eslint-plugin-sdl-vendored/vendor/

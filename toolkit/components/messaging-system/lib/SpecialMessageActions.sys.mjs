@@ -390,7 +390,6 @@ export const SpecialMessageActions = {
     const allowedPrefs = [
       "browser.aboutwelcome.didSeeFinalScreen",
       "browser.sessionstore.newTabOnRestore",
-      "browser.crashReports.unsubmittedCheck.autoSubmit2",
       "browser.dataFeatureRecommendations.enabled",
       "browser.migrate.content-modal.about-welcome-behavior",
       "browser.migrate.content-modal.import-all.enabled",
