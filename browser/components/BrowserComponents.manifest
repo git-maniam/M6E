@@ -16,8 +16,6 @@ category browser-before-ui-startup moz-src:///browser/components/sessionstore/Se
 # M6E: the page telemetry panel (D29).
 category browser-before-ui-startup moz-src:///browser/components/pagetelemetry/M6EPageTelemetry.sys.mjs M6EPageTelemetry.init
 category browser-before-ui-startup resource:///modules/BuiltInThemes.sys.mjs BuiltInThemes.maybeInstallActiveBuiltInTheme
-#ifdef MOZ_NORMANDY
-#endif
 category browser-before-ui-startup moz-src:///browser/components/privatebrowsing/ResetPBMPanel.sys.mjs ResetPBMPanel.init
 #ifdef NIGHTLY_BUILD
 category browser-before-ui-startup moz-src:///browser/components/remotecontrol/RemoteControlPanel.sys.mjs RemoteControlPanel.init

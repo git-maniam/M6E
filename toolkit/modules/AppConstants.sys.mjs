@@ -82,7 +82,8 @@ export var AppConstants = Object.freeze({
            Services.vc.compare(platformVersion, version) <= 0;
   },
 
-  MOZ_NORMANDY: @MOZ_NORMANDY_BOOL@,
+  // M6E: Normandy is deleted; the readers that remain see a constant false.
+  MOZ_NORMANDY: false,
 
 
   MOZ_BACKGROUNDTASKS: @MOZ_BACKGROUNDTASKS_BOOL@,

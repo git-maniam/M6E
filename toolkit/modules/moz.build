@@ -324,7 +324,6 @@ for var in (
     "MOZ_SANDBOX",
     "MOZ_WEBRTC",
     "MOZ_WMF_CDM",
-    "MOZ_NORMANDY",
     "MOZ_BACKGROUNDTASKS",
     "MOZ_BITS_DOWNLOAD",
     "MOZ_DEBUG",

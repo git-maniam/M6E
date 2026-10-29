@@ -81,9 +81,7 @@ def build_dict(config, env=os.environ):
     d["devedition"] = substs.get("MOZ_DEV_EDITION") == "1"
     d["pgo"] = substs.get("MOZ_PGO") == "1"
     d["crashreporter"] = bool(substs.get("MOZ_CRASHREPORTER"))
-    d["normandy"] = substs.get("MOZ_NORMANDY") == "1"
     d["datareporting"] = bool(substs.get("MOZ_DATA_REPORTING"))
-    d["healthreport"] = substs.get("MOZ_SERVICES_HEALTHREPORT") == "1"
     # FIXME(emilio): We need to update a lot of WPT expectations before removing this.
     d["stylo"] = True
     d["asan"] = substs.get("MOZ_ASAN") == "1"
