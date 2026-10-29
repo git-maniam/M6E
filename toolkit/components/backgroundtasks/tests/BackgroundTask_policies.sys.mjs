@@ -16,16 +16,13 @@ export async function runBackgroundTask(commandLine) {
   let filePath = commandLine.getArgument(0);
   await EnterprisePolicyTesting.setupPolicyEngineWithJson(filePath);
 
-  let checker = Cc["@mozilla.org/updates/update-checker;1"].getService(
-    Ci.nsIUpdateChecker
-  );
-  let actual = await checker.getUpdateURL(checker.BACKGROUND_CHECK);
+  let actual = Services.policies.getActivePolicies()?.DisplayMenuBar;
   let expected = commandLine.getArgument(1);
 
   // 0, 1, 2, 3 are all meaningful exit codes already.
   let exitCode = expected == actual ? 0 : 4;
   console.error(
-    `runBackgroundTask: policies read AppUpdateURL '${actual}',
+    `runBackgroundTask: policies read DisplayMenuBar '${actual}',
      expected '${expected}', exiting with exitCode ${exitCode}`
   );
 

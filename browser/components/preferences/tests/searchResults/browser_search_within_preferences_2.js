@@ -4,105 +4,11 @@
  */
 
 /**
- * Test that we search using `search-l10n-ids`.
- *
- * The test uses element `showUpdateHistory` and
- * l10n id `language-header` and expects the element
- * to be matched on the first word from the l10n id value ("Language" in en-US).
- */
-add_task(async function () {
-  let l10nId = "language-header";
-
-  await openPreferencesViaOpenPreferencesAPI("about", {
-    leaveOpen: true,
-  });
-
-  // First, lets make sure that the element is not matched without
-  // `search-l10n-ids`.
-  {
-    let searchInput = gBrowser.contentDocument.getElementById("searchInput");
-    let suhElem = gBrowser.contentDocument.getElementById("showUpdateHistory");
-
-    is(
-      searchInput,
-      gBrowser.contentDocument.activeElement.closest("#searchInput"),
-      "Search input should be focused when visiting preferences"
-    );
-
-    ok(
-      !suhElem.getAttribute("search-l10n-ids").includes(l10nId),
-      "showUpdateHistory element should not contain the l10n id here."
-    );
-
-    let query = "Language";
-    let searchCompletedPromise = BrowserTestUtils.waitForEvent(
-      gBrowser.contentWindow,
-      "PreferencesSearchCompleted",
-      evt => evt.detail == query
-    );
-    EventUtils.sendString(query);
-    await searchCompletedPromise;
-
-    is_element_hidden(
-      suhElem,
-      "showUpdateHistory should not be in search results"
-    );
-  }
-
-  await BrowserTestUtils.removeTab(gBrowser.selectedTab);
-
-  // Now, let's add the l10n id to the element and perform the same search again.
-
-  await openPreferencesViaOpenPreferencesAPI("about", {
-    leaveOpen: true,
-  });
-
-  {
-    let searchInput = gBrowser.contentDocument.getElementById("searchInput");
-
-    is(
-      searchInput,
-      gBrowser.contentDocument.activeElement.closest("#searchInput"),
-      "Search input should be focused when visiting preferences"
-    );
-
-    let suhElem = gBrowser.contentDocument.getElementById("showUpdateHistory");
-    suhElem.setAttribute("search-l10n-ids", l10nId);
-
-    let query = "Language";
-    let searchCompletedPromise = BrowserTestUtils.waitForEvent(
-      gBrowser.contentWindow,
-      "PreferencesSearchCompleted",
-      evt => evt.detail == query
-    );
-    EventUtils.sendString(query);
-    await searchCompletedPromise;
-
-    if (
-      AppConstants.platform === "win" &&
-      Services.sysinfo.getProperty("hasWinPackageId")
-    ) {
-      is_element_hidden(
-        suhElem,
-        "showUpdateHistory should not be in search results"
-      );
-    } else {
-      is_element_visible(
-        suhElem,
-        "showUpdateHistory should be in search results"
-      );
-    }
-  }
-
-  await BrowserTestUtils.removeTab(gBrowser.selectedTab);
-});
-
-/**
  * Test that search works as expected for custom elements that utilize both
  * slots and shadow DOM. We should be able to find text the shadow DOM.
  */
 add_task(async function testSearchShadowDOM() {
-  await openPreferencesViaOpenPreferencesAPI("about", {
+  await openPreferencesViaOpenPreferencesAPI("general", {
     leaveOpen: true,
   });
 
@@ -140,7 +46,7 @@ add_task(async function testSearchShadowDOM() {
  * slots and shadow DOM. We should be able to find text the light DOM.
  */
 add_task(async function testSearchLightDOM() {
-  await openPreferencesViaOpenPreferencesAPI("about", {
+  await openPreferencesViaOpenPreferencesAPI("general", {
     leaveOpen: true,
   });
 

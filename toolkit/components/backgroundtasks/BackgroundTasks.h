@@ -59,22 +59,12 @@ class BackgroundTasks final : public nsIBackgroundTasks {
   static nsresult RunBackgroundTask(nsICommandLine* aCmdLine);
 
   /**
-   * Whether the given task name should process updates.  Most tasks should not
-   * process updates to avoid Firefox being updated unexpectedly.
-   *
-   * At the time of writing, we only process updates for the `backgroundupdate`
-   * task and the test-only `shouldprocessupdates` task.
-   */
-  static bool IsUpdatingTaskName(const nsCString& aName);
-
-  /**
    * Whether the given task name should use a temporary ephemeral
    * profile.  Most tasks should use a temporary ephemeral profile to
    * allow concurrent task invocation and to simplify reasoning.
    *
    * At the time of writing, we use temporary ephemeral profiles for all tasks
-   * save the `backgroundupdate` task and the test-only `notephemeralprofile`
-   * task.
+   * save the test-only `notephemeralprofile` task.
    */
   static bool IsEphemeralProfileTaskName(const nsCString& aName);
 

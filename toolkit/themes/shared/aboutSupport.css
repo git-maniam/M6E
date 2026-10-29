@@ -115,7 +115,6 @@ td.integer {
   background-color: var(--table-row-background-color-alternate);
 }
 
-#update-dir-row > td:dir(rtl),
 #profile-row > td:dir(rtl) {
   /* Overrides info-pages.css to display the buttons in the right order compared to the text */
   unicode-bidi: normal;

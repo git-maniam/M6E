@@ -4,7 +4,6 @@
 "use strict";
 
 ChromeUtils.defineESModuleGetters(this, {
-  BackgroundUpdate: "resource://gre/modules/BackgroundUpdate.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
   PermissionTestUtils: "resource://testing-common/PermissionTestUtils.sys.mjs",

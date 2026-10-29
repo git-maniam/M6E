@@ -180,7 +180,6 @@ describe("ASRouter", () => {
         totalBookmarksCount: {},
         firefoxVersion: 80,
         region: "US",
-        needsUpdate: {},
         hasPinnedTabs: false,
         hasAccessedFxAPanel: false,
         userPrefs: {

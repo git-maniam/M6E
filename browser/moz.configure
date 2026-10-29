@@ -54,10 +54,10 @@ imply_option("MOZ_STUB_INSTALLER", True, when=requires_stub_installer)
 include("../toolkit/moz.configure")
 
 
-@depends("--enable-maintenance-service", when=target_is_windows)
+@depends(when=target_is_windows)
 @imports(_from="mozbuild.nsis", _import="installer_files")
-def nsis_installer_files(maintenance_service):
-    return list(installer_files(maintenance_service=bool(maintenance_service)))
+def nsis_installer_files():
+    return list(installer_files(maintenance_service=False))
 
 
 set_config("NSIS_INSTALLER_FILES", nsis_installer_files)

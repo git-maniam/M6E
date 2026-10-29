@@ -85,69 +85,6 @@ class TestRelaunchDockOverlap(MarionetteTestCase):
         if not self.bundle_path.endswith(".app"):
             self.skipTest(f"Not running from an .app bundle: {self.binary}")
 
-        # A restart goes through the updater acting as a relauncher, so without
-        # it we would not be exercising the code under test.
-        self.relauncher = os.path.join(
-            self.bundle_path,
-            "Contents",
-            "MacOS",
-            "updater.app",
-            "Contents",
-            "MacOS",
-            "org.mozilla.updater",
-        )
-
-    def _time_relauncher(self, args):
-        """Run the relauncher and return how long it took to exit."""
-        # Point it at a bundle that does not exist so that nothing is ever
-        # launched: all we are measuring is whether it waited first.
-        missing_bundle = os.path.join(self.bundle_path, "DoesNotExist.app")
-        self.assertFalse(os.path.exists(missing_bundle))
-
-        started = time.monotonic()
-        subprocess.run(
-            [self.relauncher, "--openAppBundle", *args, missing_bundle],
-            capture_output=True,
-            text=True,
-            timeout=180,
-            check=False,
-        )
-        return time.monotonic() - started
-
-    def test_relauncher_waits_for_the_process_it_replaces(self):
-        """The relauncher must not launch while the pid it was given is alive.
-
-        Our own browser is a running application as far as macOS is concerned,
-        so the relauncher should sit and wait for it. We do not want to end it,
-        so we let the wait run into its timeout instead.
-        """
-        # M6E: builds without the updater relaunch through a shell instead,
-        # which test_relaunch_does_not_overlap_previous_process covers.
-        if not os.path.exists(self.relauncher):
-            self.skipTest(
-                f"Build has no updater to relaunch through: {self.relauncher}"
-            )
-        # Measure what it costs to merely start the relauncher and have it
-        # bail out, so that the comparison below does not depend on how fast
-        # this machine is.
-        baseline = self._time_relauncher([])
-        waited = self._time_relauncher(["--wait-pid", str(self.marionette.process_id)])
-
-        self.assertGreater(
-            waited - baseline,
-            3,
-            msg=(
-                f"Relauncher took {waited:.1f}s with a live pid to wait for "
-                f"against {baseline:.1f}s without one, so it does not look "
-                f"like it waited"
-            ),
-        )
-        self.assertLess(
-            waited,
-            120,
-            msg=f"Relauncher never gave up waiting ({waited:.1f}s)",
-        )
-
     def test_relaunch_does_not_overlap_previous_process(self):
         binary = self.binary
         old_pid = self.marionette.process_id

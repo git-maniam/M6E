@@ -67,7 +67,6 @@ export var TelemetryUtils = {
     TelemetryEnabled: "toolkit.telemetry.enabled",
     UntrustedModulesPingFrequency:
       "toolkit.telemetry.untrustedModulesPing.frequency",
-    UpdatePing: "toolkit.telemetry.updatePing.enabled",
     NewProfilePingEnabled: "toolkit.telemetry.newProfilePing.enabled",
     NewProfilePingDelay: "toolkit.telemetry.newProfilePing.delay",
     PreviousBuildID: "toolkit.telemetry.previousBuildID",

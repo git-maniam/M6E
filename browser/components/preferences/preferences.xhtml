@@ -69,7 +69,6 @@
   <link rel="localization" href="preview/enUS-searchFeatures.ftl"/>
   <link rel="localization" href="security/certificates/certManager.ftl"/>
   <link rel="localization" href="security/certificates/deviceManager.ftl"/>
-  <link rel="localization" href="toolkit/updates/history.ftl"/>
   <link rel="localization" href="toolkit/global/profileSelection.ftl"/>
 
   <link rel="shortcut icon" href="chrome://global/skin/icons/settings.svg"/>
@@ -91,8 +90,6 @@
   <script type="module" src="chrome://browser/content/preferences/widgets/security-privacy-card.mjs"></script>
   <script type="module" src="chrome://global/content/elements/moz-input-color.mjs"></script>
   <script type="module" src="chrome://browser/content/usercontext/container-select.mjs"></script>
-  <script type="module" src="chrome://browser/content/preferences/widgets/update-information.mjs"></script>
-  <script type="module" src="chrome://browser/content/preferences/widgets/update-state.mjs"></script>
 </head>
 
 <html:body xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -180,11 +177,6 @@
         view="paneExperimental"
         iconsrc="chrome://browser/skin/labs-16.svg"
         data-l10n-id="settings-pane-labs-title2">
-      </html:moz-page-nav-button>
-      <html:moz-page-nav-button id="category-about-firefox"
-        view="paneAbout"
-        iconsrc="chrome://browser/skin/sidebar/firefox.svg"
-        data-l10n-id="pane-about-firefox-title">
       </html:moz-page-nav-button>
       <html:moz-page-nav-button id="category-more-from-mozilla"
         hidden="true"

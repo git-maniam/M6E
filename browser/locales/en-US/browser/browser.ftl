@@ -394,10 +394,6 @@ quickactions-themes = Manage themes
 # same word).
 quickactions-cmd-themes2 = themes, add-ons, addons
 
-# Opens a SUMO article explaining how to update the browser
-quickactions-update = Update { -brand-short-name }
-quickactions-cmd-update = update
-
 # Opens the view-source UI with current pages source
 quickactions-viewsource2 = View page source
 quickactions-cmd-viewsource2 = view source, source, page source

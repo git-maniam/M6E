@@ -4,7 +4,6 @@
 
 #include "nsAppRunner.h"
 #include "nsXREDirProvider.h"
-#  include "commonupdatedir.h"
 
 #include "jsapi.h"
 #include "xpcpublic.h"

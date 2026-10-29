@@ -414,40 +414,6 @@ BrowserGlue.prototype = {
     Services.obs.notifyObservers(null, "browser-ui-startup-complete");
   },
 
-  _checkForOldBuildUpdates() {
-    // check for update if our build is old
-    if (
-      AppConstants.MOZ_UPDATER &&
-      Services.prefs.getBoolPref("app.update.checkInstallTime")
-    ) {
-      let buildID = Services.appinfo.appBuildID;
-      let today = new Date().getTime();
-      /* eslint-disable no-multi-spaces */
-      let buildDate = new Date(
-        buildID.slice(0, 4), // year
-        buildID.slice(4, 6) - 1, // months are zero-based.
-        buildID.slice(6, 8), // day
-        buildID.slice(8, 10), // hour
-        buildID.slice(10, 12), // min
-        buildID.slice(12, 14)
-      ) // ms
-        .getTime();
-      /* eslint-enable no-multi-spaces */
-
-      const millisecondsIn24Hours = 86400000;
-      let acceptableAge =
-        Services.prefs.getIntPref("app.update.checkInstallTime.days") *
-        millisecondsIn24Hours;
-
-      if (buildDate + acceptableAge < today) {
-        // This is asynchronous, but just kick it off rather than waiting.
-        Cc["@mozilla.org/updates/update-service;1"]
-          .getService(Ci.nsIApplicationUpdateService)
-          .checkForBackgroundUpdates();
-      }
-    }
-  },
-
   async _onSafeModeRestart(window) {
     // prompt the user to confirm
     let productName = lazy.gBrandBundle.GetStringFromName("brandShortName");
@@ -722,8 +688,6 @@ BrowserGlue.prototype = {
         });
       }
     });
-
-    this._checkForOldBuildUpdates();
 
     lazy.BrowserUtils.callModulesFromCategory(
       {
@@ -1073,31 +1037,6 @@ BrowserGlue.prototype = {
         name: "ASRouterNewTabHook.createInstance",
         task: () => {
           lazy.ASRouterNewTabHook.createInstance(lazy.ASRouterDefaultConfig());
-        },
-      },
-
-      {
-        name: "BackgroundUpdate",
-        condition: AppConstants.MOZ_UPDATE_AGENT && AppConstants.MOZ_UPDATER,
-        task: async () => {
-          let updateServiceStub = Cc[
-            "@mozilla.org/updates/update-service-stub;1"
-          ].getService(Ci.nsIApplicationUpdateServiceStub);
-          // Never in automation!
-          if (!updateServiceStub.updateDisabledForTesting) {
-            let { BackgroundUpdate } = ChromeUtils.importESModule(
-              "resource://gre/modules/BackgroundUpdate.sys.mjs"
-            );
-            try {
-              await BackgroundUpdate.scheduleFirefoxMessagingSystemTargetingSnapshotting();
-            } catch (e) {
-              console.error(
-                "There was an error scheduling Firefox Messaging System targeting snapshotting: ",
-                e
-              );
-            }
-            await BackgroundUpdate.maybeScheduleBackgroundUpdateTask();
-          }
         },
       },
 
@@ -1574,9 +1513,6 @@ BrowserGlue.prototype = {
       const defaultPrefs = Services.prefs.getDefaultBranch("");
       if (!defaultPrefs.getBoolPref("browser.aboutwelcome.enabled", true)) {
         return "no-welcome";
-      }
-      if (!Services.policies.isAllowed("postUpdateCustomPage")) {
-        return "disallow-postUpdate";
       }
 
       const showUpgradeDialog =

@@ -50,7 +50,6 @@ def test_no_metrics_file_duplicated():
 
     others = [
         "firefox_desktop_metrics",
-        "background_update_metrics",
         "background_tasks_metrics",
     ]
 
@@ -75,7 +74,6 @@ def test_no_pings_file_duplicated():
 
     others = [
         "firefox_desktop_pings",
-        "background_update_pings",
         "background_tasks_pings",
     ]
 

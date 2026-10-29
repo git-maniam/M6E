@@ -28,9 +28,6 @@
 #include "nsObjCExceptions.h"
 #include "prenv.h"
 #include "nsString.h"
-#ifdef MOZ_UPDATER
-#  include "nsUpdateDriver.h"
-#endif
 
 // Exported from toolkit/mozapps/dmgInstallHelper
 #import "dmgInstallProtocol.h"

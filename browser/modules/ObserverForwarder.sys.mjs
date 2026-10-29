@@ -2,8 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
-
 // Because of the indirection with which we call into these modules, eslint
 // does not realize which of these modules are used, so we have to disable
 // the relevant lint rule. However, this does mean that when modifying the
@@ -37,19 +35,6 @@ let gObservers = {
 
   "webauthn-prompt": ["WebAuthnPromptHelper"],
 };
-
-if (AppConstants.MOZ_UPDATER) {
-  ChromeUtils.defineESModuleGetters(lazy, {
-    UpdateListener: "resource://gre/modules/UpdateListener.sys.mjs",
-  });
-
-  gObservers["update-downloading"] = ["UpdateListener"];
-  gObservers["update-staged"] = ["UpdateListener"];
-  gObservers["update-downloaded"] = ["UpdateListener"];
-  gObservers["update-available"] = ["UpdateListener"];
-  gObservers["update-error"] = ["UpdateListener"];
-  gObservers["update-swap"] = ["UpdateListener"];
-}
 
 /**
  * Utility to avoid eagerly loading modules that are only needed

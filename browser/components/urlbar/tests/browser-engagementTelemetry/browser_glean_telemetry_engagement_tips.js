@@ -119,43 +119,6 @@ add_task(async function selected_result_intervention_refresh() {
   );
 });
 
-add_task(async function selected_result_intervention_update() {
-  // Updates are disabled for MSIX packages, this test is irrelevant for them.
-  if (
-    AppConstants.platform === "win" &&
-    Services.sysinfo.getProperty("hasWinPackageId")
-  ) {
-    return;
-  }
-  await UpdateUtils.setAppUpdateAutoEnabled(false);
-  await initUpdate({ queryString: "&noUpdates=1" });
-  UrlbarProviderInterventions.checkForBrowserUpdate(true);
-  await processUpdateSteps([
-    {
-      panelId: "checkingForUpdates",
-      checkActiveUpdate: null,
-      continueFile: CONTINUE_CHECK,
-    },
-    {
-      panelId: "noUpdatesFound",
-      checkActiveUpdate: null,
-      continueFile: null,
-    },
-  ]);
-
-  await doInterventionTest(
-    SEARCH_STRINGS.UPDATE,
-    "intervention_update_refresh",
-    "chrome://global/content/resetProfile.xhtml",
-    [
-      {
-        selected_result: "intervention_update",
-        results: "search_engine,intervention_update",
-      },
-    ]
-  );
-});
-
 add_task(async function learn_more_link() {
   const provider = new UrlbarTestUtils.TestProvider({
     results: [

@@ -1497,7 +1497,6 @@ modules:
     description: Tools related to build and release automation and configuration of
       release builds.
     includes:
-      - tools/update-packaging/**/*
       - tools/update-verify/**/*
     meta:
       owners_emeritus:
@@ -3754,24 +3753,6 @@ modules:
           components:
             - Firefox::Address Bar
           review_group: urlbar-reviewers
-
-      - name: Application Update
-        description: The application update services.
-        includes:
-          - toolkit/mozapps/update/**/*
-        owners:
-          - *cdupuis
-        peers:
-          - *bytesized
-        machine_name: application_update
-        meta:
-          owners_emeritus:
-            - Robin Steuber
-          peers_emeritus:
-            - Adam Gashlin
-            - Molly Howell
-          review_group: application-update-reviewers
-
 
       - name: Bookmarks & History
         description: The bookmarks and history services (Places).

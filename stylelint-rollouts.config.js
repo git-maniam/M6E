@@ -273,7 +273,6 @@ module.exports = [
       "toolkit/themes/osx/global/richlistbox.css",
       "toolkit/themes/osx/global/wizard.css",
       "toolkit/themes/osx/mozapps/handling/handling.css",
-      "toolkit/themes/osx/mozapps/update/updates.css",
       "toolkit/themes/shared/aboutCache.css",
       "toolkit/themes/shared/aboutHttpsOnlyError.css",
       "toolkit/themes/shared/aboutLicense.css",

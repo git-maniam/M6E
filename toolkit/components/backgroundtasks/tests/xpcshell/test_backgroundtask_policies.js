@@ -27,17 +27,17 @@ let policies = Cc["@mozilla.org/enterprisepolicies;1"].getService(
 policies.observe(null, "policies-startup", null);
 
 add_task(async function test_backgroundtask_policies() {
-  let url = "https://www.example.com/";
+  let value = "always";
   await EnterprisePolicyTesting.setupPolicyEngineWithJson({
     policies: {
-      AppUpdateURL: url,
+      DisplayMenuBar: value,
     },
   });
 
   let filePath = Services.prefs.getStringPref("browser.policies.alternatePath");
 
   let exitCode = await do_backgroundtask("policies", {
-    extraArgs: [filePath, url],
+    extraArgs: [filePath, value],
   });
   Assert.equal(0, exitCode);
 });

@@ -494,11 +494,11 @@ group. Most of them appear at specific positions within the view.
 ### Search Interventions
 
 Search interventions help the user perform a task based on their search string.
-There are three kinds of interventions, and each is triggered by typing a
+There are two kinds of interventions, and each is triggered by typing a
 certain set of {searchfox}`phrases <firefox-main/rev/88b0f8e6a5925058755d2671bdac5a76d84bd224:browser/components/urlbar/UrlbarProviderInterventions.sys.mjs#171>` in the input. They always appear as the second result,
 after the heuristic result.
 
-The three kinds of interventions are:
+The two kinds of interventions are:
 
 :::{figure} assets/nontechnical-overview/intervention-clear.png
 :align: center
@@ -518,16 +518,6 @@ Clear history, cache, and other data search intervention
 :scale: 50%
 
 Refresh Firefox search intervention
-:::
-
-:::{figure} assets/nontechnical-overview/intervention-update.png
-:align: center
-:alt: |-
-:  Image of the update intervention result with text "The latest Firefox
-:  is downloaded and ready to install"
-:scale: 50%
-
-Update Firefox search intervention
 :::
 
 Currently this feature is limited to English-speaking locales, but work is

@@ -215,10 +215,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 );
 
 XPCOMUtils.defineLazyServiceGetters(lazy, {
-  AUS: [
-    "@mozilla.org/updates/update-service;1",
-    Ci.nsIApplicationUpdateService,
-  ],
   BrowserHandler: ["@mozilla.org/browser/clh;1", Ci.nsIBrowserHandler],
   ExternalProtocolService: [
     "@mozilla.org/uriloader/external-protocol-service;1",
@@ -228,10 +224,6 @@ XPCOMUtils.defineLazyServiceGetters(lazy, {
   TrackingDBService: [
     "@mozilla.org/tracking-db-service;1",
     Ci.nsITrackingDBService,
-  ],
-  UpdateCheckSvc: [
-    "@mozilla.org/updates/update-checker;1",
-    Ci.nsIUpdateChecker,
   ],
 });
 
@@ -333,52 +325,6 @@ function CacheUnhandledCampaignAction() {
   };
 }
 
-function CheckBrowserNeedsUpdate(
-  updateInterval = FRECENT_SITES_UPDATE_INTERVAL
-) {
-  const checker = {
-    _lastUpdated: 0,
-    _value: null,
-    // For testing. Avoid update check network call.
-    setUp(value) {
-      this._lastUpdated = Date.now();
-      this._value = value;
-    },
-    expire() {
-      this._lastUpdated = 0;
-      this._value = null;
-    },
-    async get() {
-      const now = Date.now();
-      if (
-        !AppConstants.MOZ_UPDATER ||
-        now - this._lastUpdated < updateInterval
-      ) {
-        return this._value;
-      }
-      if (!lazy.AUS.canCheckForUpdates) {
-        return false;
-      }
-      this._lastUpdated = now;
-      let check = lazy.UpdateCheckSvc.checkForUpdates(
-        lazy.UpdateCheckSvc.FOREGROUND_CHECK
-      );
-      let result = await check.result;
-      if (!result.succeeded) {
-        lazy.ASRouterPreferences.console.error(
-          "CheckBrowserNeedsUpdate failed :>> ",
-          result.request
-        );
-        return false;
-      }
-      checker._value = !!result.updates.length;
-      return checker._value;
-    },
-  };
-
-  return checker;
-}
-
 export const QueryCache = {
   expireAll() {
     Object.keys(this.queries).forEach(query => {
@@ -397,7 +343,6 @@ export const QueryCache = {
       includeFavicon: false,
     }),
     TotalBookmarksCount: new CachedTargetingGetter("getTotalBookmarksCount"),
-    CheckBrowserNeedsUpdate: new CheckBrowserNeedsUpdate(),
     RecentBookmarks: new CachedTargetingGetter("getRecentBookmarks"),
     UserMonthlyActivity: new CachedTargetingGetter("getUserMonthlyActivity"),
     UnhandledCampaignAction: new CacheUnhandledCampaignAction(),
@@ -961,9 +906,6 @@ const TargetingGetters = {
   },
   get region() {
     return lazy.Region.home || "";
-  },
-  get needsUpdate() {
-    return QueryCache.queries.CheckBrowserNeedsUpdate.get();
   },
   get savedTabGroups() {
     return lazy.SessionStore.getSavedTabGroups().length;

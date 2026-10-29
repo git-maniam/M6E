@@ -468,29 +468,6 @@ interface GleanImpl {
   }
 
 
-  backgroundUpdate: {
-    reasonsToNotUpdate: GleanStringList;
-    timeLastUpdateScheduled: GleanDatetime;
-    automaticRestartAttempted: GleanBoolean;
-    automaticRestartSuccess: GleanBoolean;
-    clientId: GleanUuid;
-    daysSinceLastBrowsed: GleanQuantity;
-    debounced: GleanCounter;
-    exitCodeException: GleanBoolean;
-    exitCodeSuccess: GleanBoolean;
-    finalState: GleanString;
-    reasons: GleanStringList;
-    states: GleanStringList;
-    targetingEnvCurrentDate: GleanDatetime;
-    targetingEnvFirefoxVersion: GleanQuantity;
-    targetingEnvProfileAge: GleanDatetime;
-    targetingException: GleanBoolean;
-    targetingExists: GleanBoolean;
-    targetingVersion: GleanQuantity;
-    throttled: GleanBoolean;
-    throttlingPreventedUpdates: GleanCounter;
-  }
-
   browser: {
     aiControlChanged: GleanEventWithExtras<{ feature?: string, selection?: string }>;
     aiControlIsBlocking: Record<string, GleanBoolean>;
@@ -7487,7 +7464,6 @@ interface GleanImpl {
 
   firstStartup: {
     categoryTasksTime: GleanQuantity;
-    deleteTasksTime: GleanQuantity;
     elapsed: GleanQuantity;
     newProfile: GleanBoolean;
     nimbusInitTime: GleanQuantity;
@@ -7595,106 +7571,6 @@ interface GleanImpl {
     wake: GleanCounter;
     wakeMessages: GleanCustomDistribution;
     wakeNotifications: GleanCustomDistribution;
-  }
-
-  update: {
-    autoDownload: GleanBoolean;
-    backgroundUpdate: GleanBoolean;
-    canUsuallyApplyUpdates: GleanBoolean;
-    canUsuallyCheckForUpdates: GleanBoolean;
-    canUsuallyStageUpdates: GleanBoolean;
-    canUsuallyUseBits: GleanBoolean;
-    channel: GleanString;
-    enabled: GleanBoolean;
-    serviceEnabled: GleanBoolean;
-    autoDisableStagedUpdates: GleanEventNoExtras;
-    autoReenableStagedUpdates: GleanEventNoExtras;
-    bitsResultComplete: GleanCustomDistribution;
-    bitsResultPartial: GleanCustomDistribution;
-    blocked: GleanCounter;
-    canUseBitsExternal: Record<"CanUseBits"|"NoBits_FeatureOff"|"NoBits_NotWindows"|"NoBits_OtherUser"|"NoBits_Pref"|"NoBits_Proxy", GleanCounter>;
-    canUseBitsNotify: Record<"CanUseBits"|"NoBits_FeatureOff"|"NoBits_NotWindows"|"NoBits_OtherUser"|"NoBits_Pref"|"NoBits_Proxy", GleanCounter>;
-    canUseBitsSubsequent: Record<"CanUseBits"|"NoBits_FeatureOff"|"NoBits_NotWindows"|"NoBits_OtherUser"|"NoBits_Pref"|"NoBits_Proxy", GleanCounter>;
-    cannotStageExternal: GleanCounter;
-    cannotStageNotify: GleanCounter;
-    cannotStageSubsequent: GleanCounter;
-    checkCodeExternal: GleanCustomDistribution;
-    checkCodeNotify: GleanCustomDistribution;
-    checkCodeSubsequent: GleanCustomDistribution;
-    checkExtendedErrorExternal: Record<string, GleanCounter>;
-    checkExtendedErrorNotify: Record<string, GleanCounter>;
-    checkExtendedErrorSubsequent: Record<string, GleanCounter>;
-    checkNoUpdateExternal: GleanCounter;
-    checkNoUpdateNotify: GleanCounter;
-    checkNoUpdateSubsequent: GleanCounter;
-    downloadCodeComplete: GleanCustomDistribution;
-    downloadCodePartial: GleanCustomDistribution;
-    downloadCodeUnknown: GleanCustomDistribution;
-    invalidLastupdatetimeExternal: GleanCounter;
-    invalidLastupdatetimeNotify: GleanCounter;
-    invalidLastupdatetimeSubsequent: GleanCounter;
-    langpackOvertime: GleanTimingDistribution;
-    lastNotifyIntervalDaysExternal: GleanTimingDistribution;
-    lastNotifyIntervalDaysNotify: GleanTimingDistribution;
-    lastNotifyIntervalDaysSubsequent: GleanTimingDistribution;
-    notPrefUpdateAutoExternal: GleanCounter;
-    notPrefUpdateAutoNotify: GleanCounter;
-    notPrefUpdateAutoSubsequent: GleanCounter;
-    notPrefUpdateServiceEnabledExternal: GleanCounter;
-    notPrefUpdateServiceEnabledNotify: GleanCounter;
-    notPrefUpdateServiceEnabledSubsequent: GleanCounter;
-    notPrefUpdateStagingEnabledExternal: GleanCounter;
-    notPrefUpdateStagingEnabledNotify: GleanCounter;
-    notPrefUpdateStagingEnabledSubsequent: GleanCounter;
-    notificationBadgeShown: Record<"available"|"manual"|"otherinstance"|"restart"|"unsupported", GleanCounter>;
-    notificationDismissed: Record<"available"|"manual"|"otherinstance"|"restart"|"unsupported", GleanCounter>;
-    notificationMainActionDoorhanger: Record<"available"|"manual"|"otherinstance"|"restart"|"unsupported", GleanCounter>;
-    notificationMainActionMenu: Record<"available"|"manual"|"otherinstance"|"restart"|"unsupported", GleanCounter>;
-    notificationShown: Record<"available"|"manual"|"otherinstance"|"restart"|"unsupported", GleanCounter>;
-    pingCountExternal: GleanCounter;
-    pingCountNotify: GleanCounter;
-    pingCountSubsequent: GleanCounter;
-    prefServiceErrorsExternal: GleanCustomDistribution;
-    prefServiceErrorsNotify: GleanCustomDistribution;
-    prefServiceErrorsSubsequent: GleanCustomDistribution;
-    prefUpdateCancelationsExternal: GleanCustomDistribution;
-    prefUpdateCancelationsNotify: GleanCustomDistribution;
-    prefUpdateCancelationsSubsequent: GleanCustomDistribution;
-    previousBuildId: GleanString;
-    previousChannel: GleanString;
-    previousVersion: GleanString;
-    serviceInstalledExternal: Record<"false"|"true", GleanCounter>;
-    serviceInstalledNotify: Record<"false"|"true", GleanCounter>;
-    serviceInstalledSubsequent: Record<"false"|"true", GleanCounter>;
-    serviceManuallyUninstalledExternal: GleanCounter;
-    serviceManuallyUninstalledNotify: GleanCounter;
-    serviceManuallyUninstalledSubsequent: GleanCounter;
-    stateCodeCompleteStage: GleanCustomDistribution;
-    stateCodeCompleteStartup: GleanCustomDistribution;
-    stateCodePartialStage: GleanCustomDistribution;
-    stateCodePartialStartup: GleanCustomDistribution;
-    stateCodeUnknownStage: GleanCustomDistribution;
-    stateCodeUnknownStartup: GleanCustomDistribution;
-    stateWriteFailure: GleanCounter;
-    statusErrorCodeCompleteStage: GleanCustomDistribution;
-    statusErrorCodeCompleteStartup: GleanCustomDistribution;
-    statusErrorCodePartialStage: GleanCustomDistribution;
-    statusErrorCodePartialStartup: GleanCustomDistribution;
-    statusErrorCodeUnknownStage: GleanCustomDistribution;
-    statusErrorCodeUnknownStartup: GleanCustomDistribution;
-    targetBuildId: GleanString;
-    targetChannel: GleanString;
-    targetDisplayVersion: GleanString;
-    targetVersion: GleanString;
-    unableToApplyExternal: GleanCounter;
-    unableToApplyNotify: GleanCounter;
-    unableToApplySubsequent: GleanCounter;
-    updateOutcome: GleanEventWithExtras<{ can_stage?: string|boolean, is_background?: string|boolean, is_patch?: string|boolean, is_success?: string|boolean, previous_version?: string, target_version?: string, total_retries?: string|number }>;
-    bitsError: GleanEventWithExtras<{ code?: string, code_type?: string, error_action?: string|number, error_stage?: string|number, error_type?: string|number, patch_type?: string }>;
-    moveResult: Record<string, GleanCounter>;
-    noWindowAutoRestarts: GleanCounter;
-    suppressPrompts: GleanBoolean;
-    versionPin: GleanString;
   }
 
   updateSettings: {
@@ -7911,8 +7787,6 @@ interface GleanPingsImpl {
   firstStartup: GleanPingNoReason;
   defaultAgent: GleanPingWithReason<"daily_ping">;
   addons: GleanPingWithReason<"daily"|"startup"|"updated">;
-  backgroundUpdate: GleanPingWithReason<"backgroundupdate_task">;
-  update: GleanPingWithReason<"ready"|"success">;
   newProfile: GleanPingNoReason;
 }
 

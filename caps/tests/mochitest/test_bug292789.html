@@ -13,7 +13,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=292789
 <p id="display"></p>
 <div id="content" style="display: none">
   <script src="chrome://global/content/treeUtils.js"></script>
-  <script type="application/javascript" src="chrome://mozapps/content/update/history.js"></script>
+  <script type="application/javascript" src="chrome://mozapps/content/preferences/fontbuilder.js"></script>
   <script id="resjs" type="application/javascript"></script>
 </div>
 <pre id="test">
@@ -27,7 +27,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=292789
  */
 
 /* import-globals-from ../../../toolkit/content/treeUtils.js */
-/* import-globals-from ../../../toolkit/mozapps/update/content/history.js */
+/* import-globals-from ../../../toolkit/mozapps/preferences/fontbuilder.js */
 
 SimpleTest.waitForExplicitFinish();
 
@@ -41,23 +41,23 @@ function testScriptSrc(aCallback) {
        "content can still load <script> from chrome://global");
 
     /**
-     * Try to find an export from history.js.  We will find it if it is
+     * Try to find an export from fontbuilder.js.  We will find it if it is
      * improperly not blocked, otherwise it will be "undefined".
      */
-    is(typeof gUpdateHistory, "undefined",
+    is(typeof FontBuilder, "undefined",
        "content should not be able to load <script> from chrome://mozapps");
 
     /**
-     * Make sure the last one didn't pass because someone moved history.js.
+     * Make sure the last one didn't pass because someone moved fontbuilder.js.
      */
     var resjs = document.getElementById("resjs");
     resjs.onload = scriptOnload;
-    resjs.src = "resource://gre/chrome/toolkit/content/mozapps/update/history.js";
+    resjs.src = "resource://gre/chrome/toolkit/content/mozapps/preferences/fontbuilder.js";
     document.getElementById("content").appendChild(resjs);
 
     function scriptOnload() {
-      is(typeof gUpdateHistory.onLoad, "function",
-         "history.js has not moved unexpectedly");
+      is(typeof FontBuilder.buildFontList, "function",
+         "fontbuilder.js has not moved unexpectedly");
 
       // trigger the callback
       if (aCallback)
