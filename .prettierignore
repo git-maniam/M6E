@@ -1126,6 +1126,9 @@ testing/talos/talos/tests/offscreencanvas/benchmarks/video/mp4box.all.min.js
 # Python json.
 testing/talos/talos/unittests/test_talosconfig_browser_config.json
 testing/talos/talos/unittests/test_talosconfig_test_config.json
+# Runing Talos may extract data here, see bug 1435677.
+testing/talos/talos/tests/tp5n/
+testing/talos/talos/fis/tp5n/
 
 # Mainly third-party related code, that shouldn't be linted.
 testing/web-platform/
