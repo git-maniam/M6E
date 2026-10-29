@@ -97,10 +97,6 @@ devedition
 
   Always defined.
 
-healthreport
-
-: Whether the Health Report feature is enabled.
-
   Values are `true` and `false`.
 
   Always defined.
