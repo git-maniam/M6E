@@ -97,10 +97,6 @@ devedition
 
   Always defined.
 
-  Values are `true` and `false`.
-
-  Always defined.
-
 mozconfig
 
 : The path of the {ref}`mozconfig file <mozconfig>` used to produce this build.
