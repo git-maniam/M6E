@@ -140,8 +140,6 @@ prefs = [
 
 ["test_frecency.js"]
 
-["test_frecency_alternative_nimbus.js"]
-
 ["test_geolocationUtils.js"]
 
 ["test_heuristic_cancel.js"]

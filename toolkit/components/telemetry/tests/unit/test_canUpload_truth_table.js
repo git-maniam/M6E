@@ -12,8 +12,8 @@ ChromeUtils.defineESModuleGetters(this, {
   AddonTestUtils: "resource://testing-common/AddonTestUtils.sys.mjs",
 });
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
+const { overrideFeature } = ChromeUtils.importESModule(
+  "resource://testing-common/FeatureOverride.sys.mjs"
 );
 const { TelemetryUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/TelemetryUtils.sys.mjs"
@@ -33,8 +33,6 @@ const TOU_PREF_MIGRATION_CHECK = "browser.termsofuse.prefMigrationCheck";
 
 const CURRENT_VERSION = 900;
 const MINIMUM_VERSION = 899;
-NimbusTestUtils.init(this);
-
 add_setup(async function common_setup() {
   // Initialize the addon test harness before startup.
   // Use `globalThis` as 'this' can be undefined on Linux.
@@ -59,9 +57,6 @@ add_setup(async function common_setup() {
   Services.prefs.setBoolPref(TOU_BYPASS_NOTIFICATION_PREF, false);
 
   TelemetryReportingPolicy.setup();
-
-  const { cleanup } = await NimbusTestUtils.setupTest();
-  registerCleanupFunction(cleanup);
 
   registerCleanupFunction(async () => {
     for (const pref of [
@@ -94,7 +89,7 @@ async function enrollPreonboarding({
   Services.prefs.setIntPref(TOU_CURRENT_VERSION_PREF, currentVersion);
   Services.prefs.setIntPref(TOU_MINIMUM_VERSION_PREF, minimumVersion);
 
-  return NimbusTestUtils.enrollWithFeatureConfig(
+  return overrideFeature(
     {
       featureId: NimbusFeatures.preonboarding.featureId,
       value: {

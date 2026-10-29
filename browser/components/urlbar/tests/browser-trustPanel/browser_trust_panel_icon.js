@@ -10,8 +10,6 @@
 ChromeUtils.defineESModuleGetters(this, {
   RemoteSettings: "resource://services-settings/remote-settings.sys.mjs",
   BrowserTestUtils: "resource://testing-common/BrowserTestUtils.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
   PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
 });
 
@@ -527,10 +525,8 @@ add_task(async function test_entry_page_class_on_entry_page() {
 });
 
 add_task(async function test_tracker_count_hidden_when_feature_gate_disabled() {
-  await ExperimentAPI.ready();
-  const doCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "urlbar",
-    value: { trackerCountFeatureGate: false },
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.urlbar.trackerCount.featureGate", false]],
   });
 
   await PlacesUtils.history.clear();
@@ -556,7 +552,7 @@ add_task(async function test_tracker_count_hidden_when_feature_gate_disabled() {
     );
   } finally {
     await BrowserTestUtils.removeTab(tab);
-    await doCleanup();
+    await SpecialPowers.popPrefEnv();
   }
 });
 

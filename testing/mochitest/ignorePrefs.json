@@ -18,7 +18,6 @@
   "browser.newtabpage.storageVersion",
   "browser.pageActions.persistedActions",
   "browser.policies.alternatePath",
-  "browser.preferences.experimental.hidden",
   "browser.search.totalSearches",
   "browser.tabs.notes.newBadge.enabled",
   "browser.toolbars.bookmarks.visibility",

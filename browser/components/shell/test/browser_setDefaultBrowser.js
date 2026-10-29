@@ -3,9 +3,7 @@
 
 ChromeUtils.defineESModuleGetters(this, {
   ASRouter: "resource:///modules/asrouter/ASRouter.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
+  overrideFeature: "resource://testing-common/FeatureOverride.sys.mjs",
   sinon: "resource://testing-common/Sinon.sys.mjs",
 });
 
@@ -60,16 +58,13 @@ add_task(async function remote_disable() {
 
   userChoiceStub.resetHistory();
   setDefaultStub.resetHistory();
-  let doCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.shellService.featureId,
-      value: {
-        setDefaultBrowserUserChoice: false,
-        enabled: true,
-      },
+  let doCleanup = await overrideFeature({
+    featureId: "shellService",
+    value: {
+      setDefaultBrowserUserChoice: false,
+      enabled: true,
     },
-    { isRollout: true }
-  );
+  });
 
   await ShellService.setDefaultBrowser();
 
@@ -117,17 +112,14 @@ add_task(async function ensure_fallback() {
   });
   userChoiceStub.resetHistory();
   setDefaultStub.resetHistory();
-  let doCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.shellService.featureId,
-      value: {
-        setDefaultBrowserUserChoice: true,
-        setDefaultPDFHandler: false,
-        enabled: true,
-      },
+  let doCleanup = await overrideFeature({
+    featureId: "shellService",
+    value: {
+      setDefaultBrowserUserChoice: true,
+      setDefaultPDFHandler: false,
+      enabled: true,
     },
-    { isRollout: true }
-  );
+  });
 
   await ShellService.setDefaultBrowser();
 
@@ -147,18 +139,15 @@ add_task(async function ensure_fallback() {
 
 async function setUpNotificationTests(guidanceEnabled, oneClick) {
   sinon.reset();
-  const experimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.shellService.featureId,
-      value: {
-        setDefaultGuidanceNotifications: guidanceEnabled,
-        setDefaultBrowserUserChoice: oneClick,
-        setDefaultBrowserUserChoiceRegRename: oneClick,
-        enabled: true,
-      },
+  const experimentCleanup = await overrideFeature({
+    featureId: "shellService",
+    value: {
+      setDefaultGuidanceNotifications: guidanceEnabled,
+      setDefaultBrowserUserChoice: oneClick,
+      setDefaultBrowserUserChoiceRegRename: oneClick,
+      enabled: true,
     },
-    { isRollout: true }
-  );
+  });
 
   const doCleanup = async () => {
     await experimentCleanup();

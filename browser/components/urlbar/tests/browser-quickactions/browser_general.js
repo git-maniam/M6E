@@ -9,7 +9,6 @@
 
 ChromeUtils.defineESModuleGetters(this, {
   AppConstants: "resource://gre/modules/AppConstants.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   ActionsProviderQuickActions:
     "moz-src:///browser/components/urlbar/ActionsProviderQuickActions.sys.mjs",
 });
@@ -433,27 +432,6 @@ add_task(async function test_manageai_unsupported() {
     null,
     "Manage AI is hidden when AI controls are disabled"
   );
-});
-
-add_task(async function test_labs_unsupported() {
-  const labsEnabledStub = sinon
-    .stub(ExperimentAPI, "labsEnabled")
-    .get(() => false);
-
-  try {
-    await UrlbarTestUtils.promiseAutocompleteResultPopup({
-      window,
-      value: "labs",
-    });
-
-    Assert.equal(
-      window.document.querySelector(`.urlbarView-action-btn[data-action=labs]`),
-      null,
-      "Labs action is not shown when Firefox Labs is unsupported"
-    );
-  } finally {
-    labsEnabledStub.restore();
-  }
 });
 
 add_task(async function test_searchMode_inactive_action() {

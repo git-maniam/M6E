@@ -247,7 +247,6 @@ nsresult BackgroundTasks::RunBackgroundTask(nsICommandLine* aCmdLine) {
 
 bool BackgroundTasks::IsEphemeralProfileTaskName(const nsCString& aName) {
   return !(aName.EqualsLiteral("defaultagent") ||
-           aName.EqualsLiteral("message") ||  // Just for development.
            aName.EqualsLiteral("not_ephemeral_profile"));  // Just for testing.
 }
 

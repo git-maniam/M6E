@@ -36,7 +36,6 @@
 #include "mozilla/StaticPrefs_security.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/Tokenizer.h"
-#include "mozilla/browser/NimbusFeatures.h"
 #include "mozilla/dom/BrowsingContext.h"
 #include "mozilla/dom/CanonicalBrowsingContext.h"
 #include "mozilla/dom/ContentChild.h"
@@ -3486,8 +3485,6 @@ OpaqueResponse HttpBaseChannel::BlockOrFilterOpaqueResponse(
     OpaqueResponseBlocker* aORB, const nsAString& aReason,
     const OpaqueResponseBlockedTelemetryReason aTelemetryReason,
     const char* aFormat, ...) {
-  NimbusFeatures::RecordExposureEvent("opaqueResponseBlocking"_ns, true);
-
   const bool shouldFilter =
       ShouldFilterOpaqueResponse(OpaqueResponseFilterFetch::BlockedByORB);
 

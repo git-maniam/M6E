@@ -111,10 +111,8 @@ add_task(async function test_tracker_count_toggle() {
 });
 
 add_task(async function test_tracker_count_hidden_when_gate_disabled() {
-  await ExperimentAPI.ready();
-  const doCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "urlbar",
-    value: { trackerCountFeatureGate: false },
+  await SpecialPowers.pushPrefEnv({
+    set: [["browser.urlbar.trackerCount.featureGate", false]],
   });
 
   await openPreferencesViaOpenPreferencesAPI("privacy", { leaveOpen: true });
@@ -133,7 +131,7 @@ add_task(async function test_tracker_count_hidden_when_gate_disabled() {
   );
 
   gBrowser.removeCurrentTab();
-  await doCleanup();
+  await SpecialPowers.popPrefEnv();
 });
 
 // Test that the protections dashboard link in the ETP status section opens the about:protections page.

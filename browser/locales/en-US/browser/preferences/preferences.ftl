@@ -98,17 +98,6 @@ pane-languages-title2 = Languages
 preferences-languages-header3 =
     .heading = Languages
 
-settings-pane-labs-title2 = { -firefoxlabs-brand-name }
-  .title = { -firefoxlabs-brand-name }
-
-settings-pane-labs-header =
-    .heading = { -firefoxlabs-brand-name }
-pane-experimental-description4 = Give our experimental features a try! They’re in development and evolving, which could impact how { -brand-short-name } works. We only receive data about your use of these features if you have <a data-l10n-name="data-collection">technical and interaction data</a> turned on.
-
-pane-experimental-reset =
-  .label = Restore Defaults
-  .accesskey = R
-
 help-button-label2 = { -brand-short-name } support
   .title = { -brand-short-name } support
 addons-button-label2 = Extensions and themes
@@ -2053,9 +2042,6 @@ data-collection-usage-ping =
 backup-multi-profile-warning-message =
     .message = To make sure this change is included in your backups, open each profile and choose “Backup now” in Settings.
 
-nimbus-rollouts =
-    .label = Allow { -brand-short-name } to improve features, performance, and stability between updates
-    .description = Changes will be rolled out remotely.
 addon-recommendations3 =
     .label = Allow personalized extension recommendations
     .description = Get extension recommendations to improve your browsing experience.

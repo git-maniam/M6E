@@ -398,10 +398,6 @@ quickactions-cmd-themes2 = themes, add-ons, addons
 quickactions-viewsource2 = View page source
 quickactions-cmd-viewsource2 = view source, source, page source
 
-# Opens about:preferences:experimental (Firefox Labs)
-quickactions-labs = Open { -firefoxlabs-brand-name }
-quickactions-cmd-labs = labs, experiment
-
 # Tooltip text for the help button shown in the result.
 quickactions-learn-more =
     .title = Learn more about Quick actions

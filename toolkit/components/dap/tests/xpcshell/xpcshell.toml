@@ -6,10 +6,6 @@ run-if = [
 
 ["test_dap.js"]
 
-["test_dap_incrementality.js"]
-
 ["test_dap_report_controller.js"]
 
 ["test_dap_telemetry.js"]
-
-["test_dap_visit_counter.js"]

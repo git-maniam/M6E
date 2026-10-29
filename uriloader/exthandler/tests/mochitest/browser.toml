@@ -2,7 +2,6 @@
 head = "head.js"
 support-files = ["protocolHandler.html"]
 
-
 ["browser_auto_close_window.js"]
 support-files = [
   "download_page.html",

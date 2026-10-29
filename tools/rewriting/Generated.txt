@@ -228,9 +228,6 @@ python/mozperftest/mozperftest/tests/data/
 security/manager/tools/PreloadedHPKPins.json
 services/settings/dumps/
 testing/raptor/browsertime/utils/doh_busy_sites.json
-toolkit/components/nimbus/schemas/ExperimentFeature.schema.json
-toolkit/components/nimbus/schemas/ExperimentFeatureManifest.schema.json
-toolkit/components/nimbus/schemas/NimbusExperiment.schema.json
 toolkit/components/pdfjs/PdfJsDefaultPrefs.js
 toolkit/components/pdfjs/PdfJsOverridePrefs.js
 toolkit/components/uniffi-js/GeneratedScaffolding.cpp

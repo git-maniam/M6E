@@ -72,9 +72,6 @@ collection):
 - `privacy.trackingprotection.content.protection.test_list_urls`
 - `privacy.trackingprotection.content.annotation.test_list_urls`
 
-All of the above prefs are mapped onto Nimbus feature variables in
-`toolkit/components/nimbus/FeatureManifest.yaml`.
-
 ## Threading model
 
 Three thread types appear in this code, and the rebuild and classify

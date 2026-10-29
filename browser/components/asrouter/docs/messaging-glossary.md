@@ -88,7 +88,7 @@ Natural Enrollment
    Natural Enrollment occurs when users are automatically enrolled in an experiment based on predefined advanced targeting criteria without any forced actions. It reflects typical user behavior and provides more accurate data on the experiment's impact as enrolled users meet advanced targeting conditions.
 
 Nimbus
-   ({doc}`source </toolkit/components/nimbus/docs/index>`) Nimbus is a platform used by Mozilla for running experiments and feature rollouts. Nimbus manages {term}`recipes<recipe>` and pushes them to {term}`Remote Settings` for wider distribution. The Messaging System often interfaces with Nimbus to deliver experimental messages and collect data.
+   Nimbus is a platform used by Mozilla for running experiments and feature rollouts. Nimbus manages {term}`recipes<recipe>` and pushes them to {term}`Remote Settings` for wider distribution. The Messaging System often interfaces with Nimbus to deliver experimental messages and collect data.
 
 Onboarding
    ([source](first-run.md)) Onboarding refers to the set of messages and flows designed to guide new and returning users through initial setup and familiarize them with key features of Firefox. One example for new users is the {term}`about:welcome` flow.

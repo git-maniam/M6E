@@ -6,11 +6,8 @@
 const { DefaultBrowserCheck } = ChromeUtils.importESModule(
   "moz-src:///browser/components/DefaultBrowserCheck.sys.mjs"
 );
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
-const { ExperimentAPI } = ChromeUtils.importESModule(
-  "resource://nimbus/ExperimentAPI.sys.mjs"
+const { overrideFeature } = ChromeUtils.importESModule(
+  "resource://testing-common/FeatureOverride.sys.mjs"
 );
 
 const { Spotlight } = ChromeUtils.importESModule(
@@ -182,22 +179,13 @@ add_task(async function showDefaultPrompt() {
     .stub(DefaultBrowserCheck, "willCheckDefaultBrowser")
     .returns(true);
   const promptSpy = sb.spy(DefaultBrowserCheck, "prompt");
-  await ExperimentAPI.ready();
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.setToDefaultPrompt.featureId,
-      value: {
-        showSpotlightPrompt: false,
-        message: {},
-      },
+  let doExperimentCleanup = await overrideFeature({
+    featureId: "setToDefaultPrompt",
+    value: {
+      showSpotlightPrompt: false,
+      message: {},
     },
-    {
-      slug: "test-prompt-style-spotlight",
-    },
-    {
-      isRollout: true,
-    }
-  );
+  });
 
   await BROWSER_GLUE._maybeShowDefaultBrowserPrompt();
 
@@ -251,22 +239,13 @@ add_task(async function showPromptStyleSpotlight() {
     .stub(Spotlight, "showSpotlightDialog")
     .resolves(false);
 
-  await ExperimentAPI.ready();
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.setToDefaultPrompt.featureId,
-      value: {
-        showSpotlightPrompt: true,
-        message: testSetDefaultSpotlight,
-      },
+  let doExperimentCleanup = await overrideFeature({
+    featureId: "setToDefaultPrompt",
+    value: {
+      showSpotlightPrompt: true,
+      message: testSetDefaultSpotlight,
     },
-    {
-      slug: "test-prompt-style-spotlight-2",
-    },
-    {
-      isRollout: true,
-    }
-  );
+  });
 
   await BROWSER_GLUE._maybeShowDefaultBrowserPrompt();
 
@@ -298,18 +277,13 @@ add_task(async function spotlightStoresImpressionTimestamp() {
   sandbox.stub(DefaultBrowserCheck, "willCheckDefaultBrowser").returns(true);
   sandbox.stub(Spotlight, "showSpotlightDialog").resolves(true);
 
-  await ExperimentAPI.ready();
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.setToDefaultPrompt.featureId,
-      value: {
-        showSpotlightPrompt: true,
-        message: testSetDefaultSpotlight,
-      },
+  let doExperimentCleanup = await overrideFeature({
+    featureId: "setToDefaultPrompt",
+    value: {
+      showSpotlightPrompt: true,
+      message: testSetDefaultSpotlight,
     },
-    { slug: "test-spotlight-impression-ts" },
-    { isRollout: true }
-  );
+  });
 
   await BROWSER_GLUE._maybeShowDefaultBrowserPrompt();
 
@@ -343,18 +317,13 @@ add_task(async function spotlightRecordsTelemetryOnAccept() {
   sandbox.stub(DefaultBrowserCheck, "willCheckDefaultBrowser").returns(true);
   sandbox.stub(Spotlight, "showSpotlightDialog").resolves(true);
 
-  await ExperimentAPI.ready();
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.setToDefaultPrompt.featureId,
-      value: {
-        showSpotlightPrompt: true,
-        message: testSetDefaultSpotlight,
-      },
+  let doExperimentCleanup = await overrideFeature({
+    featureId: "setToDefaultPrompt",
+    value: {
+      showSpotlightPrompt: true,
+      message: testSetDefaultSpotlight,
     },
-    { slug: "test-spotlight-telemetry-accept" },
-    { isRollout: true }
-  );
+  });
 
   await SpecialPowers.pushPrefEnv({
     set: [[CHECK_PREF, true]],
@@ -383,18 +352,13 @@ add_task(async function spotlightRecordsTelemetryWhenNotDefault() {
   sandbox.stub(DefaultBrowserCheck, "willCheckDefaultBrowser").returns(true);
   sandbox.stub(Spotlight, "showSpotlightDialog").resolves(true);
 
-  await ExperimentAPI.ready();
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.setToDefaultPrompt.featureId,
-      value: {
-        showSpotlightPrompt: true,
-        message: testSetDefaultSpotlight,
-      },
+  let doExperimentCleanup = await overrideFeature({
+    featureId: "setToDefaultPrompt",
+    value: {
+      showSpotlightPrompt: true,
+      message: testSetDefaultSpotlight,
     },
-    { slug: "test-spotlight-telemetry-not-default" },
-    { isRollout: true }
-  );
+  });
 
   await SpecialPowers.pushPrefEnv({
     set: [[CHECK_PREF, true]],
@@ -423,18 +387,13 @@ add_task(async function spotlightNotShownDoesNotRecordTelemetry() {
   // Simulate spotlight being suppressed (e.g. gDialogBox already open)
   sandbox.stub(Spotlight, "showSpotlightDialog").resolves(false);
 
-  await ExperimentAPI.ready();
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.setToDefaultPrompt.featureId,
-      value: {
-        showSpotlightPrompt: true,
-        message: testSetDefaultSpotlight,
-      },
+  let doExperimentCleanup = await overrideFeature({
+    featureId: "setToDefaultPrompt",
+    value: {
+      showSpotlightPrompt: true,
+      message: testSetDefaultSpotlight,
     },
-    { slug: "test-spotlight-not-shown" },
-    { isRollout: true }
-  );
+  });
 
   await BROWSER_GLUE._maybeShowDefaultBrowserPrompt();
 

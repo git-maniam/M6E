@@ -14,14 +14,12 @@ ChromeUtils.defineESModuleGetters(this, {
   TestUtils: "resource://testing-common/TestUtils.sys.mjs",
 });
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
+const { overrideFeature } = ChromeUtils.importESModule(
+  "resource://testing-common/FeatureOverride.sys.mjs"
 );
 const { Policy, TelemetryReportingPolicy } = ChromeUtils.importESModule(
   "resource://gre/modules/TelemetryReportingPolicy.sys.mjs"
 );
-
-NimbusTestUtils.init(this);
 
 const TOU_ACCEPTED_VERSION_PREF = "termsofuse.acceptedVersion";
 const TOU_CURRENT_VERSION_PREF = "termsofuse.currentVersion";
@@ -52,7 +50,7 @@ function unsetMinimumPolicyVersion() {
 }
 
 function enrollInPreonboardingExperiment(version) {
-  return NimbusTestUtils.enrollWithFeatureConfig(
+  return overrideFeature(
     {
       featureId: NimbusFeatures.preonboarding.featureId,
       value: {
@@ -95,11 +93,6 @@ add_setup(async function test_setup() {
   Services.prefs.setBoolPref(TOU_BYPASS_NOTIFICATION_PREF, false);
   await Services.fog.testResetFOG();
   TelemetryReportingPolicy.setup();
-});
-
-add_setup(skipIfNotBrowser(), async () => {
-  const { cleanup } = await NimbusTestUtils.setupTest();
-  registerCleanupFunction(cleanup);
 });
 
 add_setup(() => {
@@ -163,7 +156,7 @@ add_task(skipIfNotBrowser(), async function test_feature_prefs() {
   // default fallback pref.
   Services.prefs.setBoolPref("browser.preonboarding.enabled", false);
 
-  let doCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
+  let doCleanup = await overrideFeature(
     {
       featureId: NimbusFeatures.preonboarding.featureId,
       value: {
@@ -206,7 +199,7 @@ add_task(skipIfNotBrowser(), async function test_feature_prefs() {
   assertPrefs(900, 899, "http://mochi.test/v900");
 
   // Updating the Nimbus feature does nothing (without `sessionstore-windows-restored`).
-  doCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
+  doCleanup = await overrideFeature(
     {
       featureId: NimbusFeatures.preonboarding.featureId,
       value: {
@@ -1077,7 +1070,7 @@ add_task(
     // On Linux this path only applies to eligible distros.
     sinon.stub(Policy, "isEligibleOnLinux").returns(true);
     Services.prefs.setBoolPref("browser.preonboarding.enabled", true);
-    const unenroll = await NimbusTestUtils.enrollWithFeatureConfig(
+    const unenroll = await overrideFeature(
       {
         featureId: NimbusFeatures.preonboarding.featureId,
         value: {

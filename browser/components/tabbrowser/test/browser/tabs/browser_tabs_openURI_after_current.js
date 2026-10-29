@@ -11,10 +11,6 @@ const {
   "resource://testing-common/FirefoxViewTestUtils.sys.mjs"
 );
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
-
 FirefoxViewTestUtilsInit(this, window);
 
 let resetTelemetry = async () => {
@@ -153,57 +149,6 @@ add_task(async function test_browser_tabs_openURI_after_current() {
   BrowserTestUtils.removeTab(lastTab);
 
   await SpecialPowers.popPrefEnv();
-});
-
-add_task(async function test_browser_tabs_nimbus_external_link_handling() {
-  const tab1 = BrowserTestUtils.addTab(gBrowser, "about:blank", {
-    skipAnimation: true,
-  });
-  const tab2 = BrowserTestUtils.addTab(gBrowser, "about:blank", {
-    skipAnimation: true,
-  });
-  const tab3 = BrowserTestUtils.addTab(gBrowser, "about:blank", {
-    skipAnimation: true,
-  });
-  gBrowser.selectedTab = tab1;
-
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "externalLinkHandling",
-    value: {
-      openBehavior: Ci.nsIBrowserDOMWindow.OPEN_NEWTAB_AFTER_CURRENT,
-    },
-  });
-
-  const tabWithExperimentOn = await openExternalLink();
-  Assert.equal(
-    tabWithExperimentOn.elementIndex,
-    tab1.elementIndex + 1,
-    "tab should have been opened next to the active tab"
-  );
-
-  await doExperimentCleanup();
-
-  doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "externalLinkHandling",
-    value: {
-      openBehavior: -1,
-    },
-  });
-
-  const tabWithExperimentOff = await openExternalLink();
-  Assert.equal(
-    tabWithExperimentOff.elementIndex,
-    tab3.elementIndex + 1,
-    "tab should have been opened at the end of the tab strip"
-  );
-
-  await doExperimentCleanup();
-
-  BrowserTestUtils.removeTab(tab1);
-  BrowserTestUtils.removeTab(tabWithExperimentOn);
-  BrowserTestUtils.removeTab(tab2);
-  BrowserTestUtils.removeTab(tab3);
-  BrowserTestUtils.removeTab(tabWithExperimentOff);
 });
 
 /**

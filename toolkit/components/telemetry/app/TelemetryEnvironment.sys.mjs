@@ -347,7 +347,6 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
     "xpinstall.signatures.weakSignaturesTemporarilyAllowed",
     { what: RECORD_PREF_VALUE },
   ],
-  ["nimbus.debug", { what: RECORD_PREF_VALUE }],
 ]);
 
 if (AppConstants.platform == "linux" || AppConstants.platform == "macosx") {

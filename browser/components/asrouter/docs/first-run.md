@@ -46,7 +46,6 @@ Testing instructions:
 The default values in the "Force Attribution" devtool point toward uBlock Origin; the demo addon can be changed by replacing the `content` value with the base64 encoded ID of any addon prefixed with `rta:` (ex. `rta:amlkMS1Nbm54Y3hpc0JQblNYUUBqZXRwYWNr`)
 
 ### General capabilities
-- Run experiments and roll-outs through Nimbus (see [FeatureManifests](https://searchfox.org/firefox-main/source/toolkit/components/nimbus/FeatureManifest.yaml#678)), only windows is supported. FeatureConfig (from prefs or experiments) has higher precedence to defaults. See [Default experience variations](#default-experience-variations)
 - AboutWelcomeDefaults methods [getDefaults](https://searchfox.org/firefox-main/source/browser/components/aboutwelcome/modules/AboutWelcomeDefaults.sys.mjs#862) and [prepareContentForReact](https://searchfox.org/firefox-main/source/browser/components/aboutwelcome/modules/AboutWelcomeDefaults.sys.mjs#909) have dynamic rules which are applied to both experiments and default UI before content is shown to user.
 - about:welcome only shows up for users who download Firefox Beta or release (currently not enabled on Nightly)
 - [Enterprise builds](https://searchfox.org/firefox-main/source/browser/components/enterprisepolicies/Policies.sys.mjs#1710) can turn off about:welcome by setting the browser.aboutwelcome.enabled preference to false.

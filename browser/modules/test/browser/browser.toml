@@ -26,8 +26,6 @@ skip-if = [
 
 ["browser_PermissionUI.js"]
 
-["browser_PermissionUI_notification_nimbus.js"]
-
 ["browser_PermissionUI_prompts.js"]
 
 ["browser_ProcessHangNotifications.js"]

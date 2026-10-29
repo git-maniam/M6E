@@ -4,11 +4,8 @@
 
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
-// These IDs and preferences contain Windows in their name as legacy
+// These preferences contain Windows in their name as legacy
 // and changing them to be OS agnostic would break existing installs.
-export const DEFAULT_LAUNCH_ON_LOGIN_NIMBUS_FEATURE_ID =
-  "defaultWindowsLaunchOnLogin";
-
 export const DEFAULT_LAUNCH_ON_LOGIN_PREF =
   "browser.startup.windowsLaunchOnLogin.defaultEnabled";
 export const DEFAULT_LAUNCH_ON_LOGIN_ALREADY_APPLIED_PREF =
@@ -16,7 +13,6 @@ export const DEFAULT_LAUNCH_ON_LOGIN_ALREADY_APPLIED_PREF =
 
 const lazy = XPCOMUtils.declareLazy({
   AppConstants: "resource://gre/modules/AppConstants.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   LaunchOnLogin: "resource://gre/modules/LaunchOnLogin.sys.mjs",
   profileService: {
     service: "@mozilla.org/toolkit/profile-service;1",
@@ -28,10 +24,7 @@ export var DefaultLaunchOnLogin = {
   /**
    * `browser-idle-startup` category entry point.
    *
-   * This deliberately runs off the startup-critical path. Waiting for Nimbus's
-   * first Remote Settings fetch (see `waitForNimbusReady`) forces Remote
-   * Settings initialization, which does significant disk I/O; doing that in a
-   * pre-UI category regressed Talos startup file-I/O metrics (bug 2050775).
+   * This deliberately runs off the startup-critical path (bug 2050775).
    * The Windows startup apps registry key only matters before the user reboots
    * Windows, so this has ample slack and is dispatched once the browser is
    * idle instead. There is some risk that users could see the option disabled
@@ -90,10 +83,6 @@ export var DefaultLaunchOnLogin = {
       return;
     }
 
-    // Wait for Nimbus's first Remote Settings update so that any enrollment has
-    // applied its value before we read the pref below.
-    await this.waitForNimbusReady();
-
     if (!Services.prefs.getBoolPref(DEFAULT_LAUNCH_ON_LOGIN_PREF, false)) {
       return;
     }
@@ -109,14 +98,5 @@ export var DefaultLaunchOnLogin = {
     }
 
     await lazy.LaunchOnLogin.enable();
-  },
-
-  /**
-   * Wait for Nimbus's first Remote Settings update so enrollment for this
-   * feature is knowable.
-   */
-  async waitForNimbusReady() {
-    await lazy.ExperimentAPI.init();
-    await lazy.ExperimentAPI._rsLoader.finishedUpdating();
   },
 };

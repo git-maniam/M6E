@@ -9,7 +9,6 @@ const lazy = XPCOMUtils.declareLazy({
     "moz-src:///browser/components/urlbar/ActionsProviderQuickActions.sys.mjs",
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
   DevToolsShim: "chrome://devtools-startup/content/DevToolsShim.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   ResetProfile: "resource://gre/modules/ResetProfile.sys.mjs",
   Sanitizer: "resource:///modules/Sanitizer.sys.mjs",
   ScreenshotsUtils:
@@ -295,13 +294,6 @@ const DEFAULT_ACTIONS = {
         "view-source:" + controller.browserWindow.gBrowser.currentURI.spec,
         controller.browserWindow
       ),
-  },
-  labs: {
-    l10nCommands: ["quickactions-cmd-labs"],
-    icon: "chrome://global/skin/icons/experiments.svg",
-    label: "quickactions-labs",
-    isUnsupported: () => !lazy.ExperimentAPI.labsEnabled,
-    onPick: openUrlFun("about:preferences#experimental"),
   },
 };
 

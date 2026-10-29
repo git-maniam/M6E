@@ -17,8 +17,6 @@ ChromeUtils.defineESModuleGetters(this, {
   HomePage: "resource:///modules/HomePage.sys.mjs",
   InfoBar: "resource:///modules/asrouter/InfoBar.sys.mjs",
   NewTabUtils: "resource://gre/modules/NewTabUtils.sys.mjs",
-  NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
   OnboardingMessageProvider:
     "resource:///modules/asrouter/OnboardingMessageProvider.sys.mjs",
   PanelTestProvider: "resource:///modules/asrouter/PanelTestProvider.sys.mjs",
@@ -3089,21 +3087,6 @@ add_task(async function check_backupArchiveEnabled() {
       : "should return true if the killswitch is not on"
   );
   await SpecialPowers.popPrefEnv();
-  const archiveExperiment = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "backupService",
-    value: { archiveKillswitch: true },
-  });
-  await pushPrefs(["browser.backup.archive.enabled", true]);
-
-  is(
-    await ASRouterTargeting.Environment.backupArchiveEnabled,
-    false,
-    "should return false if the killswitch is on"
-  );
-
-  // End the experiment.
-  await archiveExperiment();
-  await SpecialPowers.popPrefEnv();
 });
 
 add_task(async function check_backupRestoreEnabled() {
@@ -3125,22 +3108,6 @@ add_task(async function check_backupRestoreEnabled() {
       ? "should be false when SQLite at-rest encryption disables backup"
       : "should return true if the killswitch is not on"
   );
-  await SpecialPowers.popPrefEnv();
-  await pushPrefs(["browser.backup.restore.enabled", true]);
-
-  const restoreExperiment = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "backupService",
-    value: { restoreKillswitch: true },
-  });
-
-  is(
-    await ASRouterTargeting.Environment.backupRestoreEnabled,
-    false,
-    "should return false if the killswitch is on"
-  );
-
-  // End the experiment.
-  await restoreExperiment();
   await SpecialPowers.popPrefEnv();
 });
 

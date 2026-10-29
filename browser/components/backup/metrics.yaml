@@ -703,7 +703,7 @@ browser.backup:
     type: string
     description: >
       Only set if `browser.backup.enabled` is `false`. Possible reasons are
-      "nimbus", "pref" (non-Nimbus), "policy", "sanitizeOnShutdown", "os version".
+      "pref", "policy", "sanitizeOnShutdown", "os version".
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1992808
     data_reviews:
@@ -718,7 +718,7 @@ browser.backup:
     type: string
     description: >
       Only set if `browser.backup.enabled` is `false`. Possible reasons are
-      "nimbus", "pref" (non-Nimbus), "policy", "sanitizeOnShutdown".
+      "pref", "policy", "sanitizeOnShutdown".
     bugs:
       - https://bugzilla.mozilla.org/show_bug.cgi?id=1992808
     data_reviews:

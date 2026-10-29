@@ -1,12 +1,6 @@
 const { ChromeMigrationUtils } = ChromeUtils.importESModule(
   "moz-src:///browser/components/migration/ChromeMigrationUtils.sys.mjs"
 );
-const { ExperimentAPI } = ChromeUtils.importESModule(
-  "resource://nimbus/ExperimentAPI.sys.mjs"
-);
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
 const { sinon } = ChromeUtils.importESModule(
   "resource://testing-common/Sinon.sys.mjs"
 );
@@ -38,16 +32,10 @@ add_setup(async function setup() {
     .stub(MigrationUtils, "getMigrator")
     .resolves(gTestMigrator);
 
-  const doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "password-autocomplete",
-    value: { directMigrateSingleProfile: true },
-  });
-
   // This makes the last autocomplete test *not* show import suggestions.
   Services.prefs.setIntPref("signon.suggestImportCount", 3);
 
   registerCleanupFunction(async () => {
-    await doExperimentCleanup();
     debounce.restore();
     importable.restore();
     migrator.restore();
@@ -172,70 +160,6 @@ add_task(async function import_suggestion_learn_more() {
   // Close the tab in the end of the test to avoid the username field being
   // focused again.
   await BrowserTestUtils.removeTab(supportTab);
-});
-
-add_task(async function import_suggestion_migrate() {
-  await BrowserTestUtils.withNewTab(
-    {
-      gBrowser,
-      url: "https://example.com" + DIRECTORY_PATH + "form_basic.html",
-    },
-    async function (browser) {
-      const popup = document.getElementById("PopupAutoComplete");
-      Assert.ok(popup, "Got popup");
-      await openACPopup(popup, browser, "#form-basic-username");
-
-      const importableItem = popup.querySelector(
-        `[originaltype="importableLogins"]`
-      );
-      Assert.ok(importableItem, "Got importable suggestion richlistitem");
-
-      // Wait for the layout to stabilize by waiting for possible reflow;
-      // otherwise, the synthesized mouse event might not be dispatched
-      // correctly.
-      await new Promise(requestAnimationFrame);
-      await TestUtils.waitForCondition(
-        () => !importableItem.collapsed && !EventUtils.isHidden(importableItem),
-        "Wait for importable suggestion to show"
-      );
-
-      // Pretend there's 1 profile to trigger migrate.
-      gTestMigrator.profiles.length = 1;
-
-      info("Clicking on importable suggestion");
-      const migratePromise = TestUtils.waitForCondition(
-        () => gTestMigrator.migrate.callCount,
-        "Wait for direct migration attempt"
-      );
-      EventUtils.synthesizeMouseAtCenter(importableItem, {});
-
-      const callCount = await migratePromise;
-      Assert.equal(callCount, 1, "Direct migrate used once");
-
-      let importedItem;
-      await new Promise(requestAnimationFrame);
-      await TestUtils.waitForCondition(() => {
-        importedItem = popup.querySelector(`[originaltype="loginWithOrigin"]`);
-        return importedItem && !EventUtils.isHidden(importedItem);
-      }, "Wait for imported login to show");
-      EventUtils.synthesizeMouseAtCenter(importedItem, {});
-
-      // Filling happens in the content process, so the value doesn't land
-      // synchronously with the click.
-      let username;
-      await TestUtils.waitForCondition(async () => {
-        username = await SpecialPowers.spawn(
-          browser,
-          [],
-          () => content.document.getElementById("form-basic-username").value
-        );
-        return username == "import";
-      }, "Wait for the username from the import to be filled in");
-      Assert.equal(username, "import", "username from import filled in");
-
-      LoginTestUtils.clearData();
-    }
-  );
 });
 
 /**
