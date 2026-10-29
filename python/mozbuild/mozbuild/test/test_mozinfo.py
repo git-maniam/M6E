@@ -225,7 +225,7 @@ class TestBuildDict(unittest.TestCase, Base):
 
     def test_crashreporter(self):
         """
-        Test that crashreporter values are properly detected.
+        Test that the crashreporter value is always false.
         """
         d = build_dict(
             self._config(
@@ -237,18 +237,6 @@ class TestBuildDict(unittest.TestCase, Base):
             )
         )
         self.assertEqual(False, d["crashreporter"])
-
-        d = build_dict(
-            self._config(
-                dict(
-                    OS_TARGET="Linux",
-                    TARGET_CPU="i386",
-                    MOZ_WIDGET_TOOLKIT="gtk",
-                    MOZ_CRASHREPORTER="1",
-                )
-            )
-        )
-        self.assertEqual(True, d["crashreporter"])
 
 
 class TestWriteMozinfo(unittest.TestCase, Base):

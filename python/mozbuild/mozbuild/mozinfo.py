@@ -80,7 +80,8 @@ def build_dict(config, env=os.environ):
     d["release_or_beta"] = substs.get("RELEASE_OR_BETA") == "1"
     d["devedition"] = substs.get("MOZ_DEV_EDITION") == "1"
     d["pgo"] = substs.get("MOZ_PGO") == "1"
-    d["crashreporter"] = bool(substs.get("MOZ_CRASHREPORTER"))
+    # M6E: the crash reporter is deleted; manifests still test this key.
+    d["crashreporter"] = False
     d["datareporting"] = bool(substs.get("MOZ_DATA_REPORTING"))
     # FIXME(emilio): We need to update a lot of WPT expectations before removing this.
     d["stylo"] = True
