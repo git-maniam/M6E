@@ -3,6 +3,5 @@
 ```{toctree}
 gecko
 /browser/overview
-/mobile/android/index
 ios
 ```

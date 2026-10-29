@@ -19,9 +19,7 @@ components/taskbartabs/docs/index
 extensions/formautofill/docs/index
 extensions/newtab/docs/index
 components/aboutwelcome/docs/index
-installer/windows/installer/index
 components/attribution/docs/index
-/toolkit/mozapps/defaultagent/default-browser-agent/index
 components/migration/docs/index
 components/miniwindow/docs/index
 components/pagedata/docs/index
@@ -44,7 +42,4 @@ components/storybook/docs/README.typography.stories
 components/backup/docs/index
 components/sidebar/docs/index
 components/mozcachedohttp/docs/index
-desktop-launcher/index
-app/pbproxy/private-browsing-proxy/index
-/installation_dir_layout/index
 ```
