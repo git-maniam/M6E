@@ -157,35 +157,6 @@ add_task(async function test_background_crash_simple() {
 });
 
 /**
- * Tests that if a content process crashes taking down only
- * background tabs, and the user is configured to send backlogged
- * crash reports automatically, that the tab crashed page is not
- * shown.
- */
-add_task(async function test_background_crash_autosubmit_backlogged() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["browser.crashReports.unsubmittedCheck.autoSubmit2", true]],
-  });
-
-  await setupBackgroundTabs(async function ([tab1, tab2]) {
-    // Let's crash one of those background tabs now...
-    await crashBackgroundTabs([tab1, tab2]);
-
-    // Selecting the first tab should restore it.
-    let tabRestored = promiseTabRestored(tab1);
-    await BrowserTestUtils.switchTab(gBrowser, tab1);
-    await tabRestored;
-
-    // Selecting the second tab should restore it.
-    tabRestored = promiseTabRestored(tab2);
-    await BrowserTestUtils.switchTab(gBrowser, tab2);
-    await tabRestored;
-  });
-
-  await SpecialPowers.popPrefEnv();
-});
-
-/**
  * Tests that if there are two background tab crashes in a row, that
  * the two sets of background crashes don't interfere with one another.
  *

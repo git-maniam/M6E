@@ -84,7 +84,7 @@ If you're seeing a performance issue (site is very slow to load, etc) you should
 
 If something you're doing is causing a crash, having the link to the stack trace is very useful.
 
-- Go to `about:crashes`
+- Find the **Report ID** of the crash in the `Crash Reports/submitted/` folder (see [How to get a stacktrace for a bug report](/contributing/debugging/stacktrace_report.md)).
 - Paste the **Report ID** of the crash in the bug.
 
 ## HTTP Logs

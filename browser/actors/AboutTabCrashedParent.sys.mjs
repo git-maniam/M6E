@@ -35,25 +35,22 @@ export class AboutTabCrashedParent extends JSWindowActorParent {
         gAboutTabCrashedPages.set(this, browser);
         this.updateTabCrashedCount();
 
-        let report = lazy.TabCrashHandler.onAboutTabCrashedLoad(browser);
-        this.sendAsyncMessage("SetCrashReportAvailable", report);
+        lazy.TabCrashHandler.onAboutTabCrashedLoad(browser);
+        this.sendAsyncMessage("Ready");
         break;
       }
 
       case "closeTab": {
-        lazy.TabCrashHandler.maybeSendCrashReport(browser, message);
         gBrowser.removeTab(tab, { animate: true });
         break;
       }
 
       case "restoreTab": {
-        lazy.TabCrashHandler.maybeSendCrashReport(browser, message);
         lazy.SessionStore.reviveCrashedTab(tab);
         break;
       }
 
       case "restoreAll": {
-        lazy.TabCrashHandler.maybeSendCrashReport(browser, message);
         lazy.SessionStore.reviveAllCrashedTabs();
         break;
       }

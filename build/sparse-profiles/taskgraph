@@ -123,10 +123,6 @@ path:tools/zucchini/
 
 # for the marannon toolchain task + update-verify docker image
 path:tools/update-verify/
-
-# for the minidump-stackwalk toolchain task
-path:toolkit/crashreporter
-path:tools/crashreporter/
 path:mfbt
 path:config/external/zlib
 path:build/moz.configure

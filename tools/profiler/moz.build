@@ -76,7 +76,6 @@ LOCAL_INCLUDES += [
     "/netwerk/base",
     "/netwerk/protocol/http",
     "/toolkit/components/jsoncpp/include",
-    "/toolkit/crashreporter/google-breakpad/src",
     "/tools/profiler/core/",
     "/tools/profiler/gecko/",
     "/xpcom/base",

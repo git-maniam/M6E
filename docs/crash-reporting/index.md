@@ -15,9 +15,8 @@ combination of projects:
 Crash data submitted using the Mozilla Crash Reporter is located on
 [crash-stats](https://crash-stats.mozilla.org/). If you want to find
 a specific crash that you submitted, you first need to find the Crash ID
-that the server has assigned your crash. Type `about:crashes` into
-your location bar to get a page listing both submitted and unsubmitted
-crash reports. For more information, see [How to get a stacktrace for a bug report](/contributing/debugging/stacktrace_report.md).
+that the server has assigned your crash. Submitted
+crash IDs are stored in the `Crash Reports/submitted/` folder. For more information, see [How to get a stacktrace for a bug report](/contributing/debugging/stacktrace_report.md).
 
 ## Reports and queries
 
@@ -38,11 +37,7 @@ cluster. If you are interested in obtaining this advanced access, read
 - [Crash pings (Telemetry) and crash reports (Socorro/Crash
   Stats)](https://bluesock.org/~willkg/blog/mozilla/crash_pings_crash_reports.html)
 - [Building with Debug Symbols](/setup/building_with_debug_symbols.md)
-- {ref}`Environment variables affecting crash reporting <environment-variables-affecting-crash-reporting>`
 - [Uploading symbols to Mozilla's symbol server](uploading_symbol.md)
-- [Crash Reporter](/toolkit/crashreporter/crashreporter/index.md)
-- [Crash Manager](/toolkit/components/crashes/crash-manager/index.md)
-- [Crash Ping Lifecycle](/toolkit/components/crashes/crash-manager/crash-ping-lifecycle.md)
 
 ```{toctree}
 :hidden:

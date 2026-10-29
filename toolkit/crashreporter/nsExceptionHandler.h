@@ -2,11 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// This header has two implementations, the real one in nsExceptionHandler.cpp
-// and a dummy in nsDummyExceptionHandler.cpp. The latter is used in builds
-// configured with --disable-crashreporter. If you add or remove a function
-// from this header you must update both implementations otherwise you'll break
-// builds that disable the crash reporter.
+// This header is implemented by the dummy in nsDummyExceptionHandler.cpp. If
+// you add or remove a function from this header you must update it.
 
 #ifndef nsExceptionHandler_h_
 #define nsExceptionHandler_h_
@@ -44,13 +41,7 @@ const FileHandle kInvalidFileHandle = -1;
 /**
  * Returns true if the crash reporter is using the dummy implementation.
  */
-static inline bool IsDummy() {
-#ifdef MOZ_CRASHREPORTER
-  return false;
-#else
-  return true;
-#endif
-}
+static inline bool IsDummy() { return true; }
 
 nsresult OOPInit(nsIFile* aXREDirectory, bool force = false);
 void OOPDeinit();
@@ -129,13 +120,6 @@ class MOZ_RAII AutoRecordAnnotation final {
   AutoRecordAnnotation(Annotation key, unsigned int data);
   AutoRecordAnnotation(Annotation key, const nsACString& data);
   ~AutoRecordAnnotation();
-
-#ifdef MOZ_CRASHREPORTER
- private:
-  Annotation mKey;
-  const nsCString mCurrent;
-  const nsCString* mPrevious;
-#endif
 };
 
 void AnnotateOOMAllocationSize(size_t size);

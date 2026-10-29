@@ -32,7 +32,7 @@ installation process are fine.
 ### A Firefox nightly or release
 
 You need a Firefox version for which symbols are available from the
-{doc}`symbol server </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>` to use
+symbol server to use
 with WinDbg. You can use any [official nightly
 build](https://ftp.mozilla.org/pub/firefox/nightly/) or released
 version of Firefox from Mozilla. You can find the latest trunk nightly
@@ -71,7 +71,7 @@ time, into the bottom of the Command box.
 Now that Firefox is opened in the debugger, you need to configure your
 WinDbg to download symbols from the Mozilla symbol server. To load the
 symbols, enter the three commands below, pressing enter after each one.
-(More details are available at {doc}`symbol server </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>`.)
+(More details are available at symbol server.)
 
 ```
 .sympath SRV*c:\symbols*http://symbols.mozilla.org/firefox;SRV*c:\symbols*http://msdl.microsoft.com/download/symbols
@@ -214,5 +214,5 @@ Internet Explorer to ensure "Work Offline" is unchecked.
 
 ## See also
 
-- {doc}`symbol server </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>` Maps addresses to human readable strings.
+- symbol server Maps addresses to human readable strings.
 - {doc}`source server </taskcluster/using-the-mozilla-source-server>` Maps addresses to source code lines

@@ -43,9 +43,3 @@ MaxVersion=@GRE_MILESTONE@
 #ifdef MOZ_PROFILE_MIGRATOR
 EnableProfileMigrator=1
 #endif
-
-#if MOZ_CRASHREPORTER
-[Crash Reporter]
-Enabled=1
-ServerURL=@MOZ_CRASHREPORTER_URL@/submit?id=@MOZ_APP_ID@&version=@MOZ_APP_VERSION@&buildid=@MOZ_BUILDID@
-#endif

@@ -2420,12 +2420,6 @@ VARIABLES = {
         will be made explicit.
         """,
     ),
-    "DUMP_SYMBOLS_FLAGS": (
-        List,
-        list,
-        """Extra flags passed to the dumpsymbols utility when generating symbols for the crash reporter.
-        """,
-    ),
     "LEGACY_RUN_TESTS": (
         TypedList(dict),
         list,

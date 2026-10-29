@@ -11,8 +11,6 @@ ID01:
     messages:
         # brand.ftl
         - trademarkInfo
-        # browser/aboutTabCrashed.ftl
-        - crashed-include-URL-2
         # toolkit/about/aboutAddons.ftl
         - shortcuts-browserAction2
         - shortcuts-pageAction

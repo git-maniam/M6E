@@ -363,7 +363,6 @@ class SelectableProfileServiceClass extends EventEmitter {
   // consistent amongst profiles.
   static permanentSharedPrefs = [
     "app.shield.optoutstudies.enabled",
-    "browser.crashReports.unsubmittedCheck.autoSubmit2",
     "browser.discovery.enabled",
     "browser.shell.checkDefaultBrowser",
     // Profiles on one install share a taskbar button, so whether the custom

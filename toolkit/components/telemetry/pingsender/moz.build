@@ -9,9 +9,6 @@ UNIFIED_SOURCES += [
 SOURCE_HEADERS += [
     "pingsender.h",
 ]
-LOCAL_INCLUDES += [
-    "/toolkit/crashreporter/google-breakpad/src",
-]
 USE_LIBS += [
     "zlib",
 ]

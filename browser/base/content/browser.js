@@ -2280,25 +2280,6 @@ var XULBrowserWindow = {
     } else {
       this.asyncUpdateUI();
     }
-
-    if (AppConstants.MOZ_CRASHREPORTER && aLocationURI) {
-      let uri = aLocationURI;
-      try {
-        // If the current URI contains a username/password, remove it.
-        uri = aLocationURI.mutate().setUserPass("").finalize();
-      } catch (ex) {
-        /* Ignore failures on about: URIs. */
-      }
-
-      try {
-        Services.appinfo.annotateCrashReport("URL", uri.spec);
-      } catch (ex) {
-        // Don't make noise when the crash reporter is built but not enabled.
-        if (ex.result != Cr.NS_ERROR_NOT_INITIALIZED) {
-          throw ex;
-        }
-      }
-    }
   },
 
   _updateElementsForContentType() {

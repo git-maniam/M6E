@@ -2,14 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
-
-const lazy = {};
-
-ChromeUtils.defineESModuleGetters(lazy, {
-  CrashSubmit: "moz-src:///toolkit/crashreporter/CrashSubmit.sys.mjs",
-});
-
 export const PluginManager = {
   gmpCrashes: new Map(),
 
@@ -52,40 +44,6 @@ export const PluginManager = {
         pluginID,
       });
     }
-  },
-
-  /**
-   * Submit a crash report for a crashed plugin.
-   *
-   * @param pluginCrashID
-   *        An object with a pluginID.
-   * @param keyVals
-   *        An object whose key-value pairs will be merged
-   *        with the ".extra" file submitted with the report.
-   *        The properties of htis object will override properties
-   *        of the same name in the .extra file.
-   */
-  submitCrashReport(pluginCrashID, keyVals = {}) {
-    let report = this.getCrashReport(pluginCrashID);
-    if (!report) {
-      console.error(
-        `Could not find plugin dump IDs for ${JSON.stringify(pluginCrashID)}.` +
-          `It is possible that a report was already submitted.`
-      );
-      return;
-    }
-
-    let { pluginDumpID } = report;
-    lazy.CrashSubmit.submit(
-      pluginDumpID,
-      lazy.CrashSubmit.SUBMITTED_FROM_CRASH_TAB,
-      {
-        recordSubmission: true,
-        extraExtraKeyVals: keyVals,
-      }
-    );
-
-    this.gmpCrashes.delete(pluginCrashID.pluginID);
   },
 
   getCrashReport(pluginCrashID) {
@@ -144,18 +102,6 @@ export class PluginParent extends JSWindowActorParent {
         },
       },
     ];
-
-    if (AppConstants.MOZ_CRASHREPORTER) {
-      let submitButton = {
-        "l10n-id": "plugin-crashed-notification-submit-button",
-        popup: null,
-        callback: () => {
-          PluginManager.submitCrashReport(pluginCrashID);
-        },
-      };
-
-      buttons.push(submitButton);
-    }
 
     // Add the "learn more" link.
     let learnMoreLink = {

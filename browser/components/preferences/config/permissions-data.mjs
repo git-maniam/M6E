@@ -64,8 +64,6 @@ Preferences.addAll([
   { id: BACKUP_ENABLED_ON_PROFILES_PREF_NAME, type: "string" },
 
   // Data Choices tab
-  { id: "browser.crashReports.unsubmittedCheck.autoSubmit2", type: "bool" },
-
   { id: PREF_NORMANDY_ENABLED, type: "bool" },
   { id: "nimbus.rollouts.enabled", type: "bool" },
 
@@ -460,12 +458,6 @@ Preferences.addSetting({
   pref: "datareporting.usage.uploadEnabled",
   visible: () => lazy.AppConstants.MOZ_DATA_REPORTING,
 });
-Preferences.addSetting({
-  id: "automaticallySubmitCrashesBox",
-  pref: "browser.crashReports.unsubmittedCheck.autoSubmit2",
-  visible: () =>
-    lazy.AppConstants.MOZ_DATA_REPORTING && lazy.AppConstants.MOZ_CRASHREPORTER,
-});
 Preferences.addSetting(
   /** @type {{ _originalStateOfDataCollectionPrefs: Map<string, any>} & SettingConfig} */ ({
     id: "backup-multi-profile-warning-message-bar",
@@ -475,7 +467,6 @@ Preferences.addSetting(
       "optOutStudiesEnabled",
       "submitHealthReportBox",
       "submitUsagePingBox",
-      "automaticallySubmitCrashesBox",
       "profilesBackupEnabled",
     ],
     setup(emitChange, dataCollectionPrefDeps) {
@@ -851,12 +842,6 @@ SettingGroupManager.registerGroups({
             l10nId: "data-collection-usage-ping",
             subcategory: "reports",
             supportPage: "usage-ping-settings",
-          },
-          {
-            id: "automaticallySubmitCrashesBox",
-            l10nId: "data-collection-backlogged-crash-reports",
-            subcategory: "reports",
-            supportPage: "crash-reports",
           },
         ],
       },

@@ -48,11 +48,6 @@ pref("browser.newtabpage.activity-stream.telemetry", false, locked);
 pref("browser.discovery.enabled", false, locked);
 pref("network.http.akamai_waf_telemetry.enabled", false, locked);
 
-// Crash reporting is not built. Never offer to send crash reports.
-pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
-pref("browser.tabs.crashReporting.sendReport", false, locked);
-
 // No Mozilla update, study or add-on services. Extensions are installed and
 // updated manually.
 pref("extensions.systemAddon.update.enabled", false, locked);

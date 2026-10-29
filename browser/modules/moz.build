@@ -23,9 +23,6 @@ with Files("test/browser/*PermissionUI*"):
 with Files("test/browser/*SitePermissions*"):
     BUG_COMPONENT = ("Firefox", "Site Permissions")
 
-with Files("test/browser/browser_UnsubmittedCrashHandler.js"):
-    BUG_COMPONENT = ("Toolkit", "Crash Reporting")
-
 with Files("test/browser/browser_taskbar_preview.js"):
     BUG_COMPONENT = ("Firefox", "Shell Integration")
 

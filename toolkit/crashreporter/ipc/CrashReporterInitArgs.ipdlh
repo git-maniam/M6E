@@ -6,26 +6,8 @@
 
 namespace CrashReporter {
 
-#if defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && defined(MOZ_OXIDIZED_BREAKPAD)
-
-struct AuxvInfo {
-    uintptr_t programHeaderCount;
-    uintptr_t programHeaderAddress;
-    uintptr_t linuxGateAddress;
-    uintptr_t entryAddress;
-};
-
-struct CrashReporterInitArgs {
-    NativeThreadId threadId;
-    AuxvInfo auxvInfo;
-};
-
-#else // defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && defined(MOZ_OXIDIZED_BREAKPAD)
-
 struct CrashReporterInitArgs {
     NativeThreadId threadId;
 };
-
-#endif // defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && defined(MOZ_OXIDIZED_BREAKPAD)
 
 } // namespace CrashReporter

@@ -142,7 +142,6 @@ firefox_desktop_metrics = [
     "dom/media/platforms/wmf/metrics.yaml",
     "toolkit/components/contentanalysis/metrics.yaml",
     "toolkit/components/contentrelevancy/metrics.yaml",
-    "toolkit/components/crashes/metrics.yaml",
     "toolkit/components/nimbus/metrics.yaml",
     "toolkit/components/nimbus/metrics-normandy.yaml",
     "toolkit/components/pictureinpicture/metrics.yaml",
@@ -160,7 +159,6 @@ firefox_desktop_metrics = [
 background_tasks_metrics = [
     "browser/components/metrics.yaml",
     "toolkit/components/backgroundtasks/metrics.yaml",
-    "toolkit/components/crashes/metrics.yaml",
 ]
 
 # Test metrics

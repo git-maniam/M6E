@@ -45,8 +45,8 @@ minidump-stackwalk.
 
 ## Using the MS Visual Studio debugger
 
-1. Set up the debugger to {doc}`use the Mozilla symbol
-   server </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>` and
+1. Set up the debugger to use the Mozilla symbol
+   server and
    {doc}`source server </taskcluster/using-the-mozilla-source-server>`.
 2. Double-click on the minidump file to open it in the debugger.
 3. When it loads, click the green icon in the visual studio debugger

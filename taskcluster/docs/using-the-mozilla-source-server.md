@@ -9,13 +9,13 @@ your debugger to a local checkout at the exact source revision matching the
 binary you're debugging.
 
 The Mozilla Source Server works by embedding a SrcSrv stream into PDB files
-served by the {doc}`Mozilla Symbol Server </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>`.
+served by the Mozilla Symbol Server.
 This stream contains instructions that tell your debugger where to fetch source
 files from Mozilla's HTTP servers. When you step into code during debugging, or
 when you click an entry of the call stack in a crash dump, your debugger
 automatically downloads the corresponding source file and displays it. This
 also works when debugging a try build once you have uploaded its symbols to the
-Mozilla Symbol Server (see {ref}`uploading-symbols-for-a-try-build`).
+Mozilla Symbol Server.
 
 Within the source tree, the script that adds the SrcSrv stream to PDB files is
 `toolkit/crashreporter/tools/symbolstore.py`, called from the `./mach
@@ -36,8 +36,8 @@ feature added by SrcSrv version 2.
 
 ### Visual Studio
 
-Fetching source code should mostly work {doc}`once the symbol server is
-correctly setup </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>`. If needed, you will find
+Fetching source code should mostly work once the symbol server is
+correctly setup. If needed, you will find
 the options that interact with the Source Server feature under **Tools**,
 **Options**, **Debugging**, **General**:
 
@@ -48,8 +48,8 @@ the options that interact with the Source Server feature under **Tools**,
 
 ### WinDbg
 
-The first step here is also to make sure that {doc}`the symbol server is
-correctly setup </toolkit/crashreporter/crashreporter/Using_the_Mozilla_symbol_server>`. Then, unfortunately, SrcSrv
+The first step here is also to make sure that the symbol server is
+correctly setup. Then, unfortunately, SrcSrv
 support is broken in WinDbg starting with app version 1.2402.24001.0 (see
 {ref}`source-server-known-issues` for workaround suggestions).
 
