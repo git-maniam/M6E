@@ -283,6 +283,27 @@ Don't start the next step until the current one builds and checks out. Split a s
 
 ## 4. Next step: Phase 6, deleting the dormant features
 
+### Restart bookmark: "Resume after restart" (written 2026-10-29 for a computer restart; supersedes the Tuesday bookmark)
+**What the phrase means:** the user restarted the computer for updates and starts the next prompt with "Resume after restart". Follow this checklist and "Next action" without asking questions.
+
+**State** (all committed and pushed to `origin/main`; head is a "P6.1f (work in progress)" commit, see `git log --oneline -6`):
+- **Done:** P6.0, P6.1a to P6.1e (VPN, Translations, genai `44a36ef2aa`, ml `7743d3249c`, Sync `bc2246158a`).
+- **P6.1f (Mozilla accounts) is merged and built, but not accepted.** The squash merge of `m6e-p6/fxaccounts` is in `main` as work-in-progress commits. Resolved by hand: 37 conflicts (19 modify/delete, `M6E_IMPLEMENTATION_PLAN.md` taken from HEAD because the branch carried plan edits), `panelUI-shared.css` by rule (`merge-helpers/css_merge.py`), and `OnboardingMessageProvider.sys.mjs`, which a clean auto-merge had silently broken (rebuilt from the branch version minus the Smart Window messages). Lint on the changed files is clean, the full build passed, and `test_shouldShowRelayPromo` was removed because the branch locks `browser.promo.relay.enabled` false (same reason as the VPN promo test).
+- **Test comparison for P6.1f, so far:** against the P6.1e results there is no new failure in languages, aiFeatures, UITour, ASRouter and aboutwelcome xpcshell, startup, policies, static, urlbar (one shutdown timer rejection), formautofill, passwordmgr, session store, customizableui. Against a build of the parent `bc2246158a` (`artifacts/p6/integ/fxa-baseline`, `fxa-suites`): `backup-unit` (22 failures, `app.support.baseURL` empty and "Cannot recover a backup from firefox in m6e"), `protections` and `profiles-br` are identical. `aboutlogins`, `aboutwelcome-br`, `asrouter-br` and the preferences search sub-pane test differ only in timeouts and in which test hits the shared 370-second limit; the sets overlap heavily and no failure points at a removed module. **Still to do:** rerun those four on `main`, file by file, and rerun the failing test files alone on the parent only if one points at FxA (grep their logs for `fxa`, `FxAccounts`, `UIState`).
+- **Parallel agents (worktrees, no builds, branches on origin):** `m6e-p6/pre-nimbus` (`026ad0f189`, one commit, based on main `baba8e1022`: 17 conflicts resolved; needs a full `./mach build`) and `m6e-p6/pre-updater-crashreporter` (`67e6cbff46`, two commits for P6.1g and P6.1h; the agent's report may be missing, so read the two commit messages and `git diff --stat` before adopting). Both were made before P6.1f was finished, so adopt them with `git merge --squash origin/m6e-p6/pre-nimbus` (expect a few new conflicts where the fxaccounts merge touched the same lines) rather than a cherry-pick. Worktrees of the agents are under `.claude/worktrees/`; remove them with `git worktree remove --force --force <path>` once their branches are adopted.
+- **Build state:** a `./mach build` of `main` was running when the computer was restarted. The objdir may be half-built; the build resumes.
+
+**Checklist**
+1. Read `CLAUDE.md`, the spec, this plan and `git log --oneline -15`; `git fetch`; pull if `origin/main` is ahead.
+2. `git status` must be clean apart from `kotlin-components-docs/build/` (hidden by `.git/info/exclude`). If it shows the detached parent commit `bc2246158a` (the baseline script checks it out), run `git checkout main`.
+3. Run `./mach build > artifacts/p6/integ/restart-build.log 2>&1` first and wait for it (about 20 minutes if the earlier rebuild did not finish). Ports and processes: make sure no stale `firefox`/`m6e` or `mach` process is left (`pgrep -fl 'mach|m6e'`).
+4. The VS Code Java/Gradle error is fixed in `.vscode/settings.json` (`java.gradle.buildServer.enabled: "off"`); if VS Code shows it again, run "Java: Clean Java Language Server Workspace".
+
+**Next action**
+1. Finish P6.1f: rerun the four noisy suites (above), run `tools/m6e/run_tests.sh`-equivalent headless subset and `acceptance.py --headless --idle-seconds 60` as in the P6.1e bullet, add the "P6.1f (done …)" bullet to this plan (replace the work-in-progress state), squash the work-in-progress commits (`git reset --soft bc2246158a`, recommit as `M6E P6.1f: Delete Mozilla accounts (…)`, `git push --force-with-lease origin main`).
+2. Then P6.1g and P6.1h together (one configure change, one full rebuild of about 40 minutes to 2 hours) by adopting `m6e-p6/pre-updater-crashreporter`, then P6.1i by adopting `m6e-p6/pre-nimbus`. Per step: merge, resolve, node --check and lint, build, consumer suites compared with a build of the parent, plan entry, one commit, push.
+3. After P6.1i: P6.2 and P6.3 (see the end of the Sunday bookmark).
+
 ### Tuesday bookmark: "Resume from Tuesday" (written 2026-10-27; P6.1e finished 2026-10-29, next is P6.1f)
 **What the phrase means:** the user ends a session on Tuesday 2026-10-27 and starts the next with "Resume from Tuesday". Follow this checklist and "Next action" without asking questions. It supersedes the Sunday bookmark below for the current state; the Sunday text still explains the merge method.
 
