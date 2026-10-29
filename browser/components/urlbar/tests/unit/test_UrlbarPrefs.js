@@ -299,42 +299,6 @@ add_task(function showSearchSuggestionsFirst_resultGroups() {
   );
 });
 
-// Tests whether observer.onNimbusChanged works.
-add_task(async function onNimbusChanged() {
-  Services.prefs.setBoolPref("browser.urlbar.addons.featureGate", false);
-
-  // Add an observer that throws an Error and an observer that does not define
-  // anything to check whether the other observers can get notifications.
-  UrlbarPrefs.addObserver({
-    onPrefChanged() {
-      throw new Error("From onPrefChanged");
-    },
-    onNimbusChanged() {
-      throw new Error("From onNimbusChanged");
-    },
-  });
-  UrlbarPrefs.addObserver({});
-
-  const observer = {
-    onPrefChanged(pref) {
-      this.prefChangedList.push(pref);
-    },
-    onNimbusChanged(pref) {
-      this.nimbusChangedList.push(pref);
-    },
-  };
-  observer.prefChangedList = [];
-  observer.nimbusChangedList = [];
-  UrlbarPrefs.addObserver(observer);
-
-  const doCleanup = await UrlbarTestUtils.initNimbusFeature({
-    addonsFeatureGate: true,
-  });
-  Assert.equal(observer.prefChangedList.length, 0);
-  Assert.ok(observer.nimbusChangedList.includes("addonsFeatureGate"));
-  await doCleanup();
-});
-
 // Tests whether observer.onPrefChanged works.
 add_task(async function onPrefChanged() {
   const doCleanup = await UrlbarTestUtils.initNimbusFeature({
@@ -373,7 +337,6 @@ add_task(async function onPrefChanged() {
   await deferred.promise;
   Assert.equal(observer.prefChangedList.length, 1);
   Assert.equal(observer.prefChangedList[0], "addons.featureGate");
-  Assert.equal(observer.nimbusChangedList.length, 0);
 
   Services.prefs.clearUserPref("browser.urlbar.addons.featureGate");
   await doCleanup();

@@ -993,38 +993,6 @@ const SNAPSHOT_SCHEMA = {
         },
       },
     },
-    normandy: {
-      type: "object",
-      required: AppConstants.MOZ_NORMANDY,
-      properties: {
-        nimbusExperiments: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              userFacingName: { type: "string", required: true },
-              branch: {
-                type: "object",
-                properties: {
-                  slug: { type: "string", required: true },
-                },
-              },
-            },
-          },
-          required: true,
-        },
-        nimbusRollouts: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              featureId: { type: "string", required: true },
-              slug: { type: "string", required: true },
-            },
-          },
-        },
-      },
-    },
     remoteSettings: {
       type: "object",
       additionalProperties: true,

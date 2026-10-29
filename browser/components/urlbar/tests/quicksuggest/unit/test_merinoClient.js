@@ -8,8 +8,6 @@
 
 ChromeUtils.defineESModuleGetters(this, {
   MerinoClient: "moz-src:///browser/components/urlbar/MerinoClient.sys.mjs",
-  NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
   ObliviousHTTP: "resource://gre/modules/ObliviousHTTP.sys.mjs",
 });
 
@@ -863,19 +861,7 @@ async function fetchAndCheckSuggestions({
 }
 
 async function withExperiment(values, callback) {
-  const doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.urlbar.featureId,
-      value: {
-        enabled: true,
-        ...values,
-      },
-    },
-    {
-      slug: "mock-experiment",
-      branchSlug: "treatment",
-    }
-  );
+  const doExperimentCleanup = await UrlbarTestUtils.initNimbusFeature(values);
   await callback();
   await doExperimentCleanup();
 }

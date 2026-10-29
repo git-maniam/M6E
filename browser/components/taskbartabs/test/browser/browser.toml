@@ -28,8 +28,6 @@ support-files = [
 
 ["browser_taskbarTabs_manifest.js"]
 
-["browser_taskbarTabs_nimbus.js"]
-
 ["browser_taskbarTabs_pageAction.js"]
 
 ["browser_taskbarTabs_pin.js"]

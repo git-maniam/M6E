@@ -1385,19 +1385,6 @@
       "examples": [true]
     },
 
-    "DisableRemoteImprovements": {
-      "type": "boolean",
-      "x-category": "Miscellaneous",
-      "x-compatibility": {
-        "firefox": { "version_added": "148" },
-        "firefox_esr": { "version_added": "153" },
-        "firefox_enterprise": { "version_added": "149" }
-      },
-      "x-restart-required": true,
-      "description": "Prevent Firefox from applying performance, stability, and feature changes between updates.",
-      "examples": [true]
-    },
-
     "DisableRemoteSettingsAndAcceptSecurityConsequences": {
       "type": "boolean",
       "x-category": "Network security",
@@ -3993,7 +3980,6 @@
           "UrlbarInterventions": false,
           "SkipOnboarding": true,
           "MoreFromMozilla": true,
-          "FirefoxLabs": false,
           "Locked": true
         }
       ],
@@ -4014,9 +4000,6 @@
           "type": "boolean"
         },
         "MoreFromMozilla": {
-          "type": "boolean"
-        },
-        "FirefoxLabs": {
           "type": "boolean"
         },
         "Locked": {

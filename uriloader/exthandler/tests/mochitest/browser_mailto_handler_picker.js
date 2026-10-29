@@ -7,9 +7,9 @@ const { nsContentDispatchChooser } = ChromeUtils.importESModule(
   "resource://gre/modules/ContentDispatchChooser.sys.mjs"
 );
 
-ChromeUtils.defineESModuleGetters(this, {
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
-});
+const { overrideFeature } = ChromeUtils.importESModule(
+  "resource://testing-common/FeatureOverride.sys.mjs"
+);
 
 const HANDLER_NAME = "Test Webmail";
 const URI_TEMPLATE =
@@ -63,7 +63,7 @@ function dialogButton(win, type) {
 add_setup(async function () {
   // The picker is gated behind the "dialog" variable of the "mailto" Nimbus
   // feature, so enroll to enable it for the duration of this test.
-  const nimbusCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
+  const nimbusCleanup = await overrideFeature({
     featureId: "mailto",
     value: { dialog: true },
   });

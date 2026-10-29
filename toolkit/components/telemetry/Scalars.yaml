@@ -1356,26 +1356,6 @@ browser.ui.interaction:
     record_in_processes:
       - 'main'
 
-  preferences_paneExperimental:
-    bug_numbers:
-      - 1620358
-      - 1651986
-    description: >
-      Records the items interacted with in the Experimental section of
-      preferences.
-      See https://firefox-source-docs.mozilla.org/browser/BrowserUsageTelemetry.html
-    expires: never
-    kind: uint
-    keyed: true
-    notification_emails:
-      - shong@mozilla.com
-      - dtownsend@mozilla.com
-    release_channel_collection: opt-out
-    products:
-      - 'firefox'
-    record_in_processes:
-      - 'main'
-
   preferences_paneMoreFromMozilla:
     bug_numbers:
       - 1738187

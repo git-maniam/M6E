@@ -8,14 +8,12 @@
 const { NimbusFeatures } = ChromeUtils.importESModule(
   "resource://nimbus/ExperimentAPI.sys.mjs"
 );
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
+const { overrideFeature } = ChromeUtils.importESModule(
+  "resource://testing-common/FeatureOverride.sys.mjs"
 );
 const { TelemetrySession } = ChromeUtils.importESModule(
   "resource://gre/modules/TelemetrySession.sys.mjs"
 );
-
-NimbusTestUtils.init(this);
 
 add_setup(async function () {
   // FOG needs a profile directory
@@ -59,9 +57,8 @@ add_task(async function test_scalarDisablement() {
   Assert.greater(payload.processes.parent.scalars[FILTERABLE_SCALAR], 0);
 
   info("2. Ensure we can disable scalars, leaving important ones intact.");
-  const { cleanup } = await NimbusTestUtils.setupTest();
 
-  let nimbusCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
+  let nimbusCleanup = await overrideFeature({
     featureId: NimbusFeatures.legacyTelemetry.featureId,
     value: {
       disableMainPingScalars: true,
@@ -78,7 +75,6 @@ add_task(async function test_scalarDisablement() {
   Assert.ok(!(FILTERABLE_SCALAR in filtered.processes.parent.scalars));
 
   await nimbusCleanup();
-  await cleanup();
 });
 
 add_task(async function test_hgramDisablement() {
@@ -96,9 +92,8 @@ add_task(async function test_hgramDisablement() {
   Assert.ok(SEARCH_KEYED_HGRAM in payload.keyedHistograms);
 
   info("2. Ensure we can disable histograms.");
-  const { cleanup } = await NimbusTestUtils.setupTest();
 
-  let nimbusCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
+  let nimbusCleanup = await overrideFeature({
     featureId: NimbusFeatures.legacyTelemetry.featureId,
     value: {
       disableMainPingHgrams: true,
@@ -113,5 +108,4 @@ add_task(async function test_hgramDisablement() {
   Assert.ok(!(SEARCH_KEYED_HGRAM in filtered.keyedHistograms));
 
   await nimbusCleanup();
-  await cleanup();
 });

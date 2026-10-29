@@ -128,14 +128,6 @@ support-files = ["test-page-with-nan-video-duration.html"]
 
 ["browser_multiPip.js"]
 
-["browser_nimbusDisplayDuration.js"]
-
-["browser_nimbusFirstTimeStyleVariant.js"]
-
-["browser_nimbusMessageFirstTimePip.js"]
-
-["browser_nimbusShowIconOnly.js"]
-
 ["browser_noPlayerControlsOnMiddleRightClick.js"]
 
 ["browser_noToggleOnAudio.js"]

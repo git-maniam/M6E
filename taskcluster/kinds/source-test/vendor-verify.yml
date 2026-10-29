@@ -180,7 +180,6 @@ misc:
         - third_party/perfetto/moz.yaml
         - third_party/python/vsdownload/moz.yaml
         - toolkit/components/content-classifier/etp_engine/moz.yaml
-        - toolkit/components/nimbus/schemas/moz.yaml
         - tools/lint/eslint/eslint-plugin-sdl-vendored/moz.yaml
 
 sandbox:

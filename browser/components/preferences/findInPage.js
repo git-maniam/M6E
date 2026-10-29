@@ -399,7 +399,7 @@ var gSearchResultsPane = {
         // so that only matching groups are shown. If no group matches, fall
         // back to a whole-pane search so panes still surface when the match
         // is in the pane title (moz-page-header) or in content rendered
-        // outside any setting-group (e.g. paneExperimental's description).
+        // outside any setting-group.
         if (child.localName === "setting-pane") {
           const BASE_SELECTOR =
             "setting-group:not([data-hidden-from-search]):not([hidden]):not([data-hidden-by-setting-group])";

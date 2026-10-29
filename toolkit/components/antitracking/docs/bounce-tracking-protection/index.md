@@ -202,10 +202,6 @@ fully disabled and `1` is fully enabled. See
 [nsIBounceTrackingProtection.idl](https://searchfox.org/mozilla-central/rev/ec342a3d481d9ac3324d1041e05eefa6b61392d2/toolkit/components/antitracking/bouncetrackingprotection/nsIBounceTrackingProtection.idl#10-42)
 for a full list of options.
 
-# Nimbus Integration
-A subset of the BTP prefs can be controlled via Nimbus. See definition here:
-[FeatureManifest.yaml](https://searchfox.org/firefox-main/source/toolkit/components/nimbus/FeatureManifest.yaml#:~:text=bounceTrackingProtection).
-
 ## Logging
 
 BTP has a logger which can be enabled by starting Firefox with the `MOZ_LOG`

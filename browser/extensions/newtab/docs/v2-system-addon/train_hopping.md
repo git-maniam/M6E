@@ -70,9 +70,9 @@ For example, at the time of this writing, [CSS Module Scripts are still under de
 
 ### New experiment features
 
-The Nimbus Features listed in `FeatureManifest.yaml` are registered into the client at build-time. There is currently no mechanism with which we can register new Nimbus Features at runtime dynamically.
+The Nimbus Features listed in the Nimbus feature manifest are registered into the client at build-time. There is currently no mechanism with which we can register new Nimbus Features at runtime dynamically.
 
-This means that the traditional model letting feature definitions ride the trains via `FeatureManifest.yaml` is incompatible with train-hopping. For example, if a new `newtabStockTicker` feature were to be added to `FeatureManifest.yaml`, and its variables checked at runtime by the New Tab code to determine whether to display a stock ticker widget, those runtime checks will need to grapple with the possibility that `NimbusFeatures.newtabStockTicker` is not actually defined on the underlying build, and use some sensible default (in this example, that default would probably be to *not* show the stock ticker widget).
+This means that the traditional model letting feature definitions ride the trains via the Nimbus feature manifest is incompatible with train-hopping. For example, if a new `newtabStockTicker` feature were to be added to the Nimbus feature manifest, and its variables checked at runtime by the New Tab code to determine whether to display a stock ticker widget, those runtime checks will need to grapple with the possibility that `NimbusFeatures.newtabStockTicker` is not actually defined on the underlying build, and use some sensible default (in this example, that default would probably be to *not* show the stock ticker widget).
 
 This would almost seem to defeat the purpose of train-hopping. How are we to experiment more quickly if we still must wait for our feature definitions to ride the trains?
 
@@ -177,7 +177,7 @@ In this example, if an enrollment exists such that the `newtabTrainhop` feature 
 
 New Tab has its own `metrics.yaml` and `pings.yaml` files that live not within the `browser/extensions/newtab` folder, but within `browser/components/newtab`.
 
-Similar to `FeatureManifest.yaml`, these metric and ping definitions are often parsed at build time. Unlike `FeatureManifest`, the Glean library knows how to have metrics and pings registered at runtime.
+Similar to the Nimbus feature manifest, these metric and ping definitions are often parsed at build time. Unlike the feature manifest, the Glean library knows how to have metrics and pings registered at runtime.
 
 This means it is possible to land new metrics and pings for New Tab, but to maintain backwards compatibility, and use those metrics and pings on the Beta and Release channel before the `metrics.yaml` or `pings.yaml` files have reached those channels.
 
@@ -213,7 +213,7 @@ As of this writing, Firefox is translated into 129 different locales. Many of th
 
 Typically, strings ride the trains \- they land in Nightly, and once the code in Nightly merges to the Beta channel, localizers have those 2 weeks to complete the localization. After that, a release candidate is built and tested \- and then a week later, the release goes to the Release channel.
 
-Similar to the `FeatureManifest.yaml` problem, this process would seem to go against the goals of New Tab train-hopping. How do we move faster, without upending or violating the social contract that we have with our localization community?
+Similar to the the Nimbus feature manifest problem, this process would seem to go against the goals of New Tab train-hopping. How do we move faster, without upending or violating the social contract that we have with our localization community?
 
 The solution comes in two parts:
 

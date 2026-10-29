@@ -74,8 +74,6 @@ run-if = [
 
 ["browser_screenshots_test_toggle_pref.js"]
 
-["browser_screenshots_test_toolbar_button.js"]
-
 ["browser_screenshots_test_visible.js"]
 
 ["browser_shadowRoot_test.js"]

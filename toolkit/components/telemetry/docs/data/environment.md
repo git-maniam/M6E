@@ -259,8 +259,6 @@ The following is a partial list of [collected preferences](https://searchfox.org
 - `media.gmp-gmpopenh264.visible`: Whether OpenH264 is visible.
 - `media.gmp-manager.lastCheck`: When the gmp-manager last checked for updates as seconds since Jan 1, 1970.
 - `media.gmp-manager.lastEmptyCheck`: When the gmp-manager last checked for updates and there was nothing to install as seconds since Jan 1, 1970.
-- `nimbus.qa.pref-1`: Used to monitor the results of pref-setting test experiments.
-- `nimbus.qa.pref-2`: Used to monitor the results of pref-setting test experiments.
 - `signon.firefoxRelay.feature`: User choice regarding Firefox Relay integration with Firefox Password Manager. Can be one of undefined, "available", "offered", "enabled" or "disabled".
 - `dom.popup_allowed_events`: Which events should allow popups. Only exposed with <about:config>.
 - `intl.ime.use_composition_events_for_insert_text`: Whether a set of composition events is fired when user inserts text without keyboard events nor composing state of a composition (only on Linux and macOS).

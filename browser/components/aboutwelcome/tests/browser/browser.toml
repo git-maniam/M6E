@@ -56,17 +56,9 @@ fail-if = [
 
 ["browser_aboutwelcome_multistage_default.js"]
 
-["browser_aboutwelcome_multistage_experimentAPI.js"]
-
 ["browser_aboutwelcome_multistage_languageSwitcher.js"]
 
 ["browser_aboutwelcome_multistage_mr.js"]
-
-["browser_aboutwelcome_multistage_transitions.js"]
-
-["browser_aboutwelcome_navigation.js"]
-
-["browser_aboutwelcome_nimbus_gate.js"]
 
 ["browser_aboutwelcome_observer.js"]
 https_first_disabled = true
@@ -85,8 +77,6 @@ skip-if = [
 ["browser_aboutwelcome_screen_targeting.js"]
 
 ["browser_aboutwelcome_theme_picker.js"]
-
-["browser_aboutwelcome_theming.js"]
 
 ["browser_aboutwelcome_toolbar_button.js"]
 

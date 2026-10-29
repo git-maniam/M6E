@@ -3,12 +3,6 @@
 
 "use strict";
 
-const { ExperimentAPI } = ChromeUtils.importESModule(
-  "resource://nimbus/ExperimentAPI.sys.mjs"
-);
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
 const { RemoteSettings } = ChromeUtils.importESModule(
   "resource://services-settings/remote-settings.sys.mjs"
 );
@@ -73,85 +67,6 @@ add_task(async function () {
       ok(keyMozillaStatus, "Mozilla API key status shown");
     }
   );
-});
-
-add_task(async function test_nimbus_experiments() {
-  await ExperimentAPI.ready();
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true },
-  });
-
-  await BrowserTestUtils.withNewTab(
-    { gBrowser, url: "about:support" },
-    async function (browser) {
-      let experimentName = await SpecialPowers.spawn(
-        browser,
-        [],
-        async function () {
-          await ContentTaskUtils.waitForCondition(
-            () =>
-              content.document.querySelector(
-                "#remote-experiments-tbody tr:first-child td"
-              )?.innerText
-          );
-          return content.document.querySelector(
-            "#remote-experiments-tbody tr:first-child td"
-          ).innerText;
-        }
-      );
-      ok(
-        experimentName.match("Nimbus"),
-        "Rendered the expected experiment slug"
-      );
-    }
-  );
-
-  await doExperimentCleanup();
-});
-
-add_task(async function test_remote_configuration() {
-  await ExperimentAPI.ready();
-  let doCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: NimbusFeatures.aboutwelcome.featureId,
-      value: { enabled: true },
-    },
-    { isRollout: true }
-  );
-
-  await BrowserTestUtils.withNewTab(
-    { gBrowser, url: "about:support" },
-    async function (browser) {
-      let [userFacingName, branch] = await SpecialPowers.spawn(
-        browser,
-        [],
-        async function () {
-          await ContentTaskUtils.waitForCondition(
-            () =>
-              content.document.querySelector(
-                "#remote-features-tbody tr:first-child td"
-              )?.innerText
-          );
-          let rolloutName = content.document.querySelector(
-            "#remote-features-tbody tr:first-child td"
-          ).innerText;
-          let branchName = content.document.querySelector(
-            "#remote-features-tbody tr:first-child td:nth-child(2)"
-          ).innerText;
-
-          return [rolloutName, branchName];
-        }
-      );
-      ok(
-        userFacingName.match("NimbusTestUtils recipe"),
-        `Rendered the expected rollout ${userFacingName}`
-      );
-      ok(branch.match("control"), "Rendered the expected rollout branch");
-    }
-  );
-
-  doCleanup();
 });
 
 add_task(async function test_sanitize_paths() {

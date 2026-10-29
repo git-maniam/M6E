@@ -1,18 +1,9 @@
 "use strict";
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
-
 async function testAboutWelcomeLogoFor(logo = {}) {
   info(`Testing logo: ${JSON.stringify(logo)}`);
 
   let screens = [makeTestContent("TEST_LOGO_SELECTION_STEP", { logo })];
-
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true, screens },
-  });
 
   let browser = await openAboutWelcome(JSON.stringify(screens));
 
@@ -57,7 +48,6 @@ async function testAboutWelcomeLogoFor(logo = {}) {
     unexpected
   );
 
-  await doExperimentCleanup();
   browser.closeBrowser();
 }
 

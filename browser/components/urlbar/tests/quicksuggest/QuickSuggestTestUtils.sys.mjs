@@ -8,8 +8,6 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AmpSuggestions:
     "moz-src:///browser/components/urlbar/private/AmpSuggestions.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
   QuickSuggest: "moz-src:///browser/components/urlbar/QuickSuggest.sys.mjs",
   Region: "resource://gre/modules/Region.sys.mjs",
   RemoteSettingsServer:
@@ -221,12 +219,6 @@ class _QuickSuggestTestUtils {
   } = {}) {
     this.#log("ensureQuickSuggestInit", "Started");
 
-    this.#log("ensureQuickSuggestInit", "Awaiting ExperimentAPI.init");
-    const initializedExperimentAPI = await lazy.ExperimentAPI.init();
-
-    this.#log("ensureQuickSuggestInit", "Awaiting ExperimentAPI.ready");
-    await lazy.ExperimentAPI.ready();
-
     // Set up the local remote settings server.
     this.#log("ensureQuickSuggestInit", "Preparing remote settings server");
     if (!this.#remoteSettingsServer) {
@@ -290,12 +282,6 @@ class _QuickSuggestTestUtils {
       if (!cleanupCalled) {
         cleanupCalled = true;
         await this.#uninitQuickSuggest(prefs, !!merinoSuggestions);
-
-        if (initializedExperimentAPI) {
-          // Only reset if we're in an xpcshell-test and actually initialized
-          // the ExperimentAPI.
-          lazy.ExperimentAPI._resetForTests();
-        }
       }
     };
     this.registerCleanupFunction?.(cleanup);
@@ -1364,13 +1350,14 @@ class _QuickSuggestTestUtils {
   }
 
   /**
-   * Calls a callback while enrolled in a mock Nimbus experiment. The experiment
-   * is automatically unenrolled and cleaned up after the callback returns.
+   * Calls a callback while the urlbar feature variables are overridden. The
+   * overrides are applied to the variables' fallback prefs and reverted after
+   * the callback returns.
    *
    * @param {object} options
-   *   Options for the mock experiment.
+   *   Options for the overrides.
    * @param {Function} options.callback
-   *   The callback to call while enrolled in the mock experiment.
+   *   The callback to call while the overrides are in place.
    * @param {object} options.valueOverrides
    *   Values for feature variables.
    */
@@ -1381,30 +1368,18 @@ class _QuickSuggestTestUtils {
   }
 
   /**
-   * Enrolls in a mock Nimbus experiment.
+   * Overrides the urlbar feature variables by setting their fallback prefs.
    *
    * @param {object} options
-   *   Options for the mock experiment.
+   *   Options for the overrides.
    * @param {object} [options.valueOverrides]
    *   Values for feature variables.
    * @returns {Promise<Function>}
-   *   The experiment cleanup function (async).
+   *   The cleanup function (async).
    */
   async enrollExperiment({ valueOverrides = {} }) {
-    this.#log("enrollExperiment", "Awaiting ExperimentAPI.ready");
-    await lazy.ExperimentAPI.ready();
-
-    let doExperimentCleanup =
-      await lazy.NimbusTestUtils.enrollWithFeatureConfig({
-        enabled: true,
-        featureId: "urlbar",
-        value: valueOverrides,
-      });
-
-    return async () => {
-      this.#log("enrollExperiment.cleanup", "Awaiting experiment cleanup");
-      await doExperimentCleanup();
-    };
+    this.#log("enrollExperiment", "Overriding fallback prefs");
+    return lazy.UrlbarTestUtils.initNimbusFeature(valueOverrides);
   }
 
   /**

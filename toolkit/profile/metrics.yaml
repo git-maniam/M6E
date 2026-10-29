@@ -196,7 +196,6 @@ profiles:
     expires: never
     send_in_pings:
       - metrics
-      - heartbeat
 
   creation_place:
     type: labeled_counter
@@ -266,7 +265,6 @@ profiles:
     expires: never
     send_in_pings:
       - metrics
-      - heartbeat
 
   recovered_from_backup:
     type: quantity

@@ -34,7 +34,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 3 | Search engines, bookmarks, Reader View, privacy hardening, Privacy Shield, push, Tracker Blocker button | Done |
 | 4 | Performance, platform removal, dormant-feature removal, security hardening | Done (2026-10-24). Speedometer 3 is about +28% over the Phase 3 build; Windows, Linux and Android code removed; hardening as P4.8; the dormant features marked for deletion in P6.1 (D30). |
 | 5 | Packaging (`.dmg`) and acceptance | Done (2026-10-24). Signed ad hoc, release DMG built and verified, acceptance 15 of 15; first paint 579 ms, blank-tab memory 443 MB. |
-| 6 | Delete the dormant features (D30) | **In progress** (started 2026-10-24; plan steps P6.0 to P6.3). Done by 2026-10-29: P6.0 (baseline), P6.1a (VPN, `b60ab6fb0d`), P6.1b (Translations, `d12d905ae2`), P6.1c (generative AI, `44a36ef2aa`), P6.1d (machine learning, `7743d3249c`), P6.1e (Sync, `bc2246158a`), P6.1f (Mozilla accounts). Next: P6.1g (updater) with P6.1h (crash reporter), P6.1i (Nimbus), P6.2, P6.3. "Resume after restart" starts at the Restart bookmark in plan section 4. |
+| 6 | Delete the dormant features (D30) | **In progress** (started 2026-10-24; plan steps P6.0 to P6.3). Done by 2026-10-29: P6.0 (baseline) and P6.1a to P6.1i: VPN, Translations, generative AI, machine learning, Sync, Mozilla accounts, application updater, crash reporter, Nimbus. Next: P6.2 (lint configs and leftover clean-up, prepared on `m6e-p6/ready-p62*`) and P6.3 (LTO and PGO back on, clean build, full regressions, acceptance 15 of 15, release DMG, prepared on `m6e-p6/ready-p63`). "Resume after restart" starts at the Restart bookmark in plan section 4. |
 
 ## 3. Requirements
 

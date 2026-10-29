@@ -11,9 +11,6 @@ const { EnterprisePolicyTesting, PoliciesPrefTracker } =
     "resource://testing-common/EnterprisePolicyTesting.sys.mjs"
   );
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
 const { PermissionTestUtils } = ChromeUtils.importESModule(
   "resource://testing-common/PermissionTestUtils.sys.mjs"
 );
@@ -30,12 +27,9 @@ ChromeUtils.defineLazyGetter(this, "QuickSuggestTestUtils", () => {
 });
 
 ChromeUtils.defineESModuleGetters(this, {
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   QuickSuggest: "moz-src:///browser/components/urlbar/QuickSuggest.sys.mjs",
   SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
 });
-
-NimbusTestUtils.init(this);
 
 const kDefaultWait = 2000;
 
@@ -242,11 +236,7 @@ async function clearSearch(doc) {
   await searchCompletedPromise;
 }
 
-async function evaluateSearchResults(
-  keyword,
-  searchResults,
-  includeExperiments = false
-) {
+async function evaluateSearchResults(keyword, searchResults) {
   searchResults = Array.isArray(searchResults)
     ? searchResults
     : [searchResults];
@@ -257,9 +247,6 @@ async function evaluateSearchResults(
   let mainPrefTag = gBrowser.contentDocument.getElementById("mainPrefPane");
   for (let i = 0; i < mainPrefTag.childElementCount; i++) {
     let child = mainPrefTag.children[i];
-    if (!includeExperiments && child.id?.startsWith("pane-experimental")) {
-      continue;
-    }
     if (child.localName == "setting-group") {
       // Skip migrated setting-groups to avoid interference with legacy tests
       if (child.hasAttribute("data-srd-migrated")) {

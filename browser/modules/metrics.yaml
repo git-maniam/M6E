@@ -1487,26 +1487,6 @@ browser.ui.interaction:
       - hjones@mozilla.com
     expires: never
 
-  preferences_pane_experimental:
-    type: labeled_counter
-    description: >
-      Records the items interacted with in the Experimental section of
-      preferences. See
-      https://firefox-source-docs.mozilla.org/browser/BrowserUsageTelemetry.html
-      This metric was generated to correspond to the Legacy Telemetry
-      scalar browser.ui.interaction.preferences_paneExperimental.
-    bugs:
-      - https://bugzil.la/1620358
-      - https://bugzil.la/1651986
-    data_reviews:
-      - https://bugzil.la/1620358
-      - https://bugzil.la/1651986
-    notification_emails:
-      - shong@mozilla.com
-      - dtownsend@mozilla.com
-    expires: never
-    telemetry_mirror: BROWSER_UI_INTERACTION_PREFERENCES_PANEEXPERIMENTAL
-
   preferences_pane_more_from_mozilla:
     type: labeled_counter
     description: >

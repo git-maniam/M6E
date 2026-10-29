@@ -10,8 +10,6 @@
 
 ChromeUtils.defineESModuleGetters(this, {
   EngineURL: "moz-src:///toolkit/components/search/SearchEngine.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
 });
 
 // Expected source and action recorded by `BrowserSearchTelemetry`.
@@ -368,113 +366,6 @@ add_task(async function nonconfigEngine() {
   );
   await SpecialPowers.popPrefEnv();
 });
-
-add_task(async function nimbusExposure_visualSearchEnabled() {
-  await doNimbusExposureTest({
-    visualSearchEnabled: true,
-    selector: "#image",
-    shouldBeShown: true,
-    shouldBeRecorded: true,
-  });
-});
-
-add_task(async function nimbusExposure_visualSearchDisabled() {
-  await doNimbusExposureTest({
-    visualSearchEnabled: false,
-    selector: "#image",
-    shouldBeShown: false,
-    shouldBeRecorded: true,
-  });
-});
-
-add_task(async function nimbusExposure_notAnImage() {
-  await doNimbusExposureTest({
-    visualSearchEnabled: true,
-    selector: "#plainText",
-    shouldBeShown: false,
-    shouldBeRecorded: false,
-  });
-});
-
-async function doNimbusExposureTest({
-  visualSearchEnabled,
-  selector,
-  shouldBeShown,
-  shouldBeRecorded,
-}) {
-  // The `visualSearchEnabled` variable sets this pref on the default branch.
-  // Get the original value to make sure it's properly reset on unenrollment.
-  let defaults = Services.prefs.getDefaultBranch(
-    "browser.search.visualSearch.featureGate"
-  );
-  let originalDefault = defaults.getBoolPref("");
-
-  await ExperimentAPI.ready();
-  Services.fog.testResetFOG();
-
-  // Enroll in an experiment that defines `visualSearchEnabled`.
-  let slug = "dummy-search-experiment";
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: "search",
-      value: {
-        visualSearchEnabled,
-        enabled: true,
-      },
-    },
-    {
-      slug,
-    }
-  );
-
-  let meta = NimbusFeatures.search.getEnrollmentMetadata();
-  Assert.ok(meta, "Enrollment metadata should be non-null");
-  Assert.equal(meta.slug, slug, "Experiment slug should be correct");
-
-  // The exposure event should be recorded every time the menu item is shown or
-  // would have been shown, not just once per app session, so open the menu more
-  // than once and make sure the event is recorded each time.
-  for (let i = 0; i < 2; i++) {
-    info("Opening the menu for iteration " + i);
-
-    await openAndCheckMenu({
-      selector,
-      shouldBeShown,
-      expectedEngineNameInLabel: ENGINE_NAME,
-    });
-    await closeMenu();
-
-    TelemetryTestUtils.assertEvents(
-      shouldBeRecorded
-        ? [
-            {
-              method: "expose",
-              object: "nimbus_experiment",
-              value: slug,
-              extra: {
-                branchSlug: meta.branch,
-                featureId: "search",
-              },
-            },
-          ]
-        : [],
-      {
-        category: "normandy",
-        method: "expose",
-      },
-      { clear: true }
-    );
-  }
-
-  await doExperimentCleanup();
-
-  defaults.setBoolPref("", originalDefault);
-  Assert.strictEqual(
-    defaults.getBoolPref(""),
-    originalDefault,
-    "The original default pref value should be restored"
-  );
-}
 
 async function openMenuAndClickItem({
   expectedEngineNameInLabel = ENGINE_NAME,

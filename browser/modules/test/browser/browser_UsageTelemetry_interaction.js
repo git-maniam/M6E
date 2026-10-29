@@ -26,7 +26,6 @@ const AREAS = [
   "preferencesPaneAppearance",
   "preferencesPaneContainers",
   "preferencesPaneDownloads",
-  "preferencesPaneExperimental",
   "preferencesPaneGeneral",
   "preferencesPaneHome",
   "preferencesPaneLanguages",

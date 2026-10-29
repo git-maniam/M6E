@@ -32,7 +32,6 @@ browser/components/asrouter/modules/OnboardingMessageProvider.sys.mjs
 browser/components/asrouter/modules/PageEventManager.sys.mjs
 browser/components/asrouter/modules/PanelTestProvider.sys.mjs
 browser/components/asrouter/modules/PinnableSitesProvider.sys.mjs
-browser/components/asrouter/modules/PreonboardingSplash.sys.mjs
 browser/components/asrouter/modules/RemoteL10n.sys.mjs
 browser/components/asrouter/modules/Spotlight.sys.mjs
 browser/components/asrouter/modules/ToastNotification.sys.mjs
@@ -207,7 +206,6 @@ toolkit/components/autocomplete/AutoCompleteSimpleSearch.sys.mjs
 toolkit/components/backgroundhangmonitor/BHRTelemetryService.sys.mjs
 toolkit/components/backgroundtasks/BackgroundTask_exception.sys.mjs
 toolkit/components/backgroundtasks/BackgroundTask_failure.sys.mjs
-toolkit/components/backgroundtasks/BackgroundTask_message.sys.mjs
 toolkit/components/backgroundtasks/BackgroundTask_removeDirectory.sys.mjs
 toolkit/components/backgroundtasks/BackgroundTask_removeProfileFiles.sys.mjs
 toolkit/components/backgroundtasks/BackgroundTask_success.sys.mjs

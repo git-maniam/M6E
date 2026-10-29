@@ -15,7 +15,7 @@ add_task(function test_feature_id_constant() {
   Assert.equal(
     PERMISSION_UI_FEATURE_ID,
     "webNotificationsPermissionUi",
-    "Feature ID matches the FeatureManifest.yaml entry"
+    "Feature ID matches the expected feature name"
   );
 });
 

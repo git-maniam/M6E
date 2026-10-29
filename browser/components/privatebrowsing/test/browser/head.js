@@ -3,9 +3,8 @@
 
 ChromeUtils.defineESModuleGetters(this, {
   ASRouter: "resource:///modules/asrouter/ASRouter.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   FileUtils: "resource://gre/modules/FileUtils.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
+  NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
   PanelTestProvider: "resource:///modules/asrouter/PanelTestProvider.sys.mjs",
   PlacesTestUtils: "resource://testing-common/PlacesTestUtils.sys.mjs",
   PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
@@ -369,13 +368,18 @@ async function setupMSExperimentWithMessage(message) {
     Ci.nsITelemetry.DATASET_PRERELEASE_CHANNELS,
     true
   );
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig(
-    {
-      featureId: "pbNewtab",
-      value: message,
-    },
-    { slug: message.id }
-  );
+  let enrollmentsStub = sinon
+    .stub(NimbusFeatures.pbNewtab, "getAllEnrollments")
+    .returns([
+      {
+        meta: { slug: message.id, branch: "control", isRollout: true },
+        value: message,
+      },
+    ]);
+  let doExperimentCleanup = async () => {
+    enrollmentsStub.restore();
+    await ASRouter.loadMessagesFromAllProviders();
+  };
   await SpecialPowers.pushPrefEnv({
     set: [
       [

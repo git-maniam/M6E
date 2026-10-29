@@ -34,8 +34,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ASRouterDefaultConfig:
     // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
     "resource:///modules/asrouter/ASRouterDefaultConfig.sys.mjs",
-
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
 });
 
 class CannotLockProfileError extends Error {
@@ -284,62 +282,6 @@ export var BackgroundTasksUtils = {
     let state = await IOUtils.readJSON(stateFile.path);
 
     return state.clientID;
-  },
-
-  /**
-   * Enable the Nimbus experimentation framework.
-   *
-   * @param {nsICommandLine} commandLine if given, accept command line parameters
-   *                                     like `--url about:studies?...` or
-   *                                     `--url file:path/to.json` to explicitly
-   *                                     opt-on to experiment branches.
-   * @param {object} defaultProfile      snapshot of Firefox Messaging System
-   *                                     targeting from default browsing profile.
-   */
-  async enableNimbus(commandLine, defaultProfile = {}) {
-    await lazy.ExperimentAPI.init({
-      forceSync: true,
-      extraContext: { defaultProfile },
-    });
-
-    // Allow manual explicit opt-in to experiment branches to facilitate testing.
-    //
-    // Process command line arguments, like
-    // `--url about:studies?optin_slug=nalexander-ms-test1&optin_branch=treatment-a&optin_collection=nimbus-preview`
-    // or
-    // `--url file:///Users/nalexander/Mozilla/gecko/experiment.json?optin_branch=treatment-a`.
-    let ar;
-    while ((ar = commandLine?.handleFlagWithParam("url", false))) {
-      let uri = commandLine.resolveURI(ar);
-      const params = new URLSearchParams(uri.query);
-
-      if (uri.schemeIs("about") && uri.filePath == "studies") {
-        // Allow explicit opt-in.  In the future, we might take this pref from
-        // the default browsing profile.
-        Services.prefs.setBoolPref("nimbus.debug", true);
-
-        const data = {
-          slug: params.get("optin_slug"),
-          branch: params.get("optin_branch"),
-          collection: params.get("optin_collection"),
-        };
-        await lazy.ExperimentAPI.optInToExperiment(data);
-        lazy.log.info(`Opted in to experiment: ${JSON.stringify(data)}`);
-      } else if (uri.schemeIs("file")) {
-        let branchSlug = params.get("optin_branch");
-        let path = decodeURIComponent(uri.filePath);
-        let response = await fetch(uri.spec);
-        let recipe = await response.json();
-        if (recipe.permissions) {
-          // Saved directly from Experimenter, there's a top-level `data`.  Hand
-          // written, that's not the norm.
-          recipe = recipe.data;
-        }
-
-        lazy.ExperimentAPI.manager.forceEnroll(recipe, branchSlug);
-        lazy.log.info(`Forced enrollment into: ${path}, branch: ${branchSlug}`);
-      }
-    }
   },
 
   /**

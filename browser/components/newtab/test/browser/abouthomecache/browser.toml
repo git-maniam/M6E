@@ -31,8 +31,6 @@ prefs = [
 
 ["browser_disabled.js"]
 
-["browser_experiments_api_control.js"]
-
 ["browser_locale_change.js"]
 
 ["browser_no_cache.js"]
