@@ -1493,27 +1493,6 @@ modules:
       - *mstange
     machine_name: core_apz_graphics_submodule
 
-  - name: 'Core: Build and Release Tools'
-    description: Tools related to build and release automation and configuration of
-      release builds.
-    includes:
-      - tools/update-verify/**/*
-    meta:
-      owners_emeritus:
-        - Aki Sasaki
-      group: release-engineering
-      url: <https://wiki.mozilla.org/ReleaseEngineering>
-      components:
-        - Release Engineering::*
-      review_group: releng-reviewers
-    owners:
-      - *jcristau
-    peers:
-      - *hneiva
-      - *bhearsum
-      - *gabriel
-    machine_name: core_build_and_release_tools
-
   - name: 'Core: Build Config'
     description: The build system for Gecko and several mozilla.org hosted Gecko-based
       applications.

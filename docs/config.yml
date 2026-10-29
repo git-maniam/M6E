@@ -83,8 +83,6 @@ categories:
         - testing-rust-code
     ai_agent_tools_doc:
         - ai-agent-tools
-    release_doc:
-        - tools/update-verify
     l10n_doc:
         - intl
         - l10n

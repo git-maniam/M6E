@@ -13,8 +13,4 @@ subsuite = "mozrelease"
 
 ["test_merkle.py"]
 
-["test_update_verify.py"]
-
-["test_update_verify_config_creator.py"]
-
 ["test_versions.py"]

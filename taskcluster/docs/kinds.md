@@ -391,10 +391,6 @@ Sign the pre-release checksums produced by the above task
 
 Submit to S3 the artifacts produced by the release-checksums task and its signing counterpart.
 
-## release-final-verify
-
-Verifies the contents and package of release update MARs.
-
 ## release-push-langpacks
 
 Publishes language packs onto addons.mozilla.org.
@@ -406,26 +402,6 @@ Publishes signed langpacks to archive.mozilla.org
 ## release-beetmover-signed-langpacks-checksums
 
 Publishes signed langpacks to archive.mozilla.org
-
-## release-update-verify
-
-Verifies the contents and package of release update MARs.
-
-## test-update-integrity
-
-Verifies that update MARs match installers. See `tools/update-verify/marannon` for more details.
-
-## release-update-verify-next
-
-Verifies the contents and package of release and updare MARs from the previous ESR release.
-
-## release-update-verify-config
-
-Creates configs for release-update-verify tasks
-
-## release-update-verify-config-next
-
-Creates configs for release-update-verify-next tasks
 
 ## release-updates-builder
 
@@ -700,10 +676,6 @@ Dummy tasks to consolidate beetmover-components dependencies to avoid taskcluste
 
 Dummy tasks to consolidate language pack beetmover dependencies to avoid taskcluster limits on number of dependencies per task.
 
-## post-update-verify-dummy
-
-Dummy tasks to consolidate update verify dependencies to avoid taskcluster limits on number of dependencies per task.
-
 ## fetch
 
 Tasks that obtain something from a remote service and re-expose it as a
@@ -936,10 +908,6 @@ Run baseline profile generation for Android on Firebase TestLab.
 ## dte-test
 
 Send payload for DTE testing Github Actions.
-
-## update-test
-
-Run tests to see if the Firefox executable can be updated to the latest release.
 
 ## run-macrobenchmark-firebase
 
