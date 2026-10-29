@@ -136,9 +136,7 @@ FORBIDDEN_PROCESS = re.compile(
     r"/(pingsender|crashreporter|crash-helper|updater|minidump[^/ ]*)(\.app)?(/|\s|$)", re.I
 )
 # Executables or bundles that must not ship in the app.
-FORBIDDEN_BUNDLE_ITEMS = ["crashreporter.app", "updater.app", "crashhelper"]
-# Known leftover (finding F6 of unreachability.md): reported, not failed.
-KNOWN_BUNDLE_ITEMS = ["pingsender"]
+FORBIDDEN_BUNDLE_ITEMS = ["crashreporter.app", "updater.app", "crashhelper", "pingsender"]
 
 JS_STATE = """
 const P = Services.prefs;
@@ -459,10 +457,10 @@ def check_crash(ctx, r):
         names.update(f.lower() for f in files)
         dirs[:] = [d for d in dirs if not d.endswith(".lproj")]
     shipped = [n for n in FORBIDDEN_BUNDLE_ITEMS if n in names]
-    r.add("no crash reporter or updater in the bundle", not shipped, shipped or "none")
-    r.info(
-        "known leftovers in the bundle (finding F6)",
-        [n for n in KNOWN_BUNDLE_ITEMS if n in names] or "none",
+    r.add(
+        "no crash reporter, updater or pingsender in the bundle",
+        not shipped,
+        shipped or "none",
     )
 
 
