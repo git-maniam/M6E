@@ -1180,18 +1180,6 @@ set_config("OMNIJAR_NAME", omnijar_name)
 project_flag("MOZ_PLACES", help="Build Places if required", set_as_define=True)
 
 project_flag(
-    "MOZ_SERVICES_HEALTHREPORT",
-    help="Build Firefox Health Reporter Service",
-    set_as_define=True,
-)
-
-project_flag(
-    "MOZ_NORMANDY",
-    help="Enable Normandy recipe runner",
-    set_as_define=True,
-)
-
-project_flag(
     "MOZ_GECKOVIEW_HISTORY",
     help="Enable Geckoview History instead of Places",
     set_as_define=True,
@@ -3455,20 +3443,11 @@ with only_when(compile_environment):
     set_config("MOZ_SYSTEM_LIBEVENT", True, when="--with-system-libevent")
 
 
-# If we have any service that uploads data (and requires data submission
-# policy alert), set MOZ_DATA_REPORTING.
+# Telemetry is the only service left that uploads data (and requires data
+# submission policy alert), so MOZ_DATA_REPORTING follows it.
 # ==============================================================
-@depends(
-    "MOZ_TELEMETRY_REPORTING",
-    "MOZ_SERVICES_HEALTHREPORT",
-    "MOZ_NORMANDY",
-)
-def data_reporting(telemetry, healthreport, normandy):
-    return telemetry or healthreport or normandy
-
-
-set_config("MOZ_DATA_REPORTING", True, when=data_reporting)
-set_define("MOZ_DATA_REPORTING", True, when=data_reporting)
+set_config("MOZ_DATA_REPORTING", True, when="MOZ_TELEMETRY_REPORTING")
+set_define("MOZ_DATA_REPORTING", True, when="MOZ_TELEMETRY_REPORTING")
 
 
 # Gtk+
