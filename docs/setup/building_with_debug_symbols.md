@@ -8,7 +8,7 @@
 
 By default, a release build of Firefox will not generate debug symbols
 suitable for debugging or post-processing into the
-[breakpad](/crash-reporting/index.md) symbol format. Use the
+breakpad symbol format. Use the
 following [mozconfig](configuring_build_options.md) settings
 to do a build with symbols:
 
@@ -32,7 +32,7 @@ Note that this will override the values provided for `CFLAGS` and
 ## Breakpad symbol files
 
 After the build is complete, run the following command to generate an
-archive of [Breakpad](/crash-reporting/index.md) symbol files:
+archive of Breakpad symbol files:
 
 ```bash
 mach buildsymbols

@@ -11,7 +11,6 @@ categories:
     contributing_doc:
         - contributing
         - bug-mgmt
-        - crash-reporting
     user_guide:
         - devtools-user
     source_doc:
@@ -81,7 +80,6 @@ categories:
     ai_agent_tools_doc:
         - ai-agent-tools
     release_doc:
-        - update-infrastructure
         - tools/update-verify
     l10n_doc:
         - intl
