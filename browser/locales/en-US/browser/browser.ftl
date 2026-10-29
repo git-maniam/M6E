@@ -1168,14 +1168,6 @@ toolbar-button-open-file =
   .label = Open file
   .tooltiptext = Open a file ({ $shortcut })
 
-toolbar-button-synced-tabs =
-  .label = Synced tabs
-  .tooltiptext = Show tabs from other devices
-
-toolbar-button-send-tab =
-  .label = Send tab
-  .tooltiptext = Send current tab to another device
-
 toolbar-button-new-private-window =
   .label = New private window
   .tooltiptext = Open a new private browsing window ({ $shortcut })

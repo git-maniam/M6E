@@ -191,7 +191,6 @@ protections-vpn-title = Take privacy protections beyond the browser
 protections-vpn-header-content = Protect your entire device with { -mozilla-vpn-brand-name }. One tap encrypts all traffic and hides your location.
 protections-get-vpn-link = Get { -mozilla-vpn-brand-name }
 
-protections-vpn-title-subscribed = VPN: Subscribed
 # Variables
 #   $count (number): Number of devices
 protections-vpn-header-content-subscribed =
@@ -201,4 +200,3 @@ protections-vpn-header-content-subscribed =
 
 protections-vpn-banner-header = Protection that extends beyond the browser
 protections-vpn-banner-content = Try { -mozilla-vpn-brand-name } risk-free and see why TechRadar says, “its speed, simplicity and low monthly price make it worth a look.”
-protections-vpn-banner-link = Get { -mozilla-vpn-brand-name }
