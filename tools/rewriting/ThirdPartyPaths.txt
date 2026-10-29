@@ -158,7 +158,6 @@ security/sandbox/chromium/
 security/sandbox/chromium-shim/
 security/sandbox/linux/launch/glibc_hack/sandbox/linux/services/namespace_sandbox.cc
 services/common/kinto-http-client.sys.mjs
-services/common/kinto-offline-client.sys.mjs
 testing/gtest/gmock/
 testing/gtest/gtest/
 testing/mochitest/pywebsocket3/
@@ -182,7 +181,6 @@ third_party/
 toolkit/components/contentanalysis/content_analysis/sdk/
 toolkit/components/certviewer/content/vendor/
 toolkit/components/jsoncpp/
-toolkit/components/normandy/vendor/
 toolkit/components/passwordmgr/shared/PasswordRulesParser.sys.mjs
 toolkit/components/protobuf/src/
 toolkit/components/protobuf/third_party/
