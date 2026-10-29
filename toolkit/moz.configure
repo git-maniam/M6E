@@ -8,7 +8,7 @@
 project_flag(
     env="MOZ_APP_ID",
     nargs=1,
-    help='Used for application.ini\'s "ID" field, and crash reporter server url',
+    help='Used for application.ini\'s "ID" field',
 )
 
 
