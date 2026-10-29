@@ -71,8 +71,7 @@ If we have created an update MAR file from the signed internals, the MAR
 file will also need to be signed. These kinds include `repackage-signing`,
 `release-eme-free-repack-repackage-signing`, and `release-partner-repack-repackage-signing`.
 
-`release-source-signing` and `partials-signing` sign the release source tarball
-and partial update MARs.
+`release-source-signing` signs the release source tarball.
 
 **Mac signing and notarization**: For mac, we have `*-mac-signing`, which signs the app and pkg, `*-mac-notarization` submits to Apple and staples the resulting ticket to the binaries.
 
