@@ -981,7 +981,7 @@ class ASRouterAdminInner extends (react__WEBPACK_IMPORTED_MODULE_1___default().P
       previewWarnings.push("Toast notifications are shown and limited to native Windows OS notifications via the system alerts service. ");
     }
     if (msg.template === "menu_message") {
-      previewWarnings.push('To preview this message, add "testingTriggerContext" to the JSON set to either ' + '"app_menu" or "pxi_menu" to select which menu it renders in.');
+      previewWarnings.push('To preview this message, add "testingTriggerContext" to the JSON set to ' + '"app_menu" to select which menu it renders in.');
     }
     const aboutMessagePreviewSupported = ["infobar", "spotlight", "feature_callout", "pb_newtab"].includes(msg.template);
     let itemClassName = "message-item";

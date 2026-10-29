@@ -72,10 +72,6 @@ export class AboutWelcomeChild extends JSWindowActorChild {
       defineAs: "AWGetFeatureConfig",
     });
 
-    Cu.exportFunction(this.AWGetFxAMetricsFlowURI.bind(this), window, {
-      defineAs: "AWGetFxAMetricsFlowURI",
-    });
-
     Cu.exportFunction(this.AWGetSelectedTheme.bind(this), window, {
       defineAs: "AWGetSelectedTheme",
     });
@@ -263,10 +259,6 @@ export class AboutWelcomeChild extends JSWindowActorChild {
 
   AWGetFeatureConfig() {
     return this.wrapPromise(this.getAWContent());
-  }
-
-  AWGetFxAMetricsFlowURI() {
-    return this.wrapPromise(this.sendQuery("AWPage:FXA_METRICS_FLOW_URI"));
   }
 
   AWGetSelectedTheme() {

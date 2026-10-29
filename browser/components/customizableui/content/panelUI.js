@@ -754,20 +754,7 @@ const PanelUI = {
     }
   },
 
-  _onMainViewShow(event) {
-    let panelview = event.target;
-    let messageId = panelview.getAttribute(
-      MenuMessage.SHOWING_FXA_MENU_MESSAGE_ATTR
-    );
-    if (messageId) {
-      MenuMessage.recordMenuMessageTelemetry(
-        "IMPRESSION",
-        MenuMessage.SOURCES.APP_MENU,
-        messageId
-      );
-      let message = ASRouter.getMessageById(messageId);
-      ASRouter.addImpression(message);
-    }
+  _onMainViewShow() {
     updateZoomUI(gBrowser.selectedBrowser);
   },
 

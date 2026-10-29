@@ -24,58 +24,6 @@
       <toolbaritem id="appMenu-menu-message"
                    closemenu="none">
       </toolbaritem>
-      <toolbaritem id="appMenu-fxa-status2"
-                   closemenu="none"
-                   class="subviewbutton toolbaritem-combined-buttons">
-        <html:div id="appMenu-fxa-text" data-l10n-id="appmenu-fxa-sync-and-save-data2"/>
-        <toolbarbutton id="appMenu-fxa-label2"
-                       class="subviewbutton">
-          <vbox flex="1">
-            <label id="appMenu-header-title"
-                   crop="end"/>
-            <label id="appMenu-header-description"
-                   crop="end"/>
-          </vbox>
-        </toolbarbutton>
-        <!-- Shown in place of the row-wide sign-in button once the user has
-             signed out, mirroring the account menu's signed-out card. -->
-        <hbox id="appMenu-fxa-signed-out-row"
-              align="center"
-              flex="1"
-              hidden="true">
-          <html:img class="fxa-menu-signed-out-avatar"
-                    alt=""
-                    src="chrome://browser/skin/fxa/avatar-empty.svg"/>
-          <vbox class="fxa-menu-signed-out-text" flex="1">
-            <label id="appMenu-fxa-signed-out-title"
-                   class="fxa-menu-signed-out-email"/>
-            <description id="appMenu-fxa-signed-out-message"
-                         class="fxa-menu-signed-out-message"/>
-          </vbox>
-          <html:moz-button id="appMenu-fxa-signed-out-sign-in-button"/>
-        </hbox>
-        <html:moz-button id="appMenu-nova-fxa-label"/>
-      </toolbaritem>
-      <hbox id="appMenu-fxa-sign-in-promo"
-            align="center"
-            closemenu="none">
-        <html:img class="fxa-menu-sign-in-promo-image"
-                  alt=""
-                  src="chrome://browser/content/kit-signed-out.svg"/>
-        <vbox class="fxa-menu-sign-in-promo-text" flex="1">
-          <label class="fxa-menu-sign-in-promo-heading"
-                 data-l10n-id="appmenu-fxa-sign-in-promo-heading2"/>
-          <html:a id="appMenu-fxa-sign-in-promo-link"
-                  class="fxa-menu-sign-in-promo-link"
-                  role="link"
-                  data-l10n-id="appmenu-fxa-sign-in-promo-link"/>
-        </vbox>
-        <html:moz-button type="ghost"
-                         size="small"
-                         id="appMenu-fxa-sign-in-promo-dismiss-button"
-                         iconsrc="chrome://global/skin/icons/close.svg"
-                         data-l10n-id="appmenu-fxa-sign-in-promo-dismiss-button"/>
-      </hbox>
       <toolbarbutton id="appMenu-create-profile-button"
                      class="subviewbutton subviewbutton-nav"
                      closemenu="none"
@@ -85,7 +33,6 @@
                      class="subviewbutton subviewbutton-iconic subviewbutton-nav profile-item"
                      closemenu="none"
                      hidden="true"/>
-      <toolbarseparator id="appMenu-fxa-separator" class="proton-zap"/>
       <toolbarbutton id="appMenu-new-tab-button2"
                      class="subviewbutton"
                      data-l10n-id="appmenuitem-new-tab"
@@ -488,135 +435,6 @@
     </vbox>
   </panelview>
 
-
-  <panelview id="PanelUI-fxa" class="PanelUI-subView">
-    <vbox id="PanelUI-fxa-menu" class="panel-subview-body">
-      <toolbaritem id="PanelUI-fxa-menu-message"
-                   closemenu="none">
-      </toolbaritem>
-      <hbox id="PanelUI-fxa-menu-signed-out-card"
-            align="center"
-            hidden="true">
-        <html:img class="fxa-menu-signed-out-avatar"
-                  alt=""
-                  src="chrome://browser/skin/fxa/avatar-empty.svg"/>
-        <vbox class="fxa-menu-signed-out-text" flex="1">
-          <label id="PanelUI-fxa-menu-signed-out-email"
-                 class="fxa-menu-signed-out-email"
-                 crop="end"/>
-          <description id="PanelUI-fxa-menu-signed-out-message"
-                       class="fxa-menu-signed-out-message"/>
-        </vbox>
-        <html:moz-button id="PanelUI-fxa-menu-signed-out-sign-in-button"
-                         data-l10n-id="fxa-menu-signed-out-sign-in-button"/>
-      </hbox>
-      <toolbarseparator id="PanelUI-fxa-menu-signed-out-separator" hidden="true"/>
-      <toolbarbutton id="PanelUI-fxa-menu-manage-account-button"
-                     align="center"
-                     class="subviewbutton"
-                     hidden="true">
-        <image class="fxa-menu-manage-account-avatar" role="presentation"/>
-        <vbox flex="1">
-          <label id="PanelUI-fxa-menu-manage-account-email"
-                 class="fxa-menu-manage-account-email"
-                 crop="end"/>
-          <label class="fxa-menu-manage-account-subtitle"
-                 crop="end"
-                 data-l10n-id="fxa-menu-manage-account-subtitle"/>
-        </vbox>
-      </toolbarbutton>
-      <toolbarseparator id="PanelUI-fxa-menu-manage-account-separator" hidden="true"/>
-      <!-- Hidden holder for the account header title/description. These are no
-           longer shown directly (the signed-in, signed-out and promo states
-           each render their own header), but the sign-in CTA copy experiment
-           still populates and reads these labels. -->
-      <vbox id="fxa-menu-header" hidden="true">
-        <label id="fxa-menu-header-title"
-               crop="end"
-               data-l10n-id="appmenuitem-fxa-sign-in"/>
-        <label id="fxa-menu-header-description"
-               crop="end"
-               hidden="true"
-               data-l10n-id="fxa-menu-turn-on-sync"/>
-      </vbox>
-      <hbox id="PanelUI-fxa-menu-sign-in-promo"
-            align="center"
-            hidden="true">
-        <html:img class="fxa-menu-sign-in-promo-image"
-                  alt=""
-                  src="chrome://browser/content/kit-signed-out.svg"/>
-        <vbox class="fxa-menu-sign-in-promo-text" flex="1">
-          <label class="fxa-menu-sign-in-promo-heading"
-                 data-l10n-id="fxa-menu-sign-in-promo-heading"/>
-          <description class="fxa-menu-sign-in-promo-message"
-                       data-l10n-id="fxa-menu-sign-in-promo-message"/>
-        </vbox>
-        <html:moz-button type="primary"
-                         size="small"
-                         id="PanelUI-fxa-menu-sign-in-promo-button"
-                         data-l10n-id="fxa-menu-sign-in-promo-button"/>
-      </hbox>
-      <vbox id="PanelUI-signedin-panel" hidden="true">
-        <toolbarbutton id="PanelUI-fxa-menu-get-firefox-mobile"
-                       class="subviewbutton subviewbutton-iconic"
-                       data-l10n-id="fxa-menu-get-firefox-mobile"
-                       hidden="true"/>
-      <toolbarseparator id="PanelUI-sign-out-separator" />
-      <toolbarbutton id="PanelUI-fxa-menu-account-signout-button"
-              class="subviewbutton"
-              data-l10n-id="fxa-menu-sign-out"
-              hidden="true"/>
-      </vbox>
-      <label id="PanelUI-fxa-menu-profiles-header-label" crop="end" class="subview-subheader" data-l10n-id="appmenu-profiles-header" />
-      <vbox id="PanelUI-fxa-menu-profile-buttons" hidden="true"/>
-      <toolbarseparator id="PanelUI-fxa-menu-profiles-separator" hidden="true"/>
-      <!-- updateCTAPanel will control if we show this panel -->
-      <vbox id="PanelUI-fxa-cta-menu" hidden="true">
-        <toolbarseparator id="PanelUI-fxa-menu-privacy-tools-separator" hidden="true"/>
-        <label crop="end" class="subview-subheader" data-l10n-id="appmenu-other-protection-header3" />
-        <toolbarbutton id="PanelUI-fxa-menu-monitor-button" class="fxa-cta-button subviewbutton subviewbutton-iconic">
-          <hbox align="center">
-            <image class="PanelUI-fxa-menu-monitor-button ctaMenuLogo" role="presentation" />
-            <vbox flex="1">
-              <label class="cta-menu-title" crop="end" data-l10n-id="appmenuitem-monitor-title2" />
-              <label class="cta-menu-description text-deemphasized" crop="end" data-l10n-id="appmenuitem-monitor-description2" />
-            </vbox>
-          </hbox>
-        </toolbarbutton>
-        <toolbarbutton id="PanelUI-fxa-menu-relay-button" class="fxa-cta-button subviewbutton subviewbutton-iconic">
-          <hbox align="center">
-            <image class="PanelUI-fxa-menu-relay-button ctaMenuLogo" role="presentation" />
-            <vbox flex="1">
-              <label class="cta-menu-title" crop="end" data-l10n-id="appmenuitem-relay-title2" />
-              <label class="cta-menu-description text-deemphasized" crop="end" data-l10n-id="appmenuitem-relay-description2" />
-            </vbox>
-          </hbox>
-        </toolbarbutton>
-        <toolbarbutton id="PanelUI-fxa-menu-vpn-button" class="fxa-cta-button subviewbutton subviewbutton-iconic">
-          <hbox align="center">
-            <image class="PanelUI-fxa-menu-vpn-button ctaMenuLogo" role="presentation" />
-            <vbox flex="1">
-              <label class="cta-menu-title" crop="end" data-l10n-id="appmenuitem-vpn-title2" />
-              <label class="cta-menu-description text-deemphasized" crop="end" data-l10n-id="appmenuitem-vpn-description5" />
-            </vbox>
-          </hbox>
-        </toolbarbutton>
-      </vbox>
-    </vbox>
-  </panelview>
-
-  <panelview id="PanelUI-fxa-menu-all-profiles" class="PanelUI-subView">
-    <vbox class="panel-subview-body">
-      <vbox id="PanelUI-fxa-menu-all-profiles-list"/>
-    </vbox>
-    <toolbarseparator id="PanelUI-fxa-menu-all-profiles-footer-separator"/>
-    <toolbarbutton id="PanelUI-fxa-menu-all-profiles-manage-button"
-                   class="subviewbutton"
-                   data-l10n-id="appmenu-manage-profiles"/>
-    <toolbarbutton id="PanelUI-fxa-menu-all-profiles-create-button"
-                   class="subviewbutton panel-subview-footer-button"
-                   data-l10n-id="appmenu-create-profile2"/>
-  </panelview>
 
   <panelview id="PanelUI-fxa-menu-create-profile"
              class="PanelUI-subView"

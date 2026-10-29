@@ -1883,7 +1883,7 @@ pref("browser.tabs.remote.separatePrivilegedContentProcess", false);
 
 // The domains we will isolate into the Mozilla Content Process. Comma-separated
 // full domains: any subdomains of the domains listed will also be allowed.
-pref("browser.tabs.remote.separatedMozillaDomains", "addons.mozilla.org,accounts.firefox.com");
+pref("browser.tabs.remote.separatedMozillaDomains", "addons.mozilla.org");
 
 // Default font types and sizes by locale
 pref("font.default.ar", "sans-serif");
@@ -3661,13 +3661,6 @@ pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
 
 pref("services.common.log.logger.rest.request", "Debug");
 pref("services.common.log.logger.rest.response", "Debug");
-
-// The URL of the Firefox Accounts auth server backend
-pref("identity.fxaccounts.auth.uri", "https://api.accounts.firefox.com/v1");
-
-// Authenticate FxA token requests with the auth-server's typed Bearer scheme
-// instead of Hawk. Kill-switch for the Hawk-to-Bearer migration.
-pref("identity.fxaccounts.auth.useBearer", true);
 
 #if defined(ENABLE_WEBDRIVER)
   // WebDriver is a remote control interface that enables introspection and

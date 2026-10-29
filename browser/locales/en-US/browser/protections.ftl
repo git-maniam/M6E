@@ -79,7 +79,6 @@ protection-report-passwords-save-passwords-button = Save passwords
 protection-report-passwords-manage-passwords-button = Manage passwords
   .title = Manage passwords
 
-
 # Variables:
 # $count (Number) - Number of passwords exposed in data breaches.
 lockwise-scanned-text-breached-logins =
@@ -99,95 +98,7 @@ lockwise-scanned-text-no-breached-logins =
   }
 lockwise-how-it-works-link = How it works
 
-monitor-title = Look out for data breaches
-monitor-link = How it works
-monitor-header-content-no-account = Check { -monitor-brand-name } to see if you’ve been part of a known data breach, and get alerts about new breaches.
-monitor-header-content-signed-in = { -monitor-brand-name } warns you if your info has appeared in a known data breach.
-monitor-sign-up-link = Sign up for breach alerts
-  .title = Sign up for breach alerts on { -monitor-brand-name }
 auto-scan = Automatically scanned today
-
-monitor-emails-tooltip =
-  .title = View monitored email addresses on { -monitor-brand-short-name }
-monitor-breaches-tooltip =
-  .title = View known data breaches on { -monitor-brand-short-name }
-monitor-passwords-tooltip =
-  .title = View exposed passwords on { -monitor-brand-short-name }
-
-# This string is displayed after a large numeral that indicates the total number
-# of email addresses being monitored. Don’t add $count to
-# your localization, because it would result in the number showing twice.
-info-monitored-emails =
-  { $count ->
-     [one] Email address being monitored
-    *[other] Email addresses being monitored
-  }
-
-# This string is displayed after a large numeral that indicates the total number
-# of known data breaches. Don’t add $count to
-# your localization, because it would result in the number showing twice.
-info-known-breaches-found =
-  { $count ->
-     [one] Known data breach has exposed your information
-    *[other] Known data breaches have exposed your information
-  }
-
-# This string is displayed after a large numeral that indicates the total number
-# of known data breaches that are marked as resolved by the user. Don’t add $count
-# to your localization, because it would result in the number showing twice.
-info-known-breaches-resolved =
-  { $count ->
-     [one] Known data breach marked as resolved
-    *[other] Known data breaches marked as resolved
-  }
-
-# This string is displayed after a large numeral that indicates the total number
-# of exposed passwords. Don’t add $count to
-# your localization, because it would result in the number showing twice.
-info-exposed-passwords-found =
-  { $count ->
-     [one] Password exposed across all breaches
-    *[other] Passwords exposed across all breaches
-  }
-
-# This string is displayed after a large numeral that indicates the total number
-# of exposed passwords that are marked as resolved by the user. Don’t add $count
-# to your localization, because it would result in the number showing twice.
-info-exposed-passwords-resolved =
-  { $count ->
-     [one] Password exposed in unresolved breaches
-    *[other] Passwords exposed in unresolved breaches
-  }
-
-monitor-no-breaches-title = Good news!
-monitor-no-breaches-description = You have no known breaches. If that changes, we will let you know.
-monitor-view-report-link = View report
-  .title = Resolve breaches on { -monitor-brand-short-name }
-monitor-breaches-unresolved-title = Resolve your breaches
-monitor-breaches-unresolved-description = After reviewing breach details and taking steps to protect your info, you can mark breaches as resolved.
-monitor-manage-breaches-link = Manage breaches
-  .title = Manage breaches on { -monitor-brand-short-name }
-monitor-breaches-resolved-title = Nice! You’ve resolved all known breaches.
-monitor-breaches-resolved-description = If your email appears in any new breaches, we will let you know.
-
-# Variables:
-# $numBreachesResolved (Number) - Number of breaches marked as resolved by the user on Monitor.
-# $numBreaches (Number) - Number of breaches in which a user's data was involved, detected by Monitor.
-monitor-partial-breaches-title =
-  { $numBreaches ->
-   *[other] { $numBreachesResolved } out of { $numBreaches } breaches marked as resolved
-  }
-
-# Variables:
-# $percentageResolved (Number) - Percentage of breaches marked as resolved by a user on Monitor.
-monitor-partial-breaches-percentage = { $percentageResolved }% complete
-
-monitor-partial-breaches-motivation-title-start = Great start!
-monitor-partial-breaches-motivation-title-middle = Keep it up!
-monitor-partial-breaches-motivation-title-end = Almost done! Keep it up.
-monitor-partial-breaches-motivation-description = Resolve the rest of your breaches on { -monitor-brand-short-name }.
-monitor-resolve-breaches-link = Resolve breaches
-  .title = Resolve breaches on { -monitor-brand-short-name }
 
 ## The title attribute is used to display the type of protection.
 ## The aria-label is spoken by screen readers to make the visual graph accessible to blind users.

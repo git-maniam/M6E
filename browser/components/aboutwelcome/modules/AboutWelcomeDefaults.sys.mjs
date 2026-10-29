@@ -144,70 +144,6 @@ const MR_ABOUT_WELCOME_DEFAULT = {
       },
     },
     {
-      id: "AW_WELCOME_BACK",
-      targeting: "isDeviceMigration",
-      content: {
-        fullscreen: true,
-        position: "split",
-        split_narrow_bkg_position: "-100px",
-        image_alt_text: {
-          string_id: "onboarding-device-migration-image-alt",
-        },
-        background:
-          "url('chrome://activity-stream/content/data/content/assets/br-migration-fox-juggle.svg') var(--mr-secondary-position) no-repeat light-dark(rgba(252, 245, 240, 1), rgba(33, 3, 64, 1))",
-        progress_bar: true,
-        logo: {},
-        title: {
-          string_id: "onboarding-device-migration-title",
-        },
-        subtitle: {
-          string_id: "onboarding-device-migration-subtitle2",
-        },
-        primary_button: {
-          label: {
-            string_id: "onboarding-device-migration-primary-button-label",
-          },
-          action: {
-            type: "FXA_SIGNIN_FLOW",
-            needsAwait: true,
-            navigate: "actionResult",
-            data: {
-              entrypoint: "fx-device-migration-onboarding",
-              extraParams: {
-                utm_content: "migration-onboarding",
-                utm_source: "fx-new-device-sync",
-                utm_medium: "firefox-desktop",
-                utm_campaign: "migration",
-              },
-            },
-          },
-        },
-        secondary_button: {
-          label: {
-            string_id: "mr2022-onboarding-secondary-skip-button-label",
-          },
-          action: {
-            navigate: true,
-          },
-          has_arrow_icon: true,
-        },
-        secondary_button_top: {
-          label: {
-            string_id: "mr1-onboarding-sign-in-button-label",
-          },
-          action: {
-            data: {
-              entrypoint: "activity-stream-firstrun",
-              where: "tab",
-            },
-            type: "SHOW_FIREFOX_ACCOUNTS",
-            addFlowParams: true,
-          },
-          targeting: "!isFxASignedIn",
-        },
-      },
-    },
-    {
       id: "RETURN_TO_AMO",
       targeting: "isRTAMO",
       content: {
@@ -238,20 +174,6 @@ const MR_ABOUT_WELCOME_DEFAULT = {
             navigate: true,
           },
           has_arrow_icon: true,
-        },
-        secondary_button_top: {
-          label: {
-            string_id: "mr1-onboarding-sign-in-button-label",
-          },
-          action: {
-            data: {
-              entrypoint: "activity-stream-firstrun",
-              where: "tab",
-            },
-            type: "SHOW_FIREFOX_ACCOUNTS",
-            addFlowParams: true,
-          },
-          targeting: "!isFxASignedIn",
         },
       },
     },
@@ -349,15 +271,6 @@ const MR_ABOUT_WELCOME_DEFAULT = {
               navigate: true,
             },
             targeting: "backupRestoreEnabled",
-          },
-          {
-            label: { string_id: "mr1-onboarding-sign-in-button-label" },
-            action: {
-              data: { entrypoint: "activity-stream-firstrun", where: "tab" },
-              type: "SHOW_FIREFOX_ACCOUNTS",
-              addFlowParams: true,
-            },
-            targeting: "!isFxASignedIn",
           },
         ],
       },
@@ -493,20 +406,6 @@ const MR_ABOUT_WELCOME_DEFAULT = {
             },
             targeting: `backupRestoreEnabled && !(${EASY_SETUP_TARGETING})`,
           },
-          {
-            label: {
-              string_id: "mr1-onboarding-sign-in-button-label",
-            },
-            action: {
-              data: {
-                entrypoint: "activity-stream-firstrun",
-                where: "tab",
-              },
-              type: "SHOW_FIREFOX_ACCOUNTS",
-              addFlowParams: true,
-            },
-            targeting: "!isFxASignedIn",
-          },
         ],
       },
     },
@@ -604,94 +503,7 @@ const MR_ABOUT_WELCOME_DEFAULT = {
           },
           has_arrow_icon: true,
         },
-        secondary_button_top: {
-          label: {
-            string_id: "mr1-onboarding-sign-in-button-label",
-          },
-          action: {
-            data: {
-              entrypoint: "activity-stream-firstrun",
-              where: "tab",
-            },
-            type: "SHOW_FIREFOX_ACCOUNTS",
-            addFlowParams: true,
-          },
-          targeting: "!isFxASignedIn",
-        },
       },
-    },
-    {
-      id: "AW_GRATITUDE",
-      content: {
-        fullscreen: true,
-        position: "split",
-        split_narrow_bkg_position: "-228px",
-        image_alt_text: {
-          string_id: "mr2022-onboarding-gratitude-image-alt",
-        },
-        background:
-          "url('chrome://activity-stream/content/data/content/assets/br-gratitude-fox-rock.svg') var(--mr-secondary-position) no-repeat light-dark(rgba(252, 245, 240, 1), rgba(33, 3, 64, 1))",
-        progress_bar: true,
-        logo: {},
-        title: {
-          string_id: "onboarding-refresh-gratitude-title",
-        },
-        subtitle: {
-          string_id: "onboarding-refresh-gratitude-subtitle",
-        },
-        primary_button: {
-          label: {
-            string_id: "mr2-onboarding-start-browsing-button-label",
-          },
-          action: {
-            navigate: true,
-          },
-        },
-      },
-      targeting: "isFxASignedIn",
-    },
-    {
-      id: "AW_ACCOUNT_LOGIN",
-      content: {
-        fullscreen: true,
-        position: "split",
-        split_narrow_bkg_position: "-228px",
-        image_alt_text: {
-          string_id: "mr2022-onboarding-gratitude-image-alt",
-        },
-        background:
-          "url('chrome://activity-stream/content/data/content/assets/br-fxa-fox-mirror.svg') var(--mr-secondary-position) no-repeat light-dark(rgba(252, 245, 240, 1), rgba(33, 3, 64, 1))",
-        progress_bar: true,
-        logo: {},
-        title: {
-          string_id: "onboarding-refresh-sync-title",
-        },
-        subtitle: {
-          string_id: "onboarding-refresh-sync-subtitle",
-        },
-        secondary_button: {
-          label: {
-            string_id: "mr2-onboarding-start-browsing-button-label",
-          },
-          style: "secondary",
-          action: {
-            navigate: true,
-          },
-        },
-        primary_button: {
-          label: {
-            string_id: "onboarding-sign-up-button",
-          },
-          action: {
-            data: {
-              entrypoint: "newuser-onboarding-desktop",
-            },
-            type: "FXA_SIGNIN_FLOW",
-            navigate: true,
-          },
-        },
-      },
-      targeting: "!isFxASignedIn",
     },
   ],
 };
@@ -844,16 +656,6 @@ async function prepareContentForReact(content) {
 
       label.args = browserStr ? { previous: browserStr } : {};
     }
-  }
-
-  // Remove Firefox Accounts related UI and prevent related metrics.
-  if (!Services.prefs.getBoolPref("identity.fxaccounts.enabled", false)) {
-    delete content.screens?.find(
-      screen =>
-        screen.content?.secondary_button_top?.action?.type ===
-        "SHOW_FIREFOX_ACCOUNTS"
-    )?.content.secondary_button_top;
-    content.skipFxA = true;
   }
 
   let shouldRemoveLanguageMismatchScreen = true;

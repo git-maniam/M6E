@@ -18,7 +18,7 @@ add_task(function test_blocked_action_only_actions() {
     "SHOW_SPOTLIGHT",
     "OPEN_URL",
     "CONFIGURE_HOMEPAGE",
-    "FXA_SIGNIN_FLOW",
+    "CREATE_NEW_SELECTABLE_PROFILE",
     "RESET_PROFILE",
   ]) {
     Assert.ok(
@@ -85,7 +85,6 @@ add_task(function test_blocked_set_prefs() {
     "messaging-system.rsexperimentloader.collection_id",
     "browser.newtabpage.activity-stream.asrouter.providers.cfr",
     "toolkit.telemetry.server",
-    "identity.fxaccounts.autoconfig.uri",
     "signon.rememberSignons",
     "privacy.sanitize.sanitizeOnShutdown",
     "privacy.clearOnShutdown_v2.cookiesAndStorage",

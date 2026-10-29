@@ -53,7 +53,6 @@ user_pref("extensions.systemAddon.update.url", "http://127.0.0.1/dummy-system-ad
 user_pref("extensions.update.background.url", "http://127.0.0.1/extensions-dummy/updateBackgroundURL");
 user_pref("extensions.update.notifyUser", false);
 user_pref("extensions.update.url", "http://127.0.0.1/extensions-dummy/updateURL");
-user_pref("identity.fxaccounts.auth.uri", "https://127.0.0.1/fxa-dummy/");
 user_pref("media.gmp-manager.url", "http://127.0.0.1/gmpmanager-dummy/update.xml");
 // Don't block old libavcodec libraries when testing, because our test systems
 // cannot easily be upgraded.

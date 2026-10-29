@@ -663,31 +663,6 @@ var gMainPane = {
    * - true if containers is enabled
    */
 
-  async onGetStarted() {
-    if (!AppConstants.MOZ_DEV_EDITION) {
-      return;
-    }
-    const win = Services.wm.getMostRecentWindow("navigator:browser");
-    if (!win) {
-      return;
-    }
-    const user = await fxAccounts.getSignedInUser();
-    if (user) {
-      // We have a user, open Sync preferences in the same tab
-      win.openTrustedLinkIn("about:preferences#sync", "current");
-      return;
-    }
-    if (!(await FxAccounts.canConnectAccount())) {
-      return;
-    }
-    let url = await FxAccounts.config.promiseConnectAccountURI(
-      "sync",
-      "dev-edition-setup"
-    );
-    let accountsTab = win.gBrowser.addWebTab(url);
-    win.gBrowser.selectedTab = accountsTab;
-  },
-
   // HOME PAGE
   /*
    * Preferences:

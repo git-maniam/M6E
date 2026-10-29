@@ -22,7 +22,6 @@ module.exports = [
       "browser/components/aboutlogins/content/aboutLogins.css",
       "browser/components/aboutlogins/content/aboutLoginsImportReport.css",
       "browser/components/aboutlogins/content/components/confirmation-dialog.css",
-      "browser/components/aboutlogins/content/components/fxaccounts-button.css",
       "browser/components/aboutlogins/content/components/generic-dialog.css",
       "browser/components/aboutlogins/content/components/import-error-dialog.css",
       "browser/components/aboutlogins/content/components/import-summary-dialog.css",

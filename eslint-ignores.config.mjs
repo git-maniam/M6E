@@ -238,7 +238,6 @@ export default [
   // services/ exclusions
 
   // Webpack-bundled library
-  "services/fxaccounts/FxAccountsPairingChannel.sys.mjs",
 
   // Servo is imported.
   "servo/",

@@ -63,23 +63,6 @@ export const MultiStageUtils = {
       this.sendActionTelemetry(messageId, elementId, "DISMISS", context);
     }
   },
-  async fetchFlowParams(metricsFlowUri) {
-    let flowParams;
-    try {
-      const response = await fetch(metricsFlowUri, {
-        credentials: "omit",
-      });
-      if (response.status === 200) {
-        const { deviceId, flowId, flowBeginTime } = await response.json();
-        flowParams = { deviceId, flowId, flowBeginTime };
-      } else {
-        console.error("Non-200 response", response);
-      }
-    } catch (e) {
-      flowParams = null;
-    }
-    return flowParams;
-  },
   sendEvent(type, detail) {
     document.dispatchEvent(
       new CustomEvent(`AWPage:${type}`, {

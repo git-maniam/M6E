@@ -29,9 +29,6 @@ export const TaskbarTabsChrome = {
     // Hide bookmark star
     document.getElementById("star-button-box").style.display = "none";
 
-    // Hide fxa in the hamburger menu
-    document.documentElement.setAttribute("fxadisabled", true);
-
     // Create the decorative corner icon
     initCornerIcon(aWindow);
 

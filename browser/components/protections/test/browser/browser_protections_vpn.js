@@ -4,10 +4,6 @@
 
 "use strict";
 
-const { AboutProtectionsParent } = ChromeUtils.importESModule(
-  "resource:///actors/AboutProtectionsParent.sys.mjs"
-);
-
 let { Region } = ChromeUtils.importESModule(
   "resource://gre/modules/Region.sys.mjs"
 );
@@ -69,12 +65,10 @@ async function revertRegions() {
 add_setup(async function () {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["browser.contentblocking.report.monitor.enabled", false],
       ["browser.contentblocking.report.lockwise.enabled", false],
       ["browser.vpn_promo.enabled", true],
     ],
   });
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   setCurrentRegion("us");
   const avLocales = Services.locale.availableLocales;
 
@@ -84,7 +78,6 @@ add_setup(async function () {
 });
 
 add_task(async function testVPNCardVisibility() {
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   await promiseSetHomeRegion("us");
   setCurrentRegion("us");
 
@@ -108,7 +101,6 @@ add_task(async function testVPNCardVisibility() {
   info(
     "Check that vpn card is hidden if neither the user's home nor current location is on the regions list."
   );
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   setCurrentRegion("ls");
   await promiseSetHomeRegion("ls");
   await BrowserTestUtils.reloadTab(tab);
@@ -117,18 +109,9 @@ add_task(async function testVPNCardVisibility() {
   info(
     "Check that vpn card is hidden if user's location is in the list of disallowed regions."
   );
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   setCurrentRegion("sy");
   await BrowserTestUtils.reloadTab(tab);
   await checkVPNCardVisibility(tab, true);
-
-  info(
-    "Check that vpn card shows a different version if user has subscribed to Mozilla vpn."
-  );
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(true));
-  setCurrentRegion("us");
-  await BrowserTestUtils.reloadTab(tab);
-  await checkVPNCardVisibility(tab, false, true);
 
   info(
     "VPN card should be hidden when vpn not enabled, though all other conditions are true"
@@ -144,8 +127,6 @@ add_task(async function testVPNCardVisibility() {
 });
 
 add_task(async function testVPNPromoBanner() {
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
-
   let tab = await BrowserTestUtils.openNewForegroundTab({
     url: "about:protections",
     gBrowser,
@@ -189,7 +170,6 @@ add_task(async function testVPNPromoBanner() {
   info(
     "Check that VPN banner is hidden if user's location is not on the regions list."
   );
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   setCurrentRegion("ls");
   await setHomeRegion("ls'");
   await BrowserTestUtils.reloadTab(tab);
@@ -198,7 +178,6 @@ add_task(async function testVPNPromoBanner() {
   info(
     "Check that VPN banner is hidden if user's location is in the disallowed regions list."
   );
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   setCurrentRegion("sy");
   await BrowserTestUtils.reloadTab(tab);
   await checkVPNPromoBannerVisibility(tab, true);
@@ -222,19 +201,12 @@ add_task(async function testVPNPromoBanner() {
     ],
   });
 
-  info("If user is subscribed to VPN already the promo banner should not show");
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(true));
-  setCurrentRegion("us");
-  await BrowserTestUtils.reloadTab(tab);
-  await checkVPNPromoBannerVisibility(tab, true);
-
   await BrowserTestUtils.removeTab(tab);
   revertRegions();
 });
 
 // Expect the vpn card and banner to not show as we are expressly excluding China. Even when cn is in the supported region pref.
 add_task(async function testVPNDoesNotShowChina() {
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   setCurrentRegion("us");
   let tab = await BrowserTestUtils.openNewForegroundTab({
     url: "about:protections",
@@ -269,7 +241,6 @@ add_task(async function testVPNDoesNotShowChina() {
   });
 
   info("home region is US, but current location is China");
-  AboutProtectionsParent.setTestOverride(getVPNOverrides(false));
   await promiseSetHomeRegion("US");
   setCurrentRegion("CN");
   await BrowserTestUtils.reloadTab(tab);

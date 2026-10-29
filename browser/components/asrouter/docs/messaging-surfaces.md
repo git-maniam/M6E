@@ -63,7 +63,6 @@ Calling a window function that a surface does not implement throws an unhandled 
 | `AWEnsureLangPackInstalled` | Yes | No | No |
 | `AWNegotiateLangPackForLanguageMismatch` | Yes | No | No |
 | `AWSetRequestedLocales` | Yes | No | No |
-| `AWGetFxAMetricsFlowURI` | Yes | No | No |
 | `AWGetUnhandledCampaignAction` | Yes | No | No |
 | `AWSendImpressionAction` | Yes | No | No |
 | `AWNewScreen` | Yes | No | No |

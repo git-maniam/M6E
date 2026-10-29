@@ -45,9 +45,6 @@ tags = "overflowable-toolbar"
 
 ["browser_1880230_hideInNonPrivateBrowsing.js"]
 
-["browser_2041653_non_removable_overflow_reset.js"]
-tags = "overflowable-toolbar"
-
 ["browser_873501_handle_specials.js"]
 
 ["browser_876926_customize_mode_wrapping.js"]
@@ -61,9 +58,6 @@ tags = "overflowable-toolbar"
 ["browser_877447_skip_missing_ids.js"]
 
 ["browser_878452_drag_to_panel.js"]
-
-["browser_884402_customize_from_overflow.js"]
-tags = "overflowable-toolbar"
 
 ["browser_885052_customize_mode_observers_disabed.js"]
 tags = "fullscreen"

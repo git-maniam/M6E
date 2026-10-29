@@ -185,13 +185,7 @@
   skin/classic/browser/preferences/mozilla-16.svg              (../shared/preferences/mozilla-16.svg)
 
   skin/classic/browser/fxa/avatar.svg                          (../shared/fxa/avatar.svg)
-  skin/classic/browser/fxa/avatar-color.svg                    (../shared/fxa/avatar-color.svg)
   skin/classic/browser/fxa/avatar-empty.svg                    (../shared/fxa/avatar-empty.svg)
-  skin/classic/browser/fxa/avatar-empty-circle.svg             (../shared/fxa/avatar-empty-circle.svg)
-  skin/classic/browser/fxa/avatar-fox.svg                      (../shared/fxa/avatar-fox.svg)
-  skin/classic/browser/fxa/avatar-fox-circle.svg               (../shared/fxa/avatar-fox-circle.svg)
-  skin/classic/browser/fxa/circle.svg                          (../shared/fxa/circle.svg)
-  skin/classic/browser/fxa/monitor.svg                         (../shared/fxa/monitor.svg)
 
   skin/classic/browser/add-circle-fill.svg            (../shared/icons/add-circle-fill.svg)
   skin/classic/browser/back.svg                       (../shared/icons/back.svg)

@@ -194,11 +194,7 @@ add_task(async function widgetPositions() {
   ]);
 
   organizeToolbars({
-    PersonalToolbar: [
-      "fxa-toolbar-menu-button",
-      "new-tab-button",
-      "developer-button",
-    ],
+    PersonalToolbar: ["new-tab-button", "developer-button"],
 
     TabsToolbar: [
       "stop-reload-button",
@@ -239,7 +235,6 @@ add_task(async function widgetPositions() {
     "unified-extensions-button_pinned_nav-bar-end",
     "vertical-spacer_pinned_nav-bar-end",
 
-    "fxa-toolbar-menu-button_pinned_bookmarks-bar",
     "new-tab-button_pinned_bookmarks-bar",
     "developer-button_pinned_bookmarks-bar",
   ]);

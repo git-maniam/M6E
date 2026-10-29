@@ -1819,7 +1819,6 @@ export default [
       "security/manager/ssl/RemoteSecuritySettings.sys.mjs",
       "services/common/**/*.sys.mjs",
       "services/crypto/**/*.sys.mjs",
-      "services/fxaccounts/**/*.sys.mjs",
       "services/settings/**/*.sys.mjs",
       "testing/mochitest/BrowserTestUtils/BrowserTestUtils.sys.mjs",
       "testing/modules/**/*.sys.mjs",

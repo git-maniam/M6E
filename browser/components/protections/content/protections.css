@@ -100,8 +100,7 @@ h2 {
 #save-passwords-button,
 #get-vpn-link,
 #vpn-banner-link,
-#manage-passwords-button,
-#sign-up-for-monitor-link {
+#manage-passwords-button {
   grid-area: 1 / 5 / 1 / -1;
   margin: 0;
   font-size: 0.95em;
@@ -145,7 +144,6 @@ h2 {
 }
 
 /* We want to hide certain components depending on its state. */
-.no-logins .monitor-scanned-wrapper,
 .etp-card.custom-not-blocking .card-body,
 .etp-card.custom-not-blocking #protection-settings,
 #manage-protections,
@@ -159,16 +157,6 @@ a.hidden,
 .lockwise-card.no-logins .lockwise-scanned-wrapper,
 .lockwise-card.no-logins #manage-passwords-button,
 .lockwise-card.has-logins #save-passwords-button,
-.monitor-card.hidden,
-.monitor-card.no-logins .card-body,
-.monitor-card.no-logins #monitor-header-content a,
-.monitor-card.no-logins .monitor-scanned-text,
-.monitor-card.no-logins .icon-small,
-.monitor-card.no-logins .monitor-breaches-wrapper,
-.monitor-card.no-logins .monitor-partial-breaches-wrapper,
-.monitor-card .monitor-breaches-wrapper.hidden,
-.monitor-card .monitor-partial-breaches-wrapper.hidden,
-.monitor-card.has-logins #sign-up-for-monitor-link,
 .loading a,
 .loading button,
 .loading .wrapper,
@@ -708,47 +696,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   display: none;
 }
 
-/* Monitor card */
-.monitor-info-wrapper {
-  display: grid;
-  grid: 1fr / 1fr 1fr 1fr;
-  grid-column-start: 1;
-  grid-column-end: 7;
-}
-
-.monitor-scanned-wrapper {
-  margin-block-start: 24px;
-  font-size: 0.85em;
-  display: block;
-}
-
-.monitor-breaches-wrapper {
-  display: grid;
-  grid-area: 2 / 1 / 2 / 8;
-  grid: 1fr auto / repeat(7, 1fr);
-  margin-bottom: 24px;
-}
-
-.monitor-partial-breaches-wrapper {
-  display: grid;
-  grid-area: 2 / 1 / 2 / 8;
-  grid-template-columns: repeat(7, 1fr);
-  margin-block: 24px;
-}
-
-.monitor-partial-breaches-header {
-  grid-area: 1 / 1 / 1 / 7;
-  margin-inline-end: 15px;
-  margin-block: 6px;
-}
-
-#monitor-partial-breaches-percentage {
-  font-size: 0.93em;
-  cursor: default;
-  color: var(--text-color-deemphasized);
-  float: inline-end;
-}
-
 .progress-bar {
   grid-area: 2 / 1 / 2 / 7;
   margin-inline-start: 15px;
@@ -770,117 +717,10 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   border-radius: 0 var(--border-radius-small) var(--border-radius-small) 0;
 }
 
-.monitor-partial-breaches-motivation-text {
-  grid-template-columns: repeat(7, 1fr);
-  grid-area: 3 / 1 / 3 / 8;
-  margin-top: 25px;
-  display: grid;
-}
-
-.monitor-partial-breaches-motivation-wrapper {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-area: 2 / 1 / 2 / 8;
-}
-
-#monitor-partial-breaches-motivation-title {
-  font-weight: var(--font-weight-bold);
-  grid-area: 1 / 1 / 1 / 7;
-  margin-inline-end: 15px;
-}
-
-#monitor-breaches-description,
-#monitor-partial-breaches-motivation-desc {
-  grid-area: 1 / 1 / 1 / 5;
-  margin-block: auto;
-  margin-inline-end: 15px;
-}
-
-.monitor-breaches-header {
-  margin-top: 30px;
-  grid-area: 1 / 1 / 1 / 8;
-}
-
-.monitor-breaches-description-wrapper {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-area: 2 / 1 / 2 / 8;
-}
-
-#monitor-partial-breaches-icon,
-#monitor-breaches-icon {
-  vertical-align: middle;
-  margin-inline-end: 2px;
-}
-
-#monitor-partial-breaches-title {
-  font-size: 0.93em;
-}
-
-#monitor-breaches-title {
-  font-weight: var(--font-weight-bold);
-}
-
-#monitor-breaches-title,
-#monitor-partial-breaches-title,
-#monitor-partial-breaches-motivation-title {
-  cursor: default;
-}
-
-.monitor-partial-breaches-link-wrapper,
-.monitor-breaches-link-wrapper {
-  margin-block: auto;
-  grid-area: 1 / 5 / 1 / 7;
-  margin-inline: 0 15px;
-  font-size: 0.95em;
-  text-align: center;
-  display: flex;
-}
-
-#monitor-breaches-link,
-#monitor-partial-breaches-link {
-  color: inherit;
-  outline: none;
-  text-decoration: none;
-  width: 157.267px;
-  padding: 9px;
-}
-
-.lockwise-card #lockwise-header-content > a,
-.monitor-card #monitor-header-content > a {
+.lockwise-card #lockwise-header-content > a {
   display: block;
   margin-block-start: 5px;
   width: max-content;
-}
-
-.monitor-card.has-logins #monitor-body-content {
-  display: grid;
-  grid: 1fr auto / repeat(7, 1fr);
-  align-items: center;
-}
-
-.monitor-card .card-body {
-  padding-top: 0;
-  border-block-start: none;
-}
-
-.monitor-block {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--border-radius-small);
-  text-align: center;
-  margin-inline-end: 15px;
-}
-
-.monitor-block a {
-  outline: none;
-  color: #ffffff;
-  padding: 19px 0;
-}
-
-.monitor-block a:hover {
-  text-decoration: none;
-  color: #ffffff;
 }
 
 .email {
@@ -934,20 +774,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   background: linear-gradient(197.67deg, #4714b7 0%, #2b009d 100%);
 }
 
-.monitor-stat {
-  display: flex;
-  font-size: 1.75em;
-  font-weight: var(--font-weight-bold);
-  margin-block-end: 5px;
-  word-break: break-all;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.monitor-icon {
-  margin-inline-end: 3px;
-}
-
 .icon-med {
   width: 24px;
   height: 24px;
@@ -976,11 +802,8 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
 }
 
 #manage-protections,
-#sign-up-for-monitor-link,
 #get-vpn-link,
-#vpn-banner-link,
-.monitor-partial-breaches-link-wrapper,
-.monitor-breaches-link-wrapper {
+#vpn-banner-link {
   background-color: var(--button-background-color-primary);
   border: var(--button-border);
   border-color: var(--button-border-color-primary);
@@ -991,39 +814,28 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
 }
 
 #manage-protections:hover,
-#sign-up-for-monitor-link:hover,
 #get-vpn-link:hover,
-#vpn-banner-link:hover,
-#monitor-partial-breaches-link:hover,
-#monitor-breaches-link:hover {
+#vpn-banner-link:hover {
   background-color: var(--button-background-color-primary-hover);
   color: var(--button-text-color-primary-hover);
   border-color: var(--button-border-color-hover);
 }
 
 #manage-protections:hover:active,
-#sign-up-for-monitor-link:hover:active,
 #get-vpn-link:hover:active,
-#vpn-banner-link:hover:active,
-#monitor-partial-breaches-link:hover:active,
-#monitor-breaches-link:hover:active {
+#vpn-banner-link:hover:active {
   background-color: var(--button-background-color-primary-active);
   color: var(--button-text-color-primary-active);
   border-color: var(--button-border-color-active);
 }
 
 #manage-protections:focus-visible,
-#sign-up-for-monitor-link:focus-visible,
 #get-vpn-link:focus-visible,
-#vpn-banner-link:focus-visible,
-#monitor-partial-breaches-link:focus-visible,
-.monitor-block > a:focus-visible,
-#monitor-breaches-link:focus-visible {
+#vpn-banner-link:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
 }
 
-.monitor-card.loading::after,
 .lockwise-card.loading::after {
   position: absolute;
   height: 110px;
@@ -1045,7 +857,6 @@ label[for="tab-cryptominer"]:hover ~ #highlight-hover {
   opacity: var(--protection-report-loader-gradient-opacity);
 }
 
-.monitor-card.loading:dir(rtl)::after,
 .lockwise-card.loading:dir(rtl)::after {
   background-image: linear-gradient(
     to left,

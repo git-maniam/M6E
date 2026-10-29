@@ -720,12 +720,6 @@ export class PrefsFeed {
       this.geo = "";
     }
 
-    // Get the firefox accounts url for links and to send firstrun metrics to.
-    values.fxa_endpoint = Services.prefs.getStringPref(
-      "browser.newtabpage.activity-stream.fxaccounts.endpoint",
-      "https://accounts.firefox.com"
-    );
-
     // Get the firefox update channel with values as default, nightly, beta or release
     values.appUpdateChannel = Services.prefs.getStringPref(
       "app.update.channel",

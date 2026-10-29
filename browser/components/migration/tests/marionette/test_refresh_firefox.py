@@ -277,31 +277,6 @@ class TestFirefoxRefresh(MarionetteTestCase):
             "Correct number of groups were saved",
         )
 
-    def createFxa(self):
-        # This script will write an entry to the login manager and create
-        # a signedInUser.json in the profile dir.
-        self.runAsyncCode(
-            """
-          let resolve = arguments[arguments.length - 1];
-          let { FxAccountsStorageManager } = ChromeUtils.importESModule(
-            "resource://gre/modules/FxAccountsStorage.sys.mjs"
-          );
-          let storage = new FxAccountsStorageManager();
-          let data = {email: "test@test.com", uid: "uid", keyFetchToken: "top-secret"};
-          storage.initialize(data);
-          storage.finalize().then(resolve);
-        """
-        )
-
-    def createSync(self):
-        # This script will write the canonical preference which indicates a user
-        # is signed into sync.
-        self.marionette.execute_script(
-            """
-            Services.prefs.setStringPref("services.sync.username", "test@test.com");
-        """
-        )
-
     def checkPassword(self):
         # Only match on the origin: the Rust backend normalizes formActionOrigin
         # to an origin on insert, the JSON backend stores it verbatim.
@@ -323,8 +298,7 @@ class TestFirefoxRefresh(MarionetteTestCase):
           Services.logins.getAllLogins().then(logins => resolve(logins.length));
         """
         )
-        # Note that we expect 2 logins - one from us, one from sync.
-        self.assertEqual(loginCount, 2, "No other logins are present")
+        self.assertEqual(loginCount, 1, "No other logins are present")
 
     def checkBookmarkInMenu(self):
         titleInBookmarks = self.runAsyncCode(
@@ -529,42 +503,6 @@ class TestFirefoxRefresh(MarionetteTestCase):
         )
         self.assertSequenceEqual(savedGroupIDs, self._expectedSavedGroups)
 
-    def checkFxA(self):
-        result = self.runAsyncCode(
-            """
-          let { FxAccountsStorageManager } = ChromeUtils.importESModule(
-            "resource://gre/modules/FxAccountsStorage.sys.mjs"
-          );
-          let resolve = arguments[arguments.length - 1];
-          let storage = new FxAccountsStorageManager();
-          let result = {};
-          storage.initialize();
-          storage.getAccountData().then(data => {
-            result.accountData = data;
-            return storage.finalize();
-          }).then(() => {
-            resolve(result);
-          }).catch(err => {
-            resolve(err.toString());
-          });
-        """
-        )
-        if type(result) is not dict:
-            self.fail(result)
-            return
-        self.assertEqual(result["accountData"]["email"], "test@test.com")
-        self.assertEqual(result["accountData"]["uid"], "uid")
-        self.assertEqual(result["accountData"]["keyFetchToken"], "top-secret")
-
-    def checkSync(self, expect_sync_user):
-        pref_value = self.marionette.execute_script(
-            """
-            return Services.prefs.getStringPref("services.sync.username", null);
-        """
-        )
-        expected_value = "test@test.com" if expect_sync_user else None
-        self.assertEqual(pref_value, expected_value)
-
     def checkStartupMigrationStateCleared(self):
         result = self.runCode(
             """
@@ -596,15 +534,13 @@ class TestFirefoxRefresh(MarionetteTestCase):
         )
         self.assertEqual(result, expected_source)
 
-    def checkProfile(self, has_migrated=False, expect_sync_user=True):
+    def checkProfile(self, has_migrated=False):
         self.checkPassword()
         self.checkBookmarkInMenu()
         self.checkHistory()
         self.checkFormHistory()
         self.checkFormAutofill()
         self.checkCookie()
-        self.checkFxA()
-        self.checkSync(expect_sync_user)
         self.checkProfileSource("reset" if has_migrated else "pre-reset")
         if has_migrated:
             self.checkBookmarkToolbarVisibility()
@@ -622,8 +558,6 @@ class TestFirefoxRefresh(MarionetteTestCase):
         self.createFormAutofill()
         self.createCookie()
         self.createSession()
-        self.createFxa()
-        self.createSync()
 
     def setProfileSource(self):
         self.runAsyncCode(
@@ -802,27 +736,13 @@ class TestFirefoxRefresh(MarionetteTestCase):
     def testResetEverything(self):
         self.createProfileData()
 
-        self.checkProfile(expect_sync_user=True)
+        self.checkProfile()
 
         this_cleanup = self.doReset()
         self.cleanups.append(this_cleanup)
 
         # Now check that we're doing OK...
-        self.checkProfile(has_migrated=True, expect_sync_user=True)
-
-    def testFxANoSync(self):
-        # This test doesn't need to repeat all the non-sync tests...
-        # Setup FxA but *not* sync
-        self.createFxa()
-
-        self.checkFxA()
-        self.checkSync(False)
-
-        this_cleanup = self.doReset()
-        self.cleanups.append(this_cleanup)
-
-        self.checkFxA()
-        self.checkSync(False)
+        self.checkProfile(has_migrated=True)
 
 
 class TestSelectableProfileFirefoxRefresh(TestFirefoxRefresh):
@@ -998,15 +918,13 @@ class TestSelectableProfileFirefoxRefresh(TestFirefoxRefresh):
         self.assertIn(cleanup.profile_name_to_remove, cleanup.reset_profile_path)
         return cleanup
 
-    def checkProfile(self, has_migrated=False, expect_sync_user=True):
+    def checkProfile(self, has_migrated=False):
         self.checkPassword()
         self.checkBookmarkInMenu()
         self.checkHistory()
         self.checkFormHistory()
         self.checkFormAutofill()
         self.checkCookie()
-        self.checkFxA()
-        self.checkSync(expect_sync_user)
         if has_migrated:
             self.checkBookmarkToolbarVisibility()
             self.checkSession()
@@ -1027,9 +945,6 @@ class TestFirefoxRefreshEncryptedSession(TestFirefoxRefresh):
     _enabledPref = "browser.sessionstore.encryption.enabled"
     # Header IOUtils writes in front of encrypted files.
     _encryptedFileMagic = b"mozEnc0\x00"
-
-    # Inherited test that does not involve session data.
-    testFxANoSync = None
 
     def enableSessionEncryption(self):
         # SessionStartup locks the available pref at startup so that only its
@@ -1104,8 +1019,8 @@ class TestFirefoxRefreshEncryptedSession(TestFirefoxRefresh):
         )
         self.assertTrue(enabled, "enabled pref should have been migrated")
 
-    def checkProfile(self, has_migrated=False, expect_sync_user=True):
+    def checkProfile(self, has_migrated=False):
         if has_migrated:
             self.checkSessionFilesEncrypted()
             self.checkEncryptionPrefsMigrated()
-        super().checkProfile(has_migrated, expect_sync_user)
+        super().checkProfile(has_migrated)

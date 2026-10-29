@@ -508,10 +508,7 @@ richlistitem[selected] .actionsMenu:focus-visible {
 /* Collapse the non-active vboxes in decks to use only the height the
    active vbox needs */
 #historyPane:not([selectedIndex="1"]) > #historyDontRememberPane,
-#historyPane:not([selectedIndex="2"]) > #historyCustomPane,
-#weavePrefsDeck:not([selectedIndex="1"]) > #hasFxaAccount,
-#fxaLoginStatus:not([selectedIndex="1"]) > #fxaLoginUnverified,
-#fxaLoginStatus:not([selectedIndex="2"]) > #fxaLoginRejected {
+#historyPane:not([selectedIndex="2"]) > #historyCustomPane {
   visibility: collapse;
 }
 
@@ -631,96 +628,12 @@ html|dialog,
   min-width: 30ch;
 }
 
-/**
- * Sync
- */
-
-.fxaProfileImage {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--border-radius-circle);
-  border: 1px solid transparent;
-  list-style-image: url(chrome://browser/skin/fxa/avatar-color.svg);
-  margin-inline-end: var(--space-xlarge);
-  -moz-user-focus: normal;
-}
-
-.fxaProfileImage.actionable {
-  cursor: pointer;
-}
-
-.fxaProfileImage.actionable:hover {
-  border-color: #0095dd;
-}
-
-.fxaProfileImage.actionable:hover:active {
-  border-color: #ff9500;
-}
-
-#fxaNoLoginStatus {
-  margin-block: 46px 64px;
-}
-
-#fxaAccountDisabled {
-  margin-bottom: calc(-1 * var(--space-large));
-}
-
-#noFxaAccount > label:first-child {
-  margin-bottom: 0.6em;
-}
-
-#noFxaCaption {
-  margin-block: 0 4px;
-}
-
-button#noFxaSignIn {
-  margin-inline-start: 8px;
-}
-
-#noFxaSignIn {
-  --box-icon-start-fill: var(--icon-color-warning);
-}
-
-#noFxaDescription {
-  padding-inline-end: 52px;
-}
-
 .separator {
   border-bottom: 1px solid var(--border-color);
 }
 
-#fxaGroup {
-  margin-bottom: 32px;
-}
-
 .openLink {
   cursor: pointer;
-}
-
-#fxaDisplayName {
-  margin-inline-end: 10px !important;
-}
-
-.fxaLoginRejectedWarning {
-  list-style-image: url(chrome://global/skin/icons/warning.svg);
-  -moz-context-properties: fill;
-  fill: #ffbf00;
-  margin-inline: 4px 8px;
-}
-
-#fxaLoginVerified {
-  --box-icon-size: calc(var(--icon-size-xlarge) * 2);
-  --box-icon-border-radius: var(--border-radius-circle);
-
-  &[description] {
-    --box-label-alignment: end;
-    --box-description-alignment: start;
-  }
-}
-
-.fxaMobilePromo {
-  margin-top: 2px !important;
-  margin-bottom: var(--space-xxlarge);
 }
 
 .androidIcon,

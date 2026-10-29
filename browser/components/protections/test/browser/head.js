@@ -56,26 +56,6 @@ const mockGetLoginDataWithSyncedDevices = (
   };
 };
 
-// Used to replace AboutProtectionsHandler.getMonitorData in front-end tests.
-const mockGetMonitorData = data => {
-  return {
-    getMonitorData: () => {
-      if (data.error) {
-        return data;
-      }
-
-      return {
-        monitoredEmails: 1,
-        numBreaches: data.numBreaches,
-        passwords: 8,
-        numBreachesResolved: data.numBreachesResolved,
-        passwordsResolved: 1,
-        error: false,
-      };
-    },
-  };
-};
-
 registerCleanupFunction(async function head_cleanup() {
   await Services.logins.removeAllUserFacingLoginsAsync();
 });

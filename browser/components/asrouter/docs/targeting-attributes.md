@@ -735,7 +735,7 @@ declare const usesFirefoxSync: boolean;
 
 ### `isFxAEnabled`
 
-Does the user have Firefox sync enabled? The service could potentially be turned off [for enterprise builds](https://searchfox.org/mozilla-central/rev/b59a99943de4dd314bae4e44ab43ce7687ccbbec/browser/components/enterprisepolicies/Policies.jsm#327).
+Always `false`: Mozilla accounts are not available.
 
 #### Definition
 
@@ -745,12 +745,12 @@ declare const isFxAEnabled: boolean;
 
 ### `isFxASignedIn`
 
-Is the user signed in to a Firefox Account?
+Always `false`: Mozilla accounts are not available.
 
 #### Definition
 
 ```ts
-declare const isFxASignedIn: Promise<boolean>
+declare const isFxASignedIn: boolean;
 ```
 
 ### `creditCardsSaved`
@@ -853,7 +853,7 @@ declare const hasPinnedTabs: boolean;
 
 ### `hasAccessedFxAPanel`
 
-Boolean pref that gets set the first time the user opens the FxA toolbar panel
+Always `false`: the account toolbar panel does not exist.
 
 #### Definition
 
@@ -923,29 +923,12 @@ declare const userWeekdaysActiveInLastMonth: Promise;
 
 ### `attachedFxAOAuthClients`
 
-Information about connected services associated with the FxA Account.
-Return an empty array if no account is found or an error occurs.
+Always an empty array: Mozilla accounts are not available.
 
 #### Definition
 
-```
-interface OAuthClient {
-  // OAuth client_id of the service
-  // https://docs.telemetry.mozilla.org/datasets/fxa_metrics/attribution.html#service-attribution
-  id: string;
-  lastAccessedDaysAgo: number;
-}
-
-declare const attachedFxAOAuthClients: Promise<OAuthClient[]>
-```
-
-#### Examples
-```javascript
-{
-  id: "7377719276ad44ee",
-  name: "Pocket",
-  lastAccessTime: 1513599164000
-}
+```ts
+declare const attachedFxAOAuthClients: never[];
 ```
 
 ### `relayProfileInfo`

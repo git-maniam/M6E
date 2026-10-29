@@ -113,48 +113,6 @@ Example:
 }
 ```
 
-### `SHOW_FIREFOX_ACCOUNTS`
-
-* args: (none)
-
-Opens Firefox accounts sign-up page. Encodes some information that the origin was from snippets by default.
-
-### `FXA_SIGNIN_FLOW`
-
-* args:
-
-```ts
-{
-  // a valid `where` value for `openUILinkIn`. Only `tab` and `window` have been tested, and `tabshifted`
-  // is unlikely to do anything different from `tab`.
-  where?: "tab" | "window" = "tab",
-
-  entrypoint?: string // URL search params string to pass along to FxA. Defaults to "activity-stream-firstrun".
-  extraParams?: object // Extra parameters to pass along to FxA. See FxAccountsConfig.promiseConnectAccountURI.
-}
-```
-
-* example:
-```json
-"action": {
-  "type": "FXA_SIGNIN_FLOW",
-  "needsAwait": true,
-  "navigate": "actionResult",
-  "data": {
-    "entrypoint": "onboarding",
-    "extraParams": {
-      "utm_content": "migration-onboarding"
-    }
-  }
-}
-```
-
-Opens a Firefox accounts sign-up or sign-in page, and does the work of closing the resulting tab or window once
-sign-in completes. Returns a Promise that resolves to `true` if sign-in succeeded, or to `false` if the sign-in
-window or tab closed before sign-in could be completed. In messaging surfaces using `aboutwelcome` templates, setting `needsAwait` ensures that the UI will wait for the Promise to resolve. The `navigate` and `dismiss` properties should be assigned the string value "actionResult" for the UI to respect the resolved boolean value before proceeding to the next step.
-
-Encodes some information that the origin was from about:welcome by default.
-
 ### `SHOW_MIGRATION_WIZARD`
 
 * args:

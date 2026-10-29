@@ -505,8 +505,8 @@ export class ASRouterAdminInner extends React.PureComponent {
     }
     if (msg.template === "menu_message") {
       previewWarnings.push(
-        'To preview this message, add "testingTriggerContext" to the JSON set to either ' +
-          '"app_menu" or "pxi_menu" to select which menu it renders in.'
+        'To preview this message, add "testingTriggerContext" to the JSON set to ' +
+          '"app_menu" to select which menu it renders in.'
       );
     }
     const aboutMessagePreviewSupported = [

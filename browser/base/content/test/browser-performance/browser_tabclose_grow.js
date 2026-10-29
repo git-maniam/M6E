@@ -26,7 +26,7 @@ add_task(async function () {
   });
 
   await ensureNoPreloadedBrowser();
-  await disableFxaBadge();
+  await disableToolbarBadge();
   await ensureSearchIconVisible();
 
   // The test starts on about:blank and opens an about:blank

@@ -1,20 +1,18 @@
 # MenuMessage
 
-MenuMessage displays a contextual call-to-action card inside Firefox's panel menus: the App Menu (hamburger) and the PXI Menu (Firefox Accounts avatar panel).
+MenuMessage displays a contextual call-to-action card inside the App Menu (hamburger).
 
-![MenuMessage in the PXI Menu](./menu-message.png)
+![MenuMessage in the App Menu](./menu-message.png)
 
 ## Surfaces
 
 | Surface | `testingTriggerContext` | Supported `messageType` |
 |---------|------------------------|------------------------|
-| App Menu | `app_menu` | `fxa_cta`, `default_cta` |
-| PXI Menu | `pxi_menu` | `fxa_cta` only |
+| App Menu | `app_menu` | `default_cta` |
 
 ## Message Types
 
-- **`fxa_cta`**: Firefox Accounts sign-in prompt. Hidden for signed-in users unless `allowWhenSignedIn: true`. Available in both the App Menu and PXI Menu.
-- **`default_cta`**: General CTA. App Menu only. Always shown regardless of sign-in state.
+- **`default_cta`**: General CTA. App Menu only.
 
 ## Layouts
 
@@ -34,49 +32,49 @@ Previewing the layout options and configurations can be done through `./mach sto
 1. Set `browser.newtabpage.activity-stream.asrouter.devtoolsEnabled` to `true` in `about:config`
 2. Go to `about:asrouter`
 3. Select `panel` as the provider and find messages with `"template": "menu_message"`
-4. Click **Show** — the `testingTriggerContext` field on the message determines which menu surface is simulated (`app_menu` or `fxa_cta`).
+4. Click **Show** — the `testingTriggerContext` field on the message determines which menu surface is simulated (`app_menu`).
 5. Paste custom JSON in the text area and click **Modify** to preview changes
 
 ### Example JSON
 
 ```json
 {
-    "id": "EXAMPLE_PXI_MENU_SPLIT_LAYOUT",
+    "id": "EXAMPLE_APP_MENU_SPLIT_LAYOUT",
     "template": "menu_message",
     "content": {
         "layout": "split",
-        "messageType": "fxa_cta",
+        "messageType": "default_cta",
         "primaryText": {
-            "string_id": "fxa-menu-message-sync-devices-primary-text"
+            "string_id": "example-menu-message-primary-text"
         },
         "secondaryText": {
-            "string_id": "fxa-menu-message-sync-devices-secondary-text2"
+            "string_id": "example-menu-message-secondary-text"
         },
         "primaryActionText": {
-            "string_id": "fxa-menu-message-sign-in-button"
+            "string_id": "example-menu-message-button"
         },
         "imageURL": "chrome://browser/content/asrouter/assets/kit-peek.svg",
         "imageVerticalBottomOffset": -8,
         "imagePosition": "bottom",
         "imageWidth": 95,
         "primaryAction": {
-            "type": "FXA_SIGNIN_FLOW",
+            "type": "OPEN_URL",
             "data": {
-                "where": "tab",
-                "autoClose": false
+                "args": "https://example.com",
+                "where": "tab"
             }
         },
         "closeAction": {
             "type": "BLOCK_MESSAGE",
             "data": {
-                "id": "EXAMPLE_PXI_MENU_SPLIT_LAYOUT"
+                "id": "EXAMPLE_APP_MENU_SPLIT_LAYOUT"
             }
         }
     },
     "trigger": {
         "id": "menuOpened"
     },
-    "testingTriggerContext": "pxi_menu",
+    "testingTriggerContext": "app_menu",
     "groups": [],
 }
 ```

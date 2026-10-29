@@ -90,8 +90,8 @@ add_task(async function test_multistage_aboutwelcome_experimentAPI() {
         secondary_button_top: {
           label: "link top",
           action: {
-            type: "SHOW_FIREFOX_ACCOUNTS",
-            data: { entrypoint: "test" },
+            type: "OPEN_URL",
+            data: { args: "https://example.com/", where: "tab" },
           },
         },
         has_noodles: true,

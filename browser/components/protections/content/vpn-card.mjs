@@ -62,25 +62,8 @@ export default class VPNCard {
       }
       const vpnCard = this.doc.querySelector(".vpn-card");
 
-      // add 'subscribed' class if user is subscribed to vpn
-      RPMSendQuery("FetchVPNSubStatus", {}).then(async hasVPN => {
-        if (hasVPN) {
-          vpnCard.classList.add("subscribed");
-          document.l10n.setAttributes(
-            vpnCard.querySelector(".card-title"),
-            "protections-vpn-title-subscribed"
-          );
-
-          // hide the promo banner if the user is already subscribed to vpn
-          await RPMSetPref(
-            "browser.contentblocking.report.hide_vpn_banner",
-            true
-          ).catch(() => {});
-        }
-
-        vpnCard.classList.remove("hidden");
-        showVPNBanner();
-      });
+      vpnCard.classList.remove("hidden");
+      showVPNBanner();
     });
   }
 

@@ -77,29 +77,6 @@ add_task(async function test_shouldShowPinPromo() {
   Services.prefs.clearUserBranch("browser.promo.pin");
 });
 
-add_task(async function test_shouldShowRelayPromo() {
-  // This test assumes by default no uri is configured.
-  Preferences.set("identity.fxaccounts.autoconfig.uri", "");
-  Assert.ok(BrowserUtils.shouldShowPromo(BrowserUtils.PromoType.RELAY));
-
-  // Don't show when there is an enterprise policy active
-  if (AppConstants.platform !== "android") {
-    // Services.policies isn't shipped on Android
-    await setupEnterprisePolicy();
-
-    Assert.ok(!BrowserUtils.shouldShowPromo(BrowserUtils.PromoType.RELAY));
-
-    // revert policy changes made earlier
-    await EnterprisePolicyTesting.setupPolicyEngineWithJson("");
-  }
-
-  // Don't show if a custom FxA instance is configured
-  Preferences.set("identity.fxaccounts.autoconfig.uri", "https://x");
-  Assert.ok(!BrowserUtils.shouldShowPromo(BrowserUtils.PromoType.RELAY));
-
-  Preferences.reset("identity.fxaccounts.autoconfig.uri");
-});
-
 add_task(function test_getShareableURL() {
   // Empty shouldn't be sendable
   Assert.ok(!BrowserUtils.getShareableURL(""));

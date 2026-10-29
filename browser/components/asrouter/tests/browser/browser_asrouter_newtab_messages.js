@@ -43,7 +43,7 @@ add_setup(async function () {
   gTestNewTabMessage = await PanelTestProvider.getMessages().then(msgs =>
     msgs.find(msg => msg.id === TEST_MESSAGE_ID)
   );
-  Assert.ok(gTestNewTabMessage, "Found a test fxa_cta message to use.");
+  Assert.ok(gTestNewTabMessage, "Found a test newtab message to use.");
 
   gTestPollingNewTabMessage = await PanelTestProvider.getMessages().then(msgs =>
     msgs.find(msg => msg.id === TEST_POLLING_MESSAGE_ID)

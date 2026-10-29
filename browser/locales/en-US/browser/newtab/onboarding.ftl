@@ -42,7 +42,6 @@ mr1-return-to-amo-add-extension-label = Add { $addon-name }
 onboarding-welcome-steps-indicator-label =
   .aria-label = Progress: step { $current } of { $total }
 
-
 # This button will open system settings to turn on prefers-reduced-motion
 mr1-onboarding-reduce-motion-button-label = Turn off animations
 
@@ -304,14 +303,6 @@ mr2022-onboarding-privacy-segmentation-image-alt =
 mr2022-onboarding-gratitude-image-alt =
   .aria-label = View of a sunset through a window with a fox and a house plant on a windowsill
 
-## Device migration onboarding
-
-onboarding-device-migration-image-alt =
-  .aria-label = A fox on the screen of a laptop computer waving. The laptop has a mouse plugged into it.
-onboarding-device-migration-title = Welcome back!
-onboarding-device-migration-subtitle2 = Sign in to your account to bring your bookmarks, passwords, and history with you on your new device.
-onboarding-device-migration-primary-button-label = Sign in
-
 ## Add-ons Picker screen
 
 amo-picker-title = Customize your { -brand-short-name }
@@ -338,7 +329,6 @@ onboarding-gratitude-security-and-privacy-subtitle = Thank you for using { -bran
 onboarding-sign-up-title = Sync your data across devices
 onboarding-sign-up-description = Sign up for an account and all of your important info — passwords, bookmarks, and more — will be securely stored and available when you sign in to any device.
 onboarding-sign-up-button = Sign up or sign in
-onboarding-sign-up-secondary-button = Start browsing
 
 ## New user time and familiarity survey strings
 
@@ -434,7 +424,6 @@ onboarding-checklist-set-default = Set { -brand-short-name } as default browser
 onboarding-checklist-pin = Pin { -brand-short-name } to taskbar
 onboarding-checklist-import = Import from previous browser
 onboarding-checklist-extension = Add an extension
-onboarding-checklist-sign-up = Sign up or sign in to your account
 onboarding-checklist-minimize =
     .label = Minimize
 onboarding-checklist-remove =
@@ -592,11 +581,6 @@ onboarding-refresh-import-title = Make { -brand-short-name } feel more like home
 onboarding-refresh-onboarding-addons-subtitle = Extensions are tiny apps that let you customize { -brand-short-name }. They can power up your privacy, enhance productivity, change the way { -brand-short-name } looks, and so much more.
 # "Give your browsing a boost" means to enhance or improve the browsing experience
 onboarding-refresh-onboarding-addons-title = Give your browsing a boost
-onboarding-refresh-sync-subtitle = Grab bookmarks, passwords, and more everywhere you’re signed in to { -brand-short-name }. Plus, your data is encrypted so only you can see it.
-onboarding-refresh-sync-title = Go anywhere. Sync everything.
-onboarding-refresh-gratitude-subtitle = Thank you for using { -brand-short-name }, the only major browser backed by a non-profit. With your support, we’re working to make the internet safer and more accessible for everyone.
-# "has your back" is an idiom suggesting support and protection
-onboarding-refresh-gratitude-title = { -brand-short-name } has your back
 
 ## First Run Onboarding refresh strings
 

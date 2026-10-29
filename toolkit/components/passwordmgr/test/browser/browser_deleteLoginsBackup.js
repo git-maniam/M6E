@@ -2,10 +2,8 @@
  * Test that logins backup is deleted as expected when logins are deleted.
  */
 
-ChromeUtils.defineESModuleGetters(this, {
-  FXA_PWDMGR_HOST: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-  FXA_PWDMGR_REALM: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-});
+const FXA_PWDMGR_HOST = "chrome://FirefoxAccounts";
+const FXA_PWDMGR_REALM = "Firefox Accounts credentials";
 
 const nsLoginInfo = new Components.Constructor(
   "@mozilla.org/login-manager/loginInfo;1",

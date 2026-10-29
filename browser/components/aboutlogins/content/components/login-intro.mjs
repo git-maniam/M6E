@@ -37,16 +37,13 @@ export default class LoginIntro extends HTMLElement {
     event.preventDefault();
   }
 
-  updateState(syncState) {
+  updateState() {
     let l10nId = "about-logins-login-intro-heading-message";
     document.l10n.setAttributes(
       this.shadowRoot.querySelector(".heading"),
       l10nId
     );
 
-    this.shadowRoot
-      .querySelector(".illustration")
-      .classList.toggle("logged-in", syncState.loggedIn);
     let supportURL =
       window.AboutLoginsUtils.supportBaseURL +
       "password-manager-remember-delete-edit-logins";

@@ -44,9 +44,6 @@ run-if = [
 
 ["browser_asrouter_toast_notification.js"]
 
-["browser_asrouter_toolbarbadge.js"]
-tags = "remote-settings"
-
 ["browser_asrouter_universal_infobar.js"]
 
 ["browser_backup_restore_spotlight.js"]

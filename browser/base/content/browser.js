@@ -123,12 +123,6 @@ ChromeUtils.defineESModuleGetters(this, {
   ZoomUI: "resource:///modules/ZoomUI.sys.mjs",
 });
 
-ChromeUtils.defineLazyGetter(this, "fxAccounts", () => {
-  return ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton();
-});
-
 XPCOMUtils.defineLazyScriptGetter(
   this,
   ["BrowserCommands", "kSkipCacheFlags"],
@@ -565,26 +559,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 
 XPCOMUtils.defineLazyPreferenceGetter(
   this,
-  "gFxaToolbarEnabled",
-  "identity.fxaccounts.toolbar.enabled",
-  false,
-  (aPref, aOldVal, aNewVal) => {
-    updateFxaToolbarMenu(aNewVal);
-  }
-);
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
-  "gFxaToolbarAccessed",
-  "identity.fxaccounts.toolbar.accessed",
-  false,
-  () => {
-    updateFxaToolbarMenu(gFxaToolbarEnabled);
-  }
-);
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  this,
   "gAddonAbuseReportEnabled",
   "extensions.abuseReport.enabled",
   false
@@ -783,41 +757,6 @@ var gNavigatorBundle = {
     return gBrowserBundle.formatStringFromName(key, array);
   },
 };
-
-function updateFxaToolbarMenu(enable) {
-  // We only show the Firefox Account toolbar menu if the feature is enabled and
-  // if sync is enabled.
-  const syncEnabled = Services.prefs.getBoolPref(
-    "identity.fxaccounts.enabled",
-    false
-  );
-
-  const mainWindowEl = document.documentElement;
-  const taskbarTab = mainWindowEl.hasAttribute("taskbartab");
-
-  // To minimize the toolbar button flickering or appearing/disappearing during startup,
-  // we use this pref to anticipate the likely FxA status. Only guess a signed-in
-  // state when accounts are enabled: a device name can be persisted without ever
-  // signing in (e.g. it is written on first read or when creating a backup), so
-  // without gating on syncEnabled a profile with accounts disabled would
-  // incorrectly report "signed_in".
-  const statusGuess =
-    syncEnabled &&
-    !!Services.prefs.getStringPref(
-      "identity.fxaccounts.account.device.name",
-      ""
-    );
-  mainWindowEl.setAttribute(
-    "fxastatus",
-    statusGuess ? "signed_in" : "not_configured"
-  );
-
-  if (enable && syncEnabled && !taskbarTab) {
-    mainWindowEl.setAttribute("fxatoolbarmenu", "visible");
-  } else {
-    mainWindowEl.removeAttribute("fxatoolbarmenu");
-  }
-}
 
 function UpdateBackForwardCommands(aWebNavigation) {
   var backCommand = document.getElementById("Browser:Back");

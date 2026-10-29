@@ -74,7 +74,6 @@ const PREFS_FOR_DISPLAY = [
   "general.useragent.",
   "gfx.",
   "html5.",
-  "identity.fxaccounts.enabled",
   "idle.",
   "image.",
   "javascript.",

@@ -8,21 +8,7 @@ import { MultiStageUtils } from "../../asrouter/content-src/lib/multistage-utils
 import { MultiStageAboutWelcome } from "../../asrouter/content-src/components/MultiStageAboutWelcome";
 
 class AboutWelcome extends React.PureComponent {
-  constructor(props) {
-    super(props);
-    this.state = { metricsFlowUri: null };
-    this.fetchFxAFlowUri = this.fetchFxAFlowUri.bind(this);
-  }
-
-  async fetchFxAFlowUri() {
-    this.setState({ metricsFlowUri: await window.AWGetFxAMetricsFlowURI?.() });
-  }
-
   componentDidMount() {
-    if (!this.props.skipFxA) {
-      this.fetchFxAFlowUri();
-    }
-
     if (document.location.href === "about:welcome") {
       // Record impression with performance data after allowing the page to load
       const recordImpression = domState => {
@@ -67,7 +53,6 @@ class AboutWelcome extends React.PureComponent {
         message_id={props.messageId}
         defaultScreens={props.screens}
         updateHistory={!props.disableHistoryUpdates}
-        metricsFlowUri={this.state.metricsFlowUri}
         utm_term={props.UTMTerm}
         transitions={props.transitions}
         backdrop={props.backdrop}

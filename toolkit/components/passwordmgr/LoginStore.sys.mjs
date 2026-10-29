@@ -42,12 +42,8 @@
 
 import { JSONFile } from "resource://gre/modules/JSONFile.sys.mjs";
 
-const lazy = {};
-
-ChromeUtils.defineESModuleGetters(lazy, {
-  FXA_PWDMGR_HOST: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-  FXA_PWDMGR_REALM: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-});
+const FXA_PWDMGR_HOST = "chrome://FirefoxAccounts";
+const FXA_PWDMGR_REALM = "Firefox Accounts credentials";
 
 /**
  * Current data version assigned by the code that last touched the data.
@@ -112,8 +108,8 @@ LoginStore.prototype._backupHandler = async function () {
   // key only.
   if (
     logins.length &&
-    logins[0].hostname == lazy.FXA_PWDMGR_HOST &&
-    logins[0].httpRealm == lazy.FXA_PWDMGR_REALM
+    logins[0].hostname == FXA_PWDMGR_HOST &&
+    logins[0].httpRealm == FXA_PWDMGR_REALM
   ) {
     try {
       await IOUtils.copy(this.path, this._options.backupTo);
