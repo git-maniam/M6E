@@ -402,13 +402,6 @@ tasks:
         parent: debian13-amd64-build
     index-task:
         symbol: I(idx)
-    funsize-update-generator:
-        symbol: I(pg)
-        parent: debian12-base
-    partials-zuc:
-        symbol: I(pz)
-        parent: debian13-base
-        definition: partials-zucchini
     update-verify:
         symbol: I(uv)
         parent: debian12-base
