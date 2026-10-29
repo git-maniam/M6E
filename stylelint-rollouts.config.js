@@ -53,7 +53,6 @@ module.exports = [
       "browser/components/firefoxview/history.css",
       "browser/components/firefoxview/opentabs-tab-row.css",
       "browser/components/firefoxview/view-opentabs.css",
-      "browser/components/tabbrowser/content/model-optin.css",
       "browser/components/messagepreview/messagepreview.css",
       "browser/components/places/content/clearDataForSite.css",
       "browser/components/places/metadataViewer/interactionsViewer.css",
