@@ -2345,7 +2345,6 @@ modules:
         name: 'Machine Learning: Platform'
         includes:
           - toolkit/components/pageextractor/
-          - taskcluster/kinds/toolchain-symbols-upload/kind.yml
         meta:
           components:
             - 'Core::Machine Learning: On Device'
@@ -3127,7 +3126,6 @@ modules:
       - dom/webidl/WebGPU.webidl
       - dom/webgpu/**/*
       - gfx/wgpu_bindings/**/*
-      - taskcluster/kinds/toolchain-symbols-upload/kind.yml
       - taskcluster/kinds/toolchain/dxc.yml
       - third_party/rust/naga/**/*
       - third_party/rust/wgpu-*/**/*
