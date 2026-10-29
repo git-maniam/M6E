@@ -19,7 +19,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
+  UIState: "resource://gre/modules/UIState.sys.mjs",
   FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   ChangePasswordURLs:
     "moz-src:///browser/components/aboutlogins/ChangePasswordURLs.sys.mjs",
@@ -109,10 +109,6 @@ export class AboutLoginsParent extends JSWindowActorParent {
       }
       case "AboutLogins:SortChanged": {
         this.#sortChanged(message.data);
-        break;
-      }
-      case "AboutLogins:SyncEnable": {
-        this.#syncEnable();
         break;
       }
       case "AboutLogins:ImportFromBrowser": {
@@ -218,10 +214,6 @@ export class AboutLoginsParent extends JSWindowActorParent {
 
   #sortChanged(sort) {
     Services.prefs.setCharPref("signon.management.page.sort", sort);
-  }
-
-  #syncEnable() {
-    this.#documentGlobal.gSync.openFxAEmailFirstPage("password-manager");
   }
 
   #importFromBrowser() {
@@ -842,7 +834,6 @@ class AboutLoginsInternal {
     // authenticated. More diagnostics and error states can be handled
     // by other more Sync-specific pages.
     const loggedIn = state.status != lazy.UIState.STATUS_NOT_CONFIGURED;
-    const passwordSyncEnabled = state.syncEnabled && lazy.PASSWORD_SYNC_ENABLED;
     const accountURL =
       await lazy.FxAccounts.config.promiseManageURI("password-manager");
 
@@ -851,16 +842,9 @@ class AboutLoginsInternal {
       email: state.email,
       avatarURL: state.avatarURL,
       fxAccountsEnabled: lazy.FXA_ENABLED,
-      passwordSyncEnabled,
+      passwordSyncEnabled: false,
       accountURL,
     };
-  }
-
-  async onPasswordSyncEnabledPreferenceChange(_data, _previous, _latest) {
-    this.#messageSubscribers(
-      "AboutLogins:SyncState",
-      await this.getSyncState()
-    );
   }
 
   #observedTopics = [
@@ -890,11 +874,3 @@ class AboutLoginsInternal {
 
 let AboutLogins = new AboutLoginsInternal();
 export var _AboutLogins = AboutLogins;
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "PASSWORD_SYNC_ENABLED",
-  "services.sync.engine.passwords",
-  false,
-  AboutLogins.onPasswordSyncEnabledPreferenceChange.bind(AboutLogins)
-);

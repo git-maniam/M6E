@@ -1300,7 +1300,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 
@@ -1322,7 +1321,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 
@@ -1343,7 +1341,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 
@@ -1365,7 +1362,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 
@@ -1387,7 +1383,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 
@@ -1409,7 +1404,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 
@@ -1433,7 +1427,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 
@@ -1457,7 +1450,6 @@ system.os:
     expires: never
     send_in_pings:
       - metrics
-      - sync
       - update
       - third-party-modules
 

@@ -27,12 +27,6 @@ autofill-delete-payment-method-os-prompt-other = { -brand-short-name } is trying
 credit-card-doorhanger-options-button =
     .title = Form autofill options
 
-## The credit card capture doorhanger
-
-# If Sync is enabled and credit card sync is available,
-# this checkbox is displayed on the doorhanger shown when saving credit card.
-credit-card-doorhanger-credit-cards-sync-checkbox = Sync all saved cards across my devices
-
 ## Used on the doorhanger when users submit payment with credit card.
 
 credit-card-save-doorhanger-header = Securely save this card?

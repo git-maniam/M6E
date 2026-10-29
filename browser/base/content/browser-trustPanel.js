@@ -24,7 +24,7 @@ ChromeUtils.defineESModuleGetters(this, {
     "moz-src:///browser/components/protections/PrivacyMetricsService.sys.mjs",
   QWACs: "resource://gre/modules/psm/QWACs.sys.mjs",
   SiteDataManager: "resource:///modules/SiteDataManager.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
+  UIState: "resource://gre/modules/UIState.sys.mjs",
   UrlbarPrefs: "moz-src:///browser/components/urlbar/UrlbarPrefs.sys.mjs",
 });
 

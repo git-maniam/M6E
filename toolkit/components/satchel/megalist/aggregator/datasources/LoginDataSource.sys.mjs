@@ -17,20 +17,12 @@ ChromeUtils.defineESModuleGetters(lazy, {
     "moz-src:///browser/components/aboutlogins/LoginBreaches.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
 });
 
 XPCOMUtils.defineLazyPreferenceGetter(
   lazy,
   "BREACH_ALERTS_ENABLED",
   "signon.management.page.breach-alerts.enabled",
-  false
-);
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "PASSWORD_SYNC_ENABLED",
-  "services.sync.engine.passwords",
   false
 );
 
@@ -509,20 +501,14 @@ export class LoginDataSource extends DataSourceBase {
     }
   }
 
-  #isPasswordSyncEnabled() {
-    const state = lazy.UIState.get();
-    return state.syncEnabled && lazy.PASSWORD_SYNC_ENABLED;
-  }
-
   async #removeAllPasswords() {
     const { total } = this.#header.value;
-    const messageId = this.#isPasswordSyncEnabled()
-      ? "contextual-manager-passwords-remove-all-message-sync"
-      : "contextual-manager-passwords-remove-all-message";
-
     const { confirmed, checked } = await this.#showWindowPrompt(
       { id: "contextual-manager-passwords-remove-all-title", args: { total } },
-      { id: messageId, args: { total } },
+      {
+        id: "contextual-manager-passwords-remove-all-message",
+        args: { total },
+      },
       {
         id: "contextual-manager-passwords-remove-all-confirm-button",
         args: { total },

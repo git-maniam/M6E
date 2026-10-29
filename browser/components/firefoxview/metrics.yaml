@@ -209,58 +209,6 @@ firefoxview_next:
           The short page name used as the location hash when selecting the Firefox View tab
         type: string
 
-  fxa_continue_sync:
-    type: event
-    description: >
-      Recorded when button to sign in or sign up is clicked
-      This event was generated to correspond to the Legacy Telemetry event
-      firefoxview_next.fxa_continue#sync.
-    bugs:
-      - https://bugzil.la/1833671
-    data_reviews:
-      - https://bugzil.la/1833671
-    notification_emails:
-      - firefoxview@mozilla.com
-    expires: never
-
-  fxa_mobile_sync:
-    type: event
-    description: >
-      Recorded when the 'Try Firefox for mobile' button is clicked
-      This event was generated to correspond to the Legacy Telemetry event
-      firefoxview_next.fxa_mobile#sync.
-    bugs:
-      - https://bugzil.la/1833671
-    data_reviews:
-      - https://bugzil.la/1833671
-    notification_emails:
-      - firefoxview@mozilla.com
-    expires: never
-    extra_keys:
-      has_devices:
-        description: >
-          True if user has other devices signed into sync
-        type: boolean
-
-  synced_tabs_tabs:
-    type: event
-    description: >
-      Recorded when a synced tab is clicked
-      This event was generated to correspond to the Legacy Telemetry event
-      firefoxview_next.synced_tabs#tabs.
-    bugs:
-      - https://bugzil.la/1833671
-    data_reviews:
-      - https://bugzil.la/1833671
-    notification_emails:
-      - firefoxview@mozilla.com
-    expires: never
-    extra_keys:
-      page:
-        description: >
-          The short page name where the synced tab was clicked
-        type: string
-
   history_visits:
     type: event
     description: >
@@ -402,7 +350,6 @@ firefoxview:
       - opentabs
       - recentlyclosed
       - history
-      - syncedtabs
     range_min: 0
     range_max: 100
     bucket_count: 101

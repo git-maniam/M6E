@@ -158,11 +158,6 @@ const AUTOFILL_CREDITCARDS_AVAILABLE_PREF =
 const ENABLED_AUTOFILL_CREDITCARDS_PREF =
   "extensions.formautofill.creditCards.enabled";
 const SUPPORTED_COUNTRIES_PREF = "extensions.formautofill.supportedCountries";
-const SYNC_USERNAME_PREF = "services.sync.username";
-const SYNC_ADDRESSES_PREF = "services.sync.engine.addresses";
-const SYNC_CREDITCARDS_PREF = "services.sync.engine.creditcards";
-const SYNC_CREDITCARDS_AVAILABLE_PREF =
-  "services.sync.engine.creditcards.available";
 
 // For iframe autofill tests
 const SAME_ORIGIN_ALL_FIELDS =

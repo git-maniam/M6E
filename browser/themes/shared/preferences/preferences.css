@@ -657,24 +657,8 @@ html|dialog,
   border-color: #ff9500;
 }
 
-#useFirefoxSync {
-  font-size: 90%;
-  margin-inline-end: 8px !important;
-}
-
 #fxaNoLoginStatus {
   margin-block: 46px 64px;
-}
-
-#fxaSyncComputerName {
-  flex: 1;
-  margin-block: 4px;
-  margin-inline-start: 0;
-}
-
-#fxaChangeDeviceName {
-  margin-block: 4px;
-  margin-inline-end: 0;
 }
 
 #fxaAccountDisabled {
@@ -693,28 +677,8 @@ button#noFxaSignIn {
   margin-inline-start: 8px;
 }
 
-#syncConfigured {
-  --box-icon-start-fill: var(--icon-color-success);
-}
-
-#syncNotConfigured,
 #noFxaSignIn {
   --box-icon-start-fill: var(--icon-color-warning);
-}
-
-#syncSetup {
-  white-space: nowrap;
-}
-
-#syncNow,
-#syncing {
-  min-width: 150px;
-}
-
-.fxaSyncIllustration {
-  list-style-image: url(chrome://browser/skin/fxa/sync-devices.svg);
-  width: 312px;
-  height: 136px;
 }
 
 #noFxaDescription {
@@ -752,110 +716,6 @@ button#noFxaSignIn {
     --box-label-alignment: end;
     --box-description-alignment: start;
   }
-}
-
-#syncStatusContainer {
-  margin-top: 32px;
-}
-
-#syncChangeOptions {
-  margin-inline-start: 0;
-}
-
-.sync-group {
-  margin-block: var(--space-large);
-  border: 1px solid var(--border-color);
-}
-
-.sync-configured {
-  display: block;
-}
-
-.sync-info-box {
-  border-radius: var(--border-radius-medium);
-  padding: var(--space-large);
-}
-
-.sync-engines-list > div,
-.sync-engines-list + hbox {
-  margin-top: 0;
-  padding-top: var(--space-large);
-}
-
-dialog > .sync-engines-list > div,
-dialog > .sync-engines-list + hbox {
-  padding-top: 0;
-}
-
-.sync-engines-list checkbox .checkbox-icon,
-.sync-engine-image {
-  display: flex;
-  margin-inline: 2px 8px;
-  width: 16px;
-  height: 16px;
-  -moz-context-properties: fill;
-  fill: currentColor;
-  align-self: center;
-}
-
-.sync-engines-list checkbox {
-  min-width: max-content;
-  max-width: calc(50vw - 10px);
-}
-
-.sync-engines-list .checkbox-label-box {
-  align-items: center;
-}
-
-.sync-engines-list {
-  column-count: 3;
-  column-fill: balance;
-  margin-block-end: 10px;
-}
-
-.sync-engines-list > div {
-  display: flex;
-  break-inside: avoid;
-}
-
-.sync-engine-bookmarks .checkbox-icon,
-.sync-engine-bookmarks.sync-engine-image {
-  list-style-image: url("chrome://browser/skin/bookmark.svg");
-}
-
-.sync-engine-history .checkbox-icon,
-.sync-engine-history.sync-engine-image {
-  list-style-image: url("chrome://browser/skin/history.svg");
-}
-
-.sync-engine-tabs .checkbox-icon,
-.sync-engine-tabs.sync-engine-image {
-  list-style-image: url("chrome://browser/skin/synced-tabs.svg");
-}
-
-.sync-engine-passwords .checkbox-icon,
-.sync-engine-passwords.sync-engine-image {
-  list-style-image: url("chrome://browser/skin/login.svg");
-}
-
-.sync-engine-addons .checkbox-icon,
-.sync-engine-addons.sync-engine-image {
-  list-style-image: url("chrome://mozapps/skin/extensions/extension.svg");
-}
-
-.sync-engine-prefs .checkbox-icon,
-.sync-engine-prefs.sync-engine-image {
-  list-style-image: url("chrome://global/skin/icons/settings.svg");
-}
-
-.sync-engine-addresses .checkbox-icon,
-.sync-engine-addresses.sync-engine-image {
-  list-style-image: url("chrome://formautofill/content/formfill-anchor.svg");
-}
-
-.sync-engine-creditcards .checkbox-icon,
-.sync-engine-creditcards.sync-engine-image {
-  list-style-image: url("chrome://formautofill/content/icon-credit-card-generic.svg");
 }
 
 .fxaMobilePromo {

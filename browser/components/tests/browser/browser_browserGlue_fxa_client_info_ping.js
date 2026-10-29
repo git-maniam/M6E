@@ -13,7 +13,7 @@ const { sinon } = ChromeUtils.importESModule(
   "resource://testing-common/Sinon.sys.mjs"
 );
 const { UIState } = ChromeUtils.importESModule(
-  "resource://services-sync/UIState.sys.mjs"
+  "resource://gre/modules/UIState.sys.mjs"
 );
 
 const FAKE_UID = "0123456789abcdef0123456789abcdef";

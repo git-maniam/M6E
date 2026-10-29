@@ -418,7 +418,6 @@ pref("browser.urlbar.suggest.bookmark",             true);
 pref("browser.urlbar.suggest.clipboard",            true);
 pref("browser.urlbar.suggest.history",              true);
 pref("browser.urlbar.suggest.openpage",             true);
-pref("browser.urlbar.suggest.remotetab",            true);
 pref("browser.urlbar.suggest.searches",             true);
 pref("browser.urlbar.suggest.topsites",             true);
 pref("browser.urlbar.suggest.engines",              true);
@@ -1534,156 +1533,6 @@ pref("browser.bookmarks.editDialog.maxRecentFolders", 7);
 
 
 
-// Preferences to be synced by default.
-// Preferences with the prefix `services.sync.prefs.sync-seen.` should have
-// a value of `false`, and means the value of the pref will be synced as soon
-// as a value for the pref is "seen", even if it is the default, and should be
-// used for prefs we sync but which have different values on different channels,
-// platforms or distributions.
-pref("services.sync.prefs.sync.accessibility.blockautorefresh", true);
-pref("services.sync.prefs.sync.accessibility.browsewithcaret", true);
-pref("services.sync.prefs.sync.accessibility.typeaheadfind", true);
-pref("services.sync.prefs.sync.accessibility.typeaheadfind.linksonly", true);
-pref("services.sync.prefs.sync.addons.ignoreUserEnabledChanges", true);
-pref("services.sync.prefs.sync.app.shield.optoutstudies.enabled", true);
-// The addons prefs related to repository verification are intentionally
-// not synced for security reasons. If a system is compromised, a user
-// could weaken the pref locally, install an add-on from an untrusted
-// source, and this would propagate automatically to other,
-// uncompromised Sync-connected devices.
-pref("services.sync.prefs.sync.browser.contentblocking.category", true);
-pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
-pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", true);
-pref("services.sync.prefs.sync.browser.ctrlTab.sortByRecentlyUsed", true);
-pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
-pref("services.sync.prefs.sync.browser.firefox-view.feature-tour", true);
-pref("services.sync.prefs.sync.browser.formfill.enable", true);
-pref("services.sync.prefs.sync.browser.link.open_newwindow", true);
-pref("services.sync.prefs.sync.browser.menu.showViewImageInfo", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSearch", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsoredTopSites", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.topsites", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.topSitesRows", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.topstories", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.topstories.rows", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.highlights", true);
-// Some linux distributions disable all highlights by default.
-pref("services.sync.prefs.sync-seen.browser.newtabpage.activity-stream.section.highlights", false);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeVisited", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeBookmarks", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeDownloads", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.rows", true);
-pref("services.sync.prefs.sync.browser.newtabpage.enabled", true);
-pref("services.sync.prefs.sync.browser.newtabpage.pinned", true);
-pref("services.sync.prefs.sync.browser.pdfjs.feature-tour", true);
-pref("services.sync.prefs.sync.browser.safebrowsing.downloads.enabled", true);
-pref("services.sync.prefs.sync.browser.safebrowsing.downloads.remote.block_potentially_unwanted", true);
-pref("services.sync.prefs.sync.browser.safebrowsing.malware.enabled", true);
-pref("services.sync.prefs.sync.browser.safebrowsing.phishing.enabled", true);
-pref("services.sync.prefs.sync.browser.search.update", true);
-pref("services.sync.prefs.sync.browser.startup.homepage", true);
-pref("services.sync.prefs.sync.browser.startup.page", true);
-pref("services.sync.prefs.sync.browser.startup.upgradeDialog.enabled", true);
-pref("services.sync.prefs.sync.browser.tabs.loadInBackground", true);
-pref("services.sync.prefs.sync.browser.tabs.warnOnClose", true);
-pref("services.sync.prefs.sync.browser.tabs.warnOnOpen", true);
-pref("services.sync.prefs.sync.browser.taskbar.previews.enable", true);
-pref("services.sync.prefs.sync.browser.urlbar.maxRichResults", true);
-pref("services.sync.prefs.sync.browser.urlbar.showSearchSuggestionsFirst", true);
-pref("services.sync.prefs.sync.browser.urlbar.suggest.bookmark", true);
-pref("services.sync.prefs.sync.browser.urlbar.suggest.history", true);
-pref("services.sync.prefs.sync.browser.urlbar.suggest.openpage", true);
-pref("services.sync.prefs.sync.browser.urlbar.suggest.searches", true);
-pref("services.sync.prefs.sync.browser.urlbar.suggest.topsites", true);
-pref("services.sync.prefs.sync.browser.urlbar.suggest.engines", true);
-pref("services.sync.prefs.sync.dom.disable_open_during_load", true);
-pref("services.sync.prefs.sync.dom.disable_window_flip", true);
-pref("services.sync.prefs.sync.dom.disable_window_move_resize", true);
-pref("services.sync.prefs.sync.dom.event.contextmenu.enabled", true);
-pref("services.sync.prefs.sync.dom.security.https_only_mode", true);
-pref("services.sync.prefs.sync.dom.security.https_only_mode_ever_enabled", true);
-pref("services.sync.prefs.sync.dom.security.https_only_mode_ever_enabled_pbm", true);
-pref("services.sync.prefs.sync.dom.security.https_only_mode_pbm", true);
-pref("services.sync.prefs.sync.extensions.update.enabled", true);
-pref("services.sync.prefs.sync.extensions.activeThemeID", true);
-pref("services.sync.prefs.sync.general.autoScroll", true);
-// general.autoScroll has a different default on Linux vs elsewhere.
-pref("services.sync.prefs.sync-seen.general.autoScroll", false);
-// general.smoothScroll is not synced, bug 1851024
-pref("services.sync.prefs.sync.intl.accept_languages", true);
-pref("services.sync.prefs.sync.intl.regional_prefs.use_os_locales", true);
-pref("services.sync.prefs.sync.layout.spellcheckDefault", true);
-pref("services.sync.prefs.sync.media.autoplay.default", true);
-pref("services.sync.prefs.sync.media.eme.enabled", true);
-// Some linux distributions disable eme by default.
-pref("services.sync.prefs.sync-seen.media.eme.enabled", false);
-pref("services.sync.prefs.sync.media.videocontrols.picture-in-picture.video-toggle.enabled", true);
-pref("services.sync.prefs.sync.network.cookie.cookieBehavior", true);
-pref("services.sync.prefs.sync.nimbus.rollouts.enabled", true);
-pref("services.sync.prefs.sync.permissions.default.image", true);
-pref("services.sync.prefs.sync.pref.downloads.disable_button.edit_actions", true);
-pref("services.sync.prefs.sync.pref.privacy.disable_button.cookie_exceptions", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.cache", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown_v2.cache", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.cookies", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown_v2.cookiesAndStorage", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.downloads", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown_v2.downloads", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.formdata", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown_v2.formdata", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.history", true);
-// We can't clear the old history pref until we're sure all clients have
-// migrated to the new pref.
-pref("services.sync.prefs.sync.privacy.clearOnShutdown_v2.historyFormDataAndDownloads", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown_v2.browsingHistoryAndDownloads", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.offlineApps", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.sessions", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown.siteSettings", true);
-pref("services.sync.prefs.sync.privacy.clearOnShutdown_v2.siteSettings", true);
-pref("services.sync.prefs.sync.privacy.donottrackheader.enabled", true);
-pref("services.sync.prefs.sync.privacy.globalprivacycontrol.enabled", true);
-pref("services.sync.prefs.sync.privacy.sanitize.sanitizeOnShutdown", true);
-pref("services.sync.prefs.sync.privacy.trackingprotection.enabled", true);
-pref("services.sync.prefs.sync.privacy.trackingprotection.harmfuladdon.enabled", true);
-pref("services.sync.prefs.sync.privacy.trackingprotection.cryptomining.enabled", true);
-pref("services.sync.prefs.sync.privacy.trackingprotection.fingerprinting.enabled", true);
-pref("services.sync.prefs.sync.privacy.trackingprotection.pbmode.enabled", true);
-// We do not sync `privacy.resistFingerprinting` by default as it's an undocumented,
-// not-recommended footgun - see bug 1763278 for more.
-pref("services.sync.prefs.sync.privacy.reduceTimerPrecision", true);
-pref("services.sync.prefs.sync.privacy.resistFingerprinting.reduceTimerPrecision.microseconds", true);
-pref("services.sync.prefs.sync.privacy.resistFingerprinting.reduceTimerPrecision.jitter", true);
-pref("services.sync.prefs.sync.privacy.userContext.enabled", true);
-pref("services.sync.prefs.sync.privacy.userContext.newTabContainerOnLeftClick.enabled", true);
-pref("services.sync.prefs.sync.security.default_personal_cert", true);
-pref("services.sync.prefs.sync.services.sync.syncedTabs.showRemoteIcons", true);
-pref("services.sync.prefs.sync.signon.autofillForms", true);
-pref("services.sync.prefs.sync.signon.generation.enabled", true);
-pref("services.sync.prefs.sync.signon.management.page.breach-alerts.enabled", true);
-pref("services.sync.prefs.sync.signon.rememberSignons", true);
-pref("services.sync.prefs.sync.spellchecker.dictionary", true);
-pref("services.sync.prefs.sync.ui.osk.enabled", true);
-
-// A preference which, if false, means sync will only apply incoming preference
-// changes if there's already a local services.sync.prefs.sync.* control pref.
-// If true, all incoming preferences will be applied and the local "control
-// pref" updated accordingly.
-pref("services.sync.prefs.dangerously_allow_arbitrary", false);
-
-// A preference that controls whether we should show the icon for a remote tab.
-// This pref has no UI but exists because some people may be concerned that
-// fetching these icons to show remote tabs may leak information about that
-// user's tabs and bookmarks. Note this pref is also synced.
-pref("services.sync.syncedTabs.showRemoteIcons", true);
-
-// A preference (in milliseconds) controlling if we sync after a tab change and
-// how long to delay before we schedule the sync
-// Anything <= 0 means disabled
-pref("services.sync.syncedTabs.syncDelayAfterTabChange", 5000);
-
 // Whether prompts should be content modal (1) tab modal (2) or window modal(3) by default
 // This is a fallback value for when prompt callers do not specify a modalType.
 pref("prompts.defaultModalType", 3);
@@ -2183,10 +2032,6 @@ pref("identity.sync.tokenserver.uri", "https://token.services.mozilla.com/1.0/sy
 // of making changes to "identity.fxaccounts.*.uri".
 pref("identity.fxaccounts.autoconfig.uri", "");
 
-// URL for help link about Send Tab.
-pref("identity.sendtabpromo.url", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/send-tab");
-pref("identity.sendtab.deviceissues.url", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/send-tab#w_i-dont-see-my-device-listed");
-
 // URLs for promo links to mobile browsers. Note that consumers are expected to
 // append a value for utm_campaign.
 pref("identity.mobilepromo.android", "https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
@@ -2655,10 +2500,6 @@ pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
 // (InstallTime markers, old submitted/pending reports, and the pending-report
 // cap).
 pref("browser.crashReports.cleanupCheck.enabled", true);
-
-// Preferences for the form autofill toolkit component.
-// Checkbox in sync options for credit card data sync service
-pref("services.sync.engine.creditcards.available", true);
 
 // Whether or not to restore a session with lazy-browser tabs.
 pref("browser.sessionstore.restore_tabs_lazily", true);

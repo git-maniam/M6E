@@ -510,12 +510,6 @@ export class LoginManagerPrompter {
         } else if (histogramName == "PWMGR_PROMPT_UPDATE_ACTION") {
           Services.obs.notifyObservers(browser, "LoginStats:LoginUpdateSaved");
         }
-
-        Services.obs.notifyObservers(
-          null,
-          "weave:telemetry:histogram",
-          histogramName
-        );
       },
     };
 
@@ -529,11 +523,6 @@ export class LoginManagerPrompter {
         accessKey: secondaryButton.accessKey,
         callback: () => {
           histogramAdd(PROMPT_NOTNOW_OR_DONTUPDATE);
-          Services.obs.notifyObservers(
-            null,
-            "weave:telemetry:histogram",
-            histogramName
-          );
           browser.focus();
         },
       },
@@ -548,11 +537,6 @@ export class LoginManagerPrompter {
         accessKey: neverSaveButton.accessKey,
         callback: () => {
           histogramAdd(PROMPT_NEVER);
-          Services.obs.notifyObservers(
-            null,
-            "weave:telemetry:histogram",
-            histogramName
-          );
           Services.logins.setLoginSavingEnabled(login.origin, false);
           browser.focus();
         },
@@ -570,11 +554,6 @@ export class LoginManagerPrompter {
         accessKey: updatePasswordButtonDelete.accessKey,
         callback: async () => {
           histogramAdd(PROMPT_DELETE);
-          Services.obs.notifyObservers(
-            null,
-            "weave:telemetry:histogram",
-            histogramName
-          );
           const matchingLogins = await Services.logins.searchLoginsAsync({
             guid: login.guid,
             origin: login.origin,
@@ -633,11 +612,6 @@ export class LoginManagerPrompter {
                 // Record the first time this instance of the doorhanger is shown.
                 if (!this.timeShown) {
                   histogramAdd(PROMPT_DISPLAYED);
-                  Services.obs.notifyObservers(
-                    null,
-                    "weave:telemetry:histogram",
-                    histogramName
-                  );
                 }
 
                 chromeDoc

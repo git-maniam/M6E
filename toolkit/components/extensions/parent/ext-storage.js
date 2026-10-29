@@ -16,14 +16,6 @@ var { ExtensionError } = ExtensionUtils;
 var { ignoreEvent } = ExtensionCommon;
 
 ChromeUtils.defineLazyGetter(this, "extensionStorageSync", () => {
-  // TODO bug 1637465: Remove Kinto-based implementation.
-  if (Services.prefs.getBoolPref("webextensions.storage.sync.kinto")) {
-    const { extensionStorageSyncKinto } = ChromeUtils.importESModule(
-      "resource://gre/modules/ExtensionStorageSyncKinto.sys.mjs"
-    );
-    return extensionStorageSyncKinto;
-  }
-
   const { extensionStorageSync } = ChromeUtils.importESModule(
     "resource://gre/modules/ExtensionStorageSync.sys.mjs"
   );
@@ -220,32 +212,12 @@ this.storage = class extends ExtensionAPIPersistent {
 
   registerSyncChangedListener(onStorageSyncChanged) {
     const { extension } = this;
-    let closeCallback;
-    // The ExtensionStorageSyncKinto implementation of addOnChangedListener
-    // relies on context.callOnClose (via ExtensionStorageSync.registerInUse)
-    // to keep track of active users of the storage. We don't need to pass a
-    // real BaseContext instance, a dummy object with the callOnClose method
-    // works too. This enables us to register a primed listener before any
-    // context is available.
-    // TODO bug 1637465: Remove this when the Kinto backend is dropped.
-    let dummyContextForKinto = {
-      callOnClose({ close }) {
-        closeCallback = close;
-      },
-    };
-    extensionStorageSync.addOnChangedListener(
-      extension,
-      onStorageSyncChanged,
-      dummyContextForKinto
-    );
+    extensionStorageSync.addOnChangedListener(extension, onStorageSyncChanged);
     return () => {
       extensionStorageSync.removeOnChangedListener(
         extension,
         onStorageSyncChanged
       );
-      // May be void if ExtensionStorageSyncKinto.sys.mjs was not used.
-      // ExtensionStorageSync.sys.mjs does not use the context.
-      closeCallback?.();
     };
   }
 

@@ -242,7 +242,6 @@ const PanelUI = {
       "appMenu-libraryView"
     ).addEventListener("command", this._onLibraryCommand);
     this.mainView.addEventListener("command", this);
-    this.mainView.addEventListener("click", this);
     this.mainView.addEventListener("ViewShowing", this._onMainViewShow);
     this._eventListenersAdded = true;
   },
@@ -259,7 +258,6 @@ const PanelUI = {
       "appMenu-libraryView"
     ).removeEventListener("command", this._onLibraryCommand);
     this.mainView.removeEventListener("command", this);
-    this.mainView.removeEventListener("click", this);
     this._eventListenersAdded = false;
   },
 
@@ -428,13 +426,6 @@ const PanelUI = {
       case "activate":
         this.updateNotifications();
         break;
-      case "click": {
-        let novaFxaButton = aEvent.target.closest("#appMenu-nova-fxa-label");
-        if (novaFxaButton) {
-          gSync.toggleAccountPanel(novaFxaButton, aEvent);
-        }
-        break;
-      }
       case "command":
         this.onCommand(aEvent);
         break;
@@ -461,9 +452,6 @@ const PanelUI = {
     switch (target.id) {
       case "appMenu-update-banner":
         this._onBannerItemSelected(aEvent);
-        break;
-      case "appMenu-fxa-label2":
-        gSync.toggleAccountPanel(target, aEvent);
         break;
       case "appMenu-bookmarks-button":
         BookmarkingUI.showSubView(target);

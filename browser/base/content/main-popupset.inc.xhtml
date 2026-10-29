@@ -107,13 +107,6 @@
           hidden="true"
           data-lazy-l10n-id="tab-context-share-selected-tabs"/>
     <menuseparator id="context_shareSelectedTabsSeparator" hidden="true"/>
-    <menu id="context_sendTabToDevice"
-          class="sync-ui-item"
-          data-lazy-l10n-id="tab-context-send-to-device"
-          data-l10n-args='{"tabCount": 1}'>
-      <menupopup id="context_sendTabToDevicePopupMenu" class="sync-ui-item"/>
-    </menu>
-    <menuseparator id="context_sendTabToDeviceSeparator" class="sync-ui-item"/>
     <menuitem id="context_closeTab"
               data-lazy-l10n-id="tab-context-close-n-tabs"
               data-alt-l10n-id="tab-context-close-n-tabs2"
@@ -325,9 +318,6 @@
     <menuitem id="sidebar-switcher-history"
               data-l10n-id="sidebar-menu-history"
               key="key_gotoHistory"/>
-    <menuitem id="sidebar-switcher-tabs"
-              data-l10n-id="sidebar-menu-synced-tabs"
-              class="sync-ui-item"/>
     <menuseparator/>
     <!-- Extension toolbarbuttons go here. -->
     <menuseparator id="sidebar-extensions-separator"/>
@@ -418,39 +408,6 @@
               class="sidebar-history-multiselect-command"/>
   </menupopup>
 
-  <menupopup id="sidebar-synced-tabs-context-menu" accesskey-conflicts-bug="2073894">
-    <menuitem data-l10n-id="sidebar-context-menu-open-in-tab"
-              id="sidebar-synced-tabs-context-open-in-tab"/>
-    <menu id="sidebar-synced-tabs-context-menu-container-tab"
-            data-l10n-id="sidebar-context-menu-open-in-container-tab"
-            selection-type="single"
-            node-type="link"
-            hide-if-private-browsing="true"
-            hide-if-usercontext-disabled="true">
-      <menupopup id="sidebar-synced-tabs-context-menu-container-popup"/>
-    </menu>
-    <menuitem data-l10n-id="sidebar-context-menu-open-in-window"
-              id="sidebar-synced-tabs-context-open-in-window"/>
-    <menuitem data-l10n-id="sidebar-context-menu-open-in-private-window"
-              id="sidebar-synced-tabs-context-open-in-private-window"/>
-    <menuseparator/>
-    <menuitem data-l10n-id="sidebar-context-menu-close-remote-tab"
-              id="sidebar-context-menu-close-remote-tab"
-              data-l10n-args='{"deviceName": ""}'
-              disabled="true"/>
-    <menuseparator/>
-    <menuitem data-l10n-id="sidebar-context-menu-bookmark-tab"
-              id="sidebar-synced-tabs-context-bookmark-tab"/>
-    <menuitem data-l10n-id="sidebar-context-menu-copy-link"
-              id="sidebar-synced-tabs-context-copy-link"/>
-    <menuseparator/>
-    <menuitem data-l10n-id="synced-tabs-context-open-all-in-tabs"
-              id="sidebar-synced-tabs-context-open-all-in-tabs"/>
-    <menuitem data-l10n-id="synced-tabs-context-connect-another-device"
-              id="sidebar-synced-tabs-context-connect-another-device"/>
-    <menuitem data-l10n-id="synced-tabs-context-manage-this-device"
-              id="sidebar-synced-tabs-context-manage-this-device"/>
-  </menupopup>
 
   <menupopup id="sidebar-opentabs-menu" accesskey-conflicts-bug="2073894">
     <menucaption data-l10n-id="sidebar-opentabs-sort-by-heading"
@@ -462,9 +419,6 @@
     <menuitem data-l10n-id="sidebar-opentabs-sort-option-recency"
               id="sidebar-opentabs-sort-by-recency"
               type="checkbox"/>
-    <menuseparator/>
-    <menuitem data-l10n-id="synced-tabs-context-connect-another-device"
-              id="sidebar-opentabs-connect-another-device"/>
   </menupopup>
 
   <menupopup id="sidebar-opentabs-context-menu">
@@ -847,54 +801,6 @@
 #include ../../components/tabbrowser/content/browser-allTabsMenu.inc.xhtml
 
   <tooltip id="dynamic-shortcut-tooltip"/>
-
-  <menupopup id="SyncedTabsSidebarContext">
-    <menuitem data-lazy-l10n-id="synced-tabs-context-open"
-              id="syncedTabsOpenSelected" where="current"/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-open-in-tab"
-              id="syncedTabsOpenSelectedInTab" where="tab"/>
-    <menu data-lazy-l10n-id="synced-tabs-context-open-in-container-tab"
-          id="syncedTabsOpenSelectedInContainerTab"
-          hidden="true">
-      <menupopup id="SyncedTabsOpenSelectedInContainerTabMenu"/>
-    </menu>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-open-in-window"
-              id="syncedTabsOpenSelectedInWindow" where="window"/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-open-in-private-window"
-              id="syncedTabsOpenSelectedInPrivateWindow" where="window" private="true"/>
-    <menuseparator/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-bookmark"
-              id="syncedTabsBookmarkSelected"/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-copy"
-              id="syncedTabsCopySelected"/>
-    <menuseparator/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-open-all-in-tabs"
-              id="syncedTabsOpenAllInTabs"/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-manage-devices"
-              id="syncedTabsManageDevices"/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-sync-now"
-              id="syncedTabsRefresh"/>
-  </menupopup>
-  <menupopup id="SyncedTabsSidebarTabsFilterContext"
-             class="textbox-contextmenu">
-    <menuitem data-l10n-id="text-action-undo"
-              cmd="cmd_undo"/>
-    <menuseparator/>
-    <menuitem data-l10n-id="text-action-cut"
-              cmd="cmd_cut"/>
-    <menuitem data-l10n-id="text-action-copy"
-              cmd="cmd_copy"/>
-    <menuitem data-l10n-id="text-action-paste"
-              cmd="cmd_paste"/>
-    <menuitem data-l10n-id="text-action-delete"
-              cmd="cmd_delete"/>
-    <menuseparator/>
-    <menuitem data-l10n-id="text-action-select-all"
-              cmd="cmd_selectAll"/>
-    <menuseparator/>
-    <menuitem data-lazy-l10n-id="synced-tabs-context-sync-now"
-              id="syncedTabsRefreshFilter"/>
-  </menupopup>
 
   <hbox id="statuspanel" inactive="true" hidden="true">
     <label id="statuspanel-label"

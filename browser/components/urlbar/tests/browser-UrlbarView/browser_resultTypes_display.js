@@ -3,10 +3,6 @@
 
 "use strict";
 
-const { SyncedTabs } = ChromeUtils.importESModule(
-  "resource://services-sync/SyncedTabs.sys.mjs"
-);
-
 const TEST_ENGINE_BASENAME = "searchSuggestionEngine.xml";
 
 function assertElementsDisplayed(details, expected) {
@@ -229,88 +225,4 @@ add_task(async function test_omnibox_result() {
   });
 
   await extension.unload();
-});
-
-add_task(async function test_remote_tab_result() {
-  await SpecialPowers.pushPrefEnv({
-    set: [["services.sync.username", "fake"]],
-  });
-  // Clear history so that history added by previous tests doesn't mess up this
-  // test when it selects results in the urlbar.
-  await PlacesUtils.history.clear();
-  await PlacesUtils.bookmarks.eraseEverything();
-
-  const REMOTE_TAB = {
-    id: "7cqCr77ptzX3",
-    type: "client",
-    lastModified: 1492201200,
-    name: "zcarter's Nightly on MacBook-Pro-25",
-    clientType: "desktop",
-    tabs: [
-      {
-        type: "tab",
-        title: "Test Remote",
-        url: "http://example.com",
-        icon: UrlbarShared.ICON.DEFAULT,
-        client: "7cqCr77ptzX3",
-        lastUsed: Math.floor(Date.now() / 1000),
-      },
-    ],
-  };
-
-  const sandbox = sinon.createSandbox();
-
-  let originalSyncedTabsInternal = SyncedTabs._internal;
-  SyncedTabs._internal = {
-    isConfiguredToSyncTabs: true,
-    hasSyncedThisSession: true,
-    getTabClients() {
-      return Promise.resolve([]);
-    },
-    syncTabs() {
-      return Promise.resolve();
-    },
-  };
-
-  // Tell the Sync XPCOM service it is initialized.
-  let weaveXPCService = Cc["@mozilla.org/weave/service;1"].getService(
-    Ci.nsISupports
-  ).wrappedJSObject;
-  let oldWeaveServiceReady = weaveXPCService.ready;
-  weaveXPCService.ready = true;
-
-  sandbox
-    .stub(SyncedTabs._internal, "getTabClients")
-    .callsFake(() => Promise.resolve(Cu.cloneInto([REMOTE_TAB], {})));
-
-  // Reset internal cache in UrlbarProviderRemoteTabs.
-  Services.obs.notifyObservers(null, "weave:engine:sync:finish", "tabs");
-
-  registerCleanupFunction(async function () {
-    sandbox.restore();
-    weaveXPCService.ready = oldWeaveServiceReady;
-    SyncedTabs._internal = originalSyncedTabsInternal;
-    await PlacesUtils.history.clear();
-    await PlacesUtils.bookmarks.eraseEverything();
-  });
-
-  await BrowserTestUtils.withNewTab({ gBrowser }, async () => {
-    await UrlbarTestUtils.promiseAutocompleteResultPopup({
-      window,
-      value: "example",
-      fireInputEvent: true,
-    });
-
-    const details = await UrlbarTestUtils.getDetailsOfResultAt(window, 1);
-
-    assertElementsDisplayed(details, {
-      // The separator should *not* be visible, but Proton merely sets its
-      // opacity to zero, which counts as visible. Pass false and remove this
-      // comment when enabling Nova by default.
-      separator: !Services.prefs.getBoolPref("browser.nova.enabled", false),
-      title: "Test Remote",
-      type: UrlbarShared.RESULT_TYPE.REMOTE_TAB,
-    });
-  });
-  await SpecialPowers.popPrefEnv();
 });

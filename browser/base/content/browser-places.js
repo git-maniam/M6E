@@ -617,8 +617,6 @@ class HistoryMenu extends PlacesMenu {
       undoTabMenu: "historyUndoMenu",
       hiddenTabsMenu: "hiddenTabsMenu",
       undoWindowMenu: "historyUndoWindowMenu",
-      syncTabsMenuitem: "sync-tabs-menuitem",
-      remoteTabsPromo: "historyRemoteTabsPromo",
     };
     for (let [key, elemId] of Object.entries(elements)) {
       this[key] = document.getElementById(elemId);
@@ -709,36 +707,6 @@ class HistoryMenu extends PlacesMenu {
     undoPopup.appendChild(windowsFragment);
   }
 
-  toggleTabsFromOtherComputers() {
-    // Enable/disable the Tabs From Other Computers menu. Some of the menus handled
-    // by HistoryMenu do not have this menuitem.
-    if (!this.syncTabsMenuitem) {
-      return;
-    }
-
-    // Show the promo to users who can't yet see remote tabs (see
-    // getSyncPromoState). Clicking it performs the state-specific action, which
-    // we stash in a data-action attribute for the command handler. When it
-    // applies we hide the synced-tabs menuitem, so only one is ever visible.
-    if (this.remoteTabsPromo) {
-      const promoState = gSync.getSyncPromoState(["tabs"]);
-      if (promoState) {
-        this.remoteTabsPromo.dataset.action = promoState;
-        this.remoteTabsPromo.hidden = false;
-        this.syncTabsMenuitem.hidden = true;
-        return;
-      }
-      this.remoteTabsPromo.hidden = true;
-    }
-
-    if (!PlacesUIUtils.shouldShowTabsFromOtherComputersMenuitem()) {
-      this.syncTabsMenuitem.hidden = true;
-      return;
-    }
-
-    this.syncTabsMenuitem.hidden = false;
-  }
-
   _onPopupShowing(aEvent) {
     super._onPopupShowing(aEvent);
 
@@ -750,7 +718,6 @@ class HistoryMenu extends PlacesMenu {
     this.toggleHiddenTabs();
     this.toggleRecentlyClosedTabs();
     this.toggleRecentlyClosedWindows();
-    this.toggleTabsFromOtherComputers();
   }
 
   _onCommand(aEvent) {
@@ -868,7 +835,6 @@ var BookmarksEventHandler = {
    */
   onCommand: function BEH_onCommand(aEvent) {
     var target = aEvent.originalTarget;
-    var eventAction = target.dataset.action;
 
     if (target._placesNode) {
       PlacesUIUtils.openNodeWithEvent(target._placesNode, aEvent);
@@ -876,8 +842,6 @@ var BookmarksEventHandler = {
       if (target.closest("#PersonalToolbar")) {
         Glean.browserEngagement.bookmarksToolbarBookmarkOpened.add(1);
       }
-    } else if (eventAction) {
-      gSync.handleSyncPromoAction(eventAction, "bookmarks-top-menu");
     }
   },
 
@@ -2043,12 +2007,6 @@ var BookmarkingUI = {
     if (event.target.id != "bookmarksMenuPopup") {
       return;
     }
-
-    var promoState = gSync.getSyncPromoState(["bookmarks"]);
-    var remoteTabsPromo = document.getElementById("bookmarksRemoteTabsPromo");
-
-    remoteTabsPromo.dataset.action = promoState;
-    remoteTabsPromo.hidden = !promoState;
 
     document.getElementById("menu_mobileBookmarks").hidden =
       !SHOW_MOBILE_BOOKMARKS;

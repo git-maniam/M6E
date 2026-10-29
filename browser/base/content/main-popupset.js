@@ -311,9 +311,6 @@ document.addEventListener(
         case "sidebar-switcher-history":
           SidebarController.show("viewHistorySidebar");
           break;
-        case "sidebar-switcher-tabs":
-          SidebarController.show("viewTabsSidebar");
-          break;
         case "sidebar-reverse-position":
           SidebarController.reversePosition();
           break;
@@ -419,11 +416,6 @@ document.addEventListener(
           BrowserPageActions.removeExtensionForContextAction();
           break;
 
-        // == SyncedTabsSidebarContext ==
-        case "syncedTabsManageDevices":
-          gSync.openDevicesManagementPage("syncedtabs-sidebar");
-          break;
-
         // == unified-extensions-context-menu ==
         case "unified-extensions-context-menu-pin-to-toolbar":
           gUnifiedExtensions.onPinToToolbarChange(
@@ -521,22 +513,6 @@ document.addEventListener(
       )
     );
 
-    const containerSyncedTabsPopup = document.getElementById(
-      "sidebar-synced-tabs-context-menu-container-popup"
-    );
-    containerSyncedTabsPopup.addEventListener("command", event =>
-      PlacesUIUtils.openInContainerTab(
-        event,
-        "sidebar_synced_tabs_context_menu"
-      )
-    );
-    containerSyncedTabsPopup.addEventListener("popupshowing", event =>
-      PlacesUIUtils.createContainerTabMenu(
-        event,
-        "sidebar_synced_tabs_context_menu"
-      )
-    );
-
     document
       .getElementById("sidebar-bookmarks-context-container-tab-popup")
       .addEventListener("popupshowing", event =>
@@ -604,17 +580,6 @@ document.addEventListener(
 
     mainPopupSet.addEventListener("popupshowing", event => {
       switch (event.target.id) {
-        case "context_sendTabToDevicePopupMenu":
-          gSync.populateSendTabToDevicesMenu(
-            event.target,
-            TabContextMenu.contextTab.linkedBrowser.currentURI,
-            TabContextMenu.contextTab.linkedBrowser.contentTitle,
-            {
-              multiselected: TabContextMenu.contextTab.multiselected,
-              contextMenuType: "tab",
-            }
-          );
-          break;
         case "context_reopenInContainerPopupMenu":
           TabContextMenu.createReopenInContainerMenu(event);
           break;
@@ -647,12 +612,6 @@ document.addEventListener(
           break;
         case "dynamic-shortcut-tooltip":
           DynamicShortcutTooltip.updateText(event.target);
-          break;
-        case "SyncedTabsOpenSelectedInContainerTabMenu":
-          createUserContextMenu(event, {
-            isContextMenu: true,
-            containerSource: "synced_tabs_context_menu",
-          });
           break;
         case "unified-extensions-context-menu":
           gUnifiedExtensions.updateContextMenu(event.target, event);
@@ -722,10 +681,6 @@ document.addEventListener(
         case "tabbrowser-tab-tooltip":
         case "bhTooltip":
           event.target.removeAttribute("position");
-          break;
-        case "tabContextMenu":
-          // Reset Send Tab exposure tracking when tab context menu closes
-          gSync._resetSendTabExposureTracking();
           break;
       }
     });

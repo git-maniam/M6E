@@ -9,7 +9,7 @@ import random
 from arsenic.errors import UnknownArsenicError, UnknownError
 
 from condprof.helpers import TabSwitcher, execute_async_script, is_mobile
-from condprof.util import get_credentials, logger
+from condprof.util import logger
 
 BOOKMARK_FREQUENCY = 5
 MAX_URLS = 150
@@ -22,7 +22,6 @@ class Builder:
         self.options = options
         self.words = self._read_lines("words.txt")
         self.urls = self._build_url_list(self._read_lines("urls.txt"))
-        self.sync_js = self._load_script("sync")
         self.max_bookmarks = options.get("max_bookmarks", MAX_BOOKMARKS)
         self.bookmark_js = self._load_script("bookmark")
         self.platform = options.get("platform", "")
@@ -36,15 +35,6 @@ class Builder:
         logger.info("platform: %s" % self.platform)
         logger.info("max_urls: %s" % self.max_urls)
         self.bookmark_frequency = options.get("bookmark_frequency", BOOKMARK_FREQUENCY)
-
-        # Syncing is disabled for all platforms
-        self.syncing = False
-        if self.syncing:
-            self.username, self.password = get_credentials()
-            if self.username is None:
-                raise ValueError("Sync operations need an FxA username and password")
-        else:
-            self.username, self.password = None, None
 
     def _load_script(self, name):
         return "\n".join(self._read_lines("%s.js" % name))
@@ -73,26 +63,6 @@ class Builder:
         return await execute_async_script(
             session, self.bookmark_js, url, title, self.max_bookmarks
         )
-
-    async def sync(self, session, metadata):
-        if not self.syncing:
-            return
-        # now that we've visited all pages, we want to upload to FXSync
-        logger.info("Syncing profile to FxSync")
-        logger.info("Username is %s, password is %s" % (self.username, self.password))
-        script_res = await execute_async_script(
-            session,
-            self.sync_js,
-            self.username,
-            self.password,
-            "https://accounts.stage.mozaws.net",
-        )
-        if script_res is None:
-            script_res = {}
-        metadata["logs"] = script_res.get("logs", {})
-        metadata["result"] = script_res.get("result", 0)
-        metadata["result_message"] = script_res.get("result_message", "SUCCESS")
-        return metadata
 
     async def _visit_url(self, current, session, url, word):
         await asyncio.wait_for(session.get(url), 5)
@@ -129,7 +99,6 @@ class Builder:
                 pass
 
         metadata["visited_url"] = visited
-        await self.sync(session, metadata)
         return metadata
 
 

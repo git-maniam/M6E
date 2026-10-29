@@ -20,7 +20,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ProfileAge: "resource://gre/modules/ProfileAge.sys.mjs",
   ResetProfile: "resource://gre/modules/ResetProfile.sys.mjs",
   SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
+  UIState: "resource://gre/modules/UIState.sys.mjs",
   UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
 });
 

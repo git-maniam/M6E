@@ -6,7 +6,7 @@
 add_setup(async () => {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,bookmarks,history"],
+      ["sidebar.main.tools", "bookmarks,history"],
       ["sidebar.newTool.migration.bookmarks", "{}"],
       ["browser.contextual-password-manager.enabled", false],
       [
@@ -23,7 +23,7 @@ add_setup(async () => {
 add_task(async function test_duplicate_tool() {
   const sidebar = document.querySelector("sidebar-main");
   let tools = Services.prefs.getStringPref("sidebar.main.tools").split(",");
-  is(tools.length, 3, "Three tools are in the sidebar.main.tools pref");
+  is(tools.length, 2, "Two tools are in the sidebar.main.tools pref");
   is(
     tools.filter(tool => tool == "bookmarks").length,
     1,
@@ -31,15 +31,15 @@ add_task(async function test_duplicate_tool() {
   );
   is(
     sidebar.toolButtons.length,
-    3,
-    "Three default tools are visible in the launcher"
+    2,
+    "Two default tools are visible in the launcher"
   );
 });
 
 add_task(async function test_one_time_tool_migration() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,history"],
+      ["sidebar.main.tools", "history"],
       ["sidebar.newTool.migration.bookmarks", "{}"],
     ],
   });
@@ -47,13 +47,13 @@ add_task(async function test_one_time_tool_migration() {
   let tools = Services.prefs.getStringPref("sidebar.main.tools");
   is(
     tools.split(",").length,
-    3,
-    "Three tools are in the sidebar.main.tools pref"
+    2,
+    "Two tools are in the sidebar.main.tools pref"
   );
   is(
     sidebar.toolButtons.length,
-    3,
-    "Three default tools are visible in the launcher"
+    2,
+    "Two default tools are visible in the launcher"
   );
 
   await SidebarTestUtils.showPanel(window, "viewCustomizeSidebar");
@@ -83,19 +83,15 @@ add_task(async function test_one_time_tool_migration() {
     "Pref property has been updated after being added to tools."
   );
 
-  is(sidebar.toolButtons.length, 2, "Two tools are now shown in the launcher");
+  is(sidebar.toolButtons.length, 1, "One tool is now shown in the launcher");
 });
 
 add_task(async function test_check_visibility_enabled() {
   const sidebar = document.querySelector("sidebar-main");
   let tools = Services.prefs.getStringPref("sidebar.main.tools");
-  is(
-    tools.split(",").length,
-    2,
-    "Two tools are in the sidebar.main.tools pref"
-  );
+  is(tools.split(",").length, 1, "One tool is in the sidebar.main.tools pref");
 
-  is(sidebar.toolButtons.length, 2, "Two tools are shown in the launcher");
+  is(sidebar.toolButtons.length, 1, "One tool is shown in the launcher");
 
   let prefValue = JSON.parse(
     Services.prefs.getStringPref("sidebar.newTool.migration.passwords")
@@ -130,11 +126,7 @@ add_task(async function test_check_visibility_enabled() {
     "The bookmarks input is not checked in the Customize Sidebar menu."
   );
 
-  is(
-    sidebar.toolButtons.length,
-    3,
-    "Three tools are now shown in the launcher"
-  );
+  is(sidebar.toolButtons.length, 2, "Two tools are now shown in the launcher");
 
   prefValue = JSON.parse(
     Services.prefs.getStringPref("sidebar.newTool.migration.passwords")
@@ -149,7 +141,7 @@ add_task(async function test_check_visibility_enabled() {
 add_task(async function test_resource_monitor_visibility_migration() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,history"],
+      ["sidebar.main.tools", "history"],
       ["browser.resourceMonitor.enabled", false],
       [
         "sidebar.newTool.migration.resourcemonitor",
@@ -163,10 +155,10 @@ add_task(async function test_resource_monitor_visibility_migration() {
   const sidebar = document.querySelector("sidebar-main");
   is(
     Services.prefs.getStringPref("sidebar.main.tools").split(",").length,
-    2,
+    1,
     "Resource Monitor is not yet added to sidebar.main.tools"
   );
-  is(sidebar.toolButtons.length, 2, "Two tools are shown in the launcher");
+  is(sidebar.toolButtons.length, 1, "One tool is shown in the launcher");
 
   await SpecialPowers.pushPrefEnv({
     set: [["browser.resourceMonitor.enabled", true]],
@@ -189,14 +181,10 @@ add_task(async function test_resource_monitor_visibility_migration() {
 
   is(
     Services.prefs.getStringPref("sidebar.main.tools").split(",").length,
-    3,
+    2,
     "Resource Monitor was auto-added to sidebar.main.tools once its visibility pref flipped true"
   );
-  is(
-    sidebar.toolButtons.length,
-    3,
-    "Three tools are now shown in the launcher"
-  );
+  is(sidebar.toolButtons.length, 2, "Two tools are now shown in the launcher");
 
   let prefValue = JSON.parse(
     Services.prefs.getStringPref("sidebar.newTool.migration.resourcemonitor")
@@ -210,7 +198,7 @@ add_task(async function test_resource_monitor_visibility_migration() {
 add_task(async function test_passwords_visibility_migration() {
   await SpecialPowers.pushPrefEnv({
     set: [
-      ["sidebar.main.tools", "syncedtabs,history"],
+      ["sidebar.main.tools", "history"],
       ["browser.contextual-password-manager.enabled", false],
       [
         "sidebar.newTool.migration.passwords",
@@ -224,10 +212,10 @@ add_task(async function test_passwords_visibility_migration() {
   const sidebar = document.querySelector("sidebar-main");
   is(
     Services.prefs.getStringPref("sidebar.main.tools").split(",").length,
-    2,
+    1,
     "Passwords is not yet added to sidebar.main.tools"
   );
-  is(sidebar.toolButtons.length, 2, "Two tools are shown in the launcher");
+  is(sidebar.toolButtons.length, 1, "One tool is shown in the launcher");
 
   await SpecialPowers.pushPrefEnv({
     set: [["browser.contextual-password-manager.enabled", true]],
@@ -250,14 +238,10 @@ add_task(async function test_passwords_visibility_migration() {
 
   is(
     Services.prefs.getStringPref("sidebar.main.tools").split(",").length,
-    3,
+    2,
     "Passwords was auto-added to sidebar.main.tools once its visibility pref flipped true"
   );
-  is(
-    sidebar.toolButtons.length,
-    3,
-    "Three tools are now shown in the launcher"
-  );
+  is(sidebar.toolButtons.length, 2, "Two tools are now shown in the launcher");
 
   let prefValue = JSON.parse(
     Services.prefs.getStringPref("sidebar.newTool.migration.passwords")

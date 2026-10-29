@@ -71,6 +71,7 @@ const fxaKeys = {
 // the keys_jwe generation is genuinely exercised rather than stubbed out.
 const fxaOAuth = new FxAccountsOAuth(fxaClient, fxaKeys);
 const fxAccounts = {
+  device: { getLocalName: () => DEVICE_NAME },
   getSignedInUser() {
     return {
       uid: UID,
@@ -88,10 +89,6 @@ const fxAccounts = {
     },
   },
 };
-const weave = {
-  Service: { clientsEngine: { localName: DEVICE_NAME } },
-};
-
 class MockPairingChannel extends EventTarget {
   get channelId() {
     return CHANNEL_ID;
@@ -130,7 +127,6 @@ add_task(async function testFullFlow() {
     pairingChannel,
     fxAccounts,
     fxaConfig,
-    weave,
   });
   Assert.equal(
     pairingUri,
@@ -265,7 +261,6 @@ add_task(async function testUnknownPairingMessage() {
     pairingChannel,
     fxAccounts,
     fxaConfig,
-    weave,
   });
   const flow = FxAccountsPairingFlow.get(CHANNEL_ID);
   const viewErrorObserved = emitter.once("view:Error");
@@ -288,7 +283,6 @@ add_task(async function testUnknownWebChannelCommand() {
     pairingChannel,
     fxAccounts,
     fxaConfig,
-    weave,
   });
   const flow = FxAccountsPairingFlow.get(CHANNEL_ID);
   const viewErrorObserved = emitter.once("view:Error");
@@ -309,7 +303,6 @@ add_task(async function testPairingChannelFailure() {
     pairingChannel,
     fxAccounts,
     fxaConfig,
-    weave,
   });
   const flow = FxAccountsPairingFlow.get(CHANNEL_ID);
   const viewErrorObserved = emitter.once("view:Error");
@@ -344,7 +337,6 @@ add_task(async function testFlowTimeout() {
     pairingChannel,
     fxAccounts,
     fxaConfig,
-    weave,
     flowTimeout: 1,
   });
   const flow = FxAccountsPairingFlow.get(CHANNEL_ID);

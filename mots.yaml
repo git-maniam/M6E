@@ -4613,28 +4613,6 @@ modules:
         - 'Firefox :: Remote Settings Client'
       review_group: remote-settings-reviewers
 
-  - machine_name: sync
-    name: Sync
-    description: Firefox Sync client
-    includes:
-      - services/sync/**/*
-    excludes: []
-    owners:
-      - *markh
-    peers:
-      - *lougenia
-      - *teshaq
-      - *bdk
-      - *skhamis
-      - *lina
-    meta:
-      owners_emeritus:
-        - Ryan Kelly
-      url: <https://wiki.mozilla.org/Services/Process/Code_Review>
-      components:
-        - Sync
-      review_group: sync-reviewers
-
   - machine_name: testing_firefox_ui
     name: firefox-ui
     description: Firefox UI test framework.

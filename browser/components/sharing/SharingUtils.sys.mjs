@@ -9,7 +9,6 @@ import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 let lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
   QRCodeGenerator:
     "moz-src:///browser/components/qrcode/QRCodeGenerator.sys.mjs",
 });
@@ -390,37 +389,6 @@ class SharingUtilsCls {
     if (links.length) {
       BrowserUtils.copyLinks(links);
     }
-  }
-
-  openPairingFlow(window) {
-    window.gSync.openPairDevice(null, "share-panel");
-  }
-
-  sendToDevice(panel, deviceId) {
-    let window = panel.documentGlobal;
-    let target = window.gSync
-      .getSendTabTargets()
-      .find(device => device.id == deviceId);
-    if (!target) {
-      return;
-    }
-
-    let browser = panel.contextBrowserToShare?.get();
-    let uri = browser && BrowserUtils.getShareableURL(browser.currentURI);
-    if (!uri) {
-      return;
-    }
-
-    window.gSync.sendTabsAndConfirm(
-      [
-        {
-          url: uri.spec,
-          title: browser.contentTitle,
-          private: lazy.PrivateBrowsingUtils.isBrowserPrivate(browser),
-        },
-      ],
-      [target]
-    );
   }
 
   shareOnWindows(node) {

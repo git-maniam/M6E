@@ -895,49 +895,11 @@ export class CreditCardSaveDoorhanger extends AutofillDoorhanger {
     return !!this.newRecord["cc-csc"];
   }
 
-  /**
-   * We have not yet sync address and credit card design. After syncing,
-   * we should be able to use the same "class"
-   */
   static content(panel) {
     return panel.querySelector(`.${CreditCardSaveDoorhanger.contentClass}`);
   }
   get content() {
     return CreditCardSaveDoorhanger.content(this.panel);
-  }
-
-  addCheckboxListener() {
-    if (!this.ui.options.checkbox) {
-      return;
-    }
-
-    const { checkbox } = this.panel;
-    if (checkbox && !checkbox.hidden) {
-      checkbox.addEventListener("command", event => {
-        let { secondaryButton, menubutton } =
-          event.target.closest("popupnotification");
-        let checked = event.target.checked;
-        Services.prefs.setBoolPref("services.sync.engine.creditcards", checked);
-        secondaryButton.disabled = checked;
-        menubutton.disabled = checked;
-        lazy.log.debug("Set creditCard sync to", checked);
-      });
-    }
-  }
-
-  removeCheckboxListener() {
-    if (!this.ui.options.checkbox) {
-      return;
-    }
-
-    const { checkbox } = this.panel;
-
-    if (checkbox && !checkbox.hidden) {
-      checkbox.removeEventListener(
-        "command",
-        this.ui.options.checkbox.callback
-      );
-    }
   }
 
   appendDescription() {
@@ -1080,16 +1042,6 @@ export class CreditCardSaveDoorhanger extends AutofillDoorhanger {
     // saving them off can turn it back on from here.
     if (FormAutofill.isAutofillCreditCardCVVSupported) {
       this.appendSecurityCodeCheckbox();
-    }
-  }
-
-  onEventCallback(state) {
-    super.onEventCallback(state);
-
-    if (state == "removed" || state == "dismissed") {
-      this.removeCheckboxListener();
-    } else if (state == "shown") {
-      this.addCheckboxListener();
     }
   }
 
@@ -1475,28 +1427,6 @@ CONTENT = {
       persistWhileVisible: true,
       hideClose: true,
       popupIconURL: "chrome://global/skin/icons/security.svg",
-
-      checkbox: {
-        get checked() {
-          return Services.prefs.getBoolPref("services.sync.engine.creditcards");
-        },
-        get label() {
-          // Only set the label when the fallowing conditions existed:
-          // - sync account is set
-          // - credit card sync is disabled
-          // - credit card sync is available
-          // otherwise return null label to hide checkbox.
-          return Services.prefs.prefHasUserValue("services.sync.username") &&
-            !Services.prefs.getBoolPref("services.sync.engine.creditcards") &&
-            Services.prefs.getBoolPref(
-              "services.sync.engine.creditcards.available"
-            )
-            ? l10n.formatValueSync(
-                "credit-card-doorhanger-credit-cards-sync-checkbox"
-              )
-            : null;
-        },
-      },
     },
   },
 

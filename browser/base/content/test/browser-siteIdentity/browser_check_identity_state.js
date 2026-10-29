@@ -116,7 +116,6 @@ add_task(async function chromeUITest() {
     "about:privatebrowsing",
     "about:robots",
     "about:serviceWorkers",
-    "about:sync-log",
     "about:unloads",
     "about:url-classifier",
     "about:webrtc",

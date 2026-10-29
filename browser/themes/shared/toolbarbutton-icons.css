@@ -94,18 +94,6 @@
   list-style-image: url("chrome://browser/skin/save.svg");
 }
 
-#sync-button {
-  list-style-image: url("chrome://browser/skin/synced-tabs.svg");
-}
-
-#send-tab-button {
-  list-style-image: url("chrome://browser/skin/send-tab.svg");
-
-  &:-moz-locale-dir(rtl) {
-    transform: scaleX(-1);
-  }
-}
-
 #characterencoding-button {
   list-style-image: url("chrome://browser/skin/characterEncoding.svg");
 }

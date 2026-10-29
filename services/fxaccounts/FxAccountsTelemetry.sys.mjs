@@ -2,21 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// FxA Telemetry support. For hysterical raisins, the actual implementation
-// is inside "sync". We should move the core implementation somewhere that's
-// sanely shared (eg, services-common?), but let's wait and see where we end up
-// first...
-
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
   CryptoUtils: "moz-src:///services/crypto/modules/utils.sys.mjs",
-
-  // We use this observers module because we leverage its support for richer
-  // "subject" data.
-  Observers: "resource://services-common/observers.sys.mjs",
 });
 
 import {
@@ -35,19 +26,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 export class FxAccountsTelemetry {
   constructor(fxai) {
     this._fxai = fxai;
-  }
-
-  // Records an event *in the Fxa/Sync ping*.
-  recordEvent(object, method, value, extra = undefined) {
-    // We need to ensure the telemetry module is loaded.
-    ChromeUtils.importESModule("resource://services-sync/telemetry.sys.mjs");
-    // Now it will be listening for the notifications...
-    lazy.Observers.notify("fxa:telemetry:event", {
-      object,
-      method,
-      value,
-      extra,
-    });
   }
 
   generateUUID() {
@@ -183,11 +161,6 @@ export class FxAccountsTelemetry {
       }
       if (!service) {
         extra.fxa = "true";
-        // We need a way to enumerate all services - but for now we just hard-code
-        // all possibilities here.
-        if (Services.prefs.prefHasUserValue("services.sync.username")) {
-          extra.sync = "true";
-        }
       } else if (service == "sync") {
         extra[service] = "true";
       } else {

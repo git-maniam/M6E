@@ -43,7 +43,6 @@ ChromeUtils.defineLazyGetter(this, "GeolocationTestUtils", () => {
 
 ChromeUtils.defineESModuleGetters(lazy, {
   UrlbarTestUtils: "resource://testing-common/UrlbarTestUtils.sys.mjs",
-  sinon: "resource://testing-common/Sinon.sys.mjs",
 });
 
 ChromeUtils.defineLazyGetter(this, "PlacesFrecencyRecalculator", () => {
@@ -287,69 +286,6 @@ function loadOmniboxAddon({ keyword }) {
   });
 }
 
-async function loadRemoteTab(url) {
-  await SpecialPowers.pushPrefEnv({
-    set: [
-      ["browser.urlbar.suggest.searches", false],
-      ["browser.urlbar.maxHistoricalSearchSuggestions", 0],
-      ["browser.urlbar.autoFill", false],
-      ["services.sync.username", "fake"],
-    ],
-  });
-
-  const REMOTE_TAB = {
-    id: "test",
-    type: "client",
-    lastModified: 1492201200,
-    name: "test",
-    clientType: "desktop",
-    tabs: [
-      {
-        type: "tab",
-        title: "tesrt",
-        url,
-        icon: UrlbarShared.ICON.DEFAULT,
-        client: "test",
-        lastUsed: Math.floor(Date.now() / 1000),
-      },
-    ],
-  };
-
-  const sandbox = lazy.sinon.createSandbox();
-  // eslint-disable-next-line no-undef
-  const syncedTabs = SyncedTabs;
-  const originalSyncedTabsInternal = syncedTabs._internal;
-  syncedTabs._internal = {
-    isConfiguredToSyncTabs: true,
-    hasSyncedThisSession: true,
-    getTabClients() {
-      return Promise.resolve([]);
-    },
-    syncTabs() {
-      return Promise.resolve();
-    },
-  };
-  const weaveXPCService = Cc["@mozilla.org/weave/service;1"].getService(
-    Ci.nsISupports
-  ).wrappedJSObject;
-  const oldWeaveServiceReady = weaveXPCService.ready;
-  weaveXPCService.ready = true;
-  sandbox
-    .stub(syncedTabs._internal, "getTabClients")
-    .callsFake(() => Promise.resolve(Cu.cloneInto([REMOTE_TAB], {})));
-
-  return {
-    async unload() {
-      sandbox.restore();
-      weaveXPCService.ready = oldWeaveServiceReady;
-      syncedTabs._internal = originalSyncedTabsInternal;
-      // Reset internal cache in UrlbarProviderRemoteTabs.
-      Services.obs.notifyObservers(null, "weave:engine:sync:finish", "tabs");
-      await SpecialPowers.popPrefEnv();
-    },
-  };
-}
-
 async function openPopup(input, testUtils = UrlbarTestUtils, win = window) {
   await testUtils.promisePopupOpen(win, async () => {
     await testUtils.inputIntoURLBar(win, input);
@@ -408,7 +344,6 @@ async function setup() {
     // Tests verify that no prefs have been changed so clear any
     // so clear any prefs we may have touched while running tests.
     let prefs = [
-      "services.sync.lastTabFetch",
       "services.settings.clock_skew_seconds",
       "services.settings.last_update_seconds",
       "services.settings.last_etag",

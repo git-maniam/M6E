@@ -9,10 +9,7 @@ add_task(async function test_tools_prefs() {
   const sidebar = document.querySelector("sidebar-main");
   await sidebar.updateComplete;
 
-  Services.prefs.setStringPref(
-    "sidebar.main.tools",
-    "syncedtabs,history,bookmarks"
-  );
+  Services.prefs.setStringPref("sidebar.main.tools", "history,bookmarks");
 
   // Open customize sidebar
   await SidebarTestUtils.ensureLauncherVisible(win);

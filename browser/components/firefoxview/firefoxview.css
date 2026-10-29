@@ -151,7 +151,6 @@ fxview-empty-state {
   }
 
   /* these illustrations need a larger width otherwise they look too small */
-  &.synced-tabs::part(image-container),
   &.recentlyclosed::part(image-container) {
     min-width: 250px;
   }

@@ -143,12 +143,6 @@ var localProviderModules = [
     supportedSAPs: ["newtab_searchbar", "searchbar", "urlbar"],
   },
   {
-    name: "UrlbarProviderRemoteTabs",
-    module:
-      "moz-src:///browser/components/urlbar/UrlbarProviderRemoteTabs.sys.mjs",
-    supportedSAPs: ["urlbar"],
-  },
-  {
     name: "UrlbarProviderRestrictKeywords",
     module:
       "moz-src:///browser/components/urlbar/UrlbarProviderRestrictKeywords.sys.mjs",

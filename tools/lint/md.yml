@@ -17,7 +17,6 @@ rumdl:
         - services/docs/
         - storage/docs/
         - taskcluster/docs/
-        - testing/tps/docs/
         - toolkit/docs/
         - tools/code-coverage/docs/
         - tools/fuzzing/docs/

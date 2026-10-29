@@ -256,13 +256,6 @@ menuseparator + #sidebar-extensions-separator {
   opacity: 0.8;
 }
 
-#sidebar-box[sidebarcommand="viewTabsSidebar"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
-  list-style-image: url(chrome://browser/skin/synced-tabs.svg);
-  -moz-context-properties: fill;
-  fill: currentColor;
-  opacity: 0.8;
-}
-
 /* WebExtension Sidebars */
 #sidebar-box[sidebarcommand$="-sidebar-action"] > #sidebar-header > #sidebar-switcher-target > #sidebar-icon {
   list-style-image: var(--webextension-menuitem-image, inherit);

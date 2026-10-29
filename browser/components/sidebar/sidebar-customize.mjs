@@ -16,7 +16,6 @@ const { XPCOMUtils } = ChromeUtils.importESModule(
 
 const l10nMap = new Map([
   ["viewHistorySidebar", "sidebar-menu-history-label"],
-  ["viewTabsSidebar", "sidebar-menu-synced-tabs-label"],
   ["viewBookmarksSidebar", "sidebar-menu-bookmarks-label"],
   ["viewOpenTabsSidebar", "sidebar-menu-open-tabs-label"],
   ["viewCPMSidebar", "sidebar-menu-contextual-password-manager-label"],
@@ -145,11 +144,6 @@ export class SidebarCustomize extends SidebarPage {
     e.preventDefault();
     this.getWindow().SidebarController.toggleTool(commandID);
     switch (commandID) {
-      case "viewTabsSidebar":
-        Glean.sidebarCustomize.syncedTabsEnabled.record({
-          checked: e.target.checked,
-        });
-        break;
       case "viewHistorySidebar":
         Glean.sidebarCustomize.historyEnabled.record({
           checked: e.target.checked,

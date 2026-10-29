@@ -67,8 +67,6 @@ https_first_disabled = true
 
 ["browser_policy_disable_feedback_commands.js"]
 
-["browser_policy_disable_fxaccounts.js"]
-
 ["browser_policy_disable_launch_on_login.js"]
 run-if = [
   "os == 'win'",

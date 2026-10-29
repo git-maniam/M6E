@@ -671,11 +671,6 @@ skip-if = [
   "os == 'android'", # Bug 1625257 - support non-Kinto storage.sync on Android
 ]
 
-["test_ext_storage_content_sync_kinto.js"]
-skip-if = [
-  "os == 'android' && debug",
-]
-
 ["test_ext_storage_idb_data_migration.js"]
 run-if = [
   "appname != 'thunderbird'",
@@ -737,22 +732,6 @@ skip-if = [
 ["test_ext_storage_sync.js"]
 skip-if = [
   "os == 'android'", # Bug 1625257 - support non-Kinto storage.sync on Android
-]
-
-["test_ext_storage_sync_kinto.js"]
-run-if = [
-  "appname != 'thunderbird'",
-]
-skip-if = [
-  "os == 'android'", # resource://services-sync not bundled with Android
-]
-
-["test_ext_storage_sync_kinto_crypto.js"]
-run-if = [
-  "appname != 'thunderbird'",
-]
-skip-if = [
-  "os == 'android'", # resource://services-sync not bundled with Android
 ]
 
 ["test_ext_storage_tab.js"]

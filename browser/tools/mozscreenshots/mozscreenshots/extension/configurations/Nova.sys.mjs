@@ -228,16 +228,6 @@ export var Nova = {
       },
     },
 
-    // B07 - Sidebar: Synced tabs panel
-    sidebarSyncedTabs: {
-      selectors: [":root"],
-      async applyConfig() {
-        let win = await reset();
-        await navigateTo(win, HOME_PAGE);
-        await win.SidebarController.show("viewTabsSidebar");
-      },
-    },
-
     // B09 - Horizontal tabs: 12+ tabs, horizontal layout
     horizontalTabsMany: {
       selectors: [":root"],

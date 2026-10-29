@@ -308,7 +308,6 @@ const extraMochitestTestPaths = [
   "layout/tables/test/",
   "layout/xul/test/",
   "parser/htmlparser/tests/mochitest/",
-  "services/sync/tests/tps/",
   "testing/mochitest/baselinecoverage/plain/",
   "testing/mochitest/tests/Harness_sanity/",
   "testing/mochitest/tests/python/files/",

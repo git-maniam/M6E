@@ -35,8 +35,6 @@ browser/components/asrouter/content/assets/windows-guidance-static.svg
 browser/components/asrouter/content/assets/windows-guidance.gif
 browser/components/controlcenter/content/assets/fox-concern.svg
 browser/components/firefoxview/content/history-empty.svg
-browser/components/firefoxview/content/synced-tabs-empty.svg
-browser/components/firefoxview/content/synced-tabs-error.svg
 browser/components/privatebrowsing/content/assets/focus-logo.svg
 browser/components/profiles/content/assets/kit-profiles-dark.svg
 browser/components/profiles/content/assets/kit-profiles-light.svg
@@ -87,9 +85,6 @@ browser/themes/shared/sidebar/firefox.svg
 browser/themes/shared/sidebar/foxy.svg
 browser/themes/shared/sidebar/kit-history-import.svg
 browser/themes/shared/sidebar/kit-page-history.svg
-browser/themes/shared/sidebar/kit-qr-tabs-devices-empty.svg
-browser/themes/shared/sidebar/kit-tabs-devices-error.svg
-browser/themes/shared/sidebar/kit-tabs-devices.svg
 devtools/client/themes/images/aboutdebugging-fenix-nightly.svg
 devtools/client/themes/images/aboutdebugging-fenix.svg
 devtools/client/themes/images/aboutdebugging-firefox-aurora.svg

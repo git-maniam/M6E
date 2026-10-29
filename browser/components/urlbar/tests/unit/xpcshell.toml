@@ -223,11 +223,6 @@ prefs = ["browser.urlbar.suggest.engines=true"]
 
 ["test_quickactions.js"]
 
-["test_remote_tabs.js"]
-skip-if = [
-  "!sync",
-]
-
 ["test_resultGroups.js"]
 
 ["test_result_highlights.js"]

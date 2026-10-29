@@ -63,17 +63,6 @@ this.formautofill = class extends ExtensionAPI {
       AutofillDataTypes.CREDIT_CARD
     );
 
-    // Reset the sync prefs in case the features were previously available
-    // but aren't now.
-    if (!creditCardAutofillAvailable) {
-      Services.prefs.clearUserPref(
-        "services.sync.engine.creditcards.available"
-      );
-    }
-    if (!addressAutofillAvailable) {
-      Services.prefs.clearUserPref("services.sync.engine.addresses.available");
-    }
-
     if (!addressAutofillAvailable && !creditCardAutofillAvailable) {
       Services.prefs.clearUserPref("dom.forms.autocomplete.formautofill");
       Glean.formautofill.availability.set(false);
@@ -85,28 +74,6 @@ this.formautofill = class extends ExtensionAPI {
     // support -- otherwise it'll return an empty string.
     Services.prefs.setBoolPref("dom.forms.autocomplete.formautofill", true);
     Glean.formautofill.availability.set(true);
-
-    // These "*.available" prefs determines whether the "addresses"/"creditcards" sync engine is
-    // available (ie, whether it is shown in any UI etc) - it *does not* determine
-    // whether the engine is actually enabled or not.
-    if (addressAutofillAvailable) {
-      Services.prefs.setBoolPref(
-        "services.sync.engine.addresses.available",
-        true
-      );
-    } else {
-      Services.prefs.clearUserPref("services.sync.engine.addresses.available");
-    }
-    if (creditCardAutofillAvailable) {
-      Services.prefs.setBoolPref(
-        "services.sync.engine.creditcards.available",
-        true
-      );
-    } else {
-      Services.prefs.clearUserPref(
-        "services.sync.engine.creditcards.available"
-      );
-    }
   }
   onStartup() {
     // We have to do this before actually determining if we're enabled, since

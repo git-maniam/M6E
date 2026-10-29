@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { EventEmitter } from "moz-src:///browser/components/syncedtabs/EventEmitter.sys.mjs";
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 
@@ -77,6 +76,32 @@ const MEDIA_SOURCE_L10NID_BY_TYPE = new Map([
   ["microphone", "webrtc-item-microphone"],
   ["audioCapture", "webrtc-item-audio-capture"],
 ]);
+
+class EventEmitter {
+  #events = new Map();
+
+  on(event, listener) {
+    if (this.#events.has(event)) {
+      this.#events.get(event).add(listener);
+    } else {
+      this.#events.set(event, new Set([listener]));
+    }
+  }
+
+  off(event, listener) {
+    this.#events.get(event)?.delete(listener);
+  }
+
+  emit(event, ...args) {
+    for (let listener of this.#events.get(event) ?? []) {
+      try {
+        listener.apply(this, args);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+}
 
 export var webrtcUI = {
   initialized: false,

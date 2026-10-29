@@ -24,9 +24,6 @@ tags = "search-telemetry"
 https_first_disabled = true
 tags = "search-telemetry"
 
-["browser_remotetab.js"]
-tags = "search-telemetry"
-
 ["browser_searchmode.js"]
 tags = "search-telemetry"
 support-files = [

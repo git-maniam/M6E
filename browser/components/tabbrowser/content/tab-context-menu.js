@@ -92,8 +92,6 @@ var TabContextMenu = {
           items: [
             "#context_shareSelectedTabs",
             "#context_shareSelectedTabsSeparator",
-            "#context_sendTabToDevice",
-            "#context_sendTabToDeviceSeparator",
           ],
         },
         {
@@ -244,8 +242,6 @@ var TabContextMenu = {
              */
             { selector: ".share-tab-url-item", optional: true },
             "#context_shareSelectedTabsSeparator",
-            "#context_sendTabToDevice",
-            "#context_sendTabToDeviceSeparator",
           ],
         },
         {
@@ -1053,16 +1049,6 @@ var TabContextMenu = {
 
     let selectAllTabs = document.getElementById("context_selectAllTabs");
     selectAllTabs.disabled = gBrowser.allTabsSelected();
-
-    gSync.updateTabContextMenu(aPopupMenu, this.contextTab);
-    if (this._altTabContextMenu) {
-      // gSync sets #context_sendTabToDevice's label dynamically (device / mobile
-      // / count), so the static data-alt-l10n-id mechanism can't own it; apply
-      // the alt wording here, after gSync.
-      document
-        .getElementById("context_sendTabToDevice")
-        .setAttribute("data-l10n-id", "tab-context-send-to-device2");
-    }
 
     let reopenInContainer = document.getElementById(
       "context_reopenInContainer"

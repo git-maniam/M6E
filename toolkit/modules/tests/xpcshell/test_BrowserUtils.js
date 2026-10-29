@@ -9,19 +9,9 @@ const { EnterprisePolicyTesting } = ChromeUtils.importESModule(
   "resource://testing-common/EnterprisePolicyTesting.sys.mjs"
 );
 
-const { Region } = ChromeUtils.importESModule(
-  "resource://gre/modules/Region.sys.mjs"
-);
-
 const { updateAppInfo } = ChromeUtils.importESModule(
   "resource://testing-common/AppInfo.sys.mjs"
 );
-
-// Helper to run tests for specific regions
-function setupRegions(home, current) {
-  Region._setHomeRegion(home || "");
-  Region._setCurrentRegion(current || "");
-}
 
 function setLanguage(language) {
   Services.locale.availableLocales = [language];
@@ -111,13 +101,6 @@ add_task(async function test_shouldShowRelayPromo() {
 });
 
 add_task(function test_getShareableURL() {
-  // Some test suites, specifically android, don't have this setup properly -- so we add it manually
-  if (!Preferences.get("services.sync.engine.tabs.filteredSchemes")) {
-    Preferences.set(
-      "services.sync.engine.tabs.filteredSchemes",
-      "about|resource|chrome|file|blob|moz-extension|data"
-    );
-  }
   // Empty shouldn't be sendable
   Assert.ok(!BrowserUtils.getShareableURL(""));
   // Valid

@@ -72,13 +72,7 @@ add_task(async function test_save_doorhanger_click_cancel_save() {
         },
       });
 
-      ok(
-        !SpecialPowers.Services.prefs.prefHasUserValue(SYNC_USERNAME_PREF),
-        "Sync account should not exist by default"
-      );
       await onPopupShown;
-      let cb = getDoorhangerCheckbox();
-      ok(cb.hidden, "Sync checkbox should be hidden");
       await clickDoorhangerButton(SECONDARY_BUTTON);
     }
   );

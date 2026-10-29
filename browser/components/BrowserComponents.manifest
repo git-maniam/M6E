@@ -104,7 +104,6 @@ category browser-window-sessionstore-initialized chrome://browser/content/browse
 # before they run.
 category browser-window-idle-tasks chrome://browser/content/browser.js#gReduceMotionManager gReduceMotionManager.init
 category browser-window-idle-tasks chrome://browser/content/browser.js#Win7Features Win7Features.onOpenWindow
-category browser-window-idle-tasks chrome://browser/content/browser-sync.js gSync.init
 category browser-window-idle-tasks chrome://browser/content/browser-thumbnails.js gBrowserThumbnails.init
 category browser-window-idle-tasks chrome://browser/content/browser-gestureSupport.js#gGestureSupport gGestureSupport.init
 category browser-window-idle-tasks chrome://browser/content/browser-gestureSupport.js#gHistorySwipeAnimation gHistorySwipeAnimation.init
@@ -145,7 +144,6 @@ category browser-window-unload chrome://browser/content/browser-places.js#Places
 category browser-window-unload chrome://browser/content/browser-places.js#BookmarkingUI BookmarkingUI.uninit
 category browser-window-unload chrome://browser/content/browser-gestureSupport.js#gGestureSupport gGestureSupport.uninit
 category browser-window-unload chrome://browser/content/browser-gestureSupport.js#gHistorySwipeAnimation gHistorySwipeAnimation.uninit
-category browser-window-unload chrome://browser/content/browser-sync.js gSync.uninit
 
 # Teardown for `browser-window-delayed-startup` consumers. Fired only when the
 # window's delayed startup actually ran.

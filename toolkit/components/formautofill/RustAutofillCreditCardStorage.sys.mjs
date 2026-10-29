@@ -709,17 +709,4 @@ export class RustAutofillCreditCardsAdapter extends RustAutofillAdapterBase {
     exported["cc-number"] = number;
     return exported;
   }
-
-  /**
-   * The store's bridged sync engine, driven through mozIBridgedSyncEngine.
-   *
-   * This is how the Rust store syncs: change detection and reconciliation
-   * happen inside Rust, so none of the per-record sync methods on the JSON
-   * collection have a counterpart here. BridgedCreditCardsEngine drives it.
-   *
-   * @returns {Promise<CreditCardsBridgedEngine>}
-   */
-  async bridgedEngine() {
-    return (await this._store()).creditCardsBridgedEngine();
-  }
 }

@@ -196,7 +196,6 @@ treeherder:
         'Sel-esr': 'Snap selenium ESR'
         'Flatpak': 'Flatpak image generation'
         'langpack': 'Langpack sigatures and uploads'
-        'TPS': 'Sync tests'
         'UpInt': 'MAR integrity tests'
         'UV': 'Update verify'
         'UVnext': 'Update verify for esr-next'

@@ -80,9 +80,6 @@ with Files("test/browser-startup/**"):
 with Files("test/browser-static/**"):
     BUG_COMPONENT = ("Firefox", "General")
 
-with Files("test/browser-sync/**"):
-    BUG_COMPONENT = ("Firefox", "Sync")
-
 with Files("test/browser-tabdialogs/**"):
     BUG_COMPONENT = ("Firefox", "Tabbed Browser")
 
@@ -145,9 +142,6 @@ with Files("browser-profiles.js"):
 
 with Files("browser-safebrowsing.js"):
     BUG_COMPONENT = ("Toolkit", "Safe Browsing")
-
-with Files("browser-sync.js"):
-    BUG_COMPONENT = ("Firefox", "Sync")
 
 with Files("contentSearch*"):
     BUG_COMPONENT = ("Firefox", "Search")

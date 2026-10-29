@@ -13,7 +13,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   RemoteL10n: "resource:///modules/asrouter/RemoteL10n.sys.mjs",
   SpecialMessageActions:
     "resource://messaging-system/lib/SpecialMessageActions.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
+  UIState: "resource://gre/modules/UIState.sys.mjs",
 });
 
 export const MenuMessage = {
@@ -63,7 +63,7 @@ export const MenuMessage = {
       }
 
       case this.SOURCES.PXI_MENU: {
-        this.showPxiMenuMessage(browser, message, force);
+        this.showPxiMenuMessage(browser, message);
         break;
       }
     }
@@ -188,7 +188,7 @@ export const MenuMessage = {
     return msgContainer;
   },
 
-  async showPxiMenuMessage(browser, message, force) {
+  async showPxiMenuMessage(browser, message) {
     const win = browser.documentGlobal;
     const { document } = win;
     const msgContainer = this.hidePxiMenuMessage(browser);
@@ -227,13 +227,6 @@ export const MenuMessage = {
       msgElement.style.flex = "1";
     }
     msgContainer.appendChild(msgElement);
-
-    if (force) {
-      await win.gSync.toggleAccountPanel(
-        document.getElementById("fxa-toolbar-menu-button"),
-        new MouseEvent("mousedown")
-      );
-    }
   },
 
   hidePxiMenuMessage(browser) {

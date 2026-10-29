@@ -10,5 +10,4 @@ XPCSHELL_TESTS_MANIFESTS += ["tests/unit/xpcshell.toml"]
 MOZ_SRC_FILES += [
     "modules/jwcrypto.sys.mjs",
     "modules/utils.sys.mjs",
-    "modules/WeaveCrypto.sys.mjs",
 ]

@@ -685,24 +685,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bookmark_sync"
-version = "0.1.0"
-dependencies = [
- "atomic_refcell",
- "cstr",
- "dogear",
- "libc",
- "log",
- "moz_task",
- "nserror",
- "nsstring",
- "storage",
- "storage_variant",
- "url",
- "xpcom",
-]
-
-[[package]]
 name = "breach-alerts"
 version = "0.1.0"
 dependencies = [
@@ -3005,7 +2987,6 @@ dependencies = [
  "backgroundtaskregistrar",
  "binary_http",
  "bitsdownload",
- "bookmark_sync",
  "buildid_reader_ffi",
  "cascade_bloom_filter",
  "cert_storage",

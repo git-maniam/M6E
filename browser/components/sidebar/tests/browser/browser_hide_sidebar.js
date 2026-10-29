@@ -49,7 +49,7 @@ add_setup(async () => {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["sidebar.animation.enabled", false],
-      ["sidebar.main.tools", "syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "history,bookmarks"],
       ["sidebar.updatedBookmarks.enabled", true],
       [VERTICAL_TABS_PREF, false],
     ],
@@ -226,7 +226,7 @@ add_task(async function test_switcher_label_for_tool_missing_from_pref() {
   // A panel can be opened without being one of the enabled tools, e.g. with the
   // keyboard shortcut or the View menu and we don't want to show an empty string.
   await SpecialPowers.pushPrefEnv({
-    set: [["sidebar.main.tools", "syncedtabs,history"]],
+    set: [["sidebar.main.tools", "history"]],
   });
 
   info("Open the bookmarks panel while bookmarks isn't an enabled tool.");

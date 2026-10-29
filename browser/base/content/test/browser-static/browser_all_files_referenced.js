@@ -68,9 +68,6 @@ var gExceptionPaths = [
   // Localization file added programatically in FormAutofillUtils.sys.mjs
   "resource://gre/localization/en-US/toolkit/formautofill",
 
-  // Exclude all services-automation because they are used through webdriver
-  "resource://gre/modules/services-automation/",
-
   // Paths from this folder are constructed in NetErrorParent.sys.mjs based on
   // the type of cert or net error the user is encountering.
   "chrome://global/content/neterror/supportpages/",
@@ -414,19 +411,6 @@ for (let entry of ignorableAllowlist) {
 }
 
 if (!isDevtools) {
-  // services/sync/modules/service.sys.mjs
-  for (let module of [
-    "addons.sys.mjs",
-    "bookmarks.sys.mjs",
-    "forms.sys.mjs",
-    "history.sys.mjs",
-    "passwords.sys.mjs",
-    "prefs.sys.mjs",
-    "tabs.sys.mjs",
-    "extension-storage.sys.mjs",
-  ]) {
-    allowlist.add("resource://services-sync/engines/" + module);
-  }
   // resource://devtools/shared/worker/loader.js,
   // resource://devtools/shared/loader/builtin-modules.js
   if (!AppConstants.ENABLE_WEBDRIVER) {

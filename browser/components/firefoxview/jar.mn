@@ -15,5 +15,3 @@ browser.jar:
     content/browser/firefoxview/fxview-tab-row.css
     content/browser/firefoxview/viewpage.mjs
     content/browser/firefoxview/history-empty.svg (content/history-empty.svg)
-    content/browser/firefoxview/synced-tabs-empty.svg (content/synced-tabs-empty.svg)
-    content/browser/firefoxview/synced-tabs-error.svg (content/synced-tabs-error.svg)

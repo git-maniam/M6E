@@ -90,11 +90,7 @@ function getVisibleMenuItems(aMenu) {
         // their existing ones to avoid disorienting users by changing them.
         // The duplicate access keys do work, you just have to hit the access
         // key more than once to use them.
-        // This test did not catch the duplicate access keys initially because
-        // it only tests the entries in the context menu by default and the
-        // Send Tab entry was originally only in the context menu if the user is
-        // signed in. See Bug 2035895.
-        const allowedAccessKeyDuplicates = ["context-sendlinktodevice"];
+        const allowedAccessKeyDuplicates = [];
 
         if (
           accessKeys[key] &&

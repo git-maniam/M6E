@@ -6,5 +6,4 @@ This is the nascent documentation of the Firefox services.
 :maxdepth: 2
 
 settings/index
-sync/index
 ```

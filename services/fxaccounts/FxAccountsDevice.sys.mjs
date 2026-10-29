@@ -16,8 +16,6 @@ import {
   PREF_ACCOUNT_ROOT,
 } from "resource://gre/modules/FxAccountsCommon.sys.mjs";
 
-import { DEVICE_TYPE_DESKTOP } from "resource://services-sync/constants.sys.mjs";
-
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -157,7 +155,7 @@ export class FxAccountsDevice {
   }
 
   getLocalType() {
-    return DEVICE_TYPE_DESKTOP;
+    return "desktop";
   }
 
   /**

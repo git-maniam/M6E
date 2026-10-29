@@ -11,7 +11,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
   PrivacyMetricsService:
     "moz-src:///browser/components/protections/PrivacyMetricsService.sys.mjs",
   PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
-  UIState: "resource://services-sync/UIState.sys.mjs",
+  UIState: "resource://gre/modules/UIState.sys.mjs",
   FirefoxRelay: "resource://gre/modules/FirefoxRelay.sys.mjs",
   ProfileAge: "resource://gre/modules/ProfileAge.sys.mjs",
   SpecialMessageActions:

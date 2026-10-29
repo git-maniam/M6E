@@ -15,5 +15,3 @@ support-files = [
 ["test_setting_control_options.html"]
 
 ["test_setting_group.html"]
-
-["test_sync_device_name.html"]

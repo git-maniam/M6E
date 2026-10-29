@@ -229,7 +229,7 @@ var gBrowserInit = {
       }
     });
 
-    updateFxaToolbarMenu(gFxaToolbarEnabled, true);
+    updateFxaToolbarMenu(gFxaToolbarEnabled);
 
     updatePrintCommands(gPrintEnabled);
 

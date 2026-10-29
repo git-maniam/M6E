@@ -153,10 +153,6 @@ document.addEventListener(
           DownloadsIndicatorView.onCommand(event);
           break;
 
-        case "fxa-toolbar-menu-button":
-          gSync.toggleAccountPanel(element, event);
-          break;
-
         case "unified-extensions-button":
           gUnifiedExtensions.togglePanel(event);
           break;
@@ -419,10 +415,6 @@ document.addEventListener(
 
         case "downloads-button":
           DownloadsIndicatorView.onCommand(event);
-          break;
-
-        case "fxa-toolbar-menu-button":
-          gSync.toggleAccountPanel(element, event);
           break;
 
         case "unified-extensions-button":

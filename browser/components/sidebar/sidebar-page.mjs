@@ -222,35 +222,28 @@ export class SidebarPage extends MozLitElement {
           ),
         });
         break;
-      case "sidebar-synced-tabs-context-open-in-tab":
-        this.topWindow.openTrustedLinkIn(this.triggerNode.url, "tab");
-        break;
       case "sidebar-history-context-forget-site":
         this.forgetAboutThisSite().catch(console.error);
         break;
       case "sidebar-history-context-open-in-window":
-      case "sidebar-synced-tabs-context-open-in-window":
       case "sidebar-opentabs-context-open-in-window":
         this.topWindow.openTrustedLinkIn(this.triggerNode.url, "window", {
           private: false,
         });
         break;
       case "sidebar-history-context-open-in-private-window":
-      case "sidebar-synced-tabs-context-open-in-private-window":
       case "sidebar-opentabs-context-open-in-private-window":
         this.topWindow.openTrustedLinkIn(this.triggerNode.url, "window", {
           private: true,
         });
         break;
       case "sidebar-history-context-copy-link":
-      case "sidebar-synced-tabs-context-copy-link":
       case "sidebar-opentabs-context-copy-link":
         lazy.BrowserUtils.copyLink(
           this.triggerNode.url,
           this.triggerNode.title
         );
         break;
-      case "sidebar-synced-tabs-context-bookmark-tab":
       case "sidebar-history-context-bookmark-page":
         promise = this.topWindow.PlacesCommandHook.bookmarkLink(
           this.triggerNode.url,

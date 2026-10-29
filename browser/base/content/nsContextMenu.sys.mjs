@@ -371,7 +371,6 @@ export class nsContextMenu {
     this.initMiscItems();
     this.initSpellingItems();
     this.initSaveItems();
-    this.initSyncItems();
     this.initClipboardItems();
     this.initMediaPlayerItems();
     this.initLeaveDOMFullScreenItems();
@@ -1036,11 +1035,6 @@ export class nsContextMenu {
     let disabledAttr = this.#canStripParams() ? null : true;
     this.setItemAttr("context-stripOnShareLink", "disabled", disabledAttr);
 
-    let sendLinkSeparator = this.document.getElementById(
-      "context-sep-sendlinktodevice"
-    );
-    sendLinkSeparator.toggleAttribute("ensureHidden", !this.syncItemsShown);
-
     this.showItem("context-copyvideourl", this.onVideo);
     this.showItem("context-copyaudiourl", this.onAudio);
     this.setItemAttr("context-copyvideourl", "disabled", !this.mediaURL);
@@ -1279,10 +1273,6 @@ export class nsContextMenu {
     this.showItem("fill-login", true);
 
     this.setItemAttr("passwordmgr-items-separator", "ensureHidden", null);
-  }
-
-  initSyncItems() {
-    this.syncItemsShown = this.window.gSync.updateContentContextMenu(this);
   }
 
   initViewSourceItems() {

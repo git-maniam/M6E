@@ -8,7 +8,7 @@ add_setup(async () => {
     set: [
       [VERTICAL_TABS_PREF, true],
       [SIDEBAR_VISIBILITY_PREF, "always-show"],
-      ["sidebar.main.tools", "syncedtabs,history,bookmarks"],
+      ["sidebar.main.tools", "history,bookmarks"],
     ],
   });
   await SidebarTestUtils.waitForTabstripOrientation(window, "vertical");

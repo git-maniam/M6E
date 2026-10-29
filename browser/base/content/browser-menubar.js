@@ -39,32 +39,8 @@ document.addEventListener(
           break;
 
         // == history-menu ==
-        case "sync-tabs-menuitem":
-          gSync.openSyncedTabsPanel();
-          break;
-        case "historyRemoteTabsPromo":
-          gSync.handleSyncPromoAction(
-            event.target.dataset.action,
-            "remote-tabs-top-menu-history"
-          );
-          break;
         case "hiddenTabsMenu":
           gTabsPanel.showHiddenTabsPanel(event, "hidden-tabs-menuitem");
-          break;
-        case "sync-setup":
-          gSync.openPrefs("menubar");
-          break;
-        case "sync-enable":
-          gSync.openPrefs("menubar");
-          break;
-        case "sync-unverifieditem":
-          gSync.openPrefs("menubar");
-          break;
-        case "sync-syncnowitem":
-          gSync.doSync(event);
-          break;
-        case "sync-reauthitem":
-          gSync.openSignInAgainPage("menubar");
           break;
         case "hiddenUndoCloseWindow":
           SessionWindowUI.undoCloseWindow(0);
