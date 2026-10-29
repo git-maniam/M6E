@@ -13,7 +13,6 @@ transforms:
 
 kind-dependencies:
     - build-signing
-    - upload-symbols
 
 only-for-attributes:
     - nightly
