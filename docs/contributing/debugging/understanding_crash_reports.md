@@ -311,4 +311,3 @@ occasionally.
 - [A talk about understanding crash
   reports](https://air.mozilla.org/a-talk-about-understanding-crash-reports/),
   by David Baron, from March 2016.
-- {doc}`/crash-reporting/searching_crash_reports`
