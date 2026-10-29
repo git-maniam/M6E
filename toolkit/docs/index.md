@@ -13,7 +13,6 @@ components/backgroundtasks/index
 components/downloads/index
 internal-urls
 search/index
-components/normandy/normandy/index
 components/messaging-system/docs/index
 components/pictureinpicture/pictureinpicture/index
 components/prompts/prompts/index
