@@ -89,7 +89,6 @@ SKIPPED_PATHS = [
 # the config variables named here (modules/libpref/moz.build) and for each EME
 # module (browser/moz.build: MOZ_WIDEVINE_EME). They are not in ACDEFINES.
 MOZBUILD_DEFINES = (
-    "MOZ_SERVICES_SYNC",
     "MOZ_WEBEXT_WEBIDL_ENABLED",
     "MOZ_ARTIFACT_BUILDS",
 )
@@ -116,7 +115,6 @@ BUILTIN_DEFINES = {
     "MOZ_APPLEMEDIA": 1,
     "MOZ_FFMPEG": 1,
     "MOZ_PROXY_DIRECT_FAILOVER": 1,
-    "MOZ_SERVICES_SYNC": 1,
     "MOZ_WEBEXT_WEBIDL_ENABLED": 1,
     "MOZ_WIDEVINE_EME": 1,
     "ENABLE_JIT_SIMD": 1,
