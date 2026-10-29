@@ -151,7 +151,6 @@ const PREFERENCES_PANES = [
   "paneAppearance",
   "paneContainers",
   "paneDownloads",
-  "paneExperimental",
   "paneGeneral",
   "paneHome",
   "paneLanguages",

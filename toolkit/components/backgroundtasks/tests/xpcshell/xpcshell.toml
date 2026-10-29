@@ -6,7 +6,6 @@ run-if = [
 head = "head.js"
 support-files = [
   "CatBackgroundTaskRegistrationComponents.manifest",
-  "experiment.json",
 ]
 
 ["test_backgroundtask_automaticrestart.js"]
@@ -19,14 +18,6 @@ run-if = [
 
 ["test_backgroundtask_exitcodes.js"]
 requesttimeoutfactor = 2  # Slow on Windows
-
-["test_backgroundtask_experiments.js"]
-requesttimeoutfactor = 6  # Slow on Linux and Windows
-tags = "remote-settings"
-run-if = [
-  "buildapp == 'browser'",
-]
-reason = "ASRouter is Firefox-only."
 
 ["test_backgroundtask_help.js"]
 

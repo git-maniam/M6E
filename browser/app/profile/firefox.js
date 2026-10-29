@@ -1327,8 +1327,6 @@ pref("accessibility.typeaheadfind.timeout", 5000);
 pref("accessibility.typeaheadfind.linksonly", false);
 pref("accessibility.typeaheadfind.flashBar", 1);
 
-// Whether we had to hide the "Firefox Labs" section because it would be empty.
-pref("browser.preferences.experimental.hidden", false);
 // Whether we show the "More from Mozilla" section.
 pref("browser.preferences.moreFromMozilla", true);
 // Whether we show the "AI Controls" pane.
@@ -1549,7 +1547,7 @@ pref("browser.topsites.contile.endpoint", "https://contile.services.mozilla.com/
 pref("browser.newtab.preload", true);
 
 // For further detail on the TOU prefs below, see the `preonboarding` feature in
-// FeatureManifest.yaml
+// toolkit/components/nimbus/ExperimentAPI.sys.mjs
 // Version of the TOU that the user last accepted
 pref("termsofuse.acceptedVersion", 0);
 // Stringified timestamp of when the user last accepted the TOU
@@ -1685,7 +1683,7 @@ pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", 
 pref("browser.newtabpage.activity-stream.asrouter.providers.message-groups", "{\"id\":\"message-groups\",\"enabled\":true,\"type\":\"remote-settings\",\"collection\":\"message-groups\",\"updateCycleInMs\":3600000}");
 pref("browser.newtabpage.activity-stream.asrouter.providers.onboarding", "{\"id\":\"onboarding\",\"type\":\"local\",\"localProvider\":\"OnboardingMessageProvider\",\"enabled\":true,\"exclude\":[]}");
 pref("browser.newtabpage.activity-stream.asrouter.providers.cfr", "{\"id\":\"cfr\",\"enabled\":true,\"type\":\"remote-settings\",\"collection\":\"cfr\",\"updateCycleInMs\":3600000}");
-pref("browser.newtabpage.activity-stream.asrouter.providers.messaging-experiments", "{\"id\":\"messaging-experiments\",\"enabled\":true,\"type\":\"remote-experiments\",\"updateCycleInMs\":3600000}");
+pref("browser.newtabpage.activity-stream.asrouter.providers.messaging-experiments", "{\"id\":\"messaging-experiments\",\"enabled\":false,\"type\":\"remote-experiments\",\"updateCycleInMs\":3600000}");
 
 // ASRouter user prefs
 pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", true);
@@ -1850,18 +1848,6 @@ pref("browser.newtabpage.sponsor-protection.enabled", true);
 pref("browser.aboutwelcome.enabled", true);
 // Used to set multistage welcome UX
 pref("browser.aboutwelcome.screens", "");
-// Whether to gate loading about:welcome on Nimbus experiments having loaded.
-// The gate shows a splash screen while experiments load, then auto-advances.
-// On platforms where experiments are already loaded when the modal opens,
-// skipSplashIfLoaded causes the splash to be skipped via screen targeting.
-pref("browser.aboutwelcome.experimentsGate.enabled", true);
-// Whether to skip showing the experiment loading splash screen if Nimbus is
-// already initialized when the preonboarding modal's screen targeting is
-// evaluated.
-pref("browser.aboutwelcome.experimentsGate.skipSplashIfLoaded", true);
-// Minimum and maximum time (ms) to display the experiment-loading splash screen.
-pref("browser.aboutwelcome.experimentsGate.minDisplayMs", 3000);
-pref("browser.aboutwelcome.experimentsGate.maxDisplayMs", 8000);
 
 // Global Nova redesign enabled pref
 pref("browser.nova.enabled", true);
@@ -1869,43 +1855,8 @@ pref("browser.nova.enabled", true);
 // Disable singleProfile messaging mitigation (Bug 1963213) for multiProfile feature users
 pref("messaging-system.profile.singleProfileMessaging.disable", true);
 
-// Experiment Manager
 // See Console.sys.mjs LOG_LEVELS for all possible values
 pref("messaging-system.log", "warn");
-pref("messaging-system.rsexperimentloader.collection_id", "nimbus-desktop-experiments");
-pref("nimbus.debug", false);
-pref("nimbus.validation.enabled", true);
-pref("nimbus.firstUpdateComplete", false);
-
-// Should Nimbus write to the shared ProfilesDatastoreService? Only used by tests.
-// TODO(bug 1967779): Require the ProfileDatastoreService by default and remove
-// this pref.
-pref("nimbus.profilesdatastoreservice.enabled", true);
-
-// Should Nimbus read from the shared ProfilesDatastoreService?
-// TODO(bug 2032586): Remove this pref.
-pref("nimbus.profilesdatastoreservice.read.enabled", true);
-
-// Should Nimbus sync experiment unenrollments from other profiles?
-// TODO(bug 2032586): Remove this pref.
-pref("nimbus.profilesdatastoreservice.sync.enabled", true);
-
-// Enable the targeting context telemetry by default, but allow it to be
-// disabled, e.g., for artifact builds.
-// See-also: https://bugzilla.mozilla.org/show_bug.cgi?id=1936317
-// See-also: https://bugzilla.mozilla.org/show_bug.cgi?id=1936319
-#if defined(MOZ_ARTIFACT_BUILDS)
-  pref("nimbus.telemetry.targetingContextEnabled", false);
-#else
-  pref("nimbus.telemetry.targetingContextEnabled", true);
-#endif
-
-// Enable Rollouts by default.
-pref("nimbus.rollouts.enabled", true);
-
-// Nimbus QA prefs. Used to monitor pref-setting test experiments.
-pref("nimbus.qa.pref-1", "default");
-pref("nimbus.qa.pref-2", "default");
 
 // Startup Crash Tracking
 // number of startup crashes that can occur before starting into safe mode automatically
@@ -3097,13 +3048,6 @@ pref("browser.profiles.enabled", true);
 pref("browser.profiles.profile-name.updated", false);
 // Whether to allow the user to merge profile data
 pref("browser.profiles.sync.allow-danger-merge", false);
-
-pref("startup.homepage_override_url_nimbus", "");
-// These prefs are referring to the Fx update version
-pref("startup.homepage_override_nimbus_maxVersion", "");
-pref("startup.homepage_override_nimbus_minVersion", "");
-// Pref to disable all What's New pages
-pref("startup.homepage_override_nimbus_disable_wnp", false);
 
 // Pref to enable the content relevancy feature.
 pref("toolkit.contentRelevancy.enabled", false);

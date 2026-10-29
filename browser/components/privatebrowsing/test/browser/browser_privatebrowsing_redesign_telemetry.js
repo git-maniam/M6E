@@ -155,37 +155,3 @@ add_task(async function test_basics_modal_shown_recorded() {
   await BrowserTestUtils.closeWindow(win);
   await SpecialPowers.popPrefEnv();
 });
-
-// Enrollment says who was assigned a branch; exposure says who saw it.
-add_task(async function test_redesign_exposure_recorded() {
-  await Services.fog.testFlushAllChildren();
-  Services.fog.testResetFOG();
-
-  const doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "privateWindowRedesign",
-    value: { pbwRedesignGate: true },
-  });
-
-  await SpecialPowers.pushPrefEnv({
-    set: [
-      [NOVA_PREF, true],
-      [REDESIGN_PREF, true],
-      [SHOWN_PREF, true],
-    ],
-  });
-
-  let { win } = await openTabAndWaitForRender();
-
-  // Flush on each poll: the exposure is recorded in the content process, so
-  // the parent cannot see it until the child data is flushed.
-  await TestUtils.waitForCondition(async () => {
-    await Services.fog.testFlushAllChildren();
-    return Glean.nimbusEvents.exposure
-      .testGetValue("events")
-      ?.some(e => e.extra.feature_id === "privateWindowRedesign");
-  }, "An exposure event is recorded for the redesign feature");
-
-  await BrowserTestUtils.closeWindow(win);
-  await SpecialPowers.popPrefEnv();
-  await doExperimentCleanup();
-});

@@ -362,8 +362,6 @@ pref("extensions.autoDisableScopes", 15);
 // Ask what to do with file types not seen before, instead of opening them.
 pref("browser.download.always_ask_before_handling_new_types", true);
 pref("browser.download.manager.addToRecentDocs", false);
-// Nimbus rollouts can't be turned back on (P4.8g, D30).
-pref("nimbus.rollouts.enabled", false, locked);
 
 // The PDF viewer is part of the always-light interface (Phase 1): pdf.js runs
 // as web content, so the light-theme rule for the interface doesn't reach it.

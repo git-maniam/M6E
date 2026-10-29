@@ -67,7 +67,6 @@ Preferences.addAll([
   { id: "browser.crashReports.unsubmittedCheck.autoSubmit2", type: "bool" },
 
   { id: PREF_NORMANDY_ENABLED, type: "bool" },
-  { id: "nimbus.rollouts.enabled", type: "bool" },
 
   // Preference instances for prefs that we need to monitor while the page is open.
   { id: PREF_OPT_OUT_STUDIES_ENABLED, type: "bool" },
@@ -441,19 +440,6 @@ Preferences.addSetting({
 });
 Preferences.addSetting({
   id: "viewShieldStudies",
-});
-Preferences.addSetting({
-  id: "enableNimbusRollouts",
-  pref: "nimbus.rollouts.enabled",
-  visible: () =>
-    lazy.AppConstants.MOZ_DATA_REPORTING && lazy.AppConstants.MOZ_NORMANDY,
-  disabled: () => !Services.policies.isAllowed("NimbusRollouts"),
-  get: value => {
-    if (!Services.policies.isAllowed("NimbusRollouts")) {
-      return false;
-    }
-    return value;
-  },
 });
 Preferences.addSetting({
   id: "submitUsagePingBox",
@@ -841,11 +827,6 @@ SettingGroupManager.registerGroups({
             ],
           },
 
-          {
-            id: "enableNimbusRollouts",
-            l10nId: "nimbus-rollouts",
-            supportPage: "remote-improvements",
-          },
           {
             id: "submitUsagePingBox",
             l10nId: "data-collection-usage-ping",

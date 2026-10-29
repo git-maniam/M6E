@@ -1374,14 +1374,6 @@ export var Policies = {
     },
   },
 
-  DisableRemoteImprovements: {
-    onBeforeAddons(manager, param) {
-      if (param) {
-        manager.disallowFeature("NimbusRollouts");
-      }
-    },
-  },
-
   DisableRemoteSettingsAndAcceptSecurityConsequences: {
     onBeforeUIStartup(manager, param) {
       if (param) {
@@ -3854,9 +3846,6 @@ export var Policies = {
           param.MoreFromMozilla,
           param.Locked
         );
-      }
-      if ("FirefoxLabs" in param && !param.FirefoxLabs) {
-        manager.disallowFeature("FirefoxLabs");
       }
     },
   },

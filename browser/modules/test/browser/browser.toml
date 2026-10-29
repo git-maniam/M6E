@@ -31,8 +31,6 @@ run-if = [
 
 ["browser_PermissionUI.js"]
 
-["browser_PermissionUI_notification_nimbus.js"]
-
 ["browser_PermissionUI_prompts.js"]
 
 ["browser_ProcessHangNotifications.js"]
@@ -70,7 +68,6 @@ run-if = [
 ]
 
 ["browser_UpdatePolicyEnforcer.js"]
-
 
 ["browser_UsageTelemetry.js"]
 https_first_disabled = true

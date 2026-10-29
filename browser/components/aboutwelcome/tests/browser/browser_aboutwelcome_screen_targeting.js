@@ -1,15 +1,7 @@
 "use strict";
 
-const { ASRouterScreenUtils } = ChromeUtils.importESModule(
-  "resource:///modules/asrouter/ASRouterScreenUtils.sys.mjs"
-);
-
 const { ASRouterTargeting } = ChromeUtils.importESModule(
   "resource:///modules/asrouter/ASRouterTargeting.sys.mjs"
-);
-
-const { OnboardingMessageProvider } = ChromeUtils.importESModule(
-  "resource:///modules/asrouter/OnboardingMessageProvider.sys.mjs"
 );
 
 const { ClientEnvironmentBase } = ChromeUtils.importESModule(
@@ -28,13 +20,6 @@ const OS_WITH_WIN_PIN_PROMPT = {
 };
 const OS_MAC = { isMac: true, isWindows: false };
 const OS_WINDOWS_ONE_CLICK_DEFAULT = { isMac: false, isWindows: true };
-
-function makeSplashScreen() {
-  const message = OnboardingMessageProvider.getPreonboardingMessages().find(
-    m => m.id === "NEW_USER_TOU_ONBOARDING"
-  );
-  return message.screens.find(s => s.id === "TOU_ONBOARDING_LOADING");
-}
 
 const TEST_DEFAULT_CONTENT = [
   {
@@ -491,98 +476,3 @@ add_task(
     sandbox.restore();
   }
 );
-
-add_task(
-  async function test_splash_screen_removed_when_experiments_gate_disabled() {
-    await SpecialPowers.pushPrefEnv({
-      set: [["browser.aboutwelcome.experimentsGate.enabled", false]],
-    });
-
-    const result = await ASRouterScreenUtils.evaluateTargetingAndRemoveScreens([
-      makeSplashScreen(),
-    ]);
-    Assert.equal(
-      result.length,
-      0,
-      "Splash screen removed when experimentsGate.enabled is false"
-    );
-
-    await SpecialPowers.popPrefEnv();
-  }
-);
-
-add_task(
-  async function test_splash_screen_kept_when_experiments_gate_enabled() {
-    await SpecialPowers.pushPrefEnv({
-      set: [
-        ["browser.aboutwelcome.experimentsGate.enabled", true],
-        ["browser.aboutwelcome.experimentsGate.skipSplashIfLoaded", false],
-      ],
-    });
-
-    const result = await ASRouterScreenUtils.evaluateTargetingAndRemoveScreens([
-      makeSplashScreen(),
-    ]);
-    Assert.equal(
-      result.length,
-      1,
-      "Splash screen kept when experimentsGate.enabled is true"
-    );
-
-    await SpecialPowers.popPrefEnv();
-  }
-);
-
-add_task(
-  async function test_splash_screen_removed_when_nimbus_already_loaded() {
-    const sandbox = sinon.createSandbox();
-    sandbox
-      .stub(ASRouterTargeting.Environment, "experimentsLoaded")
-      .get(() => true);
-
-    await SpecialPowers.pushPrefEnv({
-      set: [
-        ["browser.aboutwelcome.experimentsGate.enabled", true],
-        ["browser.aboutwelcome.experimentsGate.skipSplashIfLoaded", true],
-      ],
-    });
-
-    const result = await ASRouterScreenUtils.evaluateTargetingAndRemoveScreens([
-      makeSplashScreen(),
-    ]);
-    Assert.equal(
-      result.length,
-      0,
-      "Splash screen removed when skipSplashIfLoaded is true and Nimbus is already loaded"
-    );
-
-    sandbox.restore();
-    await SpecialPowers.popPrefEnv();
-  }
-);
-
-add_task(async function test_splash_screen_kept_when_nimbus_not_yet_loaded() {
-  const sandbox = sinon.createSandbox();
-  sandbox
-    .stub(ASRouterTargeting.Environment, "experimentsLoaded")
-    .get(() => false);
-
-  await SpecialPowers.pushPrefEnv({
-    set: [
-      ["browser.aboutwelcome.experimentsGate.enabled", true],
-      ["browser.aboutwelcome.experimentsGate.skipSplashIfLoaded", true],
-    ],
-  });
-
-  const result = await ASRouterScreenUtils.evaluateTargetingAndRemoveScreens([
-    makeSplashScreen(),
-  ]);
-  Assert.equal(
-    result.length,
-    1,
-    "Splash screen kept when skipSplashIfLoaded is true but Nimbus has not loaded yet"
-  );
-
-  sandbox.restore();
-  await SpecialPowers.popPrefEnv();
-});

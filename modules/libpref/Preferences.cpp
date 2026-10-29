@@ -7255,7 +7255,6 @@ static const PrefListEntry sDynamicPrefOverrideList[]{
     PREF_LIST_ENTRY("media.video_loopback_dev"),
     PREF_LIST_ENTRY("network.protocol-handler.external."),
     PREF_LIST_ENTRY("network.security.ports.banned"),
-    PREF_LIST_ENTRY("nimbus.syncdatastore."),
     PREF_LIST_ENTRY("pdfjs."),
     PREF_LIST_ENTRY("plugins.force.wmode"),
     PREF_LIST_ENTRY("print.printer_"),

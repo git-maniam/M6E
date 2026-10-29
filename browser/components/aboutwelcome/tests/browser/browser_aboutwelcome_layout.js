@@ -1,9 +1,5 @@
 "use strict";
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
-
 add_setup(async function () {
   registerCleanupFunction(function () {
     Services.prefs.clearUserPref("browser.aboutwelcome.didSeeFinalScreen");
@@ -218,12 +214,7 @@ add_task(async function test_aboutwelcome_center_large_top_buttons_row() {
 add_task(async function test_aboutwelcome_rdm_property() {
   let screens = [makeTestContent(`TEST_NO_RDM`, { no_rdm: true })];
 
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true, screens },
-  });
-
-  let browser = await openAboutWelcome();
+  let browser = await openAboutWelcome(JSON.stringify(screens));
 
   await test_screen_content(
     browser,
@@ -232,7 +223,6 @@ add_task(async function test_aboutwelcome_rdm_property() {
     ["main.TEST_NO_RDM[no-rdm]"]
   );
 
-  await doExperimentCleanup();
   browser.closeBrowser();
 });
 
@@ -242,12 +232,7 @@ add_task(async function test_aboutwelcome_rdm_property() {
 add_task(async function test_aboutwelcome_fullscreen_property() {
   let screens = [makeTestContent(`TEST_FULLSCREEN`, { fullscreen: true })];
 
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true, screens },
-  });
-
-  let browser = await openAboutWelcome();
+  let browser = await openAboutWelcome(JSON.stringify(screens));
 
   await test_screen_content(
     browser,
@@ -256,7 +241,6 @@ add_task(async function test_aboutwelcome_fullscreen_property() {
     ["main.TEST_FULLSCREEN[fullscreen]"]
   );
 
-  await doExperimentCleanup();
   browser.closeBrowser();
 });
 
@@ -280,12 +264,7 @@ add_task(async function test_aboutwelcome_narrow_property() {
     }),
   ];
 
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true, screens },
-  });
-
-  let browser = await openAboutWelcome();
+  let browser = await openAboutWelcome(JSON.stringify(screens));
 
   await test_screen_content(
     browser,
@@ -323,7 +302,6 @@ add_task(async function test_aboutwelcome_narrow_property() {
     }
   );
 
-  await doExperimentCleanup();
   browser.closeBrowser();
 });
 
@@ -354,12 +332,7 @@ add_task(async function test_secondary_button_top_configuration() {
 
   let screens = [secondaryTopContent];
 
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true, screens },
-  });
-
-  let browser = await openAboutWelcome();
+  let browser = await openAboutWelcome(JSON.stringify(screens));
 
   await test_screen_content(
     browser,
@@ -385,7 +358,6 @@ add_task(async function test_secondary_button_top_configuration() {
     }
   );
 
-  await doExperimentCleanup();
   browser.closeBrowser();
 });
 
@@ -412,12 +384,7 @@ add_task(async function test_aboutwelcome_fullscreen_split_layout_styles() {
     }),
   ];
 
-  let doExperimentCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
-    featureId: "aboutwelcome",
-    value: { enabled: true, screens },
-  });
-
-  let browser = await openAboutWelcome();
+  let browser = await openAboutWelcome(JSON.stringify(screens));
 
   await test_screen_content(
     browser,
@@ -476,6 +443,5 @@ add_task(async function test_aboutwelcome_fullscreen_split_layout_styles() {
     }
   );
 
-  await doExperimentCleanup();
   browser.closeBrowser();
 });

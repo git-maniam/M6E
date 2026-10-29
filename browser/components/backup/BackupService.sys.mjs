@@ -79,7 +79,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   FileUtils: "resource://gre/modules/FileUtils.sys.mjs",
   JsonSchema: "resource://gre/modules/JsonSchema.sys.mjs",
   NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
-  NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
   ProfileAge: "resource://gre/modules/ProfileAge.sys.mjs",
   SelectableProfileService:
     "resource:///modules/profiles/SelectableProfileService.sys.mjs",
@@ -714,19 +713,6 @@ export class BackupService extends EventTarget {
       };
     }
 
-    // Check if disabled by Nimbus killswitch.
-    const archiveKillswitchTriggered =
-      lazy.NimbusFeatures.backupService.getVariable("archiveKillswitch");
-
-    // Only disable feature if archiveKillswitch is true.
-    if (archiveKillswitchTriggered) {
-      return {
-        enabled: false,
-        reason: "Archiving a profile disabled remotely.",
-        internalReason: "nimbus",
-      };
-    }
-
     if (!Services.prefs.getBoolPref(BACKUP_ARCHIVE_ENABLED_PREF_NAME)) {
       if (Services.prefs.prefIsLocked(BACKUP_ARCHIVE_ENABLED_PREF_NAME)) {
         // If it's locked, assume it was set by an enterprise policy.
@@ -763,18 +749,6 @@ export class BackupService extends EventTarget {
         enabled: false,
         reason: "Restoring a profile disabled while SQLite encryption is on.",
         internalReason: "sqlite-encryption",
-      };
-    }
-
-    // Check if disabled by Nimbus killswitch.
-    const restoreKillswitchTriggered =
-      lazy.NimbusFeatures.backupService.getVariable("restoreKillswitch");
-
-    if (restoreKillswitchTriggered) {
-      return {
-        enabled: false,
-        reason: "Restore from backup disabled remotely.",
-        internalReason: "nimbus",
       };
     }
 
@@ -4840,7 +4814,7 @@ export class BackupService extends EventTarget {
       return;
     }
 
-    // We don't use this.#observer since any changes to the prefs or nimbus should
+    // We don't use this.#observer since any changes to the prefs should
     // immediately reflect across any observers, instead of waiting on idle.
     this.#statusPrefObserver = () => {
       // Wrap in an arrow function so 'this' is preserved.
@@ -4850,7 +4824,6 @@ export class BackupService extends EventTarget {
     for (let pref of BackupService.STATUS_OBSERVER_PREFS) {
       Services.prefs.addObserver(pref, this.#statusPrefObserver);
     }
-    lazy.NimbusFeatures.backupService.onUpdate(this.#statusPrefObserver);
     this.#handleStatusChange();
 
     this.#profileServiceStateObserver = () =>
@@ -4875,7 +4848,6 @@ export class BackupService extends EventTarget {
     for (let pref of BackupService.STATUS_OBSERVER_PREFS) {
       Services.prefs.removeObserver(pref, this.#statusPrefObserver);
     }
-    lazy.NimbusFeatures.backupService.offUpdate(this.#statusPrefObserver);
     this.#statusPrefObserver = null;
 
     lazy.SelectableProfileService.off(

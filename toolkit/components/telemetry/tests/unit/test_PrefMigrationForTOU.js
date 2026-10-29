@@ -11,11 +11,6 @@ ChromeUtils.defineESModuleGetters(this, {
 const { Policy, TelemetryReportingPolicy } = ChromeUtils.importESModule(
   "resource://gre/modules/TelemetryReportingPolicy.sys.mjs"
 );
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
-
-NimbusTestUtils.init(this);
 
 const TOU_ACCEPTED_VERSION_PREF = "termsofuse.acceptedVersion";
 const TOU_ACCEPTED_DATE_PREF = "termsofuse.acceptedDate";

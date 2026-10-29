@@ -23,11 +23,10 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ContentTaskUtils: "resource://testing-common/ContentTaskUtils.sys.mjs",
   DEFAULT_FORM_HISTORY_PARAM:
     "moz-src:///toolkit/components/search/SearchSuggestionController.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   FormHistoryTestUtils:
     "resource://testing-common/FormHistoryTestUtils.sys.mjs",
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
+  overrideFeature: "resource://testing-common/FeatureOverride.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
   ProvidersManager:
     "moz-src:///browser/components/urlbar/UrlbarProvidersManager.sys.mjs",
@@ -1728,76 +1727,133 @@ export class UrlbarInputBaseTestUtils {
   }
 
   /**
-   * Enrolls in a mock Nimbus experiment or rollout.
+   * Overrides Nimbus feature variables. Variables with a fallback pref are
+   * applied by setting the pref; the others are applied through the feature
+   * override helper. Feature update callbacks are notified of the change.
    *
    * @param {?object} value
    *   Define any desired Nimbus variables in this object.
    * @param {?object} options
    * @param {?string} options.featureId
    *   The name of the Nimbus feature.
-   * @param {?boolean} options.isRollout
-   *   True to use a rollout, false to use an experiment.
-   * @param {?string} options.slug
-   *   The experiment/rollout name. `NimbusTestUtils` will generate a name if
-   *   this isn't specified.
-   * @param {?string} options.branch
-   *   The experiment/rollout branch to enroll in. `NimbusTestUtils` will
-   *   generate a branch if this isn't specified.
    * @returns {Function}
-   *   A cleanup function that should be called to unenroll and remove the
-   *   experiment/rollout.
+   *   A cleanup function that restores the overrides.
    */
-  async initNimbusFeature(
-    value = {},
-    {
-      featureId = "urlbar",
-      isRollout = true,
-      slug = undefined,
-      branchSlug = undefined,
-    } = {}
-  ) {
-    this.info("initNimbusFeature awaiting ExperimentAPI.init");
-    const initializedExperimentAPI = await lazy.ExperimentAPI.init();
+  async initNimbusFeature(value = {}, { featureId = "urlbar" } = {}) {
+    const feature = lazy.NimbusFeatures[featureId];
+    const { fallbackPrefs } = feature;
+    const originals = new Map();
+    const overrides = {};
 
-    this.info("initNimbusFeature awaiting ExperimentAPI.ready");
-    await lazy.ExperimentAPI.ready();
+    for (let [variable, variableValue] of Object.entries(value)) {
+      if (variableValue === undefined) {
+        continue;
+      }
+      let pref = fallbackPrefs[variable];
+      if (!pref) {
+        overrides[variable] = variableValue;
+        continue;
+      }
+      if (!originals.has(pref)) {
+        originals.set(
+          pref,
+          Services.prefs.prefHasUserValue(pref)
+            ? this.#getUserPref(pref)
+            : undefined
+        );
+      }
+      this.#setUserPref(pref, variableValue);
+    }
 
-    this.info(
-      `initNimbusFeature awaiting NimbusTestUtils.enrollWithFeatureConfig`
-    );
-    const doExperimentCleanup =
-      await lazy.NimbusTestUtils.enrollWithFeatureConfig(
-        {
-          value,
-          featureId: lazy.NimbusFeatures[featureId].featureId,
-        },
-        {
-          branchSlug,
-          isRollout,
-          slug,
-        }
-      );
+    let hasOverrides = !!Object.keys(overrides).length;
+    if (hasOverrides) {
+      this.#addVariableOverrides(featureId, overrides);
+      feature.notifyUpdate();
+    }
 
-    this.info("initNimbusFeature done");
-
+    let cleanedUp = false;
     const cleanup = async () => {
-      await doExperimentCleanup();
-      if (initializedExperimentAPI) {
-        // Only reset if we're in an xpcshell-test and actually initialized the
-        // ExperimentAPI.
-        lazy.ExperimentAPI._resetForTests();
+      if (cleanedUp) {
+        return;
+      }
+      cleanedUp = true;
+      for (let [pref, original] of originals) {
+        if (original === undefined) {
+          Services.prefs.clearUserPref(pref);
+        } else {
+          this.#setUserPref(pref, original);
+        }
+      }
+      if (hasOverrides) {
+        await this.#removeVariableOverrides(featureId, overrides);
+        feature.notifyUpdate();
       }
     };
 
-    this.registerCleanupFunction?.(async () => {
-      // If `cleanup()` has already been called (i.e., by the caller), it will
-      // throw an error here.
-      try {
-        await cleanup();
-      } catch (error) {}
-    });
+    this.registerCleanupFunction?.(cleanup);
 
     return cleanup;
+  }
+
+  #variableOverrides = new Map();
+
+  #addVariableOverrides(featureId, overrides) {
+    let entry = this.#variableOverrides.get(featureId);
+    if (!entry) {
+      entry = { sets: new Set(), remove: null };
+      this.#variableOverrides.set(featureId, entry);
+    }
+    entry.sets.add(overrides);
+    this.#applyVariableOverrides(featureId, entry);
+  }
+
+  async #removeVariableOverrides(featureId, overrides) {
+    let entry = this.#variableOverrides.get(featureId);
+    entry.sets.delete(overrides);
+    await this.#applyVariableOverrides(featureId, entry);
+    if (!entry.sets.size) {
+      this.#variableOverrides.delete(featureId);
+    }
+  }
+
+  #applyVariableOverrides(featureId, entry) {
+    let remove = entry.remove;
+    entry.remove = null;
+    let cleaned = remove?.();
+    if (entry.sets.size) {
+      entry.remove = lazy.overrideFeature({
+        featureId,
+        value: Object.assign({}, ...entry.sets),
+      });
+    }
+    return cleaned;
+  }
+
+  #getUserPref(pref) {
+    switch (Services.prefs.getPrefType(pref)) {
+      case Services.prefs.PREF_BOOL:
+        return Services.prefs.getBoolPref(pref);
+      case Services.prefs.PREF_INT:
+        return Services.prefs.getIntPref(pref);
+      default:
+        return Services.prefs.getStringPref(pref);
+    }
+  }
+
+  #setUserPref(pref, value) {
+    switch (typeof value) {
+      case "boolean":
+        Services.prefs.setBoolPref(pref, value);
+        break;
+      case "number":
+        Services.prefs.setIntPref(pref, value);
+        break;
+      case "string":
+        Services.prefs.setStringPref(pref, value);
+        break;
+      default:
+        Services.prefs.setStringPref(pref, JSON.stringify(value));
+    }
   }
 
   /**

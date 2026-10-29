@@ -88,7 +88,6 @@ ChromeUtils.defineESModuleGetters(this, {
   ContextualIdentityService:
     "moz-src:///toolkit/components/contextualidentity/ContextualIdentityService.sys.mjs",
   DownloadUtils: "resource://gre/modules/DownloadUtils.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   ExtensionPreferencesManager:
     "resource://gre/modules/ExtensionPreferencesManager.sys.mjs",
   ExtensionSettingsStore:
@@ -322,12 +321,6 @@ const CONFIG_PANES = Object.freeze({
     groupIds: ["etpCustomize", "etpReset"],
     replaces: "privacy",
   },
-  experimental: {
-    l10nId: "settings-pane-labs-header",
-    iconSrc: "chrome://browser/skin/labs-16.svg",
-    groupIds: ["firefoxLabsFeatures"],
-    module: "chrome://browser/content/preferences/config/firefoxLabs.mjs",
-  },
   general: {
     l10nId: "pane-general-title",
     groupIds: [],
@@ -543,18 +536,6 @@ function init_all() {
   }
   register_module("paneSearch", gSearchPane);
   register_module("panePrivacy", gPrivacyPane);
-
-  // Restore the cached Firefox Labs nav button visibility so it shows
-  // immediately when recipes are expected to be available, before
-  // firefoxLabs.mjs loads on first navigation. The module itself updates
-  // this cache when features are (un)available.
-  if (ExperimentAPI.labsEnabled) {
-    document.getElementById("category-experimental").hidden =
-      Services.prefs.getBoolPref(
-        "browser.preferences.experimental.hidden",
-        false
-      );
-  }
 
   let categorySync = document.getElementById("category-sync");
   if (redesignEnabled) {

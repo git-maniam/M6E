@@ -57,7 +57,7 @@ The version is when the workaround can be removed (once that Firefox version hit
 
 **Practical rules:**
 - Avoid depending on new platform APIs or module paths until they are in Release
-- New Nimbus feature definitions in `FeatureManifest.yaml` require defensive coding on older channels
+- New Nimbus feature definitions require defensive coding on older channels
 - If you must depend on an external change, add a `@backward-compat` comment and plan the removal
 - The `newtabTrainhop` escape hatch in `AboutNewTabChild.sys.mjs` allows overriding the XPI-bundled content with a locally-built version for testing train-hop changes before they ship
 

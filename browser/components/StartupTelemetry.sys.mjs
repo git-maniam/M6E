@@ -137,7 +137,7 @@ export let StartupTelemetry = {
     Services.fog.initializeFOG();
 
     // Register Glean to listen for experiment updates releated to the
-    // "gleanInternalSdk" feature defined in the t/c/nimbus/FeatureManifest.yaml
+    // "gleanInternalSdk" feature (see toolkit/components/nimbus/ExperimentAPI.sys.mjs)
     // This feature is intended for internal Glean use only. For features wishing
     // to set a remote metric configuration, please use the "glean" feature for
     // the purpose of setting the data-control-plane features via Server Knobs.
@@ -149,7 +149,7 @@ export let StartupTelemetry = {
     });
 
     // Register Glean to listen for experiment updates releated to the
-    // "glean" feature defined in the t/c/nimbus/FeatureManifest.yaml
+    // "glean" feature (see toolkit/components/nimbus/ExperimentAPI.sys.mjs)
     lazy.NimbusFeatures.glean.onUpdate(() => {
       const enrollments = lazy.NimbusFeatures.glean.getAllEnrollments();
       for (const enrollment of enrollments) {

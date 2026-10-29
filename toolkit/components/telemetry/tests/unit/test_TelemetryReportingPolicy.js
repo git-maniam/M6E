@@ -12,14 +12,9 @@ ChromeUtils.defineESModuleGetters(this, {
   UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
 });
 
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
 const { Policy, TelemetryReportingPolicy } = ChromeUtils.importESModule(
   "resource://gre/modules/TelemetryReportingPolicy.sys.mjs"
 );
-
-NimbusTestUtils.init(this);
 
 // Some tests in this test file can't outside desktop Firefox because of
 // features that aren't included in the build.
@@ -88,12 +83,6 @@ add_setup(async function test_setup() {
   );
 
   TelemetryReportingPolicy.setup();
-});
-
-add_setup(skipIfNotBrowser(), async () => {
-  const { cleanup } = await NimbusTestUtils.setupTest();
-
-  registerCleanupFunction(cleanup);
 });
 
 async function runlegacyDataReportingFlowfirstRun(prefToSet) {

@@ -15,14 +15,6 @@
 pref("alerts.useSystemBackend", true);
 pref("alerts.useSystemBackend.windows.notificationserver.enabled", true);
 
-// Configure Messaging Experiments for background tasks, with
-// background task-specific feature ID.  The regular Firefox Desktop
-// Remote Settings collection will be used.
-pref(
-  "browser.newtabpage.activity-stream.asrouter.providers.messaging-experiments",
-  '{"id":"messaging-experiments","enabled":true,"type":"remote-experiments","featureIds":["backgroundTaskMessage"],"updateCycleInMs":3600000}'
-);
-
 // Disable all other Messaging System providers save for
 // `browser.newtabpage.activity-stream.asrouter.providers.message-groups`, which
 // is required for the system to function.
@@ -41,10 +33,6 @@ pref(
 
 // Don't refresh experiments while a background task is running.
 pref("app.normandy.run_interval_seconds", 0);
-
-// Use a separate Nimbus application ID from regular Firefox Desktop.
-// This prevents enrolling in regular desktop experiments.
-pref("nimbus.appId", "firefox-desktop-background-task");
 
 #if defined(ENABLE_TESTS)
   // Test prefs to verify background tasks override browser prefs correctly.

@@ -5,8 +5,6 @@
 
 ChromeUtils.defineESModuleGetters(this, {
   AboutNewTab: "resource:///modules/AboutNewTab.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  NimbusTestUtils: "resource://testing-common/NimbusTestUtils.sys.mjs",
   ObjectUtils: "resource://gre/modules/ObjectUtils.sys.mjs",
   PromptTestUtils: "resource://testing-common/PromptTestUtils.sys.mjs",
   ResetProfile: "resource://gre/modules/ResetProfile.sys.mjs",

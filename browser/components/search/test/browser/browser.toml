@@ -55,8 +55,6 @@ support-files = [
 
 ["browser_contextmenu_whereToOpenLink.js"]
 
-["browser_defaultPrivate_nimbus.js"]
-
 ["browser_displayNotification.js"]
 
 ["browser_hiddenOneOffs_diacritics.js"]

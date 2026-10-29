@@ -5,8 +5,8 @@
 const { NimbusFeatures } = ChromeUtils.importESModule(
   "resource://nimbus/ExperimentAPI.sys.mjs"
 );
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
+const { overrideFeature } = ChromeUtils.importESModule(
+  "resource://testing-common/FeatureOverride.sys.mjs"
 );
 const { TelemetryController } = ChromeUtils.importESModule(
   "resource://gre/modules/TelemetryController.sys.mjs"
@@ -17,8 +17,6 @@ const { TelemetrySend } = ChromeUtils.importESModule(
 const { TelemetryUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/TelemetryUtils.sys.mjs"
 );
-
-NimbusTestUtils.init(this);
 
 const PING_FORMAT_VERSION = 4;
 const TEST_PING_TYPE = "test-ping-type";
@@ -130,10 +128,8 @@ add_task(async function test_pingDisablement() {
   checkPingFormat(ping, TEST_PING_TYPE, false, false);
 
   info("2. Ensure we can disable a ping by name.");
-  const { cleanup } = await NimbusTestUtils.setupTest();
-  registerCleanupFunction(cleanup);
 
-  let nimbusCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
+  let nimbusCleanup = await overrideFeature({
     featureId: NimbusFeatures.legacyTelemetry.featureId,
     value: {
       disabledPings: [TEST_PING_TYPE],
@@ -173,7 +169,7 @@ add_task(async function test_cantDisableImportantPings() {
     "deletion-request",
   ];
   const PINGS = [TEST_PING_TYPE, ...DO_NOT_DISABLE_THESE_PINGS];
-  let nimbusCleanup = await NimbusTestUtils.enrollWithFeatureConfig({
+  let nimbusCleanup = await overrideFeature({
     featureId: NimbusFeatures.legacyTelemetry.featureId,
     value: {
       disabledPings: PINGS,

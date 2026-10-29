@@ -38,9 +38,6 @@ support-files = ["searchTelemetryAd_searchbox_with_content.html", "serp.css"]
 ["browser_search_telemetry_app_provided_and_overridden.js"]
 tags = "urlbar"
 
-["browser_search_telemetry_categorization_experiment_info.js"]
-support-files = ["searchTelemetryDomainCategorizationReporting.html"]
-
 ["browser_search_telemetry_categorization_missing_impression.js"]
 support-files = ["searchTelemetryDomainExtraction.html"]
 
@@ -204,7 +201,6 @@ support-files = [
   "telemetrySearchSuggestions.sjs",
   "telemetrySearchSuggestions.xml",
 ]
-
 
 ["browser_search_telemetry_searchform.js"]
 tags = "urlbar"

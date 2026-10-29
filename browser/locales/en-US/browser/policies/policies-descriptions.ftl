@@ -111,8 +111,6 @@ policy-DisableProfileImport = Disable the menu command to Import data from anoth
 
 policy-DisableProfileRefresh2 = Disable the Refresh { -brand-short-name } button in Troubleshooting Information (about:support) and on support.mozilla.org, as well as the prompt offering to refresh { -brand-short-name } when it hasn’t been used for a while.
 
-policy-DisableRemoteImprovements = Prevent { -brand-short-name } from applying performance, stability, and feature changes between updates.
-
 policy-DisableRemoteSettingsAndAcceptSecurityConsequences = Disable remote settings.
 
 policy-DisableSafeMode2 = Disable restarting in Troubleshoot Mode (Safe Mode).

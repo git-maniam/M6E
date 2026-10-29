@@ -192,11 +192,6 @@ label {
   color: var(--text-color-deemphasized);
 }
 
-.firefoxLabs-description {
-  color: var(--text-color-deemphasized);
-  margin: 0;
-}
-
 .tip-caption {
   font-size: 0.9em;
   color: var(--text-color-deemphasized);
@@ -854,22 +849,6 @@ richlistitem .text-link:hover {
 #proxy-grid > .thin {
   grid-column: span 2;
   height: 20px;
-}
-
-#pane-experimental-featureGates > .featureGate:not(.visually-hidden) ~ .featureGate:not(.visually-hidden) {
-  margin-top: var(--space-xlarge);
-}
-
-#pane-experimental-featureGates moz-fieldset::part(label) {
-  font-size: var(--font-size-large);
-}
-
-#experimentalCategory-reset {
-  margin-top: var(--space-small);
-}
-
-.featureGateDescription {
-  white-space: pre-wrap;
 }
 
 .checkbox-row {

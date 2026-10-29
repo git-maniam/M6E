@@ -27,7 +27,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   CryptoUtils: "moz-src:///services/crypto/modules/utils.sys.mjs",
   DownloadPaths: "resource://gre/modules/DownloadPaths.sys.mjs",
   EveryWindow: "resource:///modules/EveryWindow.sys.mjs",
-  ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
@@ -1780,23 +1779,6 @@ class SelectableProfileServiceClass extends EventEmitter {
         await db.execute("DELETE FROM Profiles WHERE id = :id;", {
           id: this.currentProfile.id,
         });
-
-        // TODO(bug 1969488): Make this less tightly coupled so consumers of the
-        // ProfilesDatastoreService can register cleanup actions to occur during
-        // profile deletion.
-        await db.execute(
-          "DELETE FROM NimbusEnrollments WHERE profileId = :profileId;",
-          {
-            profileId: lazy.ExperimentAPI.profileId,
-          }
-        );
-
-        await db.execute(
-          "DELETE FROM NimbusSyncTimestamps WHERE profileId = :profileId;",
-          {
-            profileId: lazy.ExperimentAPI.profileId,
-          }
-        );
       }
     );
 

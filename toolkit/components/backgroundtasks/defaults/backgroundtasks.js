@@ -65,7 +65,7 @@ pref("app.update.background.checkPolicy.throttleEnabled", true);
 #endif
 pref("app.update.background.checkPolicy.throttleAfterDays", 14);
 // When throttled, limit the background update task to take any action,
-// including querying Remote Settings and Nimbus, to at most once in any 24 hour
+// including querying Remote Settings, to at most once in any 24 hour
 // period.
 pref("app.update.background.checkPolicy.throttleDebouncePeriodInHours", 24);
 

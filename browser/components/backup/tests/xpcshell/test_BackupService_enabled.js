@@ -3,13 +3,6 @@ https://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
-const { ExperimentAPI } = ChromeUtils.importESModule(
-  "resource://nimbus/ExperimentAPI.sys.mjs"
-);
-const { NimbusTestUtils } = ChromeUtils.importESModule(
-  "resource://testing-common/NimbusTestUtils.sys.mjs"
-);
-
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   SelectableProfileService:
@@ -25,12 +18,6 @@ const SQLITE_ENCRYPTION_ENABLED_PREF_NAME =
 add_setup(async () => {
   setupProfile();
 
-  NimbusTestUtils.init(this);
-
-  const { cleanup: nimbusCleanup } = await NimbusTestUtils.setupTest();
-
-  await ExperimentAPI.ready();
-
   let backupDir = await IOUtils.createUniqueDirectory(
     PathUtils.profileDir,
     "backup"
@@ -40,30 +27,9 @@ add_setup(async () => {
   Services.prefs.setStringPref(BACKUP_DIR_PREF_NAME, backupDir);
 
   registerCleanupFunction(async () => {
-    const nimbusCleanupPromise = nimbusCleanup();
-    const backupDirCleanupPromise = IOUtils.remove(backupDir, {
-      recursive: true,
-    });
-
-    await Promise.all([nimbusCleanupPromise, backupDirCleanupPromise]);
+    await IOUtils.remove(backupDir, { recursive: true });
 
     Services.prefs.clearUserPref(BACKUP_DIR_PREF_NAME);
-  });
-});
-
-add_task(async function test_archive_killswitch_enrollment() {
-  let cleanupExperiment;
-  await archiveTemplate({
-    internalReason: "nimbus",
-    async disable() {
-      cleanupExperiment = await NimbusTestUtils.enrollWithFeatureConfig({
-        featureId: "backupService",
-        value: { archiveKillswitch: true },
-      });
-    },
-    async enable() {
-      await cleanupExperiment();
-    },
   });
 });
 
@@ -100,22 +66,6 @@ add_task(async function test_archive_policy() {
   });
 });
 
-add_task(async function test_restore_killswitch_enrollment() {
-  let cleanupExperiment;
-  await restoreTemplate({
-    internalReason: "nimbus",
-    async disable() {
-      cleanupExperiment = await NimbusTestUtils.enrollWithFeatureConfig({
-        featureId: "backupService",
-        value: { restoreKillswitch: true },
-      });
-    },
-    async enable() {
-      await cleanupExperiment();
-    },
-  });
-});
-
 add_task(async function test_restore_enabled_pref() {
   await restoreTemplate({
     internalReason: "pref",
@@ -147,7 +97,7 @@ add_task(async function test_restore_policy() {
 });
 
 // SQLite at-rest encryption disables both archive and restore. Unlike the
-// nimbus/pref/policy reasons, the encryption pref is fixed at startup (set by
+// pref/policy reasons, the encryption pref is fixed at startup (set by
 // build config or policy) and is not observed live, so the gate is evaluated
 // when status is read. Verify a service constructed with the pref on reports
 // both features disabled (with telemetry) and refuses to create or recover.
