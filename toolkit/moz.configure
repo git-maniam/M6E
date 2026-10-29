@@ -1191,8 +1191,6 @@ project_flag(
     set_as_define=True,
 )
 
-project_flag("MOZ_SERVICES_SYNC", help="Build Sync Services if required")
-
 project_flag(
     "MOZ_GECKOVIEW_HISTORY",
     help="Enable Geckoview History instead of Places",
