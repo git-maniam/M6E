@@ -48,19 +48,11 @@ security/manager/ssl/StaticHPKPins.h
 # and reformatting them can break generating that wrapper.
 config/windows-h-.*.h
 
-# Exclude tools/clang-tidy/test from automatic reformatting, since it can
-# break some of the tests in that directory.
-tools/clang-tidy/test/.*
-
 # We are testing the incorrect formatting.
 tools/lint/test/files/
 
-# Contains an XML definition and formatting would break the layout
-widget/gtk/MPRISInterfaceDescription.h
-
 # The XPTCall stubs files have some inline assembly macros
 # that get reformatted badly. See bug 1510781.
-xpcom/reflect/xptcall/md/win32/.*
 xpcom/reflect/xptcall/md/unix/.*
 
 # Askama template code, which isn't valid C++ in its original form
@@ -70,7 +62,6 @@ toolkit/components/uniffi-js/GeneratedScaffolding.cpp
 
 # Generated from ./tools/rewriting/ThirdPartyPaths.txt
 # awk '{print ""$1".*"}' ./tools/rewriting/ThirdPartyPaths.txt
-browser/extensions/mortar/ppapi/.*
 devtools/client/shared/sourceeditor/codemirror/.*
 devtools/client/shared/sourceeditor/codemirror6/.*
 dom/canvas/test/webgl-conf/checkout/closure-library/.*
@@ -101,7 +92,6 @@ gfx/ots/src/.*
 gfx/ots/include/.*
 gfx/ots/tests/.*
 gfx/qcms/.*
-gfx/sfntly/.*
 gfx/skia/.*
 gfx/vr/service/openvr/.*
 gfx/vr/service/openvr/headers/openvr.h
@@ -123,7 +113,6 @@ gfx/vr/service/openvr/src/strtools_public.h
 gfx/vr/service/openvr/src/vrpathregistry_public.cpp
 gfx/vr/service/openvr/src/vrpathregistry_public.h
 gfx/ycbcr/.*
-intl/hyphenation/hyphen/.*
 intl/icu/.*
 intl/icu_capi/.*
 ipc/chromium/src/third_party/.*
@@ -141,7 +130,6 @@ js/src/vtune/jitprofiling.c
 js/src/vtune/jitprofiling.h
 js/src/vtune/legacy/.*
 media/ffvpx/.*
-media/kiss_fft/.*
 media/libaom/.*
 media/libcubeb/.*
 media/libdav1d/.*
@@ -159,15 +147,10 @@ media/libwebp/.*
 media/libyuv/.*
 media/mozva/va/.*
 media/openmax_il/.*
-media/webrtc/signaling/src/sdp/sipcc/.*
-media/webrtc/trunk/.*
 mfbt/double-conversion/double-conversion/.*
-mobile/android/geckoview/src/thirdparty/.*
 modules/brotli/.*
 modules/fdlibm/.*
 modules/freetype2/.*
-modules/libbz2/.*
-modules/pdfium/.*
 modules/woff2/include/.*
 modules/woff2/src/.*
 modules/xz-embedded/.*
@@ -176,15 +159,12 @@ mozglue/misc/decimal/.*
 mozglue/static/lz4/.*
 mozglue/tests/glibc_printf_tests/.*
 netwerk/sctp/src/.*
-netwerk/srtp/src/.*
 nsprpub/.*
 other-licenses/.*
 parser/expat/.*
 security/nss/.*
 security/sandbox/chromium/.*
 security/sandbox/chromium-shim/.*
-testing/gtest/gmock/.*
-testing/gtest/gtest/.*
 testing/talos/talos/tests/dromaeo/.*
 testing/talos/talos/tests/kraken/.*
 testing/talos/talos/tests/v8_7/.*
@@ -195,7 +175,6 @@ toolkit/components/jsoncpp/.*
 toolkit/components/protobuf/.*
 toolkit/components/translations/cld2/.*
 toolkit/components/url-classifier/chromium/.*
-toolkit/components/url-classifier/protobuf/.*
 tools/fuzzing/libfuzzer/.*
 tools/profiler/core/vtune/.*
 # tools/profiler/public/GeckoTraceEvent.h is a modified vendored copy

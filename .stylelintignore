@@ -32,7 +32,6 @@ browser/extensions/newtab/**/*.css
 # produces errors. Bug 1831302 tracks making this better
 devtools/client/debugger/src/components/PrimaryPanes/Outline.css
 devtools/client/debugger/src/components/PrimaryPanes/Sources.css
-devtools/client/debugger/src/components/shared/AccessibleImage.css
 devtools/client/debugger/src/utils/editor/source-editor.css
 devtools/client/debugger/test/mochitest/examples/
 
@@ -83,11 +82,6 @@ layout/inspector/tests/chrome/test_bug708874.css
 layout/style/test/gtest/example.css
 layout/style/test/mapped2.css
 layout/style/test/unstyled-frame.css
-
-# Bug 1893763
-mobile/android/android-components/components/feature/readerview/src/main/assets/extensions/readerview/readerview.css
-# Three dashes at top of file (for Jekyll?) cause syntax error:
-mobile/android/android-components/docs/assets/main.scss
 
 # Empty test files:
 netwerk/test/mochitests/test1.css
