@@ -3853,8 +3853,6 @@ modules:
         description: Desktop clients for our experiments and off-train deployments
           systems.
         includes:
-          - browser/components/nimbus/**/*
-          - toolkit/components/normandy/**/*
           - toolkit/components/nimbus/**/*
         meta:
           owners_emeritus:
@@ -4921,8 +4919,6 @@ modules:
       - *marco
     meta:
       group: dev-platform
-      url: <https://github.com/mozilla/firefox-translations-training> <https://github.com/mozilla/firefox-translations-models>
-        https://github.com/mozilla/firefox-translations-evaluations https://github.com/mozilla/firefox-translations
       components:
         - Firefox::Translation
       review_group: translations-reviewers
