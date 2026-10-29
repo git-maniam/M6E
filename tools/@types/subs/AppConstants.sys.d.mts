@@ -28,8 +28,6 @@ export const AppConstants: Readonly<{
 
   MOZ_DEV_EDITION: boolean;
 
-  MOZ_SERVICES_SYNC: boolean;
-
   MOZ_DATA_REPORTING: boolean;
 
   MOZ_SANDBOX: boolean;
