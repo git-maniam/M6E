@@ -268,36 +268,6 @@ if test "$target_platform" = Windows; then
     tar_args=(--force-local)
 fi
 
-###
-# Dump the symbols for the crash reporter. This reads the library in the build
-# directory, not the copy above that is about to be stripped; stripping leaves
-# the build id alone, so these symbols still resolve the library we ship.
-if test -n "$dump_syms"; then
-    built_lib="$PWD/$onnx_builddir/$build_type/${prefix}onnxruntime.${extension}"
-    symbols_dir="$PWD/$onnx_builddir/sym"
-    case ${target_platform} in
-        Darwin)
-            symbol_platform=Darwin
-            # symbolstore.py reads these from the build config, which a
-            # toolchain task has no objdir for.
-            export DSYMUTIL=$MOZ_FETCHES_DIR/clang/bin/dsymutil
-            export OTOOL=$MOZ_FETCHES_DIR/clang/bin/llvm-otool
-            ;;
-        Windows) symbol_platform=WINNT ;;
-        *) symbol_platform=Linux ;;
-    esac
-    (cd "$GECKO_PATH" && ./mach python toolkit/crashreporter/tools/symbolstore.py \
-        "$dump_syms" \
-        --platform "$symbol_platform" \
-        --no-rust \
-        --no-moz-extra-info \
-        "$symbols_dir" \
-        "$built_lib")
-    ls -lR "$symbols_dir"
-    tar -a -c -f "$UPLOAD_DIR/target.crashreporter-symbols-onnxruntime.tar.zst" \
-        "${tar_args[@]}" -C "$symbols_dir" .
-fi
-
 find "$onnx_folder" -type f -exec llvm-strip -x {} \;  || true
 
 ls -la "$onnx_folder"

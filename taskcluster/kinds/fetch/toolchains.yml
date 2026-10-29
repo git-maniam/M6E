@@ -530,13 +530,6 @@ jdk-8-linux64:
         strip-components: 1
         add-prefix: jdk-8/
 
-makecab:
-    description: makecab source code
-    fetch:
-        type: git
-        repo: https://github.com/luser/rust-makecab/
-        revision: 236cd02baefa754fc7a61b161c71d2aa13a87c2a
-
 samply:
     description: samply source code
     fetch:
