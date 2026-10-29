@@ -1361,20 +1361,6 @@ modules:
       components:
         - Developer Infrastructure::AI for Development
       review_group: ai4dev-reviewers
-  - machine_name: android_components
-    name: Android Components
-    description: A collection of independent, reusable Android library components
-      to make it easier to build browsers and browser-like applications.
-    includes:
-      - mobile/android/android-components/**/*
-    excludes: []
-    owners:
-      - *jonalmeida
-      - *matttighe
-    peers:
-      - *kaya
-    meta:
-      review_group: android-reviewers
   - machine_name: code_coverage
     name: Code Coverage
     description: Tools for code coverage instrumentation, and coverage data parsing
@@ -1700,7 +1686,6 @@ modules:
       - toolkit/crashreporter/**/*
       - toolkit/components/crashes/**/*
       - ipc/glue/CrashReporter*
-      - mobile/android/geckoview/src/main/java/org/mozilla/geckoview/CrashReporter.java
     meta:
       peers_emeritus:
         - Aria Beingessner
@@ -1721,7 +1706,6 @@ modules:
     description: API Surface for FedCM and WebAuthn
     includes:
       - toolkit/components/credentialmanagement/**/*
-      - browser/components/credentialmanager/**/*
       - dom/credentialmanagement/**/*
       - dom/webauthn/**/*
     excludes: []
@@ -1781,25 +1765,6 @@ modules:
     peers:
       - *smaug
     machine_name: core_cycle_collector
-
-  - name: 'Core: DLL Services'
-    description: Windows dynamic linker instrumentation and blocking
-    includes:
-      - toolkit/xre/dllservices/**/*
-    meta:
-      owners_emeritus:
-        - Aaron Klotz
-        - *toshi
-      peers_emeritus:
-        - *molly
-      components:
-        - Core::DLL Services
-      review_group: win-reviewers
-    owners:
-      - *handyman
-    peers:
-      - *gstoll
-    machine_name: core_dll_services
 
   - name: 'Core: docshell'
     description: ''
@@ -1994,39 +1959,6 @@ modules:
       - *florian
       - *jseward
     machine_name: core_gecko_profiler
-
-  - name: 'Core: GeckoView'
-    description: Framework for embedding Gecko into Android applications
-    includes:
-      - mobile/android/**/*
-      - widget/android/**/*
-      - hal/android/**/*
-    excludes:
-      - mobile/android/fenix/**/*
-      - mobile/android/focus-android/**/*
-      - mobile/android/android-components/**/*
-    meta:
-      owners_emeritus:
-        - James Willcox
-        - Agi Sferro
-      peers_emeritus:
-        - Dylan Roeh
-        - Eugen Sawin
-        - Aaron Klotz
-        - Jim Chen
-        - Randall E. Barker
-        - Jonathan Almeida
-      url: <https://wiki.mozilla.org/Mobile/GeckoView>
-      components:
-        - GeckoView::General
-      review_group: geckoview-reviewers
-    owners:
-      - *owlish
-    peers:
-      - *calu
-      - *mkato
-      - *olivia
-    machine_name: core_geckoview
 
   - name: 'Core: Global Key Bindings'
     description: Global hot keys for Firefox. Does not include underlined menu accelerators
@@ -2476,7 +2408,6 @@ modules:
       - media/libnestegg/**/*
       - media/libogg/**/*
       - media/libopus/**/*
-      - media/libtremor/**/*
       - media/libvorbis/**/*
       - media/libvpx/**/*
       - dom/media/platforms/omx/**/*
@@ -2594,26 +2525,6 @@ modules:
       - *jchen
     machine_name: core_mozglue
 
-  - name: 'Core: MSCOM'
-    description: Integration with Microsoft Distributed COM
-    includes:
-      - ipc/mscom/**/*
-    meta:
-      owners_emeritus:
-        - Aaron Klotz
-        - *Jamie
-      peers_emeritus:
-        - *jimm
-      group: dev-platform
-      components:
-        - 'Core::IPC: MSCOM'
-    owners:
-      - *handyman
-    peers:
-      - *Jamie
-      - *nrishel
-    machine_name: core_mscom
-
   - name: 'Core: Necko'
     description: The Mozilla Networking Library
     includes:
@@ -2703,9 +2614,6 @@ modules:
     includes:
       - dom/notification/**/*
       - toolkit/components/alerts/**/*
-      - toolkit/system/gnome/nsAlertsIconListener*
-      - toolkit/system/gnome/nsSystemAlertsService*
-      - widget/windows/ToastNotification*
       - widget/cocoa/MacOSNotificationCenter*
     meta:
       group: dev-platform
@@ -2873,7 +2781,6 @@ modules:
       web applications.
     includes:
       - dom/push/**/*
-      - dom/interfaces/push/**/*
     meta:
       owners_emeritus:
         - Doug Turner
@@ -2902,21 +2809,6 @@ modules:
       - *jstutte
     meta:
       review_group: dom-storage-reviewers
-  - name: 'Core: Sandboxing (Linux)'
-    description: Sandboxing for the Linux platform
-    includes:
-      - security/sandbox/linux/**/*
-    meta:
-      group: dev-platform
-      url: <https://wiki.mozilla.org/Security/Sandbox>
-      components:
-        - 'Core::Security: Process Sandboxing'
-      review_group: sandbox-reviewers
-    owners:
-      - *jld
-    peers:
-      - *gcp
-    machine_name: core_sandboxing_linux
 
   - name: 'Core: Sandboxing (macOS)'
     description: Sandboxing for the macOS platform
@@ -2931,29 +2823,6 @@ modules:
       - *haik
     peers: []
     machine_name: core_sandboxing_osx
-
-  - name: 'Core: Sandboxing (Windows)'
-    description: Sandboxing for the Windows platform
-    includes:
-      - security/sandbox/win/**/*
-    meta:
-      owners_emeritus:
-        - Tim Abraldes
-      peers_emeritus:
-        - Brian Bondy
-        - Aaron Klotz
-        - *jimm
-        - *toshi
-      group: dev-platform
-      url: <https://wiki.mozilla.org/Security/Sandbox>
-      components:
-        - 'Core::Security: Process Sandboxing'
-    owners:
-      - *bobowen
-    peers:
-      - *handyman
-      - *yannis
-    machine_name: core_sandboxing_windows
 
   - name: 'Core: security'
     description: Crypto/PKI code, including NSS (Network Security Services) and JSS
@@ -3418,34 +3287,6 @@ modules:
       - *spohl
     machine_name: core_widget
 
-  - name: 'Core: Widget - Android'
-    description: This is part of the [https://wiki.mozilla.org/Modules/Core#GeckoView
-      GeckoView] module.
-    meta: {}
-    owners:
-      - *agi
-    machine_name: core_widget_android
-
-  - name: 'Core: Widget - GTK'
-    description: GTK widget support
-    includes:
-      - widget/gtk/**/*
-    meta:
-      owners_emeritus:
-        - Robert O'Callahan
-      group: dev-platform
-      url: <http://www.mozilla.org/ports/gtk/>
-      review_group: gtk-reviewers
-      components:
-        - 'Core::Widget: Gtk'
-    owners:
-      - *karlt
-    peers:
-      - *stransky
-      - *emilio
-      - *thinker
-    machine_name: core_widget_gtk
-
   - name: 'Core: Widget - Headless'
     description: Headless widget support
     includes:
@@ -3483,36 +3324,6 @@ modules:
       - *jaas
       - *bradwerth
     machine_name: core_widget_macos
-
-  - name: 'Core: Widget - Windows'
-    description: Windows widget support
-    includes:
-      - widget/windows/**/*
-    meta:
-      owners_emeritus:
-        - *jimm
-      peers_emeritus:
-        - Rob Strong
-        - Vladimir Vukicevic
-        - Brad Lassey
-        - Brian Bondy
-        - Christian Biesinger
-        - Doug Turner
-        - Josh 'timeless' Soref
-        - Rob Arnold
-        - Aaron Klotz
-        - Neil Rashbrook
-        - *toshi
-      group: dev-platform
-      components:
-        - 'Core::Widget: Win32'
-      review_group: win-reviewers
-    owners:
-      - *cmartin
-    peers:
-      - *handyman
-      - *molly
-    machine_name: core_widget_windows
 
   - name: 'Core: XML'
     description: XML in Mozilla, including XML, XHTML, Namespaces in XML, Associating
@@ -3574,7 +3385,6 @@ modules:
       - xpcom/system/**/*
       - xpcom/tests/**/*
       - xpcom/threads/**/*
-      - xpcom/windbgdlg/**/*
     meta:
       owners_emeritus:
         - Benjamin Smedberg
@@ -3947,24 +3757,6 @@ modules:
           - *andhuang
         machine_name: inproduct_messaging
 
-      - name: Launcher Process
-        description: Windows process for bootstrapping the browser process.
-        includes:
-          - browser/app/winlauncher/**/*
-        meta:
-          owners_emeritus:
-            - Aaron Klotz
-            - *toshi
-          components:
-            - Firefox::Launcher Process
-        owners:
-          - *rkraesig
-        peers:
-          - *molly
-          - *gstoll
-          - *handyman
-        machine_name: launcher_process
-
       - machine_name: localization
         name: Localization
         description: Tooling to enable translation and facilitate localization.
@@ -4292,85 +4084,7 @@ modules:
       components:
         - DevTools
       review_group: devtools-reviewers
-  - machine_name: fenix
-    name: Fenix
-    description: Android Project to build Firefox for Android
-    includes:
-      - mobile/android/fenix/**/*
-    excludes: []
-    owners:
-      - *boek
-      - *gl
-    peers:
-      - *royang
-      - *polly
-    meta:
-      peers_emeritus:
-        - Rahul Sainani
-      review_group: android-reviewers
-    submodules:
 
-      - machine_name: fenix_addons
-        name: Fenix - Add-ons
-        description: Submodule for the add-ons code in Firefox for Android.
-        includes:
-          - mobile/android/android-components/components/browser/engine-gecko/src/*/java/mozilla/components/browser/engine/gecko/webextension/*
-          - mobile/android/android-components/components/browser/state/src/*/java/mozilla/components/browser/state/state/extension/*
-          - mobile/android/android-components/components/concept/engine/src/*/java/mozilla/components/concept/engine/webextension/*
-          - mobile/android/android-components/components/feature/addons/**/*
-          - mobile/android/android-components/components/support/webextensions/**/*
-          - mobile/android/android-components/samples/browser/src/*/java/org/mozilla/samples/browser/addons/*
-          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/addons/*
-          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/extension/*
-        meta:
-          components:
-            - 'Firefox for Android :: WebExtensions'
-            - 'WebExtensions :: Android'
-          review_group: android-addons-reviewers
-        owners:
-          - *willdurand
-        peers:
-          - *rpl
-          - *robwu
-          - *zombie
-          - *tcampbell
-          - *jonalmeida
-      - machine_name: fenix_tabs
-        name: Fenix - Tabs
-        description: Submodule for the tabs code in Firefox for Android.
-        includes:
-          - mobile/android/android-components/components/browser/tabstray/**/*
-          - mobile/android/android-components/components/compose/tabstray/**/*
-          - mobile/android/android-components/components/concept/tabstray/**/*
-          - mobile/android/android-components/components/feature/tabs/**/*
-          - mobile/android/android-components/components/feature/tabgroups-storage/**/*
-          - mobile/android/android-components/components/feature/tabdata-coordinator/**/*
-          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/tabstray/**/*
-          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/tabgroups/**/*
-          - mobile/android/fenix/app/src/*/java/org/mozilla/fenix/components/tabs/**/*
-        meta:
-          components:
-            - 'Firefox for Android :: Tabs'
-          review_group: android-tabs-reviewers
-        owners:
-          - *007
-        peers:
-          - *calu
-          - *jdelorenzo
-
-  - machine_name: focus_android
-    name: Focus for Android
-    description: Android Project to build Focus for Android
-    includes:
-      - mobile/android/focus-android/**/*
-    excludes: []
-    owners:
-      - *mcarare
-      - *royang
-    peers:
-      - *giorga
-    meta:
-      review_group: android-reviewers
   - machine_name: javascript_usage
     name: JavaScript usage, tools, and style
     description: Aspects of JavaScript use such as language feature usage, tooling
@@ -4423,10 +4137,7 @@ modules:
     description: Platform-specific geolocation layer
     includes:
       - dom/system/*ocationProvider*
-      - dom/system/windows/location/**/*
-      - dom/system/windows/*WindowsUtils*
       - dom/system/mac/*LocationProvider*
-      - dom/system/linux/*LocationProvider*
       - toolkit/components/geolocation/*
     excludes: []
     owners:
@@ -4487,7 +4198,6 @@ modules:
         includes:
           - remote/**/*
         excludes:
-          - remote/cdp/*
           - remote/marionette/*
           - remote/webdriver-bidi/*
         meta:
@@ -4499,29 +4209,6 @@ modules:
             - Yulia Startsev
           components:
             - 'Remote Protocol :: Agent'
-        owners:
-          - *whimboo
-        peers:
-          - *jdescottes
-          - *jgraham
-          - *Sasha
-
-      - machine_name: remote_protocol_cdp
-        name: CDP
-        description: The core implementation for CDP support. Please file domain specific
-          issues and requests under the appropriate CDP-prefixed Remote Protocol component.
-        includes:
-          - remote/cdp/*
-        meta:
-          owners_emeritus:
-            - Andreas Tolfsen
-          peers_emeritus:
-            - Maja Frydrychowicz
-            - Alexandre Poirot
-            - Yulia Startsev
-          components:
-            - 'Remote Protocol :: CDP'
-          review_group: webdriver-reviewers
         owners:
           - *whimboo
         peers:
@@ -4701,7 +4388,6 @@ modules:
       - python/mozperftest/**/*
       - testing/awsy/**/*
       - testing/jsshell/**/*
-      - tools/lint/perfdocs/**/*
       - testing/perfdocs/**/*
       - testing/performance/**/*
       - testing/condprofile/**/*
@@ -4866,8 +4552,6 @@ modules:
           reporting capabilities (Report Site Issue addon).
         includes:
           - browser/extensions/webcompat
-          - mobile/android/android-components/components/feature/webcompat
-          - mobile/android/android-components/components/feature/webcompat-reporter
           - toolkit/components/reportbrokensite
           - https://github.com/mozilla-extensions/webcompat-addon
         meta:
