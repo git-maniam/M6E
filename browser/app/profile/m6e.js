@@ -121,6 +121,7 @@ pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false, 
 pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false, locked);
 pref("browser.topsites.contile.enabled", false, locked);
 pref("browser.urlbar.quicksuggest.enabled", false, locked);
+pref("browser.urlbar.quicksuggest.rustEnabled", false, locked);
 pref("browser.urlbar.suggest.quicksuggest.sponsored", false, locked);
 pref("browser.urlbar.suggest.quicksuggest.nonsponsored", false, locked);
 pref("browser.urlbar.merino.endpointURL", "", locked);
