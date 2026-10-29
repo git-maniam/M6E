@@ -23,7 +23,6 @@ rumdl:
         - tools/moztreedocs/docs/
         - tools/profiler/docs/
         - tools/sanitizer/docs/
-        - tools/update-verify/docs/
         - uriloader/docs/
         - widget/cocoa/docs/
         - xpcom/docs/

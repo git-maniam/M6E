@@ -37,9 +37,6 @@
       "chrome://browser/content/backup/turn-on-scheduled-backups.mjs": [
         "../../../browser/components/backup/content/turn-on-scheduled-backups.mjs"
       ],
-      "chrome://browser/content/customizableui/sync-promo.mjs": [
-        "../../../browser/components/customizableui/content/sync-promo.mjs"
-      ],
       "chrome://browser/content/firefoxview/card-container.mjs": [
         "../../../browser/components/firefoxview/card-container.mjs"
       ],
@@ -51,21 +48,6 @@
       ],
       "chrome://browser/content/firefoxview/helpers.mjs": [
         "../../../browser/components/firefoxview/helpers.mjs"
-      ],
-      "chrome://browser/content/firefoxview/history.mjs": [
-        "../../../browser/components/firefoxview/history.mjs"
-      ],
-      "chrome://browser/content/firefoxview/opentabs-tab-list.mjs": [
-        "../../../browser/components/firefoxview/opentabs-tab-list.mjs"
-      ],
-      "chrome://browser/content/firefoxview/opentabs.mjs": [
-        "../../../browser/components/firefoxview/opentabs.mjs"
-      ],
-      "chrome://browser/content/firefoxview/recentbrowsing.mjs": [
-        "../../../browser/components/firefoxview/recentbrowsing.mjs"
-      ],
-      "chrome://browser/content/firefoxview/recentlyclosed.mjs": [
-        "../../../browser/components/firefoxview/recentlyclosed.mjs"
       ],
       "chrome://browser/content/firefoxview/search-helpers.mjs": [
         "../../../browser/components/firefoxview/search-helpers.mjs"
@@ -150,12 +132,6 @@
       ],
       "chrome://browser/content/preferences/widgets/setting-pane.mjs": [
         "../../../browser/components/preferences/widgets/setting-pane/setting-pane.mjs"
-      ],
-      "chrome://browser/content/preferences/widgets/sync-device-name.mjs": [
-        "../../../browser/components/preferences/widgets/sync-device-name/sync-device-name.mjs"
-      ],
-      "chrome://browser/content/preferences/widgets/sync-engines-list.mjs": [
-        "../../../browser/components/preferences/widgets/sync-engine-list/sync-engines-list.mjs"
       ],
       "chrome://browser/content/profiles/avatar.mjs": [
         "../../../browser/components/profiles/content/avatar.mjs"
@@ -1267,9 +1243,6 @@
       "resource:///modules/SitePermissions.sys.mjs": [
         "../../../browser/modules/SitePermissions.sys.mjs"
       ],
-      "resource:///modules/SyncedTabsController.sys.mjs": [
-        "../../../browser/components/firefoxview/SyncedTabsController.sys.mjs"
-      ],
       "resource:///modules/TRRPerformance.sys.mjs": [
         "../../../toolkit/components/doh/TRRPerformance.sys.mjs"
       ],
@@ -1384,12 +1357,6 @@
       "resource:///modules/asrouter/ToolbarBadgeHub.sys.mjs": [
         "../../../browser/components/asrouter/modules/ToolbarBadgeHub.sys.mjs"
       ],
-      "resource:///modules/firefox-view-synced-tabs-error-handler.sys.mjs": [
-        "../../../browser/components/firefoxview/firefox-view-synced-tabs-error-handler.sys.mjs"
-      ],
-      "resource:///modules/firefox-view-tabs-setup-manager.sys.mjs": [
-        "../../../browser/components/firefoxview/firefox-view-tabs-setup-manager.sys.mjs"
-      ],
       "resource:///modules/policies/BookmarksPolicies.sys.mjs": [
         "../../../browser/components/enterprisepolicies/helpers/BookmarksPolicies.sys.mjs"
       ],
@@ -1449,9 +1416,6 @@
       ],
       "resource://autofill/FormAutofillStorageBase.sys.mjs": [
         "../../../toolkit/components/formautofill/FormAutofillStorageBase.sys.mjs"
-      ],
-      "resource://autofill/FormAutofillSync.sys.mjs": [
-        "../../../toolkit/components/formautofill/FormAutofillSync.sys.mjs"
       ],
       "resource://autofill/PassportStorage.sys.mjs": [
         "../../../toolkit/components/formautofill/default/PassportStorage.sys.mjs"
@@ -5281,9 +5245,6 @@
       "resource://gre/modules/AddonManager.sys.mjs": [
         "../../../toolkit/mozapps/extensions/AddonManager.sys.mjs"
       ],
-      "resource://gre/modules/AndroidLog.sys.mjs": [
-        "../../../mobile/android/modules/geckoview/AndroidLog.sys.mjs"
-      ],
       "resource://gre/modules/AppConstants.sys.mjs": [
         "../../../tools/@types/subs/AppConstants.sys.d.mts"
       ],
@@ -5352,9 +5313,6 @@
       ],
       "resource://gre/modules/CertUtils.sys.mjs": [
         "../../../toolkit/modules/CertUtils.sys.mjs"
-      ],
-      "resource://gre/modules/ChildCrashHandler.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/ChildCrashHandler.sys.mjs"
       ],
       "resource://gre/modules/ChromePushSubscription.sys.mjs": [
         "../../../dom/push/ChromePushSubscription.sys.mjs"
@@ -5434,14 +5392,8 @@
       "resource://gre/modules/DateNormalizationUtils.sys.mjs": [
         "../../../toolkit/modules/DateNormalizationUtils.sys.mjs"
       ],
-      "resource://gre/modules/DefaultAgentScheduler.sys.mjs": [
-        "../../../toolkit/mozapps/defaultagent/DefaultAgentScheduler.sys.mjs"
-      ],
       "resource://gre/modules/DeferredTask.sys.mjs": [
         "../../../toolkit/modules/DeferredTask.sys.mjs"
-      ],
-      "resource://gre/modules/DelayedInit.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/DelayedInit.sys.mjs"
       ],
       "resource://gre/modules/DownloadCore.sys.mjs": [
         "../../../toolkit/components/downloads/DownloadCore.sys.mjs"
@@ -5641,63 +5593,6 @@
       "resource://gre/modules/GMPUtils.sys.mjs": [
         "../../../toolkit/modules/GMPUtils.sys.mjs"
       ],
-      "resource://gre/modules/GeckoViewActorChild.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewActorChild.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewActorManager.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewActorManager.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewActorParent.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewActorParent.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewAutocomplete.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewAutocomplete.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewAutofill.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewAutofill.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewClipboardPermission.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewClipboardPermission.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewIdentityCredential.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewIdentityCredential.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewModule.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewModule.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewPictureInPicture.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewPictureInPicture.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewPreferences.sys.mjs": [
-        "../../../mobile/shared/components/geckoview/GeckoViewPreferences.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewPrompter.sys.mjs": [
-        "../../../mobile/shared/components/geckoview/GeckoViewPrompter.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewSessionStore.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewSessionStore.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewSettings.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewSettings.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewTab.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewTab.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewTelemetry.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewTelemetry.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewTestUtils.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewTestUtils.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewTrackingDB.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewTrackingDB.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewUtils.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewUtils.sys.mjs"
-      ],
-      "resource://gre/modules/GeckoViewWebExtension.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/GeckoViewWebExtension.sys.mjs"
-      ],
       "resource://gre/modules/Geometry.sys.mjs": [
         "../../../toolkit/modules/Geometry.sys.mjs"
       ],
@@ -5752,9 +5647,6 @@
       "resource://gre/modules/LightweightThemeManager.sys.mjs": [
         "../../../toolkit/mozapps/extensions/LightweightThemeManager.sys.mjs"
       ],
-      "resource://gre/modules/LoadURIDelegate.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/LoadURIDelegate.sys.mjs"
-      ],
       "resource://gre/modules/Log.sys.mjs": [
         "../../../toolkit/modules/Log.sys.mjs"
       ],
@@ -5806,14 +5698,8 @@
       "resource://gre/modules/MatchURLFilters.sys.mjs": [
         "../../../toolkit/components/extensions/MatchURLFilters.sys.mjs"
       ],
-      "resource://gre/modules/MediaUtils.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/MediaUtils.sys.mjs"
-      ],
       "resource://gre/modules/MessageManagerProxy.sys.mjs": [
         "../../../toolkit/components/extensions/MessageManagerProxy.sys.mjs"
-      ],
-      "resource://gre/modules/Messaging.sys.mjs": [
-        "../../../mobile/shared/modules/geckoview/Messaging.sys.mjs"
       ],
       "resource://gre/modules/NLP.sys.mjs": [
         "../../../toolkit/modules/NLP.sys.mjs"
@@ -5926,12 +5812,6 @@
       "resource://gre/modules/PushDB.sys.mjs": [
         "../../../dom/push/PushDB.sys.mjs"
       ],
-      "resource://gre/modules/PushNotificationHelper.sys.mjs": [
-        "../../../toolkit/mozapps/pushnotificationhelper/PushNotificationHelper.sys.mjs"
-      ],
-      "resource://gre/modules/PushNotificationHelperRegistry.sys.mjs": [
-        "../../../toolkit/mozapps/pushnotificationhelper/PushNotificationHelperRegistry.sys.mjs"
-      ],
       "resource://gre/modules/PushRecord.sys.mjs": [
         "../../../dom/push/PushRecord.sys.mjs"
       ],
@@ -6009,9 +5889,6 @@
       ],
       "resource://gre/modules/Subprocess.sys.mjs": [
         "../../../toolkit/modules/subprocess/Subprocess.sys.mjs"
-      ],
-      "resource://gre/modules/SyncedBookmarksMirror.sys.mjs": [
-        "../../../toolkit/components/places/SyncedBookmarksMirror.sys.mjs"
       ],
       "resource://gre/modules/TelemetryArchive.sys.mjs": [
         "../../../toolkit/components/telemetry/app/TelemetryArchive.sys.mjs"
@@ -6109,9 +5986,6 @@
       "resource://gre/modules/WebRequestUpload.sys.mjs": [
         "../../../toolkit/components/extensions/webrequest/WebRequestUpload.sys.mjs"
       ],
-      "resource://gre/modules/WindowsPushNotificationHelper.sys.mjs": [
-        "../../../toolkit/mozapps/pushnotificationhelper/WindowsPushNotificationHelper.sys.mjs"
-      ],
       "resource://gre/modules/WindowsRegistry.sys.mjs": [
         "../../../toolkit/modules/WindowsRegistry.sys.mjs"
       ],
@@ -6157,9 +6031,6 @@
       "resource://gre/modules/addons/siteperms-addon-utils.sys.mjs": [
         "../../../toolkit/mozapps/extensions/internal/siteperms-addon-utils.sys.mjs"
       ],
-      "resource://gre/modules/backgroundtasks/BackgroundTask_defaultagent.sys.mjs": [
-        "../../../toolkit/mozapps/defaultagent/BackgroundTask_defaultagent.sys.mjs"
-      ],
       "resource://gre/modules/backgroundtasks/dbg-actors.js": [
         "../../../toolkit/components/backgroundtasks/dbg-actors.js"
       ],
@@ -6183,9 +6054,6 @@
       ],
       "resource://gre/modules/ctypes.sys.mjs": [
         "../../../toolkit/components/ctypes/ctypes.sys.mjs"
-      ],
-      "resource://gre/modules/dbg-browser-actors.js": [
-        "../../../mobile/shared/modules/dbg-browser-actors.js"
       ],
       "resource://gre/modules/handlers/HandlerList.sys.mjs": [
         "../../../uriloader/exthandler/HandlerList.sys.mjs"
@@ -6604,48 +6472,6 @@
       "resource://nimbus/ExperimentAPI.sys.mjs": [
         "../../../toolkit/components/nimbus/ExperimentAPI.sys.mjs"
       ],
-      "resource://normandy/Normandy.sys.mjs": [
-        "../../../toolkit/components/normandy/Normandy.sys.mjs"
-      ],
-      "resource://normandy/NormandyMigrations.sys.mjs": [
-        "../../../toolkit/components/normandy/NormandyMigrations.sys.mjs"
-      ],
-      "resource://normandy/actions/BaseAction.sys.mjs": [
-        "../../../toolkit/components/normandy/actions/BaseAction.sys.mjs"
-      ],
-      "resource://normandy/actions/ShowHeartbeatAction.sys.mjs": [
-        "../../../toolkit/components/normandy/actions/ShowHeartbeatAction.sys.mjs"
-      ],
-      "resource://normandy/actions/schemas/index.sys.mjs": [
-        "../../../toolkit/components/normandy/actions/schemas/index.sys.mjs"
-      ],
-      "resource://normandy/lib/ActionsManager.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/ActionsManager.sys.mjs"
-      ],
-      "resource://normandy/lib/CleanupManager.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/CleanupManager.sys.mjs"
-      ],
-      "resource://normandy/lib/EventEmitter.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/EventEmitter.sys.mjs"
-      ],
-      "resource://normandy/lib/Heartbeat.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/Heartbeat.sys.mjs"
-      ],
-      "resource://normandy/lib/LegacyHeartbeat.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/LegacyHeartbeat.sys.mjs"
-      ],
-      "resource://normandy/lib/LogManager.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/LogManager.sys.mjs"
-      ],
-      "resource://normandy/lib/NormandyApi.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/NormandyApi.sys.mjs"
-      ],
-      "resource://normandy/lib/NormandyUtils.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/NormandyUtils.sys.mjs"
-      ],
-      "resource://normandy/lib/RecipeRunner.sys.mjs": [
-        "../../../toolkit/components/normandy/lib/RecipeRunner.sys.mjs"
-      ],
       "resource://pdf.js/PdfEmbedFallbackStreamConverter.sys.mjs": [
         "../../../toolkit/components/pdfjs/content/PdfEmbedFallbackStreamConverter.sys.mjs"
       ],
@@ -6717,12 +6543,6 @@
       ],
       "resource://services-common/kinto-http-client.sys.mjs": [
         "../../../services/common/kinto-http-client.sys.mjs"
-      ],
-      "resource://services-common/kinto-offline-client.sys.mjs": [
-        "../../../services/common/kinto-offline-client.sys.mjs"
-      ],
-      "resource://services-common/kinto-storage-adapter.sys.mjs": [
-        "../../../services/common/kinto-storage-adapter.sys.mjs"
       ],
       "resource://services-common/observers.sys.mjs": [
         "../../../services/common/observers.sys.mjs"
@@ -7018,9 +6838,6 @@
       "resource://testing-common/NodeServer.sys.mjs": [
         "../../../netwerk/test/httpserver/NodeServer.sys.mjs"
       ],
-      "resource://testing-common/NormandyTestUtils.sys.mjs": [
-        "../../../toolkit/components/normandy/test/NormandyTestUtils.sys.mjs"
-      ],
       "resource://testing-common/OSKeyStoreTestUtils.sys.mjs": [
         "../../../toolkit/modules/tests/modules/OSKeyStoreTestUtils.sys.mjs"
       ],
@@ -7174,15 +6991,6 @@
       "resource://testing-common/services/common/logging.sys.mjs": [
         "../../../services/common/modules-testing/logging.sys.mjs"
       ],
-      "resource://testing-common/services/sync/fakeservices.sys.mjs": [
-        "../../../services/sync/modules-testing/fakeservices.sys.mjs"
-      ],
-      "resource://testing-common/services/sync/fxa_utils.sys.mjs": [
-        "../../../services/sync/modules-testing/fxa_utils.sys.mjs"
-      ],
-      "resource://testing-common/services/sync/rotaryengine.sys.mjs": [
-        "../../../services/sync/modules-testing/rotaryengine.sys.mjs"
-      ],
       "resource://testing-common/simple_unknown_uri_helpers.sys.mjs": [
         "../../../netwerk/test/browser/simple_unknown_uri_helpers.sys.mjs"
       ],
@@ -7228,9 +7036,6 @@
       "resource://testing-common/AppInfo.sys.mjs": [
         "../../../testing/modules/AppInfo.sys.mjs"
       ],
-      "resource://testing-common/AppUiTestDelegate.sys.mjs": [
-        "../../../mobile/shared/modules/test/AppUiTestDelegate.sys.mjs"
-      ],
       "resource://testing-common/Assert.sys.mjs": [
         "../../../testing/modules/Assert.sys.mjs"
       ],
@@ -7243,23 +7048,8 @@
       "resource://testing-common/dom/quota/test/modules/Utils.sys.mjs": [
         "../../../dom/quota/test/modules/system/Utils.sys.mjs"
       ],
-      "resource://testing-common/services/sync/utils.sys.mjs": [
-        "../../../services/sync/modules-testing/utils.sys.mjs"
-      ],
       "chrome://global/content/vendor/lit.all.mjs": [
         "../../../toolkit/content/widgets/vendor/lit.all.d.ts"
-      ],
-      "@lit/reactive-element": [
-        "../../../node_modules/@lit/reactive-element/reactive-element"
-      ],
-      "lit/*": [
-        "../../../node_modules/lit/*"
-      ],
-      "lit-html": [
-        "../../../node_modules/lit-html/lit-html"
-      ],
-      "moz-src:///*": [
-        "../../../*"
       ]
     }
   }

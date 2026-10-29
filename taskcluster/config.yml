@@ -173,9 +173,6 @@ treeherder:
         'WMC64': 'MinGW-Clang builds for Windows 64-bits'
         'Searchfox': 'Searchfox builds'
         'SM': 'Spidermonkey builds'
-        'p': 'Partial generation'
-        'pz': 'Partial-zucchini generation'
-        'ps': 'Partials signing'
         'ms': 'Complete MAR signing'
         'ms-stage': 'Autograph-stage MAR signing test'
         'Rel': 'Release promotion'
@@ -447,7 +444,6 @@ index:
         - 'devedition'
         - 'source'
         - 'test'
-        - 'system-symbols'
         - 'geckodriver'
 
 try:

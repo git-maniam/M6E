@@ -138,13 +138,10 @@ accessible/tests/mochitest/elm/test_HTMLSpec.html
 accessible/tests/mochitest/events/test_focus_autocomplete.html
 accessible/tests/mochitest/events/test_focus_removal.html
 accessible/tests/mochitest/events/test_mutation.html
-accessible/tests/mochitest/events/test_stylechange.html
 accessible/tests/mochitest/hyperlink/test_general.html
 accessible/tests/mochitest/hypertext/test_general.html
 accessible/tests/mochitest/hypertext/test_update.html
-accessible/tests/mochitest/name/test_general.html
 accessible/tests/mochitest/name/test_svg.html
-accessible/tests/mochitest/pivot/doc_virtualcursor_text.html
 accessible/tests/mochitest/role/test_aria.html
 accessible/tests/mochitest/role/test_general.html
 accessible/tests/mochitest/states/test_aria.html
@@ -170,7 +167,6 @@ browser/base/content/test/browser-contextMenu/subtst_contextmenu.html
 browser/base/content/test/browser-favicons/datauri-favicon.html
 browser/base/content/test/browser-favicons/file_bug970276_popup1.html
 browser/base/content/test/browser-fullscreen/open_and_focus_helper.html
-browser/base/content/test/browser-general/browser_tab_dragdrop_embed.html
 browser/base/content/test/browser-general/dummy_page.html
 browser/base/content/test/browser-general/file_documentnavigation_frameset.html
 browser/base/content/test/browser-outOfProcess/file_base.html
@@ -203,7 +199,6 @@ browser/components/places/tests/unit/bookmarks.glue.html
 browser/components/resistfingerprinting/test/browser/file_animationapi_iframee.html
 browser/components/resistfingerprinting/test/browser/file_dummy.html
 browser/components/resistfingerprinting/test/browser/file_navigator.html
-browser/components/search/test/browser/searchTelemetryAd_searchbox.html
 browser/components/sessionstore/test/browser_423132_sample.html
 browser/components/sessionstore/test/browser_485482_sample.html
 browser/components/sessionstore/test/browser_frametree_sample_frameset.html
@@ -212,7 +207,6 @@ browser/components/tabbrowser/test/browser/tabs/dummy_page.html
 browser/components/tabbrowser/test/browser/tabs/file_anchor_elements.html
 browser/components/tabbrowser/test/browser/tabs/tab_that_closes.html
 browser/components/textrecognition/textrecognition.html
-browser/components/urlbar/content/quicksuggestOnboarding.html
 browser/components/urlbar/tests/browser/dummy_page.html
 browser/components/urlbar/tests/browser/file_urlbar_edit_dos.html
 browser/tools/mozscreenshots/mozscreenshots/extension/lib/controlCenter/mixed.html
@@ -221,7 +215,6 @@ devtools/client/aboutdebugging/test/browser/test-tab-favicons.html
 devtools/client/inspector/rules/test/doc_author-sheet.html
 devtools/client/inspector/rules/test/doc_blob_stylesheet.html
 devtools/client/inspector/rules/test/doc_keyframeLineNumbers.html
-devtools/client/inspector/test/doc_inspector_embed.html
 devtools/client/netmonitor/test/html_csp-resend-test-page.html
 devtools/client/styleeditor/test/bug_1405342_serviceworker_iframes.html
 devtools/client/styleeditor/test/sourcemaps-inline.html
@@ -272,8 +265,6 @@ dom/animation/test/style/test_transform-non-normalizable-rotate3d.html
 dom/base/test/345339_iframe.html
 dom/base/test/dummy.html
 dom/base/test/file_bug326337_inner.html
-dom/base/test/file_bug541937.html
-dom/base/test/file_bug541937.xhtml
 dom/base/test/file_bug769117.html
 dom/base/test/file_focus_display_none_xorigin_iframe_inner.html
 dom/base/test/file_lock_orientation_with_pending_fullscreen.html
@@ -301,13 +292,10 @@ dom/base/test/test_bug1648887.html
 dom/base/test/test_bug372086.html
 dom/base/test/test_bug403841.html
 dom/base/test/test_bug403852.html
-dom/base/test/test_bug422403-2.xhtml
-dom/base/test/test_bug424359-2.html
 dom/base/test/test_bug428847.html
 dom/base/test/test_bug455629.html
 dom/base/test/test_bug564863.xhtml
 dom/base/test/test_bug656283.html
-dom/base/test/test_bug726364.html
 dom/base/test/test_bug782342.html
 dom/base/test/test_bug789315.html
 dom/base/test/test_bug819051.html
@@ -357,19 +345,16 @@ dom/events/test/pointerevents/wpt/idlharness.html
 dom/events/test/pointerevents/wpt/pointerevent_sequence_at_implicit_release_on_click-manual.html
 dom/events/test/pointerevents/wpt/pointerevent_sequence_at_implicit_release_on_drag-manual.html
 dom/events/test/test_accesskey.html
-dom/events/test/test_bug1127588.html
 dom/events/test/test_bug1264380.html
 dom/events/test/test_bug1304044.html
 dom/events/test/test_bug409604.html
 dom/events/test/test_bug508479.html
 dom/events/test/test_bug547996-2.xhtml
-dom/events/test/test_bug650493.html
 dom/events/test/test_deviceSensor.html
 dom/events/test/test_draggableprop.html
 dom/events/test/test_messageEvent_init.html
 dom/events/test/test_moving_and_expanding_selection_per_page.html
 dom/events/test/test_passive_listeners.html
-dom/events/test/test_paste_image.html
 dom/events/test/test_scroll_per_page.html
 dom/file/ipc/tests/test_ipcBlob_createImageBitmap.html
 dom/file/ipc/tests/test_ipcBlob_emptyMultiplex.html
@@ -426,7 +411,6 @@ dom/html/test/test_bug388794.html
 dom/html/test/test_bug406596.html
 dom/html/test/test_bug579079.html
 dom/html/test/test_bug598833-1.html
-dom/html/test/test_bug622558.html
 dom/html/test/test_bug780993.html
 dom/html/test/test_bug797113.html
 dom/html/test/test_bug821307.html
@@ -508,7 +492,6 @@ dom/midi/tests/refresh_port_list.html
 dom/payments/test/test_abortPayment.html
 dom/performance/tests/test_performance_paint_timing_helper.html
 dom/performance/tests/test_timeOrigin.html
-dom/plugins/test/mochitest/block_all_plugins.html
 dom/plugins/test/mochitest/test_mixed_case_mime.html
 dom/plugins/test/mochitest/test_plugin_fallback_focus.html
 dom/security/test/csp/file_bug1505412_frame.html
@@ -580,7 +563,6 @@ dom/security/test/mixedcontentblocker/file_csp_block_all_mixedcontent_and_mixed_
 dom/serviceworkers/test/claim_clients/client.html
 dom/serviceworkers/test/controller/index.html
 dom/serviceworkers/test/fetch/index.html
-dom/serviceworkers/test/file_notification_openWindow.html
 dom/serviceworkers/test/skip_waiting_scope/index.html
 dom/serviceworkers/test/sw_clients/file_blob_upload_frame.html
 dom/serviceworkers/test/sw_clients/navigator.html
@@ -603,9 +585,7 @@ dom/serviceworkers/test/test_eval_allowed.html
 dom/serviceworkers/test/test_event_listener_leaks.html
 dom/serviceworkers/test/test_eventsource_intercept.html
 dom/serviceworkers/test/test_fetch_event.html
-dom/serviceworkers/test/test_fetch_event_no_orb.html
 dom/serviceworkers/test/test_fetch_event_with_thirdpartypref.html
-dom/serviceworkers/test/test_fetch_event_with_thirdpartypref_no_orb.html
 dom/serviceworkers/test/test_file_blob_response.html
 dom/serviceworkers/test/test_file_blob_upload.html
 dom/serviceworkers/test/test_force_refresh.html
@@ -631,8 +611,6 @@ dom/serviceworkers/test/test_navigationPreload_disable_crash.html
 dom/serviceworkers/test/test_navigator.html
 dom/serviceworkers/test/test_nofetch_handler.html
 dom/serviceworkers/test/test_not_intercept_plugin.html
-dom/serviceworkers/test/test_notification_constructor_error.html
-dom/serviceworkers/test/test_notification_openWindow.html
 dom/serviceworkers/test/test_opaque_intercept.html
 dom/serviceworkers/test/test_origin_after_redirect.html
 dom/serviceworkers/test/test_origin_after_redirect_cached.html
@@ -664,7 +642,6 @@ dom/serviceworkers/test/unregister/unregister.html
 dom/serviceworkers/test/workerUpdate/update.html
 dom/smil/test/file_smilWithTransition.html
 dom/smil/test/test_smilWithTransition.html
-dom/svg/test/test_getBBox-method.html
 dom/svg/test/test_non-scaling-stroke.html
 dom/svg/test/test_style_sheet.html
 dom/svg/test/test_text_update.html
@@ -685,8 +662,6 @@ dom/tests/mochitest/bugs/test_domparser_after_blank.html
 dom/tests/mochitest/chrome/child_focus_frame.html
 dom/tests/mochitest/chrome/file_popup_blocker_chrome.html
 dom/tests/mochitest/chrome/focus_frameset.html
-dom/tests/mochitest/chrome/queryCaretRectUnix.html
-dom/tests/mochitest/chrome/queryCaretRectWin.html
 dom/tests/mochitest/chrome/test_intlUtils_getDisplayNames.html
 dom/tests/mochitest/chrome/test_intlUtils_isAppLocaleRTL.html
 dom/tests/mochitest/chrome/test_nodesFromRect.html
@@ -705,8 +680,6 @@ dom/tests/mochitest/general/test_bug653364.html
 dom/tests/mochitest/general/test_offsets.html
 dom/tests/mochitest/general/test_paste_selection.html
 dom/tests/mochitest/general/test_resource_timing_frameset.html
-dom/tests/mochitest/geolocation/geolocation.html
-dom/tests/mochitest/geolocation/popup.html
 dom/tests/mochitest/localstorage/test_localStorageKeyOrder.html
 dom/tests/mochitest/webcomponents/test_event_composed.html
 dom/tests/mochitest/whatwg/test_postMessage_special.xhtml
@@ -727,7 +700,6 @@ dom/webauthn/tests/test_webauthn_isplatformauthenticatoravailable.html
 dom/webauthn/tests/test_webauthn_loopback.html
 dom/webauthn/tests/test_webauthn_make_credential.html
 dom/webauthn/tests/test_webauthn_no_token.html
-dom/webauthn/tests/test_webauthn_override_request.html
 dom/webauthn/tests/test_webauthn_sameorigin.html
 dom/webauthn/tests/test_webauthn_sameoriginwithancestors.html
 dom/webauthn/tests/test_webauthn_store_credential.html
@@ -907,19 +879,6 @@ layout/style/test/test_mql_event_listener_leaks.html
 layout/style/test/test_pointer-events.html
 layout/style/test/test_reframe_image_loading.html
 layout/tables/test/test_bug337124.html
-mobile/android/android-components/docs/_includes/footer.html
-mobile/android/android-components/docs/_includes/head.html
-mobile/android/android-components/docs/_layouts/home.html
-mobile/android/fenix/app/src/androidTest/assets/pages/downloads.html
-mobile/android/fenix/app/src/androidTest/assets/pages/htmlControls.html
-mobile/android/fenix/app/src/androidTest/assets/pages/trackingPage.html
-mobile/android/geckoview/src/androidTest/assets/www/accessibility/test-headings.html
-mobile/android/geckoview/src/androidTest/assets/www/autoplay.html
-mobile/android/geckoview/src/androidTest/assets/www/badVideoPath.html
-mobile/android/geckoview/src/androidTest/assets/www/context_menu_video.html
-mobile/android/geckoview/src/androidTest/assets/www/mp4.html
-mobile/android/geckoview/src/androidTest/assets/www/webm.html
-mobile/shared/components/extensions/test/mochitest/file_dummy.html
 netwerk/test/browser/103_preload_iframe.html
 netwerk/test/browser/post.html
 netwerk/test/mochitests/file_domain_hierarchy_inner.html
@@ -933,7 +892,6 @@ netwerk/test/mochitests/test_redirect_ref.html
 parser/html/java/named-character-references.html
 testing/marionette/harness/marionette_harness/www/click_out_of_bounds_overflow.html
 testing/mochitest/tests/Harness_sanity/test_SpecialPowersExtension.html
-testing/mochitest/tests/Harness_sanity/test_SpecialPowersLoadPrivilegedScript.html
 testing/mochitest/tests/Harness_sanity/test_sanityEventUtils.html
 testing/mochitest/tests/browser/dummy.html
 testing/talos/talos/tests/cpstartup/target.html
@@ -976,7 +934,6 @@ toolkit/components/windowcreator/test/test_window_open_units.html
 toolkit/components/windowwatcher/test/file_storage_copied.html
 toolkit/components/windowwatcher/test/file_test_dialog.html
 toolkit/content/aboutGlean.html
-toolkit/content/aboutNetError.xhtml
 toolkit/content/aboutUrlClassifier.xhtml
 toolkit/content/tests/browser/file_outside_viewport_videos.html
 toolkit/content/tests/browser/file_redirect.html
@@ -985,7 +942,6 @@ toolkit/content/tests/browser/image_page.html
 toolkit/content/tests/mochitest/file_mousecapture4.html
 toolkit/mozapps/extensions/test/browser/webapi_checkframed.html
 toolkit/xre/test/test_fpuhandler.html
-tools/jprof/README.html
 uriloader/exthandler/tests/mochitest/save_filenames.html
 
 ##############################################################################
@@ -1013,7 +969,6 @@ build/pgo/js-input/
 browser/app/
 browser/branding/**/firefox-branding.js
 # Gzipped test file.
-browser/base/content/test/browser-general/gZipOfflineChild.html
 browser/components/urlbar/tests/browser/file_blank_but_not_blank.html
 # Test files that are really json not js, and don't need to be linted.
 browser/components/sessionstore/test/unit/data/sessionstore_valid.js
@@ -1030,18 +985,13 @@ browser/components/aboutwelcome/logs/
 
 # The only file in browser/locales/ is pre-processed.
 browser/locales/
-# Generated data files
-browser/extensions/formautofill/phonenumberutils/PhoneNumberMetaData.sys.mjs
 
 # Ignore devtools debugger files which aren't intended for linting.
 devtools/client/debugger/bin/
-devtools/client/debugger/configs/
 devtools/client/debugger/dist/
 devtools/client/debugger/images/
-devtools/client/debugger/packages/
 devtools/client/debugger/test/mochitest/examples/
 devtools/client/debugger/index.html
-devtools/client/debugger/webpack.config.js
 
 # Ignore devtools preferences files
 devtools/client/preferences/
@@ -1051,7 +1001,6 @@ devtools/**/*.snapshot.mjs
 tools/profiler/tests/browser/browser_test_feature_jstracing_objtestutils.snapshot.mjs
 devtools/client/webconsole/test/node/fixtures/stubs/*.js
 !devtools/client/webconsole/test/node/fixtures/stubs/index.js
-devtools/client/shared/components/test/node/stubs/reps/*.js
 devtools/client/shared/source-map-loader/test/browser/fixtures/*.js
 
 # Ignore devtools files testing sourcemaps / code style
@@ -1100,15 +1049,10 @@ dom/encoding/test/test_utf16_files.html
 dom/encoding/test/file_utf16_be_bom.js
 dom/encoding/test/file_utf16_le_bom.js
 
-# Service workers fixtures which require specific resource caching.
-dom/base/test/file_js_cache.js
-dom/serviceworkers/test/file_js_cache.js
-
 # .ts files that aren't TypeScript
 dom/media/test/hls/*.ts
 
 # Intentional broken files
-dom/base/test/file_js_cache_syntax_error.js
 dom/base/test/file_js_cache_large_syntax_error.js
 dom/base/test/jsmodules/test_scriptNotParsedAsModule.html
 dom/base/test/jsmodules/test_syntaxError.html
@@ -1120,7 +1064,6 @@ dom/base/test/jsmodules/parse_error.js
 dom/base/test/test_bug687859.html
 dom/media/webrtc/tests/mochitests/identity/idp-bad.js
 dom/security/test/general/file_nonscript.json
-dom/serviceworkers/test/file_js_cache_syntax_error.js
 dom/serviceworkers/test/parse_error_worker.js
 dom/tests/mochitest/bugs/test_bug531176.html
 dom/webauthn/tests/cbor.js
@@ -1146,19 +1089,6 @@ js/xpconnect/tests/unit/
 # Fuzzing code for testing only, targeting the JS shell
 js/src/fuzz-tests/
 
-# Template file
-mobile/android/docs/geckoview/assets/js/search-data.json
-
-# Uses `#filter substitution`
-mobile/android/app/geckoview-prefs.js
-
-# Not much JS to lint and non-standard at that
-mobile/android/installer/
-mobile/android/locales/
-
-# Contains pref files.
-mobile/ios/app/
-
 # Pre-processed/pref files
 modules/libpref/greprefs.js
 modules/libpref/init/all.js
@@ -1170,16 +1100,10 @@ toolkit/components/backgroundtasks/defaults/backgroundtasks_browser.js
 python/
 
 # These are (mainly) imported code that we don't want to lint to make imports easier.
-remote/cdp/Protocol.sys.mjs
-remote/cdp/test/browser/chrome-remote-interface.js
 remote/marionette/atom.sys.mjs
 
 # This file explicitly has a syntax error and cannot be parsed by eslint.
 remote/shared/messagehandler/test/browser/resources/modules/root/invalid.sys.mjs
-
-# services/ exclusions
-
-# Webpack-bundled library
 
 # Servo is imported.
 servo/
@@ -1235,9 +1159,6 @@ tools/lint/test/files
 # Uses special template formatting.
 tools/tryselect/selectors/chooser/templates/chooser.html
 
-# Ignore pre-generated webpack and typescript transpiled files for translations
-browser/extensions/translations/extension/
-
 # "scaffolding" used by uniffi which isn't valid JS in its original form.
 toolkit/components/uniffi-bindgen-gecko-js/src/templates/js/
 toolkit/components/uniffi-bindgen-gecko-js/components/generated/*
@@ -1259,7 +1180,6 @@ browser/extensions/newtab/data/content/bundled-renderer-index.js
 # produces errors. Bug 1831302 tracks making this better
 devtools/client/debugger/src/components/PrimaryPanes/Outline.css
 devtools/client/debugger/src/components/PrimaryPanes/Sources.css
-devtools/client/debugger/src/components/shared/AccessibleImage.css
 devtools/client/debugger/src/utils/editor/source-editor.css
 devtools/client/debugger/test/mochitest/examples/
 
@@ -1312,11 +1232,6 @@ layout/style/test/gtest/example.css
 layout/style/test/mapped2.css
 layout/style/test/unstyled-frame.css
 
-# Bug 1893763
-mobile/android/android-components/components/feature/readerview/src/main/assets/extensions/readerview/readerview.css
-# Three dashes at top of file (for Jekyll?) cause syntax error:
-mobile/android/android-components/docs/assets/main.scss
-
 # Empty test files:
 netwerk/test/mochitests/test1.css
 netwerk/test/mochitests/test2.css
@@ -1345,9 +1260,7 @@ browser/components/topsites/content/tippytop/images/
 browser/extensions/formautofill/content/third-party/
 browser/extensions/formautofill/test/fixtures/third_party/
 devtools/client/inspector/markup/test/events/lib_*
-devtools/client/jsonview/lib/require.js
 devtools/client/shared/build/babel.js
-devtools/client/shared/source-map/
 devtools/client/shared/sourceeditor/codemirror/
 devtools/client/shared/sourceeditor/codemirror6/
 devtools/client/shared/sourceeditor/test/cm_mode_ruby.js
@@ -1355,7 +1268,6 @@ devtools/client/shared/sourceeditor/test/codemirror/
 devtools/client/shared/vendor/
 devtools/client/inspector/markup/test/events/helper_diff.js
 devtools/client/debugger/src/workers/parser/utils/parse-script-tags/
-devtools/shared/acorn/
 devtools/shared/compatibility/dataset/css-properties.json
 devtools/shared/heapsnapshot/CoreDump.pb.cc
 devtools/shared/heapsnapshot/CoreDump.pb.h
@@ -1388,21 +1300,17 @@ dom/tests/mochitest/ajax/
 dom/tests/mochitest/dom-level1-core/
 dom/tests/mochitest/dom-level2-core/
 dom/tests/mochitest/dom-level2-html/
-dom/u2f/tests/pkijs/
-dom/webauthn/tests/pkijs/
 dom/webgpu/tests/cts/checkout/
 editor/libeditor/tests/browserscope/lib/richtext/
 editor/libeditor/tests/browserscope/lib/richtext2/
 extensions/spellcheck/hunspell/src/
 function2/
 fmt/
-gfx/angle/checkout/
 gfx/cairo/
 gfx/graphite2/
 gfx/harfbuzz/
 gfx/ots/
 gfx/qcms/
-gfx/sfntly/
 gfx/skia/
 gfx/vr/service/openvr/
 gfx/vr/service/openvr/headers/openvr.h
@@ -1447,9 +1355,7 @@ js/src/vtune/jitprofiling.h
 js/src/vtune/legacy/
 js/src/xsum/
 js/src/zydis/
-layout/docs/css-gap-decorations/
 media/ffvpx/
-media/kiss_fft/
 media/libaom/
 media/libcubeb/
 media/libdav1d/
@@ -1467,14 +1373,9 @@ media/libwebp/
 media/libyuv/
 media/mozva/va
 media/mp4parse-rust/
-media/openmax_dl/
 media/openmax_il/
 media/webrtc/signaling/gtest/MockCall.h
 mfbt/double-conversion/double-conversion/
-mobile/android/android-components/components/feature/readerview/src/main/assets/extensions/readerview/readability/JSDOMParser-0.4.2.js
-mobile/android/android-components/components/feature/readerview/src/main/assets/extensions/readerview/readability/readability-0.4.2.js
-mobile/android/android-components/components/feature/readerview/src/main/assets/extensions/readerview/readability/readability-readerable-0.4.2.js
-mobile/android/exoplayer2/
 modules/brotli/
 modules/fdlibm/
 modules/freetype2/
@@ -1486,20 +1387,15 @@ mozglue/misc/decimal/
 mozglue/static/lz4/
 mozglue/tests/glibc_printf_tests/
 netwerk/sctp/src/
-netwerk/srtp/src/
 nsprpub/
 other-licenses/
 parser/expat/
-remote/cdp/test/browser/chrome-remote-interface.js
 remote/test/puppeteer/
 security/manager/tools/log_list.json
 security/nss/
 security/sandbox/chromium/
 security/sandbox/chromium-shim/
-security/sandbox/linux/launch/glibc_hack/sandbox/linux/services/namespace_sandbox.cc
 services/common/kinto-http-client.sys.mjs
-testing/gtest/gmock/
-testing/gtest/gtest/
 testing/mochitest/pywebsocket3/
 testing/modules/sinon-7.2.7.js
 testing/mozbase/mozproxy/mozproxy/backends/mitm/scripts/catapult/
@@ -1521,7 +1417,6 @@ third_party/
 toolkit/components/contentanalysis/content_analysis/sdk/
 toolkit/components/certviewer/content/vendor/
 toolkit/components/jsoncpp/
-toolkit/components/normandy/vendor/
 toolkit/components/passwordmgr/shared/PasswordRulesParser.sys.mjs
 toolkit/components/protobuf/
 toolkit/components/reader/readability/
@@ -1539,8 +1434,6 @@ tools/profiler/core/vtune/
 xpcom/build/mach_override.c
 xpcom/build/mach_override.h
 xpcom/io/crc32c.c
-rlbox/rlbox_sandbox.hpp
-
 
 ##############################################################################
 # The list below is copied from Generated.txt. Prettier doesn't currently
@@ -1576,202 +1469,9 @@ devtools/client/application/test/components/node_modules/
 devtools/client/debugger/node_modules/
 dom/base/use_counter_metrics.yaml
 dom/security/sanitizer/SanitizerDefaultConfig.h
-dom/tests/ajax/jquery/
-dom/tests/ajax/mochikit/
-gradle/wrapper/
 intl/components/src/UnicodeScriptCodes.h
 intl/unicharutil/util/nsSpecialCasingData.cpp
 intl/unicharutil/util/nsUnicodePropertyData.cpp
-mobile/android/**/.build-cache
-mobile/android/**/.gradle
-mobile/android/**/build
-mobile/android/**/bin
-mobile/android/**/generated
-mobile/android/**/local.properties
-mobile/android/**/manifest.json
-mobile/android/android-components/components/browser/engine-system/src/main/res/
-mobile/android/android-components/components/browser/errorpages/src/main/res/
-mobile/android/android-components/components/browser/menu/src/main/res/
-mobile/android/android-components/components/browser/menu2/src/main/res/
-mobile/android/android-components/components/browser/toolbar/src/main/res/
-mobile/android/android-components/components/browser/toolbar2/src/main/res/
-mobile/android/android-components/components/compose/awesomebar/src/main/res/
-mobile/android/android-components/components/compose/browser-toolbar/src/main/res/
-mobile/android/android-components/components/compose/cfr/src/main/res/
-mobile/android/android-components/components/compose/tabstray/src/main/res/
-mobile/android/android-components/components/feature/addons/src/main/res/
-mobile/android/android-components/components/feature/app-links/src/main/res/
-mobile/android/android-components/components/feature/autofill/src/main/res/
-mobile/android/android-components/components/feature/awesomebar/src/main/res/
-mobile/android/android-components/components/feature/contextmenu/src/main/res/
-mobile/android/android-components/components/feature/customtabs/src/main/res/
-mobile/android/android-components/components/feature/downloads/src/main/res/
-mobile/android/android-components/components/feature/findinpage/src/main/res/
-mobile/android/android-components/components/feature/fxsuggest/src/main/res/
-mobile/android/android-components/components/feature/media/src/main/res/
-mobile/android/android-components/components/feature/privatemode/src/main/res/
-mobile/android/android-components/components/feature/prompts/src/main/res/
-mobile/android/android-components/components/feature/pwa/src/main/res/
-mobile/android/android-components/components/feature/qr/src/main/res/
-mobile/android/android-components/components/feature/readerview/src/main/res/
-mobile/android/android-components/components/feature/search/src/main/res/
-mobile/android/android-components/components/feature/sitepermissions/
-mobile/android/android-components/components/feature/tabs/src/main/res/
-mobile/android/android-components/components/feature/webnotifications/src/main/res/
-mobile/android/android-components/components/lib/crash/src/main/res/
-mobile/android/android-components/components/service/nimbus/src/main/res/
-mobile/android/android-components/components/support/base/src/main/res/
-mobile/android/android-components/components/support/ktx/src/main/res/
-mobile/android/android-components/components/support/utils/src/main/res/
-mobile/android/android-components/components/ui/tabcounter/src/main/res/
-mobile/android/android-components/components/ui/widgets/src/main/res/
-mobile/android/android-components/config/detekt-baseline.xml
-mobile/android/android-components/gradle/wrapper/
-mobile/android/android-components/samples/glean/src/main/res/raw/initial_experiments.json
-mobile/android/android-components/components/browser/domains/lint-baseline.xml
-mobile/android/android-components/components/browser/engine-gecko/lint-baseline.xml
-mobile/android/android-components/components/browser/engine-system/lint-baseline.xml
-mobile/android/android-components/components/browser/errorpages/lint-baseline.xml
-mobile/android/android-components/components/browser/icons/lint-baseline.xml
-mobile/android/android-components/components/browser/menu/lint-baseline.xml
-mobile/android/android-components/components/browser/menu2/lint-baseline.xml
-mobile/android/android-components/components/browser/session-storage/lint-baseline.xml
-mobile/android/android-components/components/browser/state/lint-baseline.xml
-mobile/android/android-components/components/browser/storage-sync/lint-baseline.xml
-mobile/android/android-components/components/browser/tabstray/lint-baseline.xml
-mobile/android/android-components/components/browser/thumbnails/lint-baseline.xml
-mobile/android/android-components/components/browser/toolbar/lint-baseline.xml
-mobile/android/android-components/components/compose/awesomebar/lint-baseline.xml
-mobile/android/android-components/components/compose/base/lint-baseline.xml
-mobile/android/android-components/components/compose/browser-toolbar/lint-baseline.xml
-mobile/android/android-components/components/compose/cfr/lint-baseline.xml
-mobile/android/android-components/components/compose/engine/lint-baseline.xml
-mobile/android/android-components/components/compose/tabstray/lint-baseline.xml
-mobile/android/android-components/components/concept/accelerometer/lint-baseline.xml
-mobile/android/android-components/components/concept/awesomebar/lint-baseline.xml
-mobile/android/android-components/components/concept/base/lint-baseline.xml
-mobile/android/android-components/components/concept/engine/lint-baseline.xml
-mobile/android/android-components/components/concept/fetch/lint-baseline.xml
-mobile/android/android-components/components/concept/integrity/lint-baseline.xml
-mobile/android/android-components/components/concept/llm/lint-baseline.xml
-mobile/android/android-components/components/concept/menu/lint-baseline.xml
-mobile/android/android-components/components/concept/push/lint-baseline.xml
-mobile/android/android-components/components/concept/storage/lint-baseline.xml
-mobile/android/android-components/components/concept/sync/lint-baseline.xml
-mobile/android/android-components/components/concept/tabstray/lint-baseline.xml
-mobile/android/android-components/components/concept/toolbar/lint-baseline.xml
-mobile/android/android-components/components/feature/accounts-push/lint-baseline.xml
-mobile/android/android-components/components/feature/accounts/lint-baseline.xml
-mobile/android/android-components/components/feature/addons/lint-baseline.xml
-mobile/android/android-components/components/feature/app-links/lint-baseline.xml
-mobile/android/android-components/components/feature/autofill/lint-baseline.xml
-mobile/android/android-components/components/feature/awesomebar/lint-baseline.xml
-mobile/android/android-components/components/feature/containers/lint-baseline.xml
-mobile/android/android-components/components/feature/contextmenu/lint-baseline.xml
-mobile/android/android-components/components/feature/customtabs/lint-baseline.xml
-mobile/android/android-components/components/feature/downloads/lint-baseline.xml
-mobile/android/android-components/components/feature/findinpage/lint-baseline.xml
-mobile/android/android-components/components/feature/fxsuggest/lint-baseline.xml
-mobile/android/android-components/components/feature/intent/lint-baseline.xml
-mobile/android/android-components/components/feature/logins/lint-baseline.xml
-mobile/android/android-components/components/feature/media/lint-baseline.xml
-mobile/android/android-components/components/feature/privatemode/lint-baseline.xml
-mobile/android/android-components/components/feature/prompts/lint-baseline.xml
-mobile/android/android-components/components/feature/protection-dashboard/lint-baseline.xml
-mobile/android/android-components/components/feature/push/lint-baseline.xml
-mobile/android/android-components/components/feature/pwa/lint-baseline.xml
-mobile/android/android-components/components/feature/qr/lint-baseline.xml
-mobile/android/android-components/components/feature/readerview/lint-baseline.xml
-mobile/android/android-components/components/feature/recentlyclosed/lint-baseline.xml
-mobile/android/android-components/components/feature/screendetection/lint-baseline.xml
-mobile/android/android-components/components/feature/search/lint-baseline.xml
-mobile/android/android-components/components/feature/serviceworker/lint-baseline.xml
-mobile/android/android-components/components/feature/session/lint-baseline.xml
-mobile/android/android-components/components/feature/share/lint-baseline.xml
-mobile/android/android-components/components/feature/sitepermissions/lint-baseline.xml
-mobile/android/android-components/components/feature/summarize/lint-baseline.xml
-mobile/android/android-components/components/feature/syncedtabs/lint-baseline.xml
-mobile/android/android-components/components/feature/tab-collections/lint-baseline.xml
-mobile/android/android-components/components/feature/tabs/lint-baseline.xml
-mobile/android/android-components/components/feature/toolbar/lint-baseline.xml
-mobile/android/android-components/components/feature/top-sites/lint-baseline.xml
-mobile/android/android-components/components/feature/webauthn/lint-baseline.xml
-mobile/android/android-components/components/feature/webcompat-reporter/lint-baseline.xml
-mobile/android/android-components/components/feature/webcompat/lint-baseline.xml
-mobile/android/android-components/components/feature/webnotifications/lint-baseline.xml
-mobile/android/android-components/components/lib/accelerometer-sensormanager/lint-baseline.xml
-mobile/android/android-components/components/lib/auth/lint-baseline.xml
-mobile/android/android-components/components/lib/crash-sentry/lint-baseline.xml
-mobile/android/android-components/components/lib/crash/lint-baseline.xml
-mobile/android/android-components/components/lib/dataprotect/lint-baseline.xml
-mobile/android/android-components/components/lib/fetch-httpurlconnection/lint-baseline.xml
-mobile/android/android-components/components/lib/fetch-okhttp/lint-baseline.xml
-mobile/android/android-components/components/lib/integrity-googleplay/lint-baseline.xml
-mobile/android/android-components/components/lib/jexl/lint-baseline.xml
-mobile/android/android-components/components/lib/llm-gemininano/lint-baseline.xml
-mobile/android/android-components/components/lib/llm-mlpa/lint-baseline.xml
-mobile/android/android-components/components/lib/publicsuffixlist/lint-baseline.xml
-mobile/android/android-components/components/lib/push-firebase/lint-baseline.xml
-mobile/android/android-components/components/lib/shake/lint-baseline.xml
-mobile/android/android-components/components/lib/state/lint-baseline.xml
-mobile/android/android-components/components/service/digitalassetlinks/lint-baseline.xml
-mobile/android/android-components/components/service/firefox-accounts/lint-baseline.xml
-mobile/android/android-components/components/service/firefox-relay/lint-baseline.xml
-mobile/android/android-components/components/service/glean/lint-baseline.xml
-mobile/android/android-components/components/service/location/lint-baseline.xml
-mobile/android/android-components/components/service/mars/lint-baseline.xml
-mobile/android/android-components/components/service/merino-manifest/lint-baseline.xml
-mobile/android/android-components/components/service/nimbus/lint-baseline.xml
-mobile/android/android-components/components/service/pocket/lint-baseline.xml
-mobile/android/android-components/components/service/sync-autofill/lint-baseline.xml
-mobile/android/android-components/components/service/sync-logins/lint-baseline.xml
-mobile/android/android-components/components/support/android-test/lint-baseline.xml
-mobile/android/android-components/components/support/base/lint-baseline.xml
-mobile/android/android-components/components/support/images/lint-baseline.xml
-mobile/android/android-components/components/support/ktx/lint-baseline.xml
-mobile/android/android-components/components/support/license/lint-baseline.xml
-mobile/android/android-components/components/support/locale/lint-baseline.xml
-mobile/android/android-components/components/support/remotesettings/lint-baseline.xml
-mobile/android/android-components/components/support/rusterrors/lint-baseline.xml
-mobile/android/android-components/components/support/rusthttp/lint-baseline.xml
-mobile/android/android-components/components/support/rustlog/lint-baseline.xml
-mobile/android/android-components/components/support/test-appservices/lint-baseline.xml
-mobile/android/android-components/components/support/test-fakes/lint-baseline.xml
-mobile/android/android-components/components/support/test-libstate/lint-baseline.xml
-mobile/android/android-components/components/support/test/lint-baseline.xml
-mobile/android/android-components/components/support/utils/lint-baseline.xml
-mobile/android/android-components/components/support/webextensions/lint-baseline.xml
-mobile/android/android-components/components/tooling/fetch-tests/lint-baseline.xml
-mobile/android/android-components/components/ui/animation/lint-baseline.xml
-mobile/android/android-components/components/ui/autocomplete/lint-baseline.xml
-mobile/android/android-components/components/ui/colors/lint-baseline.xml
-mobile/android/android-components/components/ui/fonts/lint-baseline.xml
-mobile/android/android-components/components/ui/icons/lint-baseline.xml
-mobile/android/android-components/components/ui/richtext/lint-baseline.xml
-mobile/android/android-components/components/ui/tabcounter/lint-baseline.xml
-mobile/android/android-components/components/ui/widgets/lint-baseline.xml
-mobile/android/android-components/samples/acorn-components/lint-baseline.xml
-mobile/android/android-components/samples/browser/lint-baseline.xml
-mobile/android/android-components/samples/compose-browser/lint-baseline.xml
-mobile/android/android-components/samples/crash/lint-baseline.xml
-mobile/android/android-components/samples/dataprotect/lint-baseline.xml
-mobile/android/android-components/samples/firefox-accounts/lint-baseline.xml
-mobile/android/android-components/samples/firefox-relay/lint-baseline.xml
-mobile/android/android-components/samples/glean/lint-baseline.xml
-mobile/android/android-components/samples/glean/samples-glean-library/lint-baseline.xml
-mobile/android/android-components/samples/sync-logins/lint-baseline.xml
-mobile/android/android-components/samples/sync/lint-baseline.xml
-mobile/android/android-components/samples/toolbar/lint-baseline.xml
-mobile/android/fenix/app/lint-baseline.xml
-mobile/android/fenix/app/src/main/res/
-mobile/android/fenix/config/detekt-baseline.xml
-mobile/android/fenix/gradle/wrapper/
-mobile/android/focus-android/app/lint-baseline.xml
-mobile/android/focus-android/app/src/main/res/
-mobile/android/focus-android/gradle/wrapper/
-mobile/android/focus-android/quality/detekt-baseline.xml
-mobile/locales/l10n-changesets.json
-mobile/locales/l10n-onchange-changesets.json
 node_modules/
 python/mozperftest/mozperftest/tests/data/
 security/manager/tools/PreloadedHPKPins.json
@@ -1780,7 +1480,6 @@ testing/raptor/browsertime/utils/doh_busy_sites.json
 toolkit/components/pdfjs/PdfJsDefaultPrefs.js
 toolkit/components/pdfjs/PdfJsOverridePrefs.js
 toolkit/components/uniffi-js/GeneratedScaffolding.cpp
-toolkit/components/uniffi-bindgen-gecko-js/fixtures/generated
 tools/@types/generated/
 tools/@types/subs/
 tools/browsertime/package.json

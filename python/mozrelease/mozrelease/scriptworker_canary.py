@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 TASK_TYPES = {
-    "signing": ["linux-signing", "linux-signing-partial"],
+    "signing": ["linux-signing"],
     "beetmover": ["beetmover-candidates"],
     "bouncer": ["bouncer-submit"],
     "balrog": ["balrog-submit"],

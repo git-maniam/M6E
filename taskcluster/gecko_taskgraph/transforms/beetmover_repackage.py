@@ -153,7 +153,6 @@ def make_task_description(config, jobs):
         optional_deps = [
             ("repackage", repackage_name),
             ("mar-signing", mar_signing_name),
-            ("partials-signing", "partials-signing"),
             (msi_signing_name, msi_signing_name),
             (msix_signing_name, msix_signing_name),
             ("repackage-signing", repackage_signing_name),
@@ -161,8 +160,6 @@ def make_task_description(config, jobs):
             (repackage_deb_name, repackage_deb_name),
             ("repackage-pkg-notarization", "repackage-pkg-notarization"),
             ("repackage-l10n-pkg-notarization", "repackage-l10n-pkg-notarization"),
-            ("upload-symbols", "upload-symbols"),
-            ("upload-symbols-dummy", "upload-symbols-dummy"),
         ]
         for dep_key, upstream_name in optional_deps:
             if upstream_name in upstream_deps:

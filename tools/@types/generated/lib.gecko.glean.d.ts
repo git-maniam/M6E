@@ -415,8 +415,30 @@ interface GleanImpl {
     breachAlertDiscoveredMonitor: GleanEventNoExtras;
     breachAlertDismissed: GleanEventWithExtras<{ breach_status?: string }>;
     breachAlertShieldAnimated: GleanEventWithExtras<{ breach_status?: string }>;
-    opened: GleanEventWithExtras<{ breach_status?: string, trackers_blocked?: string|boolean }>;
+    clearCookiesCancelled: GleanEventNoExtras;
+    clearCookiesConfirmed: GleanEventNoExtras;
+    clearCookiesOpened: GleanEventNoExtras;
+    closed: GleanEventWithExtras<{ closing_reason?: string, duration_ms?: string|number, opening_reason?: string }>;
+    opened: GleanEventWithExtras<{ breach_status?: string, opening_reason?: string, smartblock_embed_toggles_shown?: string|boolean, trackers_blocked?: string|boolean }>;
+    securityInfoCertExceptionRemoved: GleanEventNoExtras;
+    securityInfoHttpsOnlyChanged: GleanEventWithExtras<{ setting?: string }>;
+    securityInfoOpened: GleanEventWithExtras<{ connection?: string }>;
+    securityInfoPageInfoOpened: GleanEventNoExtras;
+    smartblockToggled: GleanEventWithExtras<{ is_block?: string|boolean, opening_reason?: string, shim_id?: string }>;
     trackerCountShown: GleanEventWithExtras<{ first_site_load_in_tab?: string|boolean, first_visit?: string|boolean }>;
+    trackerListOpened: GleanEventNoExtras;
+  }
+
+  customize: {
+    opened: GleanEventWithExtras<{ entry_point?: string, tab_orientation?: string }>;
+    restoreDefaults: GleanEventNoExtras;
+    undoRestore: GleanEventNoExtras;
+  }
+
+  fireButton: {
+    activated: GleanEventWithExtras<{ flow?: string }>;
+    chooseClicked: GleanEventNoExtras;
+    flowCompleted: GleanEventWithExtras<{ flow?: string, outcome?: string, surface?: string }>;
   }
 
   browserCustomkeys: {
@@ -439,10 +461,7 @@ interface GleanImpl {
   }
 
   firefoxview: {
-    cumulativeSearches: Record<"history"|"opentabs"|"recentbrowsing"|"recentlyclosed"|"syncedtabs", GleanCustomDistribution>;
-    clickSendTab: GleanEventWithExtras<{ action?: string, device_count?: string }>;
-    sendTabExposed: GleanEventWithExtras<{ device_count?: string }>;
-    sendTabOpened: GleanEventWithExtras<{ device_count?: string }>;
+    cumulativeSearches: Record<"history"|"opentabs"|"recentbrowsing"|"recentlyclosed", GleanCustomDistribution>;
   }
 
   firefoxviewNext: {
@@ -454,8 +473,6 @@ interface GleanImpl {
     contextMenuTabs: GleanEventWithExtras<{ data_type?: string, menu_action?: string }>;
     dismissClosedTabTabs: GleanEventWithExtras<{ delta?: string, page?: string, position?: string|number }>;
     enteredFirefoxview: GleanEventWithExtras<{ page?: string }>;
-    fxaContinueSync: GleanEventNoExtras;
-    fxaMobileSync: GleanEventWithExtras<{ has_devices?: string|boolean }>;
     historyVisits: GleanEventNoExtras;
     openTabTabs: GleanEventWithExtras<{ page?: string, window?: string }>;
     recentlyClosedTabs: GleanEventWithExtras<{ delta?: string, page?: string, position?: string|number }>;
@@ -463,10 +480,8 @@ interface GleanImpl {
     searchShowAllShowallbutton: GleanEventWithExtras<{ section?: string }>;
     showAllHistoryTabs: GleanEventNoExtras;
     sortHistoryTabs: GleanEventWithExtras<{ search_start?: string, sort_type?: string }>;
-    syncedTabsTabs: GleanEventWithExtras<{ page?: string }>;
     tabSelectedToolbarbutton: GleanEventNoExtras;
   }
-
 
   browser: {
     aiControlChanged: GleanEventWithExtras<{ feature?: string, selection?: string }>;
@@ -519,7 +534,6 @@ interface GleanImpl {
   }
 
   launchOnLogin: {
-    lastProfileDisableStartup: GleanEventNoExtras;
     userToggle: GleanEventWithExtras<{ enabled?: string|boolean }>;
   }
 
@@ -729,7 +743,7 @@ interface GleanImpl {
   }
 
   newtabContent: {
-    click: GleanEventWithExtras<{ corpus_item_id?: string, format?: string, is_section_followed?: string|boolean, is_sponsored?: string|boolean, layout_name?: string, matches_selected_topic?: string, position?: string|number, received_rank?: string|number, recommended_at?: string|number, scheduled_corpus_item_id?: string, section?: string, section_position?: string, selected_topics?: string, source_section_id?: string, topic?: string, variant_id?: string|number }>;
+    click: GleanEventWithExtras<{ corpus_item_id?: string, dwell_time?: string|number, format?: string, is_section_followed?: string|boolean, is_sponsored?: string|boolean, layout_name?: string, matches_selected_topic?: string, position?: string|number, received_rank?: string|number, recommended_at?: string|number, scheduled_corpus_item_id?: string, section?: string, section_position?: string, selected_topics?: string, source_section_id?: string, topic?: string, variant_id?: string|number }>;
     coarseOs: GleanString;
     country: GleanString;
     dismiss: GleanEventWithExtras<{ corpus_item_id?: string, format?: string, is_section_followed?: string|boolean, is_sponsored?: string|boolean, position?: string|number, received_rank?: string|number, recommended_at?: string|number, scheduled_corpus_item_id?: string, section?: string, section_position?: string }>;
@@ -747,6 +761,7 @@ interface GleanImpl {
     sectionsUnblockSection: GleanEventWithExtras<{ event_source?: string, section?: string, section_position?: string }>;
     sectionsUnfollowSection: GleanEventWithExtras<{ event_source?: string, section?: string, section_position?: string }>;
     surfaceId: GleanString;
+    surfaceIdRejected: GleanEventNoExtras;
     topSitesClick: GleanEventWithExtras<{ advertiser_name?: string, frecency_boosted?: string|boolean, frecency_boosted_has_exposure?: string|boolean, is_sponsored?: string|boolean, position?: string|number, visible_topsites?: string|number }>;
     topSitesDismiss: GleanEventWithExtras<{ advertiser_name?: string, is_sponsored?: string|boolean, position?: string|number }>;
     topSitesImpression: GleanEventWithExtras<{ advertiser_name?: string, frecency_boosted?: string|boolean, frecency_boosted_has_exposure?: string|boolean, is_sponsored?: string|boolean, position?: string|number, visible_topsites?: string|number }>;
@@ -1053,6 +1068,7 @@ interface GleanImpl {
 
   sapImpressionCounts: {
     contextmenuVisual: Record<string, GleanCounter>;
+    textSelection: Record<string, GleanCounter>;
   }
 
   searchbar: {
@@ -1226,7 +1242,6 @@ interface GleanImpl {
     positionSettings: GleanString;
     resize: GleanEventWithExtras<{ current?: string|number, percentage?: string|number, previous?: string|number }>;
     search: Record<string, GleanCounter>;
-    syncedTabsIconClick: GleanEventWithExtras<{ sidebar_open?: string|boolean }>;
     tabsLayout: GleanString;
     width: GleanQuantity;
   }
@@ -1241,16 +1256,8 @@ interface GleanImpl {
     panelToggle: GleanEventWithExtras<{ opened?: string|boolean }>;
     sidebarDisplay: GleanEventWithExtras<{ preference?: string }>;
     sidebarPosition: GleanEventWithExtras<{ position?: string }>;
-    syncedTabsEnabled: GleanEventWithExtras<{ checked?: string|boolean }>;
     tabsDisplay: GleanEventWithExtras<{ checked?: string|boolean }>;
     tabsLayout: GleanEventWithExtras<{ orientation?: string }>;
-  }
-
-  syncedTabs: {
-    sidebarToggle: GleanEventWithExtras<{ opened?: string|boolean, synced_tabs_loaded?: string|boolean, version?: string }>;
-    clickFxaAppMenu: GleanEventWithExtras<{ filter?: string, tab_pos?: string }>;
-    clickFxaAvatarMenu: GleanEventWithExtras<{ filter?: string, tab_pos?: string }>;
-    clickSyncedTabsSidebar: GleanEventWithExtras<{ filter?: string, tab_pos?: string }>;
   }
 
   browserTabclose: {
@@ -1289,7 +1296,7 @@ interface GleanImpl {
   tab: {
     actions: Record<"activate"|"adopt"|"close"|"detach"|"move"|"pin"|"unpin", GleanCounter>;
     interaction: GleanEventWithExtras<{ action?: string, layout?: string, source?: string, tab_count?: string|number }>;
-    staleDragRecovery: Record<"session_ended"|"session_ended_after_drop"|"session_live"|"session_live_after_drop", GleanCounter>;
+    staleDragRecovery: Record<"session_ended"|"session_live", GleanCounter>;
     tabCount: Record<"activate"|"adopt"|"close"|"detach"|"move"|"pin"|"unpin", GleanCounter>;
   }
 
@@ -1302,11 +1309,6 @@ interface GleanImpl {
     reopen: GleanEventWithExtras<{ id?: string, layout?: string, source?: string, type?: string }>;
     save: GleanEventWithExtras<{ id?: string, user_triggered?: string|boolean }>;
     savedGroups: GleanQuantity;
-    smartTab: GleanEventWithExtras<{ enabled?: string|boolean }>;
-    smartTabEnabled: GleanBoolean;
-    smartTabOptin: GleanEventWithExtras<{ step?: string }>;
-    smartTabSuggest: GleanEventWithExtras<{ action?: string, backend?: string, id?: string, model_revision?: string, tabs_approved?: string|number, tabs_in_group?: string|number, tabs_in_window?: string|number, tabs_removed?: string|number, tabs_suggested?: string|number }>;
-    smartTabTopic: GleanEventWithExtras<{ action?: string, backend?: string, id?: string, label_reason?: string, levenshtein_distance?: string|number, ml_label_length?: string|number, model_revision?: string, tabs_in_group?: string|number, user_label_length?: string|number }>;
     tabCountInGroups: Record<"inside"|"outside", GleanQuantity>;
     tabInteractions: Record<"activate_collapsed"|"activate_expanded"|"add"|"close_tab_other"|"close_tabmenu"|"close_tabstrip"|"duplicate"|"new"|"remove_new_window"|"remove_other_window"|"remove_same_window"|"reorder", GleanCounter>;
     tabsPerActiveGroup: Record<"average"|"max"|"median"|"min", GleanQuantity>;
@@ -1372,13 +1374,13 @@ interface GleanImpl {
   }
 
   urlbar: {
-    abandonment: GleanEventWithExtras<{ abandonment_type?: string, actions?: string, available_semantic_sources?: string, chat_id?: string, groups?: string, intent?: string, interaction?: string, location?: string, model?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, window_mode?: string }>;
+    abandonment: GleanEventWithExtras<{ abandonment_type?: string, actions?: string, groups?: string, interaction?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, window_mode?: string }>;
     autocompleteFirstResultTime: GleanTimingDistribution;
     autocompleteSixthResultTime: GleanTimingDistribution;
     autofillDeletion: GleanCounter;
-    bounce: GleanEventWithExtras<{ chat_id?: string, engagement_type?: string, intent?: string, interaction?: string, location?: string, model?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, provider?: string, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, selected_position?: string|number, selected_result?: string, threshold?: string|number, view_time?: string|number, window_mode?: string }>;
-    disable: GleanEventWithExtras<{ chat_id?: string, feature?: string, intent?: string, interaction?: string, location?: string, model?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, selected_result?: string, window_mode?: string }>;
-    engagement: GleanEventWithExtras<{ actions?: string, available_semantic_sources?: string, chat_id?: string, engagement_type?: string, groups?: string, intent?: string, interaction?: string, location?: string, model?: string, modifiers?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, provider?: string, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, selected_position?: string|number, selected_result?: string, window_mode?: string }>;
+    bounce: GleanEventWithExtras<{ engagement_type?: string, interaction?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, provider?: string, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, selected_position?: string|number, selected_result?: string, threshold?: string|number, view_time?: string|number, window_mode?: string }>;
+    disable: GleanEventWithExtras<{ feature?: string, interaction?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, selected_result?: string, window_mode?: string }>;
+    engagement: GleanEventWithExtras<{ actions?: string, engagement_type?: string, groups?: string, interaction?: string, modifiers?: string, n_chars?: string|number, n_results?: string|number, n_words?: string|number, provider?: string, results?: string, sap?: string, search_engine_default_id?: string, search_mode?: string, selected_position?: string|number, selected_result?: string, window_mode?: string }>;
     exposure: GleanEventWithExtras<{ results?: string, sap?: string, terminal?: string }>;
     heuristicResultMissing: GleanRate;
     keywordExposure: GleanEventWithExtras<{ keyword?: string, result?: string, sap?: string, terminal?: string|boolean }>;
@@ -1424,7 +1426,6 @@ interface GleanImpl {
     exposure: Record<"newtab_searchbar"|"searchbar"|"urlbar", GleanCounter>;
   }
 
-
   browserContentCrash: {
     dumpUnavailable: GleanCounter;
     notSubmitted: GleanCounter;
@@ -1433,6 +1434,8 @@ interface GleanImpl {
   browserSanitizer: {
     cache: GleanTimingDistribution;
     cookies: GleanTimingDistribution;
+    dialogClosed: GleanEventWithExtras<{ entry_point?: string, outcome?: string }>;
+    dialogOpened: GleanEventWithExtras<{ entry_point?: string }>;
     downloads: GleanTimingDistribution;
     formdata: GleanTimingDistribution;
     history: GleanTimingDistribution;
@@ -1983,6 +1986,7 @@ interface GleanImpl {
     cssFillOpacity: GleanCounter;
     cssFillRule: GleanCounter;
     cssFilter: GleanCounter;
+    cssFitTolerance: GleanCounter;
     cssFlex: GleanCounter;
     cssFlexBasis: GleanCounter;
     cssFlexDirection: GleanCounter;
@@ -1993,6 +1997,7 @@ interface GleanImpl {
     cssFloat: GleanCounter;
     cssFloodColor: GleanCounter;
     cssFloodOpacity: GleanCounter;
+    cssFlowTolerance: GleanCounter;
     cssFont: GleanCounter;
     cssFontFamily: GleanCounter;
     cssFontFeatureSettings: GleanCounter;
@@ -2721,6 +2726,7 @@ interface GleanImpl {
     cssFillOpacity: GleanCounter;
     cssFillRule: GleanCounter;
     cssFilter: GleanCounter;
+    cssFitTolerance: GleanCounter;
     cssFlex: GleanCounter;
     cssFlexBasis: GleanCounter;
     cssFlexDirection: GleanCounter;
@@ -2731,6 +2737,7 @@ interface GleanImpl {
     cssFloat: GleanCounter;
     cssFloodColor: GleanCounter;
     cssFloodOpacity: GleanCounter;
+    cssFlowTolerance: GleanCounter;
     cssFont: GleanCounter;
     cssFontFamily: GleanCounter;
     cssFontFeatureSettings: GleanCounter;
@@ -3332,6 +3339,7 @@ interface GleanImpl {
     proximityEvent: GleanCounter;
     rtcpeerConnectionGetStreams: GleanCounter;
     svgdeselectAll: GleanCounter;
+    svguseInlineEventHandler: GleanCounter;
     syncXmlhttpRequestDeprecated: GleanCounter;
     useOfCaptureEvents: GleanCounter;
     useOfReleaseEvents: GleanCounter;
@@ -3391,6 +3399,7 @@ interface GleanImpl {
     proximityEvent: GleanCounter;
     rtcpeerConnectionGetStreams: GleanCounter;
     svgdeselectAll: GleanCounter;
+    svguseInlineEventHandler: GleanCounter;
     syncXmlhttpRequestDeprecated: GleanCounter;
     useOfCaptureEvents: GleanCounter;
     useOfReleaseEvents: GleanCounter;
@@ -3399,6 +3408,9 @@ interface GleanImpl {
   }
 
   useCounterDoc: {
+    akamaiForbidden: GleanCounter;
+    akamaiUsed: GleanCounter;
+    akamaiWafBlocked: GleanCounter;
     componentsShimResolved: GleanCounter;
     consoleAssert: GleanCounter;
     consoleClear: GleanCounter;
@@ -3667,13 +3679,11 @@ interface GleanImpl {
     speculationRulesEagernessEager: GleanCounter;
     speculationRulesEagernessImmediate: GleanCounter;
     speculationRulesEagernessModerate: GleanCounter;
+    speculationRulesHeader: GleanCounter;
     speculationRulesListSource: GleanCounter;
     speculationRulesPrefetch: GleanCounter;
     speculationRulesScriptTag: GleanCounter;
     speculationRulesTag: GleanCounter;
-    speechrecognitionAvailable: GleanCounter;
-    speechrecognitionInstall: GleanCounter;
-    speechrecognitionStart: GleanCounter;
     svgsvgelementCurrentscaleGetter: GleanCounter;
     svgsvgelementCurrentscaleSetter: GleanCounter;
     svgsvgelementGetelementbyid: GleanCounter;
@@ -3790,9 +3800,6 @@ interface GleanImpl {
     windowSensorerrorevent: GleanCounter;
     windowSidebarGetter: GleanCounter;
     windowSidebarSetter: GleanCounter;
-    windowSpeechrecognitionalternative: GleanCounter;
-    windowSpeechrecognitionresult: GleanCounter;
-    windowSpeechrecognitionresultlist: GleanCounter;
     windowStylemedia: GleanCounter;
     windowStylepropertymap: GleanCounter;
     windowStylepropertymapreadonly: GleanCounter;
@@ -3824,11 +3831,6 @@ interface GleanImpl {
     windowWebkitrequestfilesystem: GleanCounter;
     windowWebkitresolvelocalfilesystemurl: GleanCounter;
     windowWebkitrtcpeerconnection: GleanCounter;
-    windowWebkitspeechgrammar: GleanCounter;
-    windowWebkitspeechgrammarlist: GleanCounter;
-    windowWebkitspeechrecognition: GleanCounter;
-    windowWebkitspeechrecognitionerror: GleanCounter;
-    windowWebkitspeechrecognitionevent: GleanCounter;
     windowWebkitstorageinfo: GleanCounter;
     wrFilterFallback: GleanCounter;
     xslstylesheet: GleanCounter;
@@ -3837,6 +3839,9 @@ interface GleanImpl {
   }
 
   useCounterPage: {
+    akamaiForbidden: GleanCounter;
+    akamaiUsed: GleanCounter;
+    akamaiWafBlocked: GleanCounter;
     componentsShimResolved: GleanCounter;
     consoleAssert: GleanCounter;
     consoleClear: GleanCounter;
@@ -4105,13 +4110,11 @@ interface GleanImpl {
     speculationRulesEagernessEager: GleanCounter;
     speculationRulesEagernessImmediate: GleanCounter;
     speculationRulesEagernessModerate: GleanCounter;
+    speculationRulesHeader: GleanCounter;
     speculationRulesListSource: GleanCounter;
     speculationRulesPrefetch: GleanCounter;
     speculationRulesScriptTag: GleanCounter;
     speculationRulesTag: GleanCounter;
-    speechrecognitionAvailable: GleanCounter;
-    speechrecognitionInstall: GleanCounter;
-    speechrecognitionStart: GleanCounter;
     svgsvgelementCurrentscaleGetter: GleanCounter;
     svgsvgelementCurrentscaleSetter: GleanCounter;
     svgsvgelementGetelementbyid: GleanCounter;
@@ -4228,9 +4231,6 @@ interface GleanImpl {
     windowSensorerrorevent: GleanCounter;
     windowSidebarGetter: GleanCounter;
     windowSidebarSetter: GleanCounter;
-    windowSpeechrecognitionalternative: GleanCounter;
-    windowSpeechrecognitionresult: GleanCounter;
-    windowSpeechrecognitionresultlist: GleanCounter;
     windowStylemedia: GleanCounter;
     windowStylepropertymap: GleanCounter;
     windowStylepropertymapreadonly: GleanCounter;
@@ -4262,11 +4262,6 @@ interface GleanImpl {
     windowWebkitrequestfilesystem: GleanCounter;
     windowWebkitresolvelocalfilesystemurl: GleanCounter;
     windowWebkitrtcpeerconnection: GleanCounter;
-    windowWebkitspeechgrammar: GleanCounter;
-    windowWebkitspeechgrammarlist: GleanCounter;
-    windowWebkitspeechrecognition: GleanCounter;
-    windowWebkitspeechrecognitionerror: GleanCounter;
-    windowWebkitspeechrecognitionevent: GleanCounter;
     windowWebkitstorageinfo: GleanCounter;
     wrFilterFallback: GleanCounter;
     xslstylesheet: GleanCounter;
@@ -4551,12 +4546,6 @@ interface GleanImpl {
     emePlayback: GleanEventWithExtras<{ key_system?: string, played_time?: string|number, resolution?: string, video_codec?: string }>;
   }
 
-  hls: {
-    canplayRequested: GleanCounter;
-    canplaySupported: GleanCounter;
-    mediaLoad: GleanEventWithExtras<{ media_content_type?: string }>;
-  }
-
   gmp: {
     updateXmlFetchResult: Record<"content_sig_abort"|"content_sig_failed"|"content_sig_invalid"|"content_sig_missing_data"|"content_sig_net_request_error"|"content_sig_net_timeout"|"content_sig_success"|"content_sig_unknown_error"|"content_sig_xml_parse_error", GleanCounter>;
   }
@@ -4732,18 +4721,6 @@ interface GleanImpl {
     srtpCipher: Record<string, GleanCounter>;
   }
 
-  mediaSpeechRecognition: {
-    availability: Record<"available"|"downloadable"|"downloading"|"unavailable", GleanCounter>;
-    error: Record<"aborted"|"audio_capture"|"bad_grammar"|"language_not_supported"|"network"|"no_speech"|"not_allowed"|"phrases_not_supported"|"service_not_allowed", GleanCounter>;
-    inferenceRealtimeFactor: GleanCustomDistribution;
-    initFailure: Record<"backend_creation_failed"|"concurrent_session"|"engine_library_load_failed"|"language_not_supported"|"model_fd_failed"|"model_fetch_failed"|"model_install_unavailable"|"model_load_failed"|"model_not_installed"|"no_utility_process"|"stream_begin_failed"|"thread_creation_failed", GleanCounter>;
-    modelLoadTime: GleanTimingDistribution;
-    resultLatency: GleanTimingDistribution;
-    sessionEnded: GleanEventWithExtras<{ duration?: string|number, error_code?: string, outcome?: string, session_id?: string }>;
-    sessionInitTime: GleanTimingDistribution;
-    sessionStarted: GleanEventWithExtras<{ lang?: string, lang_source?: string, model_id?: string, model_locale?: string, session_id?: string }>;
-  }
-
   dom: {
     blinkFilesystemUsed: Record<"false"|"true", GleanCounter>;
     forgetSkippableDuringIdle: GleanCustomDistribution;
@@ -4751,6 +4728,7 @@ interface GleanImpl {
     fullscreenTransitionBlack: GleanTimingDistribution;
     gcInProgress: Record<string, GleanTimingDistribution>;
     gcSliceDuringIdle: GleanCustomDistribution;
+    registerProtocolHandlerCalls: GleanDualLabeledCounter;
     scriptLoadingSource: Record<"AltData"|"Inline"|"Source"|"SourceFallback", GleanCounter>;
     scriptMemoryCacheEverHit: GleanCustomDistribution;
     scriptMemoryCacheRefCount: GleanCustomDistribution;
@@ -4813,7 +4791,7 @@ interface GleanImpl {
   }
 
   webNotification: {
-    clicked: GleanEventWithExtras<{ action?: string, site_category?: string }>;
+    clicked: GleanEventWithExtras<{ action?: string, app_state_before_click?: string, site_category?: string }>;
     dismissed: GleanEventWithExtras<{ site_category?: string }>;
     ignored: GleanEventWithExtras<{ site_category?: string }>;
     insecureContextPermissionRequest: GleanCounter;
@@ -4846,6 +4824,8 @@ interface GleanImpl {
   quotamanager: {
     restoreOriginDirectoryMetadataCounter: GleanCounter;
     storageSqliteCorruptionUnrecovered: Record<"persistent_storage"|"storage"|"temporary_storage", GleanCounter>;
+    temporaryStorageUsageUnderflow: GleanEventWithExtras<{ call_site?: string, magnitude?: string|number }>;
+    usageUnderflow: GleanEventWithExtras<{ call_site?: string, client?: string, magnitude?: string|number }>;
   }
 
   quotamanagerInitializeRepository: {
@@ -5219,14 +5199,6 @@ interface GleanImpl {
     timeToFirstInteraction: GleanTimingDistribution;
   }
 
-  geckoview: {
-    documentSiteOrigins: GleanCustomDistribution;
-    pageLoadProgressTime: GleanTimingDistribution;
-    pageLoadTime: GleanTimingDistribution;
-    pageReloadTime: GleanTimingDistribution;
-    perDocumentSiteOrigins: GleanCustomDistribution;
-  }
-
   zeroByteLoad: {
     loadCss: GleanEventWithExtras<{ cancel_reason?: string, cancelled?: string|boolean, file_name?: string, status?: string, sync?: string|boolean }>;
     loadDtd: GleanEventWithExtras<{ cancel_reason?: string, cancelled?: string|boolean, file_name?: string, status?: string, sync?: string|boolean }>;
@@ -5259,6 +5231,9 @@ interface GleanImpl {
     httpCacheEntryAliveTime: GleanTimingDistribution;
     httpCacheEntryReloadTime: GleanTimingDistribution;
     httpCacheEntryReuseCount: GleanCustomDistribution;
+    akamaiDocumentLoads: Record<"forbidden"|"ok"|"waf_blocked", GleanCounter>;
+    akamaiWafBlocked: GleanBoolean;
+    akamaiWafBlockedSubresource: GleanBoolean;
     appleFastDatapathUsed: GleanBoolean;
     backgroundfilesaverThreadCount: GleanCustomDistribution;
     contentDecodingErrorReport: GleanEventWithExtras<{ error_type?: string, top_level_site?: string }>;
@@ -5643,110 +5618,15 @@ interface GleanImpl {
     uptakeRemotesettings: GleanEventWithExtras<{ age?: string, duration?: string, errorName?: string, source?: string, timestamp?: string, trigger?: string, value?: string }>;
   }
 
-  fxaAppMenu: {
-    clickAccountSettings: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickCad: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickLogin: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickMonitorCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickOpenMonitor: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickOpenSend: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickRelayCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSendTab: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncNow: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncSettings: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncTabs: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncTabsSidebar: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickToolbarIcon: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickUnverSyncSettings: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickViewAllSyncedTabs: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickVpnCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    sendTabExposed: GleanEventWithExtras<{ device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    sendTabOpened: GleanEventWithExtras<{ device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-  }
-
-  fxaAvatarMenu: {
-    clickAccountSettings: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickCad: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickLogin: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickMonitorCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickOpenMonitor: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickOpenSend: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickRelayCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSendTab: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncNow: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncSettings: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncTabs: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickSyncTabsSidebar: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickToolbarIcon: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickUnverSyncSettings: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickViewAllSyncedTabs: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    clickVpnCta: GleanEventWithExtras<{ action?: string, device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    copyPrimaryProfile: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    createNewProfileCtaButton: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    createNewProfileCtaLabel: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    createNewProfileSubmenu: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    editPrimaryProfile: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    getFirefoxForMobileCta: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    launchSecondaryProfile: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    launchSecondaryProfileAllProfiles: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    manageAllProfiles: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    managePrimaryProfile: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    manageProfiles: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    sendTabExposed: GleanEventWithExtras<{ device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    sendTabOpened: GleanEventWithExtras<{ device_count?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    syncYourDataCta: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    syncedDeviceSubmenu: GleanEventWithExtras<{ device_count?: string, device_type?: string, fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string }>;
-    viewAllProfiles: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-    whatAreProfiles: GleanEventWithExtras<{ fxa_avatar?: string, fxa_status?: string, fxa_sync_on?: string, profile_count?: string|number }>;
-  }
-
-  pageContextMenu: {
-    clickSendTab: GleanEventWithExtras<{ action?: string, context_type?: string, device_count?: string }>;
-    sendTabExposed: GleanEventWithExtras<{ context_type?: string, device_count?: string }>;
-    sendTabOpened: GleanEventWithExtras<{ context_type?: string, device_count?: string }>;
-  }
-
-  sync: {
-    deviceCountDesktop: GleanCustomDistribution;
-    deviceCountMobile: GleanCustomDistribution;
-    maintenanceFixBookmarks: GleanEventNoExtras;
-    maintenanceRunBookmarks: GleanEventNoExtras;
-  }
-
-  syncClient: {
-    processcommand: GleanEventWithExtras<{ command?: string, flow_id?: string, server_time?: string }>;
-    sendcommand: GleanEventWithExtras<{ command?: string, device_id?: string, flow_id?: string, reason?: string, server_time?: string }>;
-  }
-
-  syncMergeDialog: {
-    clicked: GleanEventWithExtras<{ option_clicked?: string, variant_shown?: string }>;
-  }
-
-  syncs: {
-    discarded: GleanQuantity;
-    hashedDeviceId: GleanString;
-    hashedFxaUid: GleanString;
-    migrations: GleanObject;
-    sessionStartDate: GleanDatetime;
-    syncNodeType: GleanString;
-    syncs: GleanObject;
-  }
-
-  tabContextMenu: {
-    clickSendTab: GleanEventWithExtras<{ action?: string, device_count?: string }>;
-    sendTabExposed: GleanEventWithExtras<{ device_count?: string }>;
-    sendTabOpened: GleanEventWithExtras<{ device_count?: string }>;
-  }
-
   startupCache: {
     requests: Record<"HitDisk"|"HitMemory"|"Miss", GleanCounter>;
   }
 
   sqliteStore: {
+    failedNormalize: GleanCounter;
     open: GleanDualLabeledCounter;
     query: GleanDualLabeledCounter;
+    slowStatements: GleanObject;
   }
 
   bounceTrackingProtection: {
@@ -6006,13 +5886,13 @@ interface GleanImpl {
     clearedAddressForm: GleanEventWithExtras<{ field_name?: string, value?: string }>;
     deleteManage: GleanEventWithExtras<{ value?: string }>;
     detectedAddressForm: GleanEventWithExtras<{ address_level1?: string, address_level2?: string, address_line1?: string, address_line2?: string, address_line3?: string, country?: string, postal_code?: string, street_address?: string, value?: string }>;
-    detectedAddressFormExt: GleanEventWithExtras<{ additional_name?: string, email?: string, family_name?: string, given_name?: string, mlversion?: string, name?: string, organization?: string, tel?: string, value?: string }>;
+    detectedAddressFormExt: GleanEventWithExtras<{ additional_name?: string, email?: string, family_name?: string, given_name?: string, name?: string, organization?: string, tel?: string, value?: string }>;
     disableCaptureDoorhanger: GleanEventWithExtras<{ value?: string }>;
     disableEditDoorhanger: GleanEventWithExtras<{ value?: string }>;
     disableUpdateDoorhanger: GleanEventWithExtras<{ value?: string }>;
     editManage: GleanEventWithExtras<{ value?: string }>;
     filledAddressForm: GleanEventWithExtras<{ address_level1?: string, address_level2?: string, address_line1?: string, address_line2?: string, address_line3?: string, country?: string, postal_code?: string, street_address?: string, value?: string }>;
-    filledAddressFormExt: GleanEventWithExtras<{ additional_name?: string, email?: string, family_name?: string, given_name?: string, mlversion?: string, name?: string, organization?: string, tel?: string, value?: string }>;
+    filledAddressFormExt: GleanEventWithExtras<{ additional_name?: string, email?: string, family_name?: string, given_name?: string, name?: string, organization?: string, tel?: string, value?: string }>;
     filledModifiedAddressForm: GleanEventWithExtras<{ address_level1?: string, address_level2?: string, address_line1?: string, address_line2?: string, address_line3?: string, country?: string, field_name?: string, postal_code?: string, street_address?: string, value?: string }>;
     filledOnFieldsUpdateAddressForm: GleanEventWithExtras<{ additional_name?: string, address_level1?: string, address_level2?: string, address_line1?: string, address_line2?: string, address_line3?: string, country?: string, email?: string, family_name?: string, given_name?: string, name?: string, organization?: string, postal_code?: string, street_address?: string, tel?: string, value?: string }>;
     learnMoreCaptureDoorhanger: GleanEventWithExtras<{ value?: string }>;
@@ -6031,7 +5911,7 @@ interface GleanImpl {
     showManage: GleanEventWithExtras<{ value?: string }>;
     showUpdateDoorhanger: GleanEventWithExtras<{ value?: string }>;
     submittedAddressForm: GleanEventWithExtras<{ address_level1?: string, address_level2?: string, address_line1?: string, address_line2?: string, address_line3?: string, country?: string, postal_code?: string, street_address?: string, value?: string }>;
-    submittedAddressFormExt: GleanEventWithExtras<{ additional_name?: string, email?: string, family_name?: string, given_name?: string, mlversion?: string, name?: string, organization?: string, tel?: string, value?: string }>;
+    submittedAddressFormExt: GleanEventWithExtras<{ additional_name?: string, email?: string, family_name?: string, given_name?: string, name?: string, organization?: string, tel?: string, value?: string }>;
     updateCaptureDoorhanger: GleanEventWithExtras<{ value?: string }>;
     updateEditDoorhanger: GleanEventWithExtras<{ value?: string }>;
     updateUpdateDoorhanger: GleanEventWithExtras<{ value?: string }>;
@@ -6083,6 +5963,7 @@ interface GleanImpl {
     autofillProfilesCount: GleanQuantity;
     migrateRecordDivergence: GleanEventWithExtras<{ added?: string, changed?: string, dropped?: string, run_id?: string }>;
     migrateToRust: GleanEventWithExtras<{ attempt?: string|number, direction?: string, diverged?: string|number, duration_ms?: string|number, error_code?: string, error_message?: string, failed?: string|number, failed_deletions?: string|number, migrated?: string|number, result?: string, run_id?: string, source_total?: string|number, target_total?: string|number }>;
+    migrateToRustBlocked: GleanEventWithExtras<{ dry_run?: string|boolean, reason?: string }>;
   }
 
   passport: {
@@ -6106,6 +5987,14 @@ interface GleanImpl {
 
   geckoTrace: {
     tracesData: GleanObject;
+  }
+
+  geckoview: {
+    documentSiteOrigins: GleanCustomDistribution;
+    pageLoadProgressTime: GleanTimingDistribution;
+    pageLoadTime: GleanTimingDistribution;
+    pageReloadTime: GleanTimingDistribution;
+    perDocumentSiteOrigins: GleanCustomDistribution;
   }
 
   fog: {
@@ -6251,42 +6140,6 @@ interface GleanImpl {
     reachSpotlight: GleanEventWithExtras<{ branches?: string, message_id?: string, value?: string }>;
     targetingAttributeError: GleanEventWithExtras<{ source?: string, value?: string }>;
     targetingAttributeTimeout: GleanEventWithExtras<{ source?: string, value?: string }>;
-  }
-
-  firefoxAiRuntime: {
-    engineCreationFailure: GleanEventWithExtras<{ engineId?: string, error?: string, featureId?: string, flow_id?: string, host_process?: string, modelId?: string, taskName?: string }>;
-    engineCreationSuccess: Record<"about-inference"|"autofill-ml"|"default-engine"|"link-preview"|"ml-suggest-intent"|"ml-suggest-ner"|"pdfjs"|"smart-intent"|"smart-openai"|"smart-openai-memories-generation"|"smart-openai-memories-usage"|"smart-tab-embedding-engine"|"smart-tab-topic-engine"|"title-generation-engine"|"webextension", GleanTimingDistribution>;
-    engineCreationSuccessFlow: GleanEventWithExtras<{ duration?: string|number, engineId?: string, flow_id?: string, host_process?: string }>;
-    engineRun: GleanEventWithExtras<{ average_chunk_time?: string|number, backend?: string, backend_source_revision?: string, character_count?: string|number, cores?: string|number, cpu_milliseconds?: string|number, cpu_utilization?: string|number, engine_id?: string, feature_id?: string, flow_id?: string, host_process?: string, memory_bytes?: string|number, model_id?: string, system_memory_mb?: string|number, time_to_first_chunk?: string|number, token_count?: string|number, wall_milliseconds?: string|number }>;
-    modelDeletion: GleanEventWithExtras<{ deletedBy?: string, error?: string, modelId?: string, modelRevision?: string }>;
-    modelDownload: GleanEventWithExtras<{ duration?: string|number, engineId?: string, error?: string, featureId?: string, modelDownloadId?: string, modelId?: string, modelRevision?: string, step?: string, when?: string|number }>;
-    runInferenceFailure: GleanEventWithExtras<{ engineId?: string, error?: string, featureId?: string, flow_id?: string, host_process?: string, modelId?: string }>;
-    runInferenceSuccess: Record<"about-inference"|"autofill-ml"|"default-engine"|"link-preview"|"ml-suggest-intent"|"ml-suggest-ner"|"pdfjs"|"smart-intent"|"smart-openai"|"smart-openai-memories-generation"|"smart-openai-memories-usage"|"smart-tab-embedding-engine"|"smart-tab-topic-engine"|"title-generation-engine"|"webextension", GleanTimingDistribution>;
-    runInferenceSuccessFlow: GleanEventWithExtras<{ decoding_time?: string|number, flow_id?: string, host_process?: string, inference_time?: string|number, input_tokens?: string|number, output_tokens?: string|number, time_per_output_token?: string|number, time_to_first_token?: string|number, tokenizing_time?: string|number, tokens_per_second?: string|number }>;
-    sessionEnd: GleanEventWithExtras<{ duration?: string|number, feature_id?: string, flow_id?: string, status?: string }>;
-    sessionStart: GleanEventWithExtras<{ feature_id?: string, flow_id?: string, interaction?: string }>;
-  }
-
-  modelManagement: {
-    detailsView: GleanEventWithExtras<{ extension_ids?: string, feature_ids?: string, model?: string, version?: string }>;
-    listItemManage: GleanEventWithExtras<{ extension_ids?: string, feature_ids?: string, model?: string, version?: string }>;
-    listView: GleanEventWithExtras<{ models?: string|number }>;
-    modelCardLink: GleanEventWithExtras<{ extension_ids?: string, feature_ids?: string, model?: string, version?: string }>;
-    removeConfirmation: GleanEventWithExtras<{ action?: string, extension_ids?: string, feature_ids?: string, model?: string, version?: string }>;
-    removeInitiated: GleanEventWithExtras<{ extension_ids?: string, feature_ids?: string, last_install?: string|number, last_used?: string|number, model?: string, size?: string|number, source?: string, version?: string }>;
-  }
-
-  heartbeat: {
-    closed: GleanDatetime;
-    engaged: GleanDatetime;
-    expired: GleanDatetime;
-    flowId: GleanUuid;
-    learnMore: GleanDatetime;
-    offered: GleanDatetime;
-    score: GleanQuantity;
-    surveyId: GleanString;
-    voted: GleanDatetime;
-    windowClosed: GleanDatetime;
   }
 
   pageExtractor: {
@@ -6508,11 +6361,6 @@ interface GleanImpl {
     bookmarksCount: GleanCustomDistribution;
     databaseFaviconsFilesize: GleanMemoryDistribution;
     databaseFilesize: GleanMemoryDistribution;
-    databaseSemanticHistoryDefragmentTime: GleanTimingDistribution;
-    databaseSemanticHistoryFilesize: GleanMemoryDistribution;
-    databaseSemanticHistoryNumEntries: GleanQuantity;
-    databaseSemanticHistoryReindexTime: GleanTimingDistribution;
-    databaseSemanticHistoryWastedPercentage: GleanQuantity;
     expirationStepsToClean: GleanCustomDistribution;
     exportTohtml: GleanTimingDistribution;
     frecencyRecalcChunkTime: GleanTimingDistribution;
@@ -6525,10 +6373,6 @@ interface GleanImpl {
     pagesNeedFrecencyRecalculation: GleanQuantity;
     placesDatabaseCorruptionHandlingStage: Record<string, GleanString>;
     previousdayVisits: GleanQuantity;
-    semanticHistoryChunkCalculateTime: GleanTimingDistribution;
-    semanticHistoryFindChunksTime: GleanTimingDistribution;
-    semanticHistoryIndexingStopped: Record<"failsafe"|"soft", GleanCounter>;
-    semanticHistoryMaxChunksCount: GleanQuantity;
     sortedBookmarksPerc: GleanCustomDistribution;
     sponsoredVisitNoTriggeringUrl: GleanCounter;
     taggedBookmarksPerc: GleanCustomDistribution;
@@ -6548,15 +6392,15 @@ interface GleanImpl {
 
   power: {
     cpuTimeBogusValues: GleanCounter;
-    cpuTimePerProcessTypeMs: Record<"extension"|"gmplugin"|"gpu"|"inference"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
+    cpuTimePerProcessTypeMs: Record<"extension"|"gmplugin"|"gpu"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
     cpuTimePerTrackerTypeMs: Record<"ad"|"analytics"|"cryptomining"|"fingerprinting"|"social"|"unknown", GleanCounter>;
-    energyPerProcessType: Record<"extension"|"gmplugin"|"gpu"|"inference"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
+    energyPerProcessType: Record<"extension"|"gmplugin"|"gpu"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
     gpuTimeBogusValues: GleanCounter;
-    gpuTimePerProcessTypeMs: Record<"extension"|"gmplugin"|"gpu"|"inference"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
+    gpuTimePerProcessTypeMs: Record<"extension"|"gmplugin"|"gpu"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
     totalCpuTimeMs: GleanCounter;
     totalGpuTimeMs: GleanCounter;
     totalThreadWakeups: GleanCounter;
-    wakeupsPerProcessType: Record<"extension"|"gmplugin"|"gpu"|"inference"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
+    wakeupsPerProcessType: Record<"extension"|"gmplugin"|"gpu"|"parent.active"|"parent.active.playing-audio"|"parent.active.playing-video"|"parent.inactive"|"parent.inactive.playing-audio"|"parent.inactive.playing-video"|"prealloc"|"privilegedabout"|"rdd"|"socket"|"utility"|"web.background"|"web.background-perceivable"|"web.foreground", GleanCounter>;
   }
 
   powerBattery: {
@@ -6564,21 +6408,19 @@ interface GleanImpl {
   }
 
   powerCpuMsPerThread: {
-    contentBackground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    contentForeground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    gpuProcess: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    inferenceProcess: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    parentActive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    parentInactive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    contentBackground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    contentForeground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    gpuProcess: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    parentActive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    parentInactive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
   }
 
   powerWakeupsPerThread: {
-    contentBackground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    contentForeground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    gpuProcess: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    inferenceProcess: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    parentActive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
-    parentInactive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"onnx_worker"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    contentBackground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    contentForeground: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    gpuProcess: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    parentActive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
+    parentInactive: Record<"androidui"|"asynclogger"|"audioipc"|"audioipc_callback_rpc"|"audioipc_client_callback"|"audioipc_client_rpc"|"audioipc_devicecollection_rpc"|"audioipc_server_callback"|"audioipc_server_rpc"|"backgroundthreadpool"|"bgiothreadpool"|"bgreadurls"|"bhmgr_monitor"|"bhmgr_processor"|"cameras_ipc"|"canvasrenderer"|"capturethread"|"classifier_update"|"com_mta"|"compositor"|"convolverworker"|"cookie"|"cubeboperation"|"datachannel_io"|"dns_resolver"|"dom_worker"|"dom_worklet"|"domcachethread"|"extensionprotocolhandler"|"font_loader"|"fontenumthread"|"fs_broker"|"geckomain"|"gmpthread"|"graphrunner"|"hrtfdatabaseldr"|"html5_parser"|"imagebridgechld"|"imageio"|"indexeddb"|"indexeddb_io"|"initfontlist"|"inotifyeventthread"|"ipc_i_o_child"|"ipc_i_o_parent"|"ipc_launch"|"ipdl_background"|"js_watchdog"|"jump_list"|"libwebrtcmodulethread"|"link_monitor"|"ls_thread"|"mdns_service"|"mediacache"|"mediadecoderstatemachine"|"mediapdecoder"|"mediasupervisor"|"mediatimer"|"mediatrackgrph"|"memorypoller"|"mozstorage"|"mtransport"|"netlink_monitor"|"pacerthread"|"permission"|"playeventsound"|"processhangmon"|"profilerchild"|"proxyresolution"|"quotamanager_io"|"registerfonts"|"remotebackbuffer"|"remotelzystream"|"remvidchild"|"renderer"|"sandboxreporter"|"savescripts"|"socket_thread"|"softwarevsyncthread"|"sqldb_content-prefs_sqlite"|"sqldb_cookies_sqlite"|"sqldb_formhistory_sqlite"|"ssl_cert"|"startupcache"|"streamtrans"|"stylethread"|"swcomposite"|"taskcontroller"|"timer"|"toastbgthread"|"trr_background"|"untrusted_modules"|"url_classifier"|"videocapture"|"vsynciothread"|"webrtccallthread"|"webrtcworker"|"wifi_tickler"|"wincompositor"|"windowsvsyncthread"|"winwindowocclusioncalc"|"worker_launcher"|"wrrenderbackend"|"wrscenebuilder"|"wrscenebuilderlp"|"wrworker"|"wrworkerlp", GleanCounter>;
   }
 
   readermode: {
@@ -7099,6 +6941,13 @@ interface GleanImpl {
     canvasNoiseCalculateTime2: GleanTimingDistribution;
   }
 
+  autocomplete: {
+    dropdownClosed: GleanEventWithExtras<{ close_reason?: string, flow_id?: string, record_type?: string }>;
+    dropdownShown: GleanEventWithExtras<{ flow_id?: string, record_type?: string }>;
+    recordDialogInteraction: GleanEventWithExtras<{ interaction_type?: string, record_type?: string, update_type?: string }>;
+    recordInteraction: GleanEventWithExtras<{ interaction_type?: string, record_type?: string }>;
+  }
+
   browserSearchinit: {
     engineInvalidWebextension: Record<string, GleanQuantity>;
     insecureOpensearchEngineCount: GleanQuantity;
@@ -7148,12 +6997,6 @@ interface GleanImpl {
     profileGroupId: GleanUuid;
     sessionId: GleanUuid;
     sessionStartDate: GleanDatetime;
-  }
-
-  onboardingOptOut: {
-    activeExperiments: GleanObject;
-    activeRollouts: GleanObject;
-    enrollmentsMap: GleanObject;
   }
 
   startupIo: {
@@ -7377,38 +7220,6 @@ interface GleanImpl {
     bypassProxyInfo: GleanEventWithExtras<{ source?: string, type?: string, value?: string }>;
   }
 
-  defaultagent: {
-    daysSinceLastAppLaunch: GleanQuantity;
-  }
-
-  notification: {
-    action: GleanString;
-    showSuccess: GleanBoolean;
-  }
-
-  system: {
-    osVersion: GleanString;
-    previousOsVersion: GleanString;
-    appleModelId: GleanString;
-    hasWinPackageId: GleanBoolean;
-    isWow64: GleanBoolean;
-    isWowArm64: GleanBoolean;
-    memory: GleanQuantity;
-    virtualMemory: GleanQuantity;
-    winPackageFamilyName: GleanString;
-  }
-
-  systemDefault: {
-    browser: GleanString;
-    pdfHandler: GleanString;
-    previousBrowser: GleanString;
-  }
-
-  systemPin: {
-    isTaskbarPinned: GleanString;
-    previousIsTaskbarPinned: GleanString;
-  }
-
   addons: {
     activeAddons: GleanObject;
     activeGMPlugins: GleanObject;
@@ -7456,17 +7267,6 @@ interface GleanImpl {
     wakeNotifications: GleanCustomDistribution;
   }
 
-  updateSettings: {
-    autoDownload: GleanBoolean;
-    background: GleanBoolean;
-    channel: GleanString;
-    enabled: GleanBoolean;
-  }
-
-  updater: {
-    available: GleanBoolean;
-  }
-
   e10s: {
     enabled: GleanBoolean;
     multiProcesses: GleanQuantity;
@@ -7490,14 +7290,9 @@ interface GleanImpl {
     imeNameOnMac: Record<string, GleanBoolean>;
     macApplicationMenuOpened: GleanCounter;
     rosettaStatus: GleanBoolean;
-    desktopEnvironment: GleanString;
-    gtkVersion: GleanString;
-    imeNameOnLinux: Record<string, GleanBoolean>;
     darkMode: GleanBoolean;
     notifyIdle: GleanTimingDistribution;
     pointingDevices: Record<"mouse"|"pen"|"touch", GleanBoolean>;
-    imeNameOnWindows: Record<string, GleanBoolean>;
-    imeNameOnWindowsInsertedCrlf: Record<string, GleanBoolean>;
   }
 
   gfxFeatures: {
@@ -7509,12 +7304,6 @@ interface GleanImpl {
     openglCompositing: GleanObject;
     webrender: GleanObject;
     wrCompositor: GleanObject;
-  }
-
-  windowsSecurity: {
-    antispyware: GleanStringList;
-    antivirus: GleanStringList;
-    firewall: GleanStringList;
   }
 
   cycleCollector: {
@@ -7586,6 +7375,16 @@ interface GleanImpl {
     processOomKilled: GleanEventWithExtras<{ psi_available?: string|boolean, psi_full_avg10?: string, psi_full_avg60?: string, psi_some_avg10?: string, psi_some_avg60?: string }>;
   }
 
+  system: {
+    appleModelId: GleanString;
+    hasWinPackageId: GleanBoolean;
+    isWow64: GleanBoolean;
+    isWowArm64: GleanBoolean;
+    memory: GleanQuantity;
+    virtualMemory: GleanQuantity;
+    winPackageFamilyName: GleanString;
+  }
+
   systemCpu: {
     bigCores: GleanQuantity;
     extensions: GleanStringList;
@@ -7644,7 +7443,7 @@ interface GleanPingsImpl {
   contentDecodingError: GleanPingWithReason<"error">;
   localNetworkAccess: GleanPingNoReason;
   urlClassifierHarmfulAddon: GleanPingNoReason;
-  sync: GleanPingWithReason<"idchange"|"schedule"|"shutdown">;
+  slowSql: GleanPingWithReason<"startup">;
   bounceTrackingProtection: GleanPingNoReason;
   hangReport: GleanPingNoReason;
   backgroundTasks: GleanPingNoReason;
@@ -7658,7 +7457,6 @@ interface GleanPingsImpl {
   rideAlongPing: GleanPingNoReason;
   testOhttpPing: GleanPingNoReason;
   testPing: GleanPingNoReason;
-  heartbeat: GleanPingNoReason;
   pageExtractor: GleanPingNoReason;
   brokenSiteReport: GleanPingNoReason;
   userCharacteristics: GleanPingNoReason;
@@ -7667,7 +7465,6 @@ interface GleanPingsImpl {
   usageDeletionRequest: GleanPingWithReason<"set_upload_enabled">;
   usageReporting: GleanPingWithReason<"active"|"dirty_startup"|"inactive">;
   firstStartup: GleanPingNoReason;
-  defaultAgent: GleanPingWithReason<"daily_ping">;
   addons: GleanPingWithReason<"daily"|"startup"|"updated">;
   newProfile: GleanPingNoReason;
 }

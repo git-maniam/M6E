@@ -40,11 +40,6 @@ ID01:
         - bottomLinks-privacy
         - bottomLinks-rights
         - releaseNotes-link
-        - update-checkForUpdatesButton
-        - update-checkingForUpdates
-        - update-noUpdatesFound
-        - update-otherInstanceHandlingUpdates
-        - update-updateButton
         - warningDesc-version
 
         # toolkit/neterror/certError.ftl
@@ -150,9 +145,6 @@ CO01:
         - onboarding-gratitude-security-and-privacy-subtitle
         # browser/policies/policies-descriptions.ftl
         - policy-DisableFirefoxScreenshots
-        # browser/preferences/preferences.ftl
-        - sync-engine-addons
-        - sync-mobile-promo
         # browser/sidebar.ftl
         - menu-view-resource-monitor
         # browser/unifiedExtensions.ftl
@@ -194,8 +186,5 @@ CO01:
         - cert-error-mitm-connection
         # browser/search.ftl
         - add-engine-name-placeholder
-        # browser/appmenu.ftl
-        - appmenu-other-protection-header2
     files:
         - browser/locales/en-US/browser/profile/default-bookmarks.ftl
-        - toolkit/locales/en-US/toolkit/about/aboutMozilla.ftl

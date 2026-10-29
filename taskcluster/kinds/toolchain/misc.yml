@@ -171,47 +171,6 @@ linux64-xar:
             - linux64-clang-toolchain
             - linux64-toolchain-sysroot
 
-linux64-mar-tools:
-    description: "mar-tools toolchain build"
-    treeherder:
-        symbol: TL(mar-tools)
-    fetches:
-        toolchain:
-            - linux64-clang-toolchain
-            - sysroot-x86_64-linux-gnu
-    run:
-        script: build-mar-tools.sh
-        sparse-profile: null
-        toolchain-artifact: public/build/mar-tools.tar.zst
-        resources:
-            - build/moz.configure
-            - modules/libmar/
-            - moz.configure
-            - other-licenses/bsdiff/
-            - other-licenses/nsis/Contrib/CityHash/cityhash/
-            - toolkit/mozapps/update/updater/bspatch/
-            - tools/update-packaging/
-
-linux64-zucchini-bin:
-    description: "zucchini bin toolchain build"
-    treeherder:
-        symbol: TL(zucchini-bin)
-    fetches:
-        toolchain:
-            - linux64-clang-toolchain
-            - sysroot-x86_64-linux-gnu
-    run:
-        script: build-zucchini.sh
-        sparse-profile: null
-        toolchain-artifact: public/build/zucchini.tar.xz
-        resources:
-            - build/moz.configure/
-            - moz.configure
-            - third_party/abseil-cpp/
-            - third_party/googletest/
-            - third_party/zucchini/
-            - tools/zucchini/
-
 linux64-msix-packaging:
     description: "msix-packaging build"
     treeherder:
@@ -242,27 +201,6 @@ linux64-custom-v8:
             target_cpu="x64"
         ]
         toolchain-artifact: public/build/d8.tar.zst
-
-linux64-marannon:
-    description: "marannon"
-    treeherder:
-        symbol: TL(marannon)
-    fetches:
-        toolchain:
-            - linux64-clang-toolchain
-            - linux64-rust
-            - sysroot-x86_64-linux-gnu
-    run:
-        script: build-rust-based-toolchain.sh
-        sparse-profile: null
-        toolchain-artifact: public/build/marannon.tar.zst
-        resources:
-            - tools/update-verify/marannon/**
-        arguments: ["x86_64-unknown-linux-gnu"]
-    worker:
-        env:
-            CRATE_PATH: tools/update-verify/marannon
-            RUN_TESTS: "1"
 
 macosx64-xz:
     description: "xz development library"
@@ -533,25 +471,6 @@ win64-winchecksec:
         toolchain:
             - linux64-clang-toolchain
             - vs-toolchain
-
-linux64-makecab:
-    description: "makecab toolchain build"
-    treeherder:
-        symbol: TL(cab)
-    worker:
-        env:
-            FETCH: rust-makecab
-    run:
-        script: build-rust-based-toolchain.sh
-        arguments: ['x86_64-unknown-linux-gnu']
-        toolchain-artifact: public/build/makecab.tar.zst
-    fetches:
-        fetch:
-            - makecab
-        toolchain:
-            - linux64-clang-toolchain
-            - linux64-rust-toolchain
-            - sysroot-x86_64-linux-gnu
 
 win64-mozmake:
     description: "mozmake for Windows"

@@ -416,18 +416,12 @@ module.exports = {
         "browser/branding/**",
         // CSS files under browser/components/extensions are not using design tokens
         "browser/components/extensions/**",
-        // Webcompat interventions are not expected to use design tokens
-        // They are intended to override existing styles for specific extension
-        "browser/extensions/webcompat/injections/css/**",
         // Most of devtools does not use design tokens, so turn the appropriate rules off for devtools.
         // Stylelint does not support negating the file glob within an overrides section,
         // so these rules get re-enabled for some devtools files in the section below
         "devtools/**",
         // FXR is no longer maintained and is not expected to use design tokens
         "browser/fxr/**",
-        // Android does not use design tokens
-        "mobile/android/**",
-        "toolkit/themes/mobile/global/aboutLicense.css",
         // Docs do not use design tokens
         "docs/**",
         // DOM does not use design tokens
@@ -445,7 +439,6 @@ module.exports = {
         "toolkit/themes/shared/media/videocontrols.css",
         "toolkit/content/widgets/datetimebox.css",
         "toolkit/content/widgets/marquee.css",
-        "toolkit/themes/shared/media/textrecognition.css",
         // The contents of backup/content/archive.css are injected as inline CSS
         // into the HTML backup archive files that exist on a user's file system
         // and can be opened in any browser.

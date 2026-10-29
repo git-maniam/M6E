@@ -26,7 +26,6 @@ kind-dependencies:
     - shippable-l10n-mac-signing
     - shippable-l10n-mac-notarization
     - repackage-signing-l10n
-    - partials-signing
     - repackage-signing-msi
     - repackage-signing-shippable-l10n-msix
     - repackage-pkg-notarization
@@ -37,8 +36,6 @@ kind-dependencies:
     - attribution-l10n
     - repackage-deb
     - repackage-deb-l10n
-    - upload-symbols
-    - upload-symbols-dummy
 
 only-for-build-platforms:
     - linux64-shippable/opt

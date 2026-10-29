@@ -60,7 +60,6 @@ lint.exclude = [
   "layout/base/tests/marionette/**",
   "layout/reftests/border-image/**",
   "layout/reftests/fonts/**",
-  "layout/reftests/w3c-css/**",
   "layout/style/**",
   "media/libdav1d/generate_source.py",
   "netwerk/dns/prepare_tlds.py",
@@ -73,7 +72,6 @@ lint.exclude = [
   "testing/condprofile/condprof/creator.py",
   "testing/condprofile/condprof/desktop.py",
   "testing/condprofile/condprof/runner.py",
-  "testing/condprofile/condprof/scenarii/heavy.py",
   "testing/condprofile/condprof/scenarii/settled.py",
   "testing/condprofile/condprof/scenarii/synced.p",
   "testing/condprofile/condprof/helpers.py",
@@ -82,8 +80,6 @@ lint.exclude = [
   "testing/mozharness/examples/**",
   "testing/mozharness/external_tools/**",
   "testing/mozharness/mach_commands.py",
-  "testing/mozharness/manifestparser/**",
-  "testing/mozharness/mozprocess/**",
   "testing/parse_build_tests_ccov.py",
   "testing/tools/iceserver/iceserver.py",
   "testing/tools/websocketprocessbridge/websocketprocessbridge.py",
@@ -91,15 +87,12 @@ lint.exclude = [
   "toolkit/library/build/dependentlibs.py",
   "toolkit/mozapps/**",
   "toolkit/moz.configure",
-  "toolkit/nss.configure",
 
   # Can be removed once remaining CI workers updated past Python 3.8
   "python/mozbuild/mozbuild/action/tooltool.py",
 
   # These paths are intentionally excluded (not necessarily for good reason).
   "build/moz.configure/*.configure",
-  "build/pymake/**",
-  "browser/extensions/mortar/ppapi/**",
   "browser/moz.configure",
   "dom/canvas/test/webgl-conf/checkout/closure-library/**",
   "editor/libeditor/tests/browserscope/**",
@@ -110,7 +103,6 @@ lint.exclude = [
   "gfx/harfbuzz/**",
   "gfx/skia/**",
   "memory/moz.configure",
-  "mobile/android/*.configure",
   "python/mozbuild/mozbuild/test/configure/data/**",
   "security/nss/**",
   "testing/marionette/harness/marionette_harness/runner/mixins/**",

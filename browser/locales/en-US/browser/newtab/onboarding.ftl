@@ -466,7 +466,6 @@ desktop-to-mobile-headline = Download, sync, and go!
 desktop-to-mobile-subtitle = Scan the QR code to download { -brand-product-name } for mobile. Once installed, select “Sync to mobile” to access your passwords, bookmarks, and more on the go.
 
 dismiss-button-label = Dismiss
-sync-to-mobile-button-label = Sync to mobile
 desktop-to-mobile-qr-code-alt =
   .aria-label = QR code to download { -brand-product-name } for mobile
 
@@ -637,9 +636,7 @@ welcome-back-onboarding-primary-button-label = Start browsing
 welcome-back-onboarding-secondary-button-label = See what else is new
 # Pill label for features that allow you to tidy up your tabs
 welcome-back-onboarding-pill-label-tabs = Tidy Tabs
-welcome-back-onboarding-pill-label-vpn = Built-in VPN
 welcome-back-onboarding-pill-label-pdf = PDF Tools
 welcome-back-onboarding-card-label-tabs = Tidy up with vertical tabs and groups
-welcome-back-onboarding-card-label-vpn = Stay hidden with built-in VPN
 welcome-back-onboarding-card-label-pdf = Highlight, sign, and work with PDFs
 welcome-back-onboarding-card-tilebutton-label = Try it

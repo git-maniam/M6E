@@ -11,7 +11,6 @@ categories:
     contributing_doc:
         - contributing
         - bug-mgmt
-        - crash-reporting
     user_guide:
         - devtools-user
     source_doc:
@@ -26,9 +25,6 @@ categories:
         - toolkit
         - js
         - jsloader
-        - mobile/android/geckoview
-        - mobile/android/fenix
-        - mobile/android/focus-android
         - dom/bindings/webidl
         - modules/libpref
         - networking
@@ -37,7 +33,6 @@ categories:
         - permissions
         - uriloader
         - widget/cocoa
-        - widget/windows
         - toolkit/components/pageextractor
         - accessible
         - media
@@ -84,17 +79,12 @@ categories:
         - testing-rust-code
     ai_agent_tools_doc:
         - ai-agent-tools
-    release_doc:
-        - update-infrastructure
-        - tools/update-verify
     l10n_doc:
         - intl
         - l10n
     python_doc:
         - mozbase
         - python
-    fennec_doc:
-        - mobile/android
     metrics_doc:
         - metrics
 

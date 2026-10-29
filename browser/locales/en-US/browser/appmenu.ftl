@@ -4,8 +4,6 @@
 
 ## App Menu
 
-appmenu-nova-fxa-sign-in = Sign in
-
 appmenu-nova-switch-device-promo =
     .message = Getting a new device soon? Take { -brand-short-name } with you!
 
@@ -73,83 +71,6 @@ appmenuitem-fullscreen =
   .label = Full screen
 
 ## Firefox Account toolbar button and Sync panel in App menu.
-
-appmenu-remote-tabs-sign-into-sync =
-  .label = Sign in to sync…
-appmenu-remote-tabs-turn-on-sync =
-  .label = Turn on sync…
-
-# This is shown after the tabs list if we can display more tabs by clicking on the button
-appmenu-remote-tabs-showmore =
-  .label = Show more tabs
-  .tooltiptext = Show more tabs from this device
-
-# This is shown as the label for an element to show inactive tabs from this device.
-appmenu-remote-tabs-show-inactive-tabs =
-  .label = Inactive tabs
-  .tooltiptext = See inactive tabs on this device
-
-# This is shown beneath the name of a device when that device has no open tabs
-appmenu-remote-tabs-notabs = No open tabs
-
-# This is shown when Sync is configured but syncing tabs is disabled.
-appmenu-remote-tabs-tabsnotsyncing = Turn on tab syncing to view a list of tabs from your other devices.
-
-appmenu-remote-tabs-opensettings =
-  .label = Settings
-
-# This is shown when Sync is configured but this appears to be the only device attached to
-# the account. We also show links to download Firefox for android/ios.
-appmenu-remote-tabs-noclients = Want to see your tabs from other devices here?
-
-appmenu-remote-tabs-connectdevice =
-  .label = Connect Another Device
-appmenu-remote-tabs-welcome = View a list of tabs from your other devices.
-appmenu-remote-tabs-unverified = Your account needs to be verified.
-
-appmenuitem-fxa-toolbar-sync-now2 = Sync now
-appmenuitem-fxa-manage-account = Manage account
-
-fxa-menu-sync-status-on = Sync is On
-
-fxa-menu-sync-status-off = Sync is Off
-
-# Shown in place of "Sync is Off" on the sync status button when the user has
-# never signed in. Sync is a verb, short for synchronize.
-fxa-menu-sync-your-data = Sync Your Data
-
-# Shown as a secondary label under "Sync is Off" when the user is signed in but
-# sync is turned off.
-fxa-menu-sync-off-data-description = Your data isn’t syncing
-
-fxa-menu-sync-status-turn-on-button-aria-label = Turn on
-
-# Shown as a secondary label under "Sync is Off" when the user needs to sign in
-# (again) for sync to work.
-fxa-menu-sync-off-signin-description = Sign in to sync
-
-# Sync is a verb, short for synchronize.
-# Variables:
-#   $deviceName (String): The name of the local device.
-fxa-menu-sync-device-now = Sync { $deviceName } Now
-
-# Mozilla account menu item when selected opens a panel with all devices synced to the user's account
-fxa-menu-all-devices =
-    .label = All Devices
-
-fxa-menu-get-firefox-mobile =
-    .label = Get { -brand-product-name } for Android or iOS
-
-fxa-menu-secure-sync-subpanel =
-    .title = Secure sync
-appmenu-account-header = Account
-# Variables
-# $time (string) - Localized relative time since last sync (e.g. 1 second ago,
-# 3 hours ago, etc.)
-appmenu-fxa-last-sync = Last synced { $time }
-    .label = Last synced { $time }
-appmenu-fxa-sync-and-save-data2 = Sync and Save Data
-appmenu-fxa-signed-in-label = Sign In
 
 appmenuitem-save-page =
     .label = Save Page As…
@@ -270,29 +191,6 @@ profiler-popup-presets-custom-label =
 appmenu-manage-history =
     .label = Manage History
 
-## Sync promo shown at the bottom of the History and Bookmarks panels. Its
-## variant depends on the user's account and Sync state. The sign-in heading and
-## all three call-to-action labels are shared by both panels; the remaining
-## headings are specific to the panel they appear in.
-
-appmenu-sync-promo-signin =
-    .heading = Stay in sync across devices
-appmenu-sync-promo-signin-cta = Sign in
-appmenu-sync-promo-turnonsync =
-    .heading = Sync your tabs and history
-appmenu-sync-promo-turnonsync-cta = Turn on sync
-# This refers to getting tabs from your mobile device via sync
-appmenu-sync-promo-connectdevice =
-    .heading = Grab your mobile tabs
-appmenu-sync-promo-connectdevice-cta = Connect a device
-appmenu-bookmarks-sync-promo-turnonsync =
-    .heading = Bring your bookmarks with you
-# This refers to having your bookmarks available on your mobile device via sync
-appmenu-bookmarks-sync-promo-connectdevice =
-    .heading = Take your bookmarks to go
-
-##
-
 appmenu-restore-session =
     .label = Restore previous session
 appmenu-clear-history =
@@ -364,47 +262,11 @@ appmenu-developer-tools-extensions =
 appmenuitem-report-broken-site =
   .label = Report Broken Site
 
-## Panel for privacy and security products
-
-appmenuitem-sign-in-account = Sign in to your account
-
-appmenuitem-monitor-title2 = Stay Ahead of Identity Theft
-appmenuitem-monitor-description2 = Get alerts about data breaches
-# Shown in place of appmenuitem-monitor-title2 when the user has signed up for Monitor.
-appmenuitem-monitor-title-signed-in = { -monitor-brand-short-name } Data Breach Alerts
-appmenuitem-relay-title2 = Keep Your Email Private
-appmenuitem-relay-description2 = Helps prevent spam in your inbox
-# Shown in place of appmenuitem-relay-title2 when the user has signed up for Relay.
-appmenuitem-relay-title-signed-in = View Email Masks
-appmenuitem-vpn-title2 = Hide Your Location with { -mozilla-vpn-brand-name }
-appmenuitem-vpn-description5 = Get extra protection across devices
-# Shown in place of appmenuitem-vpn-title2 when the user has signed up for VPN.
-appmenuitem-vpn-title-signed-in1 = Download { -mozilla-vpn-brand-name }
-
-# "Mozilla" is intentionally hardcoded to prevent forks from replacing it
-# with their own vendor name, since these tools are created and maintained by
-# Mozilla.
-appmenu-other-protection-header3 = Privacy tools
-
 ## Profiles panel
 
 appmenu-profiles-header = Profiles
 appmenu-all-profiles =
     .label = All Profiles
-appmenu-secure-sync-header = Secure sync
-
-# Button at the bottom of the per-device recent tabs subpanel.
-# Variables:
-#   $tabCount (Number): Total number of synced tabs on the device.
-fxa-menu-device-view-all-synced-tabs =
-    .label = { $tabCount ->
-        [one] View { $tabCount } Synced Tab
-       *[other] View All { $tabCount } Synced Tabs
-    }
-
-# Button in the recent tabs sub-panel that sends the current page to the synced device.
-fxa-menu-device-send-current-page =
-    .label = Send Current Page to This Device
 
 appmenu-profiles-2 =
     .label = Profiles

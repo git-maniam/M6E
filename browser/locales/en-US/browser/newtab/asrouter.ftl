@@ -108,20 +108,6 @@ cfr-doorhanger-video-support-header = Update { -brand-short-name } to play video
 cfr-doorhanger-video-support-primary-button = Update Now
   .accesskey = U
 
-## VPN promotion dialog for public Wi-Fi users
-##
-## If a user is detected to be on a public Wi-Fi network, they are given a
-## bit of info about how to improve their privacy and then offered a button
-## to the Mozilla VPN page and a link to dismiss the dialog.
-
-# This header text can be explicitly wrapped.
-spotlight-public-wifi-vpn-header = Looks like you’re using public Wi-Fi
-spotlight-public-wifi-vpn-body = To hide your location and browsing activity, consider a Virtual Private Network. It will help keep you protected when browsing in public places like airports and coffee shops.
-spotlight-public-wifi-vpn-primary-button = Stay private with { -mozilla-vpn-brand-name }
-  .accesskey = S
-spotlight-public-wifi-vpn-link = Not Now
-  .accesskey = N
-
 ## Emotive Continuous Onboarding
 
 spotlight-better-internet-header = A better internet starts with you
@@ -259,22 +245,6 @@ root-certificate-windows-background-notification-update-button = Update { -brand
 fxa-menu-message-close-button =
     .title = Close
     .aria-label = Close
-
-fxa-menu-message-sync-devices-primary-text = Sync all your devices
-fxa-menu-message-sync-devices-secondary-text = Instantly get your info — like bookmarks and passwords — everywhere you use { -brand-short-name }.
-fxa-menu-message-sync-devices-collapsed-text = Sync all your devices
-
-fxa-menu-message-backup-data-primary-text = Back up your browser data
-fxa-menu-message-backup-data-secondary-text = Automatically protect bookmarks, passwords, and other info on all your devices.
-fxa-menu-message-backup-data-collapsed-text = Back up browser data
-
-fxa-menu-message-backup-sync-primary-text = Keep your data safe and synced
-fxa-menu-message-backup-sync-secondary-text = Sync backs up most of your data so you can access it everywhere you use { -brand-short-name }.
-fxa-menu-message-backup-sync-collapsed-text = Sync and back up data
-
-fxa-menu-message-mobile-primary-text = Send tabs to your phone
-fxa-menu-message-mobile-secondary-text = Pick up where you left off instantly when you sync your tabs with a mobile device.
-fxa-menu-message-mobile-collapsed-text = Sync with your phone
 
 ## Multi-CTA Fox Doodle Spotlight
 

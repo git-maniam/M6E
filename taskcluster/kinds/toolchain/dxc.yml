@@ -4,13 +4,10 @@
 ---
 task-defaults:
     attributes:
-        enable-full-crashsymbols: true
         local-toolchain: true
     fetches:
         toolchain:
             - linux64-clang-toolchain
-            - linux64-dump_syms
-            - linux64-makecab
             - vs-toolchain
         fetch:
             - dxc-src
@@ -22,7 +19,6 @@ task-defaults:
     worker:
         env:
             MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE: system
-            MAKECAB: /builds/worker/fetches/makecab/makecab
         max-run-time: 1800
 
 win64-dxc:
