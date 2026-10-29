@@ -37,7 +37,6 @@ Structure:
     locale: <string>, // e.g. "it", null on failure
     update: {
       channel: <string>, // e.g. "release", null on failure
-      enabled: <bool>, // true on failure
     },
     userPrefs: {
       // Only prefs which are changed are listed in this block

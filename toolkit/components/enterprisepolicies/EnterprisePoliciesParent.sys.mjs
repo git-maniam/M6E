@@ -821,9 +821,7 @@ class JSONPoliciesProvider extends PoliciesProvider {
     // Check if we are in automation *before* we use the synchronous
     // nsIFile.exists() function or allow the config file to be overriden
     // An alternate policy path can also be used in Nightly builds (for
-    // testing purposes), but the Background Update Agent will be unable to
-    // detect the alternate policy file so the DisableAppUpdate policy may not
-    // work as expected.
+    // testing purposes).
     if (
       alternatePath &&
       (Cu.isInAutomation || AppConstants.NIGHTLY_BUILD) &&

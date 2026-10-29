@@ -9,7 +9,6 @@ const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
   ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  TaskScheduler: "resource://gre/modules/TaskScheduler.sys.mjs",
 });
 
 const PREF_TIMEOUT = "first-startup.timeout";
@@ -67,19 +66,6 @@ export var FirstStartup = {
 
     let normandyInitEndTime = null;
     let normandyInitPromise = null;
-
-    let deleteTasksEndTime = null;
-    if (AppConstants.MOZ_UPDATE_AGENT) {
-      // It's technically possible for a previous installation to leave an old
-      // OS-level scheduled task around.  Start fresh.
-      promises.push(
-        lazy.TaskScheduler.deleteAllTasks()
-          .catch(() => {})
-          .finally(() => {
-            deleteTasksEndTime = ChromeUtils.now();
-          })
-      );
-    }
 
     // Very important things that need to run before we launch the first window
     // during new profile setup can register a hook with CATEGORY_NAME.
@@ -159,12 +145,6 @@ export var FirstStartup = {
         Math.ceil(
           nimbusTimestamps?.nimbusInitEnd ?? ChromeUtils.now() - startingTime
         )
-      );
-    }
-
-    if (AppConstants.MOZ_UPDATE_AGENT) {
-      Glean.firstStartup.deleteTasksTime.set(
-        Math.ceil(deleteTasksEndTime || ChromeUtils.now() - startingTime)
       );
     }
 

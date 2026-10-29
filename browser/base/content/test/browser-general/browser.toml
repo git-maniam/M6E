@@ -362,10 +362,6 @@ support-files = [
 
 ["browser_remoteTroubleshoot.js"]
 https_first_disabled = true
-run-if = [
-  "updater",
-]
-reason = "depends on UpdateUtils .Locale"
 support-files = ["test_remoteTroubleshoot.html"]
 # DO NOT ADD MORE TESTS HERE. USE A TOPICAL DIRECTORY INSTEAD.
 

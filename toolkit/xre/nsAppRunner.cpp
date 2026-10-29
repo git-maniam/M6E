@@ -38,7 +38,6 @@
 #include "mozilla/intl/LocaleService.h"
 #include "mozilla/JSONWriter.h"
 #include "mozilla/gfx/gfxVars.h"
-#include "mozilla/glean/ToolkitMozappsUpdateSharedMetrics.h"
 #include "mozilla/glean/ToolkitXreMetrics.h"
 #include "mozilla/glean/GleanPings.h"
 #include "mozilla/widget/TextRecognition.h"
@@ -47,10 +46,6 @@
 #include "nsAppRunner.h"
 #include "mozilla/XREAppData.h"
 #include "mozilla/Bootstrap.h"
-#if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
-#  include "nsUpdateDriver.h"
-#  include "nsUpdateSyncManager.h"
-#endif
 #include "ProfileReset.h"
 
 #  include "nsVersionComparator.h"
@@ -3651,9 +3646,7 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
   }
 
 
-  // Set up ability to respond to system (Apple) events. This must occur before
-  // ProcessUpdates to ensure that links clicked in external applications aren't
-  // lost when updates are pending.
+  // Set up ability to respond to system (Apple) events.
   SetupMacApplicationDelegate(&gRestartedByOS);
 
   if (EnvHasValue("MOZ_LAUNCHED_CHILD")) {
@@ -3772,119 +3765,6 @@ int XREMain::XRE_mainInit(bool* aExitFlag) {
 
   return 0;
 }
-
-
-
-#if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
-enum struct ShouldNotProcessUpdatesReason {
-  DevToolsLaunching,
-  NotAnUpdatingTask,
-  OtherInstanceRunning,
-  FirstStartup,
-  DisabledByEnvironment
-};
-
-const char* ShouldNotProcessUpdatesReasonAsString(
-    ShouldNotProcessUpdatesReason aReason) {
-  switch (aReason) {
-    case ShouldNotProcessUpdatesReason::DevToolsLaunching:
-      return "DevToolsLaunching";
-    case ShouldNotProcessUpdatesReason::NotAnUpdatingTask:
-      return "NotAnUpdatingTask";
-    case ShouldNotProcessUpdatesReason::OtherInstanceRunning:
-      return "OtherInstanceRunning";
-    case ShouldNotProcessUpdatesReason::DisabledByEnvironment:
-      return "DisabledByEnvironment";
-    default:
-      MOZ_CRASH("impossible value for ShouldNotProcessUpdatesReason");
-  }
-}
-
-Maybe<ShouldNotProcessUpdatesReason> ShouldNotProcessUpdates(
-    nsXREDirProvider& aDirProvider) {
-  // Don't process updates when launched from the installer.
-  // It's possible for a stale update to be present in the case of a paveover;
-  // ignore it and leave the update service to discard it.
-  if (ARG_FOUND == CheckArgExists("first-startup")) {
-    NS_WARNING("ShouldNotProcessUpdates(): FirstStartup");
-    return Some(ShouldNotProcessUpdatesReason::FirstStartup);
-  }
-
-  // Bug 2055849: Don't process updates if MOZ_DISABLE_UPDATE_PROCESSING is set.
-  // Set by default when using https://github.com/mozilla/firefox-devtools-mcp.
-  if (EnvHasValue("MOZ_DISABLE_UPDATE_PROCESSING")) {
-    NS_WARNING("ShouldNotProcessUpdates(): DisabledByEnvironment");
-    return Some(ShouldNotProcessUpdatesReason::DisabledByEnvironment);
-  }
-
-  // Do not process updates if we're launching devtools, as evidenced by
-  // "--chrome ..." with the browser toolbox chrome document URL.
-
-  // Keep this synchronized with the value of the same name in
-  // devtools/client/framework/browser-toolbox/Launcher.sys.mjs.  Or, for bonus
-  // points, lift this value to nsIXulRuntime or similar, so that it can be
-  // accessed in both locations.  (The prefs service isn't available at this
-  // point so the simplest manner of sharing the value is not available to us.)
-  const char* BROWSER_TOOLBOX_WINDOW_URL =
-      "chrome://devtools/content/framework/browser-toolbox/window.html";
-
-  const char* chromeParam = nullptr;
-  if (ARG_FOUND == CheckArg("chrome", &chromeParam, CheckArgFlag::None)) {
-    if (!chromeParam || !strcmp(BROWSER_TOOLBOX_WINDOW_URL, chromeParam)) {
-      NS_WARNING("ShouldNotProcessUpdates(): DevToolsLaunching");
-      return Some(ShouldNotProcessUpdatesReason::DevToolsLaunching);
-    }
-  }
-
-#  ifdef MOZ_BACKGROUNDTASKS
-  // Do not process updates if we're running a background task mode and another
-  // instance is already running.  This avoids periodic maintenance updating
-  // underneath a browsing session.
-  Maybe<nsCString> backgroundTasks = BackgroundTasks::GetBackgroundTasks();
-  if (backgroundTasks.isSome()) {
-    // Only process updates for specific tasks: at this time, the
-    // `backgroundupdate` task and the test-only `shouldprocessupdates` task.
-    //
-    // Background tasks can be sparked by Firefox instances that are shutting
-    // down, which can cause races between the task startup trying to update and
-    // Firefox trying to invoke the updater.  This happened when converting
-    // `pingsender` to a background task, since it is launched to send pings at
-    // shutdown: Bug 1736373.
-    //
-    // We'd prefer to have this be a property of the task definition sibling to
-    // `backgroundTaskTimeoutSec`, but when we reach this code we're well before
-    // we can load the task JSM.
-    if (!BackgroundTasks::IsUpdatingTaskName(backgroundTasks.ref())) {
-      NS_WARNING("ShouldNotProcessUpdates(): NotAnUpdatingTask");
-      return Some(ShouldNotProcessUpdatesReason::NotAnUpdatingTask);
-    }
-
-    // At this point we have a dir provider but no XPCOM directory service.  We
-    // launch the update sync manager using that information so that it doesn't
-    // need to ask for (and fail to find) the directory service.
-    nsCOMPtr<nsIFile> anAppFile;
-    bool persistent;
-    nsresult rv = aDirProvider.GetFile(XRE_EXECUTABLE_FILE, &persistent,
-                                       getter_AddRefs(anAppFile));
-    if (NS_FAILED(rv) || !anAppFile) {
-      // Strange, but not a reason to skip processing updates.
-      return Nothing();
-    }
-
-    auto updateSyncManager = new nsUpdateSyncManager(anAppFile);
-
-    bool otherInstance = false;
-    updateSyncManager->IsOtherInstanceRunning(&otherInstance);
-    if (otherInstance) {
-      NS_WARNING("ShouldNotProcessUpdates(): OtherInstanceRunning");
-      return Some(ShouldNotProcessUpdatesReason::OtherInstanceRunning);
-    }
-  }
-#  endif
-
-  return Nothing();
-}
-#endif
 
 namespace mozilla::startup {
 Result<nsCOMPtr<nsIFile>, nsresult> GetIncompleteStartupFile(nsIFile* aProfLD) {
@@ -4073,69 +3953,6 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
     }
   }
 #endif /* MOZ_HAS_REMOTE */
-
-#if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
-  // Check for and process any available updates
-  nsCOMPtr<nsIFile> updRoot;
-  bool persistent;
-  rv = mDirProvider.GetFile(XRE_UPDATE_ROOT_DIR, &persistent,
-                            getter_AddRefs(updRoot));
-  // XRE_UPDATE_ROOT_DIR may fail. Fallback to appDir if failed
-  if (NS_FAILED(rv)) {
-    updRoot = mDirProvider.GetAppDir();
-  }
-
-  Maybe<ShouldNotProcessUpdatesReason> shouldNotProcessUpdatesReason =
-      ShouldNotProcessUpdates(mDirProvider);
-  if (shouldNotProcessUpdatesReason.isNothing()) {
-    nsCOMPtr<nsIFile> exeFile, exeDir;
-    rv = mDirProvider.GetFile(XRE_EXECUTABLE_FILE, &persistent,
-                              getter_AddRefs(exeFile));
-    NS_ENSURE_SUCCESS(rv, 1);
-    rv = exeFile->GetParent(getter_AddRefs(exeDir));
-    NS_ENSURE_SUCCESS(rv, 1);
-    ProcessUpdates(mDirProvider.GetGREDir(), exeDir, updRoot, gRestartArgc,
-                   gRestartArgv, mAppData->version);
-  } else {
-    if (CheckArg("test-should-not-process-updates") ||
-        EnvHasValue("MOZ_TEST_SHOULD_NOT_PROCESS_UPDATES")) {
-      // Support for testing *not* processing an update.  The launched process
-      // can witness this environment variable and conclude that its runtime
-      // environment resulted in not processing updates.
-
-      SaveToEnv(nsPrintfCString("MOZ_TEST_SHOULD_NOT_PROCESS_UPDATES="
-                                "ShouldNotProcessUpdates(): %s",
-                                ShouldNotProcessUpdatesReasonAsString(
-                                    shouldNotProcessUpdatesReason.value()))
-                    .get());
-    }
-  }
-  if (CheckArg("test-process-updates") ||
-      EnvHasValue("MOZ_TEST_PROCESS_UPDATES")) {
-    SaveToEnv("MOZ_TEST_PROCESS_UPDATES=");
-
-    // If the caller has asked us to log our arguments, do so.  This is used
-    // to make sure that the maintenance service successfully launches the
-    // callback application.
-    const char* logFile = nullptr;
-    if (ARG_FOUND == CheckArg("dump-args", &logFile)) {
-      FILE* logFP = fopen(logFile, "wb");
-      if (logFP) {
-        for (int i = 1; i < gRestartArgc; ++i) {
-          fprintf(logFP, "%s\n", gRestartArgv[i]);
-        }
-        fclose(logFP);
-      }
-    }
-
-    // Tests may want to know when we are done. We are about to exit, so we are
-    // done here. Write out a file to indicate this to the caller.
-    WriteUpdateCompleteTestFile(updRoot);
-
-    *aExitFlag = true;
-    return 0;
-  }
-#endif
 
   // We now know there is no existing instance using the selected profile.
 

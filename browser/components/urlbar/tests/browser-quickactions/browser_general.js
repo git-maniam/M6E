@@ -10,7 +10,6 @@
 ChromeUtils.defineESModuleGetters(this, {
   AppConstants: "resource://gre/modules/AppConstants.sys.mjs",
   ExperimentAPI: "resource://nimbus/ExperimentAPI.sys.mjs",
-  UpdateService: "resource://gre/modules/UpdateService.sys.mjs",
   ActionsProviderQuickActions:
     "moz-src:///browser/components/urlbar/ActionsProviderQuickActions.sys.mjs",
 });
@@ -285,104 +284,6 @@ add_task(async function test_clear() {
     "The dialog is told it was opened from the quick action."
   );
   Sanitizer.showUI = originalShowUI;
-});
-
-async function doUpdateActionTest(isActiveExpected) {
-  await UrlbarTestUtils.promiseAutocompleteResultPopup({
-    window,
-    value: "update",
-  });
-
-  if (isActiveExpected) {
-    await assertAction("update");
-  } else {
-    Assert.equal(hasQuickActions(window), false, "No QuickActions were shown");
-  }
-}
-
-add_task(async function test_update() {
-  if (!AppConstants.MOZ_UPDATER) {
-    await doUpdateActionTest(
-      false,
-      "Should be disabled since not AppConstants.MOZ_UPDATER"
-    );
-    return;
-  }
-
-  const sandbox = sinon.createSandbox();
-  try {
-    // Updates are disabled for testing, so pretend this build can update.
-    sandbox
-      .stub(UpdateService.prototype, "canUsuallyCheckForUpdates")
-      .get(() => true);
-    sandbox
-      .stub(UpdateService.prototype, "currentState")
-      .get(() => Ci.nsIApplicationUpdateService.STATE_IDLE);
-    await doUpdateActionTest(
-      false,
-      "Should be disabled since current update state is not pending"
-    );
-    sandbox
-      .stub(UpdateService.prototype, "currentState")
-      .get(() => Ci.nsIApplicationUpdateService.STATE_PENDING);
-    await doUpdateActionTest(
-      true,
-      "Should be enabled since current update state is pending"
-    );
-  } finally {
-    sandbox.restore();
-  }
-});
-
-add_task(async function test_update_in_actions_mode() {
-  if (!AppConstants.MOZ_UPDATER) {
-    return;
-  }
-
-  const sandbox = sinon.createSandbox();
-  let currentState = Ci.nsIApplicationUpdateService.STATE_IDLE;
-  sandbox.stub(UpdateService.prototype, "currentState").get(() => currentState);
-  // Updates are disabled for testing, so pretend this build can update.
-  sandbox
-    .stub(UpdateService.prototype, "canUsuallyCheckForUpdates")
-    .get(() => true);
-
-  try {
-    await enterActionsMode();
-    await UrlbarTestUtils.promiseAutocompleteResultPopup({
-      window,
-      value: "update",
-    });
-    let updateButton = await TestUtils.waitForCondition(() =>
-      window.document.querySelector(
-        `.urlbarView-action-btn[data-action=update]`
-      )
-    );
-    Assert.ok(
-      updateButton.hasAttribute("aria-disabled"),
-      "Update action is shown as disabled in actions mode when no update is pending"
-    );
-    await exitActionsMode();
-
-    currentState = Ci.nsIApplicationUpdateService.STATE_PENDING;
-    await enterActionsMode();
-    await UrlbarTestUtils.promiseAutocompleteResultPopup({
-      window,
-      value: "update",
-    });
-    updateButton = await TestUtils.waitForCondition(() =>
-      window.document.querySelector(
-        `.urlbarView-action-btn[data-action=update]`
-      )
-    );
-    Assert.ok(
-      !updateButton.hasAttribute("aria-disabled"),
-      "Update action is shown as enabled in actions mode when update is pending"
-    );
-  } finally {
-    sandbox.restore();
-    await exitActionsMode();
-  }
 });
 
 add_task(async function test_whitespace() {

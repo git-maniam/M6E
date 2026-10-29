@@ -13,7 +13,6 @@ test-manifest-toml:
         - 'testing/mochitest/manifests/'
         - 'testing/mozbase/manifestparser/tests/'
         - 'testing/raptor/raptor/'
-        - 'testing/update/'
         - 'tools/lint/test/files/'
         - 'third_party/'
         - 'toolkit/components/uniffi-bindgen-gecko-js/askama.toml'

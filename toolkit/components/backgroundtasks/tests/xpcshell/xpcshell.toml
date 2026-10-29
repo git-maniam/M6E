@@ -9,12 +9,6 @@ support-files = [
   "experiment.json",
 ]
 
-["test_backgroundtask_automaticrestart.js"]
-requesttimeoutfactor = 2  # Slow on Windows
-run-if = [
-  "os == 'win'",
-]
-
 ["test_backgroundtask_deletes_profile.js"]
 
 ["test_backgroundtask_exitcodes.js"]
@@ -58,9 +52,6 @@ skip-if = [
   "os == 'android'", # MultiInstanceLock doesn't work on Android
 ]
 
-["test_backgroundtask_shouldprocessupdates.js"]
-run-sequentially = ["true"] # perma-fail in parallel
-
 ["test_backgroundtask_simultaneous_instances.js"]
 
 ["test_backgroundtask_specific_pref.js"]
@@ -72,9 +63,6 @@ run-if = [
 reason = "ASRouter is Firefox-only."
 
 ["test_backgroundtask_unique_profile.js"]
-
-["test_backgroundtask_update_sync_manager.js"]
-requesttimeoutfactor = 2  # Slow on Windows
 
 ["test_backgroundtasksutils.js"]
 

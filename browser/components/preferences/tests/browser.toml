@@ -23,9 +23,6 @@ tags = "os_integration"
 
 ["browser_addressBarNavigation.js"]
 
-["browser_advanced_update.js"]
-run-if = ["updater"]
-
 ["browser_appearance_pane.js"]
 
 ["browser_backup_visibility.js"]
@@ -96,8 +93,6 @@ support-files = ["subdialog.xhtml", "subdialog2.xhtml"]
 ["browser_tabs_open_external_next_to_active_tab.js"]
 
 ["browser_tls_key_logging_warning.js"]
-
-["browser_updates_managed_by_os.js"]
 
 ["browser_windows_launch_on_login.js"]
 run-if = [

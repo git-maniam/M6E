@@ -73,7 +73,6 @@ const PLATFORM_SPECIFIC = new Set([
   "nsITouchBarUpdater.idl",
   "nsIWinAppHelper.idl",
   "nsIWinTaskbar.idl",
-  "nsIWinTaskSchedulerService.idl",
   "nsIWindowsAlertsService.idl",
   "nsIWindowsMutex.idl",
   "nsIWindowsPackageManager.idl",

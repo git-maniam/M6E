@@ -70,24 +70,10 @@ add_task(async function () {
     "should have correct build ID"
   );
 
-  let updateChannel = null;
-  try {
-    updateChannel = ChromeUtils.importESModule(
-      "resource://gre/modules/UpdateUtils.sys.mjs"
-    ).UpdateUtils.UpdateChannel;
-  } catch (ex) {}
-  if (!updateChannel) {
-    Assert.ok(
-      !("updateChannel" in got.application),
-      "should not have update channel where not available."
-    );
-  } else {
-    Assert.equal(
-      got.application.updateChannel,
-      updateChannel,
-      "should have correct update channel."
-    );
-  }
+  Assert.ok(
+    !("updateChannel" in got.application),
+    "should not have update channel."
+  );
 
   // And check some keys we know we decline to return.
   Assert.ok(

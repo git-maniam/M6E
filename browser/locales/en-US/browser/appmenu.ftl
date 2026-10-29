@@ -4,24 +4,6 @@
 
 ## App Menu
 
-appmenuitem-banner-update-downloading =
-    .label = Downloading { -brand-shorter-name } update
-
-appmenuitem-banner-update-available =
-    .label = Update available — download now
-
-appmenuitem-banner-update-manual =
-    .label = Update available — download now
-
-appmenuitem-banner-update-unsupported =
-    .label = Unable to update — system incompatible
-
-appmenuitem-banner-update-restart =
-    .label = Update available — restart now
-
-appmenu-nova-update-title = Restart to update { -brand-short-name }
-appmenu-nova-update-description = Your tabs will reopen.
-
 appmenu-nova-fxa-sign-in = Sign in
 
 appmenu-nova-switch-device-promo =

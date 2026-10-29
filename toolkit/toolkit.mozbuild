@@ -40,10 +40,6 @@ if CONFIG["MOZ_SANDBOX"]:
 if CONFIG["MOZ_USING_WASM_SANDBOXING"] and CONFIG["COMPILE_ENVIRONMENT"]:
     DIRS += ["/security/rlbox"]
 
-# the signing related bits of libmar depend on nss
-if CONFIG["MOZ_UPDATER"]:
-    DIRS += ["/modules/libmar"]
-
 DIRS += [
     "/config/external/abseil-cpp",
     "/config/external/freetype2",
@@ -55,17 +51,6 @@ DIRS += [
 
 if CONFIG["MOZ_AUTH_EXTENSION"]:
     DIRS += ["/extensions/auth"]
-
-if CONFIG["MOZ_UPDATER"] and CONFIG["OS_TARGET"] != "Android":
-    if CONFIG["MOZ_BSPATCH"]:
-        DIRS += [
-            "/toolkit/mozapps/update/updater/bspatch",
-            "/other-licenses/bsdiff",
-        ]
-    if CONFIG["MOZ_ZUCCHINI"]:
-        DIRS += [
-            "/third_party/zucchini",
-        ]
 
 # Gecko/Core components.
 

@@ -284,7 +284,6 @@ export default [
   "toolkit/components/translations/cld2/",
 
   // Uses preprocessing
-  "toolkit/mozapps/update/tests/data/xpcshellConstantsPP.js",
   "toolkit/modules/AppConstants.sys.mjs",
 
   // ESLint tests.
@@ -293,9 +292,6 @@ export default [
 
   // Uses special template formatting.
   "tools/tryselect/selectors/chooser/templates/chooser.html",
-
-  // Ignore preprocessed *(P)refs.js files in update-packaging.
-  "tools/update-packaging/**/*refs.js",
 
   // Ignore pre-generated webpack and typescript transpiled files for translations
   "browser/extensions/translations/extension/",

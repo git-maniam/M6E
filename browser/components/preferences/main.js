@@ -12,7 +12,6 @@
 /* import-globals-from extensionControlled.js */
 /* import-globals-from preferences.js */
 /* import-globals-from /toolkit/mozapps/preferences/fontbuilder.js */
-/* import-globals-from /browser/base/content/aboutDialog-appUpdater.js */
 /* global MozXULElement */
 
 /**
@@ -46,8 +45,6 @@ const { DefaultBrowserHelper } = importIntoWindow(
 );
 
 ChromeUtils.defineESModuleGetters(this, {
-  BackgroundUpdate: "resource://gre/modules/BackgroundUpdate.sys.mjs",
-  UpdateListener: "resource://gre/modules/UpdateListener.sys.mjs",
   MigrationUtils:
     "moz-src:///browser/components/migration/MigrationUtils.sys.mjs",
   LaunchOnLogin: "resource://gre/modules/LaunchOnLogin.sys.mjs",
@@ -58,9 +55,6 @@ ChromeUtils.defineESModuleGetters(this, {
 
 importIntoWindow(
   "chrome://browser/content/preferences/config/accessibility.mjs"
-);
-importIntoWindow(
-  "chrome://browser/content/preferences/config/about-firefox.mjs"
 );
 importIntoWindow("chrome://browser/content/preferences/config/appearance.mjs");
 importIntoWindow(
@@ -587,7 +581,6 @@ var gMainPane = {
     initSettingGroup("browsing");
     initSettingGroup("keyboardAndScrolling");
     initSettingGroup("motionAndLink");
-    initSettingGroup("updates");
     initSettingGroup("spellCheck");
     initSettingGroup("performance");
     initSettingGroup("defaultBrowser");
@@ -1060,9 +1053,6 @@ var gMainPane = {
   handleEvent(aEvent) {
     if (aEvent.type == "unload") {
       this.destroy();
-      if (AppConstants.MOZ_UPDATER) {
-        onUnload();
-      }
     }
   },
 

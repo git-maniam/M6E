@@ -3,11 +3,6 @@
 
 "use strict";
 
-Services.scriptloader.loadSubScript(
-  "chrome://mochitests/content/browser/toolkit/mozapps/update/tests/browser/head.js",
-  this
-);
-
 const REFERRALS_PREF = "browser.referrals.enabled";
 const REFERRAL_CODE_PREF = "browser.referrals.code";
 

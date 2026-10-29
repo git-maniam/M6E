@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const lazy = XPCOMUtils.declareLazy({
@@ -15,10 +14,6 @@ const lazy = XPCOMUtils.declareLazy({
   Sanitizer: "resource:///modules/Sanitizer.sys.mjs",
   ScreenshotsUtils:
     "moz-src:///browser/components/screenshots/ScreenshotsUtils.sys.mjs",
-  AUS: {
-    service: "@mozilla.org/updates/update-service;1",
-    iid: Ci.nsIApplicationUpdateService,
-  },
   gFluentStrings: () =>
     new Localization(
       [
@@ -289,16 +284,6 @@ const DEFAULT_ACTIONS = {
     icon: "chrome://mozapps/skin/extensions/category-themes.svg",
     label: "quickactions-themes",
     onPick: openAddonsUrl("addons://list/theme"),
-  },
-  update: {
-    l10nCommands: ["quickactions-cmd-update"],
-    icon: "chrome://global/skin/icons/update-icon.svg",
-    label: "quickactions-update",
-    isUnsupported: () =>
-      !AppConstants.MOZ_UPDATER || !lazy.AUS.canUsuallyCheckForUpdates,
-    isInactive: () =>
-      lazy.AUS.currentState != Ci.nsIApplicationUpdateService.STATE_PENDING,
-    onPick: restartBrowser,
   },
   viewsource: {
     l10nCommands: ["quickactions-cmd-viewsource2"],

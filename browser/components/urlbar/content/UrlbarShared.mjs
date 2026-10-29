@@ -309,27 +309,6 @@ export const UrlbarShared = {
     NONE: "",
     CLEAR: "intervention_clear",
     REFRESH: "intervention_refresh",
-
-    // There's an update available, but the user's pref says we should ask them
-    // to download and apply it.
-    UPDATE_ASK: "intervention_update_ask",
-
-    // The updater is currently checking.  We don't actually show a tip for this,
-    // but we use it to tell whether we should wait for the check to complete in
-    // startQuery.  See startQuery for details.
-    UPDATE_CHECKING: "intervention_update_checking",
-
-    // The user's browser is up to date, but they triggered the update
-    // intervention. We show this special refresh intervention instead.
-    UPDATE_REFRESH: "intervention_update_refresh",
-
-    // There's an update and it's been downloaded and applied. The user needs to
-    // restart to finish.
-    UPDATE_RESTART: "intervention_update_restart",
-
-    // We can't update the browser or possibly even check for updates for some
-    // reason, so the user should download the latest version from the web.
-    UPDATE_WEB: "intervention_update_web",
   }),
 
   // The tip types UrlbarProviderSearchTips can show, i.e. the `type` in the
@@ -1333,12 +1312,6 @@ export const UrlbarShared = {
               return "intervention_clear";
             case UrlbarShared.INTERVENTION_TIP_TYPE.REFRESH:
               return "intervention_refresh";
-            case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_ASK:
-            case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_CHECKING:
-            case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_REFRESH:
-            case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_RESTART:
-            case UrlbarShared.INTERVENTION_TIP_TYPE.UPDATE_WEB:
-              return "intervention_update";
             default:
               return "intervention_unknown";
           }

@@ -208,40 +208,6 @@ keys are:
   Incremented when the user picks the refresh-Firefox search intervention.
 - `intervention_refresh-shown`
   Incremented when the refresh-Firefox search intervention is shown.
-- `intervention_update_ask-help`
-  Incremented when the user picks the help button in the update_ask search
-  intervention, which is shown when there's a Firefox update available but the
-  user's preference says we should ask them to download and apply it.
-- `intervention_update_ask-picked`
-  Incremented when the user picks the update_ask search intervention.
-- `intervention_update_ask-shown`
-  Incremented when the update_ask search intervention is shown.
-- `intervention_update_refresh-help`
-  Incremented when the user picks the help button in the update_refresh search
-  intervention, which is shown when the user's browser is up to date but they
-  triggered the update intervention. We show this special refresh intervention
-  instead.
-- `intervention_update_refresh-picked`
-  Incremented when the user picks the update_refresh search intervention.
-- `intervention_update_refresh-shown`
-  Incremented when the update_refresh search intervention is shown.
-- `intervention_update_restart-help`
-  Incremented when the user picks the help button in the update_restart search
-  intervention, which is shown when there's an update and it's been downloaded
-  and applied. The user needs to restart to finish.
-- `intervention_update_restart-picked`
-  Incremented when the user picks the update_restart search intervention.
-- `intervention_update_restart-shown`
-  Incremented when the update_restart search intervention is shown.
-- `intervention_update_web-help`
-  Incremented when the user picks the help button in the update_web search
-  intervention, which is shown when we can't update the browser or possibly
-  even check for updates for some reason, so the user should download the
-  latest version from the web.
-- `intervention_update_web-picked`
-  Incremented when the user picks the update_web search intervention.
-- `intervention_update_web-shown`
-  Incremented when the update_web search intervention is shown.
 - `tabtosearch-shown`
   Increment when a non-onboarding tab-to-search result is shown, once per
   engine per engagement. Please note that the number of times non-onboarding

@@ -9,8 +9,9 @@
 #       absolute paths into the developer's checkout. ./mach package already
 #       drops them (toolkit/mozapps/installer/packager.py); this is a safety net.
 #   SMPrivilegedExecutables
-#       Mozilla's updater and DMG-install helper identities with Mozilla's Team
-#       ID. M6E builds neither helper, and ad-hoc code can never satisfy them.
+#       Helper identities (DMG install, and upstream's removed updater) with
+#       Mozilla's Team ID. M6E builds neither helper, and ad-hoc code can
+#       never satisfy them.
 #
 #   tools/m6e/package/finalize-app.sh <path to M6E.app>
 #

@@ -26,8 +26,7 @@ constexpr size_t kBundleTypeCount =
 
 // App bundles that ship beside the child process bundles but are not launched
 // through GeckoChildProcessHost.
-constexpr const char* kNonChildProcessBundles[] = {"crashreporter.app",
-                                                   "updater.app"};
+constexpr const char* kNonChildProcessBundles[] = {"crashreporter.app"};
 
 bool IsNonChildProcessBundle(const nsACString& aLeafName) {
   for (const char* bundle : kNonChildProcessBundles) {

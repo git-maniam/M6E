@@ -81,12 +81,3 @@ The Windows installer for Firefox is built with NSIS. There are currently no ins
 operating systems.
 
 {doc}`Read more <installer/windows/installer/index>`
-
-## Application Update
-
-Application Update is responsible for requesting available updates from the update servers,
-downloading them, verifying their integrity and then ultimately installing them. A binary patch tool
-(bsdiff) is used to reduce the size of update files and update files are delivered in the
-bespoke mar (Mozilla ARchive) format.
-
-{doc}`Read more </toolkit/mozapps/update/docs/index>`

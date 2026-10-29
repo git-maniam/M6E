@@ -1821,9 +1821,8 @@ nsresult nsToolkitProfileService::SelectStartupProfile(
         *aDidCreate = true;
 
         // Keep a record of the salted name.  It's okay if this doesn't succeed:
-        // not great, but it's better for tasks (particularly,
-        // `backgroundupdate`) to run and not persist state correctly than to
-        // not run at all.
+        // not great, but it's better for tasks to run and not persist state
+        // correctly than to not run at all.
         rv =
             mProfileDB.SetString("BackgroundTasksProfiles", profilePrefix.get(),
                                  saltedProfilePrefix.get());

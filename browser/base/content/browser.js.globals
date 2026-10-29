@@ -137,7 +137,6 @@
   "TelemetryEnvironment",
   "UIDensityTelemetry",
   "UITour",
-  "UpdateUtils",
   "URILoadingHelper",
   "UrlbarPrefs",
   "UrlbarProviderSearchTips",

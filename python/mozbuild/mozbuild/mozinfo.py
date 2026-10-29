@@ -95,7 +95,6 @@ def build_dict(config, env=os.environ):
     d["bin_suffix"] = substs.get("BIN_SUFFIX", "")
     d["require_signing"] = substs.get("MOZ_REQUIRE_SIGNING") == "1"
     d["official"] = bool(substs.get("MOZILLA_OFFICIAL"))
-    d["updater"] = substs.get("MOZ_UPDATER") == "1"
     d["artifact"] = substs.get("MOZ_ARTIFACT_BUILDS") == "1"
     d["ccov"] = substs.get("MOZ_CODE_COVERAGE") == "1"
     d["cc_type"] = substs.get("CC_TYPE")

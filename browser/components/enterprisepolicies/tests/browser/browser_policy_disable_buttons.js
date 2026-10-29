@@ -39,11 +39,6 @@ const CASES = [
     controlId: "manageSavedPasswords",
     hidden: true,
   },
-  {
-    pref: "app.update.disable_button.showUpdateHistory",
-    pane: "about",
-    controlId: "showUpdateHistory",
-  },
 ];
 
 add_setup(async function () {
@@ -58,7 +53,6 @@ add_setup(async function () {
         "pref.privacy.disable_button.view_passwords": true,
         "pref.privacy.disable_button.view_passwords_exceptions": true,
         "pref.downloads.disable_button.edit_actions": true,
-        "app.update.disable_button.showUpdateHistory": true,
         "security.disable_button.openCertManager": true,
         "security.disable_button.openDeviceManager": true,
       },
