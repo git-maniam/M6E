@@ -55,6 +55,3 @@ firefox-relay-opt-in-confirmation-postpone =
 ## The "with-domain" variation of the Relay offer popup
 
 firefox-relay-offer-why-to-use-relay-1 = Protect your inbox from spam by using a free <label data-l10n-name="firefox-relay-learn-more-url">{ -relay-brand-name } email mask</label> to hide your real address. Emails from <label data-l10n-name="firefox-fxa-and-relay-offer-domain">this site</label> will still come to your inbox, but with your email hidden.
-
-## The "with-domain-and-value-prop" variation of the Relay offer popup
-

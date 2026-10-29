@@ -303,8 +303,6 @@ mr2022-onboarding-privacy-segmentation-image-alt =
 mr2022-onboarding-gratitude-image-alt =
   .aria-label = View of a sunset through a window with a fox and a house plant on a windowsill
 
-## Device migration onboarding
-
 ## Add-ons Picker screen
 
 amo-picker-title = Customize your { -brand-short-name }

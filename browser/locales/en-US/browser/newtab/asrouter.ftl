@@ -195,10 +195,6 @@ annotations-make-default-pdf-handler-subtitle = You’ll have access to our tool
 annotations-make-default-pdf-primary-cta-label = Set as default
 annotations-make-default-pdf-next-label = Next
 
-## FxA sync CFR
-
-## Device Migration FxA Spotlight
-
 ## Set as Default PDF Reader Infobar
 
 # The question portion of the following message should have the <strong> and </strong> tags surrounding it.

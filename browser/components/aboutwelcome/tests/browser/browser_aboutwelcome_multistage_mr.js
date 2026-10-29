@@ -1031,8 +1031,8 @@ add_task(async function test_aboutwelcome_secondary_top_signin_only() {
     .resolves(false)
     // Mock Easy Setup for secondary button top testing
     .withArgs(EASY_SETUP_TARGETING)
-    .resolves(true)
-    // Sign in button targeting;
+    .resolves(true);
+  // Sign in button targeting;
 
   let { browser, cleanup } = await openMRAboutWelcome();
 

@@ -59,9 +59,17 @@ function AddOldMenuSideButtons() {
   // added to the navbar defaults after it don't shift them.
   const beforeExtensions = () =>
     CustomizableUI.getPlacementOfWidget(afterUrlBarButton).position;
-  CustomizableUI.addWidgetToArea("library-button", "nav-bar", beforeExtensions());
+  CustomizableUI.addWidgetToArea(
+    "library-button",
+    "nav-bar",
+    beforeExtensions()
+  );
   if (!sidebarRevampEnabled) {
-    CustomizableUI.addWidgetToArea("sidebar-button", "nav-bar", beforeExtensions());
+    CustomizableUI.addWidgetToArea(
+      "sidebar-button",
+      "nav-bar",
+      beforeExtensions()
+    );
   }
   CustomizableUI.addWidgetToArea(
     "unified-extensions-button",

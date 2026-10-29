@@ -127,7 +127,6 @@ add_task(async function testVPNCardVisibility() {
 });
 
 add_task(async function testVPNPromoBanner() {
-
   let tab = await BrowserTestUtils.openNewForegroundTab({
     url: "about:protections",
     gBrowser,

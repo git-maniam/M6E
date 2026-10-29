@@ -217,8 +217,6 @@ start-page-callout-subtitle = Try Startpage. It’s designed to keep your search
 start-page-callout-primary-label = Try Startpage
 start-page-callout-secondary-label = Dismiss
 
-## Account Adoption Passwords callout strings
-
 ## Taskbar Tabs callout strings
 
 taskbar-tabs-social-callout-title = Keep your favorite feeds in your taskbar

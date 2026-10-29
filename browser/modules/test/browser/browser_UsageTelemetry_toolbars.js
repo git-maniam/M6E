@@ -194,10 +194,7 @@ add_task(async function widgetPositions() {
   ]);
 
   organizeToolbars({
-    PersonalToolbar: [
-      "new-tab-button",
-      "developer-button",
-    ],
+    PersonalToolbar: ["new-tab-button", "developer-button"],
 
     TabsToolbar: [
       "stop-reload-button",
