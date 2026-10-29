@@ -26,7 +26,6 @@ sm-package-linux64/opt:
             - linux64-clang
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-rust
@@ -48,7 +47,6 @@ sm-plain-linux64/debug:
             - linux64-clang
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-rust
@@ -69,7 +67,6 @@ sm-plain-linux64/opt:
             - linux64-clang
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-rust
@@ -92,7 +89,6 @@ sm-nojit-linux64/opt:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -114,7 +110,6 @@ sm-pbl-linux64/opt:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -136,7 +131,6 @@ sm-pbl-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -158,7 +152,6 @@ sm-plain-linux32/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -180,7 +173,6 @@ sm-arm-sim-linux32/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -205,7 +197,6 @@ sm-arm64-sim-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -232,7 +223,6 @@ sm-mips64-sim-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -259,7 +249,6 @@ sm-loong64-sim-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -286,7 +275,6 @@ sm-riscv64-sim-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -310,7 +298,6 @@ sm-asan-linux64/opt:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -331,7 +318,6 @@ sm-compacting-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -393,7 +379,6 @@ sm-wasm-no-experimental-linux64/debug:
             - linux64-clang
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-rust
@@ -442,7 +427,6 @@ sm-msan-linux64/opt:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -466,7 +450,6 @@ sm-tsan-linux64/opt:
             - linux64-gcc
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-rust-dev
@@ -488,7 +471,6 @@ sm-rootanalysis-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -510,7 +492,6 @@ sm-concurrent-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -531,7 +512,6 @@ sm-nonunified-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -555,7 +535,6 @@ sm-fuzzing-linux64/opt:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
@@ -580,7 +559,6 @@ sm-fuzzing-linux32/opt:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux32-llvm-symbolizer
             - linux64-pkgconf
@@ -606,7 +584,6 @@ sm-fuzzing-asan-linux32/opt:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux32-llvm-symbolizer
             - linux64-pkgconf
@@ -632,7 +609,6 @@ sm-fuzzing-linux32/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux32-llvm-symbolizer
             - linux64-pkgconf
@@ -699,7 +675,6 @@ sm-gdb-linux64/debug:
             - linux64-rust
             - linux64-cbindgen
             - linux64-dump_syms
-            - linux64-breakpad-injector
             - linux64-minidump-stackwalk
             - linux64-llvm-symbolizer
             - linux64-pkgconf
