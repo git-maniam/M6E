@@ -1,8 +1,7 @@
 .gradle/
 browser/components/aboutwelcome/content/aboutwelcome.bundle.js
 browser/components/aboutwelcome/logs/
-browser/components/aboutwelcome/docs/mots/index.rst
-node_modules/
+browser/components/aboutwelcome/node_modules/
 browser/components/asrouter/node_modules/
 browser/components/asrouter/content/asrouter-admin.bundle.js
 browser/components/asrouter/content/components/asrouter-newtab-multistage/asrouter-newtab-multistage.bundle.js
@@ -31,6 +30,7 @@ dom/security/sanitizer/SanitizerDefaultConfig.h
 intl/components/src/UnicodeScriptCodes.h
 intl/unicharutil/util/nsSpecialCasingData.cpp
 intl/unicharutil/util/nsUnicodePropertyData.cpp
+docs/mots/index.rst
 node_modules/
 python/mozperftest/mozperftest/tests/data/
 security/manager/tools/PreloadedHPKPins.json
