@@ -26,9 +26,6 @@ categories:
         - toolkit
         - js
         - jsloader
-        - mobile/android/geckoview
-        - mobile/android/fenix
-        - mobile/android/focus-android
         - dom/bindings/webidl
         - modules/libpref
         - networking
@@ -37,7 +34,6 @@ categories:
         - permissions
         - uriloader
         - widget/cocoa
-        - widget/windows
         - toolkit/components/pageextractor
         - accessible
         - media
@@ -93,8 +89,6 @@ categories:
     python_doc:
         - mozbase
         - python
-    fennec_doc:
-        - mobile/android
     metrics_doc:
         - metrics
 
