@@ -55,6 +55,7 @@ LOCKED_PREFS = {
     },
     "Firefox Suggest": {
         "browser.urlbar.quicksuggest.enabled": False,
+        "browser.urlbar.quicksuggest.rustEnabled": False,
         "browser.urlbar.suggest.quicksuggest.sponsored": False,
         "browser.urlbar.suggest.quicksuggest.nonsponsored": False,
         "browser.urlbar.merino.endpointURL": "",
