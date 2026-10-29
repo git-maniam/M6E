@@ -105,14 +105,8 @@ nsAvailableMemoryWatcherBase::Observe(nsISupports* aSubject, const char* aTopic,
     Shutdown();
   } else if (strcmp(aTopic, "user-interaction-inactive") == 0) {
     mInteracting = false;
-#ifdef MOZ_CRASHREPORTER
-    CrashReporter::SetInactiveStateStart();
-#endif
   } else if (strcmp(aTopic, "user-interaction-active") == 0) {
     mInteracting = true;
-#ifdef MOZ_CRASHREPORTER
-    CrashReporter::ClearInactiveStateStart();
-#endif
   }
   return NS_OK;
 }

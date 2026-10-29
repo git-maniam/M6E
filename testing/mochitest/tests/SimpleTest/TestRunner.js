@@ -878,7 +878,6 @@ TestRunner.testFinished = function (tests) {
     }
 
     SpecialPowers.executeAfterFlushingMessageQueue(async function () {
-      await SpecialPowers.waitForCrashes(TestRunner._expectingProcessCrash);
       await cleanUpCrashDumpFiles();
       await SpecialPowers.flushPermissions();
       await SpecialPowers.flushPrefEnv();

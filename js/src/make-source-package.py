@@ -192,7 +192,6 @@ rsync_filter_list = """
 + /testing/web-platform/tests/streams/**
 + /testing/web-platform/tests/tools/**
 
-+ /toolkit/crashreporter/tools/symbolstore.py
 + /toolkit/mozapps/installer/package-name.mk
 
 + /toolkit/components/glean/build_scripts/glean_parser_ext/**

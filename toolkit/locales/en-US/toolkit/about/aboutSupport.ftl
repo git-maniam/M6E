@@ -8,11 +8,6 @@ page-subtitle =
     trying to solve a problem. If you are looking for answers to common questions
     about { -brand-short-name }, check out our <a data-l10n-name="support-link">support website</a>.
 
-crashes-title = Crash Reports
-crashes-id = Report ID
-crashes-send-date = Submitted
-crashes-all-reports = All Crash Reports
-crashes-no-config = This application has not been configured to display crash reports.
 support-addons-title = Add-ons
 support-addons-name = Name
 support-addons-type = Type
@@ -235,46 +230,6 @@ remote-debugging-accepting-connections = Accepting Connections
 remote-debugging-url = URL
 
 ##
-
-# Variables
-# $days (Integer) - Number of days of crashes to log
-report-crash-for-days =
-    { $days ->
-        [one] Crash Reports for the Last { $days } Day
-       *[other] Crash Reports for the Last { $days } Days
-    }
-
-# Variables
-# $minutes (integer) - Number of minutes since crash
-crashes-time-minutes =
-    { $minutes ->
-        [one] { $minutes } minute ago
-       *[other] { $minutes } minutes ago
-    }
-
-# Variables
-# $hours (integer) - Number of hours since crash
-crashes-time-hours =
-    { $hours ->
-        [one] { $hours } hour ago
-       *[other] { $hours } hours ago
-    }
-
-# Variables
-# $days (integer) - Number of days since crash
-crashes-time-days =
-    { $days ->
-        [one] { $days } day ago
-       *[other] { $days } days ago
-    }
-
-# Variables
-# $reports (integer) - Number of pending reports
-pending-reports =
-    { $reports ->
-        [one] All Crash Reports (including { $reports } pending crash in the given time range)
-       *[other] All Crash Reports (including { $reports } pending crashes in the given time range)
-    }
 
 raw-data-copied = Raw data copied to clipboard
 text-copied = Text copied to clipboard

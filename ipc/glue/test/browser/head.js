@@ -468,6 +468,7 @@ async function runMochitestUtilityAudio(
 async function crashSomeUtility(utilityPid, actorsCheck) {
   SimpleTest.expectChildProcessCrash();
 
+  // eslint-disable-next-line mozilla/valid-services
   const crashMan = Services.crashmanager;
   const utilityProcessGone = TestUtils.topicObserved(
     "ipc:utility-shutdown",

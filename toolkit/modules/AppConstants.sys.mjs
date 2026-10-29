@@ -84,8 +84,6 @@ export var AppConstants = Object.freeze({
            Services.vc.compare(platformVersion, version) <= 0;
   },
 
-  MOZ_CRASHREPORTER: @MOZ_CRASHREPORTER_BOOL@,
-
   MOZ_NORMANDY: @MOZ_NORMANDY_BOOL@,
 
 

@@ -47,7 +47,6 @@ export class PreferencesBackupResource extends BackupResource {
       "app.shield.optoutstudies.enabled",
       "datareporting.healthreport.uploadEnabled",
       "datareporting.usage.uploadEnabled",
-      "browser.crashReports.unsubmittedCheck.autoSubmit2",
     ];
   }
 

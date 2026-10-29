@@ -3942,23 +3942,6 @@ NS_IMETHODIMP BrowserChild::OnLocationChange(nsIWebProgress* aWebProgress,
       MOZ_TRY(loadGroup->GetRequestContextID(&requestContextID));
       locationChangeData->requestContextID() = Some(requestContextID);
     }
-
-#ifdef MOZ_CRASHREPORTER
-    if (CrashReporter::GetEnabled()) {
-      nsCOMPtr<nsIURI> annotationURI;
-
-      nsresult rv =
-          NS_MutateURI(aLocation).SetUserPass(""_ns).Finalize(annotationURI);
-
-      if (NS_FAILED(rv)) {
-        // Ignore failures on about: URIs.
-        annotationURI = aLocation;
-      }
-
-      CrashReporter::RecordAnnotationNSCString(
-          CrashReporter::Annotation::URL, annotationURI->GetSpecOrDefault());
-    }
-#endif
   }
 
   (void)SendOnLocationChange(webProgressData, requestData, aLocation, aFlags,

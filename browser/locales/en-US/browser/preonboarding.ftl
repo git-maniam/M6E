@@ -32,5 +32,3 @@ preonboarding-header-button-description = Read More
 # New user onboarding checklist
 preonboarding-checklist-interaction-data-label = Send technical and interaction data to { -vendor-short-name }
 preonboarding-checklist-interaction-data-description = Data about your device, hardware configuration, and how you use { -brand-product-name } helps improve features, performance, and stability for users everywhere.
-preonboarding-checklist-crash-reports-label = Automatically send crash reports
-preonboarding-checklist-crash-reports-description = Crash reports allow us to diagnose and fix issues with the browser. Reports may include personal or sensitive data.

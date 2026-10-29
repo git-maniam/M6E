@@ -10,9 +10,7 @@ javascript-logging
 mozapps/extensions/addon-manager/index
 components/autocomplete/docs/index
 components/backgroundtasks/index
-components/crashes/crash-manager/index
 components/downloads/index
-crashreporter/crashreporter/index
 internal-urls
 search/index
 components/normandy/normandy/index

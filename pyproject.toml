@@ -119,7 +119,6 @@ lint.exclude = [
   "testing/mozharness/configs/test/test_malformed.py",
   # Vendored verbatim from bugbug; style is owned upstream.
   "tools/lint/python/review_context_schema.py",
-  "tools/crashreporter/*.configure",
   ".ycm_extra_conf.py",
 ]
 

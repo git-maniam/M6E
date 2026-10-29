@@ -19,7 +19,7 @@ function invalidCode(code, alias) {
 }
 
 ruleTester.run("valid-services", rule, {
-  valid: ["Services.crashmanager", "lazy.Services.crashmanager"],
+  valid: ["Services.cpmm", "lazy.Services.cpmm"],
   invalid: [
     invalidCode("Services.foo", "foo"),
     invalidCode("Services.foo()", "foo"),

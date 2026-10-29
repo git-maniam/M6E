@@ -70,9 +70,6 @@ skip-if = [
 
 ["test_cookies.py"]
 
-["test_crash.py"]
-skip-if = ["asan", "!manage_instance"]
-
 ["test_data_driven.py"]
 
 ["test_date_time_value.py"]

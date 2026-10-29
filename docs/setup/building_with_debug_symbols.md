@@ -38,12 +38,6 @@ archive of [Breakpad](/crash-reporting/index.md) symbol files:
 mach buildsymbols
 ```
 
-Treeherder uses an additional `uploadsymbols` target to upload
-symbols to a socorro server. See
-{searchfox}`toolkit/crashreporter/tools/upload_symbols.py`
-for more information about the environment variables used by this
-target.
-
 ## `make package`
 
 If you use `make package` to package your build, symbols will be

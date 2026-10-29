@@ -88,13 +88,6 @@ add_setup(function () {
   }
 });
 
-add_setup(
-  // Crash dumps are only generated when MOZ_CRASHREPORTER is set.
-  // Crashes are only generated if tests can crash the extension process.
-  { skip_if: () => !AppConstants.MOZ_CRASHREPORTER || !CAN_CRASH_EXTENSIONS },
-  setup_crash_reporter_override_and_cleaner
-);
-
 // Verifies that a delayed background page is not loaded when an extension is
 // shut down during startup.
 add_task(async function test_unload_extension_before_background_page_startup() {

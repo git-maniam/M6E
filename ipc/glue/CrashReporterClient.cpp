@@ -5,12 +5,6 @@
 #include "CrashReporterClient.h"
 #include "nsISupportsImpl.h"
 
-#if defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && \
-    defined(MOZ_OXIDIZED_BREAKPAD)
-#  include "mozilla/toolkit/crashreporter/rust_minidump_writer_linux_ffi_generated.h"
-#endif  // defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) &&
-        // defined(MOZ_OXIDIZED_BREAKPAD)
-
 namespace mozilla::ipc {
 
 StaticMutex CrashReporterClient::sLock;
@@ -42,17 +36,6 @@ static dom::NativeThreadId CurrentNativeThreadId() {
 CrashReporter::CrashReporterInitArgs CrashReporterClient::CreateInitArgs() {
   CrashReporter::CrashReporterInitArgs initArgs;
   initArgs.threadId() = CurrentNativeThreadId();
-
-#if defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) && \
-    defined(MOZ_OXIDIZED_BREAKPAD)
-  DirectAuxvDumpInfo auxvInfo = {};
-  CrashReporter::GetCurrentProcessAuxvInfo(&auxvInfo);
-  initArgs.auxvInfo().programHeaderCount() = auxvInfo.program_header_count;
-  initArgs.auxvInfo().programHeaderAddress() = auxvInfo.program_header_address;
-  initArgs.auxvInfo().linuxGateAddress() = auxvInfo.linux_gate_address;
-  initArgs.auxvInfo().entryAddress() = auxvInfo.entry_address;
-#endif  // defined(XP_LINUX) && defined(MOZ_CRASHREPORTER) &&
-        // defined(MOZ_OXIDIZED_BREAKPAD)
 
   return initArgs;
 }

@@ -542,18 +542,6 @@ $(ASOBJS):
 	$(call BUILDSTATUS,END_Object $@)
 endif
 
-define syms_template
-$(2): $(1)
-ifdef MOZ_CRASHREPORTER
-	$$(call py_action,dumpsymbols $$@,$$(abspath $$<) $$(abspath $$@) $$(DUMP_SYMBOLS_FLAGS))
-ifeq ($(OS_ARCH),WINNT)
-ifdef WINCHECKSEC
-	$$(PYTHON3) $$(topsrcdir)/build/win32/autowinchecksec.py $$<
-endif # WINCHECKSEC
-endif # WINNT
-endif
-endef
-
 ifneq (,$(filter $(DIST)/bin%,$(FINAL_TARGET)))
 DUMP_SYMS_TARGETS := $(filter-out $(MOZBUILD_NON_DEFAULT_TARGETS),$(SHARED_LIBRARY) $(PROGRAM) $(SIMPLE_PROGRAMS) $(RUST_PROGRAMS))
 endif
@@ -577,9 +565,6 @@ CPP_UNIT_TESTS_PDB_TARGET = syms
 INSTALL_TARGETS += CPP_UNIT_TESTS_PDB
 endif
 
-else ifdef MOZ_CRASHREPORTER
-$(foreach file,$(DUMP_SYMS_TARGETS),$(eval $(call syms_template,$(file),$(notdir $(file))_syms.track)))
-syms:: $(foreach file,$(DUMP_SYMS_TARGETS),$(notdir $(file))_syms.track)
 endif
 
 ifneq (,$(RUST_TESTS)$(RUST_LIBRARY_FILE)$(HOST_RUST_LIBRARY_FILE)$(RUST_PROGRAMS)$(HOST_RUST_PROGRAMS))

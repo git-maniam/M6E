@@ -124,22 +124,11 @@ extern crate viaduct_necko;
 extern crate gecko_logger;
 extern crate gecko_tracing;
 
-#[cfg(feature = "oxidized_breakpad")]
-extern crate rust_minidump_writer_linux;
-
-#[cfg(feature = "crashreporter")]
-extern crate mozannotation_client;
-
-#[cfg(feature = "crashreporter")]
-extern crate crash_helper_client;
-
 #[cfg(feature = "webmidi_midir_impl")]
 extern crate midir_impl;
 
 #[cfg(all(target_os = "windows", feature = "shell_windows"))]
 extern crate shell_windows;
-#[cfg(target_os = "windows")]
-extern crate win32_process_mitigations;
 
 extern crate origin_trials_ffi;
 

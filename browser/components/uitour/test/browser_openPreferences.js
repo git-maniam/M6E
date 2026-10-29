@@ -41,10 +41,7 @@ add_UITour_task(async function test_openPrivacyPreferences() {
 });
 
 add_UITour_task(async function test_openPrivacyReports() {
-  if (
-    !AppConstants.MOZ_TELEMETRY_REPORTING &&
-    !(AppConstants.MOZ_DATA_REPORTING && AppConstants.MOZ_CRASHREPORTER)
-  ) {
+  if (!AppConstants.MOZ_TELEMETRY_REPORTING) {
     return;
   }
   let promiseTabOpened = BrowserTestUtils.waitForNewTab(

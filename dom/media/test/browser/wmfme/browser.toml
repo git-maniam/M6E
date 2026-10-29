@@ -14,12 +14,6 @@ support-files = [
   "../../../mediasource/test/bipbop/bipbop2s.mp4",
 ]
 
-["browser_wmfme_crash.js"]
-skip-if = ["!crashreporter"]
-
 ["browser_wmfme_glean_first_frame_loaded_time.js"]
-
-["browser_wmfme_max_crashes.js"]
-skip-if = ["!crashreporter"]
 
 ["browser_wmfme_cdm_info.js"]
