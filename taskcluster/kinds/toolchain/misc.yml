@@ -171,47 +171,6 @@ linux64-xar:
             - linux64-clang-toolchain
             - linux64-toolchain-sysroot
 
-linux64-mar-tools:
-    description: "mar-tools toolchain build"
-    treeherder:
-        symbol: TL(mar-tools)
-    fetches:
-        toolchain:
-            - linux64-clang-toolchain
-            - sysroot-x86_64-linux-gnu
-    run:
-        script: build-mar-tools.sh
-        sparse-profile: null
-        toolchain-artifact: public/build/mar-tools.tar.zst
-        resources:
-            - build/moz.configure
-            - modules/libmar/
-            - moz.configure
-            - other-licenses/bsdiff/
-            - other-licenses/nsis/Contrib/CityHash/cityhash/
-            - toolkit/mozapps/update/updater/bspatch/
-            - tools/update-packaging/
-
-linux64-zucchini-bin:
-    description: "zucchini bin toolchain build"
-    treeherder:
-        symbol: TL(zucchini-bin)
-    fetches:
-        toolchain:
-            - linux64-clang-toolchain
-            - sysroot-x86_64-linux-gnu
-    run:
-        script: build-zucchini.sh
-        sparse-profile: null
-        toolchain-artifact: public/build/zucchini.tar.xz
-        resources:
-            - build/moz.configure/
-            - moz.configure
-            - third_party/abseil-cpp/
-            - third_party/googletest/
-            - third_party/zucchini/
-            - tools/zucchini/
-
 linux64-msix-packaging:
     description: "msix-packaging build"
     treeherder:

@@ -7,9 +7,3 @@ HOST_SOURCES += [
 ]
 
 HostProgram('mbsdiff')
-
-
-LOCAL_INCLUDES += [
-    '/toolkit/mozapps/update/updater',
-    '/toolkit/mozapps/update/updater/bspatch',
-]
