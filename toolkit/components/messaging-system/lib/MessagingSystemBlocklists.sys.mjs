@@ -60,8 +60,6 @@ export const BLOCKED_ACTION_ONLY_ACTIONS = new Set([
 
   // Acts on the user's identity and starts a sign-in flow, enrolls them in a
   // service, or creates a profile.
-  "SHOW_FIREFOX_ACCOUNTS",
-  "FXA_SIGNIN_FLOW",
   "CREATE_NEW_SELECTABLE_PROFILE",
 
   // Offers to erase the user's profile data and restart the browser.
@@ -124,7 +122,6 @@ export const BLOCKED_SET_PREF_PREFIXES = [
 
   // Where data is sent, and the account it is tied to.
   "toolkit.telemetry.",
-  "identity.fxaccounts.",
 
   // Stored credentials, data clearing, downloads and search configuration.
   "signon.",

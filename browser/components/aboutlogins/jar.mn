@@ -18,8 +18,6 @@ browser.jar:
   content/browser/aboutlogins/components/import-details-row.mjs           (content/components/import-details-row.mjs)
   content/browser/aboutlogins/components/generic-dialog.css              (content/components/generic-dialog.css)
   content/browser/aboutlogins/components/generic-dialog.mjs               (content/components/generic-dialog.mjs)
-  content/browser/aboutlogins/components/fxaccounts-button.css           (content/components/fxaccounts-button.css)
-  content/browser/aboutlogins/components/fxaccounts-button.mjs            (content/components/fxaccounts-button.mjs)
   content/browser/aboutlogins/components/login-filter.css                (content/components/login-filter.css)
   content/browser/aboutlogins/components/login-filter.mjs                 (content/components/login-filter.mjs)
   content/browser/aboutlogins/components/login-intro.css                 (content/components/login-intro.css)

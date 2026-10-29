@@ -65,7 +65,6 @@ flowchart TD
         D-->|subscribe,getSubscription| M[PushService.sys.mjs]
         M-->|Storage| S[PushDB.sys.mjs]
         M-->|Network| N[PushWebSocket.sys.mjs]
-        F[FxAccountsPush.sys.mjs] -->|uses| D
     end
     subgraph Server
     N-. Send, Receive.-> O[Autopush]

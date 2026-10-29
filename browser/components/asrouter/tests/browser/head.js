@@ -16,9 +16,6 @@ ChromeUtils.defineESModuleGetters(this, {
   QueryCache: "resource:///modules/asrouter/ASRouterTargeting.sys.mjs",
   AboutWelcomeParent: "resource:///actors/AboutWelcomeParent.sys.mjs",
 });
-const { FxAccounts } = ChromeUtils.importESModule(
-  "resource://gre/modules/FxAccounts.sys.mjs"
-);
 // We import sinon here to make it available across all mochitest test files
 const { sinon } = ChromeUtils.importESModule(
   "resource://testing-common/Sinon.sys.mjs"

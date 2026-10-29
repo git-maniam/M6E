@@ -126,7 +126,6 @@ appmenu-remote-tabs-welcome = View a list of tabs from your other devices.
 appmenu-remote-tabs-unverified = Your account needs to be verified.
 
 appmenuitem-fxa-toolbar-sync-now2 = Sync now
-appmenuitem-fxa-sign-in = Sign in to { -brand-product-name }
 appmenuitem-fxa-manage-account = Manage account
 
 fxa-menu-sync-status-on = Sync is On
@@ -141,10 +140,6 @@ fxa-menu-sync-your-data = Sync Your Data
 # sync is turned off.
 fxa-menu-sync-off-data-description = Your data isn’t syncing
 
-# Button shown next to "Sync is Off" when the user is signed in but sync is
-# turned off. Turns syncing on by opening sync preferences.
-fxa-menu-sync-status-turn-on-button =
-    .label = Turn on
 fxa-menu-sync-status-turn-on-button-aria-label = Turn on
 
 # Shown as a secondary label under "Sync is Off" when the user needs to sign in
@@ -156,25 +151,9 @@ fxa-menu-sync-off-signin-description = Sign in to sync
 #   $deviceName (String): The name of the local device.
 fxa-menu-sync-device-now = Sync { $deviceName } Now
 
-fxa-menu-manage-sync-settings =
-    .label = Manage Sync Settings
-
-fxa-menu-add-device =
-    .label = Add a Device
-
-fxa-menu-manage-devices =
-    .label = Manage Your Devices
-
-fxa-menu-device-missing =
-    .label = Don’t See Your Device?
-
 # Mozilla account menu item when selected opens a panel with all devices synced to the user's account
 fxa-menu-all-devices =
     .label = All Devices
-
-# Mozilla account panel title which shows all devices synced to a user's account
-fxa-menu-all-devices-panel =
-    .title = All Devices
 
 fxa-menu-get-firefox-mobile =
     .label = Get { -brand-product-name } for Android or iOS
@@ -190,16 +169,6 @@ appmenu-fxa-last-sync = Last synced { $time }
 appmenu-fxa-sync-and-save-data2 = Sync and Save Data
 appmenu-fxa-signed-in-label = Sign In
 
-# Sign-in promo shown in the app menu when signed out and no menu message or
-# update banner is present, prompting the user to sign in and sync. The user can
-# dismiss it, after which the compact sign-in row is shown in its place.
-appmenu-fxa-sign-in-promo-heading2 = Sync your data everywhere
-appmenu-fxa-sign-in-promo-link = Sign in
-appmenu-fxa-sign-in-promo-dismiss-button =
-    .title = Dismiss
-    .aria-label = Dismiss sign-in promo
-appmenu-fxa-setup-sync =
-    .label = Turn On Syncing…
 appmenuitem-save-page =
     .label = Save Page As…
 
@@ -441,11 +410,6 @@ appmenu-profiles-header = Profiles
 appmenu-all-profiles =
     .label = All Profiles
 appmenu-secure-sync-header = Secure sync
-
-# Panel shown when clicking a synced device in the Mozilla account menu.
-# The .title attribute sets the panel header text.
-fxa-menu-device-recent-tabs-panel =
-    .title = Recent tabs
 
 # Button at the bottom of the per-device recent tabs subpanel.
 # Variables:

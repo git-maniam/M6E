@@ -23,13 +23,13 @@ FirefoxViewTestUtils.init(this);
 
 const PERMISSIONS_PAGE =
   "https://example.com/browser/browser/base/content/test/browser-permissions/permissions.html";
-const afterUrlBarButton = "fxa-toolbar-menu-button";
+const afterUrlBarButton = "unified-extensions-button";
 const sidebarRevampEnabled = Services.prefs.getBoolPref(
   "sidebar.revamp",
   false
 );
-// The fire button sits between the FxA button and the app menu button when it
-// is enabled.
+// The fire button sits between the extensions button and the app menu button
+// when it is enabled.
 const fireButtonEnabled = Services.prefs.getBoolPref(
   "browser.fireButton.enabled",
   false
@@ -54,26 +54,19 @@ function RemoveHomeButton() {
 }
 
 function AddOldMenuSideButtons() {
-  // Make the FxA button visible even though we're signed out.
-  // We'll use oldfxastatus to restore the old state.
-  document.documentElement.setAttribute(
-    "oldfxastatus",
-    document.documentElement.getAttribute("fxastatus")
-  );
-  document.documentElement.setAttribute("fxastatus", "signed_in");
-  // These buttons go immediately before the FxA button. Position them relative
-  // to it rather than to the end of the toolbar, so that buttons added to the
-  // navbar defaults after the FxA button don't shift them.
-  const beforeFxa = () =>
+  // These buttons go immediately before the extensions button. Position them
+  // relative to it rather than to the end of the toolbar, so that buttons
+  // added to the navbar defaults after it don't shift them.
+  const beforeExtensions = () =>
     CustomizableUI.getPlacementOfWidget(afterUrlBarButton).position;
-  CustomizableUI.addWidgetToArea("library-button", "nav-bar", beforeFxa());
+  CustomizableUI.addWidgetToArea("library-button", "nav-bar", beforeExtensions());
   if (!sidebarRevampEnabled) {
-    CustomizableUI.addWidgetToArea("sidebar-button", "nav-bar", beforeFxa());
+    CustomizableUI.addWidgetToArea("sidebar-button", "nav-bar", beforeExtensions());
   }
   CustomizableUI.addWidgetToArea(
     "unified-extensions-button",
     "nav-bar",
-    beforeFxa()
+    beforeExtensions()
   );
 }
 
@@ -82,11 +75,6 @@ function RemoveOldMenuSideButtons() {
   if (!sidebarRevampEnabled) {
     CustomizableUI.removeWidgetFromArea("sidebar-button");
   }
-  document.documentElement.setAttribute(
-    "fxastatus",
-    document.documentElement.getAttribute("oldfxastatus")
-  );
-  document.documentElement.removeAttribute("oldfxastatus");
 }
 
 function startFromUrlBar(aWindow = window) {
@@ -432,7 +420,6 @@ add_task(async function testArrowsToolbarbuttons() {
       await expectFocusAfterKey("ArrowRight", "sidebar-button");
     }
     await expectFocusAfterKey("ArrowRight", "unified-extensions-button");
-    await expectFocusAfterKey("ArrowRight", "fxa-toolbar-menu-button");
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowRight", "fire-button");
     }
@@ -448,7 +435,6 @@ add_task(async function testArrowsToolbarbuttons() {
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowLeft", "fire-button");
     }
-    await expectFocusAfterKey("ArrowLeft", "fxa-toolbar-menu-button");
     await expectFocusAfterKey("ArrowLeft", "unified-extensions-button");
     if (!sidebarRevampEnabled) {
       await expectFocusAfterKey("ArrowLeft", "sidebar-button");
@@ -542,7 +528,6 @@ add_task(async function testArrowsOverflowButton() {
       await expectFocusAfterKey("ArrowRight", "sidebar-button");
     }
     await expectFocusAfterKey("ArrowRight", "unified-extensions-button");
-    await expectFocusAfterKey("ArrowRight", "fxa-toolbar-menu-button");
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowRight", "fire-button");
     }
@@ -558,7 +543,6 @@ add_task(async function testArrowsOverflowButton() {
     if (fireButtonEnabled) {
       await expectFocusAfterKey("ArrowLeft", "fire-button");
     }
-    await expectFocusAfterKey("ArrowLeft", "fxa-toolbar-menu-button");
   });
   RemoveOldMenuSideButtons();
 });

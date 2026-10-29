@@ -54,8 +54,6 @@ add_setup(async function () {
       ],
 
       // Change the endpoints to prevent non-local network connections when landing on the page.
-      ["browser.contentblocking.report.monitor.url", ""],
-      ["browser.contentblocking.report.monitor.sign_in_url", ""],
       ["browser.contentblocking.report.social.url", ""],
       ["browser.contentblocking.report.cookie.url", ""],
       ["browser.contentblocking.report.tracker.url", ""],
@@ -63,8 +61,6 @@ add_setup(async function () {
       ["browser.contentblocking.report.cryptominer.url", ""],
       ["browser.contentblocking.report.mobile-ios.url", ""],
       ["browser.contentblocking.report.mobile-android.url", ""],
-      ["browser.contentblocking.report.monitor.home_page_url", ""],
-      ["browser.contentblocking.report.monitor.preferences_url", ""],
       ["browser.contentblocking.report.vpn.url", ""],
       ["browser.contentblocking.report.vpn-promo.url", ""],
       ["browser.contentblocking.report.vpn-android.url", ""],
@@ -105,7 +101,6 @@ add_task(async function checkTelemetryLoadEvents() {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.contentblocking.database.enabled", false],
-      ["browser.contentblocking.report.monitor.enabled", false],
       ["browser.contentblocking.report.lockwise.enabled", false],
       ["browser.vpn_promo.enabled", false],
     ],
@@ -143,7 +138,6 @@ add_task(async function checkTelemetryClickEvents() {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.contentblocking.database.enabled", true],
-      ["browser.contentblocking.report.monitor.enabled", true],
       ["browser.contentblocking.report.lockwise.enabled", true],
       ["browser.vpn_promo.enabled", false],
     ],
@@ -246,28 +240,6 @@ add_task(async function checkTelemetryClickEvents() {
 
   events = await waitForProtectionsEvents("clickLwAboutLink", 1);
   is(events.length, 1, `recorded telemetry for lw_about_link`);
-
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    let monitorAboutLink = await ContentTaskUtils.waitForCondition(() => {
-      return content.document.getElementById("monitor-link");
-    }, "monitorAboutLink exists");
-
-    monitorAboutLink.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrAboutLink", 1);
-  is(events.length, 1, `recorded telemetry for mtr_about_link`);
-
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const signUpForMonitorLink = await ContentTaskUtils.waitForCondition(() => {
-      return content.document.getElementById("sign-up-for-monitor-link");
-    }, "signUpForMonitorLink exists");
-
-    signUpForMonitorLink.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrSignupButton", 1);
-  is(events.length, 1, `recorded telemetry for mtr_signup_button`);
 
   await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
     const socialLearnMoreLink = await ContentTaskUtils.waitForCondition(() => {
@@ -387,210 +359,6 @@ add_task(async function checkTelemetryClickEvents() {
   );
   await BrowserTestUtils.removeTab(gBrowser.selectedTab);
 
-  // Add breached logins and some resolved breaches.
-  AboutProtectionsParent.setTestOverride(
-    mockGetMonitorData({
-      potentiallyBreachedLogins: 4,
-      numBreaches: 3,
-      numBreachesResolved: 1,
-    })
-  );
-  await BrowserTestUtils.reloadTab(tab);
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const resolveBreachesButton = await ContentTaskUtils.waitForCondition(
-      () => {
-        return content.document.getElementById("monitor-partial-breaches-link");
-      },
-      "Monitor resolve breaches button exists"
-    );
-
-    await ContentTaskUtils.waitForCondition(
-      () => ContentTaskUtils.isVisible(resolveBreachesButton),
-      "Resolve breaches button is visible"
-    );
-
-    resolveBreachesButton.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 1);
-  is(
-    events.at(-1).extra.value,
-    "resolve_breaches",
-    `recorded telemetry for resolve breaches button`
-  );
-
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const monitorKnownBreachesBlock = await ContentTaskUtils.waitForCondition(
-      () => {
-        return content.document.getElementById("monitor-known-breaches-link");
-      },
-      "Monitor card known breaches block exists"
-    );
-
-    monitorKnownBreachesBlock.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 2);
-  is(
-    events.at(-1).extra.value,
-    "known_resolved_breaches",
-    `recorded telemetry for monitor known breaches block`
-  );
-
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const monitorExposedPasswordsBlock =
-      await ContentTaskUtils.waitForCondition(() => {
-        return content.document.getElementById(
-          "monitor-exposed-passwords-link"
-        );
-      }, "Monitor card exposed passwords block exists");
-
-    monitorExposedPasswordsBlock.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 3);
-  is(
-    events.at(-1).extra.value,
-    "exposed_passwords_unresolved_breaches",
-    `recorded telemetry for monitor exposed passwords block`
-  );
-
-  // Add breached logins and no resolved breaches.
-  AboutProtectionsParent.setTestOverride(
-    mockGetMonitorData({
-      potentiallyBreachedLogins: 4,
-      numBreaches: 3,
-      numBreachesResolved: 0,
-    })
-  );
-  await BrowserTestUtils.reloadTab(tab);
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const manageBreachesButton = await ContentTaskUtils.waitForCondition(() => {
-      return content.document.getElementById("monitor-breaches-link");
-    }, "Monitor manage breaches button exists");
-
-    await ContentTaskUtils.waitForCondition(
-      () => ContentTaskUtils.isVisible(manageBreachesButton),
-      "Manage breaches button is visible"
-    );
-
-    manageBreachesButton.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 4);
-  is(
-    events.at(-1).extra.value,
-    "manage_breaches",
-    `recorded telemetry for manage breaches button`
-  );
-
-  // All breaches are resolved.
-  AboutProtectionsParent.setTestOverride(
-    mockGetMonitorData({
-      potentiallyBreachedLogins: 4,
-      numBreaches: 3,
-      numBreachesResolved: 3,
-    })
-  );
-  await BrowserTestUtils.reloadTab(tab);
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const viewReportButton = await ContentTaskUtils.waitForCondition(() => {
-      return content.document.getElementById("monitor-breaches-link");
-    }, "Monitor view report button exists");
-    await ContentTaskUtils.waitForCondition(
-      () => ContentTaskUtils.isVisible(viewReportButton),
-      "View report button is visible"
-    );
-
-    viewReportButton.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 5);
-  is(
-    events.at(-1).extra.value,
-    "view_report",
-    `recorded telemetry for view report button`
-  );
-
-  // No breaches are present.
-  AboutProtectionsParent.setTestOverride(
-    mockGetMonitorData({
-      potentiallyBreachedLogins: 4,
-      numBreaches: 0,
-      numBreachesResolved: 0,
-    })
-  );
-  await BrowserTestUtils.reloadTab(tab);
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const viewReportButton = await ContentTaskUtils.waitForCondition(() => {
-      return content.document.getElementById("monitor-breaches-link");
-    }, "Monitor view report button exists");
-    await ContentTaskUtils.waitForCondition(
-      () => ContentTaskUtils.isVisible(viewReportButton),
-      "View report button is visible"
-    );
-
-    viewReportButton.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 6);
-  is(
-    events.at(-1).extra.value,
-    "view_report",
-    `recorded telemetry for view report button`
-  );
-
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const monitorEmailBlock = await ContentTaskUtils.waitForCondition(() => {
-      return content.document.getElementById("monitor-stored-emails-link");
-    }, "Monitor card email block exists");
-
-    monitorEmailBlock.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 7);
-  is(
-    events.at(-1).extra.value,
-    "stored_emails",
-    `recorded telemetry for monitor email block`
-  );
-
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const monitorKnownBreachesBlock = await ContentTaskUtils.waitForCondition(
-      () => {
-        return content.document.getElementById("monitor-known-breaches-link");
-      },
-      "Monitor card known breaches block exists"
-    );
-
-    monitorKnownBreachesBlock.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 8);
-  is(
-    events.at(-1).extra.value,
-    "known_unresolved_breaches",
-    `recorded telemetry for monitor known breaches block`
-  );
-
-  await SpecialPowers.spawn(tab.linkedBrowser, [], async function () {
-    const monitorExposedPasswordsBlock =
-      await ContentTaskUtils.waitForCondition(() => {
-        return content.document.getElementById(
-          "monitor-exposed-passwords-link"
-        );
-      }, "Monitor card exposed passwords block exists");
-
-    monitorExposedPasswordsBlock.click();
-  });
-
-  events = await waitForProtectionsEvents("clickMtrReportLink", 9);
-  is(
-    events.at(-1).extra.value,
-    "exposed_passwords_all_breaches",
-    `recorded telemetry for monitor exposed passwords block`
-  );
-
   // Clean up.
   AboutProtectionsParent.setTestOverride(null);
   await BrowserTestUtils.removeTab(tab);
@@ -614,7 +382,6 @@ add_task(async function checkTelemetryLoadEventForEntrypoint() {
   await SpecialPowers.pushPrefEnv({
     set: [
       ["browser.contentblocking.database.enabled", false],
-      ["browser.contentblocking.report.monitor.enabled", false],
       ["browser.contentblocking.report.lockwise.enabled", false],
       ["browser.vpn_promo.enabled", false],
     ],
@@ -676,7 +443,6 @@ add_task(async function checkTelemetryClickEventsVPN() {
       ],
       ["browser.contentblocking.report.vpn_regions", "us,ca,nz,sg,my,gb"],
       ["browser.contentblocking.database.enabled", false],
-      ["browser.contentblocking.report.monitor.enabled", false],
       ["browser.contentblocking.report.lockwise.enabled", false],
       ["browser.contentblocking.report.hide_vpn_banner", true],
       ["browser.contentblocking.report.vpn-android.url", ""],
@@ -788,7 +554,6 @@ add_task(async function checkTelemetryEventsVPNBanner() {
         "ae,by,cn,cu,iq,ir,kp,om,ru,sd,sy,tm,tr",
       ],
       ["browser.contentblocking.database.enabled", false],
-      ["browser.contentblocking.report.monitor.enabled", false],
       ["browser.contentblocking.report.lockwise.enabled", false],
       ["browser.contentblocking.report.hide_vpn_banner", false],
       ["browser.contentblocking.report.vpn-promo.url", ""],

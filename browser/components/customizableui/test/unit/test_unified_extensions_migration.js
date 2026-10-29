@@ -113,7 +113,7 @@ add_task(async function test_no_extensions() {
         "alltabs-button",
         "developer-button",
       ],
-      PersonalToolbar: ["personal-bookmarks", "fxa-toolbar-menu-button"],
+      PersonalToolbar: ["personal-bookmarks"],
       "widget-overflow-fixed-list": ["privatebrowsing-button", "panic-button"],
     },
   };
@@ -160,7 +160,7 @@ add_task(async function test_existing_browser_actions_no_movement() {
         "alltabs-button",
         "developer-button",
       ],
-      PersonalToolbar: ["personal-bookmarks", "fxa-toolbar-menu-button"],
+      PersonalToolbar: ["personal-bookmarks"],
       "widget-overflow-fixed-list": ["privatebrowsing-button", "panic-button"],
       "unified-extensions-area": ["ext0-browser-action", "ext1-browser-action"],
     },
@@ -203,7 +203,7 @@ add_task(async function test_migrate_extension_buttons() {
         "alltabs-button",
         "developer-button",
       ],
-      PersonalToolbar: ["personal-bookmarks", "fxa-toolbar-menu-button"],
+      PersonalToolbar: ["personal-bookmarks"],
       "widget-overflow-fixed-list": [
         "ext0-browser-action",
         "privatebrowsing-button",
@@ -262,7 +262,7 @@ add_task(async function test_migrate_extension_buttons_no_overwrite() {
         "alltabs-button",
         "developer-button",
       ],
-      PersonalToolbar: ["personal-bookmarks", "fxa-toolbar-menu-button"],
+      PersonalToolbar: ["personal-bookmarks"],
       "widget-overflow-fixed-list": [
         "ext0-browser-action",
         "privatebrowsing-button",
@@ -340,7 +340,6 @@ add_task(async function test_migrate_extension_buttons_elsewhere() {
       PersonalToolbar: [
         "personal-bookmarks",
         "ext14-browser-action",
-        "fxa-toolbar-menu-button",
         "ext15-browser-action",
       ],
       "widget-overflow-fixed-list": [

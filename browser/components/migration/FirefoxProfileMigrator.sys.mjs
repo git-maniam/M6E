@@ -379,55 +379,6 @@ export class FirefoxProfileMigrator extends MigratorBase {
       savePrefs();
     }
 
-    // Sync/FxA related data
-    let sync = {
-      name: "sync", // name is used only by tests.
-      type: types.OTHERDATA,
-      migrate: async aCallback => {
-        // Try and parse a signedInUser.json file from the source directory and
-        // if we can, copy it to the new profile and set sync's username pref
-        // (which acts as a de-facto flag to indicate if sync is configured)
-        try {
-          let oldPath = PathUtils.join(
-            sourceProfileDir.path,
-            "signedInUser.json"
-          );
-          let exists = await IOUtils.exists(oldPath);
-          if (exists) {
-            let data = await IOUtils.readJSON(oldPath);
-            if (data && data.accountData && data.accountData.email) {
-              let username = data.accountData.email;
-              // copy the file itself.
-              await IOUtils.copy(
-                oldPath,
-                PathUtils.join(currentProfileDir.path, "signedInUser.json")
-              );
-              // Now we need to know whether Sync is actually configured for this
-              // user. The only way we know is by looking at the prefs file from
-              // the old profile. We avoid trying to do a full parse of the prefs
-              // file and even avoid parsing the single string value we care
-              // about.
-              let oldRawPrefs = await readOldPrefs();
-              if (/^user_pref\("services\.sync\.username"/m.test(oldRawPrefs)) {
-                // sync's configured in the source profile - ensure it is in the
-                // new profile too.
-                // Write it to prefs.js and flush the file.
-                Services.prefs.setStringPref(
-                  "services.sync.username",
-                  username
-                );
-                savePrefs();
-              }
-            }
-          }
-        } catch (ex) {
-          aCallback(false);
-          return;
-        }
-        aCallback(true);
-      },
-    };
-
     // Telemetry related migrations.
     let times = {
       name: "times", // name is used only by tests.
@@ -532,7 +483,6 @@ export class FirefoxProfileMigrator extends MigratorBase {
       dictionary,
       bookmarksBackups,
       session,
-      sync,
       times,
       telemetry,
       favicons,

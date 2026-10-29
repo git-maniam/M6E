@@ -323,8 +323,6 @@ $schema: moz://mozilla.org/schemas/glean/tags/1-0-0
   description: The Bugzilla component which applies to this object.
 'Firefox :: File Handling':
   description: The Bugzilla component which applies to this object.
-'Firefox :: Firefox Accounts':
-  description: The Bugzilla component which applies to this object.
 'Firefox :: Firefox View':
   description: The Bugzilla component which applies to this object.
 'Firefox :: General':

@@ -23,7 +23,6 @@ category browser-before-ui-startup moz-src:///browser/components/privatebrowsing
 category browser-before-ui-startup moz-src:///browser/components/remotecontrol/RemoteControlPanel.sys.mjs RemoteControlPanel.init
 #endif
 category browser-before-ui-startup resource:///modules/AboutHomeStartupCache.sys.mjs AboutHomeStartupCache.init
-category browser-before-ui-startup moz-src:///browser/components/AccountsGlue.sys.mjs AccountsGlue.init
 category browser-before-ui-startup moz-src:///browser/modules/ObserverForwarder.sys.mjs ObserverForwarder.init
 category browser-before-ui-startup moz-src:///browser/modules/ASWebAuthSessionService.sys.mjs ASWebAuthSessionService.init
 category browser-idle-startup moz-src:///browser/modules/ASWebAuthSessionService.sys.mjs ASWebAuthSessionService.removeLeftoverEphemeralContainers

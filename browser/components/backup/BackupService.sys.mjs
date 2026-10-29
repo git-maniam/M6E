@@ -65,12 +65,6 @@ ChromeUtils.defineLazyGetter(lazy, "logConsole", function () {
   });
 });
 
-ChromeUtils.defineLazyGetter(lazy, "fxAccounts", () => {
-  return ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton();
-});
-
 ChromeUtils.defineESModuleGetters(lazy, {
   AddonManager: "resource://gre/modules/AddonManager.sys.mjs",
   ArchiveDecryptor:
@@ -89,7 +83,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   ProfileAge: "resource://gre/modules/ProfileAge.sys.mjs",
   SelectableProfileService:
     "resource:///modules/profiles/SelectableProfileService.sys.mjs",
-  UIState: "resource://gre/modules/UIState.sys.mjs",
 });
 
 ChromeUtils.defineLazyGetter(lazy, "ZipWriter", () =>
@@ -3129,7 +3122,7 @@ export class BackupService extends EventTarget {
       buildID: AppConstants.MOZ_BUILDID,
       profileName,
       deviceName: Services.sysinfo.get("device") || Services.dns.myHostName,
-      machineName: lazy.fxAccounts.device.getLocalName(),
+      machineName: Services.sysinfo.get("device") || Services.dns.myHostName,
       osName: Services.sysinfo.getProperty("name"),
       osVersion: Services.sysinfo.getProperty("version"),
       osBuildNumber: (() => {
@@ -3151,12 +3144,6 @@ export class BackupService extends EventTarget {
       ),
       isSelectableProfile: !!lazy.SelectableProfileService.currentProfile,
     };
-
-    let fxaState = lazy.UIState.get();
-    if (fxaState.status == lazy.UIState.STATUS_SIGNED_IN) {
-      meta.accountID = fxaState.uid;
-      meta.accountEmail = fxaState.email;
-    }
 
     return {
       version: lazy.ArchiveUtils.SCHEMA_VERSION,

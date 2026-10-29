@@ -328,9 +328,7 @@ add_task(async function insertBeforeFirstItemInOverflow() {
   CustomizableUI.addWidgetToArea(
     "fullscreen-button",
     "nav-bar",
-    CustomizableUI.getWidgetIdsInArea("nav-bar").indexOf(
-      "fxa-toolbar-menu-button"
-    )
+    CustomizableUI.getWidgetIdsInArea("nav-bar").indexOf("downloads-button")
   );
   let fullscreenButton = document.getElementById("fullscreen-button");
   await waitForElementShown(fullscreenButton);

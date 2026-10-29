@@ -40,9 +40,7 @@ add_task(async function test_showAlert() {
     "branding/brand.ftl",
     "browser/newtab/asrouter.ftl",
   ]);
-  let expectedTitle = await l10n.formatValue(
-    "cfr-doorhanger-bookmark-fxa-header"
-  );
+  let expectedTitle = await l10n.formatValue("cfr-doorhanger-feature-heading");
 
   showAlertStub.reset();
 

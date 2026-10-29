@@ -177,7 +177,6 @@ const KNOWN_ADDONS = [];
 // and is defaulted to false.
 const SET_USAGE_PREF_BUTTONS = [
   "downloads-button",
-  "fxa-toolbar-menu-button",
   "home-button",
   "sidebar-button",
   "library-button",

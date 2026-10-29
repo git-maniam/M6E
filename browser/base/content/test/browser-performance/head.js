@@ -275,19 +275,14 @@ async function ensureNoPreloadedBrowser(win = window) {
   });
 }
 
-// Onboarding puts a badge on the fxa toolbar button a while after startup
-// which confuses tests that look at repaints in the toolbar.  Use this
-// function to cancel the badge update.
-function disableFxaBadge() {
+// Onboarding puts a badge on a toolbar button a while after startup which
+// confuses tests that look at repaints in the toolbar. Use this function to
+// cancel the badge update.
+function disableToolbarBadge() {
   let { ToolbarBadgeHub } = ChromeUtils.importESModule(
     "resource:///modules/asrouter/ToolbarBadgeHub.sys.mjs"
   );
   ToolbarBadgeHub.removeAllNotifications();
-
-  // Also prevent a new timer from being set
-  return SpecialPowers.pushPrefEnv({
-    set: [["identity.fxaccounts.toolbar.accessed", true]],
-  });
 }
 
 // Ensure updating Unified Search Button icon by user interaction before

@@ -9,7 +9,7 @@ import { MultiStageProtonScreen } from "./MultiStageProtonScreen";
 import { getTileImpressionContext } from "./ContentTiles";
 import { useLanguageSwitcher } from "./LanguageSwitcher";
 import { SubmenuButton } from "./SubmenuButton";
-import { BASE_PARAMS, addUtmParams } from "../lib/addUtmParams.mjs";
+import { addUtmParams } from "../lib/addUtmParams.mjs";
 
 // Amount of milliseconds for all transitions to complete (including delays).
 const TRANSITION_OUT_TIME = 1000;
@@ -129,16 +129,6 @@ export const MultiStageAboutWelcome = props => {
       setPreviousOrder(index);
     })();
   }, [index, didMount]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [flowParams, setFlowParams] = useState(null);
-  const { metricsFlowUri } = props;
-  useEffect(() => {
-    (async () => {
-      if (metricsFlowUri) {
-        setFlowParams(await MultiStageUtils.fetchFlowParams(metricsFlowUri));
-      }
-    })();
-  }, [metricsFlowUri]);
 
   // Allow "in" style to render to actually transition towards regular state,
   // which also makes using browser back/forward navigation skip transitions.
@@ -426,7 +416,6 @@ export const MultiStageAboutWelcome = props => {
               advanceOnExperimentLoad={currentScreen.advance_on_experiment_load}
               messageId={`${props.message_id}_${order}_${currentScreen.id}`}
               UTMTerm={props.utm_term}
-              flowParams={flowParams}
               activeTheme={activeTheme}
               activeThemeId={activeThemeId}
               initialTheme={initialTheme}
@@ -689,31 +678,11 @@ export class WelcomeScreen extends React.PureComponent {
     this.handleAction = this.handleAction.bind(this);
   }
 
-  handleOpenURL(action, flowParams, UTMTerm) {
+  handleOpenURL(action, UTMTerm) {
     let { type, data } = action;
-    if (type === "SHOW_FIREFOX_ACCOUNTS") {
-      let params = {
-        ...BASE_PARAMS,
-        utm_term: `${UTMTerm}-screen`,
-      };
-      if (action.addFlowParams && flowParams) {
-        params = {
-          ...params,
-          ...flowParams,
-        };
-      }
-      data = {
-        ...data,
-        extraParams: { ...params, ...data?.extraParams },
-      };
-    } else if (type === "OPEN_URL") {
+    if (type === "OPEN_URL") {
       let url = new URL(data.args);
       addUtmParams(url, `${UTMTerm}-screen`);
-      if (action.addFlowParams && flowParams) {
-        url.searchParams.append("device_id", flowParams.deviceId);
-        url.searchParams.append("flow_id", flowParams.flowId);
-        url.searchParams.append("flow_begin_time", flowParams.flowBeginTime);
-      }
       data = { ...data, args: url.toString() };
     }
     return MultiStageUtils.handleUserAction({ type, data });
@@ -838,8 +807,8 @@ export class WelcomeScreen extends React.PureComponent {
     if (action.collectTextInput && Object.values(props.textInputs).length) {
       this.setTextInputActions(action);
     }
-    if (["OPEN_URL", "SHOW_FIREFOX_ACCOUNTS"].includes(action.type)) {
-      this.handleOpenURL(action, props.flowParams, props.UTMTerm);
+    if (action.type === "OPEN_URL") {
+      this.handleOpenURL(action, props.UTMTerm);
     } else if (action.type === "INSTALL_ADDON_FROM_URL") {
       const url =
         props.addonURL && props.isRtamo ? props.addonURL : action.data?.url;
@@ -850,13 +819,6 @@ export class WelcomeScreen extends React.PureComponent {
       let actionPromise = MultiStageUtils.handleUserAction(action);
       if (action.needsAwait) {
         actionResult = await actionPromise;
-      }
-      if (action.type === "FXA_SIGNIN_FLOW") {
-        MultiStageUtils.sendActionTelemetry(
-          props.messageId,
-          actionResult ? "sign_in" : "sign_in_cancel",
-          "FXA_SIGNIN_FLOW"
-        );
       }
       // Wait until migration closes to complete the action
       await this.handleMigrationIfNeeded(action, props);

@@ -847,7 +847,6 @@ browser:
       - application-update-telemetry-alerts@mozilla.com
     expires: never
     send_in_pings:
-      - fx-accounts-client-info
       - metrics
 
   is_user_default_error:

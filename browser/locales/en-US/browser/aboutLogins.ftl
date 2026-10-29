@@ -12,11 +12,6 @@ about-logins-login-filter2 =
 create-login-button =
   .title = Add password
 
-fxaccounts-sign-in-text = Get your passwords on your other devices
-fxaccounts-sign-in-sync-button = Sign in to sync
-fxaccounts-avatar-button =
-  .title = Manage account
-
 ## The ⋯ menu that is in the top corner of the page
 
 menu =
@@ -87,8 +82,6 @@ about-logins-list-section-week = Last 7 days
 
 about-logins-login-intro-heading-message = Save your passwords to a safe spot
 login-intro-description2 = All passwords you save to { -brand-product-name } are encrypted. Plus, we watch out for breaches and alert you if you’re affected. <a data-l10n-name="breach-alert-link">Learn more</a>
-login-intro-instructions-fxa2 = Create or sign in to your account on the device where your logins are saved.
-login-intro-instructions-fxa-settings = Go to Settings > Sync > Turn on syncing… Select the Logins and passwords checkbox.
 login-intro-instructions-fxa-passwords-help = Visit <a data-l10n-name="passwords-help-link">passwords support</a> for more help.
 about-logins-intro-import3 = Select the plus sign button above to add a password now. You can also <a data-l10n-name="import-browser-link">import passwords from another browser</a> or <a data-l10n-name="import-file-link">from a file</a>.
 
@@ -219,20 +212,6 @@ about-logins-confirm-remove-all-dialog-message2 =
   { $count ->
      [1] This will remove the password saved to { -brand-short-name } and any breach alerts. You cannot undo this action.
     *[other] This will remove the passwords saved to { -brand-short-name } and any breach alerts. You cannot undo this action.
-  }
-
-# Title for modal to confirm the removal of all saved passwords when user IS SYNCED
-about-logins-confirm-remove-all-sync-dialog-title2 =
-  { $count ->
-     [one] Remove { $count } password from all devices?
-    *[other] Remove all { $count } passwords from all devices?
-  }
-
-# Message for modal to confirm the removal of saved passwords when user IS synced.
-about-logins-confirm-remove-all-sync-dialog-message3 =
-  { $count ->
-    [1] This will remove the password saved to { -brand-short-name } on all your synced devices. This will also remove any breach alerts that appear here. You cannot undo this action.
-    *[other] This will remove all passwords saved to { -brand-short-name } on all your synced devices. This will also remove any breach alerts that appear here. You cannot undo this action.
   }
 
 ##

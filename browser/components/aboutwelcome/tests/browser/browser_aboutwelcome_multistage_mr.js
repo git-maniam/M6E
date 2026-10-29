@@ -108,8 +108,6 @@ add_task(async function test_aboutwelcome_easy_setup_screen_impression() {
     .resolves(true)
     .withArgs("isDeviceMigration")
     .resolves(false)
-    .withArgs("!isFxASignedIn")
-    .resolves(true)
     .withArgs("backupRestoreEnabled")
     .resolves(true);
 
@@ -844,7 +842,7 @@ add_task(async function test_aboutwelcome_gratitude() {
         position: "split",
         split_narrow_bkg_position: "-228px",
         background:
-          "url('chrome://activity-stream/content/data/content/assets/br-fxa-fox-mirror.svg') var(--mr-secondary-position) no-repeat light-dark(rgba(252, 245, 240, 1), rgba(33, 3, 64, 1))",
+          "url('chrome://activity-stream/content/data/content/assets/br-gratitude-fox-rock.svg') var(--mr-secondary-position) no-repeat light-dark(rgba(252, 245, 240, 1), rgba(33, 3, 64, 1))",
         progress_bar: true,
         logo: {},
         title: {
@@ -1034,9 +1032,7 @@ add_task(async function test_aboutwelcome_secondary_top_signin_only() {
     // Mock Easy Setup for secondary button top testing
     .withArgs(EASY_SETUP_TARGETING)
     .resolves(true)
-    // Sign in button targeting
-    .withArgs("!isFxASignedIn")
-    .resolves(true);
+    // Sign in button targeting;
 
   let { browser, cleanup } = await openMRAboutWelcome();
 
@@ -1156,8 +1152,6 @@ add_task(async function test_aboutwelcome_both_secondary_top_buttons() {
     .withArgs(EASY_SETUP_TARGETING)
     .resolves(true)
     // Show Sign-in top button
-    .withArgs("!isFxASignedIn")
-    .resolves(true)
     // Show Restore top button
     .withArgs("backupRestoreEnabled")
     .resolves(true);

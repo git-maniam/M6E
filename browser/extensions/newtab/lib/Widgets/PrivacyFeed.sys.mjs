@@ -11,7 +11,6 @@ ChromeUtils.defineESModuleGetters(lazy, {
   PrivacyMetricsService:
     "moz-src:///browser/components/protections/PrivacyMetricsService.sys.mjs",
   PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
-  UIState: "resource://gre/modules/UIState.sys.mjs",
   FirefoxRelay: "resource://gre/modules/FirefoxRelay.sys.mjs",
   ProfileAge: "resource://gre/modules/ProfileAge.sys.mjs",
   SpecialMessageActions:
@@ -219,15 +218,11 @@ export class PrivacyFeed {
    * signal fails open (false → we don't suppress). VPN and Monitor have no
    * reliable local signal, so their promos are never suppressed.
    *
-   * @returns {Promise<{signedIn: boolean, hasLogins: boolean, relayMasks: boolean}>}
+   * @returns {Promise<{hasLogins: boolean, relayMasks: boolean}>}
    */
   async getFeatureFlags() {
-    let signedIn = false;
     let hasLogins = false;
     let relayMasks = false;
-    try {
-      signedIn = lazy.UIState.get().status === lazy.UIState.STATUS_SIGNED_IN;
-    } catch (e) {}
     try {
       hasLogins = (await Services.logins.countLoginsAsync("", "", "")) > 0;
     } catch (e) {}
@@ -235,7 +230,7 @@ export class PrivacyFeed {
       const profile = await lazy.FirefoxRelay.getRelayProfileInfo();
       relayMasks = (profile?.masksCount || 0) > 0;
     } catch (e) {}
-    return { signedIn, hasLogins, relayMasks };
+    return { hasLogins, relayMasks };
   }
 
   getProfileCreatedMs() {

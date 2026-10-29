@@ -1,6 +1,5 @@
 import { _ToolbarBadgeHub } from "modules/ToolbarBadgeHub.sys.mjs";
 import { GlobalOverrider } from "tests/unit/utils";
-import { OnboardingMessageProvider } from "modules/OnboardingMessageProvider.sys.mjs";
 
 describe("ToolbarBadgeHub", () => {
   let sandbox;
@@ -8,7 +7,7 @@ describe("ToolbarBadgeHub", () => {
   let fakeAddImpression;
   let fakeSendTelemetry;
   let isBrowserPrivateStub;
-  let fxaMessage;
+  let badgeMessage;
   let fakeElement;
   let globals;
   let everyWindowStub;
@@ -28,9 +27,16 @@ describe("ToolbarBadgeHub", () => {
     fakeAddImpression = sandbox.stub();
     fakeSendTelemetry = sandbox.stub();
     isBrowserPrivateStub = sandbox.stub();
-    const onboardingMsgs =
-      await OnboardingMessageProvider.getUntranslatedMessages();
-    fxaMessage = onboardingMsgs.find(({ id }) => id === "FXA_ACCOUNTS_BADGE");
+    badgeMessage = {
+      id: "TEST_TOOLBAR_BADGE",
+      template: "toolbar_badge",
+      content: {
+        delay: 10000,
+        target: "PanelUI-menu-button",
+      },
+      targeting: "false",
+      trigger: { id: "toolbarBadgeUpdate" },
+    };
     fakeElement = {
       classList: {
         add: sandbox.stub(),
@@ -128,7 +134,7 @@ describe("ToolbarBadgeHub", () => {
   describe("messageRequest", () => {
     let handleMessageRequestStub;
     beforeEach(() => {
-      handleMessageRequestStub = sandbox.stub().returns(fxaMessage);
+      handleMessageRequestStub = sandbox.stub().returns(badgeMessage);
       sandbox
         .stub(instance, "_handleMessageRequest")
         .value(handleMessageRequestStub);
@@ -152,7 +158,7 @@ describe("ToolbarBadgeHub", () => {
       assert.calledOnce(instance.registerBadgeNotificationListener);
       assert.calledWithExactly(
         instance.registerBadgeNotificationListener,
-        fxaMessage
+        badgeMessage
       );
     });
     it("shouldn't do anything if no message is provided", async () => {
@@ -200,21 +206,21 @@ describe("ToolbarBadgeHub", () => {
     });
     it("shouldn't do anything if target element is not found", () => {
       fakeDocument.getElementById.returns(null);
-      instance.addToolbarNotification(target, fxaMessage);
+      instance.addToolbarNotification(target, badgeMessage);
 
       assert.notCalled(fakeElement.setAttribute);
     });
     it("should target the element specified in the message", () => {
-      instance.addToolbarNotification(target, fxaMessage);
+      instance.addToolbarNotification(target, badgeMessage);
 
       assert.calledOnce(fakeDocument.getElementById);
       assert.calledWithExactly(
         fakeDocument.getElementById,
-        fxaMessage.content.target
+        badgeMessage.content.target
       );
     });
     it("should show a notification", () => {
-      instance.addToolbarNotification(target, fxaMessage);
+      instance.addToolbarNotification(target, badgeMessage);
 
       assert.calledTwice(fakeElement.setAttribute);
       assert.calledWithExactly(fakeElement.setAttribute, "badged", true);
@@ -226,7 +232,7 @@ describe("ToolbarBadgeHub", () => {
       assert.calledWithExactly(fakeElement.classList.add, "feature-callout");
     });
     it("should attach a cb on the notification", () => {
-      instance.addToolbarNotification(target, fxaMessage);
+      instance.addToolbarNotification(target, badgeMessage);
 
       assert.calledTwice(fakeElement.addEventListener);
       assert.calledWithExactly(
@@ -251,9 +257,9 @@ describe("ToolbarBadgeHub", () => {
       sandbox.stub(instance, "addToolbarNotification").returns(fakeElement);
       sandbox.stub(instance, "removeToolbarNotification");
       msg_no_delay = {
-        ...fxaMessage,
+        ...badgeMessage,
         content: {
-          ...fxaMessage.content,
+          ...badgeMessage.content,
           delay: 0,
         },
       };
@@ -321,14 +327,14 @@ describe("ToolbarBadgeHub", () => {
       });
       blockMessageByIdStub = sandbox.stub();
       sandbox.stub(instance, "_blockMessageById").value(blockMessageByIdStub);
-      instance.state = { notification: { id: fxaMessage.id } };
+      instance.state = { notification: { id: badgeMessage.id } };
       fakeEvent = { target: { removeEventListener: sandbox.stub() } };
     });
     it("should call to block the message", () => {
       instance.removeAllNotifications();
 
       assert.calledOnce(blockMessageByIdStub);
-      assert.calledWithExactly(blockMessageByIdStub, fxaMessage.id);
+      assert.calledWithExactly(blockMessageByIdStub, badgeMessage.id);
     });
     it("should remove the window listener", () => {
       instance.removeAllNotifications();
@@ -419,9 +425,9 @@ describe("ToolbarBadgeHub", () => {
         addImpression: fakeAddImpression,
       });
       msg_with_delay = {
-        ...fxaMessage,
+        ...badgeMessage,
         content: {
-          ...fxaMessage.content,
+          ...badgeMessage.content,
           delay: 500,
         },
       };
@@ -464,14 +470,14 @@ describe("ToolbarBadgeHub", () => {
     it("should check for private window and not send", () => {
       isBrowserPrivateStub.returns(true);
 
-      instance.sendUserEventTelemetry("CLICK", { id: fxaMessage });
+      instance.sendUserEventTelemetry("CLICK", { id: badgeMessage });
 
       assert.notCalled(instance._sendTelemetry);
     });
     it("should check for private window and send", () => {
       isBrowserPrivateStub.returns(false);
 
-      instance.sendUserEventTelemetry("CLICK", { id: fxaMessage });
+      instance.sendUserEventTelemetry("CLICK", { id: badgeMessage });
 
       assert.calledOnce(fakeSendTelemetry);
       const [ping] = instance._sendTelemetry.firstCall.args;

@@ -150,8 +150,6 @@ class GeckoInstance:
         # Disable idle-daily notifications to avoid expensive operations
         # that may cause unexpected test timeouts.
         "idle.lastDailyNotification": -1,
-        # Disable Firefox accounts ping
-        "identity.fxaccounts.auth.uri": "https://{server}/dummy/fxa",
         # Disable download and usage of OpenH264, and Widevine plugins
         "media.gmp-manager.updateEnabled": False,
         # Disable the GFX sanity window

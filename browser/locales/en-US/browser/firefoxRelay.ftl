@@ -52,25 +52,9 @@ firefox-relay-opt-in-confirmation-postpone =
     .label = Not now
     .accesskey = N
 
-firefox-relay-and-fxa-opt-in-confirmation-disable =
-    .label = Don’t show me this again
-    .accesskey = D
-firefox-relay-and-fxa-opt-in-confirmation-postpone =
-    .label = Not now
-    .accesskey = N
-
 ## The "with-domain" variation of the Relay offer popup
-
-firefox-relay-and-fxa-popup-notification-header-with-domain = Get a free email mask
-
-firefox-relay-and-fxa-popup-notification-first-sentence = Protect your inbox from spam by using a free <label data-l10n-name="firefox-relay-learn-more-url">{ -relay-brand-name } email mask</label> to hide your real address. Emails from <label data-l10n-name="firefox-fxa-and-relay-offer-domain">this site</label> will still come to your inbox, but with your email hidden.
 
 firefox-relay-offer-why-to-use-relay-1 = Protect your inbox from spam by using a free <label data-l10n-name="firefox-relay-learn-more-url">{ -relay-brand-name } email mask</label> to hide your real address. Emails from <label data-l10n-name="firefox-fxa-and-relay-offer-domain">this site</label> will still come to your inbox, but with your email hidden.
 
 ## The "with-domain-and-value-prop" variation of the Relay offer popup
 
-firefox-relay-and-fxa-popup-notification-second-sentence-with-domain-and-value-prop = First, sign up or sign in to your account to use an email mask.
-
-firefox-relay-and-fxa-opt-in-confirmation-enable-button-with-domain-and-value-prop =
-    .label = Next
-    .accesskey = N

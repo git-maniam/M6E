@@ -4,7 +4,6 @@
 "use strict";
 
 ChromeUtils.defineESModuleGetters(this, {
-  FxAccounts: "resource://gre/modules/FxAccounts.sys.mjs",
   QueryCache: "resource:///modules/asrouter/ASRouterTargeting.sys.mjs",
   sinon: "resource://testing-common/Sinon.sys.mjs",
 });

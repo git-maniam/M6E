@@ -229,8 +229,6 @@ var gBrowserInit = {
       }
     });
 
-    updateFxaToolbarMenu(gFxaToolbarEnabled);
-
     updatePrintCommands(gPrintEnabled);
 
     // Setting the focus will cause a style flush, it's preferable to call anything

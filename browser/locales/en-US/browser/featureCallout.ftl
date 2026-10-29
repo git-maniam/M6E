@@ -219,12 +219,6 @@ start-page-callout-secondary-label = Dismiss
 
 ## Account Adoption Passwords callout strings
 
-# Suggestion to backup passwords by signing up for Mozilla account and using sync
-fxa-adoption-passwords-title = Password saved. Let’s back it up.
-fxa-adoption-passwords-subtitle = Protect your passwords by syncing them to your devices with encryption.
-# Opens Mozilla accounts sign-up page
-fxa-adoption-passwords-primary-button-label = Sign up
-
 ## Taskbar Tabs callout strings
 
 taskbar-tabs-social-callout-title = Keep your favorite feeds in your taskbar

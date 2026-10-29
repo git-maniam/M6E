@@ -45,7 +45,7 @@ add_task(async function () {
     "about:home"
   );
 
-  await disableFxaBadge();
+  await disableToolbarBadge();
 
   let alreadyFocused = false;
   let inRange = (val, min, max) => min <= val && val <= max;

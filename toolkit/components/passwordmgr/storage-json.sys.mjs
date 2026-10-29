@@ -9,8 +9,6 @@
 const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  FXA_PWDMGR_HOST: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-  FXA_PWDMGR_REALM: "resource://gre/modules/FxAccountsCommon.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   LoginStore: "resource://gre/modules/LoginStore.sys.mjs",
 });
@@ -46,9 +44,12 @@ function isSyncableChange(oldLogin, newLogin) {
   return SYNCABLE_LOGIN_FIELDS.some(prop => oldLogin[prop] != newLogin[prop]);
 }
 
+const FXA_PWDMGR_HOST = "chrome://FirefoxAccounts";
+const FXA_PWDMGR_REALM = "Firefox Accounts credentials";
+
 // Returns true if the argument is for the FxA login.
 function isFXAHost(login) {
-  return login.hostname == lazy.FXA_PWDMGR_HOST;
+  return login.hostname == FXA_PWDMGR_HOST;
 }
 
 export class LoginManagerStorage_json {
@@ -691,7 +692,7 @@ export class LoginManagerStorage_json {
       if (
         !removeFXALogin &&
         isFXAHost(login) &&
-        login.httpRealm == lazy.FXA_PWDMGR_REALM
+        login.httpRealm == FXA_PWDMGR_REALM
       ) {
         remainingLogins.push(login);
       } else {

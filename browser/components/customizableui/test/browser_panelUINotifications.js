@@ -236,13 +236,6 @@ add_task(async function testDownloadingBadge() {
  */
 add_task(async function testInteractionWithBadges() {
   await BrowserTestUtils.withNewTab("about:blank", async function () {
-    // Remove the fxa toolbar button from the navbar to ensure the notification
-    // is displayed on the app menu button.
-    let { CustomizableUI } = ChromeUtils.importESModule(
-      "moz-src:///browser/components/customizableui/CustomizableUI.sys.mjs"
-    );
-    CustomizableUI.removeWidgetFromArea("fxa-toolbar-menu-button");
-
     AppMenuNotifications.showBadgeOnlyNotification("fxa-needs-authentication");
     is(
       PanelUI.menuButton.getAttribute("badge-status"),

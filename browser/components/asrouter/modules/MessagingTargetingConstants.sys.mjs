@@ -64,8 +64,6 @@ export const WIN_OS_PIN_PROMPT_ENABLED =
 export const SET_DEFAULT_OS_PROMPT_ENABLED =
   "(!('browser.bypassAutoTriggerActions'|preferenceValue) && (os.isMac || (os.isWindows && !isOneClickSetDefaultEnabled)))";
 
-export const FXA_NOT_SIGNED_IN = "isFxAEnabled && !isFxASignedIn";
-
 export const TAB_GROUPS_ENABLED =
   "('browser.tabs.groups.enabled'|preferenceValue) && userPrefs.cfrFeatures";
 

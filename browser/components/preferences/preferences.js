@@ -53,11 +53,6 @@ var { PrivateBrowsingUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/PrivateBrowsingUtils.sys.mjs"
 );
 
-var { FxAccounts, getFxAccountsSingleton } = ChromeUtils.importESModule(
-  "resource://gre/modules/FxAccounts.sys.mjs"
-);
-var fxAccounts = getFxAccountsSingleton();
-
 var TAB_SESSION_ID = crypto.randomUUID();
 
 XPCOMUtils.defineLazyServiceGetters(this, {

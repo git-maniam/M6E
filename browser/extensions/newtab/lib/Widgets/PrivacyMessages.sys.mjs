@@ -139,10 +139,6 @@ const ctaAttributedUrl = (base, utmContent) =>
 const MONITOR = "https://monitor.mozilla.org/";
 const RELAY = "https://relay.firefox.com/";
 const CTA_SET_DEFAULT = { type: "SET_DEFAULT_BROWSER" };
-const CTA_SIGNIN = {
-  type: "FXA_SIGNIN_FLOW",
-  data: { entrypoint: "newtab-privacy-widget" },
-};
 const CTA_VPN = { type: "IPPROTECTION_ENROLL" };
 const CTA_PRIVATE_WINDOW = { type: "OPEN_PRIVATE_BROWSER_WINDOW" };
 
@@ -154,8 +150,8 @@ const CTA_PRIVATE_WINDOW = { type: "OPEN_PRIVATE_BROWSER_WINDOW" };
  *   category    one of CATEGORY — drives scheduling, NOT inferred from the id
  *   icon        shield | shieldCheck | planet | bolt | star | kit
  *   countSource none | today | week | month | year | total | streak | sites
- *   feature     promos only: signin | relay | vpn | monitor | private-window
- *               (only signin/relay are locally suppressible — see isFeatureInUse)
+ *   feature     promos only: relay | vpn | monitor | private-window
+ *               (only relay is locally suppressible — see isFeatureInUse)
  *   cta         optional SpecialMessageAction descriptor for the CTA button; the
  *               button's label is the `-cta` companion Fluent id. Omitted → no
  *               button (the zero state and the random blank have none).
@@ -337,15 +333,6 @@ export const PRIVACY_MESSAGES = [
     countSource: "none",
     feature: "monitor",
     cta: ctaAttributedUrl(MONITOR, "protect-your-info-global"),
-  },
-  {
-    // sign in: encrypt bookmarks/passwords/tabs across devices
-    id: "newtab-privacy-message-promo-signin-1",
-    category: CATEGORY.PROMO,
-    icon: "star",
-    countSource: "none",
-    feature: "signin",
-    cta: CTA_SIGNIN,
   },
   {
     // VPN: public Wi-Fi
@@ -557,8 +544,6 @@ function forcedResult(ctx, state) {
 
 function isFeatureInUse(feature, features = {}) {
   switch (feature) {
-    case "signin":
-      return !!features.signedIn;
     case "logins":
       return !!features.hasLogins;
     case "relay":

@@ -16,7 +16,6 @@ DIRS += [
 ]
 
 DIRS += [
-    "fxaccounts",
     "application-services/components/viaduct-necko",
 ]
 

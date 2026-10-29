@@ -41,40 +41,6 @@ async function getPromoCards() {
   };
 }
 
-async function mockDefaultFxAInstance() {
-  /**
-   * @typedef {object} MockFxAUtilityFunctions
-   * @property {function():void} mock - Makes the dummy values default, creating
-   *                             the illusion of a production FxA instance.
-   * @property {function():void} unmock - Restores the true defaults, creating
-   *                             the illusion of a custom FxA instance.
-   */
-
-  const defaultPrefs = Services.prefs.getDefaultBranch("");
-  const userPrefs = Services.prefs.getBranch("");
-  const realAuth = defaultPrefs.getCharPref("identity.fxaccounts.auth.uri");
-  const realRoot = defaultPrefs.getCharPref("identity.fxaccounts.remote.root");
-  const mockAuth = userPrefs.getCharPref("identity.fxaccounts.auth.uri");
-  const mockRoot = userPrefs.getCharPref("identity.fxaccounts.remote.root");
-  const mock = () => {
-    defaultPrefs.setCharPref("identity.fxaccounts.auth.uri", mockAuth);
-    defaultPrefs.setCharPref("identity.fxaccounts.remote.root", mockRoot);
-    userPrefs.clearUserPref("identity.fxaccounts.auth.uri");
-    userPrefs.clearUserPref("identity.fxaccounts.remote.root");
-  };
-  const unmock = () => {
-    defaultPrefs.setCharPref("identity.fxaccounts.auth.uri", realAuth);
-    defaultPrefs.setCharPref("identity.fxaccounts.remote.root", realRoot);
-    userPrefs.setCharPref("identity.fxaccounts.auth.uri", mockAuth);
-    userPrefs.setCharPref("identity.fxaccounts.remote.root", mockRoot);
-  };
-
-  mock();
-  registerCleanupFunction(unmock);
-
-  return { mock, unmock };
-}
-
 /**
  * Runs a test that checks the visibility of the Firefox Suggest preferences UI.
  * An initial Suggest enabled status is set and visibility is checked. Then a

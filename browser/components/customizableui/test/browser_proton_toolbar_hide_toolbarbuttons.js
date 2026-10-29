@@ -31,7 +31,6 @@ async function testToolbarButtons(aActions) {
     "downloads-button",
     "library-button",
     "sidebar-button",
-    "fxa-toolbar-menu-button",
   ];
   let oldState = CustomizableUI.getTestOnlyInternalProp("gSavedState");
 

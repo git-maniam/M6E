@@ -128,7 +128,6 @@ document.addEventListener(
         #alltabs-button,
         #pageActionButton,
         #downloads-button,
-        #fxa-toolbar-menu-button,
         #unified-extensions-button,
         #library-button
         `);
@@ -336,7 +335,6 @@ document.addEventListener(
         #alltabs-button,
         #pageActionButton,
         #downloads-button,
-        #fxa-toolbar-menu-button,
         #unified-extensions-button,
         #library-button,
         #split-view-button

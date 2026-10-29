@@ -8,20 +8,12 @@ const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
-  FXA_PWDMGR_HOST: "resource://gre/modules/FxAccountsCommon.sys.mjs",
-  FXA_PWDMGR_REALM: "resource://gre/modules/FxAccountsCommon.sys.mjs",
   LoginBreaches:
     "moz-src:///browser/components/aboutlogins/LoginBreaches.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
   PrivacyMetricsService:
     "moz-src:///browser/components/protections/PrivacyMetricsService.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
-});
-
-ChromeUtils.defineLazyGetter(lazy, "fxAccounts", () => {
-  return ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton();
 });
 
 XPCOMUtils.defineLazyServiceGetter(
@@ -42,33 +34,10 @@ let idToTextMap = new Map([
   [Ci.nsITrackingDBService.SOCIAL_ID, "social"],
 ]);
 
-const MONITOR_API_ENDPOINT = Services.urlFormatter.formatURLPref(
-  "browser.contentblocking.report.endpoint_url"
-);
-
-// The ID of the vpn subscription, if we see this ID attached to a user's account then they have subscribed to vpn.
-const VPN_SUB_ID = Services.prefs.getStringPref(
-  "browser.contentblocking.report.vpn_sub_id"
-);
-
-// Error messages
-const INVALID_OAUTH_TOKEN = "Invalid OAuth token";
-const USER_UNSUBSCRIBED_TO_MONITOR = "User is not subscribed to Monitor";
-const SERVICE_UNAVAILABLE = "Service unavailable";
-const UNEXPECTED_RESPONSE = "Unexpected response";
-const UNKNOWN_ERROR = "Unknown error";
-
-// Valid response info for successful Monitor data
-const MONITOR_RESPONSE_PROPS = [
-  "monitoredEmails",
-  "numBreaches",
-  "passwords",
-  "numBreachesResolved",
-  "passwordsResolved",
-];
+const FXA_PWDMGR_HOST = "chrome://FirefoxAccounts";
+const FXA_PWDMGR_REALM = "Firefox Accounts credentials";
 
 let gTestOverride = null;
-let monitorResponse = null;
 let entrypoint = "direct";
 
 export class AboutProtectionsParent extends JSWindowActorParent {
@@ -82,72 +51,6 @@ export class AboutProtectionsParent extends JSWindowActorParent {
   }
 
   /**
-   * Fetches and validates data from the Monitor endpoint. If successful, then return
-   * expected data. Otherwise, throw the appropriate error depending on the status code.
-   *
-   * @return valid data from endpoint.
-   */
-  async fetchUserBreachStats(token) {
-    if (monitorResponse && monitorResponse.timestamp) {
-      var timeDiff = Date.now() - monitorResponse.timestamp;
-      let oneDayInMS = 24 * 60 * 60 * 1000;
-      if (timeDiff >= oneDayInMS) {
-        monitorResponse = null;
-      } else {
-        return monitorResponse;
-      }
-    }
-
-    // Make the request
-    const headers = new Headers();
-    headers.append("Authorization", `Bearer ${token}`);
-    const request = new Request(MONITOR_API_ENDPOINT, { headers });
-    const response = await fetch(request);
-
-    if (response.ok) {
-      // Validate the shape of the response is what we're expecting.
-      const json = await response.json();
-
-      // Make sure that we're getting the expected data.
-      let isValid = null;
-      for (let prop in json) {
-        isValid = MONITOR_RESPONSE_PROPS.includes(prop);
-
-        if (!isValid) {
-          break;
-        }
-      }
-
-      monitorResponse = isValid ? json : new Error(UNEXPECTED_RESPONSE);
-      if (isValid) {
-        monitorResponse.timestamp = Date.now();
-      }
-    } else {
-      // Check the reason for the error
-      switch (response.status) {
-        case 400:
-        case 401:
-          monitorResponse = new Error(INVALID_OAUTH_TOKEN);
-          break;
-        case 404:
-          monitorResponse = new Error(USER_UNSUBSCRIBED_TO_MONITOR);
-          break;
-        case 503:
-          monitorResponse = new Error(SERVICE_UNAVAILABLE);
-          break;
-        default:
-          monitorResponse = new Error(UNKNOWN_ERROR);
-          break;
-      }
-    }
-
-    if (monitorResponse instanceof Error) {
-      throw monitorResponse;
-    }
-    return monitorResponse;
-  }
-
-  /**
    * Retrieves login data for the user.
    *
    * @return {{numLogins: number, potentiallyBreachedLogins: number, mobileDeviceConnected: boolean }}
@@ -157,20 +60,12 @@ export class AboutProtectionsParent extends JSWindowActorParent {
       return gTestOverride.getLoginData();
     }
 
-    try {
-      if (await lazy.fxAccounts.getSignedInUser()) {
-        await lazy.fxAccounts.device.refreshDeviceList();
-      }
-    } catch (e) {
-      console.error("There was an error fetching login data: ", e.message);
-    }
-
     const userFacingLogins =
       (await Services.logins.countLoginsAsync("", "", "")) -
       (await Services.logins.countLoginsAsync(
-        lazy.FXA_PWDMGR_HOST,
+        FXA_PWDMGR_HOST,
         null,
-        lazy.FXA_PWDMGR_REALM
+        FXA_PWDMGR_REALM
       ));
 
     let potentiallyBreachedLogins = null;
@@ -182,128 +77,13 @@ export class AboutProtectionsParent extends JSWindowActorParent {
         await lazy.LoginBreaches.getPotentialBreachesByLoginGUID(logins);
     }
 
-    let mobileDeviceConnected =
-      lazy.fxAccounts.device.recentDeviceList &&
-      lazy.fxAccounts.device.recentDeviceList.filter(
-        device => device.type == "mobile"
-      ).length;
-
     return {
       numLogins: userFacingLogins,
       potentiallyBreachedLogins: potentiallyBreachedLogins
         ? potentiallyBreachedLogins.size
         : 0,
-      mobileDeviceConnected,
+      mobileDeviceConnected: false,
     };
-  }
-
-  /**
-   * @typedef {object} ProtectionsMonitorData
-   * @property {number} monitoredEmails
-   * @property {number} numBreaches
-   * @property {number} passwords
-   * @property {?string} userEmail
-   * @property {boolean} error
-   */
-
-  /**
-   * Retrieves monitor data for the user.
-   *
-   * @return {ProtectionsMonitorData}
-   */
-  async getMonitorData() {
-    if (gTestOverride && "getMonitorData" in gTestOverride) {
-      monitorResponse = gTestOverride.getMonitorData();
-      monitorResponse.timestamp = Date.now();
-      // In a test, expect this to not fetch from the monitor endpoint due to the timestamp guaranteeing we use the cache.
-      monitorResponse = await this.fetchUserBreachStats();
-      return monitorResponse;
-    }
-
-    let monitorData = {};
-    let userEmail = null;
-    let token = await this.getMonitorScopedOAuthToken();
-
-    try {
-      if (token) {
-        monitorData = await this.fetchUserBreachStats(token);
-
-        // Send back user's email so the protections report can direct them to the proper
-        // OAuth flow on Monitor.
-        const { email } = await lazy.fxAccounts.getSignedInUser();
-        userEmail = email;
-      } else {
-        // If no account exists, then the user is not logged in with an fxAccount.
-        monitorData = {
-          errorMessage: "No account",
-        };
-      }
-    } catch (e) {
-      console.error(e.message);
-      monitorData.errorMessage = e.message;
-
-      // If the user's OAuth token is invalid, we clear the cached token and refetch
-      // again. If OAuth token is invalid after the second fetch, then the monitor UI
-      // will simply show the "no logins" UI version.
-      if (e.message === INVALID_OAUTH_TOKEN) {
-        await lazy.fxAccounts.removeCachedOAuthToken({ token });
-        token = await this.getMonitorScopedOAuthToken();
-
-        try {
-          monitorData = await this.fetchUserBreachStats(token);
-        } catch (_) {
-          console.error(e.message);
-        }
-      } else if (e.message === USER_UNSUBSCRIBED_TO_MONITOR) {
-        // Send back user's email so the protections report can direct them to the proper
-        // OAuth flow on Monitor.
-        const { email } = await lazy.fxAccounts.getSignedInUser();
-        userEmail = email;
-      } else {
-        monitorData.errorMessage = e.message || "An error ocurred.";
-      }
-    }
-
-    return {
-      ...monitorData,
-      userEmail,
-      error: !!monitorData.errorMessage,
-    };
-  }
-
-  async getMonitorScopedOAuthToken() {
-    let token = null;
-
-    try {
-      token = await lazy.fxAccounts.getOAuthToken({ service: "monitor" });
-    } catch (e) {
-      console.error(
-        "There was an error fetching the user's token: ",
-        e.message
-      );
-    }
-
-    return token;
-  }
-
-  async VPNSubStatus() {
-    // For testing, set vpn sub status manually
-    if (gTestOverride && "vpnOverrides" in gTestOverride) {
-      return gTestOverride.vpnOverrides();
-    }
-
-    let subscriptions;
-    try {
-      subscriptions = await lazy.fxAccounts.activeSubscriptions();
-    } catch (e) {
-      console.error(
-        "There was an error fetching the user's subscriptions: ",
-        e.message
-      );
-      // there was an error, assume user is not subscribed to VPN
-      return false;
-    }
-    return subscriptions.some(sub => sub.subscriptionId == VPN_SUB_ID);
   }
 
   async receiveMessage(aMessage) {
@@ -318,9 +98,6 @@ export class AboutProtectionsParent extends JSWindowActorParent {
         win.openPreferences("privacy-trackingprotection", {
           origin: "about-protections",
         });
-        break;
-      case "OpenSyncPreferences":
-        win.openTrustedLinkIn("about:preferences#sync", "tab");
         break;
       case "FetchContentBlockingEvents": {
         let dataToSend = {};
@@ -370,15 +147,8 @@ export class AboutProtectionsParent extends JSWindowActorParent {
         return dataToSend;
       }
 
-      case "FetchMonitorData":
-        return this.getMonitorData();
-
       case "FetchUserLoginsData":
         return this.getLoginData();
-
-      case "ClearMonitorCache":
-        monitorResponse = null;
-        break;
 
       case "RecordEntryPoint":
         entrypoint = aMessage.data.entrypoint;
@@ -386,9 +156,6 @@ export class AboutProtectionsParent extends JSWindowActorParent {
 
       case "FetchEntryPoint":
         return entrypoint;
-
-      case "FetchVPNSubStatus":
-        return this.VPNSubStatus();
 
       case "FetchShowVPNCard":
         return lazy.BrowserUtils.shouldShowVPNPromo();

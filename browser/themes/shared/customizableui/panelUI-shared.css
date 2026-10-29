@@ -152,9 +152,7 @@ panel toolbarseparator {
   }
 }
 
-#PanelUI-menu-button[badge-status="addon-alert"],
-#PanelUI-menu-button[badge-status="fxa-needs-authentication"],
-#fxa-toolbar-menu-button[badge-status="login_failed"] {
+#PanelUI-menu-button[badge-status="addon-alert"] {
   > .toolbarbutton-badge-stack > .toolbarbutton-badge {
     height: var(--icon-size-xsmall);
     background: url(chrome://global/skin/icons/warning-fill-12.svg) center / contain no-repeat transparent;
@@ -165,10 +163,6 @@ panel toolbarseparator {
     /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
     stroke: var(--toolbar-background-color);
   }
-}
-
-#fxa-toolbar-menu-button[badge-status="login_failed"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
-  display: flex;
 }
 
 .cui-widget-panel,
@@ -783,239 +777,8 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
   }
 }
 
-/* FxAccount indicator bits. */
-
-#fxa-menu-account-fxa-avatar {
-  pointer-events: none;
-  list-style-image: var(--avatar-image-url);
-  -moz-context-properties: fill;
-  fill: currentColor;
-}
-
-/* Handle different UI states. */
-
-#appMenu-mainView:not([showing-fxa-menu-message], [showing-default-cta-menu-message]) #appMenu-menu-message,
-#PanelUI-fxa:not([showing-fxa-menu-message]) #PanelUI-fxa-menu-message {
-  display: none;
-}
-
-#appMenu-menu-message,
-#PanelUI-fxa-menu-message {
+#appMenu-menu-message {
   contain: inline-size;
-}
-
-#appMenu-mainView[showing-fxa-menu-message] {
-  & #appMenu-fxa-status2,
-  & #appMenu-fxa-separator {
-    display: none;
-  }
-}
-
-/* When the user has never signed in and no menu message or update banner is
-   taking up the top of the app menu, show the richer sign-in promo in place of
-   the compact "Sync and Save Data" sign-in row. A user who signed out keeps the
-   compact row, which tells them so, and so does one who dismissed the promo. */
-#appMenu-fxa-sign-in-promo {
-  display: none;
-}
-
-/* FIXME(bug 2061145): Remove :has() usage, use showing-* selectors instead */
-/* stylelint-disable-next-line stylelint-plugin-mozilla/no-has-selector */
-:root[fxastatus="not_configured"]:not([fxadisabled="true"], [fxasignedout], [fxa-sign-in-promo-dismissed])
-  #appMenu-mainView:not([showing-fxa-menu-message], [showing-default-cta-menu-message]):not(:has(#appMenu-update-banner:not([hidden]))) {
-  & #appMenu-fxa-status2 {
-    display: none;
-  }
-
-  & #appMenu-fxa-sign-in-promo {
-    display: flex;
-  }
-}
-
-#PanelUI-fxa[showing-fxa-menu-message] #PanelUI-fxa-menu-manage-account-button,
-#PanelUI-fxa[showing-fxa-menu-message] #PanelUI-fxa-menu-sign-in-promo,
-#PanelUI-fxa[showing-fxa-menu-message] #PanelUI-fxa-menu-signed-out-card {
-  display: none;
-}
-
-#PanelUI-fxa-menu-sign-in-promo,
-#appMenu-fxa-sign-in-promo {
-  background-color: var(--promo-background-color-vibrant);
-  border-radius: var(--promo-border-radius);
-  @media not (forced-colors) {
-    color: var(--promo-message-text-color-vibrant);
-  }
-  /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-  padding: 10px;
-  gap: var(--space-small);
-  margin: 0 var(--space-medium) var(--space-medium);
-
-  & .fxa-menu-sign-in-promo-image {
-    width: var(--icon-size-xlarge);
-    height: auto;
-    flex-shrink: 0;
-  }
-
-  & .fxa-menu-sign-in-promo-text {
-    gap: var(--space-xxsmall);
-  }
-
-  & .fxa-menu-sign-in-promo-heading {
-    font-weight: var(--font-weight-heading);
-    margin: 0;
-  }
-
-  & .fxa-menu-sign-in-promo-message {
-    margin: 0;
-    font-size: var(--font-size-small);
-
-    :root[uidensity="compact"] & {
-      display: none;
-    }
-  }
-
-  :root[uidensity="compact"] & {
-    /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-    padding: 6px;
-  }
-}
-
-#appMenu-fxa-sign-in-promo {
-  gap: var(--card-gap-article);
-
-  :root[uidensity="compact"] & {
-    margin: var(--space-xsmall) var(--space-medium) var(--space-medium);
-  }
-}
-
-/* The outer padding enlarges the click target without growing the visible
-   button, and the equal negative margin cancels the growth of the box so the
-   icon stays put. The two must match, or the icon drifts. */
-#appMenu-fxa-sign-in-promo-dismiss-button {
-  --button-outer-padding-inline: 8px;
-  --button-outer-padding-block: 8px;
-
-  /* Align dismiss button to top corner to mimic card appearance in normal density */
-  align-self: start;
-  /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-  margin: calc(var(--button-outer-padding-block) * -1);
-
-  /* Compact leaves only 6px of inline padding for the slop to sit in, so an
-     8px one would reach past the promo's inline edge. The block axis has room
-     either way, since centring the button leaves more than 8px above it. */
-  :root[uidensity="compact"] & {
-    --button-outer-padding-inline: 6px;
-
-    align-self: center;
-    /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-    margin-inline: calc(var(--button-outer-padding-inline) * -1);
-  }
-}
-
-/* The account menu's signed-out card and the app menu's signed-out row are the
-   same component: copy explaining the state, next to a "Sign in" button. They
-   are spaced like the sync status card, which plays the same role further down
-   the account menu. */
-#PanelUI-fxa-menu-signed-out-card,
-#appMenu-fxa-signed-out-row {
-  gap: var(--space-medium);
-  padding: var(--panel-menuitem-padding);
-  margin: var(--panel-menuitem-margin);
-
-  & .fxa-menu-signed-out-avatar {
-    width: var(--icon-size-small);
-    height: var(--icon-size-small);
-    flex-shrink: 0;
-    -moz-context-properties: fill;
-    fill: currentColor;
-  }
-
-  & .fxa-menu-signed-out-text {
-    min-width: 0;
-    gap: var(--space-xxsmall);
-  }
-
-  & .fxa-menu-signed-out-email {
-    font-weight: var(--font-weight-semibold);
-  }
-
-  & .fxa-menu-signed-out-message {
-    margin-block: 0;
-    font-size: var(--font-size-small);
-    color: var(--text-color-error);
-  }
-}
-
-/* Error states */
-
-#appMenu-nova-fxa-label {
-  display: none;
-}
-
-#appMenu-fxa-status2 {
-  display: flex;
-
-  &[fxastatus] {
-    margin: 0;
-    padding: 0;
-  }
-
-  &:not([fxastatus]) {
-    padding-block: 0 var(--space-xxsmall);
-
-    @media not -moz-pref("browser.nova.enabled") {
-      > #appMenu-fxa-label2 {
-        padding: var(--space-small) var(--space-medium);
-        color: var(--button-text-color);
-        background-color: var(--button-background-color);
-        font-weight: var(--font-weight-semibold);
-
-        &:hover {
-          color: var(--button-text-color-hover);
-          background-color: var(--button-background-color-hover);
-        }
-
-        &:hover:active {
-          color: var(--button-text-color-active);
-          background-color: var(--button-background-color-active);
-        }
-      }
-    }
-
-    @media -moz-pref("browser.nova.enabled") {
-      > #appMenu-fxa-label2 {
-        display: none;
-      }
-
-      > #appMenu-nova-fxa-label {
-        display: flex;
-      }
-    }
-  }
-}
-
-#appMenu-fxa-text,
-#appMenu-fxa-status2[fxastatus] > #appMenu-fxa-label2 {
-  flex: 1;
-  align-self: center;
-}
-
-#appMenu-fxa-label2,
-#appMenu-fxa-label2 > vbox {
-  min-width: 0;
-}
-
-#appMenu-fxa-status2[fxastatus] > #appMenu-fxa-label2 > vbox > #appMenu-header-description {
-  font-weight: var(--font-weight-semibold);
-}
-
-:root[fxadisabled="true"] #appMenu-fxa-status2,
-:root[fxadisabled="true"] #appMenu-fxa-separator {
-  display: none;
-}
-
-#appMenu-fxa-label2 > vbox > label {
-  margin: 0;
 }
 
 /* FIXME(bug 2061145): We should track visible panel without using :has() */
@@ -1023,216 +786,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
 .panel-viewcontainer:has(#PanelUI-profiles[visible]) {
   /* FIXME: Why is !important needed here? */
   min-height: 0 !important;
-}
-
-#PanelUI-fxa-cta-menu .fxa-cta-button label {
-  margin: 0;
-}
-
-#appMenu-fxa-status2 {
-  &[fxastatus="login-failed"] #appMenu-fxa-label2::after {
-    content: url("chrome://global/skin/icons/warning.svg");
-    -moz-context-properties: fill;
-    fill: var(--icon-color-warning);
-  }
-
-  &[fxastatus="unverified"] #appMenu-fxa-label2::after {
-    content: url("chrome://global/skin/icons/info-filled.svg");
-    -moz-context-properties: fill;
-    /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-    fill: var(--panel-banner-item-info-icon-bgcolor);
-  }
-}
-
-#PanelUI-fxa-menu-manage-account-button {
-  align-items: center;
-  border-radius: var(--border-radius-circle);
-
-  > vbox {
-    min-width: 0;
-  }
-
-  & .fxa-menu-manage-account-avatar {
-    width: var(--icon-size-xlarge);
-    height: var(--icon-size-xlarge);
-    flex-shrink: 0;
-    margin-inline-end: var(--space-medium);
-    border-radius: var(--border-radius-circle);
-    list-style-image: var(--avatar-image-url);
-    -moz-context-properties: fill;
-    fill: currentColor;
-  }
-
-  & .fxa-menu-manage-account-email {
-    font-weight: var(--font-weight-semibold);
-    margin-block: 0;
-  }
-
-  & .fxa-menu-manage-account-subtitle {
-    color: var(--text-color-deemphasized);
-    font-size: var(--font-size-small);
-    margin-block: 0;
-  }
-}
-
-/* Firefox Account Toolbar Panel */
-
-#fxa-avatar-image {
-  width: var(--icon-size);
-  height: var(--icon-size);
-}
-
-:root {
-  --avatar-image-url: url(chrome://browser/skin/fxa/avatar.svg);
-
-  &[fxastatus="not_configured"] {
-    --avatar-image-url: url(chrome://browser/skin/fxa/avatar-empty.svg);
-  }
-
-  /**
-   * If we're not showing the glowing badge, we'll switch to the cutout variant
-   * of avatar-empty. If we ARE showing the glowing badge, we don't want the
-   * cutout to appear.
-   */
-  &[fxastatus="not_configured"][fxa-avatar-icon-variant="human-circle"] {
-    #fxa-toolbar-menu-button {
-      --avatar-image-url: url(chrome://browser/skin/fxa/avatar-empty-circle.svg);
-    }
-
-    #fxa-toolbar-menu-button[showing-callout] {
-      --avatar-image-url: url(chrome://browser/skin/fxa/avatar-empty.svg);
-    }
-  }
-
-  /**
-   * Similar to the above for the fox variant of the icon, we only want to show
-   * the cutout variant if we're showing the glowing badge.
-   */
-  &[fxastatus="not_configured"][fxa-avatar-icon-variant="fox-circle"] {
-    #fxa-toolbar-menu-button {
-      --avatar-image-url: url(chrome://browser/skin/fxa/avatar-fox-circle.svg);
-    }
-
-    #fxa-toolbar-menu-button[showing-callout] {
-      --avatar-image-url: url(chrome://browser/skin/fxa/avatar-fox.svg);
-    }
-  }
-
-  /**
-   * This overrides the hidden state of the badge so that we can repurpose it
-   * for the "circle" that fills the little cut-out in the -circle avatar
-   * variants. We only do this if we're not currently showing the glowing badge
-   * on the button.
-   *
-   * This is pretty gross, but it's just for the signed-out avatar experiment,
-   * and I'm hoping we're okay accepting this until we decide whether or not
-   * one of these variants should be the default signed-out avatar. At that
-   * point, I'm hoping we can shift to something less gross (bug 1938106).
-   */
-  &[fxastatus="not_configured"][fxa-avatar-icon-variant$="-circle"] #fxa-toolbar-menu-button:not([showing-callout]) {
-    .avatar-container {
-      position: relative;
-
-      &:-moz-locale-dir(rtl) {
-        transform: scaleX(-1);
-      }
-    }
-
-    .avatar-container::after {
-      content: "";
-      position: absolute;
-      top: calc(var(--icon-size) - 6px);
-      /* Avatar icon size minus its circle width minus half of the little circle icon size */
-      left: calc(var(--icon-size) - 1px - 6px / 2);
-      /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-      height: 6px;
-      /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-      width: 6px;
-      background-image: url(chrome://browser/skin/fxa/circle.svg);
-      background-repeat: no-repeat;
-      background-position: center;
-      /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-      opacity: 0.43;
-
-      @media (prefers-color-scheme: dark) {
-        /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-        opacity: 0.67;
-      }
-    }
-  }
-
-  &:not([fxatoolbarmenu]) #fxa-toolbar-menu-button {
-    display: none;
-  }
-
-  @media not -moz-pref("identity.fxaccounts.toolbar.defaultVisible") {
-    /* Hide the FxA toolbar button when its in the nav-bar, until in use */
-    &[fxastatus="not_configured"] #widget-overflow-list > #fxa-toolbar-menu-button,
-    &[fxastatus="not_configured"] #nav-bar-customization-target > #fxa-toolbar-menu-button {
-      display: none;
-    }
-  }
-
-  /* Non-signedin statuses icons are not totally round. */
-  &[fxastatus="signedin"] #fxa-avatar-image {
-    border-radius: var(--border-radius-circle);
-  }
-
-  &[fxastatus="signedin"] #fxa-avatar-label {
-    display: none;
-  }
-
-  &:not([fxastatus="signedin"]) #PanelUI-fxa-menu-connect-device-button {
-    color: var(--text-color-disabled);
-  }
-}
-
-#fxa-avatar-image {
-  list-style-image: var(--avatar-image-url);
-}
-
-#fxa-avatar-label {
-  margin: 0;
-  margin-inline-start: var(--space-small);
-}
-
-#fxa-menu-header-title {
-  color: var(--panel-text-color);
-  text-wrap: wrap;
-}
-
-#fxa-menu-header-description {
-  color: var(--text-color-deemphasized);
-  font-weight: var(--font-weight-heading);
-  text-wrap: wrap;
-}
-
-.ctaMenuLogo {
-  width: var(--icon-size);
-  height: var(--icon-size);
-  margin-inline-end: var(--space-medium);
-}
-
-#PanelUI-fxa-menu-monitor-button {
-  list-style-image: url(chrome://browser/skin/fxa/monitor.svg);
-}
-
-#PanelUI-fxa-menu-relay-button {
-  list-style-image: url(chrome://browser/content/logos/relay-monochrome.svg);
-}
-
-#PanelUI-fxa-menu-vpn-button {
-  list-style-image: url("chrome://browser/skin/preferences/vpn-logo.svg");
-  -moz-context-properties: fill;
-  fill: currentColor;
-}
-
-#PanelUI-fxa-menu-create-profile-button {
-  list-style-image: url("chrome://global/skin/icons/users.svg");
-
-  > .toolbarbutton-icon {
-    margin-inline-end: var(--space-xsmall);
-  }
 }
 
 #PanelUI-fxa-menu-create-profile-content {
@@ -1261,47 +814,6 @@ toolbarbutton[constrain-size="true"][cui-areatype="panel"] > .toolbarbutton-badg
 
 #PanelUI-fxa-menu-create-profile-description {
   color: var(--text-color-deemphasized);
-}
-
-#PanelUI-fxa-menu-get-firefox-mobile {
-  list-style-image: url("chrome://browser/skin/device-phone.svg");
-  -moz-context-properties: fill;
-  fill: currentColor;
-
-  /* Match the icon-to-text gap of the sync status button above it, whose icon
-     uses margin-inline-end: var(--space-medium). */
-  > .toolbarbutton-text {
-    padding-inline-start: var(--space-medium);
-  }
-}
-
-:root:not([fxastatus="signedin"]) #PanelUI-fxa-menu-connect-device-button {
-  color: var(--text-color-disabled);
-}
-
-.fxaMonitorLogo {
-  margin-top: var(--space-large);
-  height: var(--size-image-xlarge);
-  width: var(--size-image-xlarge);
-}
-
-.fxaMonitorLogo {
-  list-style-image: url(chrome://browser/content/logos/monitor.svg);
-}
-
-.PanelUI-fxa-service-description-label {
-  margin: 0;
-  text-align: center;
-  text-shadow: none;
-  max-width: 15em;
-  margin-top: var(--space-medium);
-}
-
-.PanelUI-fxa-signin-button {
-  margin-block: var(--space-large);
-  /* stylelint-disable-next-line stylelint-plugin-mozilla/use-design-tokens */
-  min-width: 200px;
-  padding: var(--space-large);
 }
 
 #customization-palette .toolbarbutton-text {
@@ -1397,32 +909,6 @@ panelview .toolbarbutton-1,
 
 #appMenu-profiles-button > .toolbarbutton-text {
   flex: 1;
-}
-
-#PanelUI-fxa-menu-all-profiles-list {
-  overflow: hidden auto;
-}
-
-#PanelUI-fxa-menu-all-profiles-list .profile-item-labels {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-
-  > label {
-    margin: 0;
-  }
-}
-
-#PanelUI-fxa-menu-all-profiles-list .profile-item-current-label {
-  color: var(--text-color-deemphasized);
-}
-
-#PanelUI-fxa-menu-all-profiles-list .profile-item-check-icon {
-  -moz-context-properties: fill;
-  fill: currentColor;
-  width: var(--size-item-small);
-  height: var(--size-item-small);
 }
 
 /* Set the --appmenu-profiles-theme-bg and --appmenu-profiles-theme-fg
@@ -1670,8 +1156,6 @@ toolbarbutton[itemtype="tab"].PanelUI-tabitem-container,
   fill: currentColor;
 }
 
-#fxa-menu-account-fxa-avatar,
-#appMenu-fxa-label > .toolbarbutton-icon,
 #PanelUI-containersItems > .subviewbutton > .toolbarbutton-icon,
 .PanelUI-tabitem-container > toolbarbutton[itemtype="tab"] > .toolbarbutton-icon,
 #PanelUI-recentlyClosedWindows > toolbarbutton > .toolbarbutton-icon,
@@ -2771,17 +2255,6 @@ radiogroup:focus-visible > .subviewradio[focused="true"] {
 #PanelUI-profiles {
   height: fit-content;
   min-height: 0 !important;
-}
-
-/* ----- Profiles FxA panel ----- */
-
-/* Special case: hide the profiles menuitem and its separator if the FxA/Sync
- * panel is shown as a submenu of the app menu, rather than anchored to the
- * FxA/Sync toolbar button. */
-#appMenu-popup
-  panelmultiview[mainViewId="appMenu-mainView"]
-  :is(#PanelUI-fxa-menu-profiles-header-label, #PanelUI-fxa-menu-profile-buttons, #PanelUI-fxa-menu-profiles-separator) {
-  display: none;
 }
 
 /* ----- Content Analysis indicator panel ----- */

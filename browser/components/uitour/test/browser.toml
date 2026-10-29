@@ -70,6 +70,4 @@ skip-if = [
 
 ["browser_closeTab.js"]
 
-["browser_fxa_config.js"]
-
 ["browser_openPreferences.js"]

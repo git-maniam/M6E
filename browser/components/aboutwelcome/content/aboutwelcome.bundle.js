@@ -94,23 +94,6 @@ const MultiStageUtils = {
       this.sendActionTelemetry(messageId, elementId, "DISMISS", context);
     }
   },
-  async fetchFlowParams(metricsFlowUri) {
-    let flowParams;
-    try {
-      const response = await fetch(metricsFlowUri, {
-        credentials: "omit",
-      });
-      if (response.status === 200) {
-        const { deviceId, flowId, flowBeginTime } = await response.json();
-        flowParams = { deviceId, flowId, flowBeginTime };
-      } else {
-        console.error("Non-200 response", response);
-      }
-    } catch (e) {
-      flowParams = null;
-    }
-    return flowParams;
-  },
   sendEvent(type, detail) {
     document.dispatchEvent(
       new CustomEvent(`AWPage:${type}`, {
@@ -286,18 +269,6 @@ const MultiStageAboutWelcome = props => {
       setPreviousOrder(index);
     })();
   }, [index, didMount]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [flowParams, setFlowParams] = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null);
-  const {
-    metricsFlowUri
-  } = props;
-  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(() => {
-    (async () => {
-      if (metricsFlowUri) {
-        setFlowParams(await _lib_multistage_utils_mjs__WEBPACK_IMPORTED_MODULE_2__.MultiStageUtils.fetchFlowParams(metricsFlowUri));
-      }
-    })();
-  }, [metricsFlowUri]);
 
   // Allow "in" style to render to actually transition towards regular state,
   // which also makes using browser back/forward navigation skip transitions.
@@ -540,7 +511,6 @@ const MultiStageAboutWelcome = props => {
       advanceOnExperimentLoad: currentScreen.advance_on_experiment_load,
       messageId: `${props.message_id}_${order}_${currentScreen.id}`,
       UTMTerm: props.utm_term,
-      flowParams: flowParams,
       activeTheme: activeTheme,
       activeThemeId: activeThemeId,
       initialTheme: initialTheme,
@@ -755,37 +725,14 @@ class WelcomeScreen extends (react__WEBPACK_IMPORTED_MODULE_0___default().PureCo
     super(props);
     this.handleAction = this.handleAction.bind(this);
   }
-  handleOpenURL(action, flowParams, UTMTerm) {
+  handleOpenURL(action, UTMTerm) {
     let {
       type,
       data
     } = action;
-    if (type === "SHOW_FIREFOX_ACCOUNTS") {
-      let params = {
-        ..._lib_addUtmParams_mjs__WEBPACK_IMPORTED_MODULE_7__.BASE_PARAMS,
-        utm_term: `${UTMTerm}-screen`
-      };
-      if (action.addFlowParams && flowParams) {
-        params = {
-          ...params,
-          ...flowParams
-        };
-      }
-      data = {
-        ...data,
-        extraParams: {
-          ...params,
-          ...data?.extraParams
-        }
-      };
-    } else if (type === "OPEN_URL") {
+    if (type === "OPEN_URL") {
       let url = new URL(data.args);
       (0,_lib_addUtmParams_mjs__WEBPACK_IMPORTED_MODULE_7__.addUtmParams)(url, `${UTMTerm}-screen`);
-      if (action.addFlowParams && flowParams) {
-        url.searchParams.append("device_id", flowParams.deviceId);
-        url.searchParams.append("flow_id", flowParams.flowId);
-        url.searchParams.append("flow_begin_time", flowParams.flowBeginTime);
-      }
       data = {
         ...data,
         args: url.toString()
@@ -874,8 +821,8 @@ class WelcomeScreen extends (react__WEBPACK_IMPORTED_MODULE_0___default().PureCo
     if (action.collectTextInput && Object.values(props.textInputs).length) {
       this.setTextInputActions(action);
     }
-    if (["OPEN_URL", "SHOW_FIREFOX_ACCOUNTS"].includes(action.type)) {
-      this.handleOpenURL(action, props.flowParams, props.UTMTerm);
+    if (action.type === "OPEN_URL") {
+      this.handleOpenURL(action, props.UTMTerm);
     } else if (action.type === "INSTALL_ADDON_FROM_URL") {
       const url = props.addonURL && props.isRtamo ? props.addonURL : action.data?.url;
       // Set add-on url in action.data.url property from JSON
@@ -888,9 +835,6 @@ class WelcomeScreen extends (react__WEBPACK_IMPORTED_MODULE_0___default().PureCo
       let actionPromise = _lib_multistage_utils_mjs__WEBPACK_IMPORTED_MODULE_2__.MultiStageUtils.handleUserAction(action);
       if (action.needsAwait) {
         actionResult = await actionPromise;
-      }
-      if (action.type === "FXA_SIGNIN_FLOW") {
-        _lib_multistage_utils_mjs__WEBPACK_IMPORTED_MODULE_2__.MultiStageUtils.sendActionTelemetry(props.messageId, actionResult ? "sign_in" : "sign_in_cancel", "FXA_SIGNIN_FLOW");
       }
       // Wait until migration closes to complete the action
       await this.handleMigrationIfNeeded(action, props);
@@ -7397,22 +7341,7 @@ function _extends() { return _extends = Object.assign ? Object.assign.bind() : f
 
 
 class AboutWelcome extends (react__WEBPACK_IMPORTED_MODULE_0___default().PureComponent) {
-  constructor(props) {
-    super(props);
-    this.state = {
-      metricsFlowUri: null
-    };
-    this.fetchFxAFlowUri = this.fetchFxAFlowUri.bind(this);
-  }
-  async fetchFxAFlowUri() {
-    this.setState({
-      metricsFlowUri: await window.AWGetFxAMetricsFlowURI?.()
-    });
-  }
   componentDidMount() {
-    if (!this.props.skipFxA) {
-      this.fetchFxAFlowUri();
-    }
     if (document.location.href === "about:welcome") {
       // Record impression with performance data after allowing the page to load
       const recordImpression = domState => {
@@ -7458,7 +7387,6 @@ class AboutWelcome extends (react__WEBPACK_IMPORTED_MODULE_0___default().PureCom
       message_id: props.messageId,
       defaultScreens: props.screens,
       updateHistory: !props.disableHistoryUpdates,
-      metricsFlowUri: this.state.metricsFlowUri,
       utm_term: props.UTMTerm,
       transitions: props.transitions,
       backdrop: props.backdrop,

@@ -112,12 +112,6 @@ user_pref("geo.provider.network.timeToWaitBeforeSending", 2000);
 user_pref("geo.provider.network.url", "http://{server}/tests/dom/geolocation/test/mochitest/network_geolocation.sjs");
 user_pref("gfx.color_management.force_srgb", true);
 user_pref("gfx.logging.level", 1);
-// We don't want to hit the real Firefox Accounts server for tests.  We don't
-// actually need a functioning FxA server, so just set it to something that
-// resolves and accepts requests, even if they all fail.
-user_pref("identity.fxaccounts.auth.uri", "https://{server}/fxa-dummy/");
-// Ditto for all the FxA content root URI.
-user_pref("identity.fxaccounts.remote.root", "https://{server}/");
 // Make sure CSS error reporting is enabled for tests
 user_pref("layout.css.report_errors", true);
 user_pref("media.cache_size", 1000);

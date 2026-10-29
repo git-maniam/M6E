@@ -1,11 +1,9 @@
 # Images of Firefox's fox mascot (Kit) and Firefox logos that are replaced
 # with the M6E icon by replace-fox-art.sh. One repository path per line.
-browser/base/content/kit-signed-out.svg
 browser/base/content/logos/share-firefox.svg
 browser/components/aboutwelcome/assets/br-amo-fox-paint.svg
 browser/components/aboutwelcome/assets/br-backup-fox-in-box.svg
 browser/components/aboutwelcome/assets/br-backup-fox-outside-box.svg
-browser/components/aboutwelcome/assets/br-fxa-fox-mirror.svg
 browser/components/aboutwelcome/assets/br-gratitude-fox-rock.svg
 browser/components/aboutwelcome/assets/br-import-fox-house.svg
 browser/components/aboutwelcome/assets/br-kit-with-heart.svg
@@ -70,8 +68,6 @@ browser/extensions/newtab/data/content/assets/widgets-cta.svg
 browser/fxr/content/assets/icon-logo-settings-preview.png
 browser/themes/shared/addons/extensions-panel-empty-onboarding.svg
 browser/themes/shared/addons/extensions-panel-empty.svg
-browser/themes/shared/fxa/avatar-fox-circle.svg
-browser/themes/shared/fxa/avatar-fox.svg
 browser/themes/shared/icons/firefox-view.svg
 browser/themes/shared/icons/window-firefox.svg
 browser/themes/shared/identity-block/trustpanel-graphic-disabled.svg

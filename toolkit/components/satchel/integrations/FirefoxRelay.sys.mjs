@@ -48,14 +48,6 @@ const gConfig = (function () {
 ChromeUtils.defineLazyGetter(lazy, "log", () =>
   LoginHelper.createLogger("FirefoxRelay")
 );
-ChromeUtils.defineLazyGetter(lazy, "fxAccounts", () =>
-  ChromeUtils.importESModule(
-    "resource://gre/modules/FxAccounts.sys.mjs"
-  ).getFxAccountsSingleton()
-);
-ChromeUtils.defineLazyGetter(lazy, "fxAccountsCommon", () =>
-  ChromeUtils.importESModule("resource://gre/modules/FxAccountsCommon.sys.mjs")
-);
 ChromeUtils.defineLazyGetter(lazy, "strings", function () {
   return new Localization([
     "branding/brand.ftl",
@@ -87,26 +79,14 @@ const RELAY_PROFILE_CACHE_TS_PREF =
   "signon.firefoxRelay.profileInfo.cacheTimestamp";
 
 async function getRelayTokenAsync() {
-  try {
-    return await lazy.fxAccounts.getOAuthToken({ service: "relay" });
-  } catch (e) {
-    console.error(`There was an error getting the user's token: ${e.message}`);
-    return undefined;
-  }
+  return undefined;
 }
 
 async function hasFirefoxAccountAsync() {
-  if (!lazy.fxAccounts.constructor.config.isProductionConfig()) {
-    return false;
-  }
-  return lazy.fxAccounts.hasLocalSession();
+  return false;
 }
 
-async function fetchWithReauth(
-  browser,
-  createRequest,
-  canGetFreshOAuthToken = true
-) {
+async function fetchWithReauth(browser, createRequest) {
   const relayToken = await getRelayTokenAsync();
   if (!relayToken) {
     if (browser) {
@@ -122,14 +102,7 @@ async function fetchWithReauth(
     "Content-Type": "application/json",
   });
 
-  const request = createRequest(headers);
-  const response = await fetch(request);
-
-  if (canGetFreshOAuthToken && response.status == 401) {
-    await lazy.fxAccounts.removeCachedOAuthToken({ token: relayToken });
-    return fetchWithReauth(browser, createRequest, false);
-  }
-  return response;
+  return fetch(createRequest(headers));
 }
 
 async function getReusableMasksAsync(browser, _origin) {
@@ -191,20 +164,6 @@ async function showErrorAsync(browser, messageId, messageArgs) {
   );
 }
 
-function customizeNotificationHeader(notification) {
-  if (!notification) {
-    return;
-  }
-  const document = notification.owner.panel.ownerDocument;
-  const description = document.querySelector(
-    `description[popupid=${notification.id}]`
-  );
-  const headerTemplate = document.getElementById(
-    "firefox-relay-header-with-domain-and-value-prop"
-  );
-  description.replaceChildren(headerTemplate.firstChild.cloneNode(true));
-}
-
 async function formatMessages(...ids) {
   for (let i in ids) {
     if (typeof ids[i] == "string") {
@@ -222,34 +181,6 @@ async function formatMessages(...ids) {
     }
     return message.value;
   });
-}
-
-function getPostpone(postponeStrings, feature) {
-  return {
-    label: postponeStrings.label,
-    accessKey: postponeStrings.accesskey,
-    dismiss: true,
-    callback() {
-      lazy.log.info(
-        "user decided not to decide about Firefox Relay integration"
-      );
-      feature.markAsOffered();
-      Glean.relayIntegration.postponedOptInPanel.record({ value: gFlowId });
-    },
-  };
-}
-
-function getDisableIntegration(disableStrings, feature) {
-  return {
-    label: disableStrings.label,
-    accessKey: disableStrings.accesskey,
-    dismiss: true,
-    callback() {
-      lazy.log.info("user opted out from Firefox Relay integration");
-      feature.markAsDisabled();
-      Glean.relayIntegration.disabledOptInPanel.record({ value: gFlowId });
-    },
-  };
 }
 
 async function showReusableMasksAsync(browser, origin, error) {
@@ -724,300 +655,6 @@ class RelayOffered {
       });
     }
   }
-
-  async notifyServerTermsAcceptedAsync(browser) {
-    const response = await fetchWithReauth(
-      browser,
-      headers =>
-        new Request(gConfig.acceptTermsUrl, {
-          method: "POST",
-          headers,
-        })
-    );
-
-    if (!response?.ok) {
-      lazy.log.error(
-        `failed to notify server that terms are accepted : ${response?.status}:${response?.statusText}`
-      );
-
-      await showErrorAsync(browser, "firefox-relay-mask-generation-failed", {
-        status: response.status,
-      });
-      return false;
-    }
-
-    return true;
-  }
-
-  async offerRelayIntegration(feature, browser, origin) {
-    const fxaUser = await lazy.fxAccounts.getSignedInUser();
-    if (!fxaUser) {
-      return this.offerRelayIntegrationToSignedOutUser(
-        feature,
-        browser,
-        origin
-      );
-    }
-    return this.offerRelayIntegrationToFxAUser(
-      feature,
-      browser,
-      origin,
-      fxaUser
-    );
-  }
-
-  async offerRelayIntegrationToSignedOutUser(feature, browser, origin) {
-    const { PopupNotifications } = browser.documentGlobal.wrappedJSObject;
-    let fillUsername;
-    const fillUsernamePromise = new Promise(
-      resolve => (fillUsername = resolve)
-    );
-    const [enableStrings, disableStrings, postponeStrings] =
-      await formatMessages(
-        "firefox-relay-and-fxa-opt-in-confirmation-enable-button-with-domain-and-value-prop",
-        "firefox-relay-and-fxa-opt-in-confirmation-disable",
-        "firefox-relay-and-fxa-opt-in-confirmation-postpone"
-      );
-    const enableIntegration = {
-      label: enableStrings.label,
-      accessKey: enableStrings.accesskey,
-      dismiss: true,
-      callback: async () => {
-        lazy.log.info(
-          "user opted in to Mozilla account and Firefox Relay integration"
-        );
-        // Capture the flowId here since async operations might take some time to resolve
-        // and by then gFlowId might have another value
-        const flowId = gFlowId;
-        Glean.relayIntegration.enabledOptInPanel.record({ value: flowId });
-
-        // Capture the selected tab panel ID so we can come back to it after the
-        // user finishes FXA sign-in
-        const tabPanelId =
-          browser.documentGlobal.gBrowser.selectedTab.linkedPanel;
-
-        // TODO: add some visual treatment to the tab and/or the form field to
-        // indicate to the user that they need to complete sign-in to receive a
-        // mask
-
-        // Add an observer for ONVERIFIED_NOTIFICATION
-        // to detect if a new FxA user verifies their email during sign-up,
-        // and add an observer for ONLOGIN_NOTIFICATION
-        // to detect if an existing FxA user logs in.
-        const notificationsToObserve = [
-          lazy.fxAccountsCommon.ONVERIFIED_NOTIFICATION,
-          lazy.fxAccountsCommon.ONLOGIN_NOTIFICATION,
-        ];
-        const obs = async (_subject, topic) => {
-          // When a user first signs up for FxA, Firefox receives an
-          // ONLOGIN_NOTIFICATION *before* the user verifies their email
-          // address. We can't forward any Relay emails until they verify their
-          // email address, so we shouldn't call notifyServerTermsAcceptedAsync.
-          // So, ignore login notifications for unverified users.
-          if (topic == lazy.fxAccountsCommon.ONLOGIN_NOTIFICATION) {
-            const fxaUser = await lazy.fxAccounts.getSignedInUser();
-            if (!fxaUser || !fxaUser.verified) {
-              return;
-            }
-          }
-          // Remove the observers to prevent them from running again
-          for (const observedNotification of notificationsToObserve) {
-            Services.obs.removeObserver(obs, observedNotification);
-          }
-
-          // Go back to the tab with the form that started the FXA sign-in flow
-          const tabToFocus = Array.from(
-            browser.documentGlobal.gBrowser.tabs
-          ).find(tab => tab.linkedPanel === tabPanelId);
-          if (!tabToFocus) {
-            // If the tab has been closed, return
-            // TODO: figure out the real UX here?
-            return;
-          }
-
-          // TODO: Update the visual treatment to the form field to indicate to
-          // the user that we are hiding their email address.
-
-          browser.documentGlobal.gBrowser.selectedTab = tabToFocus;
-
-          // Create the relay user, mark feature enabled, fill in the username
-          // field with a mask
-          // FIXME: If the Relay server user record is corrupted (See MPP-3512),
-          // notifyServerTermsAcceptedAsync receives a 500 error from Relay
-          // server. But we can't use fxAccounts.listAttachedOAuthClients to
-          // detect if the user already has Desktop Relay, because Desktop
-          // Relay does not show up as an OAuth client
-          if (await this.notifyServerTermsAcceptedAsync(browser)) {
-            feature.markAsEnabled();
-            fillUsername(await generateUsernameAsync(browser, origin));
-            Glean.relayIntegration.placedEmailMask.record({ value: gFlowId });
-          }
-        };
-        for (const notificationToObserve of notificationsToObserve) {
-          Services.obs.addObserver(obs, notificationToObserve);
-        }
-
-        // Open tab to sign up for FxA and Relay
-        const fxaUrl =
-          await lazy.fxAccounts.constructor.config.promiseConnectAccountURI(
-            "relay",
-            "relay_integration",
-            {
-              utm_source: "relay-integration",
-              utm_medium: "firefox-desktop",
-            }
-          );
-        browser.documentGlobal.openWebLinkIn(fxaUrl, "tab");
-      },
-    };
-    const postpone = getPostpone(postponeStrings, feature);
-    const disableIntegration = getDisableIntegration(disableStrings, feature);
-    let notification;
-    feature.markAsOffered();
-    notification = PopupNotifications.show(
-      browser,
-      "fxa-and-relay-integration-offer-with-domain-and-value-prop",
-      "", // content is provided after popup shown
-      "password-notification-icon",
-      enableIntegration,
-      [postpone, disableIntegration],
-      {
-        autofocus: true,
-        removeOnDismissal: true,
-        hideClose: true,
-        eventCallback: event => {
-          switch (event) {
-            case "shown": {
-              const document = notification.owner.panel.ownerDocument;
-              customizeNotificationHeader(notification);
-              document.querySelector(
-                '[data-l10n-name="firefox-relay-learn-more-url"]'
-              ).href = gConfig.learnMoreURL;
-              const baseDomain = Services.eTLD.getBaseDomain(
-                Services.io.newURI(origin)
-              );
-              document.querySelector(
-                '[data-l10n-name="firefox-fxa-and-relay-offer-domain"]'
-              ).textContent = baseDomain;
-              const tosLink = document.querySelector(
-                ".firefox-fxa-and-relay-offer-tos-url"
-              );
-              if (tosLink) {
-                tosLink.href = gConfig.termsOfServiceUrl;
-              }
-              const privacyPolicyLink = document.querySelector(
-                ".firefox-fxa-and-relay-offer-privacy-url"
-              );
-              if (privacyPolicyLink) {
-                privacyPolicyLink.href = gConfig.privacyPolicyUrl;
-              }
-              Glean.relayIntegration.shownOptInPanel.record({ value: gFlowId });
-              break;
-            }
-          }
-        },
-      }
-    );
-    return fillUsernamePromise;
-  }
-
-  async offerRelayIntegrationToFxAUser(feature, browser, origin, fxaUser) {
-    const { PopupNotifications } = browser.documentGlobal.wrappedJSObject;
-    let fillUsername;
-    const fillUsernamePromise = new Promise(
-      resolve => (fillUsername = resolve)
-    );
-    const [enableStrings, disableStrings, postponeStrings] =
-      await formatMessages(
-        "firefox-relay-opt-in-confirmation-enable-button",
-        "firefox-relay-opt-in-confirmation-disable",
-        "firefox-relay-opt-in-confirmation-postpone"
-      );
-    const enableIntegration = {
-      label: enableStrings.label,
-      accessKey: enableStrings.accesskey,
-      dismiss: true,
-      callback: async () => {
-        lazy.log.info("user opted in to Firefox Relay integration");
-        // Capture the flowId here since async operations might take some time to resolve
-        // and by then gFlowId might have another value
-        const flowId = gFlowId;
-        Glean.relayIntegration.enabledOptInPanel.record({ value: flowId });
-
-        if (await this.notifyServerTermsAcceptedAsync(browser)) {
-          feature.markAsEnabled();
-          fillUsername(await generateUsernameAsync(browser, origin));
-          Glean.relayIntegration.placedEmailMask.record({ value: gFlowId });
-        }
-      },
-    };
-    const postpone = getPostpone(postponeStrings, feature);
-    const disableIntegration = getDisableIntegration(disableStrings, feature);
-    let notification;
-    feature.markAsOffered();
-    notification = PopupNotifications.show(
-      browser,
-      "relay-integration-offer",
-      "", // content is provided after popup shown
-      "password-notification-icon",
-      enableIntegration,
-      [postpone, disableIntegration],
-      {
-        autofocus: true,
-        removeOnDismissal: true,
-        hideClose: false,
-        eventCallback: event => {
-          switch (event) {
-            case "shown": {
-              const document = notification.owner.panel.ownerDocument;
-              customizeNotificationHeader(notification);
-              const learnMore = document.querySelector(
-                '[data-l10n-name="firefox-relay-learn-more-url"]'
-              );
-              if (learnMore) {
-                learnMore.href = gConfig.learnMoreURL;
-              }
-              const baseDomain = Services.eTLD.getBaseDomain(
-                Services.io.newURI(origin)
-              );
-              document.querySelector(
-                '[data-l10n-name="firefox-fxa-and-relay-offer-domain"]'
-              ).textContent = baseDomain;
-              const tosLink = document.querySelector(
-                ".firefox-fxa-and-relay-offer-tos-url"
-              );
-              if (tosLink) {
-                tosLink.href = gConfig.termsOfServiceUrl;
-              }
-              const privacyLink = document.querySelector(
-                ".firefox-fxa-and-relay-offer-privacy-url"
-              );
-              if (privacyLink) {
-                privacyLink.href = gConfig.privacyPolicyUrl;
-              }
-              document.l10n.setAttributes(
-                document
-                  .querySelector(
-                    `popupnotification[id=${notification.id}-notification] popupnotificationcontent`
-                  )
-                  .querySelector(
-                    "[id=firefox-relay-offer-what-relay-provides]"
-                  ),
-                "firefox-relay-offer-what-relay-provides",
-                {
-                  useremail: fxaUser.email,
-                }
-              );
-              Glean.relayIntegration.shownOptInPanel.record({ value: gFlowId });
-              break;
-            }
-          }
-        },
-      }
-    );
-    getRelayTokenAsync();
-    return fillUsernamePromise;
-  }
 }
 
 class RelayEnabled {
@@ -1135,15 +772,6 @@ class RelayFeature extends OptInFeature {
         ""
       );
       if (featureStatus !== "enabled") {
-        return null;
-      }
-
-      if (!lazy.fxAccounts.constructor.config.isProductionConfig()) {
-        return null;
-      }
-
-      const hasSession = await lazy.fxAccounts.hasLocalSession();
-      if (!hasSession) {
         return null;
       }
 

@@ -942,13 +942,6 @@ export const ASRouterTriggerListeners = new Map([
       },
 
       observe(aSubject, aTopic) {
-        if (aSubject.currentURI.asciiHost === "accounts.firefox.com") {
-          // Don't notify about saved logins on the FxA login origin since this
-          // trigger is used to promote login Sync and getting a recommendation
-          // to enable Sync during the sign up process is a bad UX.
-          return;
-        }
-
         switch (aTopic) {
           case "LoginStats:NewSavedPassword": {
             this._triggerHandler(aSubject, {

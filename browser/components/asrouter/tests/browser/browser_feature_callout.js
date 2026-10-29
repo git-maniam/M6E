@@ -491,18 +491,6 @@ add_task(async function multiple_page_event_listeners_every_window() {
         dismiss: true,
       },
     },
-    {
-      params: {
-        type: "click",
-        selectors: "#fxa-toolbar-menu-button",
-        options: {
-          every_window: true,
-        },
-      },
-      action: {
-        dismiss: true,
-      },
-    },
   ];
   const sandbox = sinon.createSandbox();
   const spy = new TelemetrySpy(sandbox);

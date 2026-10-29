@@ -8,14 +8,14 @@
 add_task(async function () {
   await startCustomizing();
   let devButton = document.getElementById("developer-button");
-  let fxaButton = document.getElementById("fxa-toolbar-menu-button");
+  let downloadsButton = document.getElementById("downloads-button");
   let stopReloadButton = document.getElementById("stop-reload-button");
   let palette = document.getElementById("customization-palette");
   ok(
-    devButton && fxaButton && stopReloadButton && palette,
+    devButton && downloadsButton && stopReloadButton && palette,
     "Stuff should exist"
   );
-  simulateItemDrag(devButton, fxaButton);
+  simulateItemDrag(devButton, downloadsButton);
   simulateItemDrag(stopReloadButton, palette);
   await gCustomizeMode.reset();
   ok(CustomizableUI.inDefaultState, "Should be back in default state");

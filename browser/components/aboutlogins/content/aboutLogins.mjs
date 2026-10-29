@@ -10,7 +10,6 @@ import {
 // The init code isn't wrapped in a DOMContentLoaded/load event listener so the
 // page works properly when restored from session restore.
 const gElements = {
-  fxAccountsButton: document.querySelector("fxaccounts-button"),
   loginList: document.querySelector("login-list"),
   loginIntro: document.querySelector("login-intro"),
   loginItem: document.querySelector("login-item"),
@@ -43,16 +42,6 @@ function handleAllLogins(logins) {
   gElements.loginList.setLogins(logins);
   numberOfLogins = logins.length;
   updateNoLogins();
-}
-
-let fxaLoggedIn = null;
-let passwordSyncEnabled = null;
-
-function handleSyncState(syncState) {
-  gElements.fxAccountsButton.updateState(syncState);
-  gElements.loginIntro.updateState(syncState);
-  fxaLoggedIn = syncState.loggedIn;
-  passwordSyncEnabled = syncState.passwordSyncEnabled;
 }
 
 window.addEventListener("AboutLoginsChromeToContent", event => {
@@ -134,7 +123,7 @@ window.addEventListener("AboutLoginsChromeToContent", event => {
         event.detail.value.preselectedLogin
       );
       handleAllLogins(event.detail.value.logins);
-      handleSyncState(event.detail.value.syncState);
+      gElements.loginIntro.updateState();
       gElements.loginList.setSortDirection(event.detail.value.selectedSort);
       if (!event.detail.value.importVisible) {
         gElements.menuButton.shadowRoot.querySelector(
@@ -147,10 +136,6 @@ window.addEventListener("AboutLoginsChromeToContent", event => {
     }
     case "ShowLoginItemError": {
       gElements.loginItem.showLoginItemError(event.detail.value);
-      break;
-    }
-    case "SyncState": {
-      handleSyncState(event.detail.value);
       break;
     }
     case "UpdateBreaches": {
@@ -168,14 +153,10 @@ window.addEventListener("AboutLoginsChromeToContent", event => {
 
 window.addEventListener("AboutLoginsRemoveAllLoginsDialog", () => {
   let loginItem = document.querySelector("login-item");
-  let options = {};
-  if (fxaLoggedIn && passwordSyncEnabled) {
-    options.title = "about-logins-confirm-remove-all-sync-dialog-title2";
-    options.message = "about-logins-confirm-remove-all-sync-dialog-message3";
-  } else {
-    options.title = "about-logins-confirm-remove-all-dialog-title2";
-    options.message = "about-logins-confirm-remove-all-dialog-message2";
-  }
+  let options = {
+    title: "about-logins-confirm-remove-all-dialog-title2",
+    message: "about-logins-confirm-remove-all-dialog-message2",
+  };
   options.confirmCheckboxLabel =
     "about-logins-confirm-remove-all-dialog-checkbox-label2";
   options.confirmButtonLabel =

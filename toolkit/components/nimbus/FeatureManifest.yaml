@@ -3917,110 +3917,6 @@ safeBrowsingRealTime:
         branch: default
         pref: "browser.safebrowsing.realTime.simulation.negativeCacheTTLSec"
 
-fxaButtonVisibility:
-  description: Prefs to control the visibility of the Firefox Accounts toolbar button when not signed in.
-  owner: mconley@mozilla.com
-  hasExposure: false
-  variables:
-    boolean:
-      description: True if the Firefox Accounts toolbar button should be visible when not signed in.
-      type: boolean
-      setPref:
-        branch: user
-        pref: identity.fxaccounts.toolbar.defaultVisible
-    pxiToolbarEnabled:
-      description: >-
-        True if we're enabling the PXI dropdown menu for the FxA toolbar button instead of
-        taking the user straight to login
-      type: boolean
-      setPref:
-        branch: user
-        pref: identity.fxaccounts.toolbar.pxiToolbarEnabled
-    monitorEnabled:
-      description: >-
-        Toggle the Monitor CTA
-      type: boolean
-      setPref:
-        branch: user
-        pref: identity.fxaccounts.toolbar.pxiToolbarEnabled.monitorEnabled
-    relayEnabled:
-      description: >-
-        Toggle the Relay CTA
-      type: boolean
-      setPref:
-        branch: user
-        pref: identity.fxaccounts.toolbar.pxiToolbarEnabled.relayEnabled
-    vpnEnabled:
-      description: >-
-        Toggle the VPN CTA
-      type: boolean
-      setPref:
-        branch: user
-        pref: identity.fxaccounts.toolbar.pxiToolbarEnabled.vpnEnabled
-    avatarIconVariant:
-      description: >-
-        Controls the icon that appears in the toolbar button when in the
-        signed-out state.
-
-        One of the following values:
-          - control
-          - human-circle
-          - fox-circle
-      type: string
-
-fxaClientAssociation:
-  description: Prefs to control the client association ping.
-  owner: mconley@mozilla.com
-  hasExposure: false
-  variables:
-    pingEnabled:
-      description: >-
-        True if the client association ping should be sent.
-      type: boolean
-      setPref:
-        branch: user
-        pref: identity.fxaccounts.telemetry.clientAssociationPing.enabled
-
-fxaAppMenuItem:
-  description: >-
-    Prefs to control the appearance and copy of the FxA sign-in button in the
-    AppMenu when signed out.
-  owner: mconley@mozilla.com
-  hasExposure: true
-  exposureDescription: >-
-    Exposure is recorded when the user is enrolled in an experiment using this
-    feature and the AppMenu on Firefox Desktop is opened.
-  variables:
-    ctaCopyVariant:
-      description: >-
-        One of the following values:
-          - control
-          - sync-devices
-          - backup-data
-          - backup-sync
-          - mobile
-      type: string
-
-fxaAvatarMenuItem:
-  description: >-
-    Prefs to control the appearance and copy of the FxA sign-in button in the
-    FxA avatar menu when signed out.
-  owner: mconley@mozilla.com
-  hasExposure: true
-  exposureDescription: >-
-    Exposure is recorded when the user is enrolled in an experiment using this
-    feature and the FxA avatar menu on Firefox Desktop is opened.
-  variables:
-    ctaCopyVariant:
-      description: >-
-        One of the following values:
-          - control
-          - sync-devices
-          - backup-data
-          - backup-sync
-          - mobile
-      type: string
-
 fingerprintingProtection:
   description: Control Fingerprinting Protection
   owner: tihuang@mozilla.com
@@ -5089,20 +4985,6 @@ bounceTrackingProtection:
         storage will be considered to be bounce trackers. If false, all
         redirects that fit the bounce tracker heuristic will be considered.
 
-remoteTabManagement:
-  description: >
-    Features that let users manage tabs on other devices that are
-    connected to the same Mozilla account.
-  owner: skhamis@mozilla.com
-  hasExposure: false
-  variables:
-    closeTabsEnabled:
-      description: >-
-        When true, the user can close tabs on other devices connected to
-        the same Mozilla account from the synced tabs menu.
-      type: boolean
-      fallbackPref: identity.fxaccounts.commands.remoteTabManagement.enabled
-
 crlite:
   description: Prefs that control the use of CRLite
   owner: jschanck@mozilla.com
@@ -5546,19 +5428,6 @@ windowsUIAutomation:
       setPref:
         branch: user
         pref: "accessibility.uia.enable"
-
-expandSignInButton:
-  description: "Add text next to the FxA avatar toolbar icon"
-  owner: skhamis@mozilla.com
-  hasExposure: false
-  variables:
-    ctaCopyVariant:
-      description: >-
-        One of the following values:
-          - fxa-avatar-sign-in
-          - fxa-avatar-sign-up
-        empty will be assumed default experience
-      type: string
 
 contextID:
   description: >-

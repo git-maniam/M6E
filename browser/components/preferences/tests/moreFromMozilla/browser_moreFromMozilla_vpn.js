@@ -3,14 +3,6 @@
 
 "use strict";
 
-let mockFxA, unmockFxA;
-
-add_setup(async function () {
-  let { mock, unmock } = await mockDefaultFxAInstance();
-  mockFxA = mock;
-  unmockFxA = unmock;
-});
-
 add_task(async function test_VPN_promo_enabled() {
   await clearPolicies();
   await SpecialPowers.pushPrefEnv({

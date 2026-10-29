@@ -23,7 +23,7 @@ export function recordTelemetryEvent(event) {
 
 export function setKeyboardAccessForNonDialogElements(enableKeyboardAccess) {
   const pageElements = document.querySelectorAll(
-    "login-item, login-list, menu-button, login-filter, fxaccounts-button, [tabindex]"
+    "login-item, login-list, menu-button, login-filter, [tabindex]"
   );
 
   let { activeElement: docActiveElement } = document;
