@@ -270,7 +270,6 @@ export default [
   // Intentionally invalid files
   "toolkit/components/workerloader/tests/moduleF-syntax-error.js",
   "toolkit/components/enterprisepolicies/tests/browser/config_broken_json.json",
-  "toolkit/components/normandy/test/unit/mock_api/api/v1/extension/index.json",
   "toolkit/mozapps/extensions/test/xpcshell/data/test_AddonRepository_fail.json",
 
   // Built files
@@ -292,9 +291,6 @@ export default [
 
   // Uses special template formatting.
   "tools/tryselect/selectors/chooser/templates/chooser.html",
-
-  // Ignore pre-generated webpack and typescript transpiled files for translations
-  "browser/extensions/translations/extension/",
 
   // "scaffolding" used by uniffi which isn't valid JS in its original form.
   "toolkit/components/uniffi-bindgen-gecko-js/src/templates/js/",

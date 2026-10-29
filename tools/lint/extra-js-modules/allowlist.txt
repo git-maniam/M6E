@@ -134,7 +134,6 @@ mobile/shared/modules/geckoview/GeckoViewClipboardPermission.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewConsole.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewContent.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewContentBlocking.sys.mjs
-mobile/shared/modules/geckoview/GeckoViewIPProtection.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewIdentityCredential.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewMediaControl.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewModule.sys.mjs
@@ -153,7 +152,6 @@ mobile/shared/modules/geckoview/GeckoViewTab.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewTelemetry.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewTestUtils.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewTrackingDB.sys.mjs
-mobile/shared/modules/geckoview/GeckoViewTranslations.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewUtils.sys.mjs
 mobile/shared/modules/geckoview/GeckoViewWebExtension.sys.mjs
 mobile/shared/modules/geckoview/LoadURIDelegate.sys.mjs
