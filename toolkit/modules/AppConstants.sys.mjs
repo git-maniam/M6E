@@ -38,8 +38,6 @@ export var AppConstants = Object.freeze({
 
   MOZ_DEV_EDITION: @MOZ_DEV_EDITION_BOOL@,
 
-  MOZ_SERVICES_SYNC: @MOZ_SERVICES_SYNC_BOOL@,
-
   MOZ_DATA_REPORTING: @MOZ_DATA_REPORTING_BOOL@,
 
   MOZ_SANDBOX: @MOZ_SANDBOX_BOOL@,
@@ -84,7 +82,8 @@ export var AppConstants = Object.freeze({
            Services.vc.compare(platformVersion, version) <= 0;
   },
 
-  MOZ_NORMANDY: @MOZ_NORMANDY_BOOL@,
+  // M6E: Normandy is deleted; the readers that remain see a constant false.
+  MOZ_NORMANDY: false,
 
 
   MOZ_BACKGROUNDTASKS: @MOZ_BACKGROUNDTASKS_BOOL@,

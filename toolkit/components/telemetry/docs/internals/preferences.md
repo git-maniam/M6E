@@ -22,15 +22,9 @@ When Defined:
 
 - Android: enables `toolkit.telemetry.enabled`
 
-`MOZ_SERVICES_HEALTHREPORT`
-
-When Defined (which it is on most platforms):
-
-- Sets `datareporting.healthreport.{infoURL|uploadEnabled}` in `modules/libpref/init/all.js`.
-
 `MOZ_DATA_REPORTING`
 
-When Defined (which it is when `MOZ_TELEMETRY_REPORTING`, `MOZ_SERVICES_HEALTHREPORT`, or `MOZ_CRASHREPORTER` is defined (so, on most platforms, but not typically on developer builds)):
+When Defined (which it is when `MOZ_TELEMETRY_REPORTING` is defined (so, on most platforms, but not typically on developer builds)):
 
 - Enables `app.shield.optoutstudies.enabled`
 
@@ -68,7 +62,7 @@ When Defined:
 
 **In Short:**
 
-For builds downloaded from mozilla.com `MOZ_TELEMETRY_REPORTING` is defined, `MOZ_TELEMETRY_ON_BY_DEFAULT` is on if you downloaded Nightly or Developer Edition, `MOZ_SERVICES_HEALTHREPORT` is defined, `MOZ_DATA_REPORTING` is defined, `MOZILLA_OFFICIAL` is defined, `MOZ_UPDATE_CHANNEL` is set to the channel you downloaded, and `DEBUG` is false. This means Telemetry is, by default, collecting some amount of information and is sending it to Mozilla.
+For builds downloaded from mozilla.com `MOZ_TELEMETRY_REPORTING` is defined, `MOZ_TELEMETRY_ON_BY_DEFAULT` is on if you downloaded Nightly or Developer Edition, `MOZ_DATA_REPORTING` is defined, `MOZILLA_OFFICIAL` is defined, `MOZ_UPDATE_CHANNEL` is set to the channel you downloaded, and `DEBUG` is false. This means Telemetry is, by default, collecting some amount of information and is sending it to Mozilla.
 
 For builds you make yourself with a blank mozconfig, `MOZ_UPDATE_CHANNEL` is set to `default` and everything else is undefined. This means Telemetry is, by default, collecting an extended amount of information but isn't sending it anywhere.
 

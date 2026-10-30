@@ -97,14 +97,6 @@ devedition
 
   Always defined.
 
-healthreport
-
-: Whether the Health Report feature is enabled.
-
-  Values are `true` and `false`.
-
-  Always defined.
-
 mozconfig
 
 : The path of the {ref}`mozconfig file <mozconfig>` used to produce this build.

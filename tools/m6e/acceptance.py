@@ -174,6 +174,7 @@ REMOVED_PREFS = {
         "browser.newtabpage.activity-stream.system.showSponsored": False,
         "browser.newtabpage.activity-stream.feeds.section.topstories": False,
         "browser.urlbar.quicksuggest.enabled": False,
+        "browser.urlbar.quicksuggest.rustEnabled": False,
         "browser.urlbar.suggest.quicksuggest.sponsored": False,
     },
     "New Tab widgets and wallpapers": {

@@ -11,7 +11,7 @@ This is a Firefox fork being turned into "M6E", a debloated, privacy-first brows
 
 Resuming: when the user says "Resume from Phase N", follow the resuming checklist at the top of the plan's section 4 ("Next step"), then continue with that phase.
 "Resume from Sunday" is a bookmark: open the plan's section 4, read "Sunday bookmark" and follow its checklist and "Next action" without asking questions.
-"Resume after restart" is the newest bookmark (written 2026-10-29): open the plan's section 4, read "Restart bookmark" and follow its checklist and "Next action" without asking questions. Use it in preference to the older ones.
+"Resume after restart" was the newest bookmark (2026-10-29). Phase 6 is finished (2026-10-30); the plan's "Restart bookmark" now only lists optional follow-ups (re-measure first paint, the optional C++ batch, items for the user).
 "Resume from Tuesday" is the newer bookmark (written 2026-10-27): open the plan's section 4, read "Tuesday bookmark" and follow its checklist and "Next action" without asking questions. Use it in preference to "Resume from Sunday".
 
 Working rules:

@@ -49,6 +49,14 @@ var gProfiles = {
       "PanelUI-fxa-menu-create-profile-confirm-button"
     ).addEventListener("click", this.handleCommand);
 
+    // M6E: without a support site, the "Learn more" button is hidden.
+    if (!Services.prefs.getStringPref("app.support.baseURL", "")) {
+      PanelMultiView.getViewNode(
+        document,
+        "PanelUI-fxa-menu-create-profile-learn-more-button"
+      ).hidden = true;
+    }
+
     this.toggleProfileMenus(SelectableProfileService?.isEnabled);
 
     if (SelectableProfileService) {
@@ -218,6 +226,9 @@ var gProfiles = {
         break;
       }
       case "PanelUI-fxa-menu-create-profile-learn-more-button": {
+        if (!Services.prefs.getStringPref("app.support.baseURL", "")) {
+          break;
+        }
         openTrustedLinkIn(
           "https://support.mozilla.org/kb/profile-management",
           "tab"
