@@ -200,12 +200,6 @@ extern void InstallSignalHandlers(const char* ProgramName);
 #define FILE_INVALIDATE_CACHES ".purgecaches"_ns
 #define FILE_STARTUP_INCOMPLETE u".startup-incomplete"_ns
 
-#if defined(MOZ_BLOCK_PROFILE_DOWNGRADE) || defined(MOZ_LAUNCHER_PROCESS) || \
-    defined(MOZ_DEFAULT_BROWSER_AGENT)
-static const char kPrefHealthReportUploadEnabled[] =
-    "datareporting.healthreport.uploadEnabled";
-#endif  // defined(MOZ_BLOCK_PROFILE_DOWNGRADE) || defined(MOZ_LAUNCHER_PROCESS)
-        // || defined(MOZ_DEFAULT_BROWSER_AGENT)
 #if defined(MOZ_DEFAULT_BROWSER_AGENT)
 static const char kPrefDefaultAgentEnabled[] = "default-browser-agent.enabled";
 
@@ -2534,76 +2528,6 @@ bool BuildDowngradePingUrl(const nsACString& aPingId,
   return true;
 }
 
-static void SubmitDowngradeTelemetry(const nsACString& aProfileSelectionReason,
-                                     mozilla::Maybe<PRTime> aReplacedLockTime,
-                                     const nsCString& aLastVersion,
-                                     bool aHasSync, int32_t aButton,
-                                     bool aIsDifferentInstall) {
-  nsCOMPtr<nsIPrefService> prefSvc =
-      do_GetService("@mozilla.org/preferences-service;1");
-  NS_ENSURE_TRUE_VOID(prefSvc);
-
-  nsCOMPtr<nsIPrefBranch> prefBranch = do_QueryInterface(prefSvc);
-  NS_ENSURE_TRUE_VOID(prefBranch);
-
-  bool enabled;
-  nsresult rv =
-      prefBranch->GetBoolPref(kPrefHealthReportUploadEnabled, &enabled);
-  NS_ENSURE_SUCCESS_VOID(rv);
-  if (!enabled) {
-    return;
-  }
-
-  nsCOMPtr<nsIFile> pingSender;
-  rv = NS_GetSpecialDirectory(NS_GRE_BIN_DIR, getter_AddRefs(pingSender));
-  NS_ENSURE_SUCCESS_VOID(rv);
-  pingSender->Append(u"pingsender"_ns);
-
-  bool exists;
-  rv = pingSender->Exists(&exists);
-  NS_ENSURE_SUCCESS_VOID(rv);
-  if (!exists) {
-    return;
-  }
-
-  rv = prefSvc->GetDefaultBranch(nullptr, getter_AddRefs(prefBranch));
-  NS_ENSURE_SUCCESS_VOID(rv);
-
-  nsCString channel("default");
-  rv = prefBranch->GetCharPref("app.update.channel", channel);
-  NS_ENSURE_SUCCESS_VOID(rv);
-
-  nsID uuid;
-  rv = nsID::GenerateUUIDInPlace(uuid);
-  NS_ENSURE_SUCCESS_VOID(rv);
-  NSID_TrimBracketsASCII pingId(uuid);
-
-  nsCString url;
-  if (!BuildDowngradePingUrl(pingId, channel, url)) {
-    return;
-  }
-
-  Maybe<PathString> filePath = GenerateDowngradeTelemetry(
-      pingId, aLastVersion, aHasSync, aButton, channel, aProfileSelectionReason,
-      aReplacedLockTime, aIsDifferentInstall);
-  if (!filePath) {
-    return;
-  }
-
-  const filesystem::Path::value_type* args[2];
-  args[0] = url.get();
-  args[1] = filePath->get();
-
-  nsCOMPtr<nsIProcess> process =
-      do_CreateInstance("@mozilla.org/process/util;1");
-  NS_ENSURE_TRUE_VOID(process);
-  process->Init(pingSender);
-  process->SetStartHidden(true);
-  process->SetNoShell(true);
-
-  process->Run(false, args, 2);
-}
-
 static const char kProfileDowngradeURL[] =
     "chrome://mozapps/content/profile/profileDowngrade.xhtml";
 
@@ -2687,16 +2611,6 @@ static ReturnAbortOnError HandleDetectedDowngrade(
       NS_ENSURE_SUCCESS(rv, rv);
 
       paramBlock->GetInt(1, &result);
-
-      PRTime replacedLockTime = 0;
-      mozilla::Maybe<PRTime> maybeReplacedLockTime;
-      if (NS_SUCCEEDED(aProfileLock->GetReplacedLockTime(&replacedLockTime)) &&
-          replacedLockTime != 0) {
-        maybeReplacedLockTime = mozilla::Some(replacedLockTime);
-      }
-      SubmitDowngradeTelemetry(aProfileSvc->ProfileSelectionReason(),
-                               maybeReplacedLockTime, aLastVersion, hasSync,
-                               result, aIsDifferentInstall);
     }
   }
 
