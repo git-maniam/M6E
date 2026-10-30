@@ -606,47 +606,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bits"
-version = "0.2.0"
-dependencies = [
- "comedy",
- "filetime_win",
- "guid_win",
- "serde",
- "serde_derive",
- "winapi",
-]
-
-[[package]]
-name = "bits_client"
-version = "0.2.0"
-dependencies = [
- "bits",
- "comedy",
- "guid_win",
- "lazy_static",
- "rand",
- "regex",
- "tempfile",
- "thiserror 1.999.999",
-]
-
-[[package]]
-name = "bitsdownload"
-version = "0.1.0"
-dependencies = [
- "bits_client",
- "comedy",
- "crossbeam-utils",
- "libc",
- "log",
- "moz_task",
- "nserror",
- "nsstring",
- "xpcom",
-]
-
-[[package]]
 name = "block"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1029,15 +988,6 @@ dependencies = [
  "icu_locale_core",
  "tinystr",
  "writeable",
-]
-
-[[package]]
-name = "comedy"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74428ae4f7f05f32f4448e9f42d371538196919c4834979f4f96d1fdebffcb47"
-dependencies = [
- "winapi",
 ]
 
 [[package]]
@@ -2090,16 +2040,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "filetime_win"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b12c2c8d7d9f04d7952cc33bac89b7425fb3cf4c44773b06ea49ac3df259ac57"
-dependencies = [
- "comedy",
- "winapi",
-]
-
-[[package]]
 name = "filter_adult"
 version = "0.1.0"
 dependencies = [
@@ -2737,7 +2677,6 @@ dependencies = [
  "audioipc2-server",
  "authrs_bridge",
  "binary_http",
- "bitsdownload",
  "buildid_reader_ffi",
  "cascade_bloom_filter",
  "cert_storage",
@@ -3027,16 +2966,6 @@ dependencies = [
  "presser",
  "thiserror 2.0.12",
  "windows",
-]
-
-[[package]]
-name = "guid_win"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d87f4be87a557b98b4e4316f2009834f4448652938a950c1e8b33ae25f6f183b"
-dependencies = [
- "comedy",
- "winapi",
 ]
 
 [[package]]

@@ -28,7 +28,6 @@ forbid-mscom-init:
         # ApartmentRegion and moving them to _that_ lint's exception-list.
         - image/DecodePool.cpp
         - ipc/glue/IOThread.cpp
-        - toolkit/components/bitsdownload/bits_client/bits/src/lib.rs
         - xpcom/io/nsLocalFileWin.cpp
 
 forbid-apartment-region:

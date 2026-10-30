@@ -2174,25 +2174,6 @@ def launcher(value, target):
 set_config("MOZ_LAUNCHER_PROCESS", launcher)
 set_define("MOZ_LAUNCHER_PROCESS", launcher)
 
-# BITS download (Windows only)
-# ==============================================================
-
-option(
-    "--enable-bits-download",
-    when=target_is_windows,
-    default=target_is_windows,
-    help="{Enable|Disable} building BITS download support",
-)
-
-set_define(
-    "MOZ_BITS_DOWNLOAD",
-    depends_if("--enable-bits-download", when=target_is_windows)(lambda _: True),
-)
-set_config(
-    "MOZ_BITS_DOWNLOAD",
-    depends_if("--enable-bits-download", when=target_is_windows)(lambda _: True),
-)
-
 # Bundled fonts on desktop platform
 # ==============================================================
 

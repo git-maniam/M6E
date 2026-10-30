@@ -145,8 +145,6 @@ clippy:
         - dom/media/webrtc/transport/mdns_service/
         - tools/lint/test/files/clippy/
         - servo/ports/geckolib/
-        - toolkit/components/bitsdownload/bits_client/
-        - toolkit/components/bitsdownload/bits_client/bits/
         # mac and windows only
         - security/manager/ssl/osclientcerts/
     # enable the `all`, `cargo` and `pedantic` lint groups plus the `use_self`

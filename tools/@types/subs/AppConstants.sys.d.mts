@@ -67,7 +67,6 @@ export const AppConstants: Readonly<{
   MOZ_BACKGROUNDTASKS: boolean;
 
 
-  MOZ_BITS_DOWNLOAD: boolean;
 
   DEBUG: boolean;
 

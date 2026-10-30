@@ -364,7 +364,6 @@ export default [
       "toolkit/components/asyncshutdown/**",
       "toolkit/components/autocomplete/**",
       "toolkit/components/backgroundtasks/**",
-      "toolkit/components/bitsdownload/Bits.sys.mjs",
       "toolkit/components/certviewer/**",
       "toolkit/components/cleardata/**",
       "toolkit/components/contentprefs/ContentPrefService*.sys.mjs",

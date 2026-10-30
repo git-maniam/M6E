@@ -21,7 +21,6 @@ DIRS += [
     "apppicker",
     "asyncshutdown",
     "backgroundhangmonitor",
-    "bitsdownload",
     "browser",
     "captchadetection",
     "cascade_bloom_filter",

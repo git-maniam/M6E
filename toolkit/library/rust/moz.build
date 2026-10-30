@@ -58,9 +58,6 @@ if CONFIG["TARGET_CPU"] != "x86":
     # cross-compile for x86, this may not run correctly.
     RUST_TESTS += ["malloc_size_of_derive"]
 
-if CONFIG["MOZ_BITS_DOWNLOAD"]:
-    RUST_TESTS += ["bits_client"]
-
 # Rust tests can't reference `libxul`, but code coverage builds and MSVC's
 # linker don't eliminate the dead references to `libxul` from `kvstore` in
 # `lockstore` tests.
