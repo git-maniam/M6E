@@ -23,32 +23,29 @@ M6E (said "'Am Sexy") is a fast, private and deliberately simple web browser for
   - HTTPS-Only mode, Global Privacy Control and WebRTC IP-leak protection;
   - Arkenfox-style hardening;
   - DNS over HTTPS through Cloudflare for Families (security), which also refuses to resolve known malware and phishing domains.
-- **Privacy Shield:** one switch in Settings, Privacy that sets how every site is treated, plus an optional Maximum protection mode with full fingerprinting resistance.
+- **Privacy Shield:** one switch in Settings, Privacy and security, that sets how every site is treated, plus an optional Maximum protection mode with full fingerprinting resistance.
 - **Tracker Blocker:** the shield at the left of the address bar counts what was blocked on the current page. Its panel lists the blocked trackers and has a per-site switch that overrides the Privacy Shield until M6E quits, in either direction.
 - **Telemetry button:** a gauge button beside the address bar that shows page timings and size, measured on your Mac and never sent anywhere.
 - **Search:** Google by default, with Bing as the only alternative. There are no partner codes, and no way to add other engines.
-- **Reading Mode:** strictly black text on white, 25% larger, with sidebars, ads, embeds and tracking pixels stripped. It can be opened on any page from the View menu.
+- **Reading Mode:** strictly black text on white, 25% larger, with sidebars, ads, embeds and tracking pixels stripped. It can be opened on any web page (http or https) from the View menu.
 - **Look:** a light, Safari-like interface that follows the macOS accent colour, with the M6E icon in place of every fox. The browser interface stays light even when macOS is in Dark Mode, while web pages still follow it. The home page shows the M6E splash illustration above the search box, and there's a custom "No Internet Connection" page.
 - **Also:** a bookmarks toolbar on/off switch in Settings, and push notifications delivered through macOS Notification Center.
 
 ## Install
 
 Requirements: a Mac with Apple silicon (M1 or later). There is no Intel or universal build. The app's `Info.plist` sets a minimum of macOS 10.15, which every Apple silicon Mac exceeds (they shipped with macOS 11 or later).
-<!-- CONFIRM: the macOS versions M6E has actually been tested on (the plan only records the developer's machine); say which is the lowest tested -->
 
 ### Homebrew
 
-<!-- TODO: confirm once the tap is published -->
 ```sh
 brew install --cask git-maniam/m6e/m6e
 ```
 
-This installs the cask `m6e` from the tap `git-maniam/m6e`.
+This installs the cask `m6e` from the tap `git-maniam/m6e`. Use the fully qualified name: Homebrew 7 treats third-party taps as untrusted, and installing by the full name trusts only this cask (`brew upgrade --cask m6e` then works too). To install by the short name `m6e`, run `brew trust --cask git-maniam/m6e/m6e` first.
 
 ### DMG
 
 1. Download `M6E-<version>-macos-arm64.dmg` (currently `M6E-161.0a1-macos-arm64.dmg`) from the [GitHub Releases page](https://github.com/git-maniam/M6E/releases).
-<!-- CONFIRM: a release with this asset is published at that URL -->
 2. Open the DMG and drag M6E onto the Applications link.
 
 ### First launch
@@ -59,15 +56,14 @@ M6E is signed ad hoc, not with an Apple Developer ID, and it is not notarized (d
 2. Open **System Settings, Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to the message about M6E. Enter your password or use Touch ID, then click **Open**. The button is available for about an hour after step 1.
 3. After that, M6E opens normally.
 
+These steps follow what the project recorded when it built the DMG; opening a freshly downloaded copy on a second Mac has not been tested yet.
+
 Alternatives:
 
 - In Terminal, remove the quarantine flag: `xattr -dr com.apple.quarantine /Applications/M6E.app`.
-- With Homebrew, skip the flag at install time: `brew install --cask --no-quarantine git-maniam/m6e/m6e`.
-<!-- CONFIRM: --no-quarantine is still accepted by the Homebrew version users will have -->
 - Control-click (right-click) and Open no longer bypasses the check on macOS 15 and later. On macOS 14 and earlier it is the usual way to open an app from an unidentified developer; the project has not tested this.
 
 If macOS says "M6E is damaged and can't be opened", the download is incomplete or the app changed after signing: download it again.
-<!-- CONFIRM: the Gatekeeper dialog and the Open Anyway steps are from the plan (P5.1); the plan says they are still untested with a real download on a second Mac -->
 
 Notarization would remove all of this. It needs an Apple Developer ID (US$99 a year) and has not been decided.
 
@@ -77,7 +73,7 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 
 **Settings:** open the M6E menu, then Settings.
 
-- **Privacy Shield** (Settings, Privacy): the first group in the pane.
+- **Privacy Shield** (Settings, Privacy and security): the first group in the pane.
   - The **Privacy Shield** switch is on by default. On, it blocks trackers, ads and fingerprinting, connects to sites securely and applies M6E's privacy hardening. Off, nothing is blocked on any site.
   - **Maximum protection** adds full fingerprinting resistance while the Shield is on. Sites see your time zone as UTC and windows get grey margins, so more sites may not work.
   - Changing either one offers to reload your tabs.
@@ -95,10 +91,9 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 
 **Telemetry button:** the gauge button beside the address bar (tooltip "Telemetry") opens a panel for the page in the current tab: time to first byte, first contentful paint, time to interactive, page size (with the number of requests and how many came from the cache), script parse time, script execution time and TLS/SSL handshake time. The figures are measured on your Mac and are never sent anywhere. M6E has no data collection.
 
-**Reading Mode:** on any page, choose Enter Reader View from the View menu, or press Command-Option-R. The address bar button also appears on pages detected as articles. The text is black on white, 25% larger than usual, with ads, navigation, embeds, forms and small images removed.
+**Reading Mode:** on any web page (http or https), choose Enter Reader View from the View menu, or press Command-Option-R. The address bar button also appears on pages detected as articles. The text is black on white, 25% larger than usual, with ads, navigation, embeds, forms and small images removed.
 
-**Push notifications:** sites can send notifications through Mozilla's push service, and they appear in macOS Notification Center. Allow M6E to show notifications when macOS asks, or change it later in System Settings, Notifications.
-<!-- CONFIRM: the native banner and the macOS permission prompt were checked by hand (the plan lists this as a manual check for the first use) -->
+**Push notifications:** sites can send notifications through Mozilla's push service, and they appear in macOS Notification Center. Allow M6E to show notifications when macOS asks, or change it later in System Settings, Notifications. Delivery is covered by the automated checks; the native banner and the macOS permission prompt are checked by hand on first use.
 
 **Updates:** M6E has no auto-updater, so it never checks for or installs a new version by itself. Security fixes arrive only when the project merges upstream Firefox and publishes a new build. To update, install the new DMG over the old app in Applications, or run:
 
@@ -106,11 +101,9 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 brew upgrade --cask m6e
 ```
 
-<!-- TODO: confirm once the tap is published -->
 Add-on updates are also off, and only signed add-ons can be installed. Themes can't be installed.
 
 **Your data:** the profile is at `~/Library/Application Support/M6E` (the folder name is the app's name, `M6E`), and the cache is under `~/Library/Caches/M6E`. M6E never shares a profile with an installed Firefox.
-<!-- CONFIRM: the Caches folder name and whether macOS also leaves ~/Library/Preferences/org.m6e.browser.plist and ~/Library/Saved Application State/org.m6e.browser.savedState; these follow from the Firefox code and the bundle ID, but were not checked on a running install -->
 
 **Uninstall:** quit M6E, drag M6E from Applications to the Trash, and delete `~/Library/Application Support/M6E` and `~/Library/Caches/M6E` to remove your profile and cache. With Homebrew:
 
@@ -118,7 +111,6 @@ Add-on updates are also off, and only signed add-ons can be installed. Themes ca
 brew uninstall --zap --cask m6e
 ```
 
-<!-- TODO: confirm once the tap is published (the cask's zap list decides what --zap removes) -->
 
 **Limitations:**
 
@@ -149,13 +141,13 @@ Measured on the packaged Phase 6 build (details in [`M6E_IMPLEMENTATION_PLAN.md`
 | | Phase 0 (stock Nightly) | Phase 6 (M6E 161.0a1) |
 |---|---|---|
 | Acceptance (`tools/m6e/acceptance.py`) | | 15 of 15 checks |
-| First paint (median of 10 runs) | 785 ms | 643 ms (Phase 5: 579 ms) |
+| First paint (median of 10 runs) | 785 ms | 606 and 624 ms in two quiet-machine sessions (Phase 5: 579 ms) |
 | Blank-tab memory | 698 MB | 430 MB (8 processes) |
 | Speedometer 3 | | 45.46 (Phase 5: 44.7) |
 | Idle network (300 s, fresh profile) | 21 hosts, plus 40 looked up only over DNS | 5 hosts |
 | Release DMG | | 106.5 MiB |
 
-The 643 ms first paint was measured right after the computer restarted, so it may overstate the difference to Phase 5; the plan lists a re-measure on a quiet machine. The Speedometer 3 score was not measured on the stock Phase 0 build.
+The first measurement, 643 ms, was inflated by background work after a restart; two re-measurements on a quiet machine gave 606 and 624 ms. The Speedometer 3 score was not measured on the stock Phase 0 build.
 
 ## Building from source
 
