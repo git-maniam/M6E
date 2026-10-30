@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "CrashReporterHost.h"
-#include "CrashReporter/CrashReporterInitArgs.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/Sprintf.h"
 #include "mozilla/SyncRunnable.h"
@@ -16,17 +15,10 @@
 
 namespace mozilla::ipc {
 
-ChildThreadId GetChildThreadIdFromArgs(
-    const CrashReporter::CrashReporterInitArgs& aInitArgs) {
-  return RetainMachSendRight(aInitArgs.threadId().get());
-}
-
-CrashReporterHost::CrashReporterHost(
-    GeckoProcessType aProcessType, GeckoChildID aChildID,
-    const CrashReporter::CrashReporterInitArgs& aInitArgs)
+CrashReporterHost::CrashReporterHost(GeckoProcessType aProcessType,
+                                     GeckoChildID aChildID)
     : mProcessType(aProcessType),
       mChildID(aChildID),
-      mThreadId(GetChildThreadIdFromArgs(aInitArgs)),
       mStartTime(::time(nullptr)),
       mFinalized(false) {}
 

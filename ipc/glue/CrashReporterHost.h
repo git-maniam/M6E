@@ -7,26 +7,21 @@
 
 #include "nsExceptionHandler.h"
 #include "nsIFile.h"
+#include "mozilla/UniquePtrExtensions.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
-
-namespace CrashReporter {
-class CrashReporterInitArgs;
-}
 
 namespace mozilla::ipc {
 
 typedef mozilla::UniqueMachSendRight ChildThreadId;
 
-// This is the newer replacement for CrashReporterParent. It is created in
-// response to a InitCrashReporter message on a top-level actor. When the
-// process terminates abnormally, the top-level should call GenerateCrashReport
-// to automatically integrate metadata.
+// This is the newer replacement for CrashReporterParent. When the process
+// terminates abnormally, the top-level should call GenerateCrashReport to
+// automatically integrate metadata.
 class CrashReporterHost {
   typedef CrashReporter::AnnotationTable AnnotationTable;
 
  public:
-  CrashReporterHost(GeckoProcessType aProcessType, GeckoChildID aChildID,
-                    const CrashReporter::CrashReporterInitArgs& aInitArgs);
+  CrashReporterHost(GeckoProcessType aProcessType, GeckoChildID aChildID);
   ~CrashReporterHost();
 
   // Helper function for generating a crash report for a process that probably

@@ -136,7 +136,7 @@ bool VRParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
   }
 
   // Init crash reporter support.
-  ipc::CrashReporterClient::InitSingleton(this);
+  ipc::CrashReporterClient::InitSingleton();
 
   gfxConfig::Init();
   gfxVars::Initialize();

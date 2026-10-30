@@ -5,10 +5,10 @@
 #ifndef mozilla_ipc_CrashReporterClient_h
 #define mozilla_ipc_CrashReporterClient_h
 
-#include "CrashReporter/CrashReporterInitArgs.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/StaticPtr.h"
 #include "nsExceptionHandler.h"
+#include "nsISupportsImpl.h"
 
 namespace mozilla::ipc {
 
@@ -16,17 +16,7 @@ class CrashReporterClient {
  public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CrashReporterClient);
 
-  // |aTopLevelProtocol| must have a child-to-parent message:
-  //
-  //   async InitCrashReporter(NativeThreadId threadId);
-  template <typename T>
-  static void InitSingleton(T* aToplevelProtocol) {
-    InitSingleton();
-    (void)aToplevelProtocol->SendInitCrashReporter(CreateInitArgs());
-  }
-
   static void InitSingleton();
-  static CrashReporter::CrashReporterInitArgs CreateInitArgs();
 
   static void DestroySingleton();
   static RefPtr<CrashReporterClient> GetSingleton();

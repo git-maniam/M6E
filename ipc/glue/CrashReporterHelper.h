@@ -19,13 +19,10 @@ namespace mozilla::ipc {
  * This class encapsulates the common elements of crash report handling for
  * toplevel protocols representing processes. To use this class, you should:
  *
- * 1. Declare a method to initialize the crash reporter in your IPDL:
- *    `async InitCrashReporter(NativeThreadId threadId)`
- *
- * 2. Inherit from this class with the name of your derived class as the
+ * 1. Inherit from this class with the name of your derived class as the
  *    type parameter. Ex: `class MyClass : public CrashReporterHelper<MyClass>`
  *
- * 3. Provide a public `PROCESS_TYPE` constant for your class. Ex:
+ * 2. Provide a public `PROCESS_TYPE` constant for your class. Ex:
  *
  *    ```
  *    public:
@@ -33,7 +30,7 @@ namespace mozilla::ipc {
  *          GeckoProcessType_GMPlugin;
  *    ```
  *
- * 4. When your protocol actor is destroyed with a reason of `AbnormalShutdown`,
+ * 3. When your protocol actor is destroyed with a reason of `AbnormalShutdown`,
  *    you should call `GenerateCrashReport()`. If you need the crash
  *    report ID it will be copied in the second optional parameter upon
  *    successful crash report generation.
@@ -42,13 +39,6 @@ template <class Derived>
 class CrashReporterHelper {
  public:
   CrashReporterHelper() : mCrashReporter(nullptr) {}
-  IPCResult RecvInitCrashReporter(
-      const CrashReporter::CrashReporterInitArgs& aInitArgs) {
-    GeckoChildID child_id = static_cast<Derived*>(this)->OtherChildID();
-    mCrashReporter = MakeUnique<ipc::CrashReporterHost>(Derived::PROCESS_TYPE,
-                                                        child_id, aInitArgs);
-    return IPC_OK();
-  }
 
  protected:
   void GenerateCrashReport(nsString* aMinidumpId = nullptr) {

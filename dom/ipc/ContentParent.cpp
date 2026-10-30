@@ -4373,13 +4373,6 @@ void ContentParent::FriendlyName(nsAString& aName, bool aAnonymize) {
   }
 }
 
-mozilla::ipc::IPCResult ContentParent::RecvInitCrashReporter(
-    const CrashReporter::CrashReporterInitArgs& aInitArgs) {
-  mCrashReporter = MakeUnique<CrashReporterHost>(GeckoProcessType_Content,
-                                                 OtherChildID(), aInitArgs);
-  return IPC_OK();
-}
-
 hal_sandbox::PHalParent* ContentParent::AllocPHalParent() {
   return hal_sandbox::CreateHalParent();
 }

@@ -127,7 +127,7 @@ bool GPUParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
   ProcessPriorityManager::Init();
 
   // Init crash reporter support.
-  CrashReporterClient::InitSingleton(this);
+  CrashReporterClient::InitSingleton();
 
   gfxConfig::Init();
   gfxVars::Initialize();

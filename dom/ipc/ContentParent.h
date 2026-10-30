@@ -67,10 +67,6 @@ class ParentIdleListener;
 class nsIOriginsListLoadCallback;
 class nsIWidget;
 
-namespace CrashReporter {
-class CrashReporterInitArgs;
-}
-
 namespace mozilla {
 class PClipboardWriteRequestParent;
 class PRemoteSpellcheckEngineParent;
@@ -501,9 +497,6 @@ class ContentParent final : public PContentParent,
    * ContentParent based on the value returned here.
    */
   void FriendlyName(nsAString& aName, bool aAnonymize = false);
-
-  mozilla::ipc::IPCResult RecvInitCrashReporter(
-      const CrashReporter::CrashReporterInitArgs& aInitArgs);
 
   already_AddRefed<PNeckoParent> AllocPNeckoParent();
 

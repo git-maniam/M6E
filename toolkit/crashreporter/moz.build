@@ -10,10 +10,6 @@ UNIFIED_SOURCES = [
     "nsDummyExceptionHandler.cpp",
 ]
 
-IPDL_SOURCES = [
-    "ipc/CrashReporterInitArgs.ipdlh",
-]
-
 include("/ipc/chromium/chromium-config.mozbuild")
 
 FINAL_LIBRARY = "xul"

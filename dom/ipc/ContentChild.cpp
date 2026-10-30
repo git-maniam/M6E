@@ -678,7 +678,7 @@ void ContentChild::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
 
 
 
-  CrashReporterClient::InitSingleton(this);
+  CrashReporterClient::InitSingleton();
 
   mIsForBrowser = aIsForBrowser;
 

@@ -21,7 +21,6 @@ include protocol PSocketProcessBackground;
 include protocol PSandboxTesting;
 #endif
 
-include CrashReporterInitArgs;
 include MemoryReportTypes;
 include NeckoChannelParams;
 include PrefsTypes;
@@ -107,7 +106,6 @@ sync protocol PSocketProcess
   manages PNativeDNSResolverOverride;
 
 parent:
-  async InitCrashReporter(CrashReporterInitArgs aInitArgs);
   async AddMemoryReport(MemoryReport aReport);
   // Messages for sending telemetry to parent process.
   async AccumulateChildHistograms(HistogramAccumulation[] accumulations);

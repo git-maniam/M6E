@@ -46,7 +46,6 @@ include protocol PRemoteWorkerService;
 include protocol PProfiler;
 include protocol PScriptCache;
 include protocol PSessionStorageObserver;
-include CrashReporterInitArgs;
 include DOMTypes;
 include WindowGlobalTypes;
 include IPCBlob;
@@ -1190,8 +1189,6 @@ parent:
         returns (Endpoint<PStreamFilterChild> aEndpoint);
 
     async PRemoteSpellcheckEngine();
-
-    async InitCrashReporter(CrashReporterInitArgs aInitArgs);
 
     sync IsSecureURI(nullable nsIURI aURI, OriginAttributes aOriginAttributes)
         returns (bool isSecureURI);

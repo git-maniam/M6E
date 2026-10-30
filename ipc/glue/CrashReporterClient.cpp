@@ -28,18 +28,6 @@ void CrashReporterClient::InitSingleton() {
   }
 }
 
-static dom::NativeThreadId CurrentNativeThreadId() {
-  return mozilla::UniqueMachSendRight{CrashReporter::CurrentThreadId()};
-}
-
-/*static*/
-CrashReporter::CrashReporterInitArgs CrashReporterClient::CreateInitArgs() {
-  CrashReporter::CrashReporterInitArgs initArgs;
-  initArgs.threadId() = CurrentNativeThreadId();
-
-  return initArgs;
-}
-
 /* static */
 void CrashReporterClient::DestroySingleton() {
   StaticMutexAutoLock lock(sLock);

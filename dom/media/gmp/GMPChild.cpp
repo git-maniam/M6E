@@ -92,7 +92,7 @@ bool GMPChild::Init(const nsAString& aPluginPath, const char* aParentBuildID,
     ipc::ProcessChild::QuickExit();
   }
 
-  CrashReporterClient::InitSingleton(this);
+  CrashReporterClient::InitSingleton();
 
   if (GMPProcessChild::UseXPCOM()) {
     if (NS_WARN_IF(NS_FAILED(NS_InitMinimalXPCOM()))) {

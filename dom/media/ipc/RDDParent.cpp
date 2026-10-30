@@ -88,7 +88,7 @@ bool RDDParent::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
   }
 
   // Init crash reporter support.
-  CrashReporterClient::InitSingleton(this);
+  CrashReporterClient::InitSingleton();
 
   if (NS_FAILED(NS_InitMinimalXPCOM())) {
     return false;

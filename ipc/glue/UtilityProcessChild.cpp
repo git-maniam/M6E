@@ -99,7 +99,7 @@ bool UtilityProcessChild::Init(mozilla::ipc::UntypedEndpoint&& aEndpoint,
   }
 
   // Init crash reporter support.
-  ipc::CrashReporterClient::InitSingleton(this);
+  ipc::CrashReporterClient::InitSingleton();
 
   if (NS_FAILED(NS_InitMinimalXPCOM())) {
     return false;

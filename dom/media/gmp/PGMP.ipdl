@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include CrashReporterInitArgs;
 include PrefsTypes;
 include ProfilerTypes;
 include protocol PGMPContent;
@@ -30,7 +29,6 @@ sync protocol PGMP
   manages PGMPStorage;
 
 parent:
-  async InitCrashReporter(CrashReporterInitArgs aInitArgs);
   async PGMPTimer();
   async PGMPStorage();
 
