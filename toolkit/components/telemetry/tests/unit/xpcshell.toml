@@ -52,11 +52,6 @@ run-if = [
   "os != 'android'", # Legacy telemetry is always disabled on Android
 ]
 
-["test_PingSender.js"]
-skip-if = [
-  "os == 'android'",
-]
-
 ["test_PrefMigrationForTOU.js"]
 
 ["test_RDDScalars.js"]
