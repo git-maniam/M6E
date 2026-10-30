@@ -397,7 +397,7 @@ Preferences.addSetting({
 
 Preferences.addSetting({
   id: "optOutStudiesEnabled",
-  visible: () => lazy.AppConstants.MOZ_NORMANDY,
+  visible: () => false,
   pref: PREF_OPT_OUT_STUDIES_ENABLED,
   deps: ["submitHealthReportBox", "normandyEnabled"],
   disabled: ({ submitHealthReportBox, normandyEnabled }) => {

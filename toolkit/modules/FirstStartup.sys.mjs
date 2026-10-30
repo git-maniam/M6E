@@ -2,17 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
-
-const lazy = {};
-
-ChromeUtils.defineESModuleGetters(lazy, {
-  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
-});
-
 const PREF_TIMEOUT = "first-startup.timeout";
 const PREF_CATEGORY_TASKS = "first-startup.category-tasks-enabled";
-const CATEGORY_NAME = "first-startup-new-profile";
 
 /**
  * Service for blocking application startup, to be used on the first install. The intended
@@ -63,37 +54,11 @@ export var FirstStartup = {
 
     let promises = [];
 
-    let normandyInitEndTime = null;
-    let normandyInitPromise = null;
-
-    // Very important things that need to run before we launch the first window
-    // during new profile setup can register a hook with CATEGORY_NAME.
-    //
-    // Consumers should be aware that:
-    //
-    // * This blocks first startup window opening for new installs on Windows
-    //   ONLY for the first created default profile
-    // * If PREF_TIMEOUT elapses before all of these promises complete, the
-    //   registered category entries might not have all had a chance to
-    //   successfully complete before the first browser window appears.
     const CATEGORY_TASKS_ENABLED = Services.prefs.getBoolPref(
       PREF_CATEGORY_TASKS,
       false
     );
     let categoryTasksEndTime = null;
-    if (CATEGORY_TASKS_ENABLED && AppConstants.MOZ_NORMANDY) {
-      promises.push(
-        normandyInitPromise.finally(() => {
-          return lazy.BrowserUtils.callModulesFromCategory({
-            categoryName: CATEGORY_NAME,
-            profileMarker: "first-startup-new-profile-tasks",
-            idleDispatch: false,
-          }).finally(() => {
-            categoryTasksEndTime = ChromeUtils.now();
-          });
-        })
-      );
-    }
 
     if (promises.length) {
       Promise.allSettled(promises).then(() => (initialized = true));
@@ -112,12 +77,6 @@ export var FirstStartup = {
       });
     } else {
       this._state = this.UNSUPPORTED;
-    }
-
-    if (AppConstants.MOZ_NORMANDY) {
-      Glean.firstStartup.normandyInitTime.set(
-        Math.ceil(normandyInitEndTime || ChromeUtils.now() - startingTime)
-      );
     }
 
     if (CATEGORY_TASKS_ENABLED) {

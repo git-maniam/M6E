@@ -29,25 +29,12 @@ add_task(async function test_success() {
 
   await GleanPings.firstStartup.testSubmission(
     () => {
-      if (AppConstants.MOZ_NORMANDY) {
-        Assert.equal(FirstStartup.state, FirstStartup.SUCCESS);
-        Assert.ok(Glean.firstStartup.newProfile.testGetValue());
-        Assert.equal(
-          Glean.firstStartup.statusCode.testGetValue(),
-          FirstStartup.SUCCESS
-        );
-
-        if (AppConstants.MOZ_NORMANDY) {
-          Assert.greater(Glean.firstStartup.normandyInitTime.testGetValue(), 0);
-        }
-      } else {
-        Assert.equal(FirstStartup.state, FirstStartup.UNSUPPORTED);
-        Assert.ok(Glean.firstStartup.newProfile.testGetValue());
-        Assert.equal(
-          Glean.firstStartup.statusCode.testGetValue(),
-          FirstStartup.UNSUPPORTED
-        );
-      }
+      Assert.equal(FirstStartup.state, FirstStartup.UNSUPPORTED);
+      Assert.ok(Glean.firstStartup.newProfile.testGetValue());
+      Assert.equal(
+        Glean.firstStartup.statusCode.testGetValue(),
+        FirstStartup.UNSUPPORTED
+      );
     },
     () => FirstStartup.init(/* newProfile = */ true)
   );
@@ -60,19 +47,9 @@ add_task(async function test_timeout() {
 
   await GleanPings.firstStartup.testSubmission(
     () => {
-      if (AppConstants.MOZ_NORMANDY) {
-        Assert.equal(FirstStartup.state, FirstStartup.TIMED_OUT);
-        Assert.greater(Glean.firstStartup.elapsed.testGetValue(), 0);
-        Assert.ok(Glean.firstStartup.newProfile.testGetValue());
-
-        if (AppConstants.MOZ_NORMANDY) {
-          Assert.greater(Glean.firstStartup.normandyInitTime.testGetValue(), 0);
-        }
-      } else {
-        Assert.equal(FirstStartup.state, FirstStartup.UNSUPPORTED);
-        Assert.equal(Glean.firstStartup.elapsed.testGetValue(), 0);
-        Assert.ok(Glean.firstStartup.newProfile.testGetValue());
-      }
+      Assert.equal(FirstStartup.state, FirstStartup.UNSUPPORTED);
+      Assert.equal(Glean.firstStartup.elapsed.testGetValue(), 0);
+      Assert.ok(Glean.firstStartup.newProfile.testGetValue());
     },
     () => FirstStartup.init(/* newProfile = */ true)
   );

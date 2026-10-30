@@ -76,8 +76,7 @@ add_task(async function test_is_registered_in_idle_startup() {
 
 add_task(
   {
-    skip_if: () =>
-      !AppConstants.MOZ_NORMANDY || AppConstants.platform !== "linux",
+    skip_if: () => AppConstants.platform !== "linux",
   },
   async function test_disabled_when_pref_off() {
     let { createStub } = await runWith(true, true, true, false, false);
@@ -90,8 +89,7 @@ add_task(
 
 add_task(
   {
-    skip_if: () =>
-      !AppConstants.MOZ_NORMANDY || AppConstants.platform !== "linux",
+    skip_if: () => AppConstants.platform !== "linux",
   },
   async function test_enabled_when_pref_on() {
     let { createStub } = await runWith(true, true, true, false, true);
@@ -120,8 +118,7 @@ add_task(async function test_skips_on_unofficial_build() {
 
 add_task(
   {
-    skip_if: () =>
-      !AppConstants.MOZ_NORMANDY || AppConstants.platform !== "linux",
+    skip_if: () => AppConstants.platform !== "linux",
   },
   async function test_skips_when_windows_policy_denies() {
     let { createStub, approvedStub } = await runWith(
@@ -144,8 +141,7 @@ add_task(
 
 add_task(
   {
-    skip_if: () =>
-      !AppConstants.MOZ_NORMANDY || AppConstants.platform !== "linux",
+    skip_if: () => AppConstants.platform !== "linux",
   },
   async function test_skips_when_already_applied() {
     let { createStub, approvedStub } = await runWith(
