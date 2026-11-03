@@ -24,6 +24,8 @@ tags = "os_integration"
 
 ["browser_etp_status.js"]
 
+["browser_m6e_fingerprinting_policy.js"]
+
 ["browser_m6e_initial_category.js"]
 
 ["browser_m6e_privacy_shield.js"]
