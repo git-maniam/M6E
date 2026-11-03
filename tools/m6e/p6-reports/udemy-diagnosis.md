@@ -24,9 +24,12 @@ Terms used below:
 6. Note whether the failing lectures have something in common: all in one
    section, all newer, all with a high quality setting, and so on.
 
-If the same lecture plays in another browser (Safari or Chrome), say so.
-Chrome and Safari can play things M6E cannot (see "Developer notes"); the
-lecture still fails in M6E either way.
+If the same lecture plays in Chrome, say so; it helps (see part 6). If it plays
+in Safari, say so too, but that tells us little: Safari uses a different DRM
+system (FairPlay), not Widevine.
+
+Also write down which M6E you have: menu M6E, About M6E, and read the version
+(`161.0a1` or `161.0a2`). Part 3 has settings that differ between them.
 
 ## 2. THE KEY TEST: switch the Tracker Blocker off for udemy.com
 
@@ -46,9 +49,10 @@ Switch the Tracker Blocker back on afterwards (same panel), or just quit M6E.
 
 ## 3. It plays with the Tracker Blocker off: find which protection does it
 
-The per-site switch turns off several protections at once (tracker blocking,
-fingerprinting protection, and the limits on third-party storage). Next, find
-the one that matters. Switching the Tracker Blocker off for good is not the
+The per-site switch turns off several protections at once for that site:
+tracker blocking, fingerprinting protection (including Maximum protection),
+the limits on third-party storage, and HTTPS-Only mode (it adds an HTTPS-Only
+exception for the site). Next, find the one that matters. Switching the Tracker Blocker off for good is not the
 answer; the goal is to learn which single setting Udemy needs.
 
 How to flip a setting:
@@ -59,32 +63,55 @@ How to flip a setting:
 2. In the address bar type `about:config` and press Enter. Click "Accept the
    Risk and Continue" if it asks.
 3. Type the setting name in the search box at the top.
-4. For a true/false setting, click the arrow button at the right of the row to
-   flip it. For a number, click the pencil button, type the new number, press
-   Enter. A bold row means you changed it.
-5. Open the failing lecture (reload with Cmd-R) and press play.
-6. Put the setting back (the circular arrow button at the right of the row
-   restores the default), then do the next row.
+4. Write down the value the row has now (its original value).
+5. For a true/false setting, click the toggle button at the right of the row
+   to flip it. For a number, click the pencil button, type the new number,
+   press Enter. A bold row means you changed it.
+6. Open the failing lecture (reload with Cmd-R) and press play.
+7. Put the setting back to the original value you wrote down: toggle it again,
+   or type the number again. Do NOT use the circular "reset" arrow on rows 1
+   and 3: it goes to Firefox's built-in default, which for those two rows is
+   the opposite of the value Strict mode sets, so it would leave the setting
+   wrong. Then do the next row.
 
 Change one setting at a time, always put it back, and write down the result of
 each.
 
-| # | Setting | Normal value | Change it to | What it turns off |
-|---|---------|--------------|--------------|-------------------|
-| 1 | `privacy.fingerprintingProtection` | `true` in strict, `false` in standard | the opposite | Fingerprinting Protection (it hides or alters things a page can read about your Mac) |
-| 2 | `privacy.trackingprotection.fingerprinting.enabled` | `true` | `false` | Blocking of known fingerprinting scripts and addresses |
-| 3 | `privacy.trackingprotection.enabled` | `true` in strict, `false` in standard | the opposite | Blocking of known tracking scripts and addresses |
-| 4 | `network.cookie.cookieBehavior` | `5` | `0` | Cookie partitioning and third-party cookie limits (`0` accepts all cookies; this is the biggest privacy loss, so only for the test) |
-| 5 | `network.http.referer.XOriginTrimmingPolicy` | `2` | `0` | Referrer trimming: other sites then see the full address of the page you came from |
-| 6 | `dom.security.https_only_mode` | `true` | `false` | HTTPS-Only mode (M6E falls back to Firefox's HTTPS-First) |
-| 7 | `network.trr.mode` | `2` | `5` | DNS over HTTPS (Cloudflare for Families): `5` turns it off and uses your normal DNS instead. Needed for the Cloudflare filter test |
+Which rows apply depends on your build (the version you wrote down in part 1):
+
+- `161.0a1` (the build you have today): Strict mode has first-party
+  Fingerprinting Protection on, so all rows apply.
+- `161.0a2` and later: Standard and Strict mode have no first-party
+  Fingerprinting Protection. Rows 1 and 1b should already be `false`, so there
+  is nothing to test in them; start at row 1c if you use Maximum protection,
+  otherwise at row 2.
+
+| # | Setting | Original value on `161.0a1` | Original value on `161.0a2`+ | Change it to | What it turns off |
+|---|---------|-----------------------------|------------------------------|--------------|-------------------|
+| 1 | `privacy.fingerprintingProtection` | `true` in Strict, `false` in Standard | `false` | `false` (skip if it is already `false`) | Fingerprinting Protection: it hides or alters things a page can read about your Mac (canvas, graphics, screen) |
+| 1b | `privacy.baselineFingerprintingProtection` | `true` | `false` | `false` (skip if it is already `false`; on `161.0a1` in Strict, also have row 1 at `false`, because row 1 takes precedence) | The smaller, always-on set of the same protections |
+| 1c | `privacy.resistFingerprinting` | `false`; `true` only if Maximum protection is selected | same | `false` (skip if it is already `false`) | Maximum protection: the strongest fingerprinting resistance. The per-site switch turns it off for the site too. If it is on because of Maximum, switch the Privacy Shield in Settings from Maximum to the normal level instead of editing it here, and reselect Maximum afterwards |
+| 2 | `privacy.trackingprotection.fingerprinting.enabled` | `true` | `true` | `false` | Blocking of known third-party fingerprinting scripts and addresses |
+| 3 | `privacy.trackingprotection.enabled` | `true` in Strict, `false` in Standard | same | `false` (skip if it is already `false`) | Blocking of known tracking scripts and addresses |
+| 4 | `network.cookie.cookieBehavior` | `5` | `5` | `0` | Cookie partitioning and third-party cookie limits (`0` accepts all cookies; this is the biggest privacy loss, so only for the test) |
+| 5 | `network.http.referer.XOriginTrimmingPolicy` | `2` | `2` | `0` | Referrer trimming: other sites then see the full address of the page you came from |
+| 6 | `dom.security.https_only_mode` | `true` | `true` | `false` | HTTPS-Only mode (M6E falls back to Firefox's HTTPS-First) |
+| 7 | `network.trr.mode` | `2` | `2` | `5` | DNS over HTTPS (Cloudflare for Families): `5` turns it off and uses your normal DNS instead. Needed for the Cloudflare filter test |
+
+The "original value" columns are what a new profile starts with. Your profile
+may differ, which is why step 4 says to write down what you see: put back what
+you saw, not what the table says. The `161.0a2`+ column describes a change that
+was still being finished when this was written; if a row shows something
+else, trust the row and tell the developer.
 
 Notes:
 
-- "Normal value" is what a new M6E profile starts with. Your profile may
-  differ; write down what you see before you change it. If `privacy.fingerprintingProtection`
-  or `privacy.trackingprotection.enabled` already has the value in the "Change it
-  to" column, skip that row.
+- Changing rows 1, 1b, 2 or 3 in about:config can switch your Enhanced
+  Tracking Protection category from Strict to Custom. When all the tests are
+  done, restore the values (step 7), then open Settings, Privacy & Security,
+  Enhanced Tracking Protection, and check that "Strict" is selected and nothing
+  says "Custom". If it says Custom, click Strict. A profile left in Custom is
+  not put back to Strict by M6E updates, so do not skip this.
 - M6E locks some settings so they cannot be changed in about:config
   (telemetry, updates, promotions, and two DNS-over-HTTPS safety settings).
   None of the seven in the table is locked, so each row can be tested
@@ -94,12 +121,14 @@ Notes:
   switch. The Privacy Shield in Settings is a test too: switching it off
   turns off tracker blocking, fingerprinting protection and the limits above
   for every site, and sets rows 5 and 6 back to Firefox's values. That is a
-  one-click version of rows 1 to 6; use it if you do not want to open about:config. Switch
-  it back on afterwards.
-- Rows 1 to 4 are the same protections the per-site switch in part 2 turns
-  off, so if only the per-site switch fixed it, one of rows 1 to 4 is the
-  cause. If none of the rows changes anything but the per-site switch did,
-  the cause is a combination: try rows 1 and 2 together, then 1 to 4 together.
+  one-click version of rows 1 to 6 (it does not touch the Strict category);
+  use it if you do not want to open about:config. Switch it back on
+  afterwards.
+- Rows 1 to 4 and row 6 are the protections the per-site switch in part 2
+  turns off, so if only the per-site switch fixed it, one of rows 1 to 4 or 6
+  is the cause (rows 5 and 7 are not part of the per-site switch). If no single
+  row changes anything but the per-site switch did, the cause is a
+  combination: try rows 1, 1b and 2 together, then 1 to 4 together.
 - If a row makes the lecture play, stop. That setting is the answer: tell the
   developer which row and what value.
 
@@ -135,26 +164,26 @@ tree), so use `about:support` for this.
 4. In the Browser Console, look for red lines mentioning "EME", "MediaKeys",
    "license", "Widevine" or "shaka". Copy them. The player may print a
    numbered error such as `Shaka Error 6007` or a line like
-   `code: 6007`: write the number down. Rough meaning of the number
-   (from memory of the Shaka player's list, not checked against the source):
-   - 6001: the player asked for a kind of DRM that M6E said it did not support
-     (see "Developer notes");
-   - 6002: the Widevine module could not be started;
-   - 6007: the licence request failed (the licence server did not answer, or
-     the request was blocked);
-   - 6008: the licence server answered, but with a refusal;
-   - 3016: a problem feeding the video data to the player (a decoding
-     problem);
-   - 1001, 1002, 1003 and other numbers starting 1 or 4: a network request
-     failed.
+   `code: 6007`: write the number down, and copy the whole line, including
+   any list of numbers after it (called `data`). What the numbers mean is
+   from memory of the Shaka player's error list and not checked: look the
+   number up at
+   https://shaka-player-demo.appspot.com/docs/api/shaka.util.Error.html
+   before relying on any of this.
+   - Numbers starting with 1 (1xxx) are believed to be network errors.
+   - Numbers starting with 6 (6xxx) are believed to be DRM errors: asking for
+     a kind of DRM, starting the module, or the licence request or its answer.
+   - 3016 is believed to be `VIDEO_ERROR`; the first number in its `data` list
+     is then the browser's own media error code, so copy it.
 5. In the Network tab, type `license` in the filter box and look for a request
    (often a POST). Click it. Write down: the address (the host name only, for
    example `something.udemy.com`), the status number (200, 403, ...), and
    whether it has a red mark or the word "Blocked". A status 403 means the
    server refused; "Blocked" with a reason like "tracking" or "content
    blocking" means M6E blocked it.
-6. Clear the filter and type `is:blocked` or look for red rows; also look for
-   rows with a status other than 200 and 206 near the time of the error. Copy
+6. Clear the filter. Click the "Status" column heading to sort by it and look
+   for rows marked "Blocked", and for rows with a status other than 200 and
+   206 near the time of the error. Copy
    the host names of any that failed or were blocked, especially CDN hosts
    (names containing `cloudfront`, `akamai`, `udemycdn`, `fastly`, `cdn`).
 7. If a failed host cannot be found ("NS_ERROR_UNKNOWN_HOST" or a "could not
@@ -174,61 +203,74 @@ Use this when part 4 does not explain it, or when asked to.
 
 1. Quit M6E completely (Cmd-Q).
 2. Open Terminal (Cmd-Space, type Terminal, Enter).
-3. Type these two lines (the second one is the script):
+3. Get the script. It is in the project at `tools/m6e/drm_log.sh`. If you have
+   the project folder at `~/Projects/M6E`, type `cd ~/Projects/M6E` and then
+   `sh tools/m6e/drm_log.sh`. Otherwise download it and run it. It is not on
+   the `main` branch yet, so use the branch address until it is merged:
 
    ```
-   cd ~/Projects/M6E
-   tools/m6e/drm_log.sh
+   cd ~/Downloads
+   curl -O https://raw.githubusercontent.com/git-maniam/M6E/m6e-fix/udemy-diagnosis/tools/m6e/drm_log.sh
+   sh drm_log.sh
    ```
 
-   Options: add `--net` to also log network requests and DNS (use this if part 4
-   pointed at a blocked or missing host). Add `--no-sandbox` only if the
+   (Once merged, replace `m6e-fix/udemy-diagnosis` with `main` in the
+   address.)
+
+   Options go after `sh drm_log.sh`: `--net` also logs network requests and
+   DNS (use it if part 4 pointed at a blocked or missing host; the logs get a
+   lot bigger), and `--max-mb 50` limits each log file to about 50 megabytes
+   (the default is 100). Add `--no-sandbox` only if the
    next step leaves no `child` files; it turns off a security feature of the
    media processes, so quit and start M6E normally afterwards. It can also
    change whether the video plays: if it plays only with `--no-sandbox`, say so.
-   A different app location or log folder: `tools/m6e/drm_log.sh /path/to/M6E.app ~/Documents`.
+   A different app location or log folder: `sh drm_log.sh /path/to/M6E.app ~/Documents`.
 4. M6E opens. Sign in to Udemy, open the failing lecture, press play, wait for
    the error, then quit M6E with Cmd-Q. Do not browse elsewhere: the logs
-   grow very quickly.
+   grow very quickly and can take up hundreds of megabytes of disk space.
+   Delete the `m6e-drm-*` files from the Desktop when you are done.
 5. The script lists the log files. They are on your Desktop and named
    `m6e-drm-<date>-<time>.moz_log` (the main process) and
    `m6e-drm-<date>-<time>.child-<number>.moz_log` (one for each helper process:
    web page, media decoding, Widevine). There is no process id in the names;
    the number is a helper number.
-6. To share only the end of each file, run the two `tail` commands the script
-   prints. Each makes a small text file of the last 500 lines. If the main
-   file is very big, that is fine.
-7. Read the files before sending them: they can contain page addresses and
-   the first part of licence requests. You can delete lines you do not want to
-   share.
+6. The script prints one line that starts with `for f in`. Paste it into
+   Terminal and press Enter. It makes a small `-tail.txt` file next to each
+   log, with the last 500 lines. Send those files (not the huge logs), unless
+   asked for more.
+7. Read the files before sending them: they can contain page addresses,
+   cookies and the first part of licence requests. Delete lines you do not
+   want to share. Send them privately (to the developer directly), never in a
+   public issue or forum post.
 
 ## 6. What the evidence points to
 
 | What you saw | What it suggests |
 |--------------|------------------|
-| Plays after the per-site Tracker Blocker switch (part 2) | Tracking or fingerprinting protection, or cookie partitioning, blocks or alters something Udemy needs (hypothesis 1) |
+| Plays after the per-site Tracker Blocker switch (part 2) | Tracking or fingerprinting protection, or cookie partitioning, blocks or alters something Udemy needs |
 | One row in part 3 fixes it (rows 1 to 4) | That protection is the cause: the developer can exempt Udemy's video and licence hosts or relax that one setting |
 | Row 5 fixes it | Referrer trimming: Udemy's licence server or CDN wants a full referrer |
 | Row 6 fixes it | HTTPS-Only: a video or licence host answers only in plain http or redirects badly |
 | Row 7 fixes it, or a failed host in 4b shows a DNS error | DNS-over-HTTPS with Cloudflare for Families blocks or fails to resolve a CDN or licence host |
-| Licence request in 4b is "Blocked" by M6E | Content blocking (hypothesis 1) |
-| Licence request is status 403, 401 or 400 and nothing is blocked | The licence server refuses this client: Udemy wants more than M6E's Widevine gives (hypothesis 2), or a login or cookie is missing (cookie partitioning) |
-| Number 6001 | The player asked for something M6E's Widevine cannot do: high security level (hardware), HEVC, saved licences, or a device ID (hypothesis 2) |
-| Number 6002, or `com.widevine.alpha` missing in about:support, or Widevine not "Enabled" | The Widevine module is missing or not started |
-| Number 3016, or the console says "decode" or the codec table lacks the video's codec | Decoder failure (hypothesis 4) |
+| Licence request in 4b is "Blocked" by M6E | Content blocking |
+| Licence request is status 403, 401 or 400 and nothing is blocked | The licence server refuses this client: Udemy wants more than M6E's Widevine gives or a login or cookie is missing (cookie partitioning) |
+| A DRM number (6xxx) whose name in Shaka's list is about the requested configuration or "no key system" | The player asked for something M6E's Widevine cannot do: high security level (hardware), HEVC, saved licences, or a device ID |
+| A DRM number (6xxx) whose name is about creating the module, or `com.widevine.alpha` missing in about:support, or Widevine not "Enabled" | The Widevine module is missing or not started |
+| 3016 with a media error code in its `data`, or the console says "decode" or the codec table lacks the video's codec | Decoder failure |
 | `child` log mentions the Widevine process crashing or exiting | The module crashed; the developer will need the log |
 | Other DRM sites also fail (4c) | The Widevine module, not Udemy |
-| Plays in Chrome or Safari but not in M6E, and 6001 | Udemy asks for a hardware-protected video that only those browsers offer |
+| Plays in Chrome but fails in M6E with a DRM (6xxx) error about the configuration or the licence | Udemy's player or licence server needs something M6E's Widevine does not offer: saved (persistent) licences, HEVC, hardware-protected (`HW_SECURE_*`) robustness, or a CDM feature that depends on the CDM host |
+| Plays in Safari but not in M6E | Tells us nothing about Widevine: Safari uses FairPlay, a different DRM system |
 | Nothing from the list changes the result | Send everything from parts 1, 4 and 5 |
 
 ## 7. Where to send the results
 
-Send them to whoever is working on this with you, usually by pasting into the
-conversation: your notes from parts 1 to 3, the screenshots and copied lines
-from part 4, and the files from part 5. If you prefer to file it, open an
-issue at https://github.com/git-maniam/M6E/issues and attach the same.
-Start the message with the answer to part 2 (did it play with the Tracker
-Blocker off, yes or no).
+Send them to the developer privately (a direct message or email, not a public
+issue, forum or chat): your notes from parts 1 to 3, the screenshots and
+copied lines from part 4, and the `-tail.txt` files from part 5. Logs and
+network details can contain cookies, session tokens and the addresses of the
+pages you visited, so do not post them publicly. Start the message with the
+answer to part 2 (did it play with the Tracker Blocker off, yes or no).
 
 ---
 
@@ -240,29 +282,45 @@ Facts checked against the source in this tree. Line numbers are for the current
 ### Setting values (checked)
 
 - Strict is the start category for new profiles:
-  `browser/app/profile/m6e.js:203` (`browser.contentblocking.initialCategory`).
-  The strict feature string includes `tp`, `cookieBehavior5`, `fp`, `fpp`, `rp`
-  (`browser/app/profile/firefox.js:2003`). In Standard, `privacy.trackingprotection.enabled`
-  (`modules/libpref/init/StaticPrefList.yaml`, `privacy.trackingprotection.enabled`) and
-  `privacy.fingerprintingProtection` default to `false`; check the profile's
-  actual values before assuming they are on.
+  `browser.contentblocking.initialCategory` in `browser/app/profile/m6e.js`.
+- Build `161.0a1` (this tree): the Strict feature string
+  (`browser.contentblocking.features.strict` in `browser/app/profile/firefox.js`)
+  includes `tp`, `cookieBehavior5`, `fp`, `fpp`, `rp`, so Strict sets
+  `privacy.trackingprotection.enabled` and `privacy.fingerprintingProtection`
+  to true. Their built-in defaults are false (`StaticPrefList.yaml`), so the
+  about:config reset arrow gives the opposite of the Strict value.
+  `privacy.baselineFingerprintingProtection` defaults to true.
+- Build `161.0a2`+ (branch `m6e-fix/fp-standard-mode`, not merged when this
+  was written; read from `git diff origin/main origin/m6e-fix/fp-standard-mode`
+  on `m6e.js`): Strict becomes `-fpp,-fppPrivate` and
+  `privacy.baselineFingerprintingProtection` false. That diff of `m6e.js` does
+  not set `privacy.fingerprintingProtection.pbmode`; the guide relies on the
+  coordinator's statement that it is false. Maximum protection stays
+  `privacy.resistFingerprinting`, set by `M6EPrivacyShield.sys.mjs` (`apply`).
+- A profile whose prefs no longer match the category is shown as Custom, and
+  an update does not reset it (as told by the reviewer; the code was not
+  checked).
 - Cookie partitioning is Firefox's default: `network.cookie.cookieBehavior` = 5
-  (`firefox.js:1902`); fingerprinter blocking is on
-  (`firefox.js:1911`).
-- M6E: `dom.security.https_only_mode` true (`m6e.js:209`),
-  `network.http.referer.XOriginTrimmingPolicy` 2 (`m6e.js:212`),
-  `network.trr.mode` 2 and provider `https://security.cloudflare-dns.com/dns-query`
-  (`m6e.js:85`, `m6e.js:88`). None is `locked`. The locked TRR prefs are
-  `hard_fail_on_extended_error` and `allow-rfc1918` only (`m6e.js:90`, `m6e.js:92`).
-- The per-site switch is Firefox's ETP allow list: `ContentBlockingAllowList::Check`
-  (`toolkit/components/antitracking/ContentBlockingAllowList.cpp`) is consulted for
-  tracking protection, storage access (`StorageAccess.cpp`) and
-  fingerprinting protection
-  (`nsContentUtils::ETPSaysShouldNotResistFingerprinting`). It does not change
-  `XOriginTrimmingPolicy` or the TRR mode; those are global
-  (`browser/components/protections/M6EPrivacyShield.sys.mjs`, `COMPATIBILITY_VALUES`),
-  and switch only with the Privacy Shield in Settings. Whether it also lifts cookie
-  partitioning was not verified.
+  (`firefox.js`); third-party fingerprinter blocking is on
+  (`privacy.trackingprotection.fingerprinting.enabled`, `firefox.js`).
+- M6E (`m6e.js`): `dom.security.https_only_mode` true,
+  `network.http.referer.XOriginTrimmingPolicy` 2, `network.trr.mode` 2 and
+  provider `https://security.cloudflare-dns.com/dns-query`. None is `locked`.
+  The locked TRR prefs are `hard_fail_on_extended_error` and `allow-rfc1918`
+  only.
+- The per-site switch with the Shield on (`M6EPrivacyShield.sys.mjs`,
+  `setSiteProtected`) adds the ETP allow-list entry
+  (`ContentBlockingAllowList.add`) and a session `https-only-load-insecure`
+  permission, which is an HTTPS-Only exception. The allow list is consulted by
+  `ContentBlockingAllowList::Check`
+  (`toolkit/components/antitracking/ContentBlockingAllowList.cpp`) for
+  tracking protection, storage access (`StorageAccess.cpp`) and fingerprinting
+  protection including resistFingerprinting
+  (`nsContentUtils::ETPSaysShouldNotResistFingerprinting`; its M6E comment says
+  it covers RFP too). It does not change `XOriginTrimmingPolicy` or the TRR
+  mode; those are global (`COMPATIBILITY_VALUES`) and switch only with the
+  Privacy Shield in Settings. Whether it also lifts cookie partitioning was
+  not verified.
 - The Tracker Blocker panel text (on/off, "until M6E quits") is in
   `browser/locales/en-US/browser/browser.ftl` (`trustpanel-etp-*`).
 
@@ -293,7 +351,7 @@ What this rejects for a typical Udemy-style (Shaka or HLS/DASH with Widevine)
 - A video capability whose robustness is `HW_SECURE_ALL`, `HW_SECURE_DECODE` or
   `HW_SECURE_CRYPTO` (the usual "high tier" ask). If the player lists a
   `SW_SECURE_*` or empty-robustness entry as a fallback, the call succeeds
-  with that one; if it offers only `HW_SECURE_*`, the call rejects (Shaka:
+  with that one; if it offers only `HW_SECURE_*`, the call rejects (Shaka, from memory:
   `REQUESTED_KEY_SYSTEM_CONFIG_UNAVAILABLE`).
 - `distinctiveIdentifier: "required"` (rejected; the CDM says not allowed).
 - `sessionTypes: ["persistent-license"]` (offline playback; rejected).
@@ -311,8 +369,8 @@ unsupported robustness string"), so it settles this in one run.
 
 If the licence server also checks the CDM's reported security level, a
 software-only L3 module will be refused regardless of what the request asked
-for; that shows as a licence request answered with an error (Shaka 6008), not
-6001.
+for; that shows as a licence request answered with an error (a licence
+response error), not a configuration error.
 
 ### Widevine version (`toolkit/content/gmp-sources/widevinecdm.json`)
 
@@ -326,17 +384,20 @@ for; that shows as a licence request answered with an error (Shaka 6008), not
   the default, M6E therefore cannot move past the version pinned in the
   file; a newer CDM needs a newer file. A cheap test: set
   `media.gmp-widevinecdm.force-chromium-update` to true, restart, and let
-  M6E fetch whatever Google currently serves. Untested here.
+  M6E fetch whatever Google currently serves. Untested here. Caveat: the
+  forced branch deletes `size`, `hashValue` and `hashFunction` from the add-on
+  (`adjustForChromiumUpdateService`), so that download is not checked against
+  the hash in the JSON file. Use it for a test only, and set the pref back to
+  false afterwards.
 - Whether `4.10.3112.0` is current upstream could not be checked offline.
 
 ### Shaka error numbers
 
-The numbers in part 4b are from memory of the Shaka Player error list
-(6001 `REQUESTED_KEY_SYSTEM_CONFIG_UNAVAILABLE`, 6002 `FAILED_TO_CREATE_CDM`,
-6007 `LICENSE_REQUEST_FAILED`, 6008 `LICENSE_RESPONSE_REJECTED`; 3016 is a
-`MEDIA_SOURCE_OPERATION_*` error, exact name not recalled). They were not checked against the
-Shaka source, and it was not verified that Udemy uses Shaka. Treat them as a
-pointer, not a proof.
+Part 4b gives only the classes (1xxx network, 6xxx DRM) and 3016 as
+`VIDEO_ERROR`, all from memory of the Shaka Player error list. Nothing was
+checked against the Shaka source, it was not verified that Udemy uses Shaka,
+and individual 6xxx numbers are deliberately left out of the reader's part.
+Check the list in Shaka's documentation before relying on a number.
 
 ### Logging (`tools/m6e/drm_log.sh`)
 
@@ -353,6 +414,12 @@ pointer, not a proof.
   release build was not verified; hence the `--no-sandbox` option, which sets
   `MOZ_DISABLE_CONTENT_SANDBOX`, `MOZ_DISABLE_GMP_SANDBOX` and
   `MOZ_DISABLE_RDD_SANDBOX` (all three exist in the source).
+- `MOZ_LOG` options used: `timestamp`, `append` and `maxsize:<MB>` (a size cap
+  needs `append` and keeps the end of the file; `xpcom/base/Logging.cpp`, the
+  option parser in `LogModuleManager::Init`). With `--net`: `nsHttp:4` (level 3
+  logs almost nothing) and `nsHostResolver:5`. DNS-over-HTTPS logging in this
+  tree goes through `nsHostResolver` (`netwerk/dns/DNSLogging.h`); no module
+  named `TRR` was found.
 - Log modules used: `EME` and `EMEV` (`dom/media/eme/EMEUtils.cpp`), `GMP`
   (`GMPService.cpp`), `MediaDecoder`, `MediaSource`, `PlatformDecoderModule`.
   `MediaKeys` from the original list is not a log module name in this tree;
