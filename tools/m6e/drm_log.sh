@@ -6,7 +6,7 @@
 # Start the installed M6E with media and DRM (Widevine) logging on, to find out
 # why an encrypted video does not play. See tools/m6e/p6-reports/udemy-diagnosis.md.
 #
-#   tools/m6e/drm_log.sh [--net] [--no-sandbox] [path to M6E.app [log directory]]
+#   tools/m6e/drm_log.sh [--net] [--max-mb <n>] [--no-sandbox] [path to M6E.app [log directory]]
 #
 # The app defaults to /Applications/M6E.app and the directory to ~/Desktop.
 # Quit M6E first: a second start only opens a window in the running copy, which
@@ -19,16 +19,25 @@
 # not a process id, and no pid is added to the main log's name.
 #
 #   --net         also log network requests, DNS and DNS-over-HTTPS (larger)
+#   --max-mb <n>  cap each log file at about <n> megabytes, keeping the end
+#                 (default 100); there is one file per process
 #   --no-sandbox  also turn off the macOS sandbox of the content, media and
 #                 Widevine processes. The sandbox may stop them writing their
 #                 log files, so use this when only the main log shows up. It
 #                 lowers security and can change whether a video plays: use it
 #                 for this diagnosis only and start M6E normally afterwards.
 #
+# Verbose logs grow fast: keep the video short and quit M6E right after the
+# error. With the cap, the disk use is at most about <n> MB times the number of
+# files (a handful), and more with --net.
+#
 # The app runs in the foreground: closing this window quits M6E.
+
+set -eu
 
 app=/Applications/M6E.app
 dir=$HOME/Desktop
+maxmb=100
 net=0
 nosandbox=0
 npos=0
@@ -37,8 +46,19 @@ while [ $# -gt 0 ]; do
     case $1 in
         --net) net=1 ;;
         --no-sandbox) nosandbox=1 ;;
+        --max-mb)
+            if [ $# -lt 2 ]; then
+                echo "--max-mb needs a number." >&2
+                exit 2
+            fi
+            case $2 in
+                ''|*[!0-9]*) echo "--max-mb needs a whole number." >&2; exit 2 ;;
+            esac
+            maxmb=$2
+            shift
+            ;;
         -h|--help)
-            echo "Usage: $0 [--net] [--no-sandbox] [path to M6E.app [log directory]]"
+            echo "Usage: $0 [--net] [--max-mb <n>] [--no-sandbox] [path to M6E.app [log directory]]"
             exit 0
             ;;
         --*)
@@ -82,10 +102,10 @@ base=$dir/m6e-drm-$stamp
 
 modules=EME:5,EMEV:5,GMP:5,MediaDecoder:5,MediaSource:5,PlatformDecoderModule:5
 if [ "$net" = 1 ]; then
-    modules=$modules,nsHttp:3,nsHostResolver:5,TRR:5
+    modules=$modules,nsHttp:4,nsHostResolver:5
 fi
 
-MOZ_LOG=timestamp,$modules
+MOZ_LOG=timestamp,append,maxsize:$maxmb,$modules
 MOZ_LOG_FILE=$base
 export MOZ_LOG MOZ_LOG_FILE
 
@@ -104,8 +124,8 @@ Play the video that fails, wait for the error, then quit M6E (Cmd-Q).
 The logs grow quickly; do not leave M6E running for long.
 EOF
 
-"$bin"
-status=$?
+status=0
+"$bin" || status=$?
 
 cat <<EOF
 
@@ -113,15 +133,12 @@ M6E has quit (exit code $status). Log files:
 EOF
 ls -l "$base"*.moz_log 2>/dev/null || echo "  none were written."
 
-cat <<EOF
-
-To share the end of a log (the last 500 lines), run for the main log and for
-the biggest child log:
-  tail -n 500 "$base.moz_log" > "$base-main-tail.txt"
-  tail -n 500 "$base.child-<n>.moz_log" > "$base-child-tail.txt"
-Files that mention EME or GMP lines near the error are the ones that matter:
-  grep -l "EME" "$base"*.moz_log
-The logs may contain page addresses and licence-request details; read them
-before sharing.
-EOF
+echo
+echo "To make a small file with the last 500 lines of every log, paste this one"
+echo "line into Terminal and press Enter; the files end in -tail.txt:"
+echo
+printf 'for f in "%s"*.moz_log; do tail -n 500 "$f" > "${f%%.moz_log}-tail.txt"; done\n' "$base"
+echo
+echo "The logs may contain page addresses, cookies and licence-request details."
+echo "Read them before sharing and send them privately, not in a public issue."
 exit "$status"
