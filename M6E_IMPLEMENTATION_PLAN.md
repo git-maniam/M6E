@@ -94,8 +94,8 @@ Don't start the next step until the current one builds and checks out. Split a s
 | P4.9, P4.3 | Final PGO build, full test pass and profiling; Phase 4 complete | `ff0b6ab100` |
 | P5.0 to P5.3 | D25 (DoH blocking) verified; app signed, release DMG built and verified; acceptance 15 of 15; merge tooling | `07b3761cbd` |
 | P6.0 to P6.3 | Phase 6: dormant features deleted (VPN, Translations, generative AI, ML, Sync, Mozilla accounts, updater, crash reporter, Nimbus), lint and config clean-up, LTO and PGO restored, unreachability proof, release DMG, acceptance 15 of 15 | `2cd68653d2` (P6.0), `b60ab6fb0d` (6.1a), `d12d905ae2` (6.1b), `44a36ef2aa` (6.1c), `7743d3249c` (6.1d), `bc2246158a` (6.1e), `85226d827b` (6.1f), `c376db70f7` (6.1g), `07a169bda7` (6.1h), `e5139bb58d` (6.1i), `92e1ea3f39` (6.2), the `M6E P6.3` commit (6.3) |
-| 161.0a2 | In progress: fingerprinting policy for standard mode (D31), passkey documentation (D32), Udemy diagnosis; not yet built or released (see section 4) | |
 | P4.8d | Review of M6E's changes: 1 medium, 3 low and 1 info finding fixed, with tests | `cfd42808e0` |
+| 161.0a2 | In progress: fingerprinting policy for standard mode (D31), passkey documentation (D32), Udemy diagnosis; not yet built or released (see section 4) | planned |
 
 ## 3. Results by phase (as built)
 
@@ -215,7 +215,7 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Tests:** `browser_readerMode_m6e.js` is new, and the colour-scheme tests are removed. The reader suite gives 149 passed. The one failure, `browser_localfile_readerMode.js`, happens only locally, because test files under `obj-m6e/_tests` are symlinks and the address bar shows the resolved source path.
 - **Privacy hardening (P3.4, D18):** all of these are defaults, not locks, so the Privacy Shield (P3.5) can switch them.
   - **Strict ETP:** new profiles start in the strict category. `browser.contentblocking.initialCategory` is `strict` in `m6e.js`, and `ContentBlockingPrefs.init()` applies it when the profile has no category yet, as if the user had chosen it. Choosing Standard or Custom persists.
-    - As built in 161.0a1, strict includes Fingerprinting Protection (`privacy.fingerprintingProtection`, from the `fpp` and `fppPrivate` tokens). `privacy.resistFingerprinting` stays off. 161.0a2 (planned, D31) drops those two tokens from the strict category, keeping the `fp` token that blocks third-party fingerprinters.
+    - As built in 161.0a1, strict includes Fingerprinting Protection (`privacy.fingerprintingProtection`, from the `fpp` and `fppPrivate` tokens). `privacy.resistFingerprinting` stays off. 161.0a2 (planned, D31) lists them as `-fpp,-fppPrivate` in the strict category string (leaving them out would keep private-window Fingerprinting Protection on) and sets `privacy.baselineFingerprintingProtection` to false, keeping the `fp` token that blocks known third-party fingerprinters.
     - Setting strict values as pref defaults doesn't work: "Standard" means "every pref at its default", so the UI would show Standard and choosing it would change nothing.
   - **Other prefs:**
     - GPC;
@@ -283,37 +283,37 @@ Don't start the next step until the current one builds and checks out. Split a s
   - **Manual check:** the native banner and the macOS permission prompt on first use (System Settings, Notifications, M6E), because headless runs can't show them.
   - **Not done:** the optional "open at login, hidden" login item. It's native code and needs the user's agreement first.
 
-## 4. Next step: Phase 6, deleting the dormant features
+## 4. Next step: 161.0a2 (Phase 6 is finished)
 
 ### 161.0a2 (in progress; written 2026-11-03)
 Nothing below is built or published yet. The release is 161.0a1 until the lead bumps the version and publishes 161.0a2.
 
 **Issues** (reported against 161.0a1):
-1. **Passkeys fail** (for example on mail.yahoo.com), with the iPhone QR code and with Touch ID. Cause (high but not full confidence): macOS needs the entitlement `com.apple.developer.web-browser.public-key-credential`, which ad hoc signing leaves out (D8, D32), so only the USB and NFC authenticator is available.
+1. **Passkeys fail** (for example on mail.yahoo.com), with the iPhone QR code and with Touch ID. Most likely cause: macOS needs the entitlement `com.apple.developer.web-browser.public-key-credential`, which ad hoc signing leaves out (D8, D32), so only the USB security key authenticator is available. The code check is verified; that this is what happened on the reporter's Yahoo account has not been confirmed.
 2. **Udemy plays some DRM videos but not others** ("We tried several times to play your video"). Widevine L3 (software) is installed and a Widevine data folder for `www.udemy.com` exists in the reporter's profile, so Udemy has used it and the failures appear to be per video. The cause is not known: strict tracking protection, a limit of software-only L3, a blocked CDN or licence host, or a decoder failure are all candidates. No fix is claimed. The diagnostics guide is `tools/m6e/p6-reports/udemy-diagnosis.md` (written by a separate branch; check that it exists before relying on it).
 3. **Suspicion that fingerprinting and tracker blocking is too aggressive.** In standard mode, strict tracking protection applies Firefox's Fingerprinting Protection to first-party sites, which masks values such as the WebGL renderer.
 
 **Decisions:**
-- **D31:** in standard mode, no Fingerprinting Protection for first-party sites; third-party fingerprinters stay blocked in every mode; Maximum keeps full resistance. Pref change only, no C++.
-- **D32:** platform passkeys are documented as unsupported; security keys only. The path to support is a Developer ID with notarization and Apple's entitlement.
+- **D31:** in Privacy Shield standard mode (Maximum off), no Firefox Fingerprinting Protection for any site, private windows included (strict category `-fpp,-fppPrivate`, baseline tier off); known third-party fingerprinters stay blocked in standard and Maximum mode while the Shield is on (except on sites switched off), and nothing is blocked with the Shield off; Maximum keeps full resistance (no letterboxing is enabled). Pref change only, no C++. Upgrade: profiles in the "strict" category (M6E's default) are migrated at startup by `ContentBlockingPrefs.init` (first window) and stay "strict" with Fingerprinting Protection off; "custom" profiles are not changed; profiles in the Standard category get no first-party Fingerprinting Protection either.
+- **D32:** platform passkeys are documented as unsupported; USB security keys only. The path to support is a Developer ID with notarization and Apple's entitlement.
 - **Udemy:** the user runs the shield-off test first; any further change is a pref or front-end follow-up only if the result points there.
 - **Version:** ship as 161.0a2. Install and version references in the README stay 161.0a1 until the release exists.
 
 **Branches** (from `origin/main`, none merged yet):
-- `m6e-fix/fp-standard-mode`: the pref change in `browser/app/profile/m6e.js`, test updates, a new mochitest and the `acceptance.py` Shield check.
+- `m6e-fix/fp-standard-mode`: three commits (the prefs in `browser/app/profile/m6e.js`; the test updates with `acceptance.py` check 7c and `testing/profiles/base/user.js`; the new mochitest `browser_m6e_fingerprinting_policy.js`), plus review-fix commits.
 - `m6e-fix/docs-161a2`: these documents (specification D18 to D20, D31, D32; README; this section).
 - The Udemy diagnostics branch: not recorded here yet.
 
 **Approved steps:**
-1. Fingerprinting fix: override `browser.contentblocking.features.strict` in `m6e.js` without `fpp,fppPrivate`. Before building, check the load order against `firefox.js`, that `ContentBlockingPrefs` still matches the category as "strict" (not "custom"), and the upgrade of existing 161.0a1 profiles that store `privacy.fingerprintingProtection`.
-2. Update the tests that assert Fingerprinting Protection under strict (the `etp` Settings tests, the protections report test, `testing/profiles/base/user.js`, `acceptance.py` check 7c) and add a mochitest: first-party canvas and `navigator.hardwareConcurrency` unmasked in standard mode, a known third-party fingerprinter still blocked, and resistance active in Maximum.
+1. Fingerprinting fix: override `browser.contentblocking.features.strict` in `m6e.js` with `-fpp,-fppPrivate` instead of `fpp,fppPrivate`, and set `privacy.baselineFingerprintingProtection` to false. Before building, check the load order against `firefox.js`, that `ContentBlockingPrefs` still matches the category as "strict" (not "custom"), and the upgrade of existing 161.0a1 profiles that store `privacy.fingerprintingProtection`.
+2. Update the tests that assert Fingerprinting Protection under strict (`browser_contentblocking_categories.js`, `browser_etp_customize_3.js`, `browser_m6e_initial_category.js`, `browser_protections_report_ui.js` and `acceptance.py` check 7c, around line 660; `testing/profiles/base/user.js` needs the baseline pref at Firefox's value) and add a mochitest: first-party canvas and `navigator.hardwareConcurrency` unmasked in standard mode, a known third-party fingerprinter still blocked, and resistance active in Maximum.
 3. Udemy diagnostics kit: the guide, a MOZ_LOG launcher script, and a check of the Widevine and EME configuration against the source.
 4. Documentation (this branch), then two read-only reviews: one tries to refute the fingerprinting change, one fact-checks the documents.
 5. Adopt the branches, lint, and run a quick front-end test with `make -C obj-m6e/faster` (the Shield and the `etp` tests).
 6. Bump `browser/config/version.txt` and `version_display.txt` to `161.0a2`. A version change forces a rebuild and PGO needs a clobber, so run the P6.3 sequence (`tools/m6e/p6-reports/p6-3-runbook.md`): clobber and build, `tools/m6e/run_tests.sh`, `tools/m6e/package/release.sh`, `acceptance.py` (15 of 15) and `unreachability_check.py` (7 of 7) on the packaged copy, then `measure.py` and `speedometer.py` on a quiet machine, with no other work running.
 7. Publish: `tools/m6e/package/homebrew-cask.sh`, a draft GitHub release that the user completes, a check of the download's sha256 against the cask, the tap, and a sandbox install. 161.0a1 stays published.
 
-**Known trade-off:** unlisted third-party scripts can fingerprint in standard mode; Maximum covers them.
+**Known trade-off:** the fingerprinter list only holds known scripts, so unlisted third-party scripts can fingerprint in standard mode, and private windows no longer get Firefox's Fingerprinting Protection; only Maximum covers both. A site switched on in the Tracker Blocker while the Shield is off gets tracker and fingerprinter blocking but no first-party fingerprinting protection.
 
 ### Restart bookmark: "Resume after restart" (written 2026-10-29; Phase 6 finished 2026-10-30)
 **Phase 6 is done.** There is nothing to resume from this bookmark; the older Tuesday and Sunday bookmarks below describe merge work that is complete. What is left is optional and listed here:
