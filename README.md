@@ -45,7 +45,7 @@ This installs the cask `m6e` from the tap `git-maniam/m6e`. Use the fully qualif
 
 ### DMG
 
-1. Download `M6E-<version>-macos-arm64.dmg` (currently `M6E-161.0a1-macos-arm64.dmg`) from the [GitHub Releases page](https://github.com/git-maniam/M6E/releases).
+1. Download `M6E-<version>-macos-arm64.dmg` (currently `M6E-161.0a2-macos-arm64.dmg`) from the [GitHub Releases page](https://github.com/git-maniam/M6E/releases).
 2. Open the DMG and drag M6E onto the Applications link.
 
 ### First launch
@@ -76,7 +76,7 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 - **Privacy Shield** (Settings, Privacy and security): the first group in the pane.
   - The **Privacy Shield** switch is on by default. On, it blocks trackers, ads and known third-party fingerprinting scripts, connects to sites securely and applies M6E's privacy hardening. Off, nothing is blocked on any site.
   - **Maximum protection** adds full fingerprinting resistance for all sites, private windows included, while the Shield is on: sites see your time zone as UTC and a spoofed user agent, screen size and language, so more sites may not work.
-  - Without Maximum protection (standard mode), known third-party fingerprinters are blocked through Firefox's list. A third-party script that is not on that list can still fingerprint you, and private windows have no Fingerprinting Protection either; only Maximum covers both. From 161.0a2 (planned, not yet released), standard mode does not apply Firefox's Fingerprinting Protection (canvas randomization, masked WebGL renderer, tiered hardware concurrency) to any site, so fewer sites should be affected; the current release, 161.0a1, still applies it to first-party sites.
+  - Without Maximum protection (standard mode), known third-party fingerprinters are blocked through Firefox's list. A third-party script that is not on that list can still fingerprint you, and private windows have no Fingerprinting Protection either; only Maximum covers both. Since 161.0a2, standard mode does not apply Firefox's Fingerprinting Protection (canvas randomization, masked WebGL renderer, tiered hardware concurrency) to any site, so fewer sites should be affected; the earlier release, 161.0a1, still applied it to first-party sites.
   - Upgrading: a profile with the default strict tracking protection moves to the new behaviour at startup. A profile with custom tracking protection settings is not reset.
   - Changing either one offers to reload your tabs.
 - **Search:** Google and Bing only. Settings lists the two, and there is no Add button.
@@ -127,7 +127,7 @@ brew uninstall --zap --cask m6e
 
 ## Status
 
-Phases 0 to 6 are done. The current release is 161.0a1, built with LTO and PGO. The plan has the dates, commits and test results of every step. Release 161.0a2 is planned (fingerprinting policy, decision D31, and the documented passkey limit, D32) and is not yet built or published.
+Phases 0 to 6 are done. The current release is 161.0a2 (2026-11-03), built with LTO and PGO; it adds the fingerprinting policy (decision D31) and documents the passkey limit (D32). The plan has the dates, commits and test results of every step.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -139,16 +139,16 @@ Phases 0 to 6 are done. The current release is 161.0a1, built with LTO and PGO. 
 | 5 | `.dmg` packaging, signing and acceptance | Done (2026-10-24) |
 | 6 | Deleting the dormant features (VPN, Translations, generative AI, machine learning, Sync, Mozilla accounts, updater, crash reporter, Nimbus) | Done (2026-10-30) |
 
-Measured on the packaged Phase 6 build (details in [`M6E_IMPLEMENTATION_PLAN.md`](M6E_IMPLEMENTATION_PLAN.md), P6.3):
+Measured on the packaged builds (details in [`M6E_IMPLEMENTATION_PLAN.md`](M6E_IMPLEMENTATION_PLAN.md), P6.3):
 
-| | Phase 0 (stock Nightly) | Phase 6 (M6E 161.0a1) |
-|---|---|---|
-| Acceptance (`tools/m6e/acceptance.py`) | | 15 of 15 checks |
-| First paint (median of 10 runs) | 785 ms | 606 and 624 ms in two quiet-machine sessions (Phase 5: 579 ms) |
-| Blank-tab memory | 698 MB | 430 MB (8 processes) |
-| Speedometer 3 | | 45.46 (Phase 5: 44.7) |
-| Idle network (300 s, fresh profile) | 21 hosts, plus 40 looked up only over DNS | 5 hosts |
-| Release DMG | | 106.5 MiB |
+| | Phase 0 (stock Nightly) | 161.0a1 | 161.0a2 |
+|---|---|---|---|
+| Acceptance (`tools/m6e/acceptance.py`) | | 15 of 15 checks | 15 of 15 checks |
+| First paint (median of 10 runs) | 785 ms | 606 and 624 ms (Phase 5: 579 ms) | 632 and 634 ms |
+| Blank-tab memory | 698 MB | 430 MB (8 processes) | 432 MB (8 processes) |
+| Speedometer 3 | | 45.46 (Phase 5: 44.7) | 44.65 |
+| Idle network (300 s, fresh profile) | 21 hosts, plus 40 looked up only over DNS | 5 hosts | acceptance check passed |
+| Release DMG | | 106.5 MiB | 105.2 MiB |
 
 The first measurement, 643 ms, was inflated by background work after a restart; two re-measurements on a quiet machine gave 606 and 624 ms. The Speedometer 3 score was not measured on the stock Phase 0 build.
 
