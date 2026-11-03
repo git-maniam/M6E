@@ -76,7 +76,7 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 - **Privacy Shield** (Settings, Privacy and security): the first group in the pane.
   - The **Privacy Shield** switch is on by default. On, it blocks trackers, ads and third-party fingerprinting scripts, connects to sites securely and applies M6E's privacy hardening. Off, nothing is blocked on any site.
   - **Maximum protection** adds full fingerprinting resistance for all sites while the Shield is on: sites see your time zone as UTC, a spoofed user agent and screen size, and windows get grey margins, so more sites may not work. Without it (standard mode), sites keep working normally and only third-party fingerprinters are blocked, through Firefox's list of known fingerprinters. A third-party script that is not on that list can still fingerprint you in standard mode; Maximum covers those too.
-  - Release 161.0a2 (planned, not yet built) makes the standard-mode behaviour above official. 161.0a1 also applies Firefox's Fingerprinting Protection (canvas randomization, masked WebGL renderer, reduced hardware concurrency) to first-party sites in standard mode.
+  - Release 161.0a2 (planned, not yet built) makes the standard-mode behaviour above official. 161.0a1 also applies Firefox's Fingerprinting Protection (canvas randomization, masked WebGL renderer, tiered hardware concurrency) to first-party sites in standard mode.
   - Changing either one offers to reload your tabs.
 - **Search:** Google and Bing only. Settings lists the two, and there is no Add button.
 - **Bookmarks toolbar** (Settings, Appearance): the "Show bookmarks toolbar" switch. It is off by default.
