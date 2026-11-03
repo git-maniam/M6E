@@ -32,8 +32,14 @@ add_task(async function test_initial_category() {
   is(Services.prefs.getStringPref(CAT_PREF), "strict", "Starts in strict");
   ok(ContentBlockingPrefs.prefsMatch("strict"), "The strict prefs are set");
   ok(
-    Services.prefs.getBoolPref("privacy.fingerprintingProtection"),
-    "Fingerprinting Protection is on"
+    !Services.prefs.getBoolPref("privacy.fingerprintingProtection"),
+    "Fingerprinting Protection is off"
+  );
+  ok(
+    Services.prefs.getBoolPref(
+      "privacy.trackingprotection.fingerprinting.enabled"
+    ),
+    "Known fingerprinters are blocked"
   );
   ok(
     !Services.prefs.getBoolPref("privacy.resistFingerprinting"),
@@ -50,5 +56,34 @@ add_task(async function test_initial_category() {
   ok(
     !Services.prefs.getBoolPref("privacy.fingerprintingProtection"),
     "Standard turns Fingerprinting Protection off"
+  );
+  ok(
+    !Services.prefs.getBoolPref("privacy.fingerprintingProtection.pbmode"),
+    "Standard has no Fingerprinting Protection in private windows either"
+  );
+});
+
+// Profiles from before M6E dropped Fingerprinting Protection from strict
+// have it stored as a user value.
+add_task(async function test_stored_fingerprinting_protection_is_reset() {
+  registerCleanupFunction(() => {
+    Services.prefs.clearUserPref("privacy.fingerprintingProtection");
+    Services.prefs.clearUserPref("privacy.fingerprintingProtection.pbmode");
+  });
+  ContentBlockingPrefs.uninit();
+  Services.prefs.setStringPref(CAT_PREF, "strict");
+  Services.prefs.setBoolPref("privacy.fingerprintingProtection", true);
+  Services.prefs.setBoolPref("privacy.fingerprintingProtection.pbmode", true);
+  ContentBlockingPrefs.init();
+
+  is(Services.prefs.getStringPref(CAT_PREF), "strict", "Still strict");
+  ok(ContentBlockingPrefs.prefsMatch("strict"), "The strict prefs are set");
+  ok(
+    !Services.prefs.getBoolPref("privacy.fingerprintingProtection"),
+    "The stored Fingerprinting Protection is off"
+  );
+  ok(
+    !Services.prefs.getBoolPref("privacy.fingerprintingProtection.pbmode"),
+    "Fingerprinting Protection is off in private windows too"
   );
 });

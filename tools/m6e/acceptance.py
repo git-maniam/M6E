@@ -658,6 +658,9 @@ const snap = () => ({
   trim: P.getIntPref("network.http.referer.XOriginTrimmingPolicy"),
   rfp: P.getBoolPref("privacy.resistFingerprinting"),
   fpp: P.getBoolPref("privacy.fingerprintingProtection"),
+  fppPrivate: P.getBoolPref("privacy.fingerprintingProtection.pbmode"),
+  baselineFpp: P.getBoolPref("privacy.baselineFingerprintingProtection"),
+  fpTracking: P.getBoolPref("privacy.trackingprotection.fingerprinting.enabled"),
   category: P.getStringPref("browser.contentblocking.category"),
 });
 const out = { start: snap() };
@@ -1574,6 +1577,18 @@ def check_shield(ctx, r):
         start,
     )
     r.add(
+        "standard mode: no first-party fingerprinting protection, third-party "
+        "fingerprinters still blocked",
+        not start["fpp"]
+        and not start["fppPrivate"]
+        and not start["baselineFpp"]
+        and start["fpTracking"],
+        {
+            k: start[k]
+            for k in ("rfp", "fpp", "fppPrivate", "baselineFpp", "fpTracking")
+        },
+    )
+    r.add(
         "switching it off lifts the hardening and disables Maximum",
         not off["enabled"]
         and not off["pressed"]
@@ -1591,8 +1606,12 @@ def check_shield(ctx, r):
         data["maximumOn"]["rfp"]
         and data["maximumOn"]["maximum"]
         and not data["maximumOff"]["rfp"]
-        and not data["maximumOff"]["maximum"],
-        f"on: rfp={data['maximumOn']['rfp']} off: rfp={data['maximumOff']['rfp']}",
+        and not data["maximumOff"]["maximum"]
+        and data["maximumOn"]["fpTracking"]
+        and data["maximumOff"]["fpTracking"]
+        and not data["maximumOff"]["fpp"],
+        f"on: rfp={data['maximumOn']['rfp']} off: rfp={data['maximumOff']['rfp']}"
+        f" fpp={data['maximumOff']['fpp']}",
     )
 
 

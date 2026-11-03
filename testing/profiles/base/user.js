@@ -29,6 +29,10 @@ user_pref("network.trr.mode", 0);
 // M6E starts new profiles in strict tracking protection; tests expect
 // Firefox's standard defaults.
 user_pref("browser.contentblocking.initialCategory", "");
+// M6E has no baseline fingerprinting protection in standard mode (m6e.js);
+// tests expect Firefox's default.
+user_pref("privacy.baselineFingerprintingProtection", true);
+user_pref("privacy.fingerprintingProtection.pbmode", true);
 // M6E's privacy hardening (m6e.js, P3.4) at Firefox's values, so tests run
 // against the behaviour they were written for. HTTPS-Only would otherwise
 // block the test harness, which loads http://mochi.test.
