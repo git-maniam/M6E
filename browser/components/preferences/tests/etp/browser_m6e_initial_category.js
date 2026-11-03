@@ -57,6 +57,10 @@ add_task(async function test_initial_category() {
     !Services.prefs.getBoolPref("privacy.fingerprintingProtection"),
     "Standard turns Fingerprinting Protection off"
   );
+  ok(
+    !Services.prefs.getBoolPref("privacy.fingerprintingProtection.pbmode"),
+    "Standard has no Fingerprinting Protection in private windows either"
+  );
 });
 
 // Profiles from before M6E dropped Fingerprinting Protection from strict

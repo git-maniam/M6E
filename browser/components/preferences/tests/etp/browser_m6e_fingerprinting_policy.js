@@ -83,6 +83,38 @@ add_setup(async function () {
   M6EPrivacyShield.apply({ enabled: true, maximum: false });
 });
 
+// Canvas randomization only alters canvases that aren't a flat colour, so draw
+// two flat rectangles and count the pixels that don't read back as drawn.
+function readCanvasAndConcurrency() {
+  let canvas = content.document.createElement("canvas");
+  canvas.width = 100;
+  canvas.height = 100;
+  let context = canvas.getContext("2d");
+  context.fillStyle = "#EE2222";
+  context.fillRect(0, 0, 100, 100);
+  context.fillStyle = "#2222EE";
+  context.fillRect(20, 20, 60, 60);
+  let data = context.getImageData(0, 0, 100, 100).data;
+  let altered = 0;
+  for (let y = 0; y < 100; y++) {
+    for (let x = 0; x < 100; x++) {
+      let inner = x >= 20 && x < 80 && y >= 20 && y < 80;
+      let expected = inner ? [0x22, 0x22, 0xee, 255] : [0xee, 0x22, 0x22, 255];
+      let i = (y * 100 + x) * 4;
+      if (expected.some((value, offset) => data[i + offset] != value)) {
+        altered++;
+      }
+    }
+  }
+  return { altered, concurrency: content.navigator.hardwareConcurrency };
+}
+
+function probeFirstParty() {
+  return BrowserTestUtils.withNewTab(TEST_URL, browser =>
+    SpecialPowers.spawn(browser, [], readCanvasAndConcurrency)
+  );
+}
+
 add_task(async function test_standard_mode() {
   ok(ContentBlockingPrefs.prefsMatch("strict"), "The strict prefs are set");
   ok(
@@ -101,42 +133,39 @@ add_task(async function test_standard_mode() {
 
   // The browser window is exempt from fingerprinting protection.
   let realConcurrency = window.navigator.hardwareConcurrency;
-  await BrowserTestUtils.withNewTab(TEST_URL, async browser => {
-    // Canvas randomization only alters canvases that aren't a flat colour, so
-    // draw two flat rectangles and count the pixels that don't read back as
-    // drawn.
-    let result = await SpecialPowers.spawn(browser, [], () => {
-      let canvas = content.document.createElement("canvas");
-      canvas.width = 100;
-      canvas.height = 100;
-      let context = canvas.getContext("2d");
-      context.fillStyle = "#EE2222";
-      context.fillRect(0, 0, 100, 100);
-      context.fillStyle = "#2222EE";
-      context.fillRect(20, 20, 60, 60);
-      let data = context.getImageData(0, 0, 100, 100).data;
-      let altered = 0;
-      for (let y = 0; y < 100; y++) {
-        for (let x = 0; x < 100; x++) {
-          let inner = x >= 20 && x < 80 && y >= 20 && y < 80;
-          let expected = inner
-            ? [0x22, 0x22, 0xee, 255]
-            : [0xee, 0x22, 0x22, 255];
-          let i = (y * 100 + x) * 4;
-          if (expected.some((value, offset) => data[i + offset] != value)) {
-            altered++;
-          }
-        }
-      }
-      return { altered, concurrency: content.navigator.hardwareConcurrency };
-    });
-    is(result.altered, 0, "A first-party canvas reads back as drawn");
-    is(
-      result.concurrency,
-      realConcurrency,
-      "A first-party site sees the real hardware concurrency"
-    );
-  });
+  let result = await probeFirstParty();
+  is(result.altered, 0, "A first-party canvas reads back as drawn");
+  is(
+    result.concurrency,
+    realConcurrency,
+    "A first-party site sees the real hardware concurrency"
+  );
+});
+
+// Shows that the canvas probe in test_standard_mode can tell: with Firefox's
+// baseline protection on, the same canvas is randomized.
+add_task(async function test_probe_detects_randomization() {
+  Services.prefs.setBoolPref("privacy.baselineFingerprintingProtection", true);
+  let result = await probeFirstParty();
+  Services.prefs.clearUserPref("privacy.baselineFingerprintingProtection");
+  Assert.greater(
+    result.altered,
+    0,
+    "A first-party canvas is randomized with baseline protection on"
+  );
+});
+
+add_task(async function test_standard_category() {
+  Services.prefs.setStringPref(CAT_PREF, "standard");
+  ContentBlockingPrefs.uninit();
+  ContentBlockingPrefs.init();
+  is(Services.prefs.getStringPref(CAT_PREF), "standard", "Standard persists");
+  for (let pref of FPP_PREFS) {
+    ok(!Services.prefs.getBoolPref(pref), `${pref} is off in Standard`);
+  }
+  Services.prefs.setStringPref(CAT_PREF, "strict");
+  ContentBlockingPrefs.uninit();
+  ContentBlockingPrefs.init();
 });
 
 add_task(async function test_maximum_mode() {
