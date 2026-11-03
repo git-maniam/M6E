@@ -17,7 +17,10 @@
  * plain http fallback for "m6e-protect" sites.
  * The hardening prefs that only apply globally are switched here instead.
  * First-party fingerprinting protection is off in standard mode (m6e.js);
- * only Maximum turns it on, as privacy.resistFingerprinting.
+ * only Maximum turns it on, as privacy.resistFingerprinting. So with the
+ * Shield off, a site with the "m6e-protect" permission gets tracker blocking
+ * and third-party fingerprinter blocking, but no baseline fingerprinting
+ * protection.
  *
  * Switching the Shield only changes prefs that still hold the value of the
  * state being left, so prefs the user changed by hand are kept.

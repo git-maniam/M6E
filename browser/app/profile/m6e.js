@@ -195,8 +195,10 @@ pref("reader.color_scheme", "light", locked);
 pref("reader.color_scheme.values", "[\"light\"]", locked);
 
 // Privacy hardening (P3.4), as defaults rather than locks: the Privacy Shield
-// (P3.5) switches them. Fingerprinting resistance (privacy.resistFingerprinting)
-// stays off by default; the Privacy Shield's strict mode turns it on (D18).
+// (P3.5) switches them. Maximum protection turns fingerprinting resistance
+// (privacy.resistFingerprinting) on (D18, D31); standard mode applies no
+// first-party fingerprinting protection, and third-party fingerprinters stay
+// blocked by the fp list.
 //
 // New profiles start in strict Enhanced Tracking Protection (see
 // ContentBlockingPrefs.init).
@@ -212,6 +214,10 @@ pref("browser.contentblocking.initialCategory", "strict");
 // and profiles that stored Fingerprinting Protection get it reset.
 pref("browser.contentblocking.features.strict", "tp,tpPrivate,cookieBehavior5,cookieBehaviorPBM5,cryptoTP,fp,stp,emailTP,emailTPPrivate,-consentmanagerSkip,-consentmanagerSkipPrivate,lvl2,rp,rpTop,qps,qpsPBM,-fpp,-fppPrivate,btp,lna");
 pref("privacy.baselineFingerprintingProtection", false);
+// M6E: private windows lose Fingerprinting Protection in standard mode too
+// (Firefox defaults this on), whichever tracking protection category is
+// chosen. Maximum protection covers them.
+pref("privacy.fingerprintingProtection.pbmode", false);
 
 // Ask sites not to sell or share data (Global Privacy Control).
 pref("privacy.globalprivacycontrol.enabled", true);
