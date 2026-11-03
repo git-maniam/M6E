@@ -19,11 +19,11 @@ M6E (said "'Am Sexy") is a fast, private and deliberately simple web browser for
 - **Debloated:** no Pocket, Firefox View, sponsored content, add-on recommendations or Normandy studies, and Phase 6 deleted the Mozilla VPN, Translations, generative AI and machine learning, Sync, Mozilla accounts, the application updater, the crash reporter and Nimbus experiments (Nimbus leaves a small stub). Telemetry and data collection are switched off and locked. What remains of the deleted features' code is checked to be unreachable (`tools/m6e/p6-reports/unreachability.md`). Only macOS on Apple silicon is supported, and the interface is in English only.
 - **Quiet on the network:** on a fresh profile left idle for 5 minutes, the release build contacted five hosts and nothing else: `content-signature-2.cdn.mozilla.net`, `firefox-settings-attachments.cdn.mozilla.net` and `firefox.settings.services.mozilla.com` (Remote Settings, for security and tracking-protection data only), `push.services.mozilla.com` (Web Push) and `security.cloudflare-dns.com` (DNS over HTTPS). Mozilla is contacted for those two things only. Widevine and OpenH264 still download from Google and Cisco when needed.
 - **Privacy by default:**
-  - strict tracking protection, which includes Fingerprinting Protection;
+  - strict tracking protection, which blocks third-party trackers, ads and fingerprinting scripts;
   - HTTPS-Only mode, Global Privacy Control and WebRTC IP-leak protection;
   - Arkenfox-style hardening;
   - DNS over HTTPS through Cloudflare for Families (security), which also refuses to resolve known malware and phishing domains.
-- **Privacy Shield:** one switch in Settings, Privacy and security, that sets how every site is treated, plus an optional Maximum protection mode with full fingerprinting resistance.
+- **Privacy Shield:** one switch in Settings, Privacy and security, that sets how every site is treated, plus an optional Maximum protection mode with full fingerprinting resistance for all sites.
 - **Tracker Blocker:** the shield at the left of the address bar counts what was blocked on the current page. Its panel lists the blocked trackers and has a per-site switch that overrides the Privacy Shield until M6E quits, in either direction.
 - **Telemetry button:** a gauge button beside the address bar that shows page timings and size, measured on your Mac and never sent anywhere.
 - **Search:** Google by default, with Bing as the only alternative. There are no partner codes, and no way to add other engines.
@@ -74,8 +74,9 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 **Settings:** open the M6E menu, then Settings.
 
 - **Privacy Shield** (Settings, Privacy and security): the first group in the pane.
-  - The **Privacy Shield** switch is on by default. On, it blocks trackers, ads and fingerprinting, connects to sites securely and applies M6E's privacy hardening. Off, nothing is blocked on any site.
-  - **Maximum protection** adds full fingerprinting resistance while the Shield is on. Sites see your time zone as UTC and windows get grey margins, so more sites may not work.
+  - The **Privacy Shield** switch is on by default. On, it blocks trackers, ads and third-party fingerprinting scripts, connects to sites securely and applies M6E's privacy hardening. Off, nothing is blocked on any site.
+  - **Maximum protection** adds full fingerprinting resistance for all sites while the Shield is on: sites see your time zone as UTC, a spoofed user agent and screen size, and windows get grey margins, so more sites may not work. Without it (standard mode), sites keep working normally and only third-party fingerprinters are blocked, through Firefox's list of known fingerprinters. A third-party script that is not on that list can still fingerprint you in standard mode; Maximum covers those too.
+  - Release 161.0a2 (planned, not yet built) makes the standard-mode behaviour above official. 161.0a1 also applies Firefox's Fingerprinting Protection (canvas randomization, masked WebGL renderer, reduced hardware concurrency) to first-party sites in standard mode.
   - Changing either one offers to reload your tabs.
 - **Search:** Google and Bing only. Settings lists the two, and there is no Add button.
 - **Bookmarks toolbar** (Settings, Appearance): the "Show bookmarks toolbar" switch. It is off by default.
@@ -83,7 +84,7 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 
 **Tracker Blocker:** the shield at the left of the address bar shows how many trackers and other privacy invasions were blocked on the current page. Click it to see them by category, with their domains, and to use the **Tracker Blocker** switch for the current site.
 
-- With the Privacy Shield on, switching a site off lets an important site that breaks load without blocking (and without HTTPS-Only for it).
+- With the Privacy Shield on, switching a site off lets an important site that breaks load without blocking, fingerprinting protection or HTTPS-Only for it.
 - With the Privacy Shield off, switching a site on protects a high-risk site.
 - The choice lasts until you quit M6E.
 - A site with protection off shows a shield with an X and no number.
@@ -117,14 +118,15 @@ brew uninstall --zap --cask m6e
 - Apple silicon Macs only; the interface is in English only (en-US, with a UK English spell-check dictionary).
 - No Mozilla accounts, Sync or sign-in: bookmarks and settings stay on the Mac.
 - Search is Google and Bing only, and you can't add search engines.
-- Sites that need DRM work through Widevine, which downloads from Google when needed. Platform passkeys (Touch ID, iCloud Keychain) are unavailable.
+- DRM video works through Widevine L3 (software), which downloads from Google when needed. Some streaming services may not play every title; the cause of the failures reported so far is still being investigated.
+- Passkeys stored on the Mac or phone do not work: Touch ID, iCloud Keychain and the iPhone QR code are unavailable, because macOS allows them only for apps with Apple's passkey entitlement, which needs a paid Apple Developer account (M6E is signed ad hoc, decision D8; see D32 in the [specification](m6e_browser_agent_instructions.md)). Only USB or NFC security keys (FIDO) work. Where a site offers a choice, use a security key or a password. A site that offers only passkeys may show a generic error.
 - Because the app is ad hoc signed, macOS may ask again for camera, microphone and location permission after each update.
-- The Privacy Shield and strict tracking protection can break some sites. Turn protection off for the site with the Tracker Blocker, or switch the Privacy Shield off.
+- The Privacy Shield and strict tracking protection can break some sites, and Maximum protection more of them. Turn protection off for the site with the Tracker Blocker, or switch the Privacy Shield off.
 - Malware and phishing protection works per domain through the DNS resolver, doesn't check downloads, and stops when DoH is unavailable.
 
 ## Status
 
-Phases 0 to 6 are done. The current release is 161.0a1, built with LTO and PGO. The plan has the dates, commits and test results of every step.
+Phases 0 to 6 are done. The current release is 161.0a1, built with LTO and PGO. The plan has the dates, commits and test results of every step. Release 161.0a2 is planned (fingerprinting policy, decision D31, and the documented passkey limit, D32) and is not yet built or published.
 
 | Phase | Scope | Status |
 |---|---|---|
