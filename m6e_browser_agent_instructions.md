@@ -24,7 +24,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 >
 > Please note: M6E is currently an experimental release, so while it is built for pure performance, you may occasionally encounter bugs or website compatibility issues.
 
-## 2. Status (2026-11-03)
+## 2. Status (2026-11-04)
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -36,6 +36,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 5 | Packaging (`.dmg`) and acceptance | Done (2026-10-24). Signed ad hoc, release DMG built and verified, acceptance 15 of 15; first paint 579 ms, blank-tab memory 443 MB. |
 | 6 | Delete the dormant features (D30) | Done (2026-10-30). VPN, Translations, generative AI, machine learning, Sync, Mozilla accounts, the application updater, the crash reporter and Nimbus are deleted (Nimbus leaves a small stub); what stays is proven unreachable (`tools/m6e/p6-reports/unreachability.md`, `tools/m6e/unreachability_check.py` 7 of 7 on the packaged app). Clean LTO and PGO build, regression suites match the baseline, acceptance 15 of 15, Speedometer 3 45.5 (Phase 5: 44.7), blank-tab memory 430 MB, first paint 606 to 624 ms on a quiet machine (Phase 5: 579 ms), release DMG 106.5 MiB. Optional C++ follow-ups are on `m6e-p7-optional/cpp-followups`. |
 | 161.0a2 | Fingerprinting policy for standard mode (D31) and the documented passkey limit (D32) | **Planned, not yet built or published.** The current release is 161.0a1. The release is a pref change plus documentation, with a version bump that needs a clean LTO and PGO rebuild. |
+| 8 | BitTorrent: the "BT" button, torrent panel, `.torrent` and `magnet:` handling, and the "Shady Torrent" warning (D33 to D37) | **Specified, not started.** Ships in a release after 161.0a2. Requirements are in Phase 8 below. |
 
 ## 3. Requirements
 
@@ -57,6 +58,8 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
   - Google and Cisco, for the DRM and video-call plugins (D10).
 
   Mozilla is contacted for exactly two things: Web Push and the Remote Settings security allowlist.
+
+  BitTorrent (Phase 8) adds no traffic to this list: the torrent engine does not run, listen or connect until the user adds a torrent (D36). Torrent traffic goes to trackers and peers, not to a fixed host list.
 
 ### Phase 2: Rebranding and UI (done)
 - **Branding:** use Firefox's branding mechanism (`browser/branding/m6e`), not a blind text replace.
@@ -142,6 +145,133 @@ The user added these before Phase 4 can finish:
 - **Acceptance** (`tools/m6e/acceptance.py`, on the packaged, signed app with a fresh profile): the 15 checks listed in the plan, including: only the 8 allowed hosts while idle; Dark Mode leaves the browser UI, including the PDF viewer, light; search is Google and Bing only; the removed features are absent; the Phase 3 features work; the blocked test domains of D25 fail without native DNS; and startup and memory are at least as good as the stock Nightly baseline.
 - **Maintenance:** upstream merges follow the procedure in the plan (P5.3), with `tools/m6e/merge/` to filter the diff and check the result.
 
+### Phase 8: BitTorrent (added 2026-11-04, D33 to D37)
+Adapted from a feature specification for a standalone uTorrent-style client (the "source spec", removed from the repository once this section replaced it; it remains in git history). What was cut, and why, is in 8.6.
+
+**Goal:** a small, private BitTorrent client inside M6E. A "BT" button beside the address bar opens a panel with the torrent controls. M6E can open `.torrent` files and `magnet:` links. A torrent with risky traits gets a "Shady Torrent" warning, which informs the user and never blocks. Nothing runs, listens or connects until the user adds a torrent (D36).
+
+#### 8.1 The BT button, panel and pages (D33)
+- **Placement and look:** a small button beside the Tracker Blocker and Telemetry buttons at the address bar, showing the letters "BT" as its icon, with the tooltip "BitTorrent". Build it the way the Page telemetry button is built (D29): `browser/base/content/browser-m6eTorrent.js`, a stylesheet and SVG next to `m6e-page-telemetry.css`, and strings in `browser/locales/en-US/browser/m6eTorrent.ftl`.
+- **States:** idle (plain icon); active (a badge with the number of downloading or seeding torrents); attention (a torrent has an error).
+- **Panel:** clicking the button opens a drop-down panel with:
+  - a header with the total download and upload speed;
+  - **Add torrent file…** and **Add magnet link…** (a paste field);
+  - the torrent list, one compact row each: name, progress bar, speed, ETA and state, with pause or resume, **Show in Finder** and remove (a choice to also delete the files). Clicking a row opens it in `about:torrents`. An empty list shows a short hint;
+  - **Pause all / Resume all**;
+  - **Turtle mode**, a switch for the alternative speed limits;
+  - quick settings: download and upload limits (KB/s, 0 is unlimited), encryption (Disabled, Enabled, Forced) and the seeding goal (stop at a ratio, after hours, or never);
+  - **BitTorrent settings…**, which opens the Settings section.
+- **Add dialog:** every torrent, from a file, a magnet link or Finder, opens an "Add torrent" dialog window before any file data is downloaded:
+  - name, total size and a file tree with checkboxes and a priority per file (High, Normal, Low, Do not download), hiding `.pad` files;
+  - the save location (default: the browser's download folder) and a free-space check that warns when the selected files will not fit;
+  - a **Sequential download** checkbox and a **Start now** checkbox;
+  - the "Shady Torrent" banner when 8.3 says so;
+  - **Add** and **Cancel**.
+- **`about:torrents`:** a page for the full view, a later step (P8.6). A sidebar filters by All, Downloading, Seeding, Completed, Active, Inactive and Errored. The table has the columns Name, Size, Done, Status, Down, Up, ETA, Ratio, Seeds/Peers and Added. The detail pane has the tabs General (transfer figures, hash, piece size, path), Trackers, Peers (address, client, encryption, speeds, progress), Pieces (a map of downloaded, verified and in-flight pieces), Files (priorities and progress), Speed (a live graph) and Log.
+- **Settings:** a "BitTorrent" section in `about:preferences`, next to the Privacy Shield (not a new page). It holds the panel's quick settings plus everything in 8.4 and 8.5, and the "default app" button of 8.2.
+- **Off switch:** the pref `m6e.torrent.enabled` (default true; Settings has "Show the BT button") hides the button and keeps the engine from ever starting.
+
+#### 8.2 Opening torrents (D33)
+- **Registration:** M6E's `Info.plist` (template: `browser/app/macbuild/Contents/Info.plist.in`) declares the document type `.torrent` (`application/x-bittorrent`) and the URL scheme `magnet`. M6E does not make itself the default silently. Settings has a button "Make M6E the default app for .torrent files and magnet links" (Launch Services); Finder's Open With works without it.
+- **Inside M6E:** a link to a `.torrent` file, a download whose type is `application/x-bittorrent`, and a navigation to a `magnet:` link all open the Add dialog instead of saving the file or asking to open an external app. Use Gecko's handler service for this, and look at how the tree handles external protocols now before deciding where to hook in. The page the link came from is recorded for the source check in 8.3.
+- **From Finder or another app:** the same Add dialog, with source "unknown".
+- **No silent adds:** a web page can never add or start a torrent. Only a user click and the Add dialog's **Add** do.
+- **Magnet links:** the Add dialog opens at once in a "Fetching torrent information…" state. Only the metadata (BEP 9) is fetched. The file tree and the 8.3 check appear when it arrives, and no file data is downloaded until the user clicks **Add**. **Cancel** drops the metadata fetch.
+- **Duplicates:** a torrent that is already in the list is not added again; its row is shown.
+- **Parsing hostile input:** reject a `.torrent` larger than 16 MiB, with bencoding nested deeper than a fixed limit, or with any file path that is absolute or has a `..`, empty or NUL component. Never write outside the chosen folder, and never follow a symlink out of it. A malformed torrent shows an error and is not added. These are safety limits, not the Shady warning.
+
+#### 8.3 The "Shady Torrent" warning (D35)
+- **What it is:** an informational banner at the top of the Add dialog, headed **Shady Torrent**, with a line such as "This torrent has traits that are common in malicious or misleading downloads", the reasons found (each with the file names concerned), and the buttons **Cancel** and **Add anyway**. It never blocks and never adds anything by itself. A torrent with no such traits, or from a trusted source, shows no banner and no extra step. M6E makes no judgement about copyright.
+- **Offline and explainable:** the check runs on the torrent's metadata and where it came from, on the device. It does not query any reputation service (no data leaves the device, D2). Every reason is shown to the user in words.
+- **Where it lives:** `browser/components/torrent/M6ETorrentRisk.sys.mjs`, a pure function from the parsed metadata and the source to `{ verdict: "ok" | "shady", reasons: [{ code, severity, files }] }`. The rules and trusted sources are bundled data (`browser/components/torrent/m6e-torrent-rules.json`) so they can be tuned without code changes. Cover it with xpcshell tests.
+- **Trusted source (no banner):** the `.torrent` was downloaded, or the `magnet:` link was clicked, on a page whose origin is **https** and belongs to a site in the bundled trusted list. The source is the strong signal because the connection is authenticated. A tracker address or a torrent name alone is never enough, because anyone can copy those into a malicious torrent. The initial list covers the official download pages of well-known Linux and BSD distributions (Debian, Ubuntu, Fedora and the Red Hat family: Rocky Linux, AlmaLinux, CentOS; plus Arch, openSUSE, Linux Mint, Tails and FreeBSD) and of open-source software projects that publish release torrents (for example Blender and the Wikimedia dumps). The implementer must check each entry against the project's own download page, and drop any project that does not publish torrents (Red Hat's own site, for example, may not). Do not add general hosting or sharing sites such as the Internet Archive, because anyone can upload to them. The user can add a site with **Always trust torrents from this site** in the Add dialog (stored in prefs). The list changes only with M6E releases (no Remote Settings, D2).
+- **Reasons, for a torrent not from a trusted source:**
+  - *High* (one is enough for **Shady Torrent**):
+    - a Windows program or script: `.exe .scr .com .pif .bat .cmd .vbs .vbe .jse .wsf .hta .msi .ps1 .cpl .lnk`;
+    - a double extension that disguises a program (`Movie.mkv.exe`), or a name with right-to-left override or other invisible characters;
+    - file names that advertise piracy tools: `crack`, `keygen`, `patch`, `activator`, `loader`, `serial`;
+    - a program or archive inside a torrent that is otherwise named and filled like video or audio.
+  - *Medium* (two are needed): a macOS installer or program (`.dmg .pkg .app .command .osax`), `.jar` or `.sh`; a `.url` or `.webloc` shortcut; a file named like `password.txt` or `readme` placed next to an archive.
+- **The user's examples:** a Debian or Fedora ISO torrent from its project's site is a trusted source, so no banner. The same ISO opened from Finder has one large `.iso` and none of the traits above, so it also gets no banner. A torrent called "Movie 2025 1080p" holding `Movie.mkv.exe` gets **Shady Torrent**.
+- **Remembered choice:** after **Add anyway** the warning is not shown again for that torrent in the session.
+
+#### 8.4 Engine and protocols (D34)
+- **Required for the first version:**
+  - BEP 3 (peer wire protocol, HTTP trackers, SHA-1 piece verification), BEP 15 (UDP trackers), BEP 9 and BEP 10 (magnet metadata and the extension protocol), BEP 53 (select files in a magnet link);
+  - BEP 5 (DHT) and BEP 11 (peer exchange);
+  - BEP 27 (private torrents): DHT, peer exchange and local discovery are off for the torrent for good;
+  - message stream encryption (Disabled, Enabled, Forced), IPv4 and IPv6, rarest-first and end-game piece picking, rate limits for download and upload (global, per torrent, and Turtle mode), selective files with priorities, sequential download, sparse files, a queue (maximum active downloads and torrents) and seeding goals (ratio or hours, then stop or use the alternative upload limit).
+- **Wanted, after the first version:** BEP 29 (uTP, with LEDBAT congestion control), BEP 19 (web seeds), BEP 52 (BitTorrent v2 and hybrid torrents, SHA-256 Merkle trees) and BEP 14 (local peer discovery, off by default, D36).
+- **Engine choice (spike P8.0):** pick an existing, maintained engine. Do not write a protocol stack. Candidates: libtorrent-rasterbar (C++, BSD), librqbit (Rust, Apache-2.0) and anacrolix/torrent (Go, MPL-2.0). Rule: the engine must cover every "Required" item (or the gaps must be small and listed), have a licence that can ship in an MPL-2.0 product, and build for arm64 macOS offline with the pinned Homebrew toolchain (D17); among those, prefer the one covering most "Wanted" items, then the smaller memory use. Read each project's documentation to check coverage and record the result in the plan.
+- **Process model:** the engine runs in its own helper executable, `m6e-torrent`, inside `M6E.app`, not inside the browser process. Reasons: a crash or exploit stays out of the browser, memory returns to the system when idle, and the Gecko build (a 40-minute to 2-hour rebuild) is untouched.
+  - **Source and build:** `tools/m6e/torrent/` (helper source and `build-helper.sh`), not built by `./mach build`. The script puts the binary into the app, and `tools/m6e/package/finalize-app.sh` and `sign-adhoc.sh` must include and sign it (D8) with the hardened runtime.
+  - **Control:** the browser starts it with `Subprocess.sys.mjs` from a parent-process service (`M6ETorrentService.sys.mjs`, in `browser/components/torrent/`), and talks to it over its standard input and output, one JSON message per line. There is no control socket and no web server. Messages include add (file or magnet), set file priorities, start, pause, remove, list, set limits, set config and shut down; events include metadata received, progress (batched once a second), tracker and peer changes, completion and errors.
+  - **Lifetime:** started on the first need; it exits 60 seconds after no torrent is active, and always when M6E quits. There is no background service after quit. Quitting with active torrents asks for confirmation, like active downloads.
+  - **Confinement:** try to run it under a macOS sandbox profile that allows only network access and the chosen download folders plus the profile's `torrents/` folder, with no process execution. If per-torrent folders make that impractical, confine writes in code instead (canonical path under the torrent's root) and record the gap in the plan.
+- **State:** resume data and the session list are kept in `<profile>/torrents/`. Torrents active when M6E quit resume at launch (setting "Resume torrents at startup", default on). A profile with no torrents has no helper and no activity.
+- **Disk:** sparse files (APFS); a modest engine cache, with the operating system's file cache doing the rest. While a torrent is active, the helper prevents idle system sleep (a power assertion) and releases it afterwards.
+- **Target to measure, not a promise:** no helper process at idle; with 5 active torrents, helper memory under 60 MB, excluding the file cache.
+
+#### 8.5 Privacy and safety defaults (D36)
+- **No idle activity:** with no active torrent there is no helper process, no listening socket, no DHT, no port mapping and no network traffic. The existing idle checks (the allowed hosts and `tools/m6e/unreachability_check.py`) keep passing.
+- **No payload before consent:** file data is downloaded only after **Add** in the Add dialog (8.2).
+- **Listening port:** a random port, chosen at each start. UPnP and NAT-PMP port mapping are off by default (they open the home router to the internet, against D22), with a setting to turn them on. Without port mapping, incoming connections arrive only if the user forwards the port by hand; outgoing connections always work.
+- **Peer discovery:** DHT and peer exchange are on for public torrents and always off for private ones (BEP 27). Local peer discovery is off by default, because it announces the user on the local network (and macOS may ask for Local Network permission).
+- **Identity:** a Peer ID prefix that does not name M6E or its version (setting to randomise it per session); a generic tracker User-Agent.
+- **Proxy:** SOCKS5 with a username and password; the setting chooses between trackers only, or trackers and peers. Host names are resolved by the proxy (no local DNS leak). If the chosen engine cannot send DHT traffic through the proxy, DHT is switched off while peers go through it, and the panel says so (no traffic may bypass the proxy). A separate setting from the browser's own network settings, because the Privacy Shield and Tracker Blocker do not apply to torrent traffic.
+- **Network interface binding and kill switch:** bind the engine to a chosen interface (for example a VPN's `utun` or `wg` device). If that interface goes away, the helper closes every torrent connection and opens none until it returns. M6E removed Mozilla's VPN (D30); this is how a user's own VPN is kept from leaking.
+- **IP filter:** load a user-supplied block list (PeerGuardian `.p2p`, eMule `ipfilter.dat`) into a memory-efficient range structure; no list is bundled or downloaded.
+- **Encryption:** the three modes of 8.4. The settings text says the encryption hides the protocol from simple traffic shaping; it does not make the user anonymous.
+- **Files:** completed files get the macOS quarantine attribute, with the same mechanism Gecko uses for ordinary downloads (find it in the tree rather than writing a new one), so Gatekeeper checks anything the user opens. Integrity comes from hash verification before data is written as complete.
+- **Seeding:** the default goal is to stop at ratio 1.0, user-adjustable. Seeding is a user-visible state in the panel.
+
+#### 8.6 Cut from the source spec (D37)
+| Source item | Why it is not in M6E |
+|---|---|
+| Web UI, REST API, passwords, CSRF, CORS, brute-force bans, HTTPS listener (3.4) | The UI is the browser's own panel and pages. There is no network control surface, so none of this applies. |
+| Tauri, Qt or React front end, SQLite state (8) | Same reason; state is plain files in the profile. |
+| System tray icon, minimize to tray (6.2) | M6E is a Dock app, and the helper stops when M6E quits. |
+| RSS downloader, watch folders (7) | Background automation that a simple browser feature does not need. |
+| Run external program on completion (7.2) | It would run arbitrary commands from torrent metadata or settings, against D22. |
+| Antivirus integration (3.5) | macOS quarantine and Gatekeeper cover it (8.5). |
+| 24/7 scheduler grid, "seeding only" and "stop all" states (4.1) | Turtle mode and manual pause cover the need. Could return later. |
+| Zero-fill pre-allocation (5.1) | Sparse files plus the free-space check in the Add dialog are enough on APFS. |
+| Auto-shutdown or hibernate when done (6.2) | Out of scope for a browser. |
+| Windows paths and Windows tools (3.2, 3.5) | M6E is macOS only (D21). |
+
+**Corrections to the source spec:** local peer discovery is BEP 14 (not BEP 26); BEP 53 only selects files in a magnet link, and magnet links themselves come from BEP 9; BEP 3 uses SHA-1, and SHA-256 arrives with BEP 52.
+
+#### 8.7 Delivery steps
+Each step follows the plan's step loop (build, check, commit as `M6E P8.<step>: …`).
+1. **P8.0 Engine spike:** compare the candidates against 8.4, choose one, and build a bare helper that downloads a test torrent from a local tracker and seed (`tools/m6e/torrent/`, so the end-to-end tests need no internet). Record the choice and the coverage in the plan. *Done when:* the helper downloads and verifies a file offline.
+2. **P8.1 Helper and service:** the JSON message protocol, `M6ETorrentService.sys.mjs`, lifetime rules, resume data, parsing limits (8.2). *Done when:* xpcshell tests add a torrent and a magnet link, report progress, survive a helper crash and restart, and show no helper at idle.
+3. **P8.2 BT button, panel, Add dialog:** 8.1, with accessibility labels and keyboard operation. *Done when:* the panel adds, pauses, resumes and removes a torrent from the offline fixture.
+4. **P8.3 Shady Torrent:** `M6ETorrentRisk.sys.mjs`, the rules and trusted list, the banner. *Done when:* the unit tests cover every rule and the three examples in 8.3 give the stated results.
+5. **P8.4 Opening torrents:** the `Info.plist` entries, the handler hooks, the default-app button, the source recorded from the page. *Done when:* a `.torrent` link and a `magnet:` link in a page and from Finder open the Add dialog, and the page cannot start anything.
+6. **P8.5 Settings and privacy:** the Settings section, limits, queue, seeding goals, encryption, proxy, interface binding, the IP filter, and the "Wanted" protocols as far as the chosen engine supports them. *Done when:* each setting has a test, and the kill switch test of 8.8 passes.
+7. **P8.6 `about:torrents`:** the full page of 8.1.
+8. **P8.7 Packaging and acceptance:** sign the helper, extend `acceptance.py` and `unreachability_check.py`, run the P6.3 sequence (clobber, build, tests, release, acceptance, measurements), update the README, and update this section's status.
+
+#### 8.8 Acceptance (added to `tools/m6e/acceptance.py`, on the packaged, signed app)
+1. A fresh profile left idle for 5 minutes: no `m6e-torrent` process, no new listening socket, and the allowed-host check unchanged.
+2. A `.torrent` from a trusted https origin and the same file opened from Finder: no banner. A crafted torrent containing `Movie.mkv.exe`: the **Shady Torrent** banner with the reason, and **Add anyway** still works.
+3. A torrent with a `../` or absolute path never writes outside the chosen folder.
+4. A magnet link downloads no file data until **Add** is clicked.
+5. A private torrent uses no DHT, peer exchange or local discovery.
+6. With the bound interface missing, the helper opens no connection.
+7. Quitting M6E leaves no `m6e-torrent` process.
+8. The helper is signed with the hardened runtime and passes the post-signing checks.
+9. Launch Services lists M6E as an app that can open `.torrent` files and `magnet:` links.
+
+**Confirmed by the user (2026-11-04):**
+- The engine is chosen by the P8.0 spike under the rule in 8.4.
+- "Shady" means risk of malware or deception only (8.3), with no copyright judgement.
+- The trusted list covers Linux and BSD distributions and open-source software projects (8.3).
+- Torrents stop when M6E quits (8.4).
+- Port mapping is off by default (8.5).
+
+**Still open:** the implementer checks each trusted-list entry against the project's own download page (8.3), and the user reviews the final list.
+
 ## 4. Decision log
 
 Decisions are numbered so the plan and commits can refer to them. Unless marked "agent", the user made or confirmed each one on 2026-10-22.
@@ -180,6 +310,11 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D30 | The remaining dormant features are marked for deletion, to be removed after all other phases are complete: the VPN (IP protection: `browser/components/ipprotection`, `toolkit/components/ipprotection`, `browser/extensions/ipp-activator`), Translations, Sync and Mozilla accounts, the updater (`toolkit/mozapps/update`), AI/ML (`toolkit/components/ml`, `browser/components/genai`, `aiwindow`), the crash reporter, and Nimbus experiments. Until then, P4.8 proves each one unreachable: locked prefs, no listening sockets, no network traffic, and no entry points from web content or IPC. | The user's choice (2026-10-23): a full removal takes about 2 days of build and test cycles, and time is short. Normandy and the platform-only code are already deleted (P4.6, P4.7a, P4.7b). **Done in Phase 6 (2026-10-30)**: all nine are deleted (Nimbus leaves a stub) and the rest is proven unreachable. |
 | D31 | Fingerprinting policy:<br>• **Privacy Shield standard mode** (Shield on, Maximum off) does not apply Firefox's Fingerprinting Protection (canvas randomization, WebGL renderer and vendor masking, hardware-concurrency tiering and similar) to any site, first-party sites included, so fewer sites are affected. Private windows lose it too: stock Firefox applies it there by default.<br>• **How:** a pref change only. The strict category string lists the Fingerprinting Protection tokens as off (`-fpp,-fppPrivate`); merely omitting them would leave it on in private windows. Firefox's baseline tier (`privacy.baselineFingerprintingProtection`) is set to false as well, because the Standard category applies it to all sites and it also randomizes the canvas, rounds the available screen size and collapses touch points.<br>• **Known third-party fingerprinters stay blocked** through Firefox's fingerprinter list (the `fp` token and `privacy.trackingprotection.fingerprinting.enabled`) in standard and Maximum mode while the Shield is on, except on sites switched off in the Tracker Blocker. With the Shield off nothing is blocked (D20). With the Shield off, a site switched on gets this blocking but no first-party fingerprinting protection.<br>• **Maximum protection** keeps full resistance (`privacy.resistFingerprinting`) for all sites, private windows included: the UTC time zone, a spoofed user agent, screen size and locale, and the other targets of that pref. Window letterboxing is not enabled.<br>• **Trade-off:** the list only holds known fingerprinters, so unlisted third-party scripts can fingerprint in standard mode, and private windows get no Fingerprinting Protection in it. Only Maximum covers both.<br>• **Upgrade:** a profile in the "strict" category (M6E's default) is migrated at startup by `ContentBlockingPrefs.init` and stays "strict" with Fingerprinting Protection off. A profile in the "custom" category is not changed, because those settings are the user's own choice. A profile in the Standard category gets no first-party Fingerprinting Protection either, private windows included.<br>• **Status:** planned for 161.0a2, not yet built. Supersedes the Fingerprinting Protection part of D18. | The user's choice for the 161.0a2 plan, after reports of site failures in 161.0a1 and the suspicion that blocking was too aggressive. Fingerprinting Protection applies to first-party sites too and masks values that sites read for legitimate reasons; it is not claimed to fix any specific report. Blocking known third-party fingerprinters is what protects users from tracking, and Maximum remains for those who accept breakage. |
 | D32 | Platform passkeys (Touch ID, iCloud Keychain) and the iPhone QR code (hybrid) flow are unsupported.<br>• macOS only lets an app use them if it carries the entitlement `com.apple.developer.web-browser.public-key-credential` (checked in `dom/webauthn/MacOSWebAuthnService.mm`). The entitlement needs a paid Apple Developer account with a Team ID, a provisioning profile and Apple's approval.<br>• M6E is signed ad hoc (D8), and `tools/m6e/package/sign-adhoc.sh` leaves that entitlement out. Without it, M6E falls back to Firefox's own authenticator (`dom/webauthn/WebAuthnService.h`), which supports USB FIDO security keys only in production (`dom/webauthn/authrs_bridge`), and reports no platform authenticator.<br>• A site that offers only passkeys can show a generic error. Users should pick a security key or a password where the site offers one.<br>• **Path to support:** a paid Developer ID, notarization (D8) and the entitlement with its provisioning profile and Apple's approval. | The user's choice for the 161.0a2 plan: accept the limit and document it. Support depends on the paid Apple account that D8 deferred. |
+| D33 | BitTorrent is a built-in M6E feature (Phase 8): a "BT" button beside the address bar opens a drop-down panel with the torrent options; M6E can open `.torrent` files and `magnet:` links; the interface is the browser's own panel, dialog and pages, not a separate application. M6E declares itself able to open them but becomes the default only when the user chooses (agent). | The user's request (2026-11-04). A default handler taken silently would surprise users who already have a torrent client. |
+| D34 (agent) | The torrent engine is an existing, maintained library run in a separate helper executable, `m6e-torrent`, controlled over a private standard-input and output pipe, started on demand and stopped when idle or when M6E quits. The library is chosen by a spike (P8.0) against the Required and Wanted lists in 8.4. It is built by `tools/m6e/torrent/build-helper.sh`, outside `./mach build`. | A protocol stack of this size is not worth writing. Separate process: an exploit or crash stays out of the browser, memory is freed when idle, there is no listening control socket (D22, D23), and the Gecko tree and its long rebuilds are untouched. |
+| D35 | The "Shady Torrent" warning is informational and never blocks: a banner in the Add dialog with the reasons, and the choice to add anyway. Legitimate sources, such as the Linux distributions' own sites, show nothing. (User, 2026-11-04.) The method is the agent's: an offline check on the metadata and the origin the torrent came from, with a bundled trusted-site list and rule data (8.3), and no outside reputation service. | The user wants the user made aware, not blocked. Offline matches D2 and the no-data-leaves-the-device rule. The origin of an https page is the one signal a malicious torrent cannot fake by copying tracker or file names. |
+| D36 (agent) | Privacy and safety defaults for BitTorrent: nothing runs, listens or connects until a torrent is added; no file data before the Add dialog is confirmed; random listening port; port mapping and local peer discovery off; DHT and peer exchange off for private torrents; a neutral Peer ID and tracker User-Agent; no download of block lists; optional SOCKS5 and network-interface binding with a kill switch; finished files carry the macOS quarantine attribute; default seeding goal is ratio 1.0. | M6E is privacy-first and its attack surface is kept small (D22). A torrent client is the opposite by default (open port, public discovery), so the defaults are set the other way, and each is a setting. |
+| D37 (agent) | The source spec's Web UI, tray icon, RSS, watch folders, run-external-program, antivirus hook, scheduler grid, zero-fill pre-allocation, auto-shutdown and Windows items are not built (table in 8.6). | They duplicate what the browser already provides, add attack surface (D22) or do not apply to macOS (D21). |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.

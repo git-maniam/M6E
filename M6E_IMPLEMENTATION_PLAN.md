@@ -1,6 +1,6 @@
 # M6E Implementation Plan
 
-How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D20) refer to the spec's decision log.
+How the spec (`m6e_browser_agent_instructions.md`) is built: the working method, what each finished step changed, and the plan for the remaining steps. Decision numbers (D1 to D37) refer to the spec's decision log.
 
 ## 1. Working method
 
@@ -314,6 +314,11 @@ Nothing below is built or published yet. The release is 161.0a1 until the lead b
 7. Publish: `tools/m6e/package/homebrew-cask.sh`, a draft GitHub release that the user completes, a check of the download's sha256 against the cask, the tap, and a sandbox install. 161.0a1 stays published.
 
 **Known trade-off:** the fingerprinter list only holds known scripts, so unlisted third-party scripts can fingerprint in standard mode, and private windows no longer get Firefox's Fingerprinting Protection; only Maximum covers both. A site switched on in the Tracker Blocker while the Shield is off gets tracker and fingerprinter blocking but no first-party fingerprinting protection.
+
+### Phase 8 bookmark: "Start Bittorrent feature implementation" (written 2026-11-04)
+The BitTorrent feature (spec Phase 8, D33 to D37) is specified and not started. When the user says "Start Bittorrent feature implementation", do not ask questions: run the pre-flight checks and the orchestration in section 5, "Phase 8", spawning the agents of each wave in parallel.
+
+**Checkpoint (keep current; the lead is the only writer of this note):** nothing started. Update it after each wave with the branches merged, the commits, what was verified and the next wave.
 
 ### Restart bookmark: "Resume after restart" (written 2026-10-29; Phase 6 finished 2026-10-30)
 **Phase 6 is done.** There is nothing to resume from this bookmark; the older Tuesday and Sunday bookmarks below describe merge work that is complete. What is left is optional and listed here:
@@ -885,6 +890,55 @@ Each is the recommended option. The user reviews these in the Summary of Complet
   - **`tools/@types/generated/lib.gecko.glean.d.ts` is not regenerated.** The typelibs are optional upstream; the ML metrics in it go with the next `./mach ts build && ./mach ts update`.
 - **Done when:** every feature is deleted or proven unreachable, the release build passes, the regression suites match the baseline, acceptance passes 15 of 15, and startup, memory and app size are measured against Phase 5.
 
+### Phase 8: BitTorrent (spec Phase 8; D33 to D37; specified 2026-11-04)
+The requirements, decisions and acceptance checks are in the spec's Phase 8 (8.1 to 8.8). This section is how to build it, and how to run the steps P8.0 to P8.7 with parallel agents.
+
+**Pre-flight (the lead, in the main checkout):**
+1. `git status` is clean, `git config core.sparseCheckout` is not true (a sparse tree has no sources: stop and tell the user), and `git pull` leaves `main` current.
+2. No build or release is running: `pgrep -fl "mach|ninja|release.sh"` is empty. If the 161.0a2 sequence (section 4) is still running, stop and tell the user, because both use `obj-m6e`.
+3. `obj-m6e/dist/M6E.app` exists. If not, the lead runs `./mach build` first, because nobody can check front-end work without it.
+
+**Rules for parallel work:**
+- **One build tree.** Only the lead runs `./mach build`, `make -C obj-m6e/faster` and `./mach test`, in the main checkout. Agents work in their own git worktree (Agent tool with `isolation: "worktree"`), on a branch `m6e-p8/<name>` cut from `origin/main`. They must not touch `obj-m6e`. The helper (`tools/m6e/torrent/`) builds outside mach, so its agent can build and test it for real. Everyone else checks with static tools (`./mach lint` or ESLint where it runs, `node --check`, plain-Node runs of pure logic) and writes the xpcshell and browser tests for the lead to run.
+- **Owned files.** Each agent edits only the files listed for it below. If an agent has to touch a shared registration file (`browser/base/content/browser.xhtml`, `browser/base/jar.mn`, `browser/themes/shared/jar.inc.mn`, a `moz.build`, `browser/app/profile/m6e.js`), it keeps the edit to a few lines marked `M6E:` and says so in its report. The lead resolves any conflict when merging.
+- **Documents.** Agents don't edit the spec or this plan. If the spec is wrong or silent, the agent says so in its report and the lead decides.
+- **Code rules.** Follow `AGENTS.md` (almost no comments, no emoji, `searchfox-cli` for Firefox code) and the working rules in `CLAUDE.md`. Pure logic modules avoid Gecko globals where they can, so they run under plain Node.
+- **Branch hygiene.** Agents commit on their branch as `M6E P8.<step> (work in progress): …` and push it to `origin`, so nothing is lost. They never push to `main`.
+- **Merging (the lead).** After a wave, merge the branches one at a time, resolve conflicts, then run `make -C obj-m6e/faster` (or `./mach build` when C++ changed), the new tests, and `tools/m6e/run_tests.sh`. Commit each finished step as `M6E P8.<step>: …`, push to `origin/main`, and update the checkpoint note in section 4.
+- **Models.** Sonnet for the high-volume steps; Opus for the helper design (P8.0) and the reviews; a stubborn problem goes to a fork or a second agent with fresh context. Briefing each agent: the goal, the owned files, the contracts below, the "done when" line, what to report (files changed, how it was verified, open issues, shared files touched), and "do not edit the spec or plan".
+
+**Contracts (the lead writes them first, as one commit on `main`, before any agent starts).** They keep the parallel agents compatible. Agents may add to a contract but never change it; a needed change goes back to the lead.
+- `tools/m6e/torrent/PROTOCOL.md`: the helper's JSON-lines messages over stdin and stdout. Requests carry an `id` and an `op`: `add` (a `.torrent` file path or a magnet link), `confirm` (file selection and priorities, save path, sequential, start), `cancel`, `pause`, `resume`, `remove` (with `deleteFiles`), `list`, `setLimits`, `setConfig`, `shutdown`. Replies repeat the `id` with `ok` or `error`. Events carry an `event` name: `metadata`, `progress` (batched once a second), `trackers`, `peers`, `completed`, `error`, `log`. A helper that exits or fails to start is an event the service must handle.
+- `browser/components/torrent/CONTRACTS.md`: the parsed metadata shape `{ infoHash, name, totalSize, files: [{ path, length }], trackers, webSeeds, isPrivate }`; the source shape `{ kind: "page" | "magnet-page" | "finder" | "unknown", origin: string | null }` (origin is the page's https origin when known); the risk result `{ verdict: "ok" | "shady", reasons: [{ code, severity, files }] }`; the `M6ETorrentService` methods (`addFile`, `addMagnet`, `confirmAdd`, `cancelAdd`, `pause`, `resume`, `remove`, `list`, `setLimits`, `getConfig`, `setConfig`) and its change notifications (observer topics `m6e-torrent-changed` and `m6e-torrent-metadata`); the pref names under `m6e.torrent.`; the file names owned by each agent.
+
+**Waves, with the agents of each wave started in one message so they run concurrently:**
+
+*Wave A (after the contracts commit):*
+| Agent | Step | Owns | Done when |
+|---|---|---|---|
+| helper | P8.0, helper half of P8.1 | `tools/m6e/torrent/**` | The engine is chosen under the spec's rule (coverage written up in the report); `build-helper.sh` builds `m6e-torrent` for arm64; a local tracker, seed and test torrent (no internet) let the helper download and verify a file; every protocol message works; the helper exits when told, and leaves nothing listening when idle. |
+| service | P8.1, JS half | `browser/components/torrent/M6ETorrentService.sys.mjs`, `moz.build`, its xpcshell tests | Written against `PROTOCOL.md` with a fake helper script: starts the helper on demand, stops it 60 seconds after no torrent is active, restarts it after a crash, restores resume data from `<profile>/torrents/`, applies the parsing limits of spec 8.2, and sends the change notifications. |
+| shady | P8.3 | `M6ETorrentRisk.sys.mjs`, `m6e-torrent-rules.json`, its tests | Every rule in spec 8.3 has a test; the three examples in 8.3 give the stated results; a plain-Node run passes; each trusted-list entry was checked against the project's own download page (the report lists what was kept or dropped, with the page used). |
+| ui | P8.2 | `browser/base/content/browser-m6eTorrent.js`, the panel markup, `m6e-torrent.css` and `.svg`, `m6eTorrent.ftl`, the Add dialog, browser tests | The BT button, panel and Add dialog of spec 8.1, driven by a mock `M6ETorrentService` in the tests, with the Shady banner fed from the contract's risk result; keyboard operation and accessibility labels. |
+| open | P8.4 | `browser/app/macbuild/Contents/Info.plist.in`, `M6ETorrentHandler.sys.mjs` | The `.torrent` document type and `magnet` scheme in the plist; the hooks of spec 8.2 (links, downloads of `application/x-bittorrent`, `magnet:` navigations) that hand a torrent and its source to the Add dialog; the default-app button's code (Launch Services). The report says where in the tree each hook went. |
+
+*Lead, between waves:* merge the five branches, `make -C obj-m6e/faster` (the plist change needs `./mach build`, which is quick when only that changes), run the new tests and the regression suites, fix integration problems, commit P8.0 to P8.4 as their own commits, push, update the checkpoint. The first real run of the whole chain (button, Add dialog, service, helper, offline torrent) happens here.
+
+*Wave B:*
+| Agent | Step | Owns | Done when |
+|---|---|---|---|
+| privacy | P8.5, helper side | `tools/m6e/torrent/**` (continuing) | Encryption modes, limits and Turtle mode, queue and seeding goals, SOCKS5 with proxy-side DNS, interface binding with the kill switch, the IP filter, and the "Wanted" protocols as far as the engine supports them. Each has a test against the local fixture. |
+| settings | P8.5, UI side | the "BitTorrent" section of `about:preferences`, `m6e.js` torrent prefs, tests | Every setting of spec 8.1 and 8.5 is in Settings and reaches the service; the default-app button works. |
+| page | P8.6 | `about:torrents` files and their registration, tests | The sidebar, table and detail tabs of spec 8.1, fed by the service. |
+
+*Lead:* merge, build, test, commit P8.5 and P8.6.
+
+*Wave C (serial, the lead):* P8.7. Sign the helper (`finalize-app.sh`, `sign-adhoc.sh`), extend `acceptance.py` and `unreachability_check.py` for spec 8.8, then the P6.3 sequence (`tools/m6e/p6-reports/p6-3-runbook.md`): clobber and build, `tools/m6e/run_tests.sh`, `tools/m6e/package/release.sh`, acceptance, then `measure.py` and `speedometer.py` on a quiet machine. Update the README and the spec's status for Phase 8.
+
+*Wave D (read-only reviews, in parallel, each given the code and not my conclusions):* (1) security: the `.torrent` and bencoding parser, path confinement, the helper's confinement and the message handling; (2) try to refute the Shady rules with ordinary torrents (false positives) and with crafted ones (false negatives); (3) fact-check the spec and README against the code. The lead fixes what is confirmed.
+
+**Done when:** spec 8.8 passes on the packaged app, the regression suites match the baseline, the idle checks are unchanged, and the spec's status table says Phase 8 is done.
+
 ## 6. Risks
 
 | Risk | Mitigation |
@@ -897,6 +951,10 @@ Each is the recommended option. The user reviews these in the Summary of Complet
 | Xcode 27's libc++ warns that the macOS 10.15 deployment target is unsupported | Raise the minimum macOS version if it becomes an error |
 | A Homebrew toolchain upgrade changes compilers mid-project | The packages are pinned (`brew pin`) |
 | LTO and PGO lengthen builds | Add flags one at a time (P4.2) |
+| The chosen torrent engine lacks a Required protocol (Phase 8) | The P8.0 spike checks coverage first; small gaps are listed in the plan, large ones change the engine |
+| Parallel Phase 8 branches conflict in shared files (`browser.xhtml`, `jar.mn`, `m6e.js`) | Owned files per agent, marked `M6E:` edits, the lead merges one branch at a time |
+| A malicious `.torrent` attacks the parser or writes outside the folder | Size and depth limits, path rules (spec 8.2), a confined helper, and the Wave D security review |
+| The trusted-site list is wrong or stale | Each entry is checked against the project's download page; the list changes only with releases |
 
 ## 7. Session notes
 - **Fresh sessions:** start each phase in a fresh session, with the spec, this plan, `CLAUDE.md` and the memory notes as the handoff. "Resume from Phase N" means: follow the resuming checklist in section 4, then continue with that phase.

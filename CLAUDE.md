@@ -6,10 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## M6E project context
 This is a Firefox fork being turned into "M6E", a debloated, privacy-first browser for Apple Silicon Macs only. Read these before changing anything:
-- `m6e_browser_agent_instructions.md`: the spec, covering what M6E is, current status and the numbered decision log (D1 to D32).
+- `m6e_browser_agent_instructions.md`: the spec, covering what M6E is, current status and the numbered decision log (D1 to D37; Phase 8, the BitTorrent feature, is specified but not started).
 - `M6E_IMPLEMENTATION_PLAN.md`: how it's built, covering the step loop, tools, a progress log with commits, as-built notes and the next step.
 
 Resuming: Phases 0 to 6 are finished. The current work is the 161.0a2 release (version bumped; remaining: the P6.3 clobber-and-build sequence, `release.sh`, acceptance, then publishing). Read the plan's section 4, "161.0a2" and its approved steps first. When the user says "Resume from Phase N", follow the resuming checklist at the top of section 4. The "Resume from Sunday / Tuesday / after restart" bookmarks in section 4 are finished history (Restart bookmark: only optional follow-ups); don't act on them unless asked.
+
+"Start Bittorrent feature implementation" starts Phase 8, the BitTorrent feature: open the plan's section 4, read "Phase 8 bookmark", run the pre-flight in section 5 "Phase 8", then follow its waves without asking questions. Spawn the agents of each wave in one message so they run in parallel (Agent tool, `isolation: "worktree"`, branches `m6e-p8/<name>`). Only the lead builds, tests, merges, commits to `main` and edits the spec and plan.
 
 Working rules:
 - **Where M6E changes live:**
