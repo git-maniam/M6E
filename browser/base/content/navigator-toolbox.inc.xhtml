@@ -210,6 +210,19 @@
             <image id="m6e-page-telemetry-icon"/>
           </box>
 
+          <!-- M6E: the BitTorrent button (Phase 8). -->
+          <box id="m6e-torrent-button"
+               class="identity-box-button"
+               align="center"
+               role="button"
+               aria-haspopup="dialog"
+               data-l10n-id="m6e-torrent-button"
+               state="idle"
+               urlbar-slot="site-info">
+            <image id="m6e-torrent-icon"/>
+            <label id="m6e-torrent-badge"/>
+          </box>
+
           <!-- Use onclick instead of normal popup= syntax since the popup
                 code fires onmousedown, and hence eats our favicon drag events. -->
           <box id="tracking-protection-icon-container" align="center"

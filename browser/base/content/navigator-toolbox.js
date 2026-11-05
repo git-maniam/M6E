@@ -209,6 +209,7 @@ document.addEventListener(
         #BMB_bookmarksPopup,
         #trust-icon-container,
         #m6e-page-telemetry-button,
+        #m6e-torrent-button,
         #tracking-protection-icon-container,
         #identity-icon-box,
         #identity-permission-box,
@@ -283,6 +284,11 @@ document.addEventListener(
           gM6EPageTelemetry.handleButtonEvent(event);
           break;
 
+        // M6E: the BitTorrent button.
+        case "m6e-torrent-button":
+          gM6ETorrent.handleButtonEvent(event);
+          break;
+
         case "tracking-protection-icon-container":
           gProtectionsHandler.handleProtectionsButtonEvent(event);
           break;
@@ -330,6 +336,7 @@ document.addEventListener(
         #tracking-protection-icon-container,
         #trust-icon-container,
         #m6e-page-telemetry-button,
+        #m6e-torrent-button,
         #identity-icon-box,
         #identity-permission-box,
         #alltabs-button,
@@ -393,6 +400,11 @@ document.addEventListener(
 
         case "m6e-page-telemetry-button":
           gM6EPageTelemetry.handleButtonEvent(event);
+          break;
+
+        // M6E: the BitTorrent button.
+        case "m6e-torrent-button":
+          gM6ETorrent.handleButtonEvent(event);
           break;
 
         case "identity-icon-box":

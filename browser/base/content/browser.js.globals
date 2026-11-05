@@ -226,6 +226,7 @@
   "ProfilesDatastoreService",
   "gTrustPanelHandler",
   "gM6EPageTelemetry",
+  "gM6ETorrent",
   "ContentSharingUtils",
   "Referrals"
 ]
