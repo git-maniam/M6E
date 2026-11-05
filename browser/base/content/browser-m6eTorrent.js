@@ -40,6 +40,7 @@ var gM6ETorrent = {
   _buttonKey: "",
   _rows: new Map(),
   _highlightTid: null,
+  lastAddDialog: null,
 
   /**
    * The torrent service. Tests replace it with a mock by assigning a value
@@ -100,6 +101,13 @@ var gM6ETorrent = {
     Services.obs.addObserver(this, "quit-application-requested");
     Services.prefs.addObserver(this.PREF_PREFIX, this);
     window.addEventListener("unload", () => this.uninit(), { once: true });
+    if (this.enabled) {
+      try {
+        this.service.init?.();
+      } catch (e) {
+        console.error("M6E: could not start the torrent service", e);
+      }
+    }
   },
 
   uninit() {
@@ -766,6 +774,8 @@ var gM6ETorrent = {
    *
    * @param {string} path - absolute path of the file
    * @param {object} source - a Source object from CONTRACTS.md
+   * @returns {Promise<boolean>} settles when the Add dialog has closed (or at
+   *   once on an error); true when the torrent was added
    */
   async addTorrentFile(path, source = this.UNKNOWN_SOURCE) {
     if (!this.enabled) {
@@ -791,6 +801,8 @@ var gM6ETorrent = {
    *
    * @param {string} uri - the magnet link
    * @param {object} source - a Source object from CONTRACTS.md
+   * @returns {Promise<boolean>} settles when the Add dialog has closed (or at
+   *   once on an error); true when the torrent was added
    */
   async addMagnet(uri, source = this.UNKNOWN_SOURCE) {
     if (!this.enabled) {
@@ -889,13 +901,13 @@ var gM6ETorrent = {
       let { dialog, closedPromise } = await gBrowser
         .getTabDialogBox(gBrowser.selectedBrowser)
         .open(this.ADD_DIALOG_URL, { features: "resizable=no" }, params);
-      closedPromise.then(() => {
-        if (!params.added) {
-          this._metadata.delete(tid);
-          this.cancelPending(tid);
-        }
-      });
-      return { dialog, closedPromise, params };
+      this.lastAddDialog = { dialog, params };
+      await closedPromise;
+      if (!params.added) {
+        this._metadata.delete(tid);
+        await this.cancelPending(tid);
+      }
+      return params.added;
     } catch (e) {
       console.error("M6E: could not open the Add dialog", e);
       this.cancelPending(tid);
@@ -947,31 +959,6 @@ var gM6ETorrent = {
     }
   },
 
-  hasActiveTorrentsSync() {
-    let done = false;
-    let active = false;
-    Promise.resolve()
-      .then(() => this.service.hasActiveTorrents())
-      .then(
-        value => {
-          active = !!value;
-        },
-        e => console.error("M6E: could not ask about active torrents", e)
-      )
-      .finally(() => {
-        done = true;
-      });
-    let timer = setTimeout(() => {
-      done = true;
-    }, 2000);
-    Services.tm.spinEventLoopUntil(
-      "gM6ETorrent:hasActiveTorrentsSync",
-      () => done
-    );
-    clearTimeout(timer);
-    return active;
-  },
-
   /**
    * Like the active-downloads prompt (DownloadIntegration): a Quit or Don't
    * quit choice, shown by the most recent browser window only.
@@ -994,7 +981,7 @@ var gM6ETorrent = {
     ) {
       return;
     }
-    if (!this.hasActiveTorrentsSync()) {
+    if (!(this.service.activeTorrentCount > 0)) {
       return;
     }
     cancel.data = this.promptQuit();
