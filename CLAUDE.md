@@ -11,7 +11,7 @@ This is a Firefox fork being turned into "M6E", a debloated, privacy-first brows
 
 Resuming: Phases 0 to 6 are finished. The current work is the 161.0a2 release (version bumped; remaining: the P6.3 clobber-and-build sequence, `release.sh`, acceptance, then publishing). Read the plan's section 4, "161.0a2" and its approved steps first. When the user says "Resume from Phase N", follow the resuming checklist at the top of section 4. The "Resume from Sunday / Tuesday / after restart" bookmarks in section 4 are finished history (Restart bookmark: only optional follow-ups); don't act on them unless asked.
 
-"Start Bittorrent feature implementation" starts Phase 8, the BitTorrent feature: open the plan's section 4, read "Phase 8 bookmark", run the pre-flight in section 5 "Phase 8", then follow its waves without asking questions. Spawn the agents of each wave in one message so they run in parallel (Agent tool, `isolation: "worktree"`, branches `m6e-p8/<name>`). Only the lead builds, tests, merges, commits to `main` and edits the spec and plan.
+"Start Bittorrent feature implementation" starts Phase 8, the BitTorrent feature: open the plan's section 4, read "Phase 8 bookmark", run the pre-flight in section 5 "Phase 8", then follow its waves without asking questions. Spawn the agents of each wave in one message so they run in parallel (Agent tool, `isolation: "worktree"`, branches `m6e-p8/<name>`). All Phase 8 work happens on the branch `BT-Implementation`; `main` stays untouched until the user merges it. Only the lead builds, tests, merges, commits to `BT-Implementation` and edits the spec and plan.
 
 Working rules:
 - **Where M6E changes live:**
