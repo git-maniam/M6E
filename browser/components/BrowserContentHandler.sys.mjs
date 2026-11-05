@@ -14,6 +14,9 @@ ChromeUtils.defineESModuleGetters(lazy, {
   HeadlessShell: "moz-src:///browser/components/shell/HeadlessShell.sys.mjs",
   HomePage: "resource:///modules/HomePage.sys.mjs",
   LaterRun: "resource:///modules/LaterRun.sys.mjs",
+  // M6E: .torrent files and magnet links open the Add torrent dialog.
+  M6ETorrentHandler:
+    "moz-src:///browser/components/torrent/M6ETorrentHandler.sys.mjs",
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
   SearchUIUtils: "moz-src:///browser/components/search/SearchUIUtils.sys.mjs",
@@ -984,6 +987,19 @@ nsBrowserContentHandler.prototype = {
 };
 var gBrowserContentHandler = new nsBrowserContentHandler();
 
+// M6E: hands a magnet link or .torrent file to the Add torrent dialog. On a
+// running browser nothing else may open a window for it.
+function handleTorrentURI(uri, cmdLine) {
+  let initialLaunch = cmdLine.state == Ci.nsICommandLine.STATE_INITIAL_LAUNCH;
+  if (!lazy.M6ETorrentHandler.handleCommandLineURI(uri, !initialLaunch)) {
+    return false;
+  }
+  if (!initialLaunch) {
+    cmdLine.preventDefault = true;
+  }
+  return true;
+}
+
 function handURIToExistingBrowser(
   uri,
   location,
@@ -1434,6 +1450,9 @@ nsDefaultCommandLineHandler.prototype = {
         let argument;
         while ((argument = cmdLine.handleFlagWithParam(flag, false))) {
           let { uri, principal } = resolveURIInternal(cmdLine, argument);
+          if (handleTorrentURI(uri, cmdLine)) {
+            continue;
+          }
           if (!shouldLoadURI(uri)) {
             // Don't fall back to openBrowserWindow if every URL is rejected.
             cmdLine.preventDefault = true;
@@ -1490,6 +1509,9 @@ nsDefaultCommandLineHandler.prototype = {
       } else {
         try {
           let { uri, principal } = resolveURIInternal(cmdLine, curarg);
+          if (handleTorrentURI(uri, cmdLine)) {
+            continue;
+          }
           if (!shouldLoadURI(uri)) {
             cmdLine.preventDefault = true;
             continue;

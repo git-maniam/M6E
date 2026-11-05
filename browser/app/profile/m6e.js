@@ -374,6 +374,9 @@ pref("extensions.autoDisableScopes", 15);
 // Ask what to do with file types not seen before, instead of opening them.
 pref("browser.download.always_ask_before_handling_new_types", true);
 pref("browser.download.manager.addToRecentDocs", false);
+// M6E: a magnet: navigation consumes the page's user activation (D33), so
+// one click opens at most one Add torrent dialog.
+pref("network.protocol-handler.external.magnet", true);
 
 // The PDF viewer is part of the always-light interface (Phase 1): pdf.js runs
 // as web content, so the light-theme rule for the interface doesn't reach it.
