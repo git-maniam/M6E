@@ -318,7 +318,7 @@ Nothing below is built or published yet. The release is 161.0a1 until the lead b
 ### Phase 8 bookmark: "Start Bittorrent feature implementation" (written 2026-11-04)
 The BitTorrent feature (spec Phase 8, D33 to D37) is specified and not started. When the user says "Start Bittorrent feature implementation", do not ask questions: run the pre-flight checks and the orchestration in section 5, "Phase 8", spawning the agents of each wave in parallel.
 
-**Checkpoint (keep current; the lead is the only writer of this note):** nothing started. Update it after each wave with the branches merged, the commits, what was verified and the next wave.
+**Checkpoint (keep current; the lead is the only writer of this note):** started 2026-11-05 on branch `BT-Implementation` (`main` untouched). Scaffold and contracts committed (`29de69a058`). A development build (`MOZCONFIG=artifacts/p8/mozconfig-dev`, log `artifacts/p8/build0.log`) was started in the main checkout. **Wave A launched** (five agents in parallel, worktrees): `m6e-p8/helper`, `m6e-p8/service`, `m6e-p8/shady`, `m6e-p8/ui`, `m6e-p8/open`. Next: merge the five branches into `BT-Implementation`, build, run the new tests and `run_tests.sh`, then Wave B. Update this note after each wave.
 
 ### Restart bookmark: "Resume after restart" (written 2026-10-29; Phase 6 finished 2026-10-30)
 **Phase 6 is done.** There is nothing to resume from this bookmark; the older Tuesday and Sunday bookmarks below describe merge work that is complete. What is left is optional and listed here:
