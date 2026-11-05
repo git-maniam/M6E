@@ -36,3 +36,12 @@ Shared by the parallel steps P8.1 to P8.6. Agents may add to this file's contrac
 - Follow `AGENTS.md` (almost no comments, no emoji) and mark edits to shared upstream files with `M6E:`.
 - No file data may be requested before `confirm` with `start: true`; nothing runs, listens or connects at idle.
 - Tests: name them `*_m6e_*` where the area has that convention; write xpcshell or browser tests the lead can run after the merge. Pure logic must also be runnable under plain Node when practical.
+
+## Additions (lead, 2026-11-05)
+- The service observes the `m6e.torrent.*` prefs and pushes changes to the helper; the UI only sets prefs.
+- `M6ETorrentService.init()` is called once at startup by `gM6ETorrent.init()` (the ui agent); it starts the helper only when saved torrents exist.
+- `M6ETorrentService.activeTorrentCount` is a synchronous getter over cached state (0 before the first status), for the quit prompt, which cannot wait. `hasActiveTorrents()` stays as the async form.
+- `gM6ETorrent.addTorrentFile` and `gM6ETorrent.addMagnet` return a promise that settles when the Add dialog closes.
+- The service reports errors by throwing an `Error` with `code` and, for `duplicate`, `tid` properties copied from the helper's error object.
+- `list()` resolves to `{ torrents: [Status] }`.
+

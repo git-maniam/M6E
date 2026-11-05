@@ -58,3 +58,14 @@ Error codes: `bad-request`, `not-found`, `invalid-torrent`, `too-large`, `unsafe
 - Any file path that is absolute, or has an empty, `.`, `..` or NUL component, or a `:` or `\`, is `unsafe-path`; the torrent is not added.
 - Writes happen only under the torrent's `savePath`; never follow a symlink out of it.
 - Completed files get the macOS quarantine attribute, applied by the browser side (the helper reports `completed`; it does not need to).
+
+## Clarifications (added by the lead, 2026-11-05, answering the helper agent)
+- `Metadata.files[].path` is relative to the torrent's top-level folder. On disk a multi-file torrent lives at `<savePath>/<name>/<path>`; a single-file torrent at `<savePath>/<name>`.
+- `list` and `progress` report only confirmed torrents. Pending torrents (`pending-confirm`, `fetching-metadata`) are reachable through `add`, `confirm`, `cancel`, `detail` and the `metadata` event only.
+- A repeated `add` of a torrent that is still pending is idempotent: it returns the same `tid`, `state` and `metadata`. Adding one that is already confirmed fails with `duplicate`.
+- Unknown `seeds` or `peers` counts are `-1`.
+- A torrent with a symlink entry (BEP 47) is rejected as `unsafe-path`.
+- At `confirm` the helper stores everything it needs (the full metadata) in its own resume data. It must not depend on the original `.torrent` path, which may be a temporary file.
+- "No listening socket at idle" means: nothing pending and nothing active. Sockets (DHT, tracker, listening) may be open while a magnet link's metadata is being fetched. A private torrent behind a magnet link cannot be recognised before its metadata arrives, so DHT may be used for that short fetch only; the helper drops the handle as soon as the metadata is in.
+- If the engine sets the executable bit from a torrent attribute, the helper clears it when the file completes (and says so in the README if it cannot).
+
