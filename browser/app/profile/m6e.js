@@ -378,3 +378,35 @@ pref("browser.download.manager.addToRecentDocs", false);
 // The PDF viewer is part of the always-light interface (Phase 1): pdf.js runs
 // as web content, so the light-theme rule for the interface doesn't reach it.
 pref("pdfjs.viewerCssTheme", 1, locked);
+
+// M6E: BitTorrent (Phase 8, D33 to D37). Keep in sync with PREF_DEFAULTS in
+// browser/components/torrent/M6ETorrentProtocol.sys.mjs. The proxy password
+// is not a pref: it is kept in the login manager.
+pref("m6e.torrent.enabled", true);
+pref("m6e.torrent.resumeAtStartup", true);
+pref("m6e.torrent.confirmQuit", true);
+pref("m6e.torrent.encryption", "enabled");
+pref("m6e.torrent.dht", true);
+pref("m6e.torrent.pex", true);
+pref("m6e.torrent.lpd", false);
+pref("m6e.torrent.portMapping", false);
+pref("m6e.torrent.listenPort", 0);
+pref("m6e.torrent.downKBps", 0);
+pref("m6e.torrent.upKBps", 0);
+pref("m6e.torrent.turtle.enabled", false);
+pref("m6e.torrent.turtle.downKBps", 50);
+pref("m6e.torrent.turtle.upKBps", 10);
+pref("m6e.torrent.maxActiveDownloads", 3);
+pref("m6e.torrent.maxActiveTorrents", 5);
+pref("m6e.torrent.seedRatioPercent", 100);
+pref("m6e.torrent.seedHours", 0);
+pref("m6e.torrent.proxy.type", "none");
+pref("m6e.torrent.proxy.host", "");
+pref("m6e.torrent.proxy.port", 1080);
+pref("m6e.torrent.proxy.username", "");
+pref("m6e.torrent.proxy.peers", true);
+pref("m6e.torrent.bindInterface", "");
+pref("m6e.torrent.ipFilterPath", "");
+pref("m6e.torrent.randomizePeerId", false);
+pref("m6e.torrent.sequentialDefault", false);
+pref("m6e.torrent.trustedSites", "");

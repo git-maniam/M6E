@@ -17,6 +17,7 @@ BROWSER_CHROME_MANIFESTS += [
 
 MOZ_SRC_FILES += [
     "M6ETorrentHandler.sys.mjs",
+    "M6ETorrentProtocol.sys.mjs",
     "M6ETorrentRisk.sys.mjs",
     "M6ETorrentService.sys.mjs",
 ]
