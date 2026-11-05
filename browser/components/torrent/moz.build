@@ -2,18 +2,11 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# M6E: the BitTorrent feature (Phase 8, D33 to D37). Each test directory
-# belongs to one step so parallel work does not touch the same manifest.
-
-XPCSHELL_TESTS_MANIFESTS += [
-    "tests/xpcshell/risk/xpcshell.toml",
-    "tests/xpcshell/service/xpcshell.toml",
-]
-
-BROWSER_CHROME_MANIFESTS += [
-    "tests/browser/open/browser.toml",
-    "tests/browser/ui/browser.toml",
-]
+# M6E: the BitTorrent feature (Phase 8, D33 to D37).
+# The test manifests under tests/ are registered here when they list a test:
+# the build rejects an empty manifest. Planned: xpcshell "tests/xpcshell/risk"
+# and "tests/xpcshell/service", browser chrome "tests/browser/open" and
+# "tests/browser/ui" (one per step, so parallel work does not share one).
 
 MOZ_SRC_FILES += [
     "M6ETorrentHandler.sys.mjs",
