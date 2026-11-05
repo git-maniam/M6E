@@ -16,6 +16,7 @@ BROWSER_CHROME_MANIFESTS += [
 ]
 
 MOZ_SRC_FILES += [
+    "m6e-torrent-rules.json",
     "M6ETorrentHandler.sys.mjs",
     "M6ETorrentRisk.sys.mjs",
     "M6ETorrentService.sys.mjs",
