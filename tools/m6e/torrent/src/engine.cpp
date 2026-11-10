@@ -364,7 +364,9 @@ Engine::~Engine() {
 }
 
 std::string Engine::engineName() {
-  return std::string("libtorrent-rasterbar ") + lt::version();
+  return "libtorrent-rasterbar " + std::to_string(LIBTORRENT_VERSION_MAJOR) +
+         "." + std::to_string(LIBTORRENT_VERSION_MINOR) + "." +
+         std::to_string(LIBTORRENT_VERSION_TINY);
 }
 
 lt::settings_pack Engine::baseSettings() const {
@@ -384,6 +386,7 @@ lt::settings_pack Engine::baseSettings() const {
   s.set_int(sp::max_metadata_size, kMaxTorrentBytes);
   s.set_int(sp::metadata_token_limit, kMaxBencodeItems);
   s.set_int(sp::max_retry_port_bind, 10);
+  s.set_int(sp::min_reconnect_time, 10);
   s.set_int(sp::alert_mask, lt::alert_category::status |
                                 lt::alert_category::error |
                                 lt::alert_category::storage |
@@ -593,8 +596,16 @@ json::object Engine::addMagnet(std::string const& uri) {
   if (!config_.dht) {
     fetch.flags |= lt::torrent_flags::disable_dht;
   }
+  ensureListening();
+  if (config_.dht && !dhtOn_) {
+    lt::settings_pack s;
+    s.set_bool(sp::enable_dht, true);
+    session_->apply_settings(std::move(s));
+    dhtOn_ = true;
+  }
   lt::torrent_handle h = session_->add_torrent(std::move(fetch), ec);
   if (ec) {
+    refreshNetwork();
     fail("engine-error", "cannot fetch the magnet link: " + ec.message());
   }
   Pending p;
@@ -778,9 +789,13 @@ json::object Engine::opConfirm(json::object const& args) {
   if (!start) {
     atp.flags |= lt::torrent_flags::paused;
   }
+  if (start) {
+    ensureListening();
+  }
   lt::error_code ec;
   lt::torrent_handle h = session_->add_torrent(atp, ec);
   if (ec) {
+    refreshNetwork();
     if (ec == lt::errors::duplicate_torrent) {
       fail("duplicate", "the torrent is already in the session", tid);
     }
@@ -848,6 +863,7 @@ void Engine::setPaused(Torrent& t, bool pause) {
     if (t.status.errc) {
       t.handle.clear_error();
     }
+    ensureListening();
     t.handle.resume();
   }
   requestResume(t);
@@ -941,7 +957,8 @@ json::object Engine::opDetail(json::object const& args) {
   }
   Torrent& t = confirmed(tid);
   t.status = t.handle.status(lt::torrent_handle::query_pieces |
-                             lt::torrent_handle::query_accurate_download_counters);
+                             lt::torrent_handle::query_accurate_download_counters |
+                             lt::torrent_handle::query_save_path);
   r["status"] = statusJson(t);
   r["metadata"] = t.metadata;
   r["trackers"] = trackersJson(t.handle);
@@ -1249,6 +1266,8 @@ json::object Engine::opRestore(json::object const& args) {
     atp.flags |= lt::torrent_flags::update_subscribe | privacyFlags(atp.ti->priv());
     if (!start || t.userPaused || t.completed) {
       atp.flags |= lt::torrent_flags::paused;
+    } else {
+      ensureListening();
     }
     t.ti = atp.ti;
     t.metadata = buildMetadata(tid, *atp.ti, atp);
@@ -1268,7 +1287,7 @@ json::object Engine::opRestore(json::object const& args) {
 }
 
 void Engine::refreshStatus(Torrent& t) {
-  t.status = t.handle.status({});
+  t.status = t.handle.status(lt::torrent_handle::query_save_path);
 }
 
 bool Engine::isActive(Torrent const& t) const {
@@ -1310,7 +1329,7 @@ std::string Engine::stateOf(Torrent const& t) const {
       return "checking";
     case lt::torrent_status::finished:
     case lt::torrent_status::seeding:
-      return "seeding";
+      return t.flushing ? "downloading" : "seeding";
     default:
       return "downloading";
   }
@@ -1396,6 +1415,22 @@ std::string Engine::listenSpec() const {
   return "0.0.0.0:" + port + ",[::]:" + port;
 }
 
+void Engine::ensureListening() {
+  if (listening_) {
+    return;
+  }
+  if (port_ == 0) {
+    port_ = config_.listenPort
+                ? config_.listenPort
+                : 20000 + static_cast<int>(arc4random_uniform(40000));
+  }
+  lt::settings_pack s;
+  s.set_str(sp::listen_interfaces, listenSpec());
+  session_->apply_settings(std::move(s));
+  listening_ = true;
+  listenAnnounced_ = false;
+}
+
 void Engine::refreshNetwork() {
   bool fetching = anyFetching();
   bool active = anyActive();
@@ -1404,24 +1439,18 @@ void Engine::refreshNetwork() {
   bool wantDht = config_.dht && (fetching || publicActive);
   bool wantLsd = config_.lpd && publicActive;
   bool wantMapping = config_.portMapping && wantListen;
+  if (wantListen && !listening_) {
+    ensureListening();
+  }
   lt::settings_pack s;
   bool changed = false;
-  if (wantListen != listening_) {
-    if (wantListen) {
-      if (port_ == 0) {
-        port_ = config_.listenPort ? config_.listenPort
-                                   : 20000 + static_cast<int>(arc4random_uniform(40000));
-      }
-      s.set_str(sp::listen_interfaces, listenSpec());
-      listenAnnounced_ = false;
-    } else {
-      s.set_str(sp::listen_interfaces, "");
-      if (listenAnnounced_) {
-        emit_(event("closed"));
-      }
-      listenAnnounced_ = false;
+  if (!wantListen && listening_) {
+    s.set_str(sp::listen_interfaces, "");
+    if (listenAnnounced_) {
+      emit_(event("closed"));
     }
-    listening_ = wantListen;
+    listenAnnounced_ = false;
+    listening_ = false;
     changed = true;
   }
   if (wantDht != dhtOn_) {
@@ -1521,6 +1550,12 @@ void Engine::handleAlert(lt::alert* a) {
     }
     return;
   }
+  if (auto* cf = lt::alert_cast<lt::cache_flushed_alert>(a)) {
+    if (Torrent* t = byHandle(cf->handle)) {
+      onFlushed(*t);
+    }
+    return;
+  }
   if (auto* sr = lt::alert_cast<lt::save_resume_data_alert>(a)) {
     outstandingSaves_ = std::max(0, outstandingSaves_ - 1);
     if (Torrent* t = byHandle(sr->handle)) {
@@ -1593,10 +1628,20 @@ void Engine::handleAlert(lt::alert* a) {
 
 void Engine::onFinished(Torrent& t) {
   refreshStatus(t);
-  if (t.finishedSeen) {
+  if (t.finishedSeen || t.flushing) {
     return;
   }
+  t.flushing = true;
+  t.handle.flush_cache();
+}
+
+void Engine::onFlushed(Torrent& t) {
+  if (!t.flushing) {
+    return;
+  }
+  t.flushing = false;
   t.finishedSeen = true;
+  refreshStatus(t);
   if (t.ti) {
     auto const& fs = t.ti->layout();
     auto priorities = t.handle.get_file_priorities();
@@ -1745,7 +1790,7 @@ void Engine::tick(Clock::time_point now) {
   nextTick_ = now + kTick;
   bool active = anyActive();
   if (active || lastProgressActive_) {
-    session_->post_torrent_updates();
+    session_->post_torrent_updates(lt::torrent_handle::query_save_path);
   }
   emitTrackerAndPeerChanges();
   if (now >= nextResumeSave_) {

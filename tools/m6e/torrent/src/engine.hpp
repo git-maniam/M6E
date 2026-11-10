@@ -106,6 +106,7 @@ class Engine {
     bool userPaused = false;
     bool completed = false;
     bool finishedSeen = false;
+    bool flushing = false;
     bool trackersDirty = false;
     int lastSeeds = -2;
     int lastPeers = -2;
@@ -129,6 +130,7 @@ class Engine {
   void applyLimits();
   void applyIdentity(lt::settings_pack& sp) const;
   void applyEncryption(lt::settings_pack& sp) const;
+  void ensureListening();
   void refreshNetwork();
   std::string listenSpec() const;
   void updatePower(bool active);
@@ -139,6 +141,7 @@ class Engine {
   void handleAlert(lt::alert* a);
   void onMetadata(lt::torrent_handle const& h);
   void onFinished(Torrent& t);
+  void onFlushed(Torrent& t);
   void emitProgress();
   void emitTrackerAndPeerChanges();
   void emitError(std::string const& tid, std::string const& code,
