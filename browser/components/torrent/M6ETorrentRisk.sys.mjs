@@ -11,7 +11,20 @@ let gRules = null;
 
 function readRulesFile() {
   const uri = Services.io.newURI(RULES_URL);
-  return JSON.parse(Cu.readUTF8URI(uri));
+  try {
+    return JSON.parse(Cu.readUTF8URI(uri));
+  } catch (e) {
+    const { NetUtil } = ChromeUtils.importESModule(
+      "resource://gre/modules/NetUtil.sys.mjs"
+    );
+    const stream = NetUtil.newChannel({
+      uri,
+      loadUsingSystemPrincipal: true,
+    }).open();
+    return JSON.parse(
+      NetUtil.readInputStreamToString(stream, stream.available())
+    );
+  }
 }
 
 function setOf(list) {

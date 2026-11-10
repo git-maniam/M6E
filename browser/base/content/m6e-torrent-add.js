@@ -47,6 +47,17 @@ function displayName(name) {
   );
 }
 
+/**
+ * Fluent DOM parses a translation as markup when it contains "<" or "&", so
+ * a name placed in a message argument is escaped to show literally.
+ */
+function overlaySafe(text) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
 function selectedFiles() {
   return files.filter(f => f.priority > PRIORITY_SKIP);
 }
@@ -169,6 +180,7 @@ function renderTree(entries) {
       list.append(item);
       entry.box = box;
       entry.select = select;
+      setPriority(entry, entry.priority);
       box.addEventListener("change", () => {
         setPriority(entry, box.checked ? PRIORITY_NORMAL : PRIORITY_SKIP);
         refresh();
@@ -234,7 +246,7 @@ async function renderBanner() {
   const list = $("m6e-torrent-shady-reasons");
   list.replaceChildren();
   for (const reason of risk.reasons ?? []) {
-    const names = (reason.files ?? []).map(displayName);
+    const names = (reason.files ?? []).map(f => overlaySafe(displayName(f)));
     let text = names.slice(0, MAX_FILES_PER_REASON).join(", ");
     if (names.length > MAX_FILES_PER_REASON) {
       const more = await document.l10n.formatValue(

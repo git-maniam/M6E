@@ -1,5 +1,13 @@
 #pragma once
 
+// Additions for P8.1 (existing declarations are unchanged):
+//  - hasAttribute(entry, flag): BEP 47 "attr" test.
+//  - checkInfoDict now also rejects over-long, non-UTF-8 and control
+//    character names, padding files without a .pad name, and paths that
+//    collide by case or Unicode normalisation (checkLayoutPaths).
+//  - confine.hpp holds the canonical-path, no-follow, quarantine and sandbox
+//    functions; call checkLayout before confirm starts a transfer.
+
 #include <optional>
 #include <string>
 #include <string_view>
@@ -27,5 +35,7 @@ std::optional<SafetyError> checkNoSymlinkEscape(
     std::string const& rootReal, std::vector<std::string> const& components);
 
 bool isAbsolutePath(std::string const& path);
+
+bool hasAttribute(libtorrent::bdecode_node const& entry, char flag);
 
 }  // namespace m6e

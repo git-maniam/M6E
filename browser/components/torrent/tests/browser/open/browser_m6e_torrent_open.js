@@ -111,7 +111,7 @@ add_task(async function test_magnet_from_http_page_has_no_origin() {
   pageOpenReset();
   M6ETorrentHandler.handleMagnet(
     magnetURI(),
-    principalFor("https://example.com"),
+    principalFor("http://example.com"),
     gBrowser.selectedBrowser.browsingContext,
     false,
     true
@@ -351,7 +351,7 @@ add_task(async function test_page_download_origin() {
     );
 
     pageOpenReset();
-    const insecure = fakeLauncher("https://example.com/sample.torrent");
+    const insecure = fakeLauncher("http://example.com/sample.torrent");
     M6ETorrentHandler.handleDownload(insecure, null);
     Assert.deepEqual(
       saved[2],
