@@ -36,7 +36,7 @@ This is the source of truth for **what** M6E is and **why**. `M6E_IMPLEMENTATION
 | 5 | Packaging (`.dmg`) and acceptance | Done (2026-10-24). Signed ad hoc, release DMG built and verified, acceptance 15 of 15; first paint 579 ms, blank-tab memory 443 MB. |
 | 6 | Delete the dormant features (D30) | Done (2026-10-30). VPN, Translations, generative AI, machine learning, Sync, Mozilla accounts, the application updater, the crash reporter and Nimbus are deleted (Nimbus leaves a small stub); what stays is proven unreachable (`tools/m6e/p6-reports/unreachability.md`, `tools/m6e/unreachability_check.py` 7 of 7 on the packaged app). Clean LTO and PGO build, regression suites match the baseline, acceptance 15 of 15, Speedometer 3 45.5 (Phase 5: 44.7), blank-tab memory 430 MB, first paint 606 to 624 ms on a quiet machine (Phase 5: 579 ms), release DMG 106.5 MiB. Optional C++ follow-ups are on `m6e-p7-optional/cpp-followups`. |
 | 161.0a2 | Fingerprinting policy for standard mode (D31) and the documented passkey limit (D32) | **Planned, not yet built or published.** The current release is 161.0a1. The release is a pref change plus documentation, with a version bump that needs a clean LTO and PGO rebuild. |
-| 8 | BitTorrent: the "BT" button, torrent panel, `.torrent` and `magnet:` handling, and the "Shady Torrent" warning (D33 to D37) | **Specified, not started.** Ships in a release after 161.0a2. Requirements are in Phase 8 below. |
+| 8 | BitTorrent: the "BT" button, torrent panel, `.torrent` and `magnet:` handling, and the "Shady Torrent" warning (D33 to D38) | **Specified, not started.** Ships in a release after 161.0a2. Requirements are in Phase 8 below. |
 
 ## 3. Requirements
 
@@ -148,7 +148,7 @@ The user added these before Phase 4 can finish:
 ### Phase 8: BitTorrent (added 2026-11-04, D33 to D37)
 Adapted from a feature specification for a standalone uTorrent-style client (the "source spec", removed from the repository once this section replaced it; it remains in git history). What was cut, and why, is in 8.6.
 
-**Goal:** a small, private BitTorrent client inside M6E. A "BT" button beside the address bar opens a panel with the torrent controls. M6E can open `.torrent` files and `magnet:` links. A torrent with risky traits gets a "Shady Torrent" warning, which informs the user and never blocks. Nothing runs, listens or connects until the user adds a torrent (D36).
+**Goal:** a small, private BitTorrent client inside M6E. A "BT" button beside the address bar opens a panel with the torrent controls. M6E can open `.torrent` files and `magnet:` links. A torrent with risky traits gets a "Shady Torrent" warning, which informs the user and never blocks. Nothing runs, listens or connects until the user adds a torrent (D36). **Testing is restricted to the two official torrent pages in 8.9 (D38); read it before running any torrent.**
 
 #### 8.1 The BT button, panel and pages (D33)
 - **Placement and look:** a small button beside the Tracker Blocker and Telemetry buttons at the address bar, showing the letters "BT" as its icon, with the tooltip "BitTorrent". Build it the way the Page telemetry button is built (D29): `browser/base/content/browser-m6eTorrent.js`, a stylesheet and SVG next to `m6e-page-telemetry.css`, and strings in `browser/locales/en-US/browser/m6eTorrent.ftl`.
@@ -263,6 +263,21 @@ Each step follows the plan's step loop (build, check, commit as `M6E P8.<step>: 
 8. The helper is signed with the hardened runtime and passes the post-signing checks.
 9. Launch Services lists M6E as an app that can open `.torrent` files and `magnet:` links.
 
+#### 8.9 Test torrents (mandatory, D38)
+This is a hard rule for every person and every agent working on BitTorrent. It is never to be relaxed, worked around or reinterpreted. The reason: the developer's computer is an office-issued machine under security hardening, and downloading an untrusted torrent on it could breach policy and cost the developer their job.
+
+- **Allowed test torrents.** Any torrent that is added, downloaded, seeded or contacted over a network, whether manually or by a script, must come from one of these two official pages, and from no other source:
+  - Fedora Linux: https://fedoraproject.org/torrents/45/
+  - Debian: https://cdimage.debian.org/debian-cd/current/arm64/bt-dvd/
+- **Everything else is "Shady" for testing.** A torrent or magnet link from anywhere else is off-list and must not be used, even if it looks legitimate. This includes torrents of the projects below when they are not taken from the two pages above (so a Debian or Fedora torrent from a mirror, a forum, a search result or another page is also off-list):
+  - Ubuntu and its official flavors (Kubuntu, Lubuntu, Xubuntu), Debian, Linux Mint, Arch Linux, Fedora, openSUSE;
+  - the specialty distributions Kali Linux (penetration testing), Tails (privacy-focused) and Raspberry Pi OS;
+  - the BSD variants FreeBSD, OpenBSD and NetBSD;
+  - LibreOffice, GIMP, Kiwix and the Internet Archive.
+- **This is separate from the product feature.** "Shady" here is a testing policy about which torrents may be run. The "Shady Torrent" warning (8.3) is what the product shows users, and the bundled trusted-site list in 8.3 does not widen this allow-list. Nothing in 8.3, 8.7 or 8.8 permits testing with a torrent that is not on the two pages.
+- **How to apply it.** Test code, fixtures, documentation and acceptance steps must not name, embed or fetch any other torrent or magnet link. An agent that needs a torrent for a test uses one of the two pages, or stops and asks the developer. Never add a torrent to a running M6E to "see if it works" outside this list.
+- **Steps that need the user's decision.** The offline fixture of P8.0 (a local tracker and seed) and the crafted `Movie.mkv.exe` case in 8.8 item 2 are synthetic torrents, not taken from the two pages. They are not covered by the allow-list above, so they must not be run until the developer approves them explicitly.
+
 **Confirmed by the user (2026-11-04):**
 - The engine is chosen by the P8.0 spike under the rule in 8.4.
 - "Shady" means risk of malware or deception only (8.3), with no copyright judgement.
@@ -315,6 +330,7 @@ Decisions are numbered so the plan and commits can refer to them. Unless marked 
 | D35 | The "Shady Torrent" warning is informational and never blocks: a banner in the Add dialog with the reasons, and the choice to add anyway. Legitimate sources, such as the Linux distributions' own sites, show nothing. (User, 2026-11-04.) The method is the agent's: an offline check on the metadata and the origin the torrent came from, with a bundled trusted-site list and rule data (8.3), and no outside reputation service. | The user wants the user made aware, not blocked. Offline matches D2 and the no-data-leaves-the-device rule. The origin of an https page is the one signal a malicious torrent cannot fake by copying tracker or file names. |
 | D36 (agent) | Privacy and safety defaults for BitTorrent: nothing runs, listens or connects until a torrent is added; no file data before the Add dialog is confirmed; random listening port; port mapping and local peer discovery off; DHT and peer exchange off for private torrents; a neutral Peer ID and tracker User-Agent; no download of block lists; optional SOCKS5 and network-interface binding with a kill switch; finished files carry the macOS quarantine attribute; default seeding goal is ratio 1.0. | M6E is privacy-first and its attack surface is kept small (D22). A torrent client is the opposite by default (open port, public discovery), so the defaults are set the other way, and each is a setting. |
 | D37 (agent) | The source spec's Web UI, tray icon, RSS, watch folders, run-external-program, antivirus hook, scheduler grid, zero-fill pre-allocation, auto-shutdown and Windows items are not built (table in 8.6). | They duplicate what the browser already provides, add attack surface (D22) or do not apply to macOS (D21). |
+| D38 | Torrent testing is limited to torrents from two official pages: the Fedora Linux page (https://fedoraproject.org/torrents/45/) and the Debian arm64 BitTorrent DVD page (https://cdimage.debian.org/debian-cd/current/arm64/bt-dvd/). Every other torrent is "Shady" for testing, including Ubuntu and its flavors, Linux Mint, Arch, openSUSE, Kali, Tails, Raspberry Pi OS, FreeBSD, OpenBSD, NetBSD, LibreOffice, GIMP, Kiwix and the Internet Archive, and also Debian or Fedora torrents taken from anywhere else. Never to be breached (8.9). (User, 2026-11-10.) | The developer's computer is office-issued and security-hardened. Running an untrusted torrent could breach company policy and put the developer's job at risk. |
 
 ## 5. Ground rules
 - **Repository:** work in the existing checkout; one commit per plan step, pushed to `origin/main` after a successful build and checks.

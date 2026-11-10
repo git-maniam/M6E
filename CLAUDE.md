@@ -13,6 +13,8 @@ Resuming: Phases 0 to 6 are finished. The current work is the 161.0a2 release (v
 
 "Start Bittorrent feature implementation" starts Phase 8, the BitTorrent feature: open the plan's section 4, read "Phase 8 bookmark", run the pre-flight in section 5 "Phase 8", then follow its waves without asking questions. Spawn the agents of each wave in one message so they run in parallel (Agent tool, `isolation: "worktree"`, branches `m6e-p8/<name>`). All Phase 8 work happens on the branch `BT-Implementation`; `main` stays untouched until the user merges it. Only the lead builds, tests, merges, commits to `BT-Implementation` and edits the spec and plan.
 
+**Torrent testing rule (spec 8.9, D38; never breach):** test only with torrents from the Fedora page (https://fedoraproject.org/torrents/45/) and the Debian arm64 page (https://cdimage.debian.org/debian-cd/current/arm64/bt-dvd/). Any other torrent or magnet link is off-limits, because this is an office-issued, security-hardened computer. Synthetic fixtures need the user's explicit approval first.
+
 Working rules:
 - **Where M6E changes live:**
   - behaviour prefs: `browser/app/profile/m6e.js`;
