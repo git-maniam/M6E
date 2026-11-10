@@ -11,6 +11,11 @@
 # Run it after ./mach build (or make -C obj-m6e/faster for front-end changes).
 # With MOZ_PGO in the mozconfig, any C++ change needs ./mach clobber first.
 #
+# The BitTorrent helper is not part of ./mach package. This script builds it
+# (tools/m6e/torrent/build-helper.sh, quick after the first run) and copies it
+# to Contents/MacOS/m6e-torrent before signing; M6E_TORRENT_HELPER=<binary>
+# reuses a prebuilt one instead. The post-signing checks cover the helper too.
+#
 # Nothing is mounted at /Volumes/M6E before it starts, and the machine should
 # not be running another M6E: the checks launch the signed app. Work happens
 # in a temporary directory, and the signed app is never placed in /tmp for
@@ -36,6 +41,8 @@ fi
 staged=obj-m6e/dist/m6e/M6E.app
 ditto "$staged" "$work/M6E.app"
 
+tools/m6e/package/install-helper.sh "$work/M6E.app"
+
 tools/m6e/package/sign-adhoc.sh "$work/M6E.app"
 
 version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$work/M6E.app/Contents/Info.plist")
@@ -45,6 +52,8 @@ rm -f "$dmg"
 
 python3 tools/m6e/branding/make-dmg-layout.py build "$work/M6E.app" "$dmg"
 python3 tools/m6e/branding/make-dmg-layout.py verify --require-signed "$dmg"
+
+python3 -I tools/m6e/package/check-helper.py "$work/M6E.app"
 
 ./mach python tools/m6e/chrome_eval.py \
     --binary "$work/M6E.app/Contents/MacOS/m6e" \
