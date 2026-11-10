@@ -413,3 +413,8 @@ pref("m6e.torrent.ipFilterPath", "");
 pref("m6e.torrent.randomizePeerId", false);
 pref("m6e.torrent.sequentialDefault", false);
 pref("m6e.torrent.trustedSites", "");
+// M6E P8.5: Add torrent window defaults (read by the Add dialog). An empty
+// downloadDir means the download folder of the browser.
+pref("m6e.torrent.downloadDir", "");
+pref("m6e.torrent.askWhereToSave", false);
+pref("m6e.torrent.startNow", true);

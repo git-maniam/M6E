@@ -51,3 +51,37 @@ user_pref("network.IDN_show_punycode", false);
 user_pref("pdfjs.enableScripting", true);
 user_pref("network.auth.subresource-http-auth-allow", 2);
 user_pref("dom.disable_window_move_resize", false);
+// M6E's BitTorrent defaults (m6e.js, P8.5), pinned so that a test profile
+// never starts the engine, opens a port or contacts anything by itself. Keep
+// in sync with m6e.js and PREF_DEFAULTS in M6ETorrentProtocol.sys.mjs.
+user_pref("m6e.torrent.enabled", true);
+user_pref("m6e.torrent.resumeAtStartup", true);
+user_pref("m6e.torrent.confirmQuit", true);
+user_pref("m6e.torrent.encryption", "enabled");
+user_pref("m6e.torrent.dht", true);
+user_pref("m6e.torrent.pex", true);
+user_pref("m6e.torrent.lpd", false);
+user_pref("m6e.torrent.portMapping", false);
+user_pref("m6e.torrent.listenPort", 0);
+user_pref("m6e.torrent.downKBps", 0);
+user_pref("m6e.torrent.upKBps", 0);
+user_pref("m6e.torrent.turtle.enabled", false);
+user_pref("m6e.torrent.turtle.downKBps", 50);
+user_pref("m6e.torrent.turtle.upKBps", 10);
+user_pref("m6e.torrent.maxActiveDownloads", 3);
+user_pref("m6e.torrent.maxActiveTorrents", 5);
+user_pref("m6e.torrent.seedRatioPercent", 100);
+user_pref("m6e.torrent.seedHours", 0);
+user_pref("m6e.torrent.proxy.type", "none");
+user_pref("m6e.torrent.proxy.host", "");
+user_pref("m6e.torrent.proxy.port", 1080);
+user_pref("m6e.torrent.proxy.username", "");
+user_pref("m6e.torrent.proxy.peers", true);
+user_pref("m6e.torrent.bindInterface", "");
+user_pref("m6e.torrent.ipFilterPath", "");
+user_pref("m6e.torrent.randomizePeerId", false);
+user_pref("m6e.torrent.sequentialDefault", false);
+user_pref("m6e.torrent.trustedSites", "");
+user_pref("m6e.torrent.downloadDir", "");
+user_pref("m6e.torrent.askWhereToSave", false);
+user_pref("m6e.torrent.startNow", true);
