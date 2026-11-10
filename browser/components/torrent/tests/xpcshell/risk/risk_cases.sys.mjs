@@ -577,7 +577,7 @@ export const ASSESS_CASES = [
       files: [
         { index: 0, path: "Release/a.txt", length: 10 },
         { index: 1, path: "Release/.pad/4096.exe", length: 4096, pad: true },
-        { index: 2, path: ".pad/100.exe", length: 100 },
+        { index: 2, path: ".pad/100", length: 100 },
       ],
     },
     source: UNKNOWN,
@@ -664,6 +664,237 @@ export const ASSESS_CASES = [
     maxFileLength: 203,
   },
   {
+    name: "a crafted .pad path that is not a number is not padding",
+    metadata: torrent("Release", [
+      ["Release/a.txt", 10],
+      ["Release/.pad/evil.exe", 4096],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["windows-program"],
+  },
+  {
+    name: "a hybrid torrent with padding files and one large ISO",
+    metadata: {
+      ...torrent("Linux-Distro-1.0", [["Linux-Distro-1.0-x86_64.iso", 4 * GiB]]),
+      files: [
+        { index: 0, path: "Linux-Distro-1.0-x86_64.iso", length: 4 * GiB },
+        { index: 1, path: ".pad/12345", length: 12345, pad: true },
+        { index: 2, path: "CHECKSUM", length: 400 },
+        { index: 3, path: ".pad/3696", length: 3696 },
+      ],
+    },
+    source: UNKNOWN,
+    verdict: "ok",
+    trusted: false,
+    codes: [],
+  },
+  {
+    name: "large single ISOs and images from Finder show nothing",
+    each: [
+      "Fedora-Workstation-Live-x86_64-45-1.6.iso",
+      "debian-13.0.0-arm64-DVD-1.iso",
+      "ubuntu-26.04-live-server-amd64.iso",
+      "kali-linux-2026.3-installer-everything-amd64.iso",
+      "Win11_25H2_English_x64.iso",
+      "Rocky-10-dvd1-update-setup-install.iso",
+      "2026-10-06-raspios-trixie-arm64-lite.img.xz",
+    ].map(file => ({
+      metadata: torrent(file, [[file, 8 * GiB]]),
+      source: FINDER,
+      verdict: "ok",
+      trusted: false,
+      codes: [],
+    })),
+  },
+  {
+    name: "an ISO with checksum and signature files",
+    metadata: torrent("distro-12", [
+      ["distro-12/distro-12-netinst.iso", 700 * MiB],
+      ["distro-12/SHA256SUMS", 1000],
+      ["distro-12/SHA256SUMS.sign", 500],
+      ["distro-12/distro-12-netinst.iso.zsync", 100000],
+      ["distro-12/README.txt", 1000],
+    ]),
+    source: UNKNOWN,
+    verdict: "ok",
+    trusted: false,
+    codes: [],
+  },
+  {
+    name: "a source release with scripts and a tarball is at most medium",
+    metadata: torrent("tool-2.0", [
+      ["tool-2.0/tool-2.0.tar.gz", 5 * MiB],
+      ["tool-2.0/install.sh", 2000],
+      ["tool-2.0/build.jar", 100000],
+      ["tool-2.0/README", 1000],
+    ]),
+    source: UNKNOWN,
+    verdict: "ok",
+    trusted: false,
+    codes: ["macos-installer"],
+  },
+  {
+    name: "a macOS installer with a demo video is not a video torrent",
+    metadata: torrent("Editor 1.0", [
+      ["Editor 1.0/Editor-1.0.dmg", 200 * MiB],
+      ["Editor 1.0/demo.mp4", 20 * MiB],
+    ]),
+    source: UNKNOWN,
+    verdict: "ok",
+    trusted: false,
+    codes: ["macos-installer"],
+  },
+  {
+    name: "a macOS installer filled out with a film is program-in-media",
+    metadata: torrent("Holiday", [
+      ["Holiday/holiday.mkv", 2 * GiB],
+      ["Holiday/player.dmg", MiB],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["macos-installer", "program-in-media"],
+  },
+  {
+    name: "a jar in an audio torrent is program-in-media",
+    metadata: torrent("Live Set", [
+      ["Live Set/01.flac", 40 * MiB],
+      ["Live Set/02.flac", 40 * MiB],
+      ["Live Set/viewer.jar", 100000],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["macos-installer", "program-in-media"],
+  },
+  {
+    name: "a script in a torrent named like a series is program-in-media",
+    metadata: torrent("Show.S01E01.WEB-DL", [
+      ["Show.S01E01.WEB-DL/show.s01e01.mkv", 500 * MiB],
+      ["Show.S01E01.WEB-DL/run.sh", 100],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["macos-installer", "program-in-media"],
+  },
+  {
+    name: "a bundle with a media double extension is a disguised program",
+    metadata: torrent("Movie 2024", [
+      ["Movie 2024/Movie.mkv.app/Contents/MacOS/run", 100000],
+      ["Movie 2024/Movie.mkv.app/Contents/Info.plist", 500],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["double-extension", "macos-installer"],
+    files: { "double-extension": ["Movie 2024/Movie.mkv.app"] },
+  },
+  {
+    name: "double extension in upper case and with a tab run",
+    each: [
+      ["Movie.MKV.EXE", ["windows-program", "double-extension"]],
+      [
+        "report.pdf\t\t\t\t\t.exe",
+        ["windows-program", "double-extension", "bidi-override"],
+      ],
+      ["song.mp3.PKG", ["macos-installer", "double-extension"]],
+    ].map(([file, codes]) => ({
+      metadata: torrent("Stuff", [[file, 100]]),
+      source: UNKNOWN,
+      verdict: "shady",
+      trusted: false,
+      codes,
+    })),
+  },
+  {
+    name: "media titles that contain piracy words are not flagged",
+    metadata: torrent("Crack House 2019", [
+      ["Crack House 2019/Crack.House.2019.mkv", 2 * GiB],
+      ["Crack House 2019/Crack Music/Crack Theme.mp3", 5 * MiB],
+      ["Crack House 2019/Crack House.srt", 10000],
+    ]),
+    source: UNKNOWN,
+    verdict: "ok",
+    trusted: false,
+    codes: [],
+  },
+  {
+    name: "a piracy word in a folder name still flags non-media files",
+    metadata: torrent("Crack House 2019", [
+      ["Crack House 2019/Crack.House.2019.mkv", 2 * GiB],
+      ["Crack House 2019/run.bin", 4 * MiB],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["piracy-tool-name"],
+    files: { "piracy-tool-name": ["Crack House 2019/run.bin"] },
+  },
+  {
+    name: "installer and password file together are shady",
+    metadata: torrent("Software", [
+      ["Software/Setup.pkg", 10 * MiB],
+      ["Software/data.7z", 10 * MiB],
+      ["Software/unrar password.txt", 20],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["macos-installer", "password-file"],
+  },
+  {
+    name: "password file name variants next to an archive",
+    each: [
+      "Password.TXT",
+      "passwords.txt",
+      "read me first.txt",
+      "README.html",
+      "How To Open.pdf",
+      "readme",
+    ].map(file => ({
+      metadata: torrent("Course", [
+        ["Course/lessons.7z", 100 * MiB],
+        ["Course/" + file, 20],
+      ]),
+      source: UNKNOWN,
+      verdict: "ok",
+      trusted: false,
+      codes: ["password-file"],
+    })),
+  },
+  {
+    name: "invisible line and paragraph separators, braille blank and grapheme joiner are flagged",
+    each: ["a b.mkv", "a b.mkv", "a⠀b.mkv", "a͏b.mkv"].map(
+      path => ({
+        metadata: torrent("Video", [[path, 100]]),
+        source: UNKNOWN,
+        verdict: "shady",
+        trusted: false,
+        codes: ["bidi-override"],
+      })
+    ),
+  },
+  {
+    name: "a right-to-left override only in the torrent name is flagged",
+    metadata: torrent("Holiday‮gpj", [["a.jpg", 100]]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["bidi-override"],
+    files: { "bidi-override": ["Holiday<U+202E>gpj"] },
+  },
+  {
+    name: "a trusted domain used as a label of another site is not trusted",
+    metadata: torrent("Movie 2025 1080p", [["Movie.mkv.exe", 2 * MiB]]),
+    source: magnet("https://www.debian.org.example-torrents.net"),
+    verdict: "shady",
+    trusted: false,
+    codes: ["windows-program", "double-extension", "program-in-media"],
+  },
+  {
     name: "high and medium together: shady with both severities",
     metadata: torrent("Mix", [
       ["Mix/a.exe", 10],
@@ -724,6 +955,24 @@ export const TRUSTED_CASES = [
   ["https://forums.linuxmint.com", [], false],
   ["https://documentfoundation.org", [], false],
   ["https://wiki.documentfoundation.org", [], false],
+  ["https://cdimage.kali.org", [], true],
+  ["https://downloads.raspberrypi.com", [], true],
+  ["https://repo.almalinux.org", [], true],
+  ["https://answers.ubuntu.com", [], false],
+  ["https://ask.fedoraproject.org", [], false],
+  ["https://forums.rockylinux.org", [], false],
+  ["https://git.almalinux.org", [], false],
+  ["https://bugs.kali.org", [], false],
+  ["https://forums.raspberrypi.com", [], false],
+  ["https://templates.libreoffice.org", [], false],
+  ["https://extensions.libreoffice.org", [], false],
+  ["https://tails.net", [], false],
+  ["https://www.freebsd.org", [], false],
+  ["https://download.opensuse.org", [], false],
+  ["https://dumps.wikimedia.org", [], false],
+  ["https://web.archive.org", [], false],
+  ["https://www.centos.org", [], false],
+  ["https://sourceforge.net", [], false],
   ["https://github.com", [], false],
   ["https://archive.org", [], false],
   ["https://blender.org", [], false],
@@ -752,6 +1001,47 @@ export const TRUSTED_CASES = [
   ["https://example.com", ["https://com"], false],
   ["https://example.org", ["ftp://example.org"], false],
 ];
+
+const NEVER_TRUSTED_DOMAINS = [
+  "archive.org",
+  "github.com",
+  "githubusercontent.com",
+  "gitlab.com",
+  "sourceforge.net",
+  "drive.google.com",
+  "dropbox.com",
+  "mega.nz",
+  "mediafire.com",
+  "wikimedia.org",
+  "blender.org",
+  "tails.net",
+  "freebsd.org",
+  "opensuse.org",
+  "centos.org",
+];
+
+export function checkTrustedList(sites) {
+  const failures = [];
+  const seen = new Set();
+  if (!sites.length) {
+    failures.push("the trusted list is empty");
+  }
+  for (const { name, domain } of sites) {
+    if (!name || !/^[a-z0-9.-]+\.[a-z]+$/.test(domain)) {
+      failures.push("bad trusted entry " + name + " / " + domain);
+    }
+    if (seen.has(domain)) {
+      failures.push("duplicate trusted domain " + domain);
+    }
+    seen.add(domain);
+    for (const never of NEVER_TRUSTED_DOMAINS) {
+      if (domain == never || domain.endsWith("." + never)) {
+        failures.push("domain must not be trusted: " + domain);
+      }
+    }
+  }
+  return failures;
+}
 
 export function checkAssess(assess, testCase) {
   if (testCase.each) {

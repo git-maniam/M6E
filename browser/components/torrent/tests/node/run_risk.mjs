@@ -14,12 +14,14 @@ import {
   TRUSTED_CASES,
   checkAssess,
   checkTrusted,
+  checkTrustedList,
 } from "../xpcshell/risk/risk_cases.sys.mjs";
 
 const rulesPath = fileURLToPath(
   new URL("../../m6e-torrent-rules.json", import.meta.url)
 );
-M6ETorrentRisk.setRules(JSON.parse(readFileSync(rulesPath, "utf8")));
+const rawRules = JSON.parse(readFileSync(rulesPath, "utf8"));
+M6ETorrentRisk.setRules(rawRules);
 
 const assess = (...args) => M6ETorrentRisk.assess(...args);
 const isTrusted = (...args) => M6ETorrentRisk.isTrustedOrigin(...args);
@@ -33,6 +35,19 @@ for (const testCase of ASSESS_CASES) {
 for (const testCase of TRUSTED_CASES) {
   count++;
   failures.push(...checkTrusted(isTrusted, testCase));
+}
+
+failures.push(...checkTrustedList(M6ETorrentRisk.getTrustedSites()));
+count++;
+for (const site of rawRules.trustedSites) {
+  count++;
+  const page = new URL(site.page);
+  if (
+    page.protocol != "https:" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(site.verified || "")
+  ) {
+    failures.push("trusted entry " + site.name + " needs an https page and a verified date");
+  }
 }
 
 if (failures.length) {
