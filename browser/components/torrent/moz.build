@@ -11,8 +11,12 @@
 # M6E: P8.2 and P8.4 browser chrome manifests.
 BROWSER_CHROME_MANIFESTS += [
     "tests/browser/open/browser.toml",
+    "tests/browser/page/browser.toml",
     "tests/browser/ui/browser.toml",
 ]
+
+# M6E: P8.6 about:torrents.
+JAR_MANIFESTS += ["jar.mn"]
 
 XPCSHELL_TESTS_MANIFESTS += [
     "tests/xpcshell/risk/xpcshell.toml",

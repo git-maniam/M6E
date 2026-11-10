@@ -1,0 +1,337 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* M6E: about:torrents (Phase 8, D33). */
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#m6e-torrents-layout {
+  display: grid;
+  grid-template-columns: 14em minmax(0, 1fr);
+  height: 100%;
+}
+
+#m6e-torrents-sidebar {
+  padding: var(--space-large);
+  border-inline-end: var(--border-width) solid var(--border-color);
+  background-color: var(--background-color-box);
+  overflow-y: auto;
+
+  > h1 {
+    margin: 0 0 var(--space-large);
+    font-size: var(--font-size-large);
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+button.filter {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-small);
+  width: 100%;
+  margin: 0 0 var(--space-xxsmall);
+  padding: var(--space-small) var(--space-medium);
+  border: none;
+  background-color: transparent;
+  text-align: start;
+
+  &:hover {
+    background-color: var(--button-background-color-hover);
+  }
+
+  &[aria-current="true"] {
+    background-color: var(--color-accent-primary);
+    color: var(--button-text-color-primary);
+  }
+
+  > .count {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+#m6e-torrents-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-small);
+  min-width: 0;
+  padding: var(--space-large);
+  overflow: hidden;
+}
+
+#m6e-torrents-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+
+  > button {
+    margin: 0;
+  }
+}
+
+#m6e-torrents-alert {
+  margin: 0;
+  color: var(--text-color-error);
+}
+
+#m6e-torrents-info,
+#m6e-torrents-notice,
+#m6e-torrents-count {
+  margin: 0;
+  color: var(--text-color-deemphasized);
+
+  &:empty {
+    display: none;
+  }
+}
+
+#m6e-torrents-table-wrap {
+  flex: 1 1 50%;
+  min-height: 8em;
+  overflow: auto;
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-small);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: var(--space-xsmall) var(--space-medium);
+    text-align: start;
+    white-space: nowrap;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    background-color: var(--background-color-box);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  td.name,
+  td.message {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+  }
+
+  td.size,
+  td.number,
+  td.down,
+  td.up,
+  td.eta,
+  td.ratio,
+  td.seeds,
+  td.peers,
+  td.added,
+  td.percent {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+#m6e-torrents-table {
+  th > button {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    font-weight: inherit;
+    text-align: start;
+  }
+
+  th[aria-sort="ascending"] > button::after {
+    content: " \25B2";
+  }
+
+  th[aria-sort="descending"] > button::after {
+    content: " \25BC";
+  }
+
+  td.name {
+    min-width: 12em;
+    max-width: 24em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  td.progress {
+    min-width: 9em;
+
+    > progress {
+      width: 5em;
+      margin-inline-end: var(--space-small);
+      vertical-align: middle;
+    }
+  }
+
+  tbody > tr {
+    cursor: default;
+
+    &:hover {
+      background-color: var(--button-background-color-hover);
+    }
+
+    &[aria-selected="true"] {
+      background-color: var(--color-accent-primary);
+      color: var(--button-text-color-primary);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-outline);
+      outline-offset: calc(-1 * var(--focus-outline-width));
+    }
+  }
+}
+
+#m6e-torrents-detail {
+  flex: 1 1 50%;
+  min-height: 10em;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  > p {
+    margin: 0;
+    color: var(--text-color-deemphasized);
+  }
+}
+
+#m6e-torrents-detail-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+#m6e-torrents-tabs {
+  display: flex;
+  gap: var(--space-xsmall);
+  border-block-end: var(--border-width) solid var(--border-color);
+
+  > [role="tab"] {
+    margin: 0;
+    border: none;
+    border-block-end: var(--focus-outline-width) solid transparent;
+    border-radius: 0;
+    background-color: transparent;
+
+    &[aria-selected="true"] {
+      border-block-end-color: var(--color-accent-primary);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
+}
+
+#m6e-torrents-detail-unavailable {
+  margin: var(--space-small) 0 0;
+  color: var(--text-color-deemphasized);
+}
+
+.tabpanel {
+  flex: 1;
+  min-height: 0;
+  padding-block-start: var(--space-small);
+  overflow: auto;
+
+  > p {
+    margin: 0;
+    color: var(--text-color-deemphasized);
+  }
+}
+
+#m6e-torrents-general {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-xsmall) var(--space-xlarge);
+  margin: 0;
+
+  > dt {
+    color: var(--text-color-deemphasized);
+  }
+
+  > dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+    font-variant-numeric: tabular-nums;
+  }
+
+  > dd[data-field="hash"] {
+    font-family: monospace;
+  }
+
+  > dd[data-field="error"] {
+    color: var(--text-color-error);
+  }
+}
+
+#m6e-torrents-files {
+  td.progress > progress {
+    width: 5em;
+    margin-inline-end: var(--space-small);
+    vertical-align: middle;
+  }
+}
+
+#m6e-torrents-remove-dialog {
+  max-width: 30em;
+  padding: var(--space-large) var(--space-xlarge);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+  background-color: var(--background-color-canvas);
+  color: var(--text-color);
+
+  &::backdrop {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+
+  > h2 {
+    margin: 0 0 var(--space-small);
+    font-size: var(--font-size-large);
+  }
+
+  > p {
+    margin: 0 0 var(--space-small);
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+  }
+
+  > #m6e-torrents-remove-note {
+    color: var(--text-color-deemphasized);
+    unicode-bidi: normal;
+  }
+
+  > .buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-small);
+    margin-block-start: var(--space-medium);
+
+    > button {
+      margin: 0;
+    }
+
+    > .danger {
+      background-color: var(--button-background-color-destructive);
+      color: var(--button-text-color-destructive);
+    }
+  }
+}
