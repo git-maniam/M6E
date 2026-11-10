@@ -13,6 +13,8 @@ listening sockets of the app's process tree. Prints a PASS/FAIL table and
 writes results.json into --out. The exit status is 1 if any check fails.
 
 The idle network capture is acceptance.py check 3 and is not repeated here.
+Check 8 (BitTorrent, spec 8.5) shows the packaged helper does not run at idle and
+that a loopback fixture torrent (spec 8.9, D38) is what starts it.
 Only one browser may use the Marionette port at a time.
   --idle-seconds  idle time before the socket snapshot (default 20)
   --only a,b      run some checks (--list names them)
@@ -497,6 +499,81 @@ def check_sockets(ctx, r):
         not helpers,
         helpers or sorted({os.path.basename(c.split(" ")[0]) for c in data["tree"].values()}),
     )
+
+
+def torrent_session(ctx):
+    """One browser with a loopback fixture torrent: the helper and its sockets after the add."""
+    a = load_acceptance()
+    _, make_torrent, _ = a.fixtures()
+    work = a.scratch_dir(ctx, "unreachability")
+    save = os.path.join(work, "downloads")
+    os.makedirs(save)
+    prefs = {
+        "m6e.torrent.bindInterface": "lo0",
+        "m6e.torrent.downloadDir": save,
+        "m6e.torrent.confirmQuit": False,
+        "m6e.torrent.resumeAtStartup": False,
+    }
+    with a.browser(ctx, prefs=prefs) as client:
+        before = a.helper_pids(ctx)
+        with a.loopback_swarm(
+            [lambda announce: make_torrent.single_file(announce=announce, name="m6e-unreach.bin")],
+            serve_blocks=False,
+        ) as (tracker, seed, made):
+            fixture = made[0]
+            path = a.write_torrent(fixture, work)
+            added = a.run_js(
+                client,
+                a.JS_BT_ADD_ACTIVE,
+                PATH=path,
+                SOURCE={"kind": "finder", "origin": None},
+                SAVE=save,
+            )
+            pids = a.wait_for(lambda: a.helper_pids(ctx), 15)
+            time.sleep(3)
+            sockets = lsof(["-iTCP", "-iUDP"], pids) if pids else []
+            return {
+                "before": before,
+                "after": pids,
+                "states": added["states"],
+                "sockets": [f"{c}[{p}] {n}" for p, c, n in sockets],
+                "announces": len(tracker.announces_for(fixture.tid)),
+            }
+
+
+@check("bittorrent", "8", "BitTorrent helper present but silent until a torrent is added")
+def check_bittorrent(ctx, r):
+    data = session(ctx)
+    helper = os.path.join(ctx.app, "Contents", "MacOS", "m6e-torrent")
+    r.add("the helper ships in the bundle", os.access(helper, os.X_OK), helper)
+    running = [pid for pid, cmd in data["tree"].items() if "m6e-torrent" in cmd]
+    r.add(
+        "no m6e-torrent process in the idle tree (the presence of the helper trips nothing)",
+        not running and len(data["tree"]) > 1,
+        running or f"{len(data['tree'])} processes, none is the helper",
+    )
+    ephemeral_udp = [
+        n for _, c, n in data["udpSockets"] if "m6e-torrent" in c
+    ]
+    r.add("no BitTorrent socket at idle", not ephemeral_udp, ephemeral_udp or "none")
+    t = ctx.once("torrent_session", lambda: torrent_session(ctx))
+    r.add(
+        "before the add there is no helper",
+        not t["before"],
+        t["before"] or "none",
+    )
+    r.add(
+        "after adding a loopback fixture torrent the helper runs and has sockets",
+        bool(t["after"]) and bool(t["sockets"]),
+        f"helper pids {t['after']}, {len(t['sockets'])} sockets, tracker announces {t['announces']}",
+    )
+    outside = [x for x in t["sockets"] if "127.0.0.1" not in x and "[::1]" not in x]
+    r.add(
+        "all of them are on the loopback interface (the test binds lo0; no fixed host is added)",
+        not outside,
+        outside or t["sockets"][:6],
+    )
+    r.info("scope", "spec 8.5: BitTorrent adds no fixed host; the traffic goes to trackers and peers")
 
 
 def build_parser():
