@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-"""Run the Phase 5 acceptance checks on a fresh profile of an M6E build.
+"""Run the Phase 5 acceptance checks (and, from Phase 8, the BitTorrent checks BT1 to BT9).
 
     ./mach python tools/m6e/acceptance.py --app <path to M6E.app> --out <dir> [--idle-seconds N]
 
@@ -23,6 +23,12 @@ The checks follow the plan's P5.2 and the spec's decisions D2, D4, D5, D10,
 D11, D12, D18 to D20, D22, D25 and D29. They reuse measure.py (startup,
 memory, log parsing), push/push_check.py, trackers/tracker_count_check.py and
 branding/scan-strings.py.
+
+The BitTorrent checks (spec 8.8) use only synthetic fixtures served on 127.0.0.1
+from tools/m6e/torrent/fixtures (spec 8.9, D38) and the helper packaged in the
+app. Their titles say [automated]; the steps left to a person are printed at the
+end. BT2, BT4 and BT7 share one browser session (the Add dialog, a magnet link,
+a quit with an active torrent). The app must be signed and contain the helper.
 """
 
 import argparse
@@ -1229,6 +1235,13 @@ def run_idle(ctx):
                 check=False,
             )
             result["open_files"] = len(everything.stdout.strip().splitlines()) - 1
+            processes = app_processes(ctx)
+            result["helper_processes"] = [
+                pid
+                for pid in pids
+                if os.path.basename(processes.get(pid, "")) == HELPER_NAME
+            ]
+            result["helper_processes_any"] = helper_pids(ctx)
         finally:
             proc.send_signal(signal.SIGTERM)
             try:
@@ -2035,6 +2048,1122 @@ def check_performance(ctx, r):
     }
 
 
+# ---------------------------------------------------------------------------
+# BitTorrent (spec Phase 8, 8.8). Only synthetic fixtures served on 127.0.0.1
+# are used (spec 8.9, D38): no real torrent, magnet link, info hash or tracker
+# appears here. Each title says whether the check is automated.
+# ---------------------------------------------------------------------------
+
+HELPER_NAME = "m6e-torrent"
+MANUAL_STEPS = [
+    "Open a fixture .torrent and a magnet: link from Finder or the Dock (double click, `open -a`)"
+    " and see the Add dialog (the automated checks use the dialog's own entry points).",
+    "One real-network download (P8.7): a torrent the developer picks from"
+    " https://fedoraproject.org/torrents/45/ or"
+    " https://cdimage.debian.org/debian-cd/current/arm64/bt-dvd/ and no other (spec 8.9, D38),"
+    " added from the panel, with the progress, completion, quarantine attribute and quit prompt"
+    " seen by hand.",
+    "Bound-interface kill switch with a real VPN interface (utun or wg): switch it off and on"
+    " and watch the panel (the automated check uses an interface that does not exist).",
+]
+
+torrent_tests_module = None
+
+
+def torrent_tests():
+    """The helper conformance harness: its Helper class and fixture tools."""
+    global torrent_tests_module
+    if torrent_tests_module is None:
+        torrent_tests_module = load_module(
+            "m6e_torrent_tests",
+            os.path.join(HERE, "torrent", "tests", "run_tests.py"),
+        )
+    return torrent_tests_module
+
+
+def fixtures():
+    torrent_tests()
+    import bencode
+    import make_torrent
+    import swarm
+
+    return bencode, make_torrent, swarm
+
+
+def helper_binary(ctx):
+    return os.path.join(ctx.app, "Contents", "MacOS", HELPER_NAME)
+
+
+def app_processes(ctx):
+    """pid -> executable path of the processes running from this app bundle."""
+    prefixes = (os.path.realpath(ctx.app) + os.sep, os.path.abspath(ctx.app) + os.sep)
+    table = subprocess.run(
+        ["ps", "-axo", "pid=,comm="], capture_output=True, text=True, check=False
+    ).stdout
+    found = {}
+    for line in table.splitlines():
+        parts = line.strip().split(None, 1)
+        if len(parts) == 2 and parts[1].startswith(prefixes):
+            found[int(parts[0])] = parts[1]
+    return found
+
+
+def helper_pids(ctx):
+    return sorted(
+        pid
+        for pid, path in app_processes(ctx).items()
+        if os.path.basename(path) == HELPER_NAME
+    )
+
+
+def scratch_dir(ctx, name):
+    path = os.path.join(ctx.out, "bt-scratch", name)
+    shutil.rmtree(path, ignore_errors=True)
+    os.makedirs(path)
+    return path
+
+
+def make_tap_seed():
+    """A loopback seed that keeps everything the peer sends."""
+    _, _, swarm = fixtures()
+
+    class Tap:
+        def __init__(self, conn):
+            self.conn = conn
+            self.received = b""
+
+        def recv(self, n):
+            data = self.conn.recv(n)
+            self.received += data
+            return data
+
+        def sendall(self, data):
+            if data[:20] == b"\x13BitTorrent protocol" and len(data) == 68:
+                data = data[:27] + bytes([data[27] | 0x01]) + data[28:]
+            return self.conn.sendall(data)
+
+        def __getattr__(self, name):
+            return getattr(self.conn, name)
+
+    class TapSeed(swarm.Seed):
+        def __init__(self, *args, **kwargs):
+            self.taps = []
+            super().__init__(*args, **kwargs)
+
+        def _serve(self, conn):
+            tap = Tap(conn)
+            self.taps.append(tap)
+            super()._serve(tap)
+
+    return TapSeed
+
+
+def peer_capabilities(tap):
+    """DHT port messages (the seed claims DHT support) and the extension names offered."""
+    bencode, _, _ = fixtures()
+    data = tap.received
+    caps = {"dht": False, "extensions": set()}
+    if len(data) < 68:
+        return caps
+    pos = 68
+    while pos + 4 <= len(data):
+        (length,) = struct.unpack(">I", data[pos : pos + 4])
+        body = data[pos + 4 : pos + 4 + length]
+        pos += 4 + length
+        if len(body) == 3 and body[0] == 9:
+            caps["dht"] = True
+        if len(body) >= 2 and body[0] == 20 and body[1] == 0:
+            try:
+                handshake = bencode.decode(body[2:])
+            except Exception:
+                continue
+            caps["extensions"] |= {
+                k.decode("latin-1") for k in handshake.get(b"m", {}).keys()
+            }
+    return caps
+
+
+@contextlib.contextmanager
+def loopback_swarm(makers, tap=False, **seed_args):
+    """A tracker and a seed on 127.0.0.1 for fixtures built by `makers(announce)`."""
+    _, _, swarm = fixtures()
+    tracker = swarm.Tracker()
+    made = [maker(tracker.url) for maker in makers]
+    seed = (make_tap_seed() if tap else swarm.Seed)(made, **seed_args)
+    tracker.peers.append(("127.0.0.1", seed.port))
+    try:
+        yield tracker, seed, made
+    finally:
+        tracker.close()
+        seed.close()
+
+
+@contextlib.contextmanager
+def packaged_helper(ctx, name, bind="lo0", config=None):
+    """The packaged helper on a scratch profile, with the sockets bound to `bind`."""
+    t = torrent_tests()
+    base = scratch_dir(ctx, name)
+    dirs = {key: os.path.join(base, key) for key in ("save", "in", "area")}
+    for path in dirs.values():
+        os.makedirs(path)
+    helper = t.Helper(
+        [helper_binary(ctx)],
+        os.path.join(base, "profile"),
+        {"M6E_TORRENT_IDLE_SECONDS": "300"},
+        os.path.join(base, "stderr.log"),
+    )
+    try:
+        helper.wait_ready()
+        settings = dict(config or {})
+        if bind:
+            settings["bindInterface"] = bind
+        if settings:
+            helper.req("setConfig", settings)
+        yield helper, dirs
+    finally:
+        helper.stop()
+
+
+def write_torrent(fixture, directory, name=None):
+    path = os.path.join(directory, name or fixture.name + ".torrent")
+    fixture.write(path)
+    return path
+
+
+def tree(path):
+    return torrent_tests().tree(path)
+
+
+def sockets_of(pid):
+    try:
+        return torrent_tests().sockets(pid)
+    except torrent_tests().Skip:
+        return []
+
+
+# -- 1. idle ----------------------------------------------------------------
+
+
+@check("bt_idle", "BT1", "BitTorrent 1: idle starts nothing [automated]")
+def check_bt_idle(ctx, r):
+    idle = ctx.once("idle", lambda: run_idle(ctx))
+    requested = set(idle["http_requests"]) | set(idle["dns_only"])
+    unexpected = sorted(requested - ALLOWED_HOSTS)
+    r.add(
+        "no m6e-torrent process in the idle app",
+        idle["alive"] and idle["pids"] > 1 and not idle["helper_processes"],
+        f"{idle['pids']} processes after {idle['seconds']} s;"
+        f" helper processes in the tree: {idle['helper_processes'] or 'none'}",
+    )
+    r.add(
+        "no m6e-torrent process from this app anywhere",
+        not idle["helper_processes_any"],
+        idle["helper_processes_any"] or "none",
+    )
+    r.add(
+        "no TCP listener and no UDP socket on a fixed port",
+        idle["alive"]
+        and not idle["tcp_listeners"]
+        and not [
+            s
+            for s in idle["udp_sockets"]
+            if (udp_port(s) or 65535) < 49152
+        ],
+        f"TCP listeners: {idle['tcp_listeners'] or 'none'}; UDP sockets:"
+        f" {len(idle['udp_sockets'])}",
+    )
+    r.add(
+        "the allowed-host check is unchanged (BitTorrent adds no host)",
+        bool(idle["http_requests"]) and not unexpected,
+        unexpected or f"{len(idle['http_requests'])} hosts, all allowed",
+    )
+    r.info("not run here", "the first torrent starts the helper (checks BT2 and BT4)")
+
+
+def udp_port(line):
+    match = re.search(r":(\d+)(?:\s|$|->)", line.split("UDP", 1)[-1])
+    return int(match.group(1)) if match else None
+
+
+# -- the shared browser session (checks 2, 4 and 7) --------------------------
+
+JS_BT_BEGIN = """
+const g = win.gM6ETorrent;
+if (!g) {
+  return { reached: false, reason: "gM6ETorrent is missing" };
+}
+const prev = g.lastAddDialog;
+win.__m6eAddState = null;
+const started = __KIND__ == "magnet"
+  ? g.addMagnet(__ARG__, __SOURCE__)
+  : g.addTorrentFile(__ARG__, __SOURCE__);
+started.then(
+  value => { win.__m6eAddState = { added: value }; },
+  e => { win.__m6eAddState = { error: String(e) }; }
+);
+for (let i = 0; i < 160; i++) {
+  await sleep(250);
+  if (g.lastAddDialog !== prev || win.__m6eAddState) {
+    break;
+  }
+}
+if (g.lastAddDialog === prev) {
+  return { reached: false, reason: "no Add dialog opened", state: win.__m6eAddState };
+}
+try {
+  const opened = g.lastAddDialog;
+  await opened.dialog._dialogReady;
+  await opened.dialog._frame.contentWindow.document.mozSubdialogReady;
+} catch (e) {
+  return { reached: false, reason: String(e) };
+}
+return { reached: true };
+"""
+
+JS_BT_STATE = """
+const doc = win.gM6ETorrent.lastAddDialog.dialog._frame.contentWindow.document;
+const el = id => doc.getElementById(id);
+const shown = id => !!el(id) && !el(id).hidden;
+return {
+  ready: doc.documentElement.hasAttribute("m6e-ready"),
+  banner: shown("m6e-torrent-shady"),
+  fetching: shown("m6e-torrent-add-fetching"),
+  error: shown("m6e-torrent-add-error") ? el("m6e-torrent-add-error").textContent : null,
+  reasons: [...doc.querySelectorAll("#m6e-torrent-shady-reasons li")].map(li => ({
+    id: li.getAttribute("data-l10n-id"), text: li.textContent,
+  })),
+  addAnywayDisabled: el("m6e-torrent-shady-add-anyway")?.disabled ?? null,
+  addDisabled: el("m6e-torrent-add-confirm")?.disabled ?? null,
+  name: el("m6e-torrent-add-name")?.textContent,
+  savePath: el("m6e-torrent-add-save-path")?.value,
+};
+"""
+
+JS_BT_CLICK = """
+const doc = win.gM6ETorrent.lastAddDialog.dialog._frame.contentWindow.document;
+const button = doc.getElementById(__ID__);
+if (!button || button.disabled) {
+  return { clicked: false, found: !!button, disabled: button?.disabled ?? null };
+}
+button.click();
+return { clicked: true };
+"""
+
+JS_BT_SETTLE = """
+for (let i = 0; i < 120 && !win.__m6eAddState; i++) {
+  await sleep(250);
+}
+return win.__m6eAddState;
+"""
+
+JS_BT_REMOVE = """
+const g = win.gM6ETorrent;
+const tid = g.lastAddDialog.params.tid;
+const before = (await g.service.list()).torrents.map(t => t.tid);
+await g.service.remove(tid, true);
+return { tid, wasListed: before.includes(tid) };
+"""
+
+JS_BT_RISK = """
+const g = win.gM6ETorrent;
+const added = await g.service.addFile(__PATH__, __SOURCE__);
+const risk = g.risk.assess(added.metadata, __SOURCE__, []);
+await g.service.cancelAdd(added.tid);
+return { tid: added.tid, files: added.metadata.files.map(f => f.path), risk };
+"""
+
+JS_BT_MAGNET_SERVICE = """
+const g = win.gM6ETorrent;
+const waitMetadata = new Promise(resolve => {
+  const observer = {
+    observe(subject, topic, data) {
+      Services.obs.removeObserver(observer, "m6e-torrent-metadata");
+      resolve(JSON.parse(data));
+    },
+  };
+  Services.obs.addObserver(observer, "m6e-torrent-metadata");
+});
+const added = await g.service.addMagnet(__URI__, __SOURCE__);
+const meta = await Promise.race([waitMetadata, sleep(40000).then(() => null)]);
+win.__m6eMagnet = { tid: added.tid, metadata: meta?.metadata ?? null };
+return { tid: added.tid, got: !!meta, files: meta?.metadata?.files?.length ?? 0 };
+"""
+
+JS_BT_CONFIRM_SERVICE = """
+const g = win.gM6ETorrent;
+const { tid, metadata } = win.__m6eMagnet;
+await g.service.confirmAdd(tid, {
+  files: metadata.files.filter(f => !f.pad).map(f => ({ index: f.index, priority: 2 })),
+  savePath: __SAVE__,
+  sequential: false,
+  start: true,
+});
+return { confirmed: true };
+"""
+
+JS_BT_CANCEL_SERVICE = """
+await win.gM6ETorrent.service.cancelAdd(win.__m6eMagnet.tid);
+return true;
+"""
+
+JS_BT_ADD_ACTIVE = """
+const g = win.gM6ETorrent;
+const added = await g.service.addFile(__PATH__, __SOURCE__);
+await g.service.confirmAdd(added.tid, {
+  files: added.metadata.files.filter(f => !f.pad).map(f => ({ index: f.index, priority: 2 })),
+  savePath: __SAVE__,
+  sequential: false,
+  start: true,
+});
+await sleep(3000);
+const listed = await g.service.list();
+return { tid: added.tid, states: listed.torrents.map(t => t.state) };
+"""
+
+JS_BT_SERVICE_STATE = """
+const g = win.gM6ETorrent;
+const listed = await g.service.list();
+return { states: listed.torrents.map(t => ({ tid: t.tid, state: t.state, progress: t.progress })) };
+"""
+
+JS_BT_PREFS = """
+return {
+  enabled: Services.prefs.getBoolPref("m6e.torrent.enabled", null),
+  bind: Services.prefs.getStringPref("m6e.torrent.bindInterface", null),
+  downloadDir: Services.prefs.getStringPref("m6e.torrent.downloadDir", null),
+  hasGlobal: !!win.gM6ETorrent,
+  hasButton: !!doc.getElementById("m6e-torrent-button"),
+};
+"""
+
+
+def wait_for(predicate, timeout, interval=0.25):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        value = predicate()
+        if value:
+            return value
+        time.sleep(interval)
+    return predicate()
+
+
+def dialog_open(client, kind, arg, source):
+    return run_js(client, JS_BT_BEGIN, KIND=kind, ARG=arg, SOURCE=source)
+
+
+def dialog_state(client):
+    return run_js(client, JS_BT_STATE)
+
+
+def dialog_click(client, button_id):
+    return run_js(client, JS_BT_CLICK, ID=button_id)
+
+
+def dialog_wait_ready(client, timeout=60):
+    return wait_for(
+        lambda: (lambda s: s if s["ready"] or s["error"] else None)(dialog_state(client)),
+        timeout,
+    )
+
+
+def session_part(name, out, fn):
+    """Run one part of the browser session; an exception becomes the part's error."""
+    try:
+        out[name] = fn()
+    except Exception:
+        out[name] = {"error": traceback.format_exc()}
+
+
+def run_bt_session(ctx):
+    """One browser: Add dialog, Shady banner, magnet metadata, then quit with an active torrent."""
+    bencode, make_torrent, swarm = fixtures()
+    t = torrent_tests()
+    work = scratch_dir(ctx, "session")
+    save = os.path.join(work, "downloads")
+    files = os.path.join(work, "in")
+    os.makedirs(save)
+    os.makedirs(files)
+    rules = json.load(
+        open(os.path.join(ROOT, "browser", "components", "torrent", "m6e-torrent-rules.json"))
+    )
+    trusted = "https://" + rules["trustedSites"][0]["domain"]
+    prefs = {
+        "m6e.torrent.bindInterface": "lo0",
+        "m6e.torrent.downloadDir": save,
+        "m6e.torrent.askWhereToSave": False,
+        "m6e.torrent.startNow": True,
+        "m6e.torrent.confirmQuit": False,
+        "m6e.torrent.resumeAtStartup": False,
+    }
+    out = {"trustedOrigin": trusted, "save": save}
+
+    benign = make_torrent.multi_file(name="m6e-acceptance-benign")
+    shady = make_torrent.Fixture(
+        "m6e-acceptance-shady",
+        [(("Movie.mkv.exe",), make_torrent.deterministic_bytes("shady", 3000))],
+    )
+    benign_path = write_torrent(benign, files)
+    shady_path = write_torrent(shady, files)
+    finder = {"kind": "finder", "origin": None}
+    page = {"kind": "page", "origin": trusted}
+
+    with browser(ctx, prefs=prefs) as client:
+        out["prefs"] = run_js(client, JS_BT_PREFS)
+        out["idleHelpers"] = helper_pids(ctx)
+
+        def banner_case(path, source):
+            opened = dialog_open(client, "file", path, source)
+            if not opened.get("reached"):
+                return {"reached": False, "reason": opened}
+            state = dialog_wait_ready(client, 30)
+            result = {"reached": True, "state": state}
+            if state and state["banner"]:
+                result["addAnyway"] = dialog_click(client, "m6e-torrent-shady-add-anyway")
+                result["settled"] = run_js(client, JS_BT_SETTLE)
+                result["removed"] = run_js(client, JS_BT_REMOVE)
+            else:
+                dialog_click(client, "m6e-torrent-add-cancel")
+                result["settled"] = run_js(client, JS_BT_SETTLE)
+            return result
+
+        session_part("benignFinder", out, lambda: banner_case(benign_path, finder))
+        session_part("benignTrusted", out, lambda: banner_case(benign_path, page))
+        session_part("shadyFinder", out, lambda: banner_case(shady_path, finder))
+        session_part("shadyTrusted", out, lambda: banner_case(shady_path, page))
+        if not out["shadyFinder"].get("reached"):
+            session_part(
+                "shadyRisk",
+                out,
+                lambda: run_js(client, JS_BT_RISK, PATH=shady_path, SOURCE=finder),
+            )
+
+        def magnet_part():
+            fixture = make_torrent.multi_file(name="m6e-acceptance-magnet")
+            result = {}
+            with loopback_swarm([lambda announce: fixture]) as (tracker, seed, _):
+                uri = fixture.magnet(peers=(seed.address,))
+                payload = [
+                    os.path.join(save, fixture.name, *rel) for rel, _ in fixture.files
+                ]
+                opened = dialog_open(client, "magnet", uri, finder)
+                result["viaDialog"] = bool(opened.get("reached"))
+                if not result["viaDialog"]:
+                    result["dialogReason"] = opened
+                    meta = run_js(client, JS_BT_MAGNET_SERVICE, URI=uri, SOURCE=finder)
+                    result["metadataArrived"] = meta["got"]
+                else:
+                    state = dialog_wait_ready(client, 60)
+                    result["metadataArrived"] = bool(state and state["ready"])
+                    result["dialogState"] = state
+                time.sleep(4)
+                result["metadataRequests"] = seed.metadata_requests
+                result["blockRequestsBeforeAdd"] = seed.request_count()
+                result["bytesServedBeforeAdd"] = seed.bytes_served
+                result["filesBeforeAdd"] = sorted(tree(save))
+                if result["viaDialog"]:
+                    dialog_click(client, "m6e-torrent-add-cancel")
+                    result["cancelled"] = run_js(client, JS_BT_SETTLE)
+                else:
+                    run_js(client, JS_BT_CANCEL_SERVICE)
+                time.sleep(3)
+                result["blockRequestsAfterCancel"] = seed.request_count()
+
+                opened = dialog_open(client, "magnet", uri, finder)
+                if opened.get("reached"):
+                    dialog_wait_ready(client, 60)
+                    result["addClick"] = dialog_click(client, "m6e-torrent-add-confirm")
+                    result["added"] = run_js(client, JS_BT_SETTLE)
+                else:
+                    run_js(client, JS_BT_MAGNET_SERVICE, URI=uri, SOURCE=finder)
+                    run_js(client, JS_BT_CONFIRM_SERVICE, SAVE=save)
+
+                def complete():
+                    return all(
+                        os.path.isfile(p) and os.path.getsize(p) == len(data)
+                        for p, (_, data) in zip(payload, fixture.files)
+                    )
+
+                result["downloaded"] = bool(wait_for(complete, 90))
+                result["blockRequestsAfterAdd"] = seed.request_count()
+                result["sha256Match"] = result["downloaded"] and all(
+                    hashlib.sha256(open(p, "rb").read()).digest()
+                    == hashlib.sha256(data).digest()
+                    for p, (_, data) in zip(payload, fixture.files)
+                )
+                result["service"] = run_js(client, JS_BT_SERVICE_STATE)
+            return result
+
+        session_part("magnet", out, magnet_part)
+
+        def quit_part():
+            with loopback_swarm(
+                [
+                    lambda announce: make_torrent.single_file(
+                        announce=announce, name="m6e-acceptance-active.bin"
+                    )
+                ],
+                serve_blocks=False,
+            ) as (tracker, seed, made):
+                fixture = made[0]
+                path = write_torrent(fixture, files)
+                active = run_js(client, JS_BT_ADD_ACTIVE, PATH=path, SOURCE=finder, SAVE=save)
+                pids = wait_for(lambda: helper_pids(ctx), 15)
+                return {
+                    "active": active,
+                    "helperPids": pids,
+                    "announces": len(tracker.announces_for(fixture.tid)),
+                }
+
+        session_part("quit", out, quit_part)
+        running = out["quit"].get("helperPids") or []
+
+    out["helperGoneAfterQuit"] = bool(
+        wait_for(lambda: not [p for p in running if p in helper_pids(ctx)], 20)
+    ) and bool(running)
+    out["helperPidsAfterQuit"] = helper_pids(ctx)
+    return out
+
+
+def bt_session(ctx):
+    return ctx.once("bt_session", lambda: run_bt_session(ctx))
+
+
+def part(session, name):
+    value = session[name]
+    if isinstance(value, dict) and "error" in value and len(value) == 1:
+        raise RuntimeError(f"{name} failed in the browser session:\n{value['error']}")
+    return value
+
+
+# -- 2. Shady Torrent banner -------------------------------------------------
+
+
+@check("bt_shady", "BT2", "BitTorrent 2: Shady Torrent banner [automated]")
+def check_bt_shady(ctx, r):
+    s = bt_session(ctx)
+    r.add(
+        "the BitTorrent code is in the packaged app",
+        s["prefs"]["hasGlobal"] and s["prefs"]["enabled"] is True,
+        s["prefs"],
+    )
+    r.add(
+        "a fresh browser has no helper before the first torrent",
+        not s["idleHelpers"],
+        s["idleHelpers"] or "none",
+    )
+    for name, label in (
+        ("benignFinder", "an ordinary fixture torrent opened as from Finder"),
+        ("benignTrusted", "the same file from a trusted https origin"),
+    ):
+        case = part(s, name)
+        state = case.get("state") or {}
+        r.add(
+            f"no banner: {label}",
+            case.get("reached") and state.get("ready") and not state.get("banner"),
+            {k: state.get(k) for k in ("ready", "banner", "error")}
+            if case.get("reached")
+            else case.get("reason"),
+        )
+    r.add(
+        "no banner: the crafted torrent from a trusted https origin",
+        (lambda c: c.get("reached") and (c.get("state") or {}).get("ready") and not (c.get("state") or {}).get("banner"))(part(s, "shadyTrusted")),
+        "trusted origins skip the check (spec 8.3)",
+    )
+    shady = part(s, "shadyFinder")
+    if shady.get("reached"):
+        state = shady["state"] or {}
+        r.add(
+            "Movie.mkv.exe fixture: the Shady Torrent banner is shown, with a reason",
+            state.get("banner") and bool(state.get("reasons"))
+            and "Movie.mkv.exe" in json.dumps(state["reasons"]),
+            [x["text"] for x in state.get("reasons", [])],
+        )
+        r.add(
+            "Add anyway works: the dialog closes and the torrent is added (then removed)",
+            (shady.get("addAnyway") or {}).get("clicked")
+            and (shady.get("settled") or {}).get("added") is True
+            and (shady.get("removed") or {}).get("wasListed") is True,
+            {k: shady.get(k) for k in ("addAnyway", "settled", "removed")},
+        )
+        r.info("how the banner was checked", "through the Add dialog in the packaged app")
+    else:
+        risk = part(s, "shadyRisk")
+        r.add(
+            "Movie.mkv.exe fixture: the Shady Torrent check returns shady, with a reason",
+            risk["risk"]["verdict"] == "shady" and bool(risk["risk"]["reasons"]),
+            risk["risk"],
+        )
+        r.info(
+            "NOTE: the banner itself was not checked",
+            f"the Add dialog was not reachable ({shady.get('reason')}); the verdict came from"
+            " the service and M6ETorrentRisk in the packaged app, and the banner has the"
+            " browser tests (tests/browser/ui)",
+        )
+    r.info("MANUAL", MANUAL_STEPS[0])
+
+
+# -- 3. hostile paths --------------------------------------------------------
+
+HOSTILE_KINDS = [
+    "traversal",
+    "traversal-mid",
+    "absolute",
+    "empty-component",
+    "dot",
+    "backslash",
+    "colon",
+    "nul",
+    "name-dotdot",
+    "name-slash",
+    "single-name-traversal",
+]
+
+
+@check("bt_paths", "BT3", "BitTorrent 3: hostile paths never write outside [automated]")
+def check_bt_paths(ctx, r):
+    _, make_torrent, _ = fixtures()
+    t = torrent_tests()
+    with packaged_helper(ctx, "paths") as (h, dirs):
+        save = dirs["save"]
+        sibling = os.path.join(dirs["area"], "sibling")
+        os.makedirs(sibling)
+        with open(os.path.join(sibling, "marker"), "w") as fh:
+            fh.write("untouched")
+        before = {
+            "save": tree(save),
+            "area": tree(dirs["area"]),
+        }
+        accepted, codes = [], {}
+        for kind in HOSTILE_KINDS:
+            path = os.path.join(dirs["in"], f"hostile-{kind}.torrent")
+            with open(path, "wb") as fh:
+                fh.write(make_torrent.hostile(kind))
+            reply = h.req("add", {"file": path})
+            if reply.get("ok"):
+                accepted.append(kind)
+                tid = reply["result"]["tid"]
+                h.req(
+                    "confirm",
+                    dict(
+                        t.confirm_args(
+                            reply["result"].get("metadata") or {"files": []}, save
+                        ),
+                        tid=tid,
+                    ),
+                )
+            else:
+                codes[kind] = reply["error"]["code"]
+        time.sleep(2)
+        r.add(
+            "every hostile torrent is refused by the helper",
+            not accepted,
+            codes if not accepted else f"ACCEPTED: {accepted}",
+        )
+        r.add(
+            "the refusals are unsafe-path or invalid-torrent",
+            set(codes.values()) <= {"unsafe-path", "invalid-torrent"},
+            sorted(set(codes.values())),
+        )
+
+        with loopback_swarm([lambda announce: make_torrent.multi_file(announce)]) as (
+            tracker,
+            seed,
+            made,
+        ):
+            fixture = made[0]
+            os.symlink(sibling, os.path.join(save, fixture.name))
+            added = h.call("add", {"file": write_torrent(fixture, dirs["in"])})
+            reply = h.req(
+                "confirm",
+                dict(t.confirm_args(added["metadata"], save), tid=added["tid"]),
+            )
+            time.sleep(8)
+            r.add(
+                "a symbolic link in the save folder is not followed",
+                sorted(os.listdir(sibling)) == ["marker"]
+                and open(os.path.join(sibling, "marker")).read() == "untouched",
+                f"confirm answered {reply.get('ok')} {reply.get('error', {}).get('code')};"
+                f" the folder it points to holds {sorted(os.listdir(sibling))};"
+                f" the seed was asked for {seed.request_count()} blocks",
+            )
+            os.unlink(os.path.join(save, fixture.name))
+        outside = {
+            p for p in tree(dirs["area"]) - before["area"] if not p.startswith("save")
+        }
+        r.add(
+            "nothing was created next to or above the save folder",
+            not outside and tree(save) == before["save"],
+            sorted(outside) or "the save folder is as it was",
+        )
+        r.info("scope", "the packaged helper; the service applies the same rules first (xpcshell tests)")
+
+
+# -- 4. magnet --------------------------------------------------------------
+
+
+@check("bt_magnet", "BT4", "BitTorrent 4: a magnet link downloads nothing before Add [automated]")
+def check_bt_magnet(ctx, r):
+    _, make_torrent, _ = fixtures()
+    t = torrent_tests()
+    with packaged_helper(ctx, "magnet") as (h, dirs):
+        fixture = make_torrent.multi_file(name="m6e-acceptance-magnet-helper")
+        with loopback_swarm([lambda announce: fixture]) as (tracker, seed, _):
+            uri = fixture.magnet(peers=(seed.address,))
+            since = h.mark()
+            added = h.call("add", {"magnet": uri})
+            h.wait_event("metadata", timeout=40, since=since)
+            time.sleep(4)
+            r.add(
+                "helper: the metadata arrived and no block was requested",
+                seed.metadata_requests > 0
+                and seed.request_count() == 0
+                and seed.bytes_served == 0,
+                f"metadata requests {seed.metadata_requests}, block requests"
+                f" {seed.request_count()}, bytes {seed.bytes_served}",
+            )
+            r.add(
+                "helper: no file was created in the save folder",
+                not tree(dirs["save"]),
+                sorted(tree(dirs["save"])) or "empty",
+            )
+            h.call("cancel", {"tid": added["tid"]})
+            time.sleep(2)
+            r.add(
+                "helper: after Cancel still nothing was requested",
+                seed.request_count() == 0 and not tree(dirs["save"]),
+                f"block requests {seed.request_count()}",
+            )
+    s = bt_session(ctx)
+    m = part(s, "magnet")
+    how = "Add dialog" if m.get("viaDialog") else "service"
+    r.add(
+        f"browser ({how}): the metadata arrived through the loopback peer",
+        m.get("metadataArrived") and m.get("metadataRequests", 0) > 0,
+        {k: m.get(k) for k in ("metadataArrived", "metadataRequests")},
+    )
+    r.add(
+        f"browser ({how}): no block requested and no file written before Add",
+        m.get("blockRequestsBeforeAdd") == 0
+        and m.get("bytesServedBeforeAdd") == 0
+        and not m.get("filesBeforeAdd"),
+        {
+            k: m.get(k)
+            for k in ("blockRequestsBeforeAdd", "bytesServedBeforeAdd", "filesBeforeAdd")
+        },
+    )
+    r.add(
+        f"browser ({how}): Cancel keeps it that way",
+        m.get("blockRequestsAfterCancel") == 0,
+        m.get("blockRequestsAfterCancel"),
+    )
+    r.add(
+        f"browser ({how}): Add then downloads every file, and the contents match",
+        m.get("downloaded") and m.get("sha256Match") and m.get("blockRequestsAfterAdd", 0) > 0,
+        {k: m.get(k) for k in ("downloaded", "sha256Match", "blockRequestsAfterAdd", "addClick")},
+    )
+    if not m.get("viaDialog"):
+        r.info(
+            "NOTE: the Add dialog was not reachable for the magnet link",
+            f"{m.get('dialogReason')}; the same steps ran through M6ETorrentService",
+        )
+
+
+# -- 5. private torrent -----------------------------------------------------
+
+
+@check("bt_private", "BT5", "BitTorrent 5: a private torrent uses no DHT, PEX or LSD [automated]")
+def check_bt_private(ctx, r):
+    _, make_torrent, _ = fixtures()
+    t = torrent_tests()
+    config = {"dht": True, "pex": True, "lpd": True}
+    results = {}
+    for label, private in (("public", False), ("private", True)):
+        with packaged_helper(ctx, f"private-{label}", config=config) as (h, dirs):
+            with loopback_swarm(
+                [
+                    lambda announce, p=private, n=label: make_torrent.multi_file(
+                        announce, private=p, name=f"m6e-acceptance-{n}"
+                    )
+                ],
+                tap=True,
+            ) as (tracker, seed, made):
+                fixture = made[0]
+                since = h.mark()
+                added = t.add_file(h, write_torrent(fixture, dirs["in"]))
+                h.call(
+                    "confirm",
+                    dict(t.confirm_args(added["metadata"], dirs["save"]), tid=added["tid"]),
+                )
+                t.wait_done(h, added["tid"], since, timeout=90)
+                time.sleep(1)
+                taps = [peer_capabilities(tap) for tap in seed.taps if tap.received]
+                udp = [
+                    line
+                    for line in sockets_of(h.pid)
+                    if "UDP" in line and ":6771" in line
+                ]
+                results[label] = {
+                    "dht": any(c["dht"] for c in taps),
+                    "extensions": sorted(set().union(*[c["extensions"] for c in taps])),
+                    "lsdSocket": udp,
+                    "connections": len(taps),
+                    "isPrivate": added["metadata"]["isPrivate"],
+                }
+    public, private = results["public"], results["private"]
+    r.add(
+        "control: with DHT, PEX and LSD switched on, a public torrent sends a DHT port"
+        " message, offers ut_pex and opens the LSD socket (so the check can see them)",
+        public["connections"] > 0
+        and public["dht"]
+        and "ut_pex" in public["extensions"]
+        and bool(public["lsdSocket"]),
+        public,
+    )
+    r.add(
+        "the private torrent downloaded from the loopback seed",
+        private["connections"] > 0 and private["isPrivate"],
+        private,
+    )
+    r.add(
+        "private: no DHT port message is sent to the peer",
+        not private["dht"],
+        private["dht"],
+    )
+    r.add(
+        "private: ut_pex is not offered",
+        "ut_pex" not in private["extensions"],
+        private["extensions"],
+    )
+    r.add(
+        "private: no local-discovery socket (UDP 6771)",
+        not private["lsdSocket"],
+        private["lsdSocket"] or "none",
+    )
+
+
+# -- 6. bound interface missing ---------------------------------------------
+
+
+@check("bt_interface", "BT6", "BitTorrent 6: a missing bound interface opens no connection [automated]")
+def check_bt_interface(ctx, r):
+    _, make_torrent, _ = fixtures()
+    t = torrent_tests()
+    outcome = {}
+    for label, interface in (("missing", "m6e-no-such0"), ("control", "lo0")):
+        with packaged_helper(ctx, f"iface-{label}", bind=None) as (h, dirs):
+            with loopback_swarm([lambda announce: make_torrent.multi_file(announce)]) as (
+                tracker,
+                seed,
+                made,
+            ):
+                fixture = made[0]
+                config = h.req("setConfig", {"bindInterface": interface})
+                added = t.add_file(h, write_torrent(fixture, dirs["in"]))
+                confirm = h.req(
+                    "confirm",
+                    dict(t.confirm_args(added["metadata"], dirs["save"]), tid=added["tid"]),
+                )
+                time.sleep(10 if label == "missing" else 6)
+                outcome[label] = {
+                    "setConfig": config.get("ok"),
+                    "confirm": confirm.get("ok"),
+                    "announces": len(tracker.announces_for(fixture.tid)),
+                    "handshakes": len(seed.handshakes),
+                    "blocks": seed.request_count(),
+                    "sockets": sockets_of(h.pid),
+                    "outside": sorted(tree(dirs["save"])),
+                }
+    r.add(
+        "control: bound to lo0, the helper reaches the tracker and the seed",
+        outcome["control"]["announces"] > 0 and outcome["control"]["handshakes"] > 0,
+        outcome["control"],
+    )
+    missing = outcome["missing"]
+    r.add(
+        "missing interface: no tracker announce, no peer connection, no block requested",
+        missing["announces"] == 0 and missing["handshakes"] == 0 and missing["blocks"] == 0,
+        missing,
+    )
+    r.add(
+        "missing interface: the helper holds no TCP or UDP socket",
+        not missing["sockets"],
+        missing["sockets"] or "none",
+    )
+    r.info(
+        "MANUAL",
+        MANUAL_STEPS[2],
+    )
+
+
+# -- 7. quit ----------------------------------------------------------------
+
+
+@check("bt_quit", "BT7", "BitTorrent 7: quitting leaves no helper process [automated]")
+def check_bt_quit(ctx, r):
+    s = bt_session(ctx)
+    q = part(s, "quit")
+    r.add(
+        "an active torrent had started the helper before the quit (not vacuous)",
+        bool(q.get("helperPids"))
+        and bool({"downloading", "queued", "checking"} & set((q.get("active") or {}).get("states", []))),
+        {k: q.get(k) for k in ("helperPids", "active", "announces")},
+    )
+    r.add(
+        "no m6e-torrent process from this app remains after the quit",
+        s["helperGoneAfterQuit"] and not s["helperPidsAfterQuit"],
+        f"left: {s['helperPidsAfterQuit'] or 'none'}",
+    )
+
+
+# -- 8. signature -----------------------------------------------------------
+
+check_helper_module = None
+
+
+def load_check_helper():
+    global check_helper_module
+    if check_helper_module is None:
+        check_helper_module = load_module(
+            "m6e_check_helper",
+            os.path.join(HERE, "package", "check-helper.py"),
+        )
+    return check_helper_module
+
+
+@check("bt_signed", "BT8", "BitTorrent 8: helper signed with the hardened runtime [automated]")
+def check_bt_signed(ctx, r):
+    items = load_check_helper().check_helper(ctx.app)
+    for name, ok, detail in items:
+        r.add(name, ok, detail)
+    proc = subprocess.run(
+        ["codesign", "--verify", "--deep", "--strict", ctx.app],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    r.add(
+        "the whole app verifies with the helper in it",
+        proc.returncode == 0,
+        (proc.stderr.strip().splitlines() or [""])[-1],
+    )
+    r.info(
+        "also run by release.sh",
+        "tools/m6e/package/check-helper.py and check-signed.js (the helper launched by the signed app)",
+    )
+
+
+# -- 9. Launch Services -----------------------------------------------------
+
+LSREGISTER = (
+    "/System/Library/Frameworks/CoreServices.framework/Frameworks/"
+    "LaunchServices.framework/Support/lsregister"
+)
+
+
+def launch_services_apps(url=None, path=None):
+    """Paths of the apps Launch Services offers for a URL or a file (None if unusable)."""
+    import ctypes
+
+    cf = ctypes.cdll.LoadLibrary(
+        "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"
+    )
+    cs = ctypes.cdll.LoadLibrary(
+        "/System/Library/Frameworks/CoreServices.framework/CoreServices"
+    )
+    vp = ctypes.c_void_p
+    cf.CFStringCreateWithCString.restype = vp
+    cf.CFStringCreateWithCString.argtypes = [vp, ctypes.c_char_p, ctypes.c_uint32]
+    cf.CFURLCreateWithString.restype = vp
+    cf.CFURLCreateWithString.argtypes = [vp, vp, vp]
+    cf.CFURLCreateFromFileSystemRepresentation.restype = vp
+    cf.CFURLCreateFromFileSystemRepresentation.argtypes = [
+        vp,
+        ctypes.c_char_p,
+        ctypes.c_long,
+        ctypes.c_ubyte,
+    ]
+    cf.CFArrayGetCount.restype = ctypes.c_long
+    cf.CFArrayGetCount.argtypes = [vp]
+    cf.CFArrayGetValueAtIndex.restype = vp
+    cf.CFArrayGetValueAtIndex.argtypes = [vp, ctypes.c_long]
+    cf.CFURLCopyFileSystemPath.restype = vp
+    cf.CFURLCopyFileSystemPath.argtypes = [vp, ctypes.c_long]
+    cf.CFStringGetCString.restype = ctypes.c_ubyte
+    cf.CFStringGetCString.argtypes = [vp, ctypes.c_char_p, ctypes.c_long, ctypes.c_uint32]
+    cs.LSCopyApplicationURLsForURL.restype = vp
+    cs.LSCopyApplicationURLsForURL.argtypes = [vp, ctypes.c_uint32]
+    utf8 = 0x08000100
+    if url:
+        text = cf.CFStringCreateWithCString(None, url.encode(), utf8)
+        target = cf.CFURLCreateWithString(None, text, None)
+    else:
+        encoded = path.encode()
+        target = cf.CFURLCreateFromFileSystemRepresentation(None, encoded, len(encoded), 0)
+    apps = cs.LSCopyApplicationURLsForURL(target, 0xFFFFFFFF)
+    if not apps:
+        return []
+    found = []
+    for i in range(cf.CFArrayGetCount(apps)):
+        item = cf.CFArrayGetValueAtIndex(apps, i)
+        text = cf.CFURLCopyFileSystemPath(item, 0)
+        buffer = ctypes.create_string_buffer(4096)
+        if cf.CFStringGetCString(text, buffer, 4096, utf8):
+            found.append(os.path.realpath(buffer.value.decode()))
+    return found
+
+
+@check("bt_launchservices", "BT9", "BitTorrent 9: Launch Services lists M6E for .torrent and magnet: [automated]")
+def check_bt_launchservices(ctx, r):
+    info = plist_strings(os.path.join(ctx.app, "Contents", "Info.plist"))
+    types = info.get("CFBundleDocumentTypes", [])
+    extensions = {e for t in types for e in t.get("CFBundleTypeExtensions", [])}
+    mimes = {m for t in types for m in t.get("CFBundleTypeMIMETypes", [])}
+    schemes = {
+        s for t in info.get("CFBundleURLTypes", []) for s in t.get("CFBundleURLSchemes", [])
+    }
+    r.add(
+        "Info.plist declares .torrent and the magnet scheme",
+        "torrent" in extensions and "application/x-bittorrent" in mimes and "magnet" in schemes,
+        f"extensions {sorted(extensions)[:8]}, schemes {sorted(schemes)}",
+    )
+    app = os.path.realpath(ctx.app)
+    registered = subprocess.run(
+        [LSREGISTER, "-f", ctx.app], capture_output=True, text=True, check=False
+    )
+    r.info("lsregister -f", registered.returncode)
+    scratch = scratch_dir(ctx, "launchservices")
+    sample = os.path.join(scratch, "sample.torrent")
+    _, make_torrent, _ = fixtures()
+    make_torrent.multi_file(name="m6e-acceptance-ls").write(sample)
+    magnet = "magnet:?xt=urn:btih:" + "0" * 40
+
+    def offered(**kwargs):
+        try:
+            return app in launch_services_apps(**kwargs)
+        except Exception:
+            return None
+
+    torrent_ok = wait_for(lambda: offered(path=sample), 20)
+    magnet_ok = wait_for(lambda: offered(url=magnet), 20)
+    r.add(
+        "Launch Services lists M6E as an application that can open a .torrent file",
+        torrent_ok,
+        f"{app}: {torrent_ok}",
+    )
+    r.add(
+        "Launch Services lists M6E as an application that can open a magnet: link",
+        magnet_ok,
+        f"{app}: {magnet_ok}",
+    )
+    r.info(
+        "scope",
+        "the apps offered, not the default; M6E becomes the default only when the user chooses (D33)",
+    )
+    if not app.startswith("/Applications/"):
+        subprocess.run([LSREGISTER, "-u", ctx.app], capture_output=True, check=False)
+        r.info("lsregister -u", "the copy under test was unregistered again")
+
+
 def run_check(ctx, entry):
     result = Result()
     started = time.time()
@@ -2094,6 +3223,9 @@ def render_report(meta, results):
         f"| {c['label']} | {c['title']} | {c['status']} | {c['summary'].replace('|', '/')} |"
         for c in results
     ]
+    if any(c["key"].startswith("bt_") for c in results):
+        lines += ["", "Manual BitTorrent steps this script does not run:", ""]
+        lines += [f"- {step}" for step in MANUAL_STEPS]
     for c in results:
         lines += [
             "",
@@ -2177,6 +3309,10 @@ def main():
             fh.write(render_report(meta, results))
     print()
     print(render_table(results))
+    if any(c["key"].startswith("bt_") for c in results):
+        print("\nManual BitTorrent steps this script does not run:")
+        for step in MANUAL_STEPS:
+            print(f"  - {step}")
     failed = [c for c in results if c["status"] != "PASS"]
     print(f"\n{len(results) - len(failed)} of {len(results)} checks passed.")
     return 1 if failed else 0
