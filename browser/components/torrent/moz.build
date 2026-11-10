@@ -9,6 +9,7 @@
 # "tests/browser/ui" (one per step, so parallel work does not share one).
 
 MOZ_SRC_FILES += [
+    "m6e-torrent-rules.json",
     "M6ETorrentHandler.sys.mjs",
     "M6ETorrentProtocol.sys.mjs",
     "M6ETorrentRisk.sys.mjs",

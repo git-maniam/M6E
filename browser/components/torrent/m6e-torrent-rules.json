@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "maxFilesPerReason": 10,
+  "maxDisplayLength": 200,
+  "mediumNeeded": 2,
+  "trustedSites": [
+    {
+      "name": "Debian",
+      "domain": "debian.org",
+      "page": "https://www.debian.org/CD/torrent-cd/",
+      "exclude": ["bugs.debian.org", "lists.debian.org", "people.debian.org", "salsa.debian.org", "wiki.debian.org"]
+    },
+    {
+      "name": "Ubuntu",
+      "domain": "ubuntu.com",
+      "page": "https://ubuntu.com/download/alternative-downloads",
+      "exclude": ["discourse.ubuntu.com", "lists.ubuntu.com", "paste.ubuntu.com", "people.ubuntu.com", "wiki.ubuntu.com"]
+    },
+    {
+      "name": "Fedora",
+      "domain": "fedoraproject.org",
+      "page": "https://torrent.fedoraproject.org/",
+      "exclude": ["ask.fedoraproject.org", "discussion.fedoraproject.org", "lists.fedoraproject.org", "src.fedoraproject.org"]
+    },
+    {
+      "name": "Rocky Linux",
+      "domain": "rockylinux.org",
+      "page": "https://rockylinux.org/download",
+      "exclude": ["forums.rockylinux.org", "git.rockylinux.org", "wiki.rockylinux.org"]
+    },
+    {
+      "name": "AlmaLinux",
+      "domain": "almalinux.org",
+      "page": "https://almalinux.org/get-almalinux/",
+      "exclude": ["forums.almalinux.org", "git.almalinux.org", "wiki.almalinux.org"]
+    },
+    {
+      "name": "Arch Linux",
+      "domain": "archlinux.org",
+      "page": "https://archlinux.org/download/",
+      "exclude": ["aur.archlinux.org", "bbs.archlinux.org", "bugs.archlinux.org", "gitlab.archlinux.org", "lists.archlinux.org", "wiki.archlinux.org"]
+    },
+    {
+      "name": "Linux Mint",
+      "domain": "linuxmint.com",
+      "page": "https://linuxmint.com/edition.php?id=327",
+      "exclude": ["community.linuxmint.com", "forums.linuxmint.com"]
+    },
+    {
+      "name": "Kali Linux",
+      "domain": "kali.org",
+      "page": "https://www.kali.org/get-kali/",
+      "exclude": ["bugs.kali.org", "forums.kali.org"]
+    },
+    {
+      "name": "Raspberry Pi OS",
+      "domain": "raspberrypi.com",
+      "page": "https://www.raspberrypi.com/software/operating-systems/",
+      "exclude": ["forums.raspberrypi.com"]
+    },
+    {
+      "name": "LibreOffice",
+      "domain": "libreoffice.org",
+      "page": "https://www.libreoffice.org/download/download-libreoffice/",
+      "exclude": ["ask.libreoffice.org", "extensions.libreoffice.org"]
+    },
+    {
+      "name": "LibreOffice downloads",
+      "domain": "download.documentfoundation.org",
+      "page": "https://www.libreoffice.org/download/download-libreoffice/",
+      "exclude": []
+    }
+  ],
+  "extensions": {
+    "windowsProgram": ["exe", "scr", "com", "pif", "bat", "cmd", "vbs", "vbe", "jse", "wsf", "hta", "msi", "ps1", "cpl", "lnk"],
+    "macosInstaller": ["dmg", "pkg", "app", "command", "osax", "jar", "sh"],
+    "shortcut": ["url", "webloc"],
+    "archive": ["zip", "rar", "7z", "cab", "ace", "arj", "gz", "tgz", "bz2", "xz", "zst", "tar", "lz", "lzh"],
+    "passwordArchive": ["zip", "rar", "7z", "cab", "ace", "arj"],
+    "weakNameArchive": ["zip", "rar", "7z", "cab", "ace", "arj"],
+    "video": ["mkv", "avi", "mp4", "mov", "wmv", "flv", "webm", "m4v", "mpg", "mpeg", "m2ts", "vob", "divx", "3gp", "ogv"],
+    "audio": ["mp3", "flac", "wav", "ogg", "m4a", "aac", "wma", "opus", "aiff", "ape", "alac", "mka"],
+    "harmless": [
+      "jpg", "jpeg", "png", "gif", "bmp", "webp", "tif", "tiff", "heic", "svg",
+      "srt", "sub", "ass", "ssa", "vtt", "idx",
+      "pdf", "epub", "mobi", "azw3", "djvu", "txt", "md", "rtf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "csv", "html", "htm",
+      "cue", "log", "m3u", "m3u8", "sfv", "md5", "sha1", "sha256", "sig", "asc"
+    ],
+    "decoy": [
+      "mkv", "avi", "mp4", "mov", "wmv", "flv", "webm", "m4v", "mpg", "mpeg", "mp3", "flac", "wav", "ogg", "m4a", "aac", "wma",
+      "jpg", "jpeg", "png", "gif", "bmp", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "epub", "mobi",
+      "zip", "rar", "7z", "iso", "srt"
+    ]
+  },
+  "paddedExtensionMinSpaces": 5,
+  "piracy": {
+    "strong": ["crack", "cracked", "cracks", "keygen", "keygens", "keymaker", "activator", "activators"],
+    "strongPairs": [["key", "gen"], ["key", "maker"]],
+    "weak": ["patch", "patcher", "loader", "serial", "serials"]
+  },
+  "mediaName": {
+    "tokens": [
+      "1080p", "720p", "480p", "2160p", "4k", "uhd", "bluray", "bdrip", "brrip", "webrip", "hdrip", "dvdrip", "hdtv", "remux",
+      "x264", "x265", "h264", "h265", "hevc", "xvid", "hdcam", "camrip", "dvdscr", "mp3", "flac", "320kbps", "discography", "ost", "soundtrack"
+    ],
+    "pairs": [["web", "dl"], ["complete", "series"], ["full", "album"]],
+    "patterns": ["^s\\d{1,2}e\\d{1,3}$", "^season\\d{0,2}$", "^\\d{3,4}p$"]
+  },
+  "suspiciousArchiveNames": {
+    "tokens": ["codec", "codecs", "player", "setup", "install", "installer", "update", "viewer", "decoder", "downloader", "flash", "activation", "unlock", "unlocker", "stream", "watch"]
+  },
+  "passwordFiles": {
+    "names": ["password", "passwords", "pass", "pwd", "readme", "read me", "read me first", "readme first", "unrar password", "how to open", "how to extract", "open me"],
+    "extensions": ["txt", "nfo", "md", "html", "htm", "rtf", "pdf", ""]
+  },
+  "hiddenCharacters": [
+    [0, 31], [127, 159], [173, 173], [1564, 1564], [4447, 4448], [6068, 6069], [6158, 6158],
+    [8203, 8203], [8206, 8207], [8234, 8238], [8288, 8292], [8294, 8297], [12644, 12644],
+    [65279, 65279], [65440, 65440], [65529, 65531], [917504, 917631]
+  ],
+  "joiners": [8204, 8205]
+}
