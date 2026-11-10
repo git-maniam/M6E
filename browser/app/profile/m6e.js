@@ -413,3 +413,6 @@ pref("m6e.torrent.ipFilterPath", "");
 pref("m6e.torrent.randomizePeerId", false);
 pref("m6e.torrent.sequentialDefault", false);
 pref("m6e.torrent.trustedSites", "");
+// Off until the sandbox of the helper is verified end to end (P8.1).
+pref("m6e.torrent.sandbox", false);
+pref("m6e.torrent.sandboxFolders", "");

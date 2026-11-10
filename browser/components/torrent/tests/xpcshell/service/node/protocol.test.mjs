@@ -14,9 +14,16 @@ import {
   candidateFilePaths,
   classifyPref,
   encodeRequest,
+  helperArguments,
+  helperIdleSeconds,
   httpsOrigin,
   limitsToPrefs,
+  mergeFolders,
   parseBencode,
+  parseFolderList,
+  pathIsInside,
+  rememberFolder,
+  unsupportedConfig,
   parseTrustedSites,
   partialToPrefs,
   precheckTorrent,
@@ -335,6 +342,8 @@ test("every pref is classified or deliberately local", () => {
     "confirmQuit",
     "sequentialDefault",
     "trustedSites",
+    "sandbox",
+    "sandboxFolders",
   ]);
   for (const name of Object.keys(PREF_DEFAULTS)) {
     assert.equal(!!classifyPref(name), !local.has(name), name);
@@ -446,4 +455,84 @@ test("candidate file paths", () => {
   ]);
   const one = { name: "x.iso", files: [{ path: "x.iso" }] };
   assert.deepEqual(candidateFilePaths("/save", one, one.files[0]), ["/save/x.iso"]);
+});
+
+test("the helper idles out later than the service stops it", () => {
+  assert.equal(helperIdleSeconds(60_000), 90);
+  assert.equal(helperIdleSeconds(1_000), 90);
+  assert.equal(helperIdleSeconds(120_000), 150);
+});
+
+test("helper arguments carry the sandbox folders only when asked", () => {
+  const base = { profileDir: "/p/torrents", inboxDir: "/p/torrents/inbox" };
+  assert.deepEqual(helperArguments({ ...base, sandbox: false, folders: ["/a"] }), [
+    "--protocol",
+    "1",
+    "--profile-dir",
+    "/p/torrents",
+  ]);
+  const args = helperArguments({
+    ...base,
+    sandbox: true,
+    folders: ["/a", "/b/", "/a", "rel", "/c", "/d", "/e"],
+  });
+  assert.deepEqual(args.slice(4), [
+    "--sandbox",
+    "--inbox-dir",
+    "/p/torrents/inbox",
+    "--download-dir",
+    "/a",
+    "--download-dir",
+    "/b",
+    "--download-dir",
+    "/c",
+    "--download-dir",
+    "/d",
+  ]);
+});
+
+test("download folders", () => {
+  assert.deepEqual(parseFolderList(""), []);
+  assert.deepEqual(parseFolderList('["/a","/b"]'), ["/a", "/b"]);
+  assert.equal(parseFolderList('["a"]'), null);
+  assert.equal(parseFolderList("{"), null);
+  assert.deepEqual(mergeFolders(["/", "/a//", "/a", "x"]), ["/a"]);
+  assert.equal(pathIsInside("/a/b", "/a/b"), true);
+  assert.equal(pathIsInside("/a/b/", "/a/b/c/d"), true);
+  assert.equal(pathIsInside("/a/b", "/a/bc"), false);
+  assert.equal(pathIsInside("/a/b", "/a"), false);
+  assert.deepEqual(rememberFolder(["/1", "/2", "/3"], "/new"), ["/new", "/1", "/2"]);
+  assert.deepEqual(rememberFolder(["/1", "/2"], "/2"), ["/2", "/1"]);
+  assert.throws(() => validatePrefValue("sandboxFolders", "[1]"), {
+    code: "bad-request",
+  });
+});
+
+test("unsupported settings are fatal when they touch the network", () => {
+  const config = {
+    proxy: { type: "socks5" },
+    ipFilterPath: "/x",
+    bindInterface: null,
+    seedGoal: { ratio: 1, hours: null },
+    peerIdPrefix: null,
+    userAgent: null,
+  };
+  assert.deepEqual(
+    unsupportedConfig(config, {
+      applied: [],
+      unsupported: ["proxy", "ipFilterPath", "bindInterface", "seedGoal", "userAgent"],
+    }),
+    { fatal: ["proxy", "ipFilterPath"], warn: ["seedGoal"] }
+  );
+  assert.deepEqual(
+    unsupportedConfig(
+      { proxy: { type: "none" }, dht: true },
+      { applied: ["proxy"], unsupported: [] }
+    ),
+    { fatal: ["dht"], warn: [] }
+  );
+  assert.deepEqual(unsupportedConfig({ dht: true }, { applied: ["dht"] }), {
+    fatal: [],
+    warn: [],
+  });
 });

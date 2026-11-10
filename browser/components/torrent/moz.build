@@ -16,6 +16,7 @@ BROWSER_CHROME_MANIFESTS += [
 
 XPCSHELL_TESTS_MANIFESTS += [
     "tests/xpcshell/risk/xpcshell.toml",
+    "tests/xpcshell/service/xpcshell.toml",
 ]
 
 MOZ_SRC_FILES += [

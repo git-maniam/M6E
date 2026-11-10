@@ -45,3 +45,12 @@ Shared by the parallel steps P8.1 to P8.6. Agents may add to this file's contrac
 - The service reports errors by throwing an `Error` with `code` and, for `duplicate`, `tid` properties copied from the helper's error object.
 - `list()` resolves to `{ torrents: [Status] }`.
 
+
+## Additions (service, P8.1, 2026-11-10)
+- Observer notification `m6e-torrent-trackers` with `{ "tid", "trackers": [...] }` (the helper's `trackers` event). `m6e-torrent-completed` may carry `"warning"` (the helper's, when it could not clear execute bits or quarantine a file). The helper's `peers` event updates `seeds` and `peers` of the cached Status.
+- The helper's idle exit: the service starts it with `M6E_TORRENT_IDLE_SECONDS` of 90 (never less than the service's own idle stop plus 30 s), and an exit with status 0 while nothing is active is not an error (no `helper-exited`).
+- Input files are staged: a `.torrent` for `add` and an IP-filter file for `setConfig` are copied to `<profile>/torrents/inbox/` (mode 0600) and deleted after the helper replies. Files left behind by a crash and older than 5 minutes are removed at helper start.
+- Prefs `m6e.torrent.sandbox` (default false) and `m6e.torrent.sandboxFolders` (JSON array of folders confirmed earlier, most recent first). With `sandbox` on, the helper gets `--sandbox --inbox-dir <inbox> --download-dir <folder>` (up to four folders: the default download folder, then the remembered ones). A `confirmAdd` into another folder remembers it, stops the helper and adds the pending torrent again to the restarted one.
+- `setConfig` keys the helper does not apply fail closed: `encryption`, `dht`, `pex`, `lpd`, `portMapping`, `listenPort`, `proxy`, `bindInterface` and `ipFilterPath` (with a value that is not off) stop the helper and make start, `setConfig` and `setLimits` reject with `config-failed`. `seedGoal`, `peerIdPrefix` and `userAgent` are reported once per helper start as `m6e-torrent-error` with code `unsupported-setting` and the helper keeps running.
+- The Gecko wake lock is gone: the helper holds the sleep assertion while a confirmed torrent is active.
+- `list()` resolves to `{ torrents }` and `activeTorrentCount` exists as specified above.
