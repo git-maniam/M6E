@@ -16,7 +16,7 @@ What each test proves:
 - `download_file_and_verify`, `selective_priority_zero`, `magnet_metadata_only_then_download`: no payload is requested and no file is written before `confirm`; after it the torrent completes and every output file matches the fixture by SHA-256.
 - `progress_batched`, `pause_and_resume`, `remove_with_and_without_delete`: progress events at most once a second and only while active; pause stops transfer; remove keeps or deletes the files and the torrent does not return after a restart.
 - `shutdown_*`, `eof_*`: exit 0 within 2 s on `shutdown` and on stdin EOF, idle or mid-download.
-- `killed_helper_resumes`: after SIGKILL mid-download, `restore` finds the torrent (paused with `start:false`), and with `start:true` it finishes with correct data.
+- `killed_helper_resumes`: after SIGKILL mid-download (resume data is a file named after the tid directly in `--profile-dir`, which the service points at `<profile>/torrents`), `restore` finds the torrent (paused with `start:false`), and with `start:true` it finishes with correct data.
 - `idle_has_no_sockets`, `sockets_follow_active_torrents`: `lsof -nP -iTCP -iUDP -a -p PID` shows nothing before the first add or after the last removal, and `listening`/`closed` events match.
 
 Against the fake helper (engine name starting with `fake`) the checks it cannot satisfy are reported as `# fake gap:` lines instead of failures, and tests that need real transfer skip or run their non-transfer part. A target that answers a request with the error code `unsupported` makes that test skip. `ref_helper.py` is a small Python helper that really transfers from the loopback swarm; it exists to prove the harness works end to end and is not shipped.
