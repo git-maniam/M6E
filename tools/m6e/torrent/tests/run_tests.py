@@ -1032,10 +1032,9 @@ def killed_helper_resumes(ctx):
         assert wait_until(lambda: seed.request_count() >= 6, 20), "download did not start"
     h.kill()
     assert not h.alive()
-    resume_dir = os.path.join(ctx.profile, "torrents")
     ctx.gap(
-        os.path.isdir(resume_dir) and any(os.scandir(resume_dir)),
-        "no resume data in <profile>/torrents after confirm",
+        any(tid in name for name in os.listdir(ctx.profile)),
+        "no resume file named after the tid in the profile folder (--profile-dir) after confirm",
     )
     h2 = ctx.start()
     paused = h2.call("restore", {"start": False})["torrents"]
