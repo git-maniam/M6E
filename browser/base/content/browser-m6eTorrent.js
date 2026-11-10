@@ -15,6 +15,8 @@ ChromeUtils.defineESModuleGetters(m6eTorrentModules, {
 
 var gM6ETorrent = {
   ADD_DIALOG_URL: "chrome://browser/content/m6e-torrent-add.html",
+  TORRENTS_PAGE_URL: "about:torrents",
+  TORRENTS_PAGE_TIMEOUT_MS: 10000,
   UNKNOWN_SOURCE: Object.freeze({ kind: "unknown", origin: null }),
   PENDING_STATES: ["pending-confirm", "fetching-metadata"],
   RUNNING_STATES: ["downloading", "seeding"],
@@ -808,30 +810,109 @@ var gM6ETorrent = {
   },
 
   /**
+   * Selects the about:torrents tab of this window, or opens one in the
+   * foreground, and waits for it to load (or for a timeout).
+   *
+   * @returns {Promise<MozBrowser>} the browser of the page
+   */
+  async showTorrentsPage() {
+    let tab = gBrowser.tabs.find(
+      t => !t.closing && this.isTorrentsPage(t.linkedBrowser)
+    );
+    if (!tab) {
+      tab = gBrowser.addTrustedTab(this.TORRENTS_PAGE_URL, {
+        inBackground: false,
+      });
+    }
+    gBrowser.selectedTab = tab;
+    await this.whenTorrentsPageLoaded(tab.linkedBrowser);
+    return tab.linkedBrowser;
+  },
+
+  isTorrentsPage(browser) {
+    let uri = browser?.currentURI;
+    return !!uri && uri.schemeIs("about") && uri.filePath == "torrents";
+  },
+
+  whenTorrentsPageLoaded(browser) {
+    let loaded = () =>
+      this.isTorrentsPage(browser) && !browser.webProgress.isLoadingDocument;
+    if (loaded()) {
+      return Promise.resolve();
+    }
+    return new Promise(resolve => {
+      let timer = null;
+      let listener = {
+        onStateChange: (aBrowser, webProgress, request, flags) => {
+          const wanted =
+            Ci.nsIWebProgressListener.STATE_STOP |
+            Ci.nsIWebProgressListener.STATE_IS_WINDOW;
+          if (
+            aBrowser == browser &&
+            (flags & wanted) == wanted &&
+            this.isTorrentsPage(browser)
+          ) {
+            finish();
+          }
+        },
+      };
+      let finish = () => {
+        clearTimeout(timer);
+        gBrowser.removeTabsProgressListener(listener);
+        resolve();
+      };
+      timer = setTimeout(finish, this.TORRENTS_PAGE_TIMEOUT_MS);
+      gBrowser.addTabsProgressListener(listener);
+    });
+  },
+
+  /**
+   * Selects a torrent in an open about:torrents page through its URL hash,
+   * which the page follows. Does nothing when the tab has moved elsewhere.
+   *
+   * @param {MozBrowser} browser
+   * @param {string} tid
+   */
+  selectInTorrentsPage(browser, tid) {
+    if (!this.isTorrentsPage(browser)) {
+      return;
+    }
+    let hash = "#" + encodeURIComponent(tid);
+    browser.loadURI(Services.io.newURI(this.TORRENTS_PAGE_URL + hash), {
+      triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+    });
+  },
+
+  /**
    * Opens the Add dialog for a .torrent file.
    *
    * @param {string} path - absolute path of the file
    * @param {object} source - a Source object from CONTRACTS.md
+   * @param {object} options
+   * @param {boolean} options.goToPage - first bring the user to about:torrents
+   *   and show the dialog over it (D40); the new torrent is selected there
    * @returns {Promise<boolean>} settles when the Add dialog has closed (or at
    *   once on an error); true when the torrent was added
    */
-  async addTorrentFile(path, source = this.UNKNOWN_SOURCE) {
+  async addTorrentFile(path, source = this.UNKNOWN_SOURCE, options = {}) {
     if (!this.enabled) {
       return false;
     }
     source = this.sanitizeSource(source);
     this.init();
+    let pageBrowser = options.goToPage ? await this.showTorrentsPage() : null;
     let result;
     try {
       result = await this.service.addFile(path, source);
     } catch (e) {
-      return this.handleAddError(e);
+      return this.handleAddError(e, pageBrowser);
     }
     return this.openAddDialog({
       mode: "file",
       tid: result.tid,
       metadata: result.metadata,
       source,
+      pageBrowser,
     });
   },
 
@@ -840,34 +921,37 @@ var gM6ETorrent = {
    *
    * @param {string} uri - the magnet link
    * @param {object} source - a Source object from CONTRACTS.md
+   * @param {object} options - as for addTorrentFile
    * @returns {Promise<boolean>} settles when the Add dialog has closed (or at
    *   once on an error); true when the torrent was added
    */
-  async addMagnet(uri, source = this.UNKNOWN_SOURCE) {
+  async addMagnet(uri, source = this.UNKNOWN_SOURCE, options = {}) {
     if (!this.enabled) {
       return false;
     }
     source = this.sanitizeSource(source);
     this.init();
+    let pageBrowser = options.goToPage ? await this.showTorrentsPage() : null;
     let result;
     try {
       result = await this.service.addMagnet(uri, source);
     } catch (e) {
-      return this.handleAddError(e);
+      return this.handleAddError(e, pageBrowser);
     }
     return this.openAddDialog({
       mode: "magnet",
       tid: result.tid,
       metadata: result.metadata ?? null,
       source,
+      pageBrowser,
     });
   },
 
-  async handleAddError(error) {
+  async handleAddError(error, pageBrowser = null) {
     let code = error?.code ?? error?.error?.code;
     let tid = error?.tid ?? error?.error?.tid;
     if (code == "duplicate" && tid) {
-      await this.showExisting(tid);
+      await this.showExisting(tid, pageBrowser);
       return false;
     }
     await this.showError(error?.message ?? error?.error?.message ?? "");
@@ -875,11 +959,18 @@ var gM6ETorrent = {
   },
 
   /**
-   * Opens the panel and marks the row of a torrent that is already added.
+   * Shows a torrent that is already added: selects it in the page when the
+   * Add flow came through about:torrents, else opens the panel and marks the
+   * row.
    *
    * @param {string} tid
+   * @param {MozBrowser} pageBrowser - the about:torrents browser, if any
    */
-  async showExisting(tid) {
+  async showExisting(tid, pageBrowser = null) {
+    if (pageBrowser && this.isTorrentsPage(pageBrowser)) {
+      this.selectInTorrentsPage(pageBrowser, tid);
+      return;
+    }
     this._highlightTid = tid;
     await this.openPanel();
     this.renderList();
@@ -903,27 +994,48 @@ var gM6ETorrent = {
   },
 
   /**
+   * The folder the Add dialog starts in: m6e.torrent.downloadDir when it is
+   * an absolute path, else the browser's download folder.
+   */
+  async defaultSaveFolder() {
+    let configured = Services.prefs
+      .getStringPref(this.PREF_PREFIX + "downloadDir", "")
+      .trim();
+    if (configured.startsWith("/")) {
+      return configured;
+    }
+    try {
+      return (
+        (await m6eTorrentModules.Downloads.getPreferredDownloadsDirectory()) ??
+        ""
+      );
+    } catch (e) {
+      console.error("M6E: no download folder", e);
+      return "";
+    }
+  },
+
+  /**
    * The Add dialog is a tab-modal SubDialog (gBrowser.getTabDialogBox), not
    * a window-modal gDialogBox: a magnet link can wait on peers for minutes,
    * and that must not freeze the window or the other tabs. It belongs to
-   * the tab the link was clicked in, so closing the tab drops the pending
-   * torrent. Everything it needs is passed in, so tests can mock it.
+   * the tab the link was clicked in, or to the about:torrents tab when
+   * pageBrowser is given, so closing the tab drops the pending torrent.
+   * Everything it needs is passed in, so tests can mock it.
    */
-  async openAddDialog({ mode, tid, metadata, source }) {
-    let defaultSavePath = "";
-    try {
-      defaultSavePath =
-        (await m6eTorrentModules.Downloads.getPreferredDownloadsDirectory()) ??
-        "";
-    } catch (e) {
-      console.error("M6E: no download folder", e);
-    }
+  async openAddDialog({ mode, tid, metadata, source, pageBrowser = null }) {
+    let browser = pageBrowser ?? gBrowser.selectedBrowser;
     let params = {
       mode,
       tid,
       metadata: metadata ?? this.takeMetadata(tid),
       source: source ?? this.UNKNOWN_SOURCE,
-      defaultSavePath,
+      defaultSavePath: await this.defaultSaveFolder(),
+      askWhereToSave: Services.prefs.getBoolPref(
+        this.PREF_PREFIX + "askWhereToSave",
+        false
+      ),
+      startNow: Services.prefs.getBoolPref(this.PREF_PREFIX + "startNow", true),
       added: false,
       service: this.service,
       assess: (meta, src, extra) => this.risk.assess(meta, src, extra),
@@ -932,20 +1044,22 @@ var gM6ETorrent = {
       addTrustedSite: origin => this.addTrustedSite(origin),
       isAcknowledged: infoHash => this._acknowledged.has(infoHash),
       acknowledge: infoHash => this._acknowledged.add(infoHash),
-      showExisting: id => this.showExisting(id),
+      showExisting: id => this.showExisting(id, pageBrowser),
       getFreeSpace: path => this.getFreeSpace(path),
       pickFolder: path => this.pickFolder(path),
       formatBytes: bytes => this.formatBytes(bytes),
     };
     try {
       let { dialog, closedPromise } = await gBrowser
-        .getTabDialogBox(gBrowser.selectedBrowser)
+        .getTabDialogBox(browser)
         .open(this.ADD_DIALOG_URL, { features: "resizable=no" }, params);
       this.lastAddDialog = { dialog, params, closedPromise };
       await closedPromise;
       if (!params.added) {
         this._metadata.delete(tid);
         await this.cancelPending(tid);
+      } else if (pageBrowser) {
+        this.selectInTorrentsPage(pageBrowser, tid);
       }
       return params.added;
     } catch (e) {

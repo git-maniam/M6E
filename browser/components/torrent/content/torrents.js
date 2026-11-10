@@ -844,10 +844,17 @@ var gM6ETorrentsPage = {
       this.selectTab(all[next].dataset.tab, { focus: true });
     });
 
-    window.addEventListener("hashchange", () => {
+    window.addEventListener("hashchange", async () => {
       let tid = this.tidFromHash();
       if (tid && tid != this.selectedTid) {
-        this.select(tid);
+        // M6E P8.4: a torrent added a moment ago may not be listed yet, and
+        // an unlisted selection is dropped by setTorrents.
+        if (!this.torrents.some(t => t.tid == tid)) {
+          await this.refreshList();
+        }
+        if (this.tidFromHash() == tid) {
+          this.select(tid);
+        }
       }
     });
     document.addEventListener("visibilitychange", () => {

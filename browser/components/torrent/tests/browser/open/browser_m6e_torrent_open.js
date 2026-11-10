@@ -74,6 +74,7 @@ add_task(async function test_magnet_without_user_activation_is_ignored() {
     "A page without a user gesture reaches nothing"
   );
   is(gM6ETorrent.lastAddDialog, null, "No dialog opened");
+  is(torrentsTabs().length, 0, "The torrents page is not opened either");
 });
 
 add_task(async function test_magnet_from_page_records_source() {
@@ -368,4 +369,183 @@ add_task(async function test_page_download_origin() {
     ok(second.cancelled, "and the burst of page downloads is cancelled");
   });
   M6ETorrentHandler._saveToTemp = original;
+});
+
+add_task(async function test_magnet_goes_to_the_torrents_page_first() {
+  const { service } = installMocks();
+  pageOpenReset();
+  const original = gBrowser.selectedTab;
+  is(torrentsTabs().length, 0, "No torrents page is open yet");
+
+  ok(
+    M6ETorrentHandler.handleCommandLineURI(magnetURI(), false),
+    "A magnet link is handled"
+  );
+  const opened = await waitForAddDialog();
+  const tabs = torrentsTabs();
+  is(tabs.length, 1, "A torrents page was opened");
+  is(gBrowser.selectedTab, tabs[0], "and it is in the foreground");
+  isnot(gBrowser.selectedTab, original, "instead of the tab the user was on");
+  is(
+    opened.dialog._frame.closest(".browserSidebarContainer"),
+    dialogContainer(tabs[0].linkedBrowser),
+    "The Add dialog belongs to the torrents page, so it shows over it"
+  );
+  Assert.deepEqual(
+    service.callsTo("confirmAdd"),
+    [],
+    "Going to the page adds nothing"
+  );
+
+  await closeAddDialog(opened);
+  is(torrentsTabs().length, 1, "Cancel leaves the torrents page open");
+  is(gBrowser.selectedTab, tabs[0], "and selected");
+  is(
+    tabs[0].linkedBrowser.currentURI.spec,
+    "about:torrents",
+    "with nothing selected in it"
+  );
+  await TestUtils.waitForCondition(
+    () => service.callsTo("cancelAdd").length == 1,
+    "Cancel drops the request"
+  );
+  Assert.deepEqual(service.callsTo("confirmAdd"), [], "Nothing was added");
+});
+
+add_task(async function test_an_open_torrents_page_is_reused() {
+  const { service } = installMocks();
+  pageOpenReset();
+  const page = await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:torrents"
+  );
+  await BrowserTestUtils.switchTab(gBrowser, gBrowser.tabs[0]);
+  isnot(gBrowser.selectedTab, page, "The torrents page is in the background");
+
+  M6ETorrentHandler.handleCommandLineURI(
+    Services.io.newURI("file:///mock/sample.torrent"),
+    false
+  );
+  const opened = await waitForAddDialog();
+  is(torrentsTabs().length, 1, "No second torrents page was opened");
+  is(gBrowser.selectedTab, page, "The existing page was selected");
+  is(
+    opened.dialog._frame.closest(".browserSidebarContainer"),
+    dialogContainer(page.linkedBrowser),
+    "The dialog shows over the existing page"
+  );
+  Assert.deepEqual(
+    service.callsTo("addFile")[0].args,
+    ["/mock/sample.torrent", { kind: "finder", origin: null }],
+    "The file is opened with the finder source"
+  );
+  await closeAddDialog(opened);
+  is(torrentsTabs().length, 1, "The page stays open after Cancel");
+});
+
+add_task(async function test_page_initiated_magnet_goes_to_the_page() {
+  const { service } = installMocks();
+  pageOpenReset();
+  await BrowserTestUtils.withNewTab("https://example.com/", async browser => {
+    await SimpleTest.promiseFocus(window);
+    ok(
+      M6ETorrentHandler.handleMagnet(
+        magnetURI(),
+        principalFor(HTTPS_ORIGIN),
+        browser.browsingContext,
+        false,
+        true
+      ),
+      "The navigation is handled"
+    );
+    const opened = await waitForAddDialog();
+    const tabs = torrentsTabs();
+    is(tabs.length, 1, "The torrents page was opened");
+    is(gBrowser.selectedTab, tabs[0], "and selected");
+    Assert.deepEqual(
+      service.callsTo("addMagnet")[0].args,
+      [SYNTHETIC_MAGNET, { kind: "magnet-page", origin: HTTPS_ORIGIN }],
+      "The page's origin is still recorded as the source"
+    );
+    Assert.deepEqual(service.callsTo("confirmAdd"), [], "Nothing is added");
+    await closeAndSettle(opened);
+  });
+});
+
+add_task(async function test_add_selects_the_new_torrent_in_the_page() {
+  const { service } = installMocks();
+  pageOpenReset();
+
+  M6ETorrentHandler.handleCommandLineURI(
+    Services.io.newURI("file:///mock/sample.torrent"),
+    false
+  );
+  const opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  const tab = gBrowser.selectedTab;
+  const win = tab.linkedBrowser.contentWindow;
+  is(win.location.hash, "", "No torrent is selected before Add");
+
+  service.torrents = [syntheticStatus(SYNTHETIC_HASH)];
+  opened.doc.getElementById("m6e-torrent-add-confirm").click();
+  await opened.closedPromise;
+  is(service.callsTo("confirmAdd").length, 1, "Add confirmed the torrent");
+
+  await TestUtils.waitForCondition(
+    () => win.location.hash == "#" + SYNTHETIC_HASH,
+    "The new torrent is in the page's URL"
+  );
+  await TestUtils.waitForCondition(
+    () => win.gM6ETorrentsPage.selectedTid == SYNTHETIC_HASH,
+    "The page selected the new torrent"
+  );
+  is(gBrowser.selectedTab, tab, "The user stays on the torrents page");
+  is(torrentsTabs().length, 1, "No other torrents page was opened");
+});
+
+add_task(async function test_duplicate_selects_the_existing_torrent() {
+  const { service } = installMocks();
+  pageOpenReset();
+  service.torrents = [syntheticStatus(SYNTHETIC_HASH)];
+  service.addError = Object.assign(new Error("already added"), {
+    code: "duplicate",
+    tid: SYNTHETIC_HASH,
+  });
+
+  M6ETorrentHandler.handleCommandLineURI(
+    Services.io.newURI("file:///mock/sample.torrent"),
+    false
+  );
+  await TestUtils.waitForCondition(
+    () => torrentsTabs().length == 1,
+    "The torrents page is opened"
+  );
+  const tab = torrentsTabs()[0];
+  const win = tab.linkedBrowser.contentWindow;
+  await TestUtils.waitForCondition(
+    () => win.gM6ETorrentsPage?.selectedTid == SYNTHETIC_HASH,
+    "The torrent that is already added is selected"
+  );
+  is(win.location.hash, "#" + SYNTHETIC_HASH, "and shown in the URL");
+  is(gM6ETorrent.lastAddDialog, null, "No Add dialog is shown for a duplicate");
+  ok(!gM6ETorrent.panelShown, "The panel stays closed");
+  is(gBrowser.selectedTab, tab, "The user is on the torrents page");
+});
+
+add_task(async function test_disabled_torrents_do_not_open_the_page() {
+  const { service } = installMocks();
+  pageOpenReset();
+  await SpecialPowers.pushPrefEnv({ set: [["m6e.torrent.enabled", false]] });
+  ok(
+    !M6ETorrentHandler.handleCommandLineURI(magnetURI(), false),
+    "With BitTorrent off the link is left alone"
+  );
+  await settle();
+  is(torrentsTabs().length, 0, "and the torrents page is not opened");
+  Assert.deepEqual(
+    service.calls.filter(c => c.name != "init"),
+    [],
+    "Nothing reached the service"
+  );
+  await SpecialPowers.popPrefEnv();
 });
