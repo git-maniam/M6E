@@ -12,6 +12,10 @@ const lazy = {};
 
 ChromeUtils.defineESModuleGetters(lazy, {
   NimbusFeatures: "resource://nimbus/ExperimentAPI.sys.mjs",
+  // M6E: magnet links open the Add torrent dialog.
+  M6ETorrentHandler:
+    // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
+    "moz-src:///browser/components/torrent/M6ETorrentHandler.sys.mjs",
 });
 
 const DIALOG_URL_APP_CHOOSER =
@@ -65,6 +69,20 @@ export class nsContentDispatchChooser {
     aTriggeredExternally = false,
     aHasValidUserGestureActivation = false
   ) {
+    // M6E: magnet links open the Add torrent dialog, not an external app.
+    if (
+      aURI.scheme == "magnet" &&
+      lazy.M6ETorrentHandler.handleMagnet(
+        aURI,
+        aPrincipal,
+        aBrowsingContext,
+        aTriggeredExternally,
+        aHasValidUserGestureActivation
+      )
+    ) {
+      return;
+    }
+
     const isStandardProtocol = E10SUtils.STANDARD_SAFE_PROTOCOLS.includes(
       aURI.scheme
     );
