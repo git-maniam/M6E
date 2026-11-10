@@ -285,7 +285,7 @@ add_task(async function test_untrusted_origins_are_dropped() {
   const { service, risk } = installMocks();
   const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", {
     kind: "page",
-    origin: "https://example.org",
+    origin: "http://example.org",
   });
   const opened = await waitForAddDialog();
   await waitForDetails(opened.doc);
@@ -407,10 +407,11 @@ add_task(async function test_magnet_error_while_fetching() {
     () => visible(opened.doc, "m6e-torrent-add-error"),
     "The error is shown"
   );
-  ok(
-    opened.doc
-      .getElementById("m6e-torrent-add-error")
-      .textContent.includes("synthetic failure"),
+  await TestUtils.waitForCondition(
+    () =>
+      opened.doc
+        .getElementById("m6e-torrent-add-error")
+        .textContent.includes("synthetic failure"),
     "The error text is shown"
   );
   ok(
@@ -463,10 +464,11 @@ add_task(async function test_confirm_error_keeps_dialog_open() {
     () => visible(opened.doc, "m6e-torrent-add-error"),
     "The error is shown in the dialog"
   );
-  ok(
-    opened.doc
-      .getElementById("m6e-torrent-add-error")
-      .textContent.includes("synthetic disk problem"),
+  await TestUtils.waitForCondition(
+    () =>
+      opened.doc
+        .getElementById("m6e-torrent-add-error")
+        .textContent.includes("synthetic disk problem"),
     "The error text is shown"
   );
   ok(
