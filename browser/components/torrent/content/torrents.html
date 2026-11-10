@@ -1,0 +1,421 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- M6E: about:torrents (Phase 8, D33). -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src chrome:" />
+    <title data-l10n-id="m6e-torrents-page-title"></title>
+    <link rel="localization" href="browser/m6eTorrent.ftl" />
+    <link rel="localization" href="browser/m6eTorrents.ftl" />
+    <link rel="stylesheet" href="chrome://global/skin/global.css" />
+    <link rel="stylesheet" href="chrome://global/skin/in-content/common.css" />
+    <link
+      rel="stylesheet"
+      href="chrome://browser/content/torrents/torrents.css"
+    />
+    <script
+      defer="defer"
+      src="chrome://browser/content/torrents/torrents.js"
+    ></script>
+  </head>
+  <body>
+    <div id="m6e-torrents-layout">
+      <nav id="m6e-torrents-sidebar" data-l10n-id="m6e-torrents-filters">
+        <h1
+          id="m6e-torrents-heading"
+          data-l10n-id="m6e-torrents-heading"
+        ></h1>
+        <ul id="m6e-torrents-filter-list">
+          <li>
+            <button
+              type="button"
+              class="filter"
+              data-filter="all"
+              aria-current="true"
+            >
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-all"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="filter" data-filter="downloading">
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-downloading"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="filter" data-filter="seeding">
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-seeding"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="filter" data-filter="completed">
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-completed"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="filter" data-filter="paused">
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-paused"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="filter" data-filter="active">
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-active"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="filter" data-filter="inactive">
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-inactive"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="filter" data-filter="errored">
+              <span
+                class="label"
+                data-l10n-id="m6e-torrents-filter-errored"
+              ></span>
+              <span class="count"></span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <main id="m6e-torrents-main">
+        <div
+          id="m6e-torrents-toolbar"
+          role="toolbar"
+          data-l10n-id="m6e-torrents-toolbar"
+        >
+          <button
+            id="m6e-torrents-pause"
+            type="button"
+            data-action="pause"
+            data-l10n-id="m6e-torrents-pause"
+          ></button>
+          <button
+            id="m6e-torrents-resume"
+            type="button"
+            data-action="resume"
+            data-l10n-id="m6e-torrents-resume"
+          ></button>
+          <button
+            id="m6e-torrents-remove"
+            type="button"
+            data-action="remove"
+            data-l10n-id="m6e-torrents-remove"
+          ></button>
+          <button
+            id="m6e-torrents-open-folder"
+            type="button"
+            data-action="open-folder"
+            data-l10n-id="m6e-torrents-open-folder"
+          ></button>
+          <button
+            id="m6e-torrents-copy-magnet"
+            type="button"
+            data-action="copy-magnet"
+            data-l10n-id="m6e-torrents-copy-magnet"
+          ></button>
+        </div>
+        <p id="m6e-torrents-alert" role="alert" hidden="hidden"></p>
+        <p id="m6e-torrents-info" role="status"></p>
+        <p id="m6e-torrents-notice"></p>
+        <p id="m6e-torrents-count" role="status"></p>
+
+        <div id="m6e-torrents-table-wrap">
+          <table
+            id="m6e-torrents-table"
+            role="grid"
+            data-l10n-id="m6e-torrents-table"
+          >
+            <thead>
+              <tr>
+                <th data-sort="name" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-name"
+                  ></button>
+                </th>
+                <th data-sort="size" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-size"
+                  ></button>
+                </th>
+                <th data-sort="progress" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-done"
+                  ></button>
+                </th>
+                <th data-sort="status" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-status"
+                  ></button>
+                </th>
+                <th data-sort="down" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-down"
+                  ></button>
+                </th>
+                <th data-sort="up" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-up"
+                  ></button>
+                </th>
+                <th data-sort="eta" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-eta"
+                  ></button>
+                </th>
+                <th data-sort="ratio" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-ratio"
+                  ></button>
+                </th>
+                <th data-sort="seeds" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-seeds"
+                  ></button>
+                </th>
+                <th data-sort="peers" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-peers"
+                  ></button>
+                </th>
+                <th data-sort="added" aria-sort="none">
+                  <button
+                    type="button"
+                    data-l10n-id="m6e-torrents-column-added"
+                  ></button>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="m6e-torrents-rows"></tbody>
+          </table>
+        </div>
+
+        <section id="m6e-torrents-detail">
+          <p
+            id="m6e-torrents-detail-hint"
+            data-l10n-id="m6e-torrents-detail-hint"
+          ></p>
+          <div id="m6e-torrents-detail-body" hidden="hidden">
+            <div
+              id="m6e-torrents-tabs"
+              role="tablist"
+              data-l10n-id="m6e-torrents-tabs"
+            >
+              <button
+                id="m6e-torrents-tab-general"
+                type="button"
+                role="tab"
+                aria-controls="m6e-torrents-panel-general"
+                aria-selected="true"
+                data-tab="general"
+                data-l10n-id="m6e-torrents-tab-general"
+              ></button>
+              <button
+                id="m6e-torrents-tab-files"
+                type="button"
+                role="tab"
+                aria-controls="m6e-torrents-panel-files"
+                aria-selected="false"
+                tabindex="-1"
+                data-tab="files"
+                data-l10n-id="m6e-torrents-tab-files"
+              ></button>
+              <button
+                id="m6e-torrents-tab-trackers"
+                type="button"
+                role="tab"
+                aria-controls="m6e-torrents-panel-trackers"
+                aria-selected="false"
+                tabindex="-1"
+                data-tab="trackers"
+                data-l10n-id="m6e-torrents-tab-trackers"
+              ></button>
+              <button
+                id="m6e-torrents-tab-peers"
+                type="button"
+                role="tab"
+                aria-controls="m6e-torrents-panel-peers"
+                aria-selected="false"
+                tabindex="-1"
+                data-tab="peers"
+                data-l10n-id="m6e-torrents-tab-peers"
+              ></button>
+            </div>
+
+            <p
+              id="m6e-torrents-detail-unavailable"
+              role="status"
+              hidden="hidden"
+              data-l10n-id="m6e-torrents-detail-unavailable"
+            ></p>
+
+            <div
+              id="m6e-torrents-panel-general"
+              class="tabpanel"
+              role="tabpanel"
+              aria-labelledby="m6e-torrents-tab-general"
+            >
+              <dl id="m6e-torrents-general"></dl>
+            </div>
+            <div
+              id="m6e-torrents-panel-files"
+              class="tabpanel"
+              role="tabpanel"
+              aria-labelledby="m6e-torrents-tab-files"
+              hidden="hidden"
+            >
+              <table id="m6e-torrents-files" data-l10n-id="m6e-torrents-files">
+                <thead>
+                  <tr>
+                    <th data-l10n-id="m6e-torrents-files-column-name"></th>
+                    <th data-l10n-id="m6e-torrents-files-column-size"></th>
+                    <th data-l10n-id="m6e-torrents-files-column-progress"></th>
+                    <th data-l10n-id="m6e-torrents-files-column-priority"></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <p
+                id="m6e-torrents-files-empty"
+                data-l10n-id="m6e-torrents-files-empty"
+                hidden="hidden"
+              ></p>
+            </div>
+            <div
+              id="m6e-torrents-panel-trackers"
+              class="tabpanel"
+              role="tabpanel"
+              aria-labelledby="m6e-torrents-tab-trackers"
+              hidden="hidden"
+            >
+              <table
+                id="m6e-torrents-trackers"
+                data-l10n-id="m6e-torrents-trackers"
+              >
+                <thead>
+                  <tr>
+                    <th data-l10n-id="m6e-torrents-trackers-column-url"></th>
+                    <th data-l10n-id="m6e-torrents-trackers-column-status"></th>
+                    <th data-l10n-id="m6e-torrents-trackers-column-seeds"></th>
+                    <th data-l10n-id="m6e-torrents-trackers-column-peers"></th>
+                    <th data-l10n-id="m6e-torrents-trackers-column-message"></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <p
+                id="m6e-torrents-trackers-empty"
+                data-l10n-id="m6e-torrents-trackers-empty"
+                hidden="hidden"
+              ></p>
+            </div>
+            <div
+              id="m6e-torrents-panel-peers"
+              class="tabpanel"
+              role="tabpanel"
+              aria-labelledby="m6e-torrents-tab-peers"
+              hidden="hidden"
+            >
+              <table id="m6e-torrents-peers" data-l10n-id="m6e-torrents-peers">
+                <thead>
+                  <tr>
+                    <th data-l10n-id="m6e-torrents-peers-column-address"></th>
+                    <th data-l10n-id="m6e-torrents-peers-column-client"></th>
+                    <th data-l10n-id="m6e-torrents-peers-column-encrypted"></th>
+                    <th data-l10n-id="m6e-torrents-peers-column-down"></th>
+                    <th data-l10n-id="m6e-torrents-peers-column-up"></th>
+                    <th data-l10n-id="m6e-torrents-peers-column-progress"></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+              <p
+                id="m6e-torrents-peers-empty"
+                data-l10n-id="m6e-torrents-peers-empty"
+                hidden="hidden"
+              ></p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog
+      id="m6e-torrents-remove-dialog"
+      aria-labelledby="m6e-torrents-remove-question"
+      aria-describedby="m6e-torrents-remove-name m6e-torrents-remove-note"
+    >
+      <h2
+        id="m6e-torrents-remove-question"
+        data-l10n-id="m6e-torrents-remove-question"
+      ></h2>
+      <p id="m6e-torrents-remove-name"></p>
+      <p
+        id="m6e-torrents-remove-note"
+        data-l10n-id="m6e-torrents-remove-note"
+      ></p>
+      <div class="buttons">
+        <button
+          id="m6e-torrents-remove-cancel"
+          type="button"
+          data-action="remove-cancel"
+          data-l10n-id="m6e-torrents-remove-cancel"
+        ></button>
+        <button
+          id="m6e-torrents-remove-keep"
+          type="button"
+          data-action="remove-keep"
+          data-l10n-id="m6e-torrents-remove-keep"
+        ></button>
+        <button
+          id="m6e-torrents-remove-delete"
+          type="button"
+          class="danger"
+          data-action="remove-delete"
+          data-l10n-id="m6e-torrents-remove-delete"
+        ></button>
+      </div>
+    </dialog>
+  </body>
+</html>

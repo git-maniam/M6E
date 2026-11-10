@@ -114,6 +114,10 @@ static const RedirEntry kRedirMap[] = {
     {"tabcrashed", "chrome://browser/content/aboutTabCrashed.xhtml",
      nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
          nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::HIDE_FROM_ABOUTABOUT},
+    // M6E: the BitTorrent page (P8.6), a parent-process page like
+    // about:downloads.
+    {"torrents", "chrome://browser/content/torrents/torrents.html",
+     nsIAboutModule::ALLOW_SCRIPT | nsIAboutModule::IS_SECURE_CHROME_UI},
     {"unloads", "chrome://browser/content/tabunloader/aboutUnloads.html",
      nsIAboutModule::ALLOW_SCRIPT},
     {"welcome", "about:blank",

@@ -45,3 +45,8 @@ Shared by the parallel steps P8.1 to P8.6. Agents may add to this file's contrac
 - The service reports errors by throwing an `Error` with `code` and, for `duplicate`, `tid` properties copied from the helper's error object.
 - `list()` resolves to `{ torrents: [Status] }`.
 
+
+## Additions (page agent, 2026-11-10)
+- `about:torrents[#<tid>]` is a parent-process, chrome-privileged page (`browser/components/torrent/content/torrents.{html,css,js}`, registered in `AboutRedirector.cpp`, `components.conf` and the new `browser/components/torrent/jar.mn`). It calls `M6ETorrentService.list()` and `detail(tid)`, `pause`, `resume` and `remove`, and listens to `m6e-torrent-changed`. Its global is `gM6ETorrentsPage`. The fragment selects a torrent; an unknown or malformed one selects nothing.
+- Strings: `browser/locales/en-US/browser/m6eTorrents.ftl` (`m6e-torrents-*`); the page also links `m6eTorrent.ftl` for the state and priority names.
+- Torrent text is shown only through `textContent` or attribute values after `displayName`, never in a Fluent message value.

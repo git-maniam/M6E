@@ -1,0 +1,9 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# M6E: about:torrents (Phase 8, D33).
+browser.jar:
+    content/browser/torrents/torrents.html      (content/torrents.html)
+    content/browser/torrents/torrents.css       (content/torrents.css)
+    content/browser/torrents/torrents.js        (content/torrents.js)
