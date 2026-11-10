@@ -193,7 +193,7 @@ class Engine {
   void deleteResume(std::string const& tid);
   std::string resumePath(std::string const& tid) const;
 
-  // Called once a second, and after setConfig.
+  // Called once a second; watchBoundInterface also after setConfig.
   void applySeedGoals();
   void watchBoundInterface();
   bool seedGoalMet(Torrent const& t) const;

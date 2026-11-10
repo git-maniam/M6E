@@ -46,6 +46,7 @@ The helper runs M6E's torrent engine (libtorrent-rasterbar 2.1.2, D39) in its ow
 ## Not yet done and known gaps
 - With a peer proxy, libtorrent keeps one UDP socket on all interfaces while a torrent is active (its SOCKS5 UDP relay endpoint). It sends nothing directly and drops datagrams that do not come from the proxy (`tests/privacy` checks that it answers nothing), but a port scan sees it as open or filtered.
 - The kill switch was tested with the real watchdog and a real interface (`lo0`) made to look gone, and with an interface that does not exist; a VPN interface (`utun`) disappearing for real was not tested, because creating one needs root.
+- With both a peer proxy and `bindInterface`, peer connections to the proxy are bound to the interface, but tracker connections to the proxy are not: libtorrent binds tracker connections to the listen socket, and its proxy listen socket has no device. The kill switch still stops them when the interface goes away.
 - The service still sends the user's own IP filter path; it must copy the file into `<profile-dir>/inbox/` first.
 - No TLS: `https://` trackers and web seeds fail.
 - The sandbox profile in `sandbox/` is not applied (see its README for what the service must provide first).

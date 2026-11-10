@@ -1580,7 +1580,8 @@ json::object Engine::opSetConfig(json::object const& args) {
     s.set_bool(sp::enable_outgoing_utp, utp);
     s.set_bool(sp::enable_incoming_utp, utp);
   }
-  if (reopen) {
+  if (reopen && listenAnnounced_) {
+    emit_(event("closed"));
     listenAnnounced_ = false;
   }
   session_->apply_settings(std::move(s));
