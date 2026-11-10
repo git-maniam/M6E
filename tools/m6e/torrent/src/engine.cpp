@@ -5,6 +5,7 @@
 #include "engine.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <climits>
 #include <cmath>
@@ -21,6 +22,7 @@
 
 #include <IOKit/pwr_mgt/IOPMLib.h>
 
+#include <libtorrent/address.hpp>
 #include <libtorrent/alert_types.hpp>
 #include <libtorrent/announce_entry.hpp>
 #include <libtorrent/bdecode.hpp>
@@ -47,8 +49,8 @@ using namespace std::chrono_literals;
 using sp = lt::settings_pack;
 
 constexpr char kNeutralPeerId[] = "-LT0000-";
-constexpr char kNeutralUserAgent[] = "libtorrent";
 constexpr std::size_t kMaxMagnetBytes = 16 * 1024;
+constexpr char kInboxDir[] = "inbox";
 constexpr std::size_t kMaxResumeBytes = 2 * kMaxTorrentBytes + 1024 * 1024;
 constexpr std::size_t kMaxMetadataJson = kMaxLineBytes - 64 * 1024;
 constexpr auto kTick = 1s;
@@ -369,10 +371,96 @@ std::string endpointString(lt::tcp::endpoint const& ep) {
   return host + ":" + std::to_string(ep.port());
 }
 
+bool isUdpTracker(std::string const& url) {
+  if (url.size() < 6) {
+    return false;
+  }
+  std::string scheme = url.substr(0, 6);
+  std::transform(scheme.begin(), scheme.end(), scheme.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return scheme == "udp://";
+}
+
+std::vector<lt::announce_entry> trackersOf(lt::add_torrent_params const& atp) {
+  std::vector<lt::announce_entry> out;
+  for (std::size_t i = 0; i < atp.trackers.size(); i++) {
+    lt::announce_entry ae(atp.trackers[i]);
+    ae.tier = static_cast<std::uint8_t>(
+        i < atp.tracker_tiers.size() ? std::clamp(atp.tracker_tiers[i], 0, 255)
+                                     : 0);
+    out.push_back(std::move(ae));
+  }
+  return out;
+}
+
+std::optional<double> goalArg(json::object const& o, std::string_view key) {
+  auto const* v = findArg(o, key);
+  if (!v) {
+    return std::nullopt;
+  }
+  double d = 0;
+  if (auto n = asInt(*v)) {
+    d = static_cast<double>(*n);
+  } else if (v->is_double()) {
+    d = v->as_double();
+  } else {
+    fail("bad-request", std::string(key) + " must be a number or null");
+  }
+  if (!std::isfinite(d) || d < 0 || d > 1e6) {
+    fail("bad-request", std::string(key) + " must be from 0 to 1000000");
+  }
+  if (d == 0) {
+    return std::nullopt;
+  }
+  return d;
+}
+
+std::string optionalString(json::object const& o, std::string_view key,
+                           std::size_t maxLen) {
+  auto const* v = findArg(o, key);
+  if (!v) {
+    return {};
+  }
+  std::string s = stringArg(o, key);
+  if (s.size() > maxLen || s.find('\0') != std::string::npos) {
+    fail("bad-request", std::string(key) + " is too long or has a NUL");
+  }
+  return s;
+}
+
+lt::ip_filter peerClassFilter() {
+  auto bit = [](lt::peer_class_t c) {
+    return std::uint32_t(1) << static_cast<std::uint32_t>(c);
+  };
+  std::uint32_t const global = bit(lt::session_handle::global_peer_class_id);
+  std::uint32_t const both =
+      global | bit(lt::session_handle::local_peer_class_id);
+  lt::ip_filter f;
+  auto add = [&](char const* first, char const* last, std::uint32_t classes) {
+    f.add_rule(lt::make_address(first), lt::make_address(last), classes);
+  };
+  add("0.0.0.0", "255.255.255.255", global);
+  add("10.0.0.0", "10.255.255.255", both);
+  add("172.16.0.0", "172.31.255.255", both);
+  add("192.168.0.0", "192.168.255.255", both);
+  add("169.254.0.0", "169.254.255.255", both);
+  add("127.0.0.0", "127.255.255.255", both);
+  add("::", "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", global);
+  add("fc00::", "fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", both);
+  add("fe80::", "febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff", both);
+  add("::1", "::1", both);
+  return f;
+}
+
 }  // namespace
 
 Engine::Engine(EngineOptions options, Emit emit)
     : options_(std::move(options)), emit_(std::move(emit)) {
+  if (!options_.interfacePresent) {
+    options_.interfacePresent = [](std::string const& name) {
+      return if_nametoindex(name.c_str()) != 0;
+    };
+  }
   pendingDir_ = options_.profileDir + "/pending";
   int fds[2];
   if (pipe(fds) != 0) {
@@ -386,6 +474,7 @@ Engine::Engine(EngineOptions options, Emit emit)
   }
   lt::session_params params(baseSettings());
   session_ = std::make_unique<lt::session>(std::move(params));
+  session_->set_peer_class_filter(peerClassFilter());
   int wake = wakeWrite_;
   session_->set_alert_notify([wake] {
     char c = 1;
@@ -413,7 +502,6 @@ std::string Engine::engineName() {
 
 lt::settings_pack Engine::baseSettings() const {
   lt::settings_pack s;
-  s.set_str(sp::listen_interfaces, "");
   s.set_str(sp::outgoing_interfaces, "");
   s.set_str(sp::dht_bootstrap_nodes, "");
   s.set_bool(sp::enable_dht, false);
@@ -421,7 +509,6 @@ lt::settings_pack Engine::baseSettings() const {
   s.set_bool(sp::enable_upnp, false);
   s.set_bool(sp::enable_natpmp, false);
   s.set_bool(sp::enable_ip_notifier, false);
-  s.set_int(sp::stop_tracker_timeout, 1);
   s.set_int(sp::max_queued_disk_bytes, 4 * 1024 * 1024);
   s.set_int(sp::aio_threads, 2);
   s.set_int(sp::checking_mem_usage, 64);
@@ -432,8 +519,11 @@ lt::settings_pack Engine::baseSettings() const {
   s.set_int(sp::alert_mask,
             lt::alert_category::status | lt::alert_category::error |
                 lt::alert_category::storage | lt::alert_category::tracker);
+  s.set_bool(sp::dont_count_slow_torrents, false);
+  s.set_int(sp::auto_manage_interval, 5);
   applyIdentity(s);
   applyEncryption(s);
+  applyNetwork(s, false);
   s.set_int(sp::connections_limit, 200);
   return s;
 }
@@ -441,9 +531,37 @@ lt::settings_pack Engine::baseSettings() const {
 void Engine::applyIdentity(lt::settings_pack& s) const {
   s.set_str(sp::peer_fingerprint,
             config_.peerIdPrefix.value_or(kNeutralPeerId));
-  auto ua = config_.userAgent.value_or(kNeutralUserAgent);
+  auto ua = config_.userAgent.value_or("");
   s.set_str(sp::user_agent, ua);
   s.set_str(sp::handshake_client_version, ua);
+  s.set_bool(sp::anonymous_mode,
+             !config_.userAgent || config_.proxy.has_value());
+}
+
+void Engine::applyNetwork(lt::settings_pack& s, bool on) const {
+  if (on && config_.proxy) {
+    auto const& p = *config_.proxy;
+    s.set_int(sp::proxy_type, p.username.empty() ? sp::socks5 : sp::socks5_pw);
+    s.set_str(sp::proxy_hostname, p.host);
+    s.set_int(sp::proxy_port, p.port);
+    s.set_str(sp::proxy_username, p.username);
+    s.set_str(sp::proxy_password, p.password);
+    s.set_bool(sp::proxy_peer_connections, p.peers);
+  } else {
+    s.set_int(sp::proxy_type, sp::none);
+    s.set_str(sp::proxy_hostname, "");
+    s.set_int(sp::proxy_port, 0);
+    s.set_str(sp::proxy_username, "");
+    s.set_str(sp::proxy_password, "");
+    s.set_bool(sp::proxy_peer_connections, true);
+  }
+  s.set_bool(sp::proxy_hostnames, true);
+  s.set_bool(sp::proxy_tracker_connections, true);
+  bool utp = !config_.proxy;
+  s.set_bool(sp::enable_outgoing_utp, utp);
+  s.set_bool(sp::enable_incoming_utp, utp);
+  s.set_str(sp::listen_interfaces, on ? listenSpec() : "");
+  s.set_int(sp::stop_tracker_timeout, killed_ ? 0 : 1);
 }
 
 void Engine::applyEncryption(lt::settings_pack& s) const {
@@ -467,9 +585,139 @@ void Engine::applyLimits() {
   int up = limits_.turtle ? limits_.turtleUpKBps : limits_.upKBps;
   s.set_int(sp::download_rate_limit, down * 1024);
   s.set_int(sp::upload_rate_limit, up * 1024);
-  s.set_int(sp::active_downloads, limits_.maxActiveDownloads);
-  s.set_int(sp::active_limit, limits_.maxActiveTorrents);
+  auto queue = [](int n) { return n <= 0 ? -1 : n; };
+  s.set_int(sp::active_downloads, queue(limits_.maxActiveDownloads));
+  s.set_int(sp::active_seeds, queue(limits_.maxActiveTorrents));
+  s.set_int(sp::active_limit, queue(limits_.maxActiveTorrents));
   session_->apply_settings(std::move(s));
+  for (auto& [tid, t] : torrents_) {
+    if (t.goalReached) {
+      applyTorrentLimits(t);
+    }
+  }
+}
+
+void Engine::applyTorrentLimits(Torrent& t) {
+  int up = t.upLimitKBps;
+  if (t.goalReached && config_.seedSlow) {
+    int alt = limits_.turtleUpKBps;
+    up = up == 0 ? alt : (alt == 0 ? up : std::min(up, alt));
+  }
+  t.handle.set_download_limit(t.downLimitKBps * 1024);
+  t.handle.set_upload_limit(up * 1024);
+}
+
+void Engine::reconnectAll() {
+  if (killed_ || !listening_) {
+    return;
+  }
+  session_->pause();
+  session_->resume();
+}
+
+std::vector<lt::announce_entry> Engine::allowedTrackers(
+    std::vector<lt::announce_entry> const& all) const {
+  std::vector<lt::announce_entry> out;
+  for (auto const& ae : all) {
+    if (!(config_.proxy && isUdpTracker(ae.url))) {
+      out.push_back(ae);
+    }
+  }
+  return out;
+}
+
+void Engine::setAddTrackers(lt::add_torrent_params& atp,
+                            std::vector<lt::announce_entry> const& all) const {
+  atp.trackers.clear();
+  atp.tracker_tiers.clear();
+  for (auto const& ae : allowedTrackers(all)) {
+    atp.trackers.push_back(ae.url);
+    atp.tracker_tiers.push_back(ae.tier);
+  }
+}
+
+void Engine::applyIpFilter() {
+  lt::ip_filter f = userFilter_.value_or(lt::ip_filter());
+  if (config_.bindInterface) {
+    f.add_rule(lt::make_address("::"),
+               lt::make_address("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"),
+               lt::ip_filter::blocked);
+  }
+  session_->set_ip_filter(std::move(f));
+}
+
+json::array Engine::forcedOff() const {
+  json::array off;
+  if (config_.proxy) {
+    for (char const* k : {"dht", "lpd", "portMapping", "utp", "udpTrackers"}) {
+      off.emplace_back(k);
+    }
+    if (config_.proxy->peers) {
+      off.emplace_back("incoming");
+    }
+  }
+  if (config_.bindInterface) {
+    off.emplace_back("ipv6");
+  }
+  return off;
+}
+
+IpFilterList Engine::loadIpFilter(std::string const& path) const {
+  if (!isAbsolutePath(path)) {
+    fail("bad-request", "ipFilterPath must be an absolute path");
+  }
+  auto slash = path.rfind('/');
+  std::string parent = slash == 0 ? "/" : path.substr(0, slash);
+  std::string name = path.substr(slash + 1);
+  std::string inbox = options_.profileDir + "/" + kInboxDir;
+  char inboxReal[PATH_MAX];
+  char parentReal[PATH_MAX];
+  if (!realpath(inbox.c_str(), inboxReal)) {
+    fail("not-found", "there is no inbox folder " + inbox);
+  }
+  if (!realpath(parent.c_str(), parentReal) ||
+      std::string(parentReal) != inboxReal) {
+    fail("bad-request", "the IP filter file must be in " + inbox);
+  }
+  PathComponents parts;
+  if (auto e = splitRelativePath(name, &parts); e || parts.size() != 1) {
+    fail("bad-request", "the IP filter file name is not usable");
+  }
+  struct stat st;
+  if (lstat((std::string(inboxReal) + "/" + name).c_str(), &st) != 0 &&
+      errno == ENOENT) {
+    fail("not-found", "no IP filter file at " + path);
+  }
+  SafetyError err;
+  int fd = openConfined(inboxReal, parts, O_RDONLY, 0, false, &err);
+  if (fd < 0) {
+    fail(err.code, err.message);
+  }
+  if (fstat(fd, &st) != 0 ||
+      static_cast<std::uint64_t>(st.st_size) > kMaxIpFilterBytes) {
+    close(fd);
+    fail("too-large", "the IP filter file is larger than 64 MiB");
+  }
+  std::string text;
+  text.resize(static_cast<std::size_t>(st.st_size));
+  std::size_t off = 0;
+  while (off < text.size()) {
+    ssize_t n = ::read(fd, text.data() + off, text.size() - off);
+    if (n < 0 && errno == EINTR) {
+      continue;
+    }
+    if (n <= 0) {
+      break;
+    }
+    off += static_cast<std::size_t>(n);
+  }
+  close(fd);
+  text.resize(off);
+  IpFilterList list = parseIpFilter(text);
+  if (list.ranges == 0) {
+    fail("bad-request", "the IP filter file has no address ranges");
+  }
+  return list;
 }
 
 json::object Engine::handle(std::string const& op, json::object const& args) {
@@ -499,6 +747,9 @@ json::object Engine::handle(std::string const& op, json::object const& args) {
   }
   if (op == "setLimits") {
     return opSetLimits(args);
+  }
+  if (op == "setTorrentLimits") {
+    return opSetTorrentLimits(args);
   }
   if (op == "setConfig") {
     return opSetConfig(args);
@@ -634,12 +885,15 @@ json::object Engine::addMagnet(std::string const& uri) {
   fetch.file_priorities.clear();
   fetch.flags = lt::torrent_flags::update_subscribe |
                 lt::torrent_flags::default_dont_download |
+                lt::torrent_flags::apply_ip_filter |
                 lt::torrent_flags::disable_pex | lt::torrent_flags::disable_lsd;
-  if (!config_.dht) {
+  setAddTrackers(fetch, trackersOf(atp));
+  bool dht = config_.dht && !config_.proxy && !killed_;
+  if (!dht) {
     fetch.flags |= lt::torrent_flags::disable_dht;
   }
   ensureListening();
-  if (config_.dht && !dhtOn_) {
+  if (dht && !dhtOn_) {
     lt::settings_pack s;
     s.set_bool(sp::enable_dht, true);
     session_->apply_settings(std::move(s));
@@ -815,20 +1069,23 @@ json::object Engine::opConfirm(json::object const& args) {
     }
   }
 
+  auto trackers = trackersOf(p.atp);
   lt::add_torrent_params atp = p.atp;
   atp.name.clear();
   atp.save_path = root;
   atp.file_priorities = priorities;
   atp.added_time = std::time(nullptr);
+  setAddTrackers(atp, trackers);
   atp.flags = lt::torrent_flags::update_subscribe |
               lt::torrent_flags::apply_ip_filter |
               lt::torrent_flags::need_save_resume |
-              lt::torrent_flags::duplicate_is_error | privacyFlags(ti.priv());
+              lt::torrent_flags::duplicate_is_error |
+              lt::torrent_flags::paused | privacyFlags(ti.priv());
   if (sequential) {
     atp.flags |= lt::torrent_flags::sequential_download;
   }
-  if (!start) {
-    atp.flags |= lt::torrent_flags::paused;
+  if (start) {
+    atp.flags |= lt::torrent_flags::auto_managed;
   }
   if (start) {
     if (auto e = prepareWanted(root, fs, priorities)) {
@@ -852,6 +1109,7 @@ json::object Engine::opConfirm(json::object const& args) {
   t.metadata = p.metadata;
   t.addedAtMs = nowMs();
   t.userPaused = !start;
+  t.trackers = std::move(trackers);
   pending_.erase(it);
   auto& stored = torrents_.emplace(tid, std::move(t)).first->second;
   handles_[h] = tid;
@@ -898,17 +1156,17 @@ Engine::Torrent& Engine::confirmed(std::string const& tid) {
 }
 
 void Engine::setPaused(Torrent& t, bool pause) {
-  t.handle.unset_flags(lt::torrent_flags::auto_managed);
   t.userPaused = pause;
   t.completed = false;
   if (pause) {
+    t.handle.unset_flags(lt::torrent_flags::auto_managed);
     t.handle.pause();
   } else {
     if (t.status.errc) {
       t.handle.clear_error();
     }
     ensureListening();
-    t.handle.resume();
+    t.handle.set_flags(lt::torrent_flags::auto_managed);
   }
   requestResume(t);
 }
@@ -940,6 +1198,9 @@ json::object Engine::opPause(json::object const& args, bool pause) {
 
 json::object Engine::opPauseAll(bool pause) {
   for (auto& [tid, t] : torrents_) {
+    if (t.completed) {
+      continue;
+    }
     if (!pause) {
       if (auto e = checkTorrentFiles(t)) {
         emitError(tid, e->code, e->message);
@@ -1029,7 +1290,7 @@ json::object Engine::opDetail(json::object const& args) {
                       lt::torrent_handle::query_save_path);
   r["status"] = statusJson(t);
   r["metadata"] = t.metadata;
-  r["trackers"] = trackersJson(t.handle);
+  r["trackers"] = trackersJson(t);
   std::vector<lt::peer_info> peers;
   t.handle.get_peer_info(peers);
   json::array peerList;
@@ -1082,9 +1343,20 @@ json::object Engine::opDetail(json::object const& args) {
   return r;
 }
 
-json::array Engine::trackersJson(lt::torrent_handle const& h) const {
+json::array Engine::trackersJson(Torrent const& t) const {
   json::array list;
-  for (auto const& ae : h.trackers()) {
+  for (auto const& ae : t.trackers) {
+    if (config_.proxy && isUdpTracker(ae.url)) {
+      json::object o;
+      o["url"] = ae.url;
+      o["status"] = "disabled";
+      o["seeds"] = -1;
+      o["peers"] = -1;
+      o["message"] = "UDP trackers are off while a proxy is set";
+      list.push_back(std::move(o));
+    }
+  }
+  for (auto const& ae : t.handle.trackers()) {
     bool working = false, updating = false, failed = false, enabled = false;
     int seeds = -1, peers = -1;
     std::string message;
@@ -1144,9 +1416,28 @@ json::object Engine::opSetLimits(json::object const& args) {
   return {};
 }
 
+json::object Engine::opSetTorrentLimits(json::object const& args) {
+  Torrent& t = confirmed(tidArg(args));
+  constexpr std::int64_t kMaxKBps = 4 * 1024 * 1024;
+  int down =
+      static_cast<int>(intArg(args, "downKBps", 0, kMaxKBps, t.downLimitKBps));
+  int up = static_cast<int>(intArg(args, "upKBps", 0, kMaxKBps, t.upLimitKBps));
+  t.downLimitKBps = down;
+  t.upLimitKBps = up;
+  applyTorrentLimits(t);
+  requestResume(t);
+  refreshStatus(t);
+  json::object r;
+  r["status"] = statusJson(t);
+  return r;
+}
+
 json::object Engine::opSetConfig(json::object const& args) {
   Config next = config_;
   json::array applied, unsupported;
+  std::optional<IpFilterList> filter;
+  bool filterChanged = false;
+  bool goalChanged = false;
   for (auto const& [key, value] : args) {
     std::string k(key);
     if (k == "encryption") {
@@ -1203,37 +1494,78 @@ json::object Engine::opSetConfig(json::object const& args) {
       if (!value.is_object()) {
         fail("bad-request", "proxy must be an object");
       }
-      std::string type = stringArg(value.as_object(), "type");
-      if (type != "none" && type != "socks5") {
+      auto const& o = value.as_object();
+      std::string type = stringArg(o, "type");
+      if (type == "none") {
+        next.proxy.reset();
+      } else if (type == "socks5") {
+        Proxy p;
+        p.host = stringArg(o, "host");
+        if (!printableAscii(p.host, 253) ||
+            p.host.find(' ') != std::string::npos) {
+          fail("bad-request", "proxy.host must be a host name or address");
+        }
+        p.port = static_cast<int>(intArg(o, "port", 1, 65535));
+        p.username = optionalString(o, "username", 255);
+        p.password = optionalString(o, "password", 255);
+        p.peers = boolArg(o, "peers", true);
+        next.proxy = std::move(p);
+      } else {
         fail("bad-request", "proxy.type must be none or socks5");
       }
-      (type == "none" ? applied : unsupported).emplace_back(k);
-      continue;
     } else if (k == "ipFilterPath") {
-      if (!value.is_null() && !value.is_string()) {
+      if (value.is_null()) {
+        next.ipFilterPath.reset();
+        filter.reset();
+      } else if (value.is_string()) {
+        next.ipFilterPath = std::string(value.as_string());
+        filter = loadIpFilter(*next.ipFilterPath);
+      } else {
         fail("bad-request", "ipFilterPath must be a path or null");
       }
-      (value.is_null() ? applied : unsupported).emplace_back(k);
-      continue;
+      filterChanged = true;
     } else if (k == "seedGoal") {
       if (!value.is_object()) {
         fail("bad-request", "seedGoal must be an object");
       }
       auto const& o = value.as_object();
-      bool never = !findArg(o, "ratio") && !findArg(o, "hours");
-      (never ? applied : unsupported).emplace_back(k);
-      continue;
+      next.seedRatio = goalArg(o, "ratio");
+      next.seedHours = goalArg(o, "hours");
+      std::string action =
+          findArg(o, "action") ? stringArg(o, "action") : "stop";
+      if (action != "stop" && action != "slow") {
+        fail("bad-request", "seedGoal.action must be stop or slow");
+      }
+      next.seedSlow = action == "slow";
+      goalChanged = true;
     } else {
       unsupported.emplace_back(k);
       continue;
     }
     applied.emplace_back(k);
   }
-  bool reopen = listening_ && (next.bindInterface != config_.bindInterface ||
+  bool proxyChanged = next.proxy.has_value() != config_.proxy.has_value() ||
+                      (next.proxy && config_.proxy &&
+                       (next.proxy->host != config_.proxy->host ||
+                        next.proxy->port != config_.proxy->port ||
+                        next.proxy->username != config_.proxy->username ||
+                        next.proxy->password != config_.proxy->password ||
+                        next.proxy->peers != config_.proxy->peers));
+  bool bindChanged = next.bindInterface != config_.bindInterface;
+  bool reconnect = listening_ && (proxyChanged || bindChanged ||
+                                  next.encryption != config_.encryption);
+  bool reopen = listening_ && (bindChanged || proxyChanged ||
                                (next.listenPort && next.listenPort != port_));
   config_ = next;
   if (config_.listenPort) {
     port_ = config_.listenPort;
+  }
+  if (filterChanged) {
+    if (filter) {
+      userFilter_ = std::move(filter->filter);
+    } else {
+      userFilter_.reset();
+    }
   }
   lt::settings_pack s;
   applyIdentity(s);
@@ -1241,21 +1573,49 @@ json::object Engine::opSetConfig(json::object const& args) {
   s.set_int(sp::connections_limit,
             config_.maxConnections > 0 ? config_.maxConnections : 200);
   s.set_str(sp::outgoing_interfaces, config_.bindInterface.value_or(""));
+  if (listening_ && !killed_) {
+    applyNetwork(s, true);
+  } else {
+    bool utp = !config_.proxy;
+    s.set_bool(sp::enable_outgoing_utp, utp);
+    s.set_bool(sp::enable_incoming_utp, utp);
+  }
   if (reopen) {
-    s.set_str(sp::listen_interfaces, listenSpec());
     listenAnnounced_ = false;
   }
   session_->apply_settings(std::move(s));
+  if (filterChanged || bindChanged) {
+    applyIpFilter();
+  }
   for (auto& [tid, t] : torrents_) {
     auto flags = privacyFlags(t.ti && t.ti->priv());
     t.handle.set_flags(flags, lt::torrent_flags::disable_pex |
                                   lt::torrent_flags::disable_dht |
                                   lt::torrent_flags::disable_lsd);
+    if (proxyChanged) {
+      t.handle.replace_trackers(allowedTrackers(t.trackers));
+    }
+    if (goalChanged && !t.completed && t.goalReached) {
+      t.goalReached = false;
+      applyTorrentLimits(t);
+      requestResume(t);
+    }
   }
   refreshNetwork();
+  watchBoundInterface();
+  if (reconnect) {
+    reconnectAll();
+  }
   json::object r;
   r["applied"] = std::move(applied);
   r["unsupported"] = std::move(unsupported);
+  r["forcedOff"] = forcedOff();
+  if (filterChanged && userFilter_ && filter) {
+    json::object f;
+    f["ranges"] = filter->ranges;
+    f["skipped"] = filter->skipped;
+    r["ipFilter"] = std::move(f);
+  }
   return r;
 }
 
@@ -1332,13 +1692,41 @@ json::object Engine::opRestore(json::object const& args) {
     t.completed = m6eState && m6eState.dict_find_int_value("completed", 0) != 0;
     t.finishedSeen =
         m6eState && m6eState.dict_find_int_value("finished", 0) != 0;
+    if (m6eState) {
+      auto limit = [&](char const* key) {
+        return static_cast<int>(std::clamp<std::int64_t>(
+            m6eState.dict_find_int_value(key, 0), 0, 4 * 1024 * 1024));
+      };
+      t.downLimitKBps = limit("downLimit");
+      t.upLimitKBps = limit("upLimit");
+      t.goalReached = m6eState.dict_find_int_value("goalReached", 0) != 0;
+    }
+    auto savedTrackers =
+        m6eState ? m6eState.dict_find_list("trackers") : lt::bdecode_node();
+    if (savedTrackers) {
+      for (int i = 0; i < savedTrackers.list_size(); i++) {
+        auto entry = savedTrackers.list_at(i);
+        if (entry.type() != lt::bdecode_node::list_t ||
+            entry.list_size() != 2 ||
+            entry.list_at(0).type() != lt::bdecode_node::string_t) {
+          continue;
+        }
+        lt::announce_entry ae(std::string(entry.list_string_value_at(0)));
+        ae.tier = static_cast<std::uint8_t>(
+            std::clamp<std::int64_t>(entry.list_int_value_at(1), 0, 255));
+        t.trackers.push_back(std::move(ae));
+      }
+    } else {
+      t.trackers = trackersOf(atp);
+    }
     atp.flags &=
         ~(lt::torrent_flags::auto_managed | lt::torrent_flags::paused |
           lt::torrent_flags::disable_dht | lt::torrent_flags::disable_pex |
           lt::torrent_flags::disable_lsd | lt::torrent_flags::upload_mode |
           lt::torrent_flags::default_dont_download);
-    atp.flags |=
-        lt::torrent_flags::update_subscribe | privacyFlags(atp.ti->priv());
+    atp.flags |= lt::torrent_flags::update_subscribe |
+                 lt::torrent_flags::apply_ip_filter |
+                 lt::torrent_flags::paused | privacyFlags(atp.ti->priv());
     bool startNow = start && !t.userPaused && !t.completed;
     if (startNow) {
       if (auto e = checkBeforeTransfer(atp.save_path, atp.ti->layout(),
@@ -1349,11 +1737,18 @@ json::object Engine::opRestore(json::object const& args) {
     }
     if (startNow) {
       ensureListening();
-    } else {
-      atp.flags |= lt::torrent_flags::paused;
+      atp.flags |= lt::torrent_flags::auto_managed;
     }
     t.ti = atp.ti;
-    t.metadata = buildMetadata(tid, *atp.ti, atp);
+    setAddTrackers(atp, t.trackers);
+    lt::add_torrent_params full = atp;
+    full.trackers.clear();
+    full.tracker_tiers.clear();
+    for (auto const& ae : t.trackers) {
+      full.trackers.push_back(ae.url);
+      full.tracker_tiers.push_back(ae.tier);
+    }
+    t.metadata = buildMetadata(tid, *atp.ti, full);
     lt::torrent_handle h = session_->add_torrent(std::move(atp), ec);
     if (ec) {
       log("warn", "could not restore " + tid + ": " + ec.message());
@@ -1362,6 +1757,7 @@ json::object Engine::opRestore(json::object const& args) {
     t.handle = h;
     auto& stored = torrents_.emplace(tid, std::move(t)).first->second;
     handles_[h] = tid;
+    applyTorrentLimits(stored);
     refreshStatus(stored);
   }
   refreshNetwork();
@@ -1450,6 +1846,9 @@ json::object Engine::statusJson(Torrent const& t) const {
   o["savePath"] = st.save_path;
   o["sequential"] = bool(st.flags & lt::torrent_flags::sequential_download);
   o["addedAt"] = t.addedAtMs;
+  o["downLimitKBps"] = t.downLimitKBps;
+  o["upLimitKBps"] = t.upLimitKBps;
+  o["goalReached"] = t.goalReached;
   if (st.errc) {
     json::object e;
     e["code"] = errorCode(st.errc);
@@ -1486,6 +1885,9 @@ json::object Engine::pendingStatusJson(Pending const& p) const {
   o["savePath"] = "";
   o["sequential"] = false;
   o["addedAt"] = p.addedAtMs;
+  o["downLimitKBps"] = 0;
+  o["upLimitKBps"] = 0;
+  o["goalReached"] = false;
   o["error"] = nullptr;
   return o;
 }
@@ -1499,7 +1901,7 @@ std::string Engine::listenSpec() const {
 }
 
 void Engine::ensureListening() {
-  if (listening_) {
+  if (listening_ || killed_) {
     return;
   }
   if (port_ == 0) {
@@ -1508,7 +1910,7 @@ void Engine::ensureListening() {
                 : 20000 + static_cast<int>(arc4random_uniform(40000));
   }
   lt::settings_pack s;
-  s.set_str(sp::listen_interfaces, listenSpec());
+  applyNetwork(s, true);
   session_->apply_settings(std::move(s));
   listening_ = true;
   listenAnnounced_ = false;
@@ -1518,17 +1920,18 @@ void Engine::refreshNetwork() {
   bool fetching = anyFetching();
   bool active = anyActive();
   bool publicActive = anyPublicActive();
-  bool wantListen = fetching || active;
-  bool wantDht = config_.dht && (fetching || publicActive);
-  bool wantLsd = config_.lpd && publicActive;
-  bool wantMapping = config_.portMapping && wantListen;
+  bool open = !config_.proxy && !killed_;
+  bool wantListen = !killed_ && (fetching || active);
+  bool wantDht = open && config_.dht && (fetching || publicActive);
+  bool wantLsd = open && config_.lpd && publicActive;
+  bool wantMapping = open && config_.portMapping && wantListen;
   if (wantListen && !listening_) {
     ensureListening();
   }
   lt::settings_pack s;
   bool changed = false;
   if (!wantListen && listening_) {
-    s.set_str(sp::listen_interfaces, "");
+    applyNetwork(s, false);
     if (listenAnnounced_) {
       emit_(event("closed"));
     }
@@ -1770,7 +2173,7 @@ void Engine::emitTrackerAndPeerChanges() {
       t.trackersDirty = false;
       json::object e = event("trackers");
       e["tid"] = tid;
-      e["trackers"] = trackersJson(t.handle);
+      e["trackers"] = trackersJson(t);
       emit_(e);
     }
     int seeds = t.status.num_seeds;
@@ -1823,6 +2226,17 @@ bool Engine::writeResume(Torrent const& t, lt::add_torrent_params const& atp) {
   state["paused"] = t.userPaused ? 1 : 0;
   state["completed"] = t.completed ? 1 : 0;
   state["finished"] = t.finishedSeen ? 1 : 0;
+  state["downLimit"] = t.downLimitKBps;
+  state["upLimit"] = t.upLimitKBps;
+  state["goalReached"] = t.goalReached ? 1 : 0;
+  lt::entry::list_type trackers;
+  for (auto const& ae : t.trackers) {
+    lt::entry::list_type pair;
+    pair.emplace_back(ae.url);
+    pair.emplace_back(static_cast<std::int64_t>(ae.tier));
+    trackers.emplace_back(std::move(pair));
+  }
+  state["trackers"] = std::move(trackers);
   std::vector<char> buf;
   lt::bencode(std::back_inserter(buf), e);
   std::string path = resumePath(t.tid);
@@ -1864,9 +2278,89 @@ void Engine::deleteResume(std::string const& tid) {
   unlink((resumePath(tid) + ".tmp").c_str());
 }
 
-void Engine::applySeedGoals() {}
+bool Engine::seedGoalMet(Torrent const& t) const {
+  auto const& st = t.status;
+  if (config_.seedRatio) {
+    std::int64_t base =
+        st.total_wanted_done > 0 ? st.total_wanted_done : st.all_time_download;
+    if (base > 0 && static_cast<double>(st.all_time_upload) >=
+                        *config_.seedRatio * static_cast<double>(base)) {
+      return true;
+    }
+  }
+  if (config_.seedHours) {
+    auto seconds =
+        std::chrono::duration_cast<std::chrono::seconds>(st.seeding_duration)
+            .count();
+    if (static_cast<double>(seconds) >= *config_.seedHours * 3600.0) {
+      return true;
+    }
+  }
+  return false;
+}
 
-void Engine::watchBoundInterface() {}
+void Engine::applySeedGoals() {
+  if (!config_.seedRatio && !config_.seedHours) {
+    return;
+  }
+  for (auto& [tid, t] : torrents_) {
+    if (t.goalReached || t.completed || t.userPaused) {
+      continue;
+    }
+    if (stateOf(t) != "seeding") {
+      continue;
+    }
+    refreshStatus(t);
+    if (stateOf(t) != "seeding" || !seedGoalMet(t)) {
+      continue;
+    }
+    t.goalReached = true;
+    if (config_.seedSlow) {
+      applyTorrentLimits(t);
+    } else {
+      t.handle.unset_flags(lt::torrent_flags::auto_managed);
+      t.handle.pause();
+      t.completed = true;
+    }
+    requestResume(t);
+    refreshStatus(t);
+    json::object e = event("goalReached");
+    e["tid"] = tid;
+    e["action"] = config_.seedSlow ? "slow" : "stop";
+    emit_(e);
+  }
+}
+
+void Engine::watchBoundInterface() {
+  bool present = !config_.bindInterface ||
+                 options_.interfacePresent(*config_.bindInterface);
+  if (present == !killed_) {
+    return;
+  }
+  json::object e = event(present ? "interfaceUp" : "interfaceDown");
+  if (!present) {
+    downInterface_ = *config_.bindInterface;
+  }
+  e["interface"] = downInterface_;
+  if (!present) {
+    killed_ = true;
+    lt::settings_pack s;
+    s.set_int(sp::stop_tracker_timeout, 0);
+    session_->apply_settings(std::move(s));
+    session_->pause();
+    refreshNetwork();
+    log("warn", "the network interface " + *config_.bindInterface +
+                    " is gone; every connection is closed");
+  } else {
+    killed_ = false;
+    lt::settings_pack s;
+    s.set_int(sp::stop_tracker_timeout, 1);
+    session_->apply_settings(std::move(s));
+    refreshNetwork();
+    session_->resume();
+  }
+  emit_(e);
+}
 
 void Engine::tick(Clock::time_point now) {
   nextTick_ = now + kTick;
