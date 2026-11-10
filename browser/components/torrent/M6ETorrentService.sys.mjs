@@ -265,7 +265,7 @@ class M6ETorrentServiceImpl {
       httpRealm: PROXY_LOGIN_REALM,
     });
     for (const login of existing) {
-      Services.logins.removeLogin(login);
+      await Services.logins.removeLoginAsync(login);
     }
     if (password == "") {
       return;

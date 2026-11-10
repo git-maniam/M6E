@@ -98,9 +98,10 @@ function waitForPref(name, expected) {
 }
 
 async function openSection() {
-  await openPreferencesViaOpenPreferencesAPI("bittorrent", {
-    leaveOpen: true,
-  });
+  await BrowserTestUtils.openNewForegroundTab(
+    gBrowser,
+    "about:preferences#bittorrent"
+  );
   let doc = gBrowser.selectedBrowser.contentDocument;
   await TestUtils.waitForCondition(
     () => doc.getElementById("btPrivacyNote"),
