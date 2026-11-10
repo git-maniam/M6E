@@ -20,7 +20,8 @@ const TEMP_DIR_NAME = "m6e-torrent-open";
 const QUEUE_LIFETIME_MS = 60000;
 const PAGE_COOLDOWN_MS = 2000;
 
-const SOURCE_UNKNOWN = Object.freeze({ kind: "unknown", origin: null });
+const GO_TO_PAGE = Object.freeze({ goToPage: true });
+const SOURCE_UNKNOWN =Object.freeze({ kind: "unknown", origin: null });
 const SOURCE_FINDER = Object.freeze({ kind: "finder", origin: null });
 
 function isEnabled() {
@@ -136,9 +137,11 @@ export const M6ETorrentHandler = {
     this.init();
     const win = browsingContext?.topChromeWindow;
     if (triggeredExternally) {
-      this._open(win, w => w.gM6ETorrent.addMagnet(uri.spec, SOURCE_UNKNOWN), {
-        focus: true,
-      });
+      this._open(
+        win,
+        w => w.gM6ETorrent.addMagnet(uri.spec, SOURCE_UNKNOWN, GO_TO_PAGE),
+        { focus: true }
+      );
       return true;
     }
     const privileged = !!principal?.isSystemPrincipal;
@@ -155,9 +158,11 @@ export const M6ETorrentHandler = {
       kind: principal?.isContentPrincipal ? "magnet-page" : "unknown",
       origin: httpsOriginOfPrincipal(principal),
     };
-    this._open(win, w => w.gM6ETorrent.addMagnet(uri.spec, source), {
-      pageInitiated: !privileged,
-    });
+    this._open(
+      win,
+      w => w.gM6ETorrent.addMagnet(uri.spec, source, GO_TO_PAGE),
+      { pageInitiated: !privileged }
+    );
     return true;
   },
 
@@ -196,7 +201,7 @@ export const M6ETorrentHandler = {
       launcher.cancel(Cr.NS_BINDING_ABORTED);
       this._open(
         this._windowOf(launcher, context),
-        w => w.gM6ETorrent.addTorrentFile(file.path, SOURCE_FINDER),
+        w => w.gM6ETorrent.addTorrentFile(file.path, SOURCE_FINDER, GO_TO_PAGE),
         { focus: true }
       );
       return true;
@@ -240,7 +245,7 @@ export const M6ETorrentHandler = {
     }
     let run;
     if (uri.schemeIs("magnet")) {
-      run = w => w.gM6ETorrent.addMagnet(uri.spec, SOURCE_UNKNOWN);
+      run = w => w.gM6ETorrent.addMagnet(uri.spec, SOURCE_UNKNOWN, GO_TO_PAGE);
     } else if (uri.schemeIs("file")) {
       let file;
       try {
@@ -252,7 +257,7 @@ export const M6ETorrentHandler = {
         return false;
       }
       const path = file.path;
-      run = w => w.gM6ETorrent.addTorrentFile(path, SOURCE_FINDER);
+      run = w => w.gM6ETorrent.addTorrentFile(path, SOURCE_FINDER, GO_TO_PAGE);
     } else {
       return false;
     }
@@ -442,7 +447,11 @@ export const M6ETorrentHandler = {
     this._open(
       entry.win,
       w => {
-        const result = w.gM6ETorrent.addTorrentFile(path, entry.source);
+        const result = w.gM6ETorrent.addTorrentFile(
+          path,
+          entry.source,
+          GO_TO_PAGE
+        );
         const remove = () =>
           IOUtils.remove(path, { ignoreAbsent: true }).catch(console.error);
         Promise.resolve(result).then(remove, remove);

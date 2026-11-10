@@ -503,3 +503,221 @@ add_task(async function test_dialog_is_labelled_and_focusable() {
   await closeAddDialog(opened);
   await done;
 });
+
+const REAL_PICK_FOLDER = gM6ETorrent.pickFolder;
+
+registerCleanupFunction(() => {
+  gM6ETorrent.pickFolder = REAL_PICK_FOLDER;
+});
+
+function stubPickFolder(result) {
+  const calls = [];
+  gM6ETorrent.pickFolder = async startPath => {
+    calls.push(startPath);
+    return result;
+  };
+  return { calls };
+}
+
+function savePathOf(doc) {
+  return doc.getElementById("m6e-torrent-add-save-path").value;
+}
+
+add_task(async function test_download_dir_pref_sets_the_save_folder() {
+  const { service } = installMocks();
+  await SpecialPowers.pushPrefEnv({
+    set: [["m6e.torrent.downloadDir", "/mock/chosen-dir"]],
+  });
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  const opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  is(
+    savePathOf(opened.doc),
+    "/mock/chosen-dir",
+    "The configured folder is the starting save location"
+  );
+  opened.doc.getElementById("m6e-torrent-add-confirm").click();
+  is(await done, true, "The torrent is added");
+  is(
+    service.callsTo("confirmAdd")[0].args[1].savePath,
+    "/mock/chosen-dir",
+    "and it is saved there"
+  );
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function test_empty_or_relative_download_dir_uses_downloads() {
+  installMocks();
+  const { Downloads } = ChromeUtils.importESModule(
+    "resource://gre/modules/Downloads.sys.mjs"
+  );
+  const expected = await Downloads.getPreferredDownloadsDirectory();
+  ok(expected, "The browser has a download folder");
+  for (const value of ["", "relative/folder"]) {
+    await SpecialPowers.pushPrefEnv({
+      set: [["m6e.torrent.downloadDir", value]],
+    });
+    const done = gM6ETorrent.addTorrentFile(
+      "/mock/sample.torrent",
+      FILE_SOURCE
+    );
+    const opened = await waitForAddDialog();
+    await waitForDetails(opened.doc);
+    is(
+      savePathOf(opened.doc),
+      expected,
+      `"${value}" falls back to the browser's download folder`
+    );
+    await closeAddDialog(opened);
+    await done;
+    await SpecialPowers.popPrefEnv();
+  }
+});
+
+add_task(async function test_start_now_pref_is_the_checkbox_default() {
+  const { service } = installMocks();
+  await SpecialPowers.pushPrefEnv({ set: [["m6e.torrent.startNow", false]] });
+  let done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  let opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  ok(
+    !opened.doc.getElementById("m6e-torrent-add-start-now").checked,
+    "Start now is off when the setting is off"
+  );
+  opened.doc.getElementById("m6e-torrent-add-confirm").click();
+  await done;
+  is(
+    service.callsTo("confirmAdd")[0].args[1].start,
+    false,
+    "The torrent is added paused"
+  );
+  await SpecialPowers.popPrefEnv();
+
+  await SpecialPowers.pushPrefEnv({ set: [["m6e.torrent.startNow", true]] });
+  done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  opened = await waitForAddDialog(opened);
+  await waitForDetails(opened.doc);
+  ok(
+    opened.doc.getElementById("m6e-torrent-add-start-now").checked,
+    "Start now is on when the setting is on"
+  );
+  opened.doc.getElementById("m6e-torrent-add-confirm").click();
+  await done;
+  is(
+    service.callsTo("confirmAdd")[1].args[1].start,
+    true,
+    "The torrent is started"
+  );
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function test_ask_where_opens_the_folder_chooser_first() {
+  const { service } = installMocks();
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["m6e.torrent.askWhereToSave", true],
+      ["m6e.torrent.downloadDir", "/mock/default-dir"],
+    ],
+  });
+  const picker = stubPickFolder("/mock/picked-dir");
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  const opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  await TestUtils.waitForCondition(
+    () => savePathOf(opened.doc) == "/mock/picked-dir",
+    "The folder chosen first becomes the save location"
+  );
+  Assert.deepEqual(
+    picker.calls,
+    ["/mock/default-dir"],
+    "The chooser opened once, in the default folder"
+  );
+  Assert.deepEqual(
+    service.callsTo("confirmAdd"),
+    [],
+    "Choosing a folder adds nothing"
+  );
+  opened.doc.getElementById("m6e-torrent-add-confirm").click();
+  await done;
+  is(
+    service.callsTo("confirmAdd")[0].args[1].savePath,
+    "/mock/picked-dir",
+    "The torrent is saved in the chosen folder"
+  );
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function test_ask_where_cancelled_keeps_the_default() {
+  installMocks();
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["m6e.torrent.askWhereToSave", true],
+      ["m6e.torrent.downloadDir", "/mock/default-dir"],
+    ],
+  });
+  const picker = stubPickFolder(null);
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  const opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  await TestUtils.waitForCondition(
+    () => picker.calls.length == 1,
+    "The chooser opened"
+  );
+  await settle();
+  is(
+    savePathOf(opened.doc),
+    "/mock/default-dir",
+    "Cancelling the chooser keeps the default folder"
+  );
+  ok(
+    !opened.doc.getElementById("m6e-torrent-add-confirm").disabled,
+    "and the dialog can still add"
+  );
+  await closeAddDialog(opened);
+  await done;
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function test_ask_where_off_does_not_open_the_chooser() {
+  installMocks();
+  await SpecialPowers.pushPrefEnv({
+    set: [["m6e.torrent.askWhereToSave", false]],
+  });
+  const picker = stubPickFolder("/mock/picked-dir");
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  const opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  await settle();
+  is(picker.calls.length, 0, "The chooser stays closed");
+  await closeAddDialog(opened);
+  await done;
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function test_unsupported_setting_errors_are_ignored() {
+  installMocks();
+  const done = gM6ETorrent.addMagnet(SYNTHETIC_MAGNET);
+  const opened = await waitForAddDialog();
+  for (const tid of [undefined, SYNTHETIC_HASH]) {
+    Services.obs.notifyObservers(
+      null,
+      "m6e-torrent-error",
+      JSON.stringify({
+        tid,
+        code: "unsupported-setting",
+        message: "the helper cannot apply seedGoal",
+      })
+    );
+  }
+  await settle();
+  ok(
+    !visible(opened.doc, "m6e-torrent-add-error"),
+    "An unsupported-setting event does not show an error in the dialog"
+  );
+  ok(
+    visible(opened.doc, "m6e-torrent-add-fetching"),
+    "The dialog keeps waiting for the metadata"
+  );
+  await closeAddDialog(opened);
+  await done;
+});

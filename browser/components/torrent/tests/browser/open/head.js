@@ -8,6 +8,10 @@
 // metadata only. No test names a real torrent, info hash or tracker, and none
 // reaches the network or starts the helper (spec 8.9, D38).
 
+const { M6ETorrentService } = ChromeUtils.importESModule(
+  "moz-src:///browser/components/torrent/M6ETorrentService.sys.mjs"
+);
+
 const SYNTHETIC_HASH = "0".repeat(40);
 const SYNTHETIC_MAGNET = `magnet:?xt=urn:btih:${"a".repeat(40)}`;
 
@@ -125,9 +129,76 @@ class MockRisk {
   }
 }
 
+function syntheticStatus(tid) {
+  return {
+    tid,
+    name: "synthetic-sample",
+    state: "downloading",
+    progress: 0.25,
+    size: 3000,
+    downloaded: 750,
+    uploaded: 0,
+    downKBps: 12,
+    upKBps: 0,
+    etaSeconds: 90,
+    ratio: 0,
+    seeds: 1,
+    peers: 2,
+    isPrivate: false,
+    savePath: "/mock/downloads",
+    sequential: false,
+    addedAt: 1700000000000,
+    error: null,
+  };
+}
+
+function dialogContainer(browser) {
+  return browser.closest(".browserSidebarContainer");
+}
+
+function torrentsTabs() {
+  return gBrowser.tabs.filter(
+    tab => tab.linkedBrowser.currentURI.spec.split("#")[0] == "about:torrents"
+  );
+}
+
+function closeTorrentsTabs() {
+  for (const tab of torrentsTabs()) {
+    BrowserTestUtils.removeTab(tab);
+  }
+}
+
+function installPageMock(service) {
+  // about:torrents reads the real singleton, so it gets the mock's data too.
+  const methods = {
+    list: async () => ({ torrents: service.torrents }),
+    detail: async () => {
+      throw new Error("not found");
+    },
+  };
+  for (const [name, value] of Object.entries(methods)) {
+    Object.defineProperty(M6ETorrentService, name, {
+      configurable: true,
+      writable: true,
+      value,
+    });
+  }
+  registerCleanupFunction(() => {
+    for (const name of Object.keys(methods)) {
+      delete M6ETorrentService[name];
+    }
+  });
+  Assert.ok(
+    Object.hasOwn(M6ETorrentService, "list"),
+    "The page reads the mock list, so the real service is not used"
+  );
+}
+
 function installMocks() {
+  closeTorrentsTabs();
   const service = new MockTorrentService();
   const risk = new MockRisk();
+  installPageMock(service);
   gM6ETorrent.service = service;
   gM6ETorrent.risk = risk;
   gM6ETorrent.lastAddDialog = null;

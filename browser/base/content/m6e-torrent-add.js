@@ -418,7 +418,7 @@ function onMetadataNotification(subject, topic, data) {
   } catch (e) {
     return;
   }
-  if (detail.tid != params.tid) {
+  if (detail.tid != params.tid || detail.code == "unsupported-setting") {
     return;
   }
   if (topic == "m6e-torrent-metadata" && !metadata && detail.metadata) {
@@ -455,12 +455,20 @@ function init() {
     { once: true }
   );
 
+  $("m6e-torrent-add-start-now").checked = params.startNow ?? true;
+
   const known = params.metadata ?? params.takeMetadata(params.tid);
+  let ready = Promise.resolve();
   if (known) {
-    return showMetadata(known);
+    ready = showMetadata(known);
+  } else {
+    $("m6e-torrent-add-cancel").focus();
   }
-  $("m6e-torrent-add-cancel").focus();
-  return Promise.resolve();
+  if (params.askWhereToSave) {
+    // Not awaited: the dialog must be ready while the folder chooser is open.
+    ready.then(chooseFolder).catch(console.error);
+  }
+  return ready;
 }
 
 document.mozSubdialogReady = init().catch(console.error);
