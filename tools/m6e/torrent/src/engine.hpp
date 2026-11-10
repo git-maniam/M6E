@@ -16,12 +16,15 @@
 
 #include <libtorrent/add_torrent_params.hpp>
 #include <libtorrent/alert.hpp>
+#include <libtorrent/announce_entry.hpp>
+#include <libtorrent/ip_filter.hpp>
 #include <libtorrent/session.hpp>
 #include <libtorrent/settings_pack.hpp>
 #include <libtorrent/torrent_handle.hpp>
 #include <libtorrent/torrent_info.hpp>
 #include <libtorrent/torrent_status.hpp>
 
+#include "ipfilter.hpp"
 #include "json.hpp"
 #include "safety.hpp"
 
@@ -32,6 +35,9 @@ using Clock = std::chrono::steady_clock;
 struct EngineOptions {
   std::string profileDir;
   std::chrono::seconds idleExit{60};
+  // Whether the named network interface exists; the kill switch polls it
+  // once a second. Defaults to if_nametoindex.
+  std::function<bool(std::string const&)> interfacePresent;
 };
 
 // The libtorrent session and every torrent in it. Single-threaded: all calls
@@ -63,6 +69,14 @@ class Engine {
   void shutdown(Clock::time_point saveBy);
 
  private:
+  struct Proxy {
+    std::string host;
+    int port = 0;
+    std::string username;
+    std::string password;
+    bool peers = true;
+  };
+
   struct Config {
     std::string encryption = "enabled";
     bool dht = false;
@@ -74,6 +88,11 @@ class Engine {
     std::optional<std::string> peerIdPrefix;
     std::optional<std::string> userAgent;
     int maxConnections = 0;
+    std::optional<Proxy> proxy;
+    std::optional<std::string> ipFilterPath;
+    std::optional<double> seedRatio;
+    std::optional<double> seedHours;
+    bool seedSlow = false;
   };
 
   struct Limits {
@@ -111,6 +130,12 @@ class Engine {
     bool trackersDirty = false;
     int lastSeeds = -2;
     int lastPeers = -2;
+    int downLimitKBps = 0;
+    int upLimitKBps = 0;
+    bool goalReached = false;
+    // Every tracker of the torrent; UDP ones are withheld from the engine
+    // while a proxy is set.
+    std::vector<lt::announce_entry> trackers;
   };
 
   json::object opAdd(json::object const& args);
@@ -124,6 +149,7 @@ class Engine {
   json::object opList();
   json::object opDetail(json::object const& args);
   json::object opSetLimits(json::object const& args);
+  json::object opSetTorrentLimits(json::object const& args);
   json::object opSetConfig(json::object const& args);
   json::object opRestore(json::object const& args);
 
@@ -131,6 +157,18 @@ class Engine {
   void applyLimits();
   void applyIdentity(lt::settings_pack& sp) const;
   void applyEncryption(lt::settings_pack& sp) const;
+  // The settings that follow activity: listen sockets and the proxy are only
+  // set while something is active (`on`), so an idle helper opens nothing.
+  void applyNetwork(lt::settings_pack& sp, bool on) const;
+  void applyIpFilter();
+  void applyTorrentLimits(Torrent& t);
+  void reconnectAll();
+  std::vector<lt::announce_entry> allowedTrackers(
+      std::vector<lt::announce_entry> const& all) const;
+  void setAddTrackers(lt::add_torrent_params& atp,
+                      std::vector<lt::announce_entry> const& all) const;
+  json::array forcedOff() const;
+  IpFilterList loadIpFilter(std::string const& path) const;
   void ensureListening();
   void refreshNetwork();
   std::string listenSpec() const;
@@ -155,10 +193,10 @@ class Engine {
   void deleteResume(std::string const& tid);
   std::string resumePath(std::string const& tid) const;
 
-  // Extension points for P8.5 (seeding goals, queue, kill switch); called
-  // once a second.
+  // Called once a second; watchBoundInterface also after setConfig.
   void applySeedGoals();
   void watchBoundInterface();
+  bool seedGoalMet(Torrent const& t) const;
 
   bool anyActive() const;
   bool anyFetching() const;
@@ -167,7 +205,7 @@ class Engine {
   std::string stateOf(Torrent const& t) const;
   json::object statusJson(Torrent const& t) const;
   json::object pendingStatusJson(Pending const& p) const;
-  json::array trackersJson(lt::torrent_handle const& h) const;
+  json::array trackersJson(Torrent const& t) const;
   Torrent* byHandle(lt::torrent_handle const& h);
   Torrent& confirmed(std::string const& tid);
   void refreshStatus(Torrent& t);
@@ -186,6 +224,12 @@ class Engine {
   std::map<lt::torrent_handle, std::string> handles_;
   std::set<std::string> deleting_;
   int outstandingSaves_ = 0;
+
+  std::optional<lt::ip_filter> userFilter_;
+  // The bound interface is missing: the session is paused and every
+  // connection is closed until it returns.
+  bool killed_ = false;
+  std::string downInterface_;
 
   bool listening_ = false;
   bool listenAnnounced_ = false;

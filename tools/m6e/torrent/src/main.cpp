@@ -11,6 +11,8 @@
 #include <cstring>
 #include <exception>
 #include <fcntl.h>
+#include <functional>
+#include <net/if.h>
 #include <new>
 #include <poll.h>
 #include <string>
@@ -59,6 +61,20 @@ bool makeProfileDir(std::string const& path) {
   }
   struct stat st;
   return stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+// M6E_TORRENT_TEST_INTERFACE_GATE names a file; while it is missing the bound
+// interface counts as gone. It can only trigger the kill switch, never hide
+// a missing interface.
+std::function<bool(std::string const&)> interfaceLookup() {
+  char const* gate = std::getenv("M6E_TORRENT_TEST_INTERFACE_GATE");
+  std::string gatePath = gate ? gate : "";
+  return [gatePath](std::string const& name) {
+    if (if_nametoindex(name.c_str()) == 0) {
+      return false;
+    }
+    return gatePath.empty() || access(gatePath.c_str(), F_OK) == 0;
+  };
 }
 
 std::chrono::seconds idleSeconds() {
@@ -219,7 +235,7 @@ int main(int argc, char** argv) {
   std::unique_ptr<m6e::Engine> engine;
   try {
     engine = std::make_unique<m6e::Engine>(
-        m6e::EngineOptions{resolved, idleSeconds()},
+        m6e::EngineOptions{resolved, idleSeconds(), interfaceLookup()},
         [&out](json::object const& e) { out.write(e); });
   } catch (std::exception const& e) {
     std::fprintf(stderr, "m6e-torrent: cannot start the engine: %s\n",
