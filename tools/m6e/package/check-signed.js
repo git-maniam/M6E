@@ -8,6 +8,9 @@
 // The GPU process only starts without --headless. Every entry of `checks`
 // must be true (hasGpu only without --headless). inIon() is true only while
 // the calling code runs in Ion, so a build that interprets slowly cannot pass.
+// The BitTorrent helper next to the executable (Contents/MacOS/m6e-torrent) is
+// checked too: signature, hardened runtime, no entitlements, arm64, macOS 11.0,
+// and that it starts, answers `ready` and exits within 2 s of the end of its input.
 // WASM is sum() from: int sum(int n) { int s = 0; for (int i = 0; i < n; i++) s += (i ^ (i >> 3)) * 3; return s; }
 const WASM = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 6, 1, 96, 1, 127, 1, 127, 3, 2, 1, 0, 5, 3, 1, 0, 1, 7, 16, 2, 6, 109, 101, 109, 111, 114, 121, 2, 0, 3, 115, 117, 109, 0, 0, 10, 178, 1, 1, 175, 1, 1, 4, 127, 2, 64, 32, 0, 65, 1, 78, 13, 0, 65, 0, 15, 11, 32, 0, 65, 3, 113, 33, 1, 65, 0, 33, 2, 65, 0, 33, 3, 2, 64, 2, 64, 32, 0, 65, 4, 73, 13, 0, 32, 0, 65, 252, 255, 255, 255, 7, 113, 33, 4, 65, 0, 33, 2, 65, 0, 33, 3, 3, 64, 32, 2, 65, 3, 118, 34, 0, 32, 2, 65, 3, 106, 115, 65, 3, 108, 32, 0, 32, 2, 65, 2, 106, 115, 65, 3, 108, 32, 0, 32, 2, 65, 1, 106, 115, 65, 3, 108, 32, 0, 32, 2, 115, 65, 3, 108, 32, 3, 106, 106, 106, 106, 33, 3, 32, 2, 65, 4, 106, 34, 2, 32, 4, 71, 13, 0, 11, 32, 1, 69, 13, 1, 11, 3, 64, 32, 2, 65, 3, 118, 32, 2, 115, 65, 3, 108, 32, 3, 106, 33, 3, 32, 2, 65, 1, 106, 33, 2, 32, 1, 65, 127, 106, 34, 1, 13, 0, 11, 11, 32, 3, 11, 0, 24, 4, 110, 97, 109, 101, 0, 9, 8, 115, 117, 109, 46, 119, 97, 115, 109, 1, 6, 1, 0, 3, 115, 117, 109, 0, 47, 9, 112, 114, 111, 100, 117, 99, 101, 114, 115, 1, 12, 112, 114, 111, 99, 101, 115, 115, 101, 100, 45, 98, 121, 1, 14, 72, 111, 109, 101, 98, 114, 101, 119, 32, 99, 108, 97, 110, 103, 6, 50, 51, 46, 49, 46, 52, 0, 148, 1, 15, 116, 97, 114, 103, 101, 116, 95, 102, 101, 97, 116, 117, 114, 101, 115, 8, 43, 11, 98, 117, 108, 107, 45, 109, 101, 109, 111, 114, 121, 43, 15, 98, 117, 108, 107, 45, 109, 101, 109, 111, 114, 121, 45, 111, 112, 116, 43, 22, 99, 97, 108, 108, 45, 105, 110, 100, 105, 114, 101, 99, 116, 45, 111, 118, 101, 114, 108, 111, 110, 103, 43, 10, 109, 117, 108, 116, 105, 118, 97, 108, 117, 101, 43, 15, 109, 117, 116, 97, 98, 108, 101, 45, 103, 108, 111, 98, 97, 108, 115, 43, 19, 110, 111, 110, 116, 114, 97, 112, 112, 105, 110, 103, 45, 102, 112, 116, 111, 105, 110, 116, 43, 15, 114, 101, 102, 101, 114, 101, 110, 99, 101, 45, 116, 121, 112, 101, 115, 43, 8, 115, 105, 103, 110, 45, 101, 120, 116]);
 const out = {};
@@ -165,6 +168,63 @@ out.processTypes = [...new Set(procs.children.map(c => c.type))].sort();
 out.processCount = procs.children.length;
 win.gBrowser.removeTab(tab);
 
+const { Subprocess } = ChromeUtils.importESModule("resource://gre/modules/Subprocess.sys.mjs");
+const helperPath = PathUtils.join(Services.dirsvc.get("XREExeF", Ci.nsIFile).parent.path, "m6e-torrent");
+
+async function tool(command, args) {
+  const proc = await Subprocess.call({ command, arguments: args, stderr: "stdout" });
+  let text = "";
+  let chunk;
+  while ((chunk = await proc.stdout.readString())) {
+    text += chunk;
+  }
+  const { exitCode } = await proc.wait();
+  return { exitCode, text };
+}
+
+async function checkHelper() {
+  const h = { path: helperPath, exists: await IOUtils.exists(helperPath) };
+  if (!h.exists) {
+    return h;
+  }
+  h.verify = await tool("/usr/bin/codesign", ["--verify", "--strict", helperPath]);
+  h.info = (await tool("/usr/bin/codesign", ["-dv", helperPath])).text;
+  h.entitlements = (await tool("/usr/bin/codesign", ["-d", "--entitlements", "-", "--xml", helperPath])).text;
+  h.archs = (await tool("/usr/bin/lipo", ["-archs", helperPath])).text.trim();
+  h.minos = /minos (\S+)/.exec((await tool("/usr/bin/otool", ["-l", helperPath])).text)?.[1];
+  const profile = await IOUtils.createUniqueDirectory(PathUtils.tempDir, "m6e-helper-check");
+  const proc = await Subprocess.call({
+    command: helperPath,
+    arguments: ["--protocol", "1", "--profile-dir", PathUtils.join(profile, "torrents")],
+  });
+  try {
+    let first = "";
+    const reading = (async () => {
+      let chunk;
+      while (!first.includes("\n") && (chunk = await proc.stdout.readString())) {
+        first += chunk;
+      }
+    })();
+    await Promise.race([reading, sleep(15000)]);
+    try {
+      h.ready = JSON.parse(first.split("\n")[0]);
+    } catch (e) {
+      h.ready = null;
+    }
+    const closed = performance.now();
+    await proc.stdin.close();
+    const exited = await Promise.race([proc.wait(), sleep(2000).then(() => null)]);
+    h.exitCode = exited ? exited.exitCode : null;
+    h.exitMs = Math.round(performance.now() - closed);
+  } finally {
+    await proc.kill(0).catch(() => {});
+    await IOUtils.remove(profile, { recursive: true, ignoreAbsent: true });
+  }
+  return h;
+}
+
+out.helper = await checkHelper();
+
 const c = out.content;
 out.checks = {
   jitParent: out.parent.ionAt >= 0,
@@ -180,5 +240,13 @@ out.checks = {
   hasSocket: out.processTypes.includes("socket"),
   hasRdd: out.processTypes.includes("rdd"),
   hasGpu: out.processTypes.includes("gpu"),
+  helperPresent: out.helper.exists === true,
+  helperSigned: out.helper.verify?.exitCode === 0 && /Signature=adhoc/.test(out.helper.info),
+  helperHardenedRuntime: /flags=0x[0-9a-f]+\([^)]*runtime/.test(out.helper.info ?? ""),
+  helperNoEntitlements: out.helper.exists === true && !(out.helper.entitlements ?? "").includes("<key>"),
+  helperArm64Only: out.helper.archs === "arm64",
+  helperMinos11: out.helper.minos === "11.0",
+  helperReady: out.helper.ready?.event === "ready" && out.helper.ready?.protocol === 1,
+  helperExitsOnInputEnd: out.helper.exitCode === 0 && out.helper.exitMs < 2000,
 };
 return out;
