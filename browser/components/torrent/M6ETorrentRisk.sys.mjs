@@ -199,8 +199,7 @@ function isPadFile(file) {
   if (file.pad === true) {
     return true;
   }
-  const path = file.path;
-  return path.startsWith(".pad/") || path.includes("/.pad/");
+  return /(^|\/)\.pad\/\d+$/.test(file.path);
 }
 
 function findBundle(parts) {
@@ -338,8 +337,7 @@ function analyze(rules, metadata) {
             ? bundle.slice(0, bundle.lastIndexOf("/"))
             : "",
           base: bundle.slice(bundle.lastIndexOf("/") + 1),
-          ext: "app",
-          prevExt: "",
+          ...splitName(bundle.slice(bundle.lastIndexOf("/") + 1)),
           bundle: true,
         });
       }
@@ -365,6 +363,14 @@ function analyze(rules, metadata) {
     }
   }
 
+  if (
+    !lists["bidi-override"].size &&
+    typeof metadata?.name == "string" &&
+    hasHidden(rules, metadata.name)
+  ) {
+    lists["bidi-override"].add(metadata.name);
+  }
+
   const programFiles = [];
   for (const entry of entries) {
     const { path, base, dirPath, ext, prevExt } = entry;
@@ -383,7 +389,7 @@ function analyze(rules, metadata) {
       lists["shortcut-file"].add(path);
     }
 
-    if (!entry.bundle && (isProgram || isShortcut)) {
+    if (isProgram || isShortcut) {
       const padded = rules.paddedRe.test(base);
       if (rules.decoy.has(prevExt) || padded) {
         lists["double-extension"].add(path);
@@ -396,7 +402,11 @@ function analyze(rules, metadata) {
       dir = { strong: hasStrongPiracyToken(rules, tokenize(dirPath)) };
       dirInfo.set(dirPath, dir);
     }
-    const harmless = rules.harmless.has(ext) && !entry.bundle;
+    const harmless =
+      !entry.bundle &&
+      (rules.harmless.has(ext) ||
+        rules.video.has(ext) ||
+        rules.audio.has(ext));
     let piracy = false;
     if (!harmless) {
       if (dir.strong || hasStrongPiracyToken(rules, baseTokens)) {
@@ -434,7 +444,8 @@ function analyze(rules, metadata) {
   const mediaLike =
     nameLooksLikeMedia(rules, metadata?.name || "") ||
     (mediaCount > 0 &&
-      (mediaCount * 2 >= contentCount || mediaBytes * 2 >= totalBytes));
+      mediaCount * 2 >= contentCount &&
+      mediaBytes * 2 >= totalBytes);
   if (mediaLike) {
     for (const path of programFiles) {
       lists["program-in-media"].add(path);

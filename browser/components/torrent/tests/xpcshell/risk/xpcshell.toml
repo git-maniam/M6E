@@ -1,1 +1,5 @@
 [DEFAULT]
+firefox-appdir = "browser"
+support-files = ["risk_cases.sys.mjs"]
+
+["test_m6e_torrent_risk.js"]
