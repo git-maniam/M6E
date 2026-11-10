@@ -1,5 +1,7 @@
 #include "safety.hpp"
 
+#include "confine.hpp"
+
 #include <cerrno>
 #include <sys/stat.h>
 
@@ -103,6 +105,14 @@ bool componentIsSafe(std::string_view c) {
   return true;
 }
 
+bool hasAttribute(lt::bdecode_node const& entry, char flag) {
+  if (entry.type() != lt::bdecode_node::dict_t) {
+    return false;
+  }
+  return entry.dict_find_string_value("attr").find(flag) !=
+         std::string_view::npos;
+}
+
 bool isAbsolutePath(std::string const& path) {
   return !path.empty() && path[0] == '/' &&
          path.find('\0') == std::string::npos;
@@ -159,6 +169,15 @@ std::optional<SafetyError> checkInfoDict(lt::bdecode_node const& info) {
   }
   if (!files && !tree && hasSymlinkEntry(info)) {
     return unsafe("the torrent contains a symbolic link");
+  }
+  std::vector<Layout> layouts;
+  if (auto err = layoutsFromInfo(info, &layouts)) {
+    return err;
+  }
+  for (auto const& layout : layouts) {
+    if (auto err = checkLayoutPaths(layout)) {
+      return err;
+    }
   }
   return std::nullopt;
 }
