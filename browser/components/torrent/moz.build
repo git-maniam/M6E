@@ -14,6 +14,10 @@ BROWSER_CHROME_MANIFESTS += [
     "tests/browser/ui/browser.toml",
 ]
 
+XPCSHELL_TESTS_MANIFESTS += [
+    "tests/xpcshell/risk/xpcshell.toml",
+]
+
 MOZ_SRC_FILES += [
     "m6e-torrent-rules.json",
     "M6ETorrentHandler.sys.mjs",
