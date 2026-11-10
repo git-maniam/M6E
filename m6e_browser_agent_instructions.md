@@ -266,7 +266,7 @@ Each step follows the plan's step loop (build, check, commit as `M6E P8.<step>: 
 #### 8.9 Test torrents (mandatory, D38)
 This is a hard rule for every person and every agent working on BitTorrent. It is never to be relaxed, worked around or reinterpreted. The reason: the developer's computer is an office-issued machine under security hardening, and downloading an untrusted torrent on it could breach policy and cost the developer their job.
 
-- **Allowed test torrents.** Any torrent that is added, downloaded, seeded or contacted over a network, whether manually or by a script, must come from one of these two official pages, and from no other source:
+- **Allowed test torrents.** Any torrent that is added, downloaded, seeded or contacted over a network, whether manually or by a script, must be a torrent link (a `.torrent` file or a `magnet:` link) listed on one of these two official download pages, and from no other source:
   - Fedora Linux: https://fedoraproject.org/torrents/45/
   - Debian: https://cdimage.debian.org/debian-cd/current/arm64/bt-dvd/
 - **Everything else is "Shady" for testing.** A torrent or magnet link from anywhere else is off-list and must not be used, even if it looks legitimate. This includes torrents of the projects below when they are not taken from the two pages above (so a Debian or Fedora torrent from a mirror, a forum, a search result or another page is also off-list):
