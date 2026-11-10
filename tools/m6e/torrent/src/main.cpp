@@ -39,8 +39,9 @@ void onSignal(int) {
 }
 
 void usage() {
-  std::fprintf(stderr,
-               "usage: m6e-torrent --protocol 1 --profile-dir <absolute path>\n");
+  std::fprintf(
+      stderr,
+      "usage: m6e-torrent --protocol 1 --profile-dir <absolute path>\n");
 }
 
 bool makeProfileDir(std::string const& path) {
@@ -145,7 +146,8 @@ bool dispatch(std::string_view line, m6e::Engine& engine, m6e::Output& out) {
     reply["result"] = engine.handle(op, *args);
     if (!out.write(reply) && !out.closed()) {
       out.write(errorReply(
-          *id, {"too-large", "the reply is longer than the protocol allows", {}}));
+          *id,
+          {"too-large", "the reply is longer than the protocol allows", {}}));
     }
   } catch (m6e::RequestError const& e) {
     out.write(errorReply(*id, e));
@@ -191,7 +193,8 @@ int main(int argc, char** argv) {
   }
   char resolved[PATH_MAX];
   if (!realpath(profileDir.c_str(), resolved)) {
-    std::fprintf(stderr, "m6e-torrent: cannot resolve %s\n", profileDir.c_str());
+    std::fprintf(stderr, "m6e-torrent: cannot resolve %s\n",
+                 profileDir.c_str());
     return 1;
   }
 
@@ -205,7 +208,7 @@ int main(int argc, char** argv) {
     fcntl(fd, F_SETFD, FD_CLOEXEC);
   }
   gStopWrite = stopPipe[1];
-  struct sigaction sa {};
+  struct sigaction sa{};
   sa.sa_handler = onSignal;
   sigemptyset(&sa.sa_mask);
   sigaction(SIGTERM, &sa, nullptr);
@@ -219,7 +222,8 @@ int main(int argc, char** argv) {
         m6e::EngineOptions{resolved, idleSeconds()},
         [&out](json::object const& e) { out.write(e); });
   } catch (std::exception const& e) {
-    std::fprintf(stderr, "m6e-torrent: cannot start the engine: %s\n", e.what());
+    std::fprintf(stderr, "m6e-torrent: cannot start the engine: %s\n",
+                 e.what());
     return 1;
   }
   json::object ready = m6e::event("ready");
@@ -258,7 +262,9 @@ int main(int argc, char** argv) {
         running = reader.feed(
             buf, static_cast<std::size_t>(got),
             [&](std::string_view line) { return dispatch(line, *engine, out); },
-            [&] { protocolErrorEvent(out, "a request line is longer than 1 MiB"); });
+            [&] {
+              protocolErrorEvent(out, "a request line is longer than 1 MiB");
+            });
       }
     }
     now = m6e::Clock::now();

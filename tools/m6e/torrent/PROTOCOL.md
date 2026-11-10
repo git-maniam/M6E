@@ -69,3 +69,18 @@ Error codes: `bad-request`, `not-found`, `invalid-torrent`, `too-large`, `unsafe
 - "No listening socket at idle" means: nothing pending and nothing active. Sockets (DHT, tracker, listening) may be open while a magnet link's metadata is being fetched. A private torrent behind a magnet link cannot be recognised before its metadata arrives, so DHT may be used for that short fetch only; the helper drops the handle as soon as the metadata is in.
 - If the engine sets the executable bit from a torrent attribute, the helper clears it when the file completes (and says so in the README if it cannot).
 
+
+## Additions (helper-core, 2026-11-10)
+- Environment: `M6E_TORRENT_IDLE_SECONDS` (integer, default 60; 0 turns the idle exit off). The helper exits with status 0 once nothing has been pending or active, and no request has arrived, for that long. Exit status 2 means a bad command line.
+- Before the first `setConfig`, `dht`, `pex`, `lpd` and `portMapping` are off and `encryption` is `"enabled"`.
+- `setConfig` lists as `unsupported`, until P8.5 adds them: `proxy` with `type` `"socks5"`, an `ipFilterPath` that is not null, and a `seedGoal` with a `ratio` or `hours`. Unknown keys are `unsupported` too. A key with a wrong type fails the whole request with `bad-request` and nothing is applied.
+- Event `trackers`: `{ "tid", "trackers": [the tracker objects of detail] }`, at most once a second per torrent, after a tracker answers or fails.
+- Event `peers`: `{ "tid", "seeds", "peers" }`, when a torrent's connected counts change (checked once a second).
+- Event `completed` may carry `"warning": string` when the helper could not clear the execute bits or set the quarantine attribute on a finished file. `completed` is written only after the torrent's data is flushed to its files; until then the torrent reports `downloading`.
+- `Metadata.files[]` of a magnet link with a BEP 53 `so=` selection carries `"selected": boolean`.
+- `Status`: `size` is the size of the selected files, `downloaded` the verified bytes of the selected files, `uploaded` all bytes uploaded, `ratio` uploaded divided by downloaded (0 when nothing is downloaded); `seeds` and `peers` count connected seeds and connected peers that are not seeds.
+- `progress` lists every confirmed torrent. After the last active torrent stops, one more `progress` event reports the final states, then none.
+- A line that is not a JSON object with an integer `id`, or that is longer than 1 MiB, cannot be answered: the helper writes an `error` event with `code` `"bad-request"` instead.
+- A reply or `metadata` event that would be longer than 1 MiB (a torrent with tens of thousands of files) becomes a `too-large` error.
+- `confirm` treats a missing `sequential` or `start` as false. `remove` of a pending torrent works like `cancel`. `remove` with `deleteFiles` replies after the engine has deleted the files (at most 3 seconds).
+- Files in `--profile-dir`: `<tid>.resume` (libtorrent resume data with the info dictionary and an `m6e` dictionary), mode 0600; `pending/`, the engine's save folder while a magnet link's metadata is fetched (nothing is written there).

@@ -22,8 +22,8 @@ std::optional<std::int64_t> asInt(json::value const& value) {
     return *p;
   }
   if (auto const* p = value.if_uint64()) {
-    if (*p <= static_cast<std::uint64_t>(
-                  std::numeric_limits<std::int64_t>::max())) {
+    if (*p <=
+        static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
       return static_cast<std::int64_t>(*p);
     }
     return std::nullopt;
@@ -75,8 +75,7 @@ std::int64_t intArg(json::object const& args, std::string_view key,
   auto n = v ? asInt(*v) : std::nullopt;
   if (!n || *n < min || *n > max) {
     fail("bad-request", std::string(key) + " must be an integer from " +
-                            std::to_string(min) + " to " +
-                            std::to_string(max));
+                            std::to_string(min) + " to " + std::to_string(max));
   }
   return *n;
 }
@@ -193,8 +192,8 @@ bool Output::write(json::object const& message) {
   line.push_back('\n');
   std::size_t offset = 0;
   while (offset < line.size()) {
-    ssize_t n = ::write(STDOUT_FILENO, line.data() + offset,
-                        line.size() - offset);
+    ssize_t n =
+        ::write(STDOUT_FILENO, line.data() + offset, line.size() - offset);
     if (n < 0) {
       if (errno == EINTR) {
         continue;

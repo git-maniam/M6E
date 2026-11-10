@@ -23,6 +23,7 @@
 #include <libtorrent/torrent_status.hpp>
 
 #include "json.hpp"
+#include "safety.hpp"
 
 namespace m6e {
 
@@ -135,6 +136,7 @@ class Engine {
   std::string listenSpec() const;
   void updatePower(bool active);
   void setPaused(Torrent& t, bool pause);
+  std::optional<SafetyError> checkTorrentFiles(Torrent const& t);
   void dropPending(std::string const& tid);
   void pumpUntil(std::function<bool()> const& done, Clock::duration timeout);
 

@@ -35,6 +35,7 @@
 #include <libtorrent/version.hpp>
 #include <libtorrent/write_resume_data.hpp>
 
+#include "confine.hpp"
 #include "protocol.hpp"
 #include "safety.hpp"
 
@@ -146,6 +147,47 @@ std::optional<SafetyError> checkLayoutComponents(lt::torrent_info const& ti) {
     }
   }
   return std::nullopt;
+}
+
+std::optional<SafetyError> checkFilesUnder(std::string const& root,
+                                           lt::file_storage const& fs) {
+  std::vector<std::string> paths;
+  std::vector<bool> pad;
+  for (auto i : fs.file_range()) {
+    paths.push_back(fs.file_path(i));
+    pad.push_back(fs.pad_file_at(i));
+  }
+  return checkRelativePaths(root, paths, pad);
+}
+
+std::optional<SafetyError> prepareWanted(
+    std::string const& root, lt::file_storage const& fs,
+    std::vector<lt::download_priority_t> const& priorities) {
+  Layout layout;
+  for (auto i : fs.file_range()) {
+    auto k = static_cast<std::size_t>(static_cast<int>(i));
+    if (fs.pad_file_at(i) ||
+        (k < priorities.size() && priorities[k] == lt::dont_download)) {
+      continue;
+    }
+    LayoutFile f;
+    f.path = splitPath(fs.file_path(i));
+    layout.files.push_back(std::move(f));
+  }
+  return prepareDirectories(root, layout);
+}
+
+std::optional<SafetyError> checkBeforeTransfer(
+    std::string const& savePath, lt::file_storage const& fs,
+    std::vector<lt::download_priority_t> const& priorities) {
+  std::string root;
+  if (auto e = canonicalRoot(savePath, &root)) {
+    return e;
+  }
+  if (auto e = checkFilesUnder(root, fs)) {
+    return e;
+  }
+  return prepareWanted(root, fs, priorities);
 }
 
 std::string errorCode(lt::error_code const& ec) {
@@ -289,9 +331,9 @@ json::object buildMetadata(std::string const& tid, lt::torrent_info const& ti,
       f["pad"] = true;
     }
     if (!selection.empty()) {
-      f["selected"] = static_cast<std::size_t>(index) < selection.size() &&
-                      selection[static_cast<std::size_t>(index)] !=
-                          lt::dont_download;
+      f["selected"] =
+          static_cast<std::size_t>(index) < selection.size() &&
+          selection[static_cast<std::size_t>(index)] != lt::dont_download;
     }
     files.push_back(std::move(f));
   }
@@ -387,10 +429,9 @@ lt::settings_pack Engine::baseSettings() const {
   s.set_int(sp::metadata_token_limit, kMaxBencodeItems);
   s.set_int(sp::max_retry_port_bind, 10);
   s.set_int(sp::min_reconnect_time, 10);
-  s.set_int(sp::alert_mask, lt::alert_category::status |
-                                lt::alert_category::error |
-                                lt::alert_category::storage |
-                                lt::alert_category::tracker);
+  s.set_int(sp::alert_mask,
+            lt::alert_category::status | lt::alert_category::error |
+                lt::alert_category::storage | lt::alert_category::tracker);
   applyIdentity(s);
   applyEncryption(s);
   s.set_int(sp::connections_limit, 200);
@@ -398,7 +439,8 @@ lt::settings_pack Engine::baseSettings() const {
 }
 
 void Engine::applyIdentity(lt::settings_pack& s) const {
-  s.set_str(sp::peer_fingerprint, config_.peerIdPrefix.value_or(kNeutralPeerId));
+  s.set_str(sp::peer_fingerprint,
+            config_.peerIdPrefix.value_or(kNeutralPeerId));
   auto ua = config_.userAgent.value_or(kNeutralUserAgent);
   s.set_str(sp::user_agent, ua);
   s.set_str(sp::handshake_client_version, ua);
@@ -495,16 +537,16 @@ json::object Engine::addFile(std::string const& path) {
     case ReadResult::notRegular:
       fail("invalid-torrent", "the torrent path is not a regular file");
     case ReadResult::error:
-      fail("io-error", "cannot read the torrent file: " +
-                           std::string(std::strerror(err)));
+      fail("io-error",
+           "cannot read the torrent file: " + std::string(std::strerror(err)));
   }
   lt::error_code ec;
   int errorPos = 0;
-  lt::bdecode_node root = lt::bdecode(buf, ec, &errorPos, kMaxBencodeDepth,
-                                      kMaxBencodeItems);
+  lt::bdecode_node root =
+      lt::bdecode(buf, ec, &errorPos, kMaxBencodeDepth, kMaxBencodeItems);
   if (ec) {
-    fail("invalid-torrent", "the torrent file is not valid bencoding (" +
-                                ec.message() + ")");
+    fail("invalid-torrent",
+         "the torrent file is not valid bencoding (" + ec.message() + ")");
   }
   if (root.type() != lt::bdecode_node::dict_t) {
     fail("invalid-torrent", "the torrent file is not a dictionary");
@@ -566,8 +608,8 @@ json::object Engine::addMagnet(std::string const& uri) {
   lt::error_code ec;
   lt::add_torrent_params atp = lt::parse_magnet_uri(uri, ec);
   if (ec) {
-    fail("invalid-torrent", "the magnet link names no torrent (" +
-                                ec.message() + ")");
+    fail("invalid-torrent",
+         "the magnet link names no torrent (" + ec.message() + ")");
   }
   std::string tid = tidOf(atp.info_hashes);
   if (torrents_.count(tid)) {
@@ -641,11 +683,11 @@ void Engine::onMetadata(lt::torrent_handle const& h) {
   } else {
     auto section = ti->info_section();
     lt::error_code ec;
-    lt::bdecode_node info = lt::bdecode(section, ec, nullptr, kMaxBencodeDepth,
-                                        kMaxBencodeItems);
+    lt::bdecode_node info =
+        lt::bdecode(section, ec, nullptr, kMaxBencodeDepth, kMaxBencodeItems);
     if (ec) {
-      problem = SafetyError{"invalid-torrent",
-                            "the metadata is not valid bencoding"};
+      problem =
+          SafetyError{"invalid-torrent", "the metadata is not valid bencoding"};
     } else {
       problem = checkInfoDict(info);
     }
@@ -733,8 +775,8 @@ json::object Engine::opConfirm(json::object const& args) {
 
   char resolved[PATH_MAX];
   if (!realpath(savePath.c_str(), resolved)) {
-    fail(errnoCode(errno), "the save folder is not usable: " +
-                               std::string(std::strerror(errno)));
+    fail(errnoCode(errno),
+         "the save folder is not usable: " + std::string(std::strerror(errno)));
   }
   std::string root = resolved;
   struct stat st;
@@ -744,14 +786,13 @@ json::object Engine::opConfirm(json::object const& args) {
   if (access(root.c_str(), W_OK) != 0) {
     fail("io-error", "the save folder is not writable");
   }
+  if (auto e = checkFilesUnder(root, fs)) {
+    fail(e->code, e->message);
+  }
   std::int64_t wanted = 0;
   for (auto i : fs.file_range()) {
     if (fs.pad_file_at(i)) {
       continue;
-    }
-    auto parts = splitPath(fs.file_path(i));
-    if (auto e = checkNoSymlinkEscape(root, parts)) {
-      fail(e->code, e->message);
     }
     if (priorities[static_cast<std::size_t>(static_cast<int>(i))] ==
         lt::dont_download) {
@@ -790,6 +831,9 @@ json::object Engine::opConfirm(json::object const& args) {
     atp.flags |= lt::torrent_flags::paused;
   }
   if (start) {
+    if (auto e = prepareWanted(root, fs, priorities)) {
+      fail(e->code, e->message);
+    }
     ensureListening();
   }
   lt::error_code ec;
@@ -869,8 +913,22 @@ void Engine::setPaused(Torrent& t, bool pause) {
   requestResume(t);
 }
 
+std::optional<SafetyError> Engine::checkTorrentFiles(Torrent const& t) {
+  if (!t.ti) {
+    return std::nullopt;
+  }
+  return checkBeforeTransfer(
+      t.handle.status(lt::torrent_handle::query_save_path).save_path,
+      t.ti->layout(), t.handle.get_file_priorities());
+}
+
 json::object Engine::opPause(json::object const& args, bool pause) {
   Torrent& t = confirmed(tidArg(args));
+  if (!pause) {
+    if (auto e = checkTorrentFiles(t)) {
+      fail(e->code, e->message);
+    }
+  }
   setPaused(t, pause);
   refreshStatus(t);
   refreshNetwork();
@@ -882,6 +940,12 @@ json::object Engine::opPause(json::object const& args, bool pause) {
 
 json::object Engine::opPauseAll(bool pause) {
   for (auto& [tid, t] : torrents_) {
+    if (!pause) {
+      if (auto e = checkTorrentFiles(t)) {
+        emitError(tid, e->code, e->message);
+        continue;
+      }
+    }
     setPaused(t, pause);
   }
   for (auto& [tid, t] : torrents_) {
@@ -901,8 +965,9 @@ json::object Engine::opRemove(json::object const& args) {
   }
   Torrent& t = confirmed(tid);
   lt::torrent_handle h = t.handle;
-  session_->remove_torrent(h, deleteFiles ? lt::session_handle::delete_files
-                                          : lt::session_handle::delete_partfile);
+  session_->remove_torrent(h, deleteFiles
+                                  ? lt::session_handle::delete_files
+                                  : lt::session_handle::delete_partfile);
   handles_.erase(h);
   torrents_.erase(tid);
   deleteResume(tid);
@@ -940,7 +1005,9 @@ json::object Engine::opDetail(json::object const& args) {
     json::object pieces;
     pieces["count"] = p.fetching ? 0 : p.atp.ti->num_pieces();
     pieces["have"] = base64(std::vector<std::uint8_t>(
-        p.fetching ? 0 : static_cast<std::size_t>((p.atp.ti->num_pieces() + 7) / 8)));
+        p.fetching
+            ? 0
+            : static_cast<std::size_t>((p.atp.ti->num_pieces() + 7) / 8)));
     r["pieces"] = std::move(pieces);
     json::array files;
     if (!p.fetching) {
@@ -956,9 +1023,10 @@ json::object Engine::opDetail(json::object const& args) {
     return r;
   }
   Torrent& t = confirmed(tid);
-  t.status = t.handle.status(lt::torrent_handle::query_pieces |
-                             lt::torrent_handle::query_accurate_download_counters |
-                             lt::torrent_handle::query_save_path);
+  t.status =
+      t.handle.status(lt::torrent_handle::query_pieces |
+                      lt::torrent_handle::query_accurate_download_counters |
+                      lt::torrent_handle::query_save_path);
   r["status"] = statusJson(t);
   r["metadata"] = t.metadata;
   r["trackers"] = trackersJson(t.handle);
@@ -969,9 +1037,8 @@ json::object Engine::opDetail(json::object const& args) {
     json::object o;
     o["address"] = endpointString(pi.remote_endpoint());
     o["client"] = pi.client;
-    o["encrypted"] =
-        bool(pi.flags & (lt::peer_info::rc4_encrypted |
-                         lt::peer_info::plaintext_encrypted));
+    o["encrypted"] = bool(pi.flags & (lt::peer_info::rc4_encrypted |
+                                      lt::peer_info::plaintext_encrypted));
     o["downKBps"] = round1(pi.payload_down_speed / 1024.0);
     o["upKBps"] = round1(pi.payload_up_speed / 1024.0);
     o["progress"] = std::clamp<double>(pi.progress, 0.0, 1.0);
@@ -1000,10 +1067,14 @@ json::object Engine::opDetail(json::object const& args) {
       auto k = static_cast<std::size_t>(static_cast<int>(i));
       json::object f;
       f["index"] = static_cast<int>(i);
-      f["priority"] = k < priorities.size() ? fromEnginePriority(priorities[k]) : 2;
+      f["priority"] =
+          k < priorities.size() ? fromEnginePriority(priorities[k]) : 2;
       std::int64_t size = fs.file_size(i);
-      double done = k < progress.size() ? static_cast<double>(progress[k]) : 0.0;
-      f["progress"] = size > 0 ? std::clamp(done / static_cast<double>(size), 0.0, 1.0) : 1.0;
+      double done =
+          k < progress.size() ? static_cast<double>(progress[k]) : 0.0;
+      f["progress"] =
+          size > 0 ? std::clamp(done / static_cast<double>(size), 0.0, 1.0)
+                   : 1.0;
       files.push_back(std::move(f));
     }
   }
@@ -1026,9 +1097,6 @@ json::array Engine::trackersJson(lt::torrent_handle const& h) const {
           message = ih.message.empty() ? ih.last_error.message() : ih.message;
         } else if (ih.start_sent && ih.fails == 0) {
           working = true;
-          if (!ih.message.empty()) {
-            message = ih.message;
-          }
         }
         seeds = std::max(seeds, ih.scrape_complete);
         peers = std::max(peers, ih.scrape_incomplete);
@@ -1043,7 +1111,7 @@ json::array Engine::trackersJson(lt::torrent_handle const& h) const {
                              : "disabled";
     o["seeds"] = seeds;
     o["peers"] = peers;
-    o["message"] = message;
+    o["message"] = working ? std::string() : message;
     list.push_back(std::move(o));
   }
   return list;
@@ -1052,8 +1120,10 @@ json::array Engine::trackersJson(lt::torrent_handle const& h) const {
 json::object Engine::opSetLimits(json::object const& args) {
   Limits next = limits_;
   constexpr std::int64_t kMaxKBps = 4 * 1024 * 1024;
-  next.downKBps = static_cast<int>(intArg(args, "downKBps", 0, kMaxKBps, next.downKBps));
-  next.upKBps = static_cast<int>(intArg(args, "upKBps", 0, kMaxKBps, next.upKBps));
+  next.downKBps =
+      static_cast<int>(intArg(args, "downKBps", 0, kMaxKBps, next.downKBps));
+  next.upKBps =
+      static_cast<int>(intArg(args, "upKBps", 0, kMaxKBps, next.upKBps));
   next.maxActiveDownloads = static_cast<int>(
       intArg(args, "maxActiveDownloads", -1, 10000, next.maxActiveDownloads));
   next.maxActiveTorrents = static_cast<int>(
@@ -1064,8 +1134,8 @@ json::object Engine::opSetLimits(json::object const& args) {
     }
     auto const& o = turtle->as_object();
     next.turtle = boolArg(o, "enabled", next.turtle);
-    next.turtleDownKBps =
-        static_cast<int>(intArg(o, "downKBps", 0, kMaxKBps, next.turtleDownKBps));
+    next.turtleDownKBps = static_cast<int>(
+        intArg(o, "downKBps", 0, kMaxKBps, next.turtleDownKBps));
     next.turtleUpKBps =
         static_cast<int>(intArg(o, "upKBps", 0, kMaxKBps, next.turtleUpKBps));
   }
@@ -1113,7 +1183,8 @@ json::object Engine::opSetConfig(json::object const& args) {
       } else {
         std::string v = stringArg(args, k);
         if (!printableAscii(v, 20)) {
-          fail("bad-request", "peerIdPrefix must be 1 to 20 printable characters");
+          fail("bad-request",
+               "peerIdPrefix must be 1 to 20 printable characters");
         }
         next.peerIdPrefix = v;
       }
@@ -1123,7 +1194,8 @@ json::object Engine::opSetConfig(json::object const& args) {
       } else {
         std::string v = stringArg(args, k);
         if (!printableAscii(v, 128)) {
-          fail("bad-request", "userAgent must be 1 to 128 printable characters");
+          fail("bad-request",
+               "userAgent must be 1 to 128 printable characters");
         }
         next.userAgent = v;
       }
@@ -1228,8 +1300,8 @@ json::object Engine::opRestore(json::object const& args) {
       continue;
     }
     lt::error_code ec;
-    lt::bdecode_node node = lt::bdecode(buf, ec, nullptr, kMaxBencodeDepth,
-                                        2 * kMaxBencodeItems);
+    lt::bdecode_node node =
+        lt::bdecode(buf, ec, nullptr, kMaxBencodeDepth, 2 * kMaxBencodeItems);
     lt::bdecode_node info;
     if (!ec && node.type() == lt::bdecode_node::dict_t) {
       info = node.dict_find_dict("info");
@@ -1258,16 +1330,27 @@ json::object Engine::opRestore(json::object const& args) {
     }
     t.userPaused = m6eState && m6eState.dict_find_int_value("paused", 0) != 0;
     t.completed = m6eState && m6eState.dict_find_int_value("completed", 0) != 0;
-    t.finishedSeen = m6eState && m6eState.dict_find_int_value("finished", 0) != 0;
-    atp.flags &= ~(lt::torrent_flags::auto_managed | lt::torrent_flags::paused |
-                   lt::torrent_flags::disable_dht | lt::torrent_flags::disable_pex |
-                   lt::torrent_flags::disable_lsd | lt::torrent_flags::upload_mode |
-                   lt::torrent_flags::default_dont_download);
-    atp.flags |= lt::torrent_flags::update_subscribe | privacyFlags(atp.ti->priv());
-    if (!start || t.userPaused || t.completed) {
-      atp.flags |= lt::torrent_flags::paused;
-    } else {
+    t.finishedSeen =
+        m6eState && m6eState.dict_find_int_value("finished", 0) != 0;
+    atp.flags &=
+        ~(lt::torrent_flags::auto_managed | lt::torrent_flags::paused |
+          lt::torrent_flags::disable_dht | lt::torrent_flags::disable_pex |
+          lt::torrent_flags::disable_lsd | lt::torrent_flags::upload_mode |
+          lt::torrent_flags::default_dont_download);
+    atp.flags |=
+        lt::torrent_flags::update_subscribe | privacyFlags(atp.ti->priv());
+    bool startNow = start && !t.userPaused && !t.completed;
+    if (startNow) {
+      if (auto e = checkBeforeTransfer(atp.save_path, atp.ti->layout(),
+                                       atp.file_priorities)) {
+        emitError(tid, e->code, e->message);
+        startNow = false;
+      }
+    }
+    if (startNow) {
       ensureListening();
+    } else {
+      atp.flags |= lt::torrent_flags::paused;
     }
     t.ti = atp.ti;
     t.metadata = buildMetadata(tid, *atp.ti, atp);
@@ -1350,13 +1433,13 @@ json::object Engine::statusJson(Torrent const& t) const {
   o["upKBps"] = round1(st.upload_payload_rate / 1024.0);
   std::int64_t remaining = st.total_wanted - st.total_wanted_done;
   if (state == "downloading" && st.download_payload_rate > 0 && remaining > 0) {
-    o["etaSeconds"] = (remaining + st.download_payload_rate - 1) /
-                      st.download_payload_rate;
+    o["etaSeconds"] =
+        (remaining + st.download_payload_rate - 1) / st.download_payload_rate;
   } else {
     o["etaSeconds"] = nullptr;
   }
-  std::int64_t base = st.total_wanted_done > 0 ? st.total_wanted_done
-                                               : st.all_time_download;
+  std::int64_t base =
+      st.total_wanted_done > 0 ? st.total_wanted_done : st.all_time_download;
   o["ratio"] = base > 0 ? std::round(static_cast<double>(st.all_time_upload) /
                                      static_cast<double>(base) * 1000.0) /
                               1000.0
@@ -1477,10 +1560,9 @@ void Engine::refreshNetwork() {
 void Engine::updatePower(bool active) {
   if (active && !powerAssertion_) {
     IOPMAssertionID id = 0;
-    if (IOPMAssertionCreateWithName(kIOPMAssertPreventUserIdleSystemSleep,
-                                    kIOPMAssertionLevelOn,
-                                    CFSTR("M6E BitTorrent transfer"),
-                                    &id) == kIOReturnSuccess) {
+    if (IOPMAssertionCreateWithName(
+            kIOPMAssertPreventUserIdleSystemSleep, kIOPMAssertionLevelOn,
+            CFSTR("M6E BitTorrent transfer"), &id) == kIOReturnSuccess) {
       powerAssertion_ = id;
     } else {
       std::fprintf(stderr, "m6e-torrent: no power assertion\n");
@@ -1574,7 +1656,8 @@ void Engine::handleAlert(lt::alert* a) {
   if (auto* tdf = lt::alert_cast<lt::torrent_delete_failed_alert>(a)) {
     std::string tid = tidOf(tdf->info_hashes);
     deleting_.erase(tid);
-    emitError(tid, "io-error", "could not delete the files: " + tdf->error.message());
+    emitError(tid, "io-error",
+              "could not delete the files: " + tdf->error.message());
     return;
   }
   if (auto* fe = lt::alert_cast<lt::file_error_alert>(a)) {
@@ -1591,7 +1674,8 @@ void Engine::handleAlert(lt::alert* a) {
     return;
   }
   if (auto* ls = lt::alert_cast<lt::listen_succeeded_alert>(a)) {
-    if (listening_ && !listenAnnounced_ && ls->socket_type == lt::socket_type_t::tcp) {
+    if (listening_ && !listenAnnounced_ &&
+        ls->socket_type == lt::socket_type_t::tcp) {
       listenAnnounced_ = true;
       json::object e = event("listening");
       e["port"] = ls->port;
@@ -1642,32 +1726,30 @@ void Engine::onFlushed(Torrent& t) {
   t.flushing = false;
   t.finishedSeen = true;
   refreshStatus(t);
-  if (t.ti) {
+  std::string warning;
+  std::string root;
+  if (t.ti && !canonicalRoot(t.status.save_path, &root)) {
     auto const& fs = t.ti->layout();
     auto priorities = t.handle.get_file_priorities();
-    std::string root = t.status.save_path;
     for (auto i : fs.file_range()) {
       auto k = static_cast<std::size_t>(static_cast<int>(i));
       if (fs.pad_file_at(i) || k >= priorities.size() ||
           priorities[k] == lt::dont_download) {
         continue;
       }
-      auto parts = splitPath(fs.file_path(i));
-      if (checkNoSymlinkEscape(root, parts)) {
-        continue;
-      }
-      std::string full = root + "/" + fs.file_path(i);
-      struct stat st;
-      if (lstat(full.c_str(), &st) == 0 && S_ISREG(st.st_mode) &&
-          (st.st_mode & 0111)) {
-        fchmodat(AT_FDCWD, full.c_str(), st.st_mode & 07666,
-                 AT_SYMLINK_NOFOLLOW);
+      auto report = finalizeRelative(root, fs.file_path(i));
+      if (!report.warning.empty() && warning.empty()) {
+        warning = report.warning;
       }
     }
   }
   requestResume(t);
   json::object e = event("completed");
   e["tid"] = t.tid;
+  if (!warning.empty()) {
+    e["warning"] = warning;
+    log("warn", t.tid + ": " + warning);
+  }
   emit_(e);
 }
 
@@ -1745,8 +1827,8 @@ bool Engine::writeResume(Torrent const& t, lt::add_torrent_params const& atp) {
   lt::bencode(std::back_inserter(buf), e);
   std::string path = resumePath(t.tid);
   std::string tmp = path + ".tmp";
-  int fd = open(tmp.c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC,
-                0600);
+  int fd = open(tmp.c_str(),
+                O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC, 0600);
   if (fd < 0) {
     return false;
   }
@@ -1825,6 +1907,8 @@ bool Engine::idleExpired(Clock::time_point now) const {
 }
 
 void Engine::shutdown(Clock::time_point saveBy) {
+  processAlerts();
+  outstandingSaves_ = 0;
   for (auto& [tid, t] : torrents_) {
     if (t.handle.is_valid() && t.handle.need_save_resume_data()) {
       requestResume(t);
