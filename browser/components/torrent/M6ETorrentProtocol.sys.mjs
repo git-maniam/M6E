@@ -44,6 +44,9 @@ export const PREF_DEFAULTS = {
   randomizePeerId: false,
   sequentialDefault: false,
   trustedSites: "",
+  downloadDir: "",
+  askWhereToSave: false,
+  startNow: true,
 };
 
 const ACTIVE_STATES = new Set([
@@ -262,6 +265,11 @@ export function validatePrefValue(name, value) {
     case "bindInterface":
       if (!/^[A-Za-z0-9._:-]{0,32}$/.test(value)) {
         throw new TorrentError("bad-request", "invalid interface name");
+      }
+      break;
+    case "downloadDir":
+      if (value != "" && !isAbsolutePosixPath(value)) {
+        throw new TorrentError("bad-request", "invalid download folder");
       }
       break;
     case "ipFilterPath":

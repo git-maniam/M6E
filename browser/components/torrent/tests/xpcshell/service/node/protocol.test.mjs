@@ -335,6 +335,9 @@ test("every pref is classified or deliberately local", () => {
     "confirmQuit",
     "sequentialDefault",
     "trustedSites",
+    "downloadDir",
+    "askWhereToSave",
+    "startNow",
   ]);
   for (const name of Object.keys(PREF_DEFAULTS)) {
     assert.equal(!!classifyPref(name), !local.has(name), name);
@@ -354,6 +357,7 @@ test("pref validation", () => {
     ["proxy.host", "a b"],
     ["bindInterface", "en0; rm"],
     ["ipFilterPath", "relative.txt"],
+    ["downloadDir", "relative"],
     ["trustedSites", "{}"],
     ["trustedSites", "[1]"],
     ["nope", 1],

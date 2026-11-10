@@ -1,0 +1,6 @@
+[DEFAULT]
+support-files = [
+  "head.js",
+]
+
+["browser_m6e_torrent_settings.js"]

@@ -28,6 +28,7 @@ browser.jar:
    content/browser/preferences/config/accessibility.mjs                 (config/accessibility.mjs)
    content/browser/preferences/config/appearance.mjs                    (config/appearance.mjs)
    content/browser/preferences/config/browser-icon.mjs                  (config/browser-icon.mjs)
+   content/browser/preferences/config/bittorrent.mjs                    (config/bittorrent.mjs)
    content/browser/preferences/config/aiFeatures.mjs                    (config/aiFeatures.mjs)
    content/browser/preferences/config/moreFromMozilla.mjs               (config/moreFromMozilla.mjs)
    content/browser/preferences/config/downloads.mjs                     (config/downloads.mjs)
