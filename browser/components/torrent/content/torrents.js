@@ -393,7 +393,9 @@ var gM6ETorrentsPage = {
         row.state.textContent = this.displayName(t.state);
       }
     }
-    row.state.title = t.error ? this.displayName(t.error.message) : "";
+    row.cells.status.title = t.error
+      ? this.displayName(t.error.message)
+      : "";
 
     this.setText(row, "down", cells.down, this.speedOrNone(t.downKBps));
     this.setText(row, "up", cells.up, this.speedOrNone(t.upKBps));

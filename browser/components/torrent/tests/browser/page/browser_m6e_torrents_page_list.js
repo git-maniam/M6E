@@ -126,7 +126,7 @@ add_task(async function test_filters_counts_and_columns() {
     "A downloading torrent shows its ETA"
   );
   is(
-    rowFor(doc, DELTA).querySelector("td.status span").title,
+    rowFor(doc, DELTA).querySelector("td.status").title,
     "synthetic failure",
     "An errored torrent shows its error as a tooltip"
   );
