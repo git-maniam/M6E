@@ -2,7 +2,7 @@
 firefox-appdir = "browser"
 skip-if = ["os != 'mac'"]
 requesttimeoutfactor = 4
-run-sequentially = "starts the torrent helper and a loopback swarm"
+run-sequentially = ["true"]
 support-files = [
   "fake_helper.py",
   "swarm_server.py",

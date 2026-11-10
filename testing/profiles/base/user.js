@@ -85,3 +85,5 @@ user_pref("m6e.torrent.trustedSites", "");
 user_pref("m6e.torrent.downloadDir", "");
 user_pref("m6e.torrent.askWhereToSave", false);
 user_pref("m6e.torrent.startNow", true);
+user_pref("m6e.torrent.sandbox", false);
+user_pref("m6e.torrent.sandboxFolders", "");
