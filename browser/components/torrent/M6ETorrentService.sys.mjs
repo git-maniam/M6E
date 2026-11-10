@@ -26,16 +26,23 @@ import {
   candidateFilePaths,
   classifyPref,
   encodeRequest,
+  helperArguments,
+  helperIdleSeconds,
   httpsOrigin,
   isAbsolutePosixPath,
   isActiveState,
   isBusyState,
   limitsToPrefs,
+  mergeFolders,
+  parseFolderList,
   parseTrustedSites,
   partialToPrefs,
+  pathIsInside,
   precheckTorrent,
   randomPeerIdPrefix,
+  rememberFolder,
   sanitizeSource,
+  unsupportedConfig,
   validateMagnet,
   validatePrefValue,
 } from "moz-src:///browser/components/torrent/M6ETorrentProtocol.sys.mjs";
@@ -43,15 +50,12 @@ import {
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   AsyncShutdown: "resource://gre/modules/AsyncShutdown.sys.mjs",
+  Downloads: "resource://gre/modules/Downloads.sys.mjs",
   FileUtils: "resource://gre/modules/FileUtils.sys.mjs",
   NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
   Subprocess: "resource://gre/modules/Subprocess.sys.mjs",
 });
 XPCOMUtils.defineLazyServiceGetters(lazy, {
-  powerManager: [
-    "@mozilla.org/power/powermanagerservice;1",
-    Ci.nsIPowerManagerService,
-  ],
   downloadPlatform: [
     "@mozilla.org/toolkit/download-platform;1",
     Ci.mozIDownloadPlatform,
@@ -61,7 +65,10 @@ XPCOMUtils.defineLazyServiceGetters(lazy, {
 const HELPER_NAME = "m6e-torrent";
 const HELPER_PATH_PREF = PREF_BRANCH + "helperPath";
 const SHUTDOWN_BLOCKER_NAME = "M6ETorrentService: stop the torrent helper";
-const WAKE_LOCK_TOPIC = "download-in-progress";
+const INBOX_NAME = "inbox";
+const INBOX_MAX_AGE_MS = 5 * 60_000;
+const MAX_FILTER_BYTES = 64 * 1024 * 1024;
+const IDLE_SECONDS_ENV = "M6E_TORRENT_IDLE_SECONDS";
 const QUARANTINE_ATTR = "com.apple.quarantine";
 const MAX_ORIGIN_METADATA_FILES = 20;
 const MAX_LOG_ENTRIES = 200;
@@ -74,6 +81,7 @@ const TOPIC_METADATA = "m6e-torrent-metadata";
 const TOPIC_ERROR = "m6e-torrent-error";
 const TOPIC_COMPLETED = "m6e-torrent-completed";
 const TOPIC_NETWORK = "m6e-torrent-network";
+const TOPIC_TRACKERS = "m6e-torrent-trackers";
 
 const DEFAULT_TIMINGS = {
   idleStopMs: 60_000,
@@ -109,13 +117,16 @@ class M6ETorrentServiceImpl {
   #torrents = new Map();
   #pending = new Map();
   #sources = new Map();
+  #trackers = new Map();
+  #metadataWaiters = new Map();
+  #reportedUnsupported = new Set();
   #quarantined = new Set();
   #log = [];
   #network = { listening: null, interfaceDown: null };
   #quitting = false;
   #initDone = false;
   #hasStartedThisSession = false;
-  #crashRestart = false;
+  #resumeOnStart = false;
   #failures = 0;
   #restartTimer = null;
   #idleTimer = null;
@@ -125,7 +136,6 @@ class M6ETorrentServiceImpl {
   #dirtyPrefs = new Set();
   #prefObserverAdded = false;
   #blockerAdded = false;
-  #wakeLock = null;
   #peerIdPrefix = null;
   #quitObserverAdded = false;
   #prefObserver;
@@ -199,12 +209,12 @@ class M6ETorrentServiceImpl {
     if (!this.#prefTimer) {
       this.#prefTimer = setTimeout(() => {
         this.#prefTimer = null;
-        this.#flushPrefs().catch(e => this.#reportError(null, e));
+        this.#flushPrefs(false).catch(e => this.#reportError(null, e));
       }, this.#timings.prefDebounceMs);
     }
   }
 
-  async #flushPrefs() {
+  async #flushPrefs(rethrow = true) {
     if (this.#prefTimer) {
       clearTimeout(this.#prefTimer);
       this.#prefTimer = null;
@@ -217,6 +227,10 @@ class M6ETorrentServiceImpl {
     }
     if (dirty.has("enabled") && !this.#enabled) {
       await this.#stop("disabled");
+      return;
+    }
+    if (dirty.has("sandbox") && !this.#isBusy()) {
+      await this.#stop("sandbox");
       return;
     }
     let limits = false;
@@ -240,6 +254,9 @@ class M6ETorrentServiceImpl {
       this.#reportError(null, e);
       if (e.code == "config-failed") {
         await this.#stop("config-failed");
+      }
+      if (rethrow) {
+        throw e;
       }
     }
   }
@@ -298,6 +315,107 @@ class M6ETorrentServiceImpl {
     return PathUtils.join(exe.parent.path, HELPER_NAME);
   }
 
+  get #torrentsDir() {
+    return PathUtils.join(PathUtils.profileDir, "torrents");
+  }
+
+  get #inboxDir() {
+    return PathUtils.join(this.#torrentsDir, INBOX_NAME);
+  }
+
+  // Leftovers of a crash. Younger files may belong to a request in flight.
+  async #cleanInbox() {
+    let children;
+    try {
+      children = await IOUtils.getChildren(this.#inboxDir);
+    } catch (e) {
+      return;
+    }
+    for (const path of children) {
+      try {
+        const { lastModified } = await IOUtils.stat(path);
+        if (Date.now() - lastModified > INBOX_MAX_AGE_MS) {
+          await IOUtils.remove(path, { recursive: true, ignoreAbsent: true });
+        }
+      } catch (e) {
+        // Already gone.
+      }
+    }
+  }
+
+  // The sandboxed helper can read only its inbox, so a file the user picked
+  // is copied there (mode 0600) for the helper and deleted after its reply.
+  async #stageInput(bytes, prefix) {
+    await IOUtils.makeDirectory(this.#inboxDir, {
+      createAncestors: true,
+      ignoreExisting: true,
+      permissions: 0o700,
+    });
+    const staged = await IOUtils.createUniqueFile(this.#inboxDir, prefix, 0o600);
+    try {
+      await IOUtils.write(staged, bytes);
+    } catch (e) {
+      await IOUtils.remove(staged, { ignoreAbsent: true });
+      throw e;
+    }
+    return staged;
+  }
+
+  async #withStaged(bytes, prefix, callback) {
+    const staged = await this.#stageInput(bytes, prefix);
+    try {
+      return await callback(staged);
+    } finally {
+      await IOUtils.remove(staged, { ignoreAbsent: true }).catch(() => {});
+    }
+  }
+
+  async #allowedFolders() {
+    const folders = [];
+    try {
+      folders.push(await lazy.Downloads.getPreferredDownloadsDirectory());
+    } catch (e) {
+      this.#addLog("warn", `no default download folder: ${e.message}`);
+    }
+    folders.push(...(parseFolderList(this.#pref("sandboxFolders")) ?? []));
+    return mergeFolders(folders);
+  }
+
+  // With the sandbox on, the helper can write only to the folders it was
+  // started with. A folder outside them is remembered and the helper stopped,
+  // so that its next start (the caller adds the torrent again) includes it.
+  async #ensureFolderAllowed(savePath) {
+    if (!this.#pref("sandbox")) {
+      return;
+    }
+    const allowed = await this.#allowedFolders();
+    if (allowed.some(folder => pathIsInside(folder, savePath))) {
+      return;
+    }
+    const remembered = parseFolderList(this.#pref("sandboxFolders")) ?? [];
+    this.#setPref(
+      "sandboxFolders",
+      JSON.stringify(rememberFolder(remembered, savePath))
+    );
+    const session = this.#session;
+    if (session && !session.closed) {
+      this.#resumeOnStart = [...this.#torrents.values()].some(t =>
+        isActiveState(t.state)
+      );
+      await this.#stop("folder");
+    }
+  }
+
+  // The helper also exits by itself when idle. It is told to wait longer than
+  // the service does, so that the service stops it first; an exit with status
+  // 0 while nothing is active is still treated as normal (see #onExit).
+  #helperIdleSeconds() {
+    const override = Cu.isInAutomation
+      ? Services.prefs.getIntPref(PREF_BRANCH + "helperIdleSeconds", 0)
+      : 0;
+    return override || helperIdleSeconds(this.#timings.idleStopMs);
+  }
+
   async #ensureHelper() {
     if (this.#quitting) {
       throw new TorrentError("shutting-down", "M6E is quitting");
@@ -326,24 +444,34 @@ class M6ETorrentServiceImpl {
       clearTimeout(this.#restartTimer);
       this.#restartTimer = null;
     }
-    const restoreStart = this.#crashRestart
+    const restoreStart = this.#resumeOnStart
       ? true
       : this.#hasStartedThisSession
         ? false
         : this.#pref("resumeAtStartup");
-    this.#crashRestart = false;
+    this.#resumeOnStart = false;
     this.#hasStartedThisSession = true;
+    this.#reportedUnsupported.clear();
 
     const command = this.#helperPath();
     if (!(await IOUtils.exists(command))) {
       throw new TorrentError("helper-missing", `no helper at ${command}`);
     }
-    const profileDir = PathUtils.join(PathUtils.profileDir, "torrents");
+    const sandbox = this.#pref("sandbox");
+    const folders = sandbox ? await this.#allowedFolders() : [];
+    await this.#cleanInbox();
     let proc;
     try {
       proc = await lazy.Subprocess.call({
         command,
-        arguments: ["--protocol", String(PROTOCOL_VERSION), "--profile-dir", profileDir],
+        arguments: helperArguments({
+          profileDir: this.#torrentsDir,
+          sandbox,
+          folders,
+          inboxDir: this.#inboxDir,
+        }),
+        environment: { [IDLE_SECONDS_ENV]: String(this.#helperIdleSeconds()) },
+        environmentAppend: true,
         stderr: "pipe",
       });
     } catch (e) {
@@ -365,6 +493,8 @@ class M6ETorrentServiceImpl {
       stderrTail: "",
       engine: "",
       pid: proc.pid ?? null,
+      sandbox,
+      folders,
     };
     session.ready.promise.catch(() => {});
     this.#session = session;
@@ -469,7 +599,6 @@ class M6ETorrentServiceImpl {
     }
     this.#session = null;
     this.#removeSessionHooks();
-    this.#releaseWakeLock();
     this.#clearIdleTimer();
     this.#network = { listening: null, interfaceDown: null };
     if (session.stopping || this.#quitting) {
@@ -479,6 +608,11 @@ class M6ETorrentServiceImpl {
       this.#addLog("error", String(error));
     }
     const hadActive = [...this.#torrents.values()].some(t => isActiveState(t.state));
+    if (exitCode === 0 && !hadActive && !error) {
+      this.#addLog("info", "the helper exited because it was idle");
+      this.#pending.clear();
+      return;
+    }
     this.#pending.clear();
     this.#emitError(null, "helper-exited", message);
     if (hadActive && session.initialized) {
@@ -496,12 +630,12 @@ class M6ETorrentServiceImpl {
       return;
     }
     const delay = delays[this.#failures++];
-    this.#crashRestart = true;
+    this.#resumeOnStart = true;
     this.#restartTimer = setTimeout(() => {
       this.#restartTimer = null;
       this.#ensureHelper().catch(e => {
         this.#emitError(null, e.code ?? "helper-start-failed", e.message);
-        this.#crashRestart = true;
+        this.#resumeOnStart = true;
         this.#scheduleRestart({ startedAt: Date.now() });
       });
     }, delay);
@@ -592,24 +726,35 @@ class M6ETorrentServiceImpl {
       password,
       peerIdPrefix: this.#peerIdPrefix,
     });
+    let staged = null;
     try {
+      if (typeof config.ipFilterPath == "string") {
+        const bytes = await IOUtils.read(config.ipFilterPath, {
+          maxBytes: MAX_FILTER_BYTES + 1,
+        }).catch(() => {
+          throw new TorrentError("config-failed", "the IP filter file cannot be read");
+        });
+        if (bytes.length > MAX_FILTER_BYTES) {
+          throw new TorrentError("config-failed", "the IP filter file is too large");
+        }
+        staged = await this.#stageInput(bytes, PathUtils.filename(config.ipFilterPath));
+        config.ipFilterPath = staged;
+      }
       if (initial) {
         await this.#send(session, "setLimits", buildLimits(prefs));
       }
       const result = await this.#send(session, "setConfig", config);
-      const unsupported = result.unsupported ?? [];
-      const mustHave = [];
-      if (prefs["proxy.type"] != "none") {
-        mustHave.push("proxy");
+      const { fatal, warn } = unsupportedConfig(config, result);
+      for (const key of warn) {
+        if (!this.#reportedUnsupported.has(key)) {
+          this.#reportedUnsupported.add(key);
+          this.#emitError(null, "unsupported-setting", `the helper cannot apply ${key}`);
+        }
       }
-      if (prefs.bindInterface) {
-        mustHave.push("bindInterface");
-      }
-      const missing = mustHave.filter(k => k in config && unsupported.includes(k));
-      if (missing.length) {
+      if (fatal.length) {
         throw new TorrentError(
           "config-failed",
-          `the helper cannot apply ${missing.join(" and ")}`
+          `the helper cannot apply ${fatal.join(" and ")}`
         );
       }
     } catch (e) {
@@ -620,6 +765,10 @@ class M6ETorrentServiceImpl {
         "config-failed",
         `the helper rejected its settings: ${e.message}`
       );
+    } finally {
+      if (staged) {
+        await IOUtils.remove(staged, { ignoreAbsent: true }).catch(() => {});
+      }
     }
   }
 
@@ -683,8 +832,14 @@ class M6ETorrentServiceImpl {
         break;
       case "completed":
         if (typeof message.tid == "string") {
-          this.#onCompleted(session, message.tid);
+          this.#onCompleted(session, message.tid, message.warning);
         }
+        break;
+      case "trackers":
+        this.#onTrackers(message);
+        break;
+      case "peers":
+        this.#onPeers(message);
         break;
       case "listening":
         this.#network.listening = message.port ?? null;
@@ -719,6 +874,7 @@ class M6ETorrentServiceImpl {
     if (entry) {
       entry.metadata = metadata;
     }
+    this.#metadataWaiters.get(tid)?.resolve(metadata);
     this.#notify(TOPIC_METADATA, {
       tid,
       metadata,
@@ -726,7 +882,27 @@ class M6ETorrentServiceImpl {
     });
   }
 
-  async #onCompleted(session, tid) {
+  #onTrackers({ tid, trackers }) {
+    if (typeof tid != "string" || !Array.isArray(trackers)) {
+      return;
+    }
+    this.#trackers.set(tid, trackers);
+    this.#notify(TOPIC_TRACKERS, { tid, trackers });
+  }
+
+  #onPeers({ tid, seeds, peers }) {
+    const status = this.#torrents.get(tid);
+    if (!status || !Number.isInteger(seeds) || !Number.isInteger(peers)) {
+      return;
+    }
+    this.#torrents.set(tid, { ...status, seeds, peers });
+    this.#scheduleChanged();
+  }
+
+  async #onCompleted(session, tid, warning) {
+    if (typeof warning == "string" && warning) {
+      this.#addLog("warn", `${tid}: ${warning}`);
+    }
     try {
       const status = await this.#send(session, "list").then(r => r.torrents);
       this.#replaceTorrents(status);
@@ -741,7 +917,10 @@ class M6ETorrentServiceImpl {
         this.#emitError(tid, "quarantine-failed", e?.message ?? String(e));
       }
     }
-    this.#notify(TOPIC_COMPLETED, { tid });
+    this.#notify(
+      TOPIC_COMPLETED,
+      typeof warning == "string" && warning ? { tid, warning } : { tid }
+    );
     this.#evaluateIdle();
   }
 
@@ -808,7 +987,7 @@ class M6ETorrentServiceImpl {
     }
   }
 
-  /* Idle stop and sleep assertion */
+  /* Idle stop. The helper holds the sleep assertion itself while a torrent is active. */
 
   #clearIdleTimer() {
     if (this.#idleTimer) {
@@ -830,7 +1009,6 @@ class M6ETorrentServiceImpl {
   }
 
   #evaluateIdle() {
-    this.#updateWakeLock();
     const session = this.#session;
     if (!session?.initialized || session.stopping) {
       return;
@@ -844,32 +1022,6 @@ class M6ETorrentServiceImpl {
           this.#stop("idle").catch(console.error);
         }
       }, this.#timings.idleStopMs);
-    }
-  }
-
-  #updateWakeLock() {
-    const active =
-      !!this.#session?.initialized &&
-      [...this.#torrents.values()].some(t => isActiveState(t.state));
-    if (active && !this.#wakeLock) {
-      try {
-        this.#wakeLock = lazy.powerManager.newWakeLock(WAKE_LOCK_TOPIC, null);
-      } catch (e) {
-        this.#addLog("warn", `no sleep assertion: ${e.message}`);
-      }
-    } else if (!active) {
-      this.#releaseWakeLock();
-    }
-  }
-
-  #releaseWakeLock() {
-    if (this.#wakeLock) {
-      try {
-        this.#wakeLock.unlock();
-      } catch (e) {
-        // Already unlocked.
-      }
-      this.#wakeLock = null;
     }
   }
 
@@ -937,9 +1089,9 @@ class M6ETorrentServiceImpl {
       return;
     }
     this.#initDone = true;
-    const dir = PathUtils.join(PathUtils.profileDir, "torrents");
     try {
-      if (!(await IOUtils.exists(dir)) || !(await IOUtils.getChildren(dir)).length) {
+      const saved = await IOUtils.getChildren(this.#torrentsDir).catch(() => []);
+      if (!saved.some(path => path.endsWith(".resume"))) {
         return;
       }
       await this.#ensureHelper();
@@ -950,13 +1102,7 @@ class M6ETorrentServiceImpl {
 
   /* Public API */
 
-  async addFile(path, source) {
-    if (!isAbsolutePosixPath(path)) {
-      throw new TorrentError("bad-request", "the torrent path must be absolute");
-    }
-    if (!this.#enabled) {
-      throw new TorrentError("disabled", "BitTorrent is turned off");
-    }
+  async #readTorrentFile(path) {
     const stat = await IOUtils.stat(path).catch(() => {
       throw new TorrentError("io-error", "the torrent file cannot be read");
     });
@@ -968,7 +1114,51 @@ class M6ETorrentServiceImpl {
     }
     const bytes = await IOUtils.read(path, { maxBytes: MAX_TORRENT_BYTES + 1 });
     precheckTorrent(bytes);
-    const result = await this.#call("add", { file: path });
+    return bytes;
+  }
+
+  async #addTorrentFile(path) {
+    const bytes = await this.#readTorrentFile(path);
+    await this.#ensureHelper();
+    return this.#withStaged(bytes, "torrent.torrent", file =>
+      this.#call("add", { file })
+    );
+  }
+
+  async #addPending(tid, entry) {
+    if (entry.input.file) {
+      return this.#addTorrentFile(entry.input.file);
+    }
+    const waiter = deferred();
+    waiter.promise.catch(() => {});
+    this.#metadataWaiters.set(tid, waiter);
+    const timer = setTimeout(
+      () =>
+        waiter.reject(
+          new TorrentError("timeout", "the magnet link's metadata did not arrive")
+        ),
+      this.#timings.requestTimeoutMs
+    );
+    try {
+      const result = await this.#call("add", { magnet: entry.input.magnet });
+      if (!result.metadata) {
+        await waiter.promise;
+      }
+      return result;
+    } finally {
+      clearTimeout(timer);
+      this.#metadataWaiters.delete(tid);
+    }
+  }
+
+  async addFile(path, source) {
+    if (!isAbsolutePosixPath(path)) {
+      throw new TorrentError("bad-request", "the torrent path must be absolute");
+    }
+    if (!this.#enabled) {
+      throw new TorrentError("disabled", "BitTorrent is turned off");
+    }
+    const result = await this.#addTorrentFile(path);
     const clean = sanitizeSource(source);
     this.#sources.set(result.tid, clean);
     this.#pending.set(result.tid, {
@@ -1028,14 +1218,15 @@ class M6ETorrentServiceImpl {
       sequential: options.sequential ?? this.#pref("sequentialDefault"),
       start: options.start !== false,
     };
+    await this.#ensureFolderAllowed(options.savePath);
     let result;
     try {
       result = await this.#call("confirm", args);
     } catch (e) {
-      if (e.code != "not-found" || !entry?.input?.file) {
+      if (e.code != "not-found" || !entry?.input) {
         throw e;
       }
-      await this.#call("add", entry.input);
+      await this.#addPending(tid, entry);
       result = await this.#call("confirm", args);
     }
     this.#pending.delete(tid);
@@ -1084,6 +1275,7 @@ class M6ETorrentServiceImpl {
     this.#torrents.delete(tid);
     this.#pending.delete(tid);
     this.#sources.delete(tid);
+    this.#trackers.delete(tid);
     this.#quarantined.delete(tid);
     this.#scheduleChanged();
     this.#evaluateIdle();
@@ -1116,14 +1308,21 @@ class M6ETorrentServiceImpl {
   async list() {
     await this.init();
     if (this.#session?.initialized && !this.#session.stopping) {
-      return this.#syncList();
+      return { torrents: await this.#syncList() };
     }
-    return [...this.#torrents.values()];
+    return { torrents: [...this.#torrents.values()] };
   }
 
   async detail(tid) {
     this.#checkTid(tid);
     return this.#call("detail", { tid });
+  }
+
+  get activeTorrentCount() {
+    if (!this.#session?.initialized || this.#session.stopping) {
+      return 0;
+    }
+    return [...this.#torrents.values()].filter(t => isActiveState(t.state)).length;
   }
 
   async hasActiveTorrents() {
@@ -1234,10 +1433,13 @@ class M6ETorrentServiceImpl {
         this.#torrents.clear();
         this.#pending.clear();
         this.#sources.clear();
+        this.#trackers.clear();
+        this.#metadataWaiters.clear();
+        this.#reportedUnsupported.clear();
         this.#quarantined.clear();
         this.#log = [];
         this.#failures = 0;
-        this.#crashRestart = false;
+        this.#resumeOnStart = false;
         this.#hasStartedThisSession = false;
         this.#initDone = false;
         this.#quitting = false;
@@ -1256,7 +1458,9 @@ class M6ETorrentServiceImpl {
       isHelperRunning: () => !!this.#session && !this.#session.closed,
       helperPid: () => this.#session?.pid ?? null,
       hasIdleTimer: () => !!this.#idleTimer,
-      hasWakeLock: () => !!this.#wakeLock,
+      callHelper: (op, args) => this.#call(op, args),
+      trackers: tid => this.#trackers.get(tid) ?? null,
+      allowedFolders: () => this.#allowedFolders(),
       quarantineFile: nsFile => this.#quarantineFile(nsFile),
       cachedTorrents: () => [...this.#torrents.values()],
     };

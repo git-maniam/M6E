@@ -11,6 +11,9 @@ export const MAX_LINE_BYTES = 1024 * 1024;
 export const MAX_TORRENT_BYTES = 16 * 1024 * 1024;
 export const MAX_BENCODE_DEPTH = 64;
 export const MAX_MAGNET_LENGTH = 16 * 1024;
+export const MAX_DOWNLOAD_FOLDERS = 4;
+export const MIN_HELPER_IDLE_SECONDS = 90;
+export const HELPER_IDLE_MARGIN_SECONDS = 30;
 
 export const PREF_BRANCH = "m6e.torrent.";
 
@@ -47,6 +50,8 @@ export const PREF_DEFAULTS = {
   downloadDir: "",
   askWhereToSave: false,
   startNow: true,
+  sandbox: false,
+  sandboxFolders: "",
 };
 
 const ACTIVE_STATES = new Set([
@@ -282,6 +287,11 @@ export function validatePrefValue(name, value) {
         throw new TorrentError("bad-request", "invalid trusted sites");
       }
       break;
+    case "sandboxFolders":
+      if (value != "" && parseFolderList(value) === null) {
+        throw new TorrentError("bad-request", "invalid folder list");
+      }
+      break;
   }
   return value;
 }
@@ -309,6 +319,124 @@ export function parseTrustedSites(text) {
     // Fall through.
   }
   return null;
+}
+
+// Returns an array of absolute folder paths, or null when the value is not
+// one.
+export function parseFolderList(text) {
+  if (text === "" || text === undefined) {
+    return [];
+  }
+  try {
+    const list = JSON.parse(text);
+    if (Array.isArray(list) && list.every(isAbsolutePosixPath)) {
+      return list;
+    }
+  } catch (e) {
+    // Fall through.
+  }
+  return null;
+}
+
+function trimFolder(folder) {
+  return folder.length > 1 ? folder.replace(/\/+$/, "") || "/" : folder;
+}
+
+// Unique, absolute folders in order, at most max of them.
+export function mergeFolders(folders, max = MAX_DOWNLOAD_FOLDERS) {
+  const out = [];
+  for (const folder of folders) {
+    if (!isAbsolutePosixPath(folder)) {
+      continue;
+    }
+    const clean = trimFolder(folder);
+    if (clean != "/" && !out.includes(clean)) {
+      out.push(clean);
+    }
+  }
+  return out.slice(0, max);
+}
+
+export function pathIsInside(folder, path) {
+  const base = trimFolder(folder);
+  return path == base || path.startsWith(base + "/");
+}
+
+// The most recently used folders first, the default folder always kept.
+export function rememberFolder(remembered, folder, max = MAX_DOWNLOAD_FOLDERS - 1) {
+  return mergeFolders([folder, ...remembered], max);
+}
+
+// How long the helper waits before it exits on its own: longer than the
+// service's own idle stop, so that the service always stops it first.
+export function helperIdleSeconds(idleStopMs) {
+  return Math.max(
+    MIN_HELPER_IDLE_SECONDS,
+    Math.ceil(idleStopMs / 1000) + HELPER_IDLE_MARGIN_SECONDS
+  );
+}
+
+// The helper's command line. The sandbox arguments are only passed when the
+// m6e.torrent.sandbox pref is on (see the report of P8.1 for the helper side).
+export function helperArguments({ profileDir, sandbox, folders, inboxDir }) {
+  const args = ["--protocol", String(PROTOCOL_VERSION), "--profile-dir", profileDir];
+  if (sandbox) {
+    args.push("--sandbox", "--inbox-dir", inboxDir);
+    for (const folder of mergeFolders(folders)) {
+      args.push("--download-dir", folder);
+    }
+  }
+  return args;
+}
+
+const PRIVACY_CONFIG_KEYS = new Set([
+  "encryption",
+  "dht",
+  "pex",
+  "lpd",
+  "portMapping",
+  "listenPort",
+  "proxy",
+  "bindInterface",
+  "ipFilterPath",
+]);
+
+function configValueIsActive(key, value) {
+  switch (key) {
+    case "proxy":
+      return !!value && value.type != "none";
+    case "seedGoal":
+      return value?.ratio != null || value?.hours != null;
+    case "bindInterface":
+    case "ipFilterPath":
+    case "peerIdPrefix":
+    case "userAgent":
+      return value !== null && value !== undefined && value !== "";
+    default:
+      return true;
+  }
+}
+
+// Sorts the keys of a setConfig request that the helper did not apply:
+// fatal ones touch privacy or the network and the helper must not run
+// without them; the rest are reported only.
+export function unsupportedConfig(config, result) {
+  const unsupported = new Set(result?.unsupported ?? []);
+  if (Array.isArray(result?.applied)) {
+    for (const key of Object.keys(config)) {
+      if (!result.applied.includes(key)) {
+        unsupported.add(key);
+      }
+    }
+  }
+  const out = { fatal: [], warn: [] };
+  for (const key of unsupported) {
+    if (!(key in config) || !configValueIsActive(key, config[key])) {
+      continue;
+    }
+    (PRIVACY_CONFIG_KEYS.has(key) ? out.fatal : out.warn).push(key);
+  }
+  return out;
 }
 
 // Returns "https://host[:port]" or null for anything that is not an https
