@@ -1,0 +1,141 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- M6E: the Add torrent dialog (Phase 8, D33, D35). -->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src chrome:" />
+    <title data-l10n-id="m6e-torrent-add-window-title"></title>
+    <link rel="localization" href="browser/m6eTorrent.ftl" />
+    <link rel="stylesheet" href="chrome://global/skin/global.css" />
+    <link rel="stylesheet" href="chrome://global/skin/in-content/common.css" />
+    <link
+      rel="stylesheet"
+      href="chrome://browser/content/m6e-torrent-add.css"
+    />
+    <script src="chrome://browser/content/m6e-torrent-add.js"></script>
+  </head>
+  <body>
+    <form id="m6e-torrent-add-form" autocomplete="off">
+      <h1
+        id="m6e-torrent-add-heading"
+        data-l10n-id="m6e-torrent-add-heading"
+      ></h1>
+
+      <section
+        id="m6e-torrent-shady"
+        role="group"
+        aria-labelledby="m6e-torrent-shady-title"
+        aria-describedby="m6e-torrent-shady-description"
+        hidden="hidden"
+      >
+        <h2
+          id="m6e-torrent-shady-title"
+          tabindex="-1"
+          data-l10n-id="m6e-torrent-shady-title"
+        ></h2>
+        <p
+          id="m6e-torrent-shady-description"
+          data-l10n-id="m6e-torrent-shady-description"
+        ></p>
+        <ul id="m6e-torrent-shady-reasons"></ul>
+        <div class="buttons">
+          <button
+            id="m6e-torrent-shady-cancel"
+            type="button"
+            data-l10n-id="m6e-torrent-shady-cancel"
+          ></button>
+          <button
+            id="m6e-torrent-shady-add-anyway"
+            type="button"
+            data-l10n-id="m6e-torrent-shady-add-anyway"
+          ></button>
+        </div>
+      </section>
+
+      <section id="m6e-torrent-add-fetching" role="status">
+        <p data-l10n-id="m6e-torrent-add-fetching"></p>
+        <progress></progress>
+        <p class="note" data-l10n-id="m6e-torrent-add-fetching-note"></p>
+      </section>
+
+      <p id="m6e-torrent-add-error" role="alert" hidden="hidden"></p>
+
+      <div id="m6e-torrent-add-details" hidden="hidden">
+        <dl id="m6e-torrent-add-summary">
+          <dt data-l10n-id="m6e-torrent-add-name"></dt>
+          <dd id="m6e-torrent-add-name"></dd>
+          <dt data-l10n-id="m6e-torrent-add-size"></dt>
+          <dd id="m6e-torrent-add-size"></dd>
+        </dl>
+
+        <h2
+          id="m6e-torrent-add-files-heading"
+          data-l10n-id="m6e-torrent-add-files"
+        ></h2>
+        <div
+          id="m6e-torrent-add-tree"
+          role="group"
+          aria-labelledby="m6e-torrent-add-files-heading"
+          data-l10n-id="m6e-torrent-add-file-tree"
+        ></div>
+        <p id="m6e-torrent-add-selection" role="status"></p>
+
+        <div id="m6e-torrent-add-save">
+          <label
+            for="m6e-torrent-add-save-path"
+            data-l10n-id="m6e-torrent-add-save-to"
+          ></label>
+          <input
+            id="m6e-torrent-add-save-path"
+            type="text"
+            readonly="readonly"
+            data-l10n-id="m6e-torrent-add-save-path"
+          />
+          <button
+            id="m6e-torrent-add-browse"
+            type="button"
+            data-l10n-id="m6e-torrent-add-browse"
+          ></button>
+        </div>
+        <p id="m6e-torrent-add-no-space" role="alert" hidden="hidden"></p>
+
+        <div id="m6e-torrent-add-options">
+          <label>
+            <input id="m6e-torrent-add-sequential" type="checkbox" />
+            <span data-l10n-id="m6e-torrent-add-sequential"></span>
+          </label>
+          <label>
+            <input
+              id="m6e-torrent-add-start-now"
+              type="checkbox"
+              checked="checked"
+            />
+            <span data-l10n-id="m6e-torrent-add-start-now"></span>
+          </label>
+          <label id="m6e-torrent-add-trust-label" hidden="hidden">
+            <input id="m6e-torrent-add-trust" type="checkbox" />
+            <span id="m6e-torrent-add-trust-text"></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="m6e-torrent-add-footer" class="buttons">
+        <button
+          id="m6e-torrent-add-cancel"
+          type="button"
+          data-l10n-id="m6e-torrent-add-cancel"
+        ></button>
+        <button
+          id="m6e-torrent-add-confirm"
+          type="submit"
+          class="primary"
+          disabled="disabled"
+          data-l10n-id="m6e-torrent-add-confirm"
+        ></button>
+      </div>
+    </form>
+  </body>
+</html>

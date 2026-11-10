@@ -78,8 +78,9 @@ m6e-torrent-remove-delete = Remove and delete files
 m6e-torrent-remove-cancel = Cancel
 # Variables:
 #   $percent (Number) - progress from 0 to 100
+#   $name (String) - the name of the torrent
 m6e-torrent-progress =
-    .aria-label = Progress
+    .aria-label = Progress of { $name }
     .title = { NUMBER($percent, maximumFractionDigits: 1) }%
 # Variables:
 #   $speed (String) - a speed, for example "1.2 MB/s"

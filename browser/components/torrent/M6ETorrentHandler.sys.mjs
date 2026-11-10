@@ -141,11 +141,8 @@ export const M6ETorrentHandler = {
       });
       return true;
     }
-    const privileged =
-      !!principal &&
-      (principal.isSystemPrincipal ||
-        principal.isAddonOrExpandedAddonPrincipal);
-    if (!privileged && !hasUserActivation) {
+    const privileged = !!principal?.isSystemPrincipal;
+    if (!privileged && (!win || !hasUserActivation)) {
       console.warn(
         "M6E: ignored a magnet: navigation without user activation."
       );
@@ -444,10 +441,14 @@ export const M6ETorrentHandler = {
     list.remove(download).catch(console.error);
     this._open(
       entry.win,
-      w => w.gM6ETorrent.addTorrentFile(path, entry.source),
-      {
-        pageInitiated: true,
-      }
+      w => {
+        const result = w.gM6ETorrent.addTorrentFile(path, entry.source);
+        const remove = () =>
+          IOUtils.remove(path, { ignoreAbsent: true }).catch(console.error);
+        Promise.resolve(result).then(remove, remove);
+        return result;
+      },
+      { pageInitiated: true }
     );
   },
 
