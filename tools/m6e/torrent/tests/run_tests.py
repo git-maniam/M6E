@@ -299,6 +299,11 @@ class Ctx:
         self.helpers.append(h)
         if ready:
             h.wait_ready()
+            if not self.fake:
+                try:
+                    h.req("setConfig", {"bindInterface": "lo0"})
+                except (Skip, AssertionError):
+                    pass
         return h
 
     def gap(self, condition, message):
