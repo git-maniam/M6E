@@ -107,6 +107,7 @@ export default [
       "browser/base/content/browser-toolbarKeyNav.js",
       "browser/base/content/browser-trustPanel.js",
       "browser/base/content/browser-m6ePageTelemetry.js",
+      "browser/base/content/browser-m6eTorrent.js",
       "browser/base/content/browser-unified-extensions.js",
       "browser/base/content/browser-webrtc.js",
       "browser/base/content/global-scripts.js",

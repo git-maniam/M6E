@@ -1,0 +1,275 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* M6E: the BitTorrent button, panel and Add dialog (Phase 8, D33 to D37). */
+
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+/* Padding, radius, hover, active and focus come from .identity-box-button. */
+#m6e-torrent-button {
+  position: relative;
+  fill: currentColor;
+  fill-opacity: var(--urlbar-icon-fill-opacity);
+  -moz-context-properties: fill, fill-opacity;
+  list-style-image: url(chrome://browser/skin/m6e-torrent.svg);
+
+  > #m6e-torrent-icon {
+    width: var(--size-item-small);
+    height: var(--size-item-small);
+  }
+
+  > #m6e-torrent-badge {
+    display: none;
+    margin: 0;
+    margin-inline-start: var(--space-xsmall);
+    padding-inline: var(--space-xsmall);
+    min-width: 1.4em;
+    border-radius: var(--border-radius-circle);
+    background-color: var(--color-accent-primary);
+    color: var(--button-text-color-primary);
+    font-size: 0.8em;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.4;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &[state="active"] > #m6e-torrent-badge,
+  &[state="attention"] > #m6e-torrent-badge {
+    display: block;
+  }
+
+  &[state="active"] {
+    fill-opacity: 1;
+  }
+
+  &[state="attention"] {
+    fill-opacity: 1;
+
+    > #m6e-torrent-badge {
+      background-color: var(--text-color-error);
+    }
+  }
+}
+
+@media not -moz-pref("m6e.torrent.enabled") {
+  #m6e-torrent-button {
+    display: none;
+  }
+}
+
+#m6e-torrent-body {
+  padding: var(--space-large) var(--space-xlarge);
+  width: 30em;
+  max-height: 36em;
+  overflow-y: auto;
+
+  > * {
+    flex-shrink: 0;
+  }
+}
+
+#m6e-torrent-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-large);
+  margin-block-end: var(--space-medium);
+
+  > h2 {
+    margin: 0;
+    font-size: var(--font-size-large);
+    font-weight: var(--font-weight-bold);
+  }
+
+  > #m6e-torrent-speeds {
+    color: var(--text-color-deemphasized);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+#m6e-torrent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+  margin-block-end: var(--space-medium);
+
+  > button {
+    margin: 0;
+  }
+}
+
+#m6e-torrent-magnet-row {
+  margin-block-end: var(--space-medium);
+
+  &:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-small);
+  }
+
+  > input {
+    flex: 1;
+    min-width: 12em;
+    margin: 0;
+  }
+
+  > button {
+    margin: 0;
+  }
+
+  > #m6e-torrent-magnet-error {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--text-color-error);
+  }
+}
+
+#m6e-torrent-empty {
+  margin: var(--space-medium) 0;
+  color: var(--text-color-deemphasized);
+}
+
+#m6e-torrent-error-banner {
+  margin: 0 0 var(--space-medium);
+  color: var(--text-color-error);
+}
+
+#m6e-torrent-list {
+  list-style: none;
+  margin: 0 0 var(--space-medium);
+  padding: 0;
+}
+
+.m6e-torrent-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xsmall);
+  padding-block: var(--space-small);
+  border-top: 1px solid var(--border-color-deemphasized);
+
+  &[highlight] {
+    background-color: var(--background-color-box);
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: -2px;
+  }
+
+  > .row-main {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-medium);
+    align-items: baseline;
+  }
+
+  .row-name {
+    all: unset;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-outline);
+      outline-offset: var(--focus-outline-offset);
+    }
+  }
+
+  .row-state {
+    color: var(--text-color-deemphasized);
+  }
+
+  &[data-state="error"] .row-state,
+  .row-error {
+    color: var(--text-color-error);
+  }
+
+  .row-progress {
+    width: 100%;
+    height: 6px;
+    margin: 0;
+  }
+
+  > .row-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-medium);
+    color: var(--text-color-deemphasized);
+    font-variant-numeric: tabular-nums;
+  }
+
+  > .row-actions,
+  > .row-remove-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-small);
+    align-items: center;
+
+    > button {
+      margin: 0;
+      min-height: 0;
+      padding-block: var(--space-xsmall);
+    }
+  }
+
+  > .row-remove-choices[hidden] {
+    display: none;
+  }
+
+  .row-remove-question {
+    flex-basis: 100%;
+  }
+}
+
+#m6e-torrent-settings {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-small) var(--space-large);
+  padding-block: var(--space-medium);
+  border-top: 1px solid var(--border-color-deemphasized);
+
+  > moz-toggle {
+    grid-column: 1 / -1;
+  }
+
+  > label {
+    min-width: 0;
+  }
+
+  input[type="number"] {
+    width: 7em;
+    margin: 0;
+  }
+
+  select {
+    margin: 0;
+    min-width: 7em;
+  }
+
+  > #m6e-torrent-seed-value {
+    grid-column: 1 / -1;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+  }
+}
+
+#m6e-torrent-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-block-start: var(--space-medium);
+  border-top: 1px solid var(--border-color-deemphasized);
+
+  > button {
+    margin: 0;
+  }
+}
