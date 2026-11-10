@@ -63,6 +63,31 @@ var gM6ETorrent = {
     this._risk = value;
   },
 
+  /**
+   * Normalises a Source (CONTRACTS.md): only the four known kinds, and only
+   * an https origin without a path is kept.
+   *
+   * @param {object} source
+   * @returns {{kind: string, origin: string|null}}
+   */
+  sanitizeSource(source) {
+    let kind = ["page", "magnet-page", "finder", "unknown"].includes(
+      source?.kind
+    )
+      ? source.kind
+      : "unknown";
+    let origin = null;
+    try {
+      let url = new URL(source?.origin);
+      if (url.protocol == "https:" && url.origin == source.origin) {
+        origin = url.origin;
+      }
+    } catch (e) {
+      // Not a usable origin; the source stays untrusted.
+    }
+    return { kind, origin };
+  },
+
   get button() {
     return document.getElementById("m6e-torrent-button");
   },
@@ -177,7 +202,12 @@ var gM6ETorrent = {
     let hasError = visible.some(t => t.state == "error" || t.error);
     let count = visible.filter(t => this.RUNNING_STATES.includes(t.state))
       .length;
-    let state = hasError ? "attention" : count ? "active" : "idle";
+    let state = "idle";
+    if (hasError) {
+      state = "attention";
+    } else if (count) {
+      state = "active";
+    }
     let key = `${state}:${count}`;
     if (key == this._buttonKey) {
       return;
@@ -265,9 +295,11 @@ var gM6ETorrent = {
     });
     panel.addEventListener("popupshown", () => {
       this.button.setAttribute("open", "true");
+      this.button.setAttribute("aria-expanded", "true");
     });
     panel.addEventListener("popuphidden", () => {
       this.button.removeAttribute("open");
+      this.button.setAttribute("aria-expanded", "false");
       this._highlightTid = null;
       this.hideMagnetRow();
     });
@@ -415,6 +447,7 @@ var gM6ETorrent = {
     progress.value = fraction;
     document.l10n.setAttributes(progress, "m6e-torrent-progress", {
       percent: fraction * 100,
+      name,
     });
 
     let showDown = state == "downloading" || torrent.downKBps > 0;
@@ -507,7 +540,12 @@ var gM6ETorrent = {
 
     let ratioPercent = prefs.getIntPref(prefix + "seedRatioPercent", 100);
     let hours = prefs.getIntPref(prefix + "seedHours", 0);
-    let goal = ratioPercent > 0 ? "ratio" : hours > 0 ? "hours" : "never";
+    let goal = "never";
+    if (ratioPercent > 0) {
+      goal = "ratio";
+    } else if (hours > 0) {
+      goal = "hours";
+    }
     setValue("m6e-torrent-seed-goal", goal);
     document.getElementById("m6e-torrent-seed-value").hidden = goal == "never";
     if (goal != "never") {
@@ -781,6 +819,7 @@ var gM6ETorrent = {
     if (!this.enabled) {
       return false;
     }
+    source = this.sanitizeSource(source);
     this.init();
     let result;
     try {
@@ -808,6 +847,7 @@ var gM6ETorrent = {
     if (!this.enabled) {
       return false;
     }
+    source = this.sanitizeSource(source);
     this.init();
     let result;
     try {
@@ -901,7 +941,7 @@ var gM6ETorrent = {
       let { dialog, closedPromise } = await gBrowser
         .getTabDialogBox(gBrowser.selectedBrowser)
         .open(this.ADD_DIALOG_URL, { features: "resizable=no" }, params);
-      this.lastAddDialog = { dialog, params };
+      this.lastAddDialog = { dialog, params, closedPromise };
       await closedPromise;
       if (!params.added) {
         this._metadata.delete(tid);

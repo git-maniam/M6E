@@ -1,1 +1,9 @@
 [DEFAULT]
+head = "head.js"
+prefs = [
+  "m6e.torrent.enabled=true",
+]
+
+["browser_m6e_torrent_add_dialog.js"]
+
+["browser_m6e_torrent_panel.js"]

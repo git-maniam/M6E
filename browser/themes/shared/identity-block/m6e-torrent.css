@@ -28,7 +28,7 @@
     border-radius: var(--border-radius-circle);
     background-color: var(--color-accent-primary);
     color: var(--button-text-color-primary);
-    font-size: 0.8em;
+    font-size: var(--font-size-small);
     font-weight: var(--font-weight-bold);
     line-height: 1.4;
     text-align: center;
@@ -48,7 +48,7 @@
     fill-opacity: 1;
 
     > #m6e-torrent-badge {
-      background-color: var(--text-color-error);
+      background-color: var(--background-color-critical);
     }
   }
 }
@@ -193,7 +193,7 @@
 
   .row-progress {
     width: 100%;
-    height: 6px;
+    height: var(--size-item-xsmall);
     margin: 0;
   }
 

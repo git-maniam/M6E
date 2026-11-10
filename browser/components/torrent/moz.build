@@ -8,6 +8,12 @@
 # and "tests/xpcshell/service", browser chrome "tests/browser/open" and
 # "tests/browser/ui" (one per step, so parallel work does not share one).
 
+# M6E: P8.2 and P8.4 browser chrome manifests.
+BROWSER_CHROME_MANIFESTS += [
+    "tests/browser/open/browser.toml",
+    "tests/browser/ui/browser.toml",
+]
+
 MOZ_SRC_FILES += [
     "m6e-torrent-rules.json",
     "M6ETorrentHandler.sys.mjs",
