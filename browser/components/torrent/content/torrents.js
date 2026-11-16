@@ -37,6 +37,16 @@ const M6E_TORRENTS_TRACKER_STATES = [
   "disabled",
 ];
 const M6E_TORRENTS_PRIORITIES = { 0: "skip", 1: "low", 2: "normal", 3: "high" };
+const M6E_TORRENTS_PRIORITY_ORDER = [3, 2, 1, 0];
+const M6E_TORRENTS_SPEED_WINDOW_MS = 5 * 60 * 1000;
+const M6E_TORRENTS_SPEED_MIN_GAP_MS = 500;
+const M6E_TORRENTS_SPEED_WIDTH = 600;
+const M6E_TORRENTS_SPEED_HEIGHT = 150;
+const M6E_TORRENTS_MAX_LOG_ROWS = 500;
+const M6E_TORRENTS_LOG_LEVELS = ["debug", "info", "warn", "error"];
+const M6E_TORRENTS_PIECE_CELL = 6;
+const M6E_TORRENTS_PIECE_COLUMNS = 100;
+const M6E_TORRENTS_PIECE_MAX_CELLS = 12000;
 const M6E_TORRENTS_CAN_PAUSE = ["checking", "queued", "downloading", "seeding"];
 const M6E_TORRENTS_CAN_RESUME = ["paused", "error"];
 const M6E_TORRENTS_ACTIVE = ["downloading", "seeding"];
@@ -128,6 +138,10 @@ var gM6ETorrentsPage = {
   _listApplied: 0,
   _loaded: false,
   _observing: false,
+  _speed: new Map(),
+  _logKey: "",
+  _limitsKey: "",
+  _piecesKey: "",
 
   get service() {
     return m6eTorrentsModules.M6ETorrentService;
@@ -223,6 +237,7 @@ var gM6ETorrentsPage = {
     this.torrents = (Array.isArray(list) ? list : []).filter(
       t => t && typeof t.tid == "string"
     );
+    this.recordSamples();
     let tid = this.selectedTid;
     if (tid && !this.torrents.some(t => t.tid == tid)) {
       this.selectedTid = null;
@@ -271,6 +286,8 @@ var gM6ETorrentsPage = {
     this.detail = null;
     this.detailUnavailable = false;
     this._filesKey = "";
+    this._limitsKey = "";
+    this._piecesKey = "";
     this._detailSeq++;
     this.$("m6e-torrents-info").textContent = "";
     this.updateHash();
@@ -359,8 +376,10 @@ var gM6ETorrentsPage = {
     percent.className = "percent";
     cells.progress.append(bar, percent);
     let state = document.createElement("span");
-    cells.status.append(state);
-    return { tr, cells, name, bar, percent, state, last: {} };
+    let flag = document.createElement("span");
+    flag.className = "flag";
+    cells.status.append(state, flag);
+    return { tr, cells, name, bar, percent, state, flag, last: {} };
   },
 
   setText(row, key, el, text) {
@@ -368,6 +387,15 @@ var gM6ETorrentsPage = {
       row.last[key] = text;
       el.textContent = text;
     }
+  },
+
+  flagId(t) {
+    if (t.goalReached) {
+      return "m6e-torrents-goal-flag";
+    }
+    return t.downLimitKBps > 0 || t.upLimitKBps > 0
+      ? "m6e-torrents-limited-flag"
+      : null;
   },
 
   updateRow(row, t) {
@@ -391,6 +419,16 @@ var gM6ETorrentsPage = {
       } else {
         row.state.removeAttribute("data-l10n-id");
         row.state.textContent = this.displayName(t.state);
+      }
+    }
+    let flagId = this.flagId(t);
+    if (row.last.flag !== flagId) {
+      row.last.flag = flagId;
+      if (flagId) {
+        document.l10n.setAttributes(row.flag, flagId);
+      } else {
+        row.flag.removeAttribute("data-l10n-id");
+        row.flag.textContent = "";
       }
     }
     row.cells.status.title = t.error
@@ -604,13 +642,291 @@ var gM6ETorrentsPage = {
       this.setValue(dd, values[key]);
     }
 
-    if (this.tab == "files") {
-      this.renderFiles();
-    } else if (this.tab == "trackers") {
-      this.renderTrackers();
-    } else if (this.tab == "peers") {
-      this.renderPeers();
+    this.renderNote({ ...t, ...status });
+    this.renderLimits({ ...t, ...status });
+
+    switch (this.tab) {
+      case "files":
+        this.renderFiles();
+        break;
+      case "trackers":
+        this.renderTrackers();
+        break;
+      case "peers":
+        this.renderPeers();
+        break;
+      case "pieces":
+        this.renderPieces();
+        break;
+      case "speed":
+        this.renderSpeed();
+        break;
+      case "log":
+        this.renderLog();
+        break;
     }
+  },
+
+  renderNote(t) {
+    let note = this.$("m6e-torrents-detail-note");
+    let id = null;
+    if (t.goalReached) {
+      id = "m6e-torrents-goal-note";
+    } else if (t.state == "queued") {
+      id = "m6e-torrents-queued-note";
+    }
+    note.hidden = !id;
+    if (id) {
+      this.setValue(note, { id });
+    }
+  },
+
+  renderLimits(t) {
+    let down = this.$("m6e-torrents-limit-down");
+    let up = this.$("m6e-torrents-limit-up");
+    let key = `${t.tid}:${t.downLimitKBps ?? 0}:${t.upLimitKBps ?? 0}`;
+    if (
+      key == this._limitsKey ||
+      document.activeElement == down ||
+      document.activeElement == up
+    ) {
+      return;
+    }
+    this._limitsKey = key;
+    down.value = String(t.downLimitKBps ?? 0);
+    up.value = String(t.upLimitKBps ?? 0);
+  },
+
+  applyLimits() {
+    let t = this.selected;
+    let down = this.$("m6e-torrents-limit-down");
+    let up = this.$("m6e-torrents-limit-up");
+    if (!t || !down.checkValidity() || !up.checkValidity()) {
+      (down.checkValidity() ? up : down).reportValidity();
+      return;
+    }
+    let limits = {
+      downKBps: Math.max(0, Math.floor(Number(down.value) || 0)),
+      upKBps: Math.max(0, Math.floor(Number(up.value) || 0)),
+    };
+    this.clearAlert();
+    this._limitsKey = "";
+    this.runAction(() => this.service.setTorrentLimits(t.tid, limits));
+  },
+
+  /* Speed history */
+
+  recordSamples(now = Date.now()) {
+    let known = new Set();
+    for (let t of this.torrents) {
+      known.add(t.tid);
+      let samples = this._speed.get(t.tid);
+      if (!samples) {
+        samples = [];
+        this._speed.set(t.tid, samples);
+      }
+      let last = samples[samples.length - 1];
+      if (!last || now - last.t >= M6E_TORRENTS_SPEED_MIN_GAP_MS) {
+        samples.push({ t: now, down: t.downKBps || 0, up: t.upKBps || 0 });
+      }
+      let cutoff = now - M6E_TORRENTS_SPEED_WINDOW_MS;
+      let drop = 0;
+      while (drop < samples.length && samples[drop].t < cutoff) {
+        drop++;
+      }
+      if (drop) {
+        samples.splice(0, drop);
+      }
+    }
+    for (let tid of [...this._speed.keys()]) {
+      if (!known.has(tid)) {
+        this._speed.delete(tid);
+      }
+    }
+  },
+
+  renderSpeed(now = Date.now()) {
+    let samples = (this._speed.get(this.selectedTid) ?? []).filter(
+      sample => sample.t >= now - M6E_TORRENTS_SPEED_WINDOW_MS
+    );
+    let downLine = this.$("m6e-torrents-speed-line-down");
+    let upLine = this.$("m6e-torrents-speed-line-up");
+    let summary = this.$("m6e-torrents-speed-summary");
+    if (!samples.length) {
+      downLine.setAttribute("points", "");
+      upLine.setAttribute("points", "");
+      this.setValue(summary, { id: "m6e-torrents-speed-none" });
+      return;
+    }
+    let max = Math.max(
+      1,
+      ...samples.flatMap(sample => [sample.down, sample.up])
+    );
+    let start = now - M6E_TORRENTS_SPEED_WINDOW_MS;
+    let x = time =>
+      (
+        ((time - start) / M6E_TORRENTS_SPEED_WINDOW_MS) *
+        M6E_TORRENTS_SPEED_WIDTH
+      ).toFixed(1);
+    let y = value =>
+      (
+        M6E_TORRENTS_SPEED_HEIGHT -
+        2 -
+        (value / max) * (M6E_TORRENTS_SPEED_HEIGHT - 4)
+      ).toFixed(1);
+    let points = key => {
+      let list = samples.map(sample => `${x(sample.t)},${y(sample[key])}`);
+      let last = samples[samples.length - 1];
+      list.push(`${x(Math.max(now, last.t))},${y(last[key])}`);
+      return list.join(" ");
+    };
+    downLine.setAttribute("points", points("down"));
+    upLine.setAttribute("points", points("up"));
+
+    let stats = key => {
+      let values = samples.map(sample => sample[key]);
+      return {
+        now: values[values.length - 1],
+        average: values.reduce((a, b) => a + b, 0) / values.length,
+        peak: Math.max(...values),
+      };
+    };
+    let down = stats("down");
+    let up = stats("up");
+    this.setValue(summary, {
+      id: "m6e-torrents-speed-summary",
+      args: {
+        downNow: this.formatSpeed(down.now),
+        downAverage: this.formatSpeed(down.average),
+        downPeak: this.formatSpeed(down.peak),
+        upNow: this.formatSpeed(up.now),
+        upAverage: this.formatSpeed(up.average),
+        upPeak: this.formatSpeed(up.peak),
+      },
+    });
+  },
+
+  /* Pieces */
+
+  decodePieces(pieces) {
+    let count = pieces?.count;
+    if (
+      !Number.isInteger(count) ||
+      count <= 0 ||
+      typeof pieces.have != "string"
+    ) {
+      return null;
+    }
+    let bytes;
+    try {
+      bytes = Uint8Array.from(atob(pieces.have), ch => ch.charCodeAt(0));
+    } catch (e) {
+      return null;
+    }
+    let have = new Uint8Array(count);
+    for (let i = 0; i < count; i++) {
+      have[i] = (bytes[i >> 3] >> (7 - (i & 7))) & 1;
+    }
+    return { count, have };
+  },
+
+  renderPieces() {
+    let canvas = this.$("m6e-torrents-pieces-map");
+    let summary = this.$("m6e-torrents-pieces-summary");
+    let empty = this.$("m6e-torrents-pieces-empty");
+    let data = this.decodePieces(this.detail?.pieces);
+    empty.hidden = !!data;
+    canvas.hidden = !data;
+    summary.hidden = !data;
+    if (!data) {
+      this._piecesKey = "";
+      return;
+    }
+    let key = `${this.selectedTid}:${data.count}:${this.detail.pieces.have}`;
+    if (key == this._piecesKey) {
+      return;
+    }
+    this._piecesKey = key;
+    let have = data.have.reduce((a, b) => a + b, 0);
+    let cells = Math.min(data.count, M6E_TORRENTS_PIECE_MAX_CELLS);
+    let columns = Math.min(cells, M6E_TORRENTS_PIECE_COLUMNS);
+    let rows = Math.ceil(cells / columns);
+    let size = M6E_TORRENTS_PIECE_CELL;
+    canvas.width = columns * size;
+    canvas.height = rows * size;
+    canvas.dataset.count = String(data.count);
+    canvas.dataset.have = String(have);
+    canvas.dataset.cells = String(cells);
+    let style = getComputedStyle(canvas);
+    let full =
+      style.getPropertyValue("--color-accent-primary").trim() || "#0060df";
+    let none = style.getPropertyValue("--border-color").trim() || "#cfcfd8";
+    let context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    for (let cell = 0; cell < cells; cell++) {
+      let from = Math.floor((cell * data.count) / cells);
+      let to = Math.max(
+        from + 1,
+        Math.floor(((cell + 1) * data.count) / cells)
+      );
+      let got = 0;
+      for (let i = from; i < to; i++) {
+        got += data.have[i];
+      }
+      let fraction = got / (to - from);
+      let cx = (cell % columns) * size;
+      let cy = Math.floor(cell / columns) * size;
+      context.globalAlpha = 1;
+      context.fillStyle = none;
+      context.fillRect(cx, cy, size - 1, size - 1);
+      if (fraction > 0) {
+        context.globalAlpha = 0.3 + 0.7 * fraction;
+        context.fillStyle = full;
+        context.fillRect(cx, cy, size - 1, size - 1);
+      }
+    }
+    context.globalAlpha = 1;
+    this.setValue(summary, {
+      id: "m6e-torrents-pieces-summary",
+      args: {
+        have,
+        count: data.count,
+        percent: this.formatPercent(have / data.count),
+      },
+    });
+  },
+
+  /* Log */
+
+  renderLog() {
+    let entries = [];
+    try {
+      entries = this.service.getLog().slice(-M6E_TORRENTS_MAX_LOG_ROWS);
+    } catch (e) {
+      console.error("M6E: could not read the log", e);
+    }
+    let last = entries[entries.length - 1];
+    let key = `${entries.length}:${last?.time}:${last?.message}`;
+    let list = this.$("m6e-torrents-log-list");
+    this.$("m6e-torrents-log-empty").hidden = !!entries.length;
+    list.hidden = !entries.length;
+    if (key == this._logKey) {
+      return;
+    }
+    this._logKey = key;
+    let format = new Intl.DateTimeFormat(undefined, { timeStyle: "medium" });
+    list.replaceChildren(
+      ...entries.map(entry => {
+        let li = document.createElement("li");
+        let level = M6E_TORRENTS_LOG_LEVELS.includes(entry.level)
+          ? entry.level
+          : "info";
+        li.className = level;
+        let time = format.format(new Date(entry.time));
+        li.textContent = `${time} ${level} ${this.displayName(entry.message)}`;
+        return li;
+      })
+    );
   },
 
   makeCell(text, className) {
@@ -645,11 +961,27 @@ var gM6ETorrentsPage = {
         let percent = document.createElement("span");
         percent.className = "percent";
         progress.append(bar, percent);
+        name.id = `m6e-torrents-file-name-${file.index}`;
         let priority = document.createElement("td");
         priority.className = "priority";
+        let select = document.createElement("select");
+        select.dataset.index = String(file.index);
+        select.disabled = true;
+        select.setAttribute("aria-labelledby", name.id);
+        for (let value of M6E_TORRENTS_PRIORITY_ORDER) {
+          let option = document.createElement("option");
+          option.value = String(value);
+          document.l10n.setAttributes(
+            option,
+            `m6e-torrent-priority-${M6E_TORRENTS_PRIORITIES[value]}`
+          );
+          select.append(option);
+        }
+        select.value = "2";
+        priority.append(select);
         tr.append(name, size, progress, priority);
         tbody.append(tr);
-        this._fileRows.set(file.index, { bar, percent, priority });
+        this._fileRows.set(file.index, { bar, percent, select });
       }
     }
     for (let entry of this.detail?.files ?? []) {
@@ -663,11 +995,12 @@ var gM6ETorrentsPage = {
       if (row.percent.textContent != percent) {
         row.percent.textContent = percent;
       }
-      let name = M6E_TORRENTS_PRIORITIES[entry.priority];
-      this.setValue(
-        row.priority,
-        name ? { id: `m6e-torrent-priority-${name}` } : String(entry.priority)
-      );
+      let value = String(entry.priority);
+      let known = value in M6E_TORRENTS_PRIORITIES;
+      row.select.disabled = !known || !!row.select._m6eBusy;
+      if (known && !row.select._m6eBusy && row.select.value != value) {
+        row.select.value = value;
+      }
     }
   },
 
@@ -793,6 +1126,21 @@ var gM6ETorrentsPage = {
       }
     });
 
+    this.$("m6e-torrents-files").tBodies[0].addEventListener("change", event =>
+      this.onPriorityChange(event.target)
+    );
+    this.$("m6e-torrents-limits-apply").addEventListener("click", () =>
+      this.applyLimits()
+    );
+    for (let id of ["m6e-torrents-limit-down", "m6e-torrents-limit-up"]) {
+      this.$(id).addEventListener("keydown", event => {
+        if (event.key == "Enter") {
+          event.preventDefault();
+          this.applyLimits();
+        }
+      });
+    }
+
     let dialog = this.$("m6e-torrents-remove-dialog");
     dialog.addEventListener("click", event => {
       let button = event.target.closest("button[data-action]");
@@ -916,6 +1264,26 @@ var gM6ETorrentsPage = {
   },
 
   /* Actions */
+
+  async onPriorityChange(select) {
+    let t = this.selected;
+    if (!t || select.localName != "select") {
+      return;
+    }
+    let index = Number(select.dataset.index);
+    let priority = Number(select.value);
+    select._m6eBusy = true;
+    this.clearAlert();
+    try {
+      await this.runAction(() =>
+        this.service.setFilePriority(t.tid, [{ index, priority }])
+      );
+    } finally {
+      await this.loadDetail();
+      select._m6eBusy = false;
+      this.renderFiles();
+    }
+  },
 
   async doAction(action) {
     let t = this.selected;

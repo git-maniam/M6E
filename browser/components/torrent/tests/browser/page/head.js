@@ -15,7 +15,16 @@ const { M6ETorrentService } = ChromeUtils.importESModule(
 
 const TOPIC_CHANGED = "m6e-torrent-changed";
 const SYNTHETIC_TRACKER = "http://tracker.invalid/announce";
-const MOCKED_METHODS = ["list", "detail", "pause", "resume", "remove"];
+const MOCKED_METHODS = [
+  "list",
+  "detail",
+  "pause",
+  "resume",
+  "remove",
+  "setFilePriority",
+  "setTorrentLimits",
+  "getLog",
+];
 
 function tidOf(char) {
   return char.repeat(40);
@@ -96,6 +105,7 @@ class MockPageService {
     this.torrents = [];
     this.details = new Map();
     this.actionError = null;
+    this.log = [];
   }
 
   callsTo(name) {
@@ -133,6 +143,38 @@ class MockPageService {
   async remove(tid, deleteFiles) {
     this.record("remove", tid, deleteFiles);
     await this.act();
+  }
+
+  async setFilePriority(tid, files) {
+    this.record("setFilePriority", tid, files);
+    await this.act();
+    const detail = this.details.get(tid);
+    for (const { index, priority } of files) {
+      const entry = detail?.files.find(f => f.index == index);
+      if (entry) {
+        entry.priority = priority;
+      }
+    }
+    return { status: this.torrents.find(t => t.tid == tid) };
+  }
+
+  async setTorrentLimits(tid, limits) {
+    this.record("setTorrentLimits", tid, limits);
+    await this.act();
+    this.torrents = this.torrents.map(t =>
+      t.tid == tid
+        ? {
+            ...t,
+            downLimitKBps: limits.downKBps ?? t.downLimitKBps,
+            upLimitKBps: limits.upKBps ?? t.upLimitKBps,
+          }
+        : t
+    );
+    return { status: this.torrents.find(t => t.tid == tid) };
+  }
+
+  getLog() {
+    return this.log.map(l => ({ ...l }));
   }
 
   async act() {

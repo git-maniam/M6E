@@ -106,8 +106,10 @@ add_task(async function test_files_trackers_peers_tabs() {
   is(files[1].cells[2].querySelector("progress").value, 0.5, "Progress bar");
   await TestUtils.waitForCondition(
     () =>
-      files[0].cells[3].textContent == "Normal" &&
-      files[1].cells[3].textContent == "High",
+      files[0].cells[3].querySelector("select").selectedOptions[0]
+        .textContent == "Normal" &&
+      files[1].cells[3].querySelector("select").selectedOptions[0]
+        .textContent == "High",
     "The priorities are localized"
   );
 
@@ -122,8 +124,8 @@ add_task(async function test_files_trackers_peers_tabs() {
     "The tracker status is localized"
   );
 
-  EventUtils.synthesizeKey("KEY_End", {}, win);
-  is(doc.activeElement, tabButton(doc, "peers"), "End goes to the last tab");
+  EventUtils.synthesizeKey("KEY_ArrowRight", {}, win);
+  is(doc.activeElement, tabButton(doc, "peers"), "Arrow Right moves a tab");
   const peer = doc.querySelector("#m6e-torrents-peers tbody tr");
   is(peer.cells[0].textContent, "192.0.2.10:6881", "Peer address");
   is(peer.cells[1].textContent, "synthetic-client", "Peer client");

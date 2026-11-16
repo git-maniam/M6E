@@ -281,6 +281,36 @@
                 data-tab="peers"
                 data-l10n-id="m6e-torrents-tab-peers"
               ></button>
+              <button
+                id="m6e-torrents-tab-pieces"
+                type="button"
+                role="tab"
+                aria-controls="m6e-torrents-panel-pieces"
+                aria-selected="false"
+                tabindex="-1"
+                data-tab="pieces"
+                data-l10n-id="m6e-torrents-tab-pieces"
+              ></button>
+              <button
+                id="m6e-torrents-tab-speed"
+                type="button"
+                role="tab"
+                aria-controls="m6e-torrents-panel-speed"
+                aria-selected="false"
+                tabindex="-1"
+                data-tab="speed"
+                data-l10n-id="m6e-torrents-tab-speed"
+              ></button>
+              <button
+                id="m6e-torrents-tab-log"
+                type="button"
+                role="tab"
+                aria-controls="m6e-torrents-panel-log"
+                aria-selected="false"
+                tabindex="-1"
+                data-tab="log"
+                data-l10n-id="m6e-torrents-tab-log"
+              ></button>
             </div>
 
             <p
@@ -296,7 +326,39 @@
               role="tabpanel"
               aria-labelledby="m6e-torrents-tab-general"
             >
+              <p id="m6e-torrents-detail-note" role="status" hidden="hidden"></p>
               <dl id="m6e-torrents-general"></dl>
+              <fieldset id="m6e-torrents-limits">
+                <legend data-l10n-id="m6e-torrents-limits-legend"></legend>
+                <label for="m6e-torrents-limit-down">
+                  <span data-l10n-id="m6e-torrents-limit-down"></span>
+                  <input
+                    id="m6e-torrents-limit-down"
+                    type="number"
+                    min="0"
+                    max="100000000"
+                    step="1"
+                    inputmode="numeric"
+                  />
+                </label>
+                <label for="m6e-torrents-limit-up">
+                  <span data-l10n-id="m6e-torrents-limit-up"></span>
+                  <input
+                    id="m6e-torrents-limit-up"
+                    type="number"
+                    min="0"
+                    max="100000000"
+                    step="1"
+                    inputmode="numeric"
+                  />
+                </label>
+                <button
+                  id="m6e-torrents-limits-apply"
+                  type="button"
+                  data-l10n-id="m6e-torrents-limits-apply"
+                ></button>
+                <p data-l10n-id="m6e-torrents-limits-hint"></p>
+              </fieldset>
             </div>
             <div
               id="m6e-torrents-panel-files"
@@ -373,6 +435,72 @@
               <p
                 id="m6e-torrents-peers-empty"
                 data-l10n-id="m6e-torrents-peers-empty"
+                hidden="hidden"
+              ></p>
+            </div>
+            <div
+              id="m6e-torrents-panel-pieces"
+              class="tabpanel"
+              role="tabpanel"
+              aria-labelledby="m6e-torrents-tab-pieces"
+              hidden="hidden"
+            >
+              <canvas
+                id="m6e-torrents-pieces-map"
+                role="img"
+                aria-labelledby="m6e-torrents-pieces-summary"
+              ></canvas>
+              <p id="m6e-torrents-pieces-summary" role="status"></p>
+              <p
+                id="m6e-torrents-pieces-empty"
+                data-l10n-id="m6e-torrents-pieces-empty"
+                hidden="hidden"
+              ></p>
+            </div>
+            <div
+              id="m6e-torrents-panel-speed"
+              class="tabpanel"
+              role="tabpanel"
+              aria-labelledby="m6e-torrents-tab-speed"
+              hidden="hidden"
+            >
+              <svg
+                id="m6e-torrents-speed-graph"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 600 150"
+                preserveAspectRatio="none"
+                role="img"
+                aria-labelledby="m6e-torrents-speed-summary"
+              >
+                <polyline id="m6e-torrents-speed-line-down" points="" />
+                <polyline id="m6e-torrents-speed-line-up" points="" />
+              </svg>
+              <p class="legend">
+                <span
+                  class="swatch down"
+                  data-l10n-id="m6e-torrents-speed-legend-down"
+                ></span>
+                <span
+                  class="swatch up"
+                  data-l10n-id="m6e-torrents-speed-legend-up"
+                ></span>
+              </p>
+              <p id="m6e-torrents-speed-summary" role="status"></p>
+            </div>
+            <div
+              id="m6e-torrents-panel-log"
+              class="tabpanel"
+              role="tabpanel"
+              aria-labelledby="m6e-torrents-tab-log"
+              hidden="hidden"
+            >
+              <ol
+                id="m6e-torrents-log-list"
+                data-l10n-id="m6e-torrents-log-list"
+              ></ol>
+              <p
+                id="m6e-torrents-log-empty"
+                data-l10n-id="m6e-torrents-log-empty"
                 hidden="hidden"
               ></p>
             </div>
