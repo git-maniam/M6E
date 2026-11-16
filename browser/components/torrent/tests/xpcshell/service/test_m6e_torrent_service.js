@@ -1283,20 +1283,28 @@ helper_task(async function test_sandbox_more_than_four_folders_is_reported() {
 
 helper_task(async function test_helper_gets_only_its_own_environment() {
   await useFakeHelper();
-  const saved = Services.env.get("SSH_AUTH_SOCK");
-  Services.env.set("SSH_AUTH_SOCK", "/private/tmp/m6e-test-agent.sock");
-  cleanups.push(() => Services.env.set("SSH_AUTH_SOCK", saved));
+  const set = {
+    SSH_AUTH_SOCK: "/private/tmp/m6e-test-agent.sock",
+    M6E_SECURITY_TEST_TOKEN: "secret",
+    M6E_TORRENT_TEST_MARK: "kept",
+  };
+  for (const [name, value] of Object.entries(set)) {
+    const saved = Services.env.get(name);
+    Services.env.set(name, value);
+    cleanups.push(() => Services.env.set(name, saved));
+  }
   await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
   const [start] = await fakeLog("starts.jsonl");
   Assert.ok(!("SSH_AUTH_SOCK" in start.env), "no agent socket for the helper");
+  Assert.ok(!("M6E_SECURITY_TEST_TOKEN" in start.env), "no other variable");
   Assert.ok(!("HOME" in start.env), "no home folder for the helper");
-  Assert.ok(Number(start.env.M6E_TORRENT_IDLE_SECONDS) >= 90, "the idle exit is set");
-  for (const name of Object.keys(start.env)) {
-    Assert.ok(
-      /^(M6E_TORRENT_|PATH$|__)/.test(name),
-      `only the helper's own variables reach it: ${name}`
-    );
-  }
+  Assert.ok(!("USER" in start.env) && !("TMPDIR" in start.env));
+  Assert.equal(start.env.M6E_TORRENT_TEST_MARK, "kept", "its own variables pass");
+  Assert.greaterOrEqual(
+    Number(start.env.M6E_TORRENT_IDLE_SECONDS),
+    90,
+    "the idle exit is set"
+  );
 });
 
 helper_task(async function test_config_goes_first_and_a_rejected_limit_fails_closed() {

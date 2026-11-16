@@ -636,14 +636,14 @@ test("folder selection for the sandbox", () => {
 
 test("rate limits stop at the helper's cap", () => {
   assert.equal(MAX_RATE_KBPS, 4 * 1024 * 1024);
-  for (const name of ["downKBps", "upKBps", "turtle.downKBps", "turtle.upKBps"]) {
-    assert.equal(validatePrefValue(name, MAX_RATE_KBPS), MAX_RATE_KBPS);
-    assert.equal(code(() => validatePrefValue(name, MAX_RATE_KBPS + 1)), "bad-request");
+  for (const pref of ["downKBps", "upKBps", "turtle.downKBps", "turtle.upKBps"]) {
+    assert.equal(validatePrefValue(pref, MAX_RATE_KBPS), MAX_RATE_KBPS);
+    assert.equal(code(() => validatePrefValue(pref, MAX_RATE_KBPS + 1)), "bad-request");
   }
 });
 
 test("the helper gets only its own environment", () => {
-  const parent = {
+  const browserEnv = {
     HOME: "/Users/someone",
     PATH: "/usr/bin:/bin",
     SSH_AUTH_SOCK: "/private/tmp/agent.sock",
@@ -653,11 +653,11 @@ test("the helper gets only its own environment", () => {
     M6E_TORRENT_TEST_INTERFACE_GATE: "/private/tmp/gate",
     M6E_TORRENT_IDLE_SECONDS: "5",
   };
-  assert.deepEqual(helperEnvironment(parent, 90), {
+  assert.deepEqual(helperEnvironment(browserEnv, 90), {
     M6E_TORRENT_TEST_INTERFACE_GATE: "/private/tmp/gate",
     M6E_TORRENT_IDLE_SECONDS: "90",
   });
-  assert.deepEqual(helperEnvironment(parent, 90, { automation: true }), {
+  assert.deepEqual(helperEnvironment(browserEnv, 90, { automation: true }), {
     M6E_TORRENT_TEST_INTERFACE_GATE: "/private/tmp/gate",
     M6E_TORRENT_IDLE_SECONDS: "90",
     PATH: "/usr/bin:/bin",

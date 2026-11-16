@@ -444,11 +444,9 @@ export function helperArguments({ profileDir, sandbox, folders, inboxDir }) {
   return args;
 }
 
-/**
- * The helper's whole environment: its own M6E_TORRENT_* variables and nothing
- * of the browser's (no HOME, no SSH_AUTH_SOCK or other agent sockets and
- * tokens). Under automation PATH is kept for the Python fake helper.
- */
+// The helper's whole environment: its own M6E_TORRENT_* variables and nothing
+// of the browser's (no HOME, no SSH_AUTH_SOCK or other agent sockets and
+// tokens). Under automation PATH is kept for the Python fake helper.
 export function helperEnvironment(
   parent,
   idleSeconds,
