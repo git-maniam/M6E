@@ -115,4 +115,12 @@ bool enterSandbox(std::string const& profilePath,
                   std::map<std::string, std::string> const& params,
                   std::string* error);
 
+// Same, with the profile text itself (the helper's built-in copy).
+bool enterSandboxWithProfile(std::string const& profile,
+                             std::map<std::string, std::string> const& params,
+                             std::string* error);
+
+// Whether the canonical path `pathReal` is `rootReal` or below it.
+bool pathIsWithin(std::string const& rootReal, std::string const& pathReal);
+
 }  // namespace m6e

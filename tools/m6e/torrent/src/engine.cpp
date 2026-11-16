@@ -461,6 +461,9 @@ Engine::Engine(EngineOptions options, Emit emit)
       return if_nametoindex(name.c_str()) != 0;
     };
   }
+  if (options_.inboxDir.empty()) {
+    options_.inboxDir = options_.profileDir + "/" + kInboxDir;
+  }
   pendingDir_ = options_.profileDir + "/pending";
   int fds[2];
   if (pipe(fds) != 0) {
@@ -669,7 +672,7 @@ IpFilterList Engine::loadIpFilter(std::string const& path) const {
   auto slash = path.rfind('/');
   std::string parent = slash == 0 ? "/" : path.substr(0, slash);
   std::string name = path.substr(slash + 1);
-  std::string inbox = options_.profileDir + "/" + kInboxDir;
+  std::string const& inbox = options_.inboxDir;
   char inboxReal[PATH_MAX];
   char parentReal[PATH_MAX];
   if (!realpath(inbox.c_str(), inboxReal)) {
@@ -750,6 +753,9 @@ json::object Engine::handle(std::string const& op, json::object const& args) {
   }
   if (op == "setTorrentLimits") {
     return opSetTorrentLimits(args);
+  }
+  if (op == "setFilePriority") {
+    return opSetFilePriority(args);
   }
   if (op == "setConfig") {
     return opSetConfig(args);
@@ -1002,30 +1008,10 @@ json::object Engine::opConfirm(json::object const& args) {
 
   auto const& ti = *p.atp.ti;
   auto const& fs = ti.layout();
-  int const count = fs.num_files();
-  std::vector<lt::download_priority_t> priorities(
-      static_cast<std::size_t>(count), lt::default_priority);
-  std::vector<bool> given(static_cast<std::size_t>(count), false);
-  for (auto const& entry : filesArg->as_array()) {
-    if (!entry.is_object()) {
-      fail("bad-request", "each file must be an object");
-    }
-    auto const& f = entry.as_object();
-    auto index = intArg(f, "index", 0, count - 1);
-    auto priority = intArg(f, "priority", 0, 3);
-    auto i = static_cast<std::size_t>(index);
-    if (given[i]) {
-      fail("bad-request", "a file index is listed twice");
-    }
-    given[i] = true;
-    priorities[i] = toEnginePriority(priority);
-  }
-  for (auto i : fs.file_range()) {
-    if (fs.pad_file_at(i)) {
-      priorities[static_cast<std::size_t>(static_cast<int>(i))] =
-          lt::dont_download;
-    }
-  }
+  auto priorities = priorityArgs(
+      filesArg->as_array(), fs,
+      std::vector<lt::download_priority_t>(
+          static_cast<std::size_t>(fs.num_files()), lt::default_priority));
 
   char resolved[PATH_MAX];
   if (!realpath(savePath.c_str(), resolved)) {
@@ -1036,6 +1022,9 @@ json::object Engine::opConfirm(json::object const& args) {
   struct stat st;
   if (stat(root.c_str(), &st) != 0 || !S_ISDIR(st.st_mode)) {
     fail("io-error", "the save folder is not a folder");
+  }
+  if (auto e = checkSaveRoot(root)) {
+    fail(e->code, e->message);
   }
   if (access(root.c_str(), W_OK) != 0) {
     fail("io-error", "the save folder is not writable");
@@ -1110,6 +1099,10 @@ json::object Engine::opConfirm(json::object const& args) {
   t.addedAtMs = nowMs();
   t.userPaused = !start;
   t.trackers = std::move(trackers);
+  t.priorities = priorities;
+  for (auto prio : priorities) {
+    t.everWanted.push_back(prio != lt::dont_download);
+  }
   pending_.erase(it);
   auto& stored = torrents_.emplace(tid, std::move(t)).first->second;
   handles_[h] = tid;
@@ -1175,9 +1168,60 @@ std::optional<SafetyError> Engine::checkTorrentFiles(Torrent const& t) {
   if (!t.ti) {
     return std::nullopt;
   }
-  return checkBeforeTransfer(
-      t.handle.status(lt::torrent_handle::query_save_path).save_path,
-      t.ti->layout(), t.handle.get_file_priorities());
+  std::string savePath =
+      t.handle.status(lt::torrent_handle::query_save_path).save_path;
+  if (auto e = checkSaveRoot(savePath)) {
+    return e;
+  }
+  return checkBeforeTransfer(savePath, t.ti->layout(), t.priorities);
+}
+
+std::optional<SafetyError> Engine::checkSaveRoot(
+    std::string const& savePath) const {
+  if (!options_.saveRoots) {
+    return std::nullopt;
+  }
+  std::string root;
+  if (auto e = canonicalRoot(savePath, &root)) {
+    return e;
+  }
+  for (auto const& allowed : *options_.saveRoots) {
+    if (pathIsWithin(allowed, root)) {
+      return std::nullopt;
+    }
+  }
+  return SafetyError{"unsafe-path",
+                     "the sandbox allows no downloads into " + root +
+                         "; the helper must be started with that folder"};
+}
+
+std::vector<lt::download_priority_t> Engine::priorityArgs(
+    json::array const& files, lt::file_storage const& fs,
+    std::vector<lt::download_priority_t> priorities) const {
+  int const count = fs.num_files();
+  priorities.resize(static_cast<std::size_t>(count), lt::default_priority);
+  std::vector<bool> given(static_cast<std::size_t>(count), false);
+  for (auto const& entry : files) {
+    if (!entry.is_object()) {
+      fail("bad-request", "each file must be an object");
+    }
+    auto const& f = entry.as_object();
+    auto index = intArg(f, "index", 0, count - 1);
+    auto priority = intArg(f, "priority", 0, 3);
+    auto i = static_cast<std::size_t>(index);
+    if (given[i]) {
+      fail("bad-request", "a file index is listed twice");
+    }
+    given[i] = true;
+    priorities[i] = toEnginePriority(priority);
+  }
+  for (auto i : fs.file_range()) {
+    if (fs.pad_file_at(i)) {
+      priorities[static_cast<std::size_t>(static_cast<int>(i))] =
+          lt::dont_download;
+    }
+  }
+  return priorities;
 }
 
 json::object Engine::opPause(json::object const& args, bool pause) {
@@ -1272,10 +1316,17 @@ json::object Engine::opDetail(json::object const& args) {
     r["pieces"] = std::move(pieces);
     json::array files;
     if (!p.fetching) {
-      for (auto i : p.atp.ti->layout().file_range()) {
+      auto const& fs = p.atp.ti->layout();
+      auto const& selection = p.atp.file_priorities;
+      for (auto i : fs.file_range()) {
+        auto k = static_cast<std::size_t>(static_cast<int>(i));
         json::object f;
         f["index"] = static_cast<int>(i);
-        f["priority"] = 2;
+        f["priority"] = fs.pad_file_at(i) ? 0
+                        : selection.empty() ? 2
+                        : k < selection.size()
+                            ? fromEnginePriority(selection[k])
+                            : 0;
         f["progress"] = 0;
         files.push_back(std::move(f));
       }
@@ -1319,7 +1370,7 @@ json::object Engine::opDetail(json::object const& args) {
   pieces["count"] = count;
   pieces["have"] = base64(have);
   r["pieces"] = std::move(pieces);
-  auto priorities = t.handle.get_file_priorities();
+  auto const& priorities = t.priorities;
   auto progress = t.handle.file_progress(lt::torrent_handle::piece_granularity);
   json::array files;
   if (t.ti) {
@@ -1427,6 +1478,54 @@ json::object Engine::opSetTorrentLimits(json::object const& args) {
   applyTorrentLimits(t);
   requestResume(t);
   refreshStatus(t);
+  json::object r;
+  r["status"] = statusJson(t);
+  return r;
+}
+
+json::object Engine::opSetFilePriority(json::object const& args) {
+  Torrent& t = confirmed(tidArg(args));
+  auto const* filesArg = findArg(args, "files");
+  if (!filesArg || !filesArg->is_array()) {
+    fail("bad-request", "files must be an array");
+  }
+  if (!t.ti) {
+    fail("engine-error", "the torrent has no metadata");
+  }
+  auto const& fs = t.ti->layout();
+  auto next = priorityArgs(filesArg->as_array(), fs, t.priorities);
+  t.priorities.resize(next.size(), lt::default_priority);
+  t.everWanted.resize(next.size(), false);
+  bool enabling = false;
+  for (std::size_t k = 0; k < next.size(); k++) {
+    enabling = enabling || (next[k] != lt::dont_download &&
+                            t.priorities[k] == lt::dont_download);
+  }
+  if (enabling && !t.userPaused && !t.completed) {
+    std::string savePath =
+        t.handle.status(lt::torrent_handle::query_save_path).save_path;
+    if (auto e = checkSaveRoot(savePath)) {
+      fail(e->code, e->message);
+    }
+    if (auto e = checkBeforeTransfer(savePath, fs, next)) {
+      fail(e->code, e->message);
+    }
+  }
+  for (std::size_t k = 0; k < next.size(); k++) {
+    if (next[k] != lt::dont_download) {
+      t.everWanted[k] = true;
+    }
+  }
+  if (enabling) {
+    t.finishedSeen = false;
+    t.recheckFinish = true;
+  }
+  t.priorities = next;
+  t.handle.prioritize_files(std::move(next));
+  requestResume(t);
+  refreshStatus(t);
+  refreshNetwork();
+  updatePower(anyActive());
   json::object r;
   r["status"] = statusJson(t);
   return r;
@@ -1728,10 +1827,33 @@ json::object Engine::opRestore(json::object const& args) {
     atp.flags |= lt::torrent_flags::update_subscribe |
                  lt::torrent_flags::apply_ip_filter |
                  lt::torrent_flags::paused | privacyFlags(atp.ti->priv());
+    auto const& layout = atp.ti->layout();
+    t.priorities = atp.file_priorities;
+    t.priorities.resize(static_cast<std::size_t>(layout.num_files()),
+                        lt::default_priority);
+    for (auto i : layout.file_range()) {
+      if (layout.pad_file_at(i)) {
+        t.priorities[static_cast<std::size_t>(static_cast<int>(i))] =
+            lt::dont_download;
+      }
+    }
+    std::string wanted;
+    if (m6eState) {
+      wanted = std::string(m6eState.dict_find_string_value("wanted"));
+    }
+    for (std::size_t k = 0; k < t.priorities.size(); k++) {
+      t.everWanted.push_back(t.priorities[k] != lt::dont_download ||
+                             (wanted.size() == t.priorities.size() &&
+                              wanted[k] == '1'));
+    }
+    atp.file_priorities = t.priorities;
     bool startNow = start && !t.userPaused && !t.completed;
     if (startNow) {
-      if (auto e = checkBeforeTransfer(atp.save_path, atp.ti->layout(),
-                                       atp.file_priorities)) {
+      auto e = checkSaveRoot(atp.save_path);
+      if (!e) {
+        e = checkBeforeTransfer(atp.save_path, layout, atp.file_priorities);
+      }
+      if (e) {
         emitError(tid, e->code, e->message);
         startNow = false;
       }
@@ -2042,6 +2164,18 @@ void Engine::handleAlert(lt::alert* a) {
     }
     return;
   }
+  if (auto* fp = lt::alert_cast<lt::file_prio_alert>(a)) {
+    Torrent* t = byHandle(fp->handle);
+    if (t && t->recheckFinish &&
+        t->handle.get_file_priorities() == t->priorities) {
+      t->recheckFinish = false;
+      refreshStatus(*t);
+      if (t->status.is_finished && !t->status.errc) {
+        onFinished(*t);
+      }
+    }
+    return;
+  }
   if (auto* sr = lt::alert_cast<lt::save_resume_data_alert>(a)) {
     outstandingSaves_ = std::max(0, outstandingSaves_ - 1);
     if (Torrent* t = byHandle(sr->handle)) {
@@ -2134,12 +2268,17 @@ void Engine::onFlushed(Torrent& t) {
   std::string root;
   if (t.ti && !canonicalRoot(t.status.save_path, &root)) {
     auto const& fs = t.ti->layout();
-    auto priorities = t.handle.get_file_priorities();
     for (auto i : fs.file_range()) {
       auto k = static_cast<std::size_t>(static_cast<int>(i));
-      if (fs.pad_file_at(i) || k >= priorities.size() ||
-          priorities[k] == lt::dont_download) {
+      if (fs.pad_file_at(i) || k >= t.priorities.size()) {
         continue;
+      }
+      if (t.priorities[k] == lt::dont_download) {
+        struct stat st;
+        if (k >= t.everWanted.size() || !t.everWanted[k] ||
+            lstat((root + "/" + fs.file_path(i)).c_str(), &st) != 0) {
+          continue;
+        }
       }
       auto report = finalizeRelative(root, fs.file_path(i));
       if (!report.warning.empty() && warning.empty()) {
@@ -2230,6 +2369,19 @@ bool Engine::writeResume(Torrent const& t, lt::add_torrent_params const& atp) {
   state["downLimit"] = t.downLimitKBps;
   state["upLimit"] = t.upLimitKBps;
   state["goalReached"] = t.goalReached ? 1 : 0;
+  if (!t.priorities.empty()) {
+    lt::entry::list_type prio;
+    for (auto p : t.priorities) {
+      prio.emplace_back(
+          static_cast<std::int64_t>(static_cast<std::uint8_t>(p)));
+    }
+    e["file_priority"] = std::move(prio);
+    std::string wanted;
+    for (bool w : t.everWanted) {
+      wanted.push_back(w ? '1' : '0');
+    }
+    state["wanted"] = wanted;
+  }
   lt::entry::list_type trackers;
   for (auto const& ae : t.trackers) {
     lt::entry::list_type pair;

@@ -32,6 +32,7 @@
   (subpath (param "TORRENTS_DIR")))
 
 (allow file-read* (subpath (param "INBOX_DIR")))
+(deny file-write* (subpath (param "INBOX_DIR")))
 
 (allow network*)
 (allow system-socket)
