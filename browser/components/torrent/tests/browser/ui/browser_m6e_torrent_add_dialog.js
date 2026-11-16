@@ -186,7 +186,10 @@ add_task(async function test_shady_banner() {
     "A direction override in a file name is shown as a visible escape"
   );
   ok(
-    reasons[1].getAttribute("data-l10n-id").endsWith("-other"),
+    reasons[1]
+      .querySelector("span")
+      .getAttribute("data-l10n-id")
+      .endsWith("-other"),
     "A reason code this build does not know falls back to the generic text"
   );
   ok(
@@ -718,6 +721,266 @@ add_task(async function test_unsupported_setting_errors_are_ignored() {
     visible(opened.doc, "m6e-torrent-add-fetching"),
     "The dialog keeps waiting for the metadata"
   );
+  await closeAddDialog(opened);
+  await done;
+});
+
+const RLO = String.fromCodePoint(0x202e);
+
+add_task(async function test_banner_shortens_names_and_counts_more() {
+  const { risk } = installMocks();
+  const long = "Folder/" + "x".repeat(300) + ".exe";
+  const emoji = "\u{1F600}".repeat(150) + ".dmg";
+  const files = [long, emoji, "a.exe", "b.exe", "c.exe", "d.exe", "e.exe"];
+  risk.result = {
+    verdict: "shady",
+    trusted: false,
+    reasons: [
+      { code: "windows-program", severity: "high", files, moreFiles: 20 },
+    ],
+  };
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  const opened = await waitForAddDialog();
+  const doc = opened.doc;
+  await waitForDetails(doc);
+  const item = doc.querySelector("#m6e-torrent-shady-reasons li");
+  const text = item.textContent;
+  ok(
+    text.includes("and 22 more"),
+    "The names past the first five and those the check left out are counted"
+  );
+  ok(
+    text.includes("c.exe") && !text.includes("d.exe"),
+    "Only the first five names are shown"
+  );
+  ok(
+    text.includes("\u{2026}") && text.includes("xxx.exe"),
+    "A long name is shortened in the middle and keeps its extension"
+  );
+  ok(text.includes("\u{1F600}.dmg"), "So is a long name of emoji");
+  ok(!/[\u{D800}-\u{DFFF}]/u.test(text), "No character is cut in half");
+  ok(
+    item.title.includes(long) && item.title.includes(emoji),
+    "The full names are the item's tooltip"
+  );
+  ok(
+    !item.hasAttribute("data-l10n-id"),
+    "on an untranslated element, so Fluent keeps it"
+  );
+  doc.getElementById("m6e-torrent-shady-cancel").click();
+  await opened.closedPromise;
+  await done;
+});
+
+add_task(async function test_trust_is_not_offered_when_it_would_be_unsafe() {
+  const { risk } = installMocks();
+  const fine = { verdict: "ok", trusted: false, reasons: [] };
+  const shady = {
+    verdict: "shady",
+    trusted: false,
+    reasons: [{ code: "windows-program", severity: "high", files: ["a.exe"] }],
+  };
+  const cases = [
+    [shady, PAGE_SOURCE, "a shady torrent"],
+    [fine, { kind: "page", origin: "https://co.uk" }, "a public suffix"],
+    [fine, { kind: "page", origin: "https://github.io" }, "a hosting suffix"],
+  ];
+  let previous = null;
+  for (const [result, source, what] of cases) {
+    risk.result = result;
+    const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", source);
+    const opened = await waitForAddDialog(previous);
+    await waitForDetails(opened.doc);
+    ok(
+      opened.doc.getElementById("m6e-torrent-add-trust-label").hidden,
+      `"Always trust" is not offered for ${what}`
+    );
+    opened.doc
+      .getElementById(
+        result == shady ? "m6e-torrent-shady-cancel" : "m6e-torrent-add-cancel"
+      )
+      .click();
+    await opened.closedPromise;
+    await done;
+    previous = opened;
+  }
+  is(gM6ETorrent.trustedSites.length, 0, "No site was trusted");
+});
+
+add_task(async function test_page_torrent_waits_for_a_focused_delay() {
+  const { service } = installMocks();
+  await SimpleTest.promiseFocus(window);
+  await SpecialPowers.pushPrefEnv({
+    set: [["security.dialog_enable_delay", 60000]],
+  });
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", PAGE_SOURCE);
+  const opened = await waitForAddDialog();
+  const { doc, win } = opened;
+  await waitForDetails(doc);
+  const confirm = doc.getElementById("m6e-torrent-add-confirm");
+  const sequential = doc.getElementById("m6e-torrent-add-sequential");
+  await TestUtils.waitForCondition(
+    () => doc.activeElement?.id == "m6e-torrent-add-cancel",
+    "A torrent that a page started gets the focus on Cancel, not on Add"
+  );
+  ok(
+    doc.getElementById("m6e-torrent-add-start-now").checked,
+    "Start now is on, so a stray Add would also start it"
+  );
+  ok(confirm.disabled, "Add waits for the delay");
+
+  sequential.focus();
+  EventUtils.synthesizeKey("KEY_Enter", {}, win);
+  confirm.click();
+  doc.getElementById("m6e-torrent-add-form").requestSubmit();
+  await settle();
+  Assert.deepEqual(
+    service.callsTo("confirmAdd"),
+    [],
+    "Enter, a click and a submit during the delay add nothing"
+  );
+
+  await SpecialPowers.pushPrefEnv({
+    set: [["security.dialog_enable_delay", 50]],
+  });
+  gURLBar.focus();
+  await TestUtils.waitForCondition(
+    () => !doc.hasFocus(),
+    "The dialog has lost the focus"
+  );
+  ok(confirm.disabled, "Add stays disabled without the focus");
+  sequential.focus();
+  await TestUtils.waitForCondition(
+    () => !confirm.disabled,
+    "Add works once the dialog has had the focus for the delay"
+  );
+  gURLBar.focus();
+  await TestUtils.waitForCondition(
+    () => confirm.disabled,
+    "Losing the focus disables Add again"
+  );
+  sequential.focus();
+  await TestUtils.waitForCondition(
+    () => !confirm.disabled,
+    "and the delay starts again when the focus comes back"
+  );
+  confirm.click();
+  is(await done, true, "Add then adds the torrent");
+  is(service.callsTo("confirmAdd").length, 1, "once");
+  await SpecialPowers.popPrefEnv();
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function test_shady_page_torrent_waits_for_a_focused_delay() {
+  const { service, risk } = installMocks();
+  await SimpleTest.promiseFocus(window);
+  await SpecialPowers.pushPrefEnv({
+    set: [["security.dialog_enable_delay", 60000]],
+  });
+  risk.result = {
+    verdict: "shady",
+    trusted: false,
+    reasons: [{ code: "windows-program", severity: "high", files: ["a.exe"] }],
+  };
+  const done = gM6ETorrent.addMagnet(SYNTHETIC_MAGNET, {
+    kind: "magnet-page",
+    origin: "https://example.org",
+  });
+  const opened = await waitForAddDialog();
+  const { doc } = opened;
+  Services.obs.notifyObservers(
+    null,
+    "m6e-torrent-metadata",
+    JSON.stringify({ tid: SYNTHETIC_HASH, metadata: syntheticMetadata() })
+  );
+  await waitForDetails(doc);
+  const anyway = doc.getElementById("m6e-torrent-shady-add-anyway");
+  await TestUtils.waitForCondition(
+    () => doc.activeElement?.id == "m6e-torrent-shady-title",
+    "The banner's heading has the focus"
+  );
+  ok(anyway.disabled, "Add anyway waits for the delay");
+  anyway.click();
+  await settle();
+  Assert.deepEqual(service.callsTo("confirmAdd"), [], "Nothing is added");
+
+  await SpecialPowers.pushPrefEnv({
+    set: [["security.dialog_enable_delay", 50]],
+  });
+  gURLBar.focus();
+  await TestUtils.waitForCondition(() => !doc.hasFocus(), "Focus left");
+  doc.getElementById("m6e-torrent-shady-title").focus();
+  await TestUtils.waitForCondition(
+    () => !anyway.disabled,
+    "Add anyway works after the delay with the focus"
+  );
+  anyway.click();
+  is(await done, true, "Add anyway adds the torrent");
+  gM6ETorrent._acknowledged.clear();
+  await SpecialPowers.popPrefEnv();
+  await SpecialPowers.popPrefEnv();
+});
+
+add_task(async function test_own_torrent_focuses_add() {
+  installMocks();
+  await SimpleTest.promiseFocus(window);
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  const opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  await TestUtils.waitForCondition(
+    () => opened.doc.activeElement?.id == "m6e-torrent-add-confirm",
+    "A torrent the user opened from Finder gets the focus on Add"
+  );
+  await closeAddDialog(opened);
+  await done;
+});
+
+add_task(async function test_torrent_text_in_messages_is_not_markup() {
+  installMocks();
+  const hostile = "cannot write Evil&#x202E;gpj.exe <b>bold</b> " + RLO + "x";
+  const done = gM6ETorrent.addMagnet(SYNTHETIC_MAGNET);
+  const opened = await waitForAddDialog();
+  Services.obs.notifyObservers(
+    null,
+    "m6e-torrent-error",
+    JSON.stringify({ tid: SYNTHETIC_HASH, code: "io-error", message: hostile })
+  );
+  const error = opened.doc.getElementById("m6e-torrent-add-error");
+  await TestUtils.waitForCondition(
+    () => error.textContent.includes("Evil"),
+    "The error is shown"
+  );
+  ok(
+    error.textContent.includes("Evil&#x202E;gpj.exe"),
+    "A character reference in torrent text is shown as written"
+  );
+  ok(error.textContent.includes("<b>bold</b>"), "and so is markup");
+  is(error.querySelector("b"), null, "which does not become an element");
+  ok(
+    !error.textContent.includes(RLO) && error.textContent.includes("<U+202E>"),
+    "A real direction override is shown as a visible escape"
+  );
+  await closeAddDialog(opened);
+  await done;
+});
+
+add_task(async function test_add_error_text_is_not_markup() {
+  const { service } = installMocks();
+  service.confirmError = new Error("disk problem in <b>Evil</b>&#x202E;.exe");
+  const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", FILE_SOURCE);
+  const opened = await waitForAddDialog();
+  await waitForDetails(opened.doc);
+  opened.doc.getElementById("m6e-torrent-add-confirm").click();
+  const error = opened.doc.getElementById("m6e-torrent-add-error");
+  await TestUtils.waitForCondition(
+    () => error.textContent.includes("disk problem"),
+    "The error is shown"
+  );
+  ok(
+    error.textContent.includes("<b>Evil</b>&#x202E;.exe"),
+    "The helper's message is shown as written"
+  );
+  is(error.querySelector("b"), null, "without markup");
   await closeAddDialog(opened);
   await done;
 });

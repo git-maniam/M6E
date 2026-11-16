@@ -8,11 +8,19 @@
 
 "use strict";
 
+const { M6ETorrentRisk } = ChromeUtils.importESModule(
+  "moz-src:///browser/components/torrent/M6ETorrentRisk.sys.mjs"
+);
+
 const PRIORITY_HIGH = 3;
 const PRIORITY_NORMAL = 2;
 const PRIORITY_LOW = 1;
 const PRIORITY_SKIP = 0;
 const MAX_FILES_PER_REASON = 5;
+const MAX_NAME_LENGTH = 120;
+const ENABLE_DELAY_PREF = "security.dialog_enable_delay";
+const ENABLE_DELAY_FALLBACK_MS = 1000;
+const PAGE_KINDS = ["page", "magnet-page"];
 const KNOWN_REASONS = [
   "windows-program",
   "double-extension",
@@ -35,6 +43,8 @@ let risk = null;
 let busy = false;
 let failed = false;
 let savePath = params.defaultSavePath || "";
+let armed = false;
+let armTimer = null;
 
 /**
  * Makes a name safe to show: invisible and direction-changing characters
@@ -78,11 +88,41 @@ function canAdd() {
 }
 
 function updateButtons() {
-  $("m6e-torrent-add-confirm").disabled = !canAdd();
+  $("m6e-torrent-add-confirm").disabled = !armed || !canAdd();
   $("m6e-torrent-shady-add-anyway").disabled =
-    busy || failed || !savePath || !selectedFiles().length;
+    !armed || busy || failed || !savePath || !selectedFiles().length;
   $("m6e-torrent-add-footer").hidden = bannerShown();
   $("m6e-torrent-shady-cancel").disabled = false;
+}
+
+function enableDelay() {
+  try {
+    return Services.prefs.getIntPref(ENABLE_DELAY_PREF);
+  } catch (e) {
+    return ENABLE_DELAY_FALLBACK_MS;
+  }
+}
+
+// Add and Add anyway work only once the dialog has had the focus for the
+// dialog enable delay, so a key press meant for the page cannot add a
+// torrent that the page started. Losing the focus starts the delay again.
+function disarm() {
+  clearTimeout(armTimer);
+  armTimer = null;
+  armed = enableDelay() <= 0;
+  updateButtons();
+}
+
+function arm() {
+  disarm();
+  if (armed || !document.hasFocus()) {
+    return;
+  }
+  armTimer = setTimeout(() => {
+    armTimer = null;
+    armed = true;
+    updateButtons();
+  }, enableDelay());
 }
 
 function buildTree(entries) {
@@ -205,19 +245,22 @@ function setPriority(entry, priority) {
 }
 
 function refresh() {
-  for (const { box, members } of $("m6e-torrent-add-tree")._folderBoxes ??
-    []) {
+  for (const { box, members } of $("m6e-torrent-add-tree")._folderBoxes ?? []) {
     const chosen = members.filter(m => m.priority > PRIORITY_SKIP).length;
     box.checked = chosen == members.length && chosen > 0;
     box.indeterminate = chosen > 0 && chosen < members.length;
   }
   const chosen = selectedFiles();
   const bytes = chosen.reduce((sum, f) => sum + f.length, 0);
-  document.l10n.setAttributes($("m6e-torrent-add-selection"), "m6e-torrent-add-selection", {
-    selected: chosen.length,
-    total: files.length,
-    size: params.formatBytes(bytes),
-  });
+  document.l10n.setAttributes(
+    $("m6e-torrent-add-selection"),
+    "m6e-torrent-add-selection",
+    {
+      selected: chosen.length,
+      total: files.length,
+      size: params.formatBytes(bytes),
+    }
+  );
   updateSpaceWarning(bytes);
   updateButtons();
 }
@@ -242,27 +285,48 @@ function updateSpaceWarning(bytes) {
   }
 }
 
+// The risk check lists programs first; the banner keeps that order, shows
+// the first names shortened in the middle, and the full names as a tooltip
+// on the untranslated list item (Fluent drops a title on a translated one).
 async function renderBanner() {
   const list = $("m6e-torrent-shady-reasons");
   list.replaceChildren();
+  const labels = [];
   for (const reason of risk.reasons ?? []) {
-    const names = (reason.files ?? []).map(f => overlaySafe(displayName(f)));
-    let text = names.slice(0, MAX_FILES_PER_REASON).join(", ");
-    if (names.length > MAX_FILES_PER_REASON) {
-      const more = await document.l10n.formatValue(
-        "m6e-torrent-shady-more-files",
-        { count: names.length - MAX_FILES_PER_REASON }
+    const names = (Array.isArray(reason.files) ? reason.files : []).map(f =>
+      displayName(f)
+    );
+    const shown = names.slice(0, MAX_FILES_PER_REASON);
+    const more =
+      names.length -
+      shown.length +
+      (Number.isInteger(reason.moreFiles) && reason.moreFiles > 0
+        ? reason.moreFiles
+        : 0);
+    const parts = shown.map(name =>
+      overlaySafe(M6ETorrentRisk.shortenForDisplay(name, MAX_NAME_LENGTH))
+    );
+    if (more > 0) {
+      parts.push(
+        overlaySafe(
+          await document.l10n.formatValue("m6e-torrent-shady-more-files", {
+            count: more,
+          })
+        )
       );
-      text += `, ${more}`;
     }
     const item = document.createElement("li");
+    item.title = names.join("\n");
+    const label = document.createElement("span");
     const code = KNOWN_REASONS.includes(reason.code) ? reason.code : "other";
-    document.l10n.setAttributes(item, `m6e-torrent-shady-${code}`, {
-      files: text,
+    document.l10n.setAttributes(label, `m6e-torrent-shady-${code}`, {
+      files: parts.join(", "),
     });
+    item.append(label);
     list.append(item);
+    labels.push(label);
   }
-  await document.l10n.translateElements([...list.children]);
+  await document.l10n.translateElements(labels);
 }
 
 function isHttpsOrigin(origin) {
@@ -271,6 +335,30 @@ function isHttpsOrigin(origin) {
   } catch (e) {
     return false;
   }
+}
+
+function isPublicSuffix(host) {
+  if (!host.includes(".")) {
+    return true;
+  }
+  try {
+    return Services.eTLD.getPublicSuffixFromHost(host) == host;
+  } catch (e) {
+    return e.result != Cr.NS_ERROR_HOST_IS_IP_ADDRESS;
+  }
+}
+
+// "Always trust" is offered for an https site of a torrent that is not shady
+// and not already trusted, never for a public suffix such as co.uk or a
+// shared hosting domain, where anyone can publish.
+function canOfferTrust() {
+  if (!risk || risk.trusted || risk.verdict == "shady") {
+    return false;
+  }
+  if (!isHttpsOrigin(source?.origin)) {
+    return false;
+  }
+  return !isPublicSuffix(new URL(source.origin).hostname);
 }
 
 async function assessAndShow() {
@@ -290,16 +378,36 @@ async function assessAndShow() {
   $("m6e-torrent-shady").hidden = !shady;
 
   const trustLabel = $("m6e-torrent-add-trust-label");
-  const canTrust = isHttpsOrigin(source?.origin) && !risk?.trusted;
+  const canTrust = canOfferTrust();
   trustLabel.hidden = !canTrust;
   if (canTrust) {
     document.l10n.setAttributes(
       $("m6e-torrent-add-trust-text"),
       "m6e-torrent-add-trust-site",
-      { site: source.origin }
+      { site: overlaySafe(source.origin) }
     );
   }
 }
+
+// A torrent that a page started gets the focus on Cancel (or the banner), so
+// that the Enter the user meant for the page does not add it.
+function focusDefault() {
+  const active = document.activeElement;
+  const untouched = !active || active == document.body;
+  const fromPage = PAGE_KINDS.includes(source?.kind);
+  if (bannerShown()) {
+    if (fromPage || untouched || active.id == "m6e-torrent-add-cancel") {
+      $("m6e-torrent-shady-title").focus();
+    }
+  } else if (fromPage || !metadata) {
+    $("m6e-torrent-add-cancel").focus();
+  } else if (untouched) {
+    $("m6e-torrent-add-confirm").focus();
+  }
+}
+
+// SubDialog calls this instead of focusing the first focusable element.
+document.subDialogSetDefaultFocus = () => focusDefault();
 
 async function showMetadata(meta) {
   metadata = meta;
@@ -314,10 +422,14 @@ async function showMetadata(meta) {
 
   $("m6e-torrent-add-name").textContent = displayName(meta.name);
   const total = files.reduce((sum, f) => sum + f.length, 0);
-  document.l10n.setAttributes($("m6e-torrent-add-size"), "m6e-torrent-add-size-value", {
-    size: params.formatBytes(total),
-    count: files.length,
-  });
+  document.l10n.setAttributes(
+    $("m6e-torrent-add-size"),
+    "m6e-torrent-add-size-value",
+    {
+      size: params.formatBytes(total),
+      count: files.length,
+    }
+  );
   renderTree(files);
   $("m6e-torrent-add-save-path").value = savePath;
   $("m6e-torrent-add-sequential").checked = Services.prefs.getBoolPref(
@@ -331,26 +443,24 @@ async function showMetadata(meta) {
   $("m6e-torrent-add-details").hidden = false;
   refresh();
   await document.l10n.translateFragment(document.body);
-  const active = document.activeElement;
-  if (bannerShown() && (!active || active == document.body || active.id == "m6e-torrent-add-cancel")) {
-    $("m6e-torrent-shady-title").focus();
-  } else if (!active || active == document.body) {
-    $("m6e-torrent-add-confirm").focus();
-  }
+  focusDefault();
+  arm();
   document.documentElement.setAttribute("m6e-ready", "true");
 }
 
 function showFailure(message) {
   failed = true;
   const error = $("m6e-torrent-add-error");
-  document.l10n.setAttributes(error, "m6e-torrent-add-failed", { message });
+  document.l10n.setAttributes(error, "m6e-torrent-add-failed", {
+    message: overlaySafe(displayName(message)),
+  });
   error.hidden = false;
   $("m6e-torrent-add-fetching").hidden = true;
   updateButtons();
 }
 
 async function submitAdd(anyway) {
-  if (!metadata || busy || failed) {
+  if (!armed || !metadata || busy || failed) {
     return;
   }
   if (bannerShown() && !anyway) {
@@ -378,7 +488,7 @@ async function submitAdd(anyway) {
     }
     const error = $("m6e-torrent-add-error");
     document.l10n.setAttributes(error, "m6e-torrent-add-failed", {
-      message: e?.message ?? "",
+      message: overlaySafe(displayName(e?.message ?? "")),
     });
     error.hidden = false;
     updateButtons();
@@ -436,9 +546,7 @@ function init() {
     submitAdd(false);
   });
   $("m6e-torrent-add-cancel").addEventListener("click", () => window.close());
-  $("m6e-torrent-shady-cancel").addEventListener("click", () =>
-    window.close()
-  );
+  $("m6e-torrent-shady-cancel").addEventListener("click", () => window.close());
   $("m6e-torrent-shady-add-anyway").addEventListener("click", () =>
     submitAdd(true)
   );
@@ -449,10 +557,30 @@ function init() {
   window.addEventListener(
     "unload",
     () => {
+      clearTimeout(armTimer);
       Services.obs.removeObserver(observer, "m6e-torrent-metadata");
       Services.obs.removeObserver(observer, "m6e-torrent-error");
     },
     { once: true }
+  );
+  window.addEventListener("focus", event => {
+    if (event.target == window) {
+      arm();
+    }
+  });
+  window.addEventListener("blur", event => {
+    if (event.target == window) {
+      disarm();
+    }
+  });
+  window.addEventListener(
+    "keydown",
+    () => {
+      if (armTimer) {
+        arm();
+      }
+    },
+    true
   );
 
   $("m6e-torrent-add-start-now").checked = params.startNow ?? true;
@@ -462,7 +590,8 @@ function init() {
   if (known) {
     ready = showMetadata(known);
   } else {
-    $("m6e-torrent-add-cancel").focus();
+    focusDefault();
+    arm();
   }
   if (params.askWhereToSave) {
     // Not awaited: the dialog must be ready while the folder chooser is open.

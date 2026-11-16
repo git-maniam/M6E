@@ -12,6 +12,8 @@ ChromeUtils.defineESModuleGetters(lazy, {
   BrowserWindowTracker: "resource:///modules/BrowserWindowTracker.sys.mjs",
   Downloads: "resource://gre/modules/Downloads.sys.mjs",
   FileUtils: "resource://gre/modules/FileUtils.sys.mjs",
+  M6ETorrentRisk:
+    "moz-src:///browser/components/torrent/M6ETorrentRisk.sys.mjs",
 });
 
 const PREF_ENABLED = "m6e.torrent.enabled";
@@ -21,7 +23,7 @@ const QUEUE_LIFETIME_MS = 60000;
 const PAGE_COOLDOWN_MS = 2000;
 
 const GO_TO_PAGE = Object.freeze({ goToPage: true });
-const SOURCE_UNKNOWN =Object.freeze({ kind: "unknown", origin: null });
+const SOURCE_UNKNOWN = Object.freeze({ kind: "unknown", origin: null });
 const SOURCE_FINDER = Object.freeze({ kind: "finder", origin: null });
 
 function isEnabled() {
@@ -217,11 +219,11 @@ export const M6ETorrentHandler = {
       launcher.cancel(Cr.NS_BINDING_ABORTED);
       return true;
     }
-    const source = {
-      kind: "page",
-      origin: this._downloadOrigin(uri, browsingContext),
+    const origins = {
+      fileOrigin: httpsOriginOfURI(uri),
+      pageOrigin: this._pageOrigin(uri, browsingContext),
     };
-    this._saveToTemp(launcher, win, source).catch(e => {
+    this._saveToTemp(launcher, win, origins).catch(e => {
       console.error(e);
       try {
         launcher.cancel(Cr.NS_BINDING_ABORTED);
@@ -355,23 +357,40 @@ export const M6ETorrentHandler = {
     return false;
   },
 
-  // The page the link was on counts only when it is https and on the same
-  // site as the file, so a URL typed or pasted while a trusted page is open
-  // is not credited to that page.
-  _downloadOrigin(uri, browsingContext) {
-    const fileOrigin = httpsOriginOfURI(uri);
+  // The page that may vouch for a .torrent download: an https page on the
+  // same site as the https file, unless the file's host is one where other
+  // people publish (M6ETorrentRisk.isExcludedHost).
+  _pageOrigin(uri, browsingContext) {
     const pagePrincipal =
       browsingContext?.currentWindowGlobal?.documentPrincipal;
     const pageOrigin = httpsOriginOfPrincipal(pagePrincipal);
-    if (fileOrigin && pageOrigin) {
+    if (!pageOrigin || !httpsOriginOfURI(uri)) {
+      return null;
+    }
+    try {
+      if (
+        siteOf(pagePrincipal.host) == siteOf(uri.host) &&
+        !lazy.M6ETorrentRisk.isExcludedHost(uri.host)
+      ) {
+        return pageOrigin;
+      }
+    } catch (e) {}
+    return null;
+  },
+
+  // The page counts only when the download's referrer is that page, so a URL
+  // typed or pasted while a trusted page is open is credited to the file's
+  // own origin. The referrer is known once the download has been saved.
+  _downloadOrigin({ fileOrigin, pageOrigin }, referrerInfo) {
+    if (pageOrigin) {
       try {
-        const pageHost = pagePrincipal.host;
-        if (siteOf(pageHost) == siteOf(uri.host)) {
+        const referrer = referrerInfo?.originalReferrer;
+        if (referrer && httpsOriginOfURI(referrer) == pageOrigin) {
           return pageOrigin;
         }
       } catch (e) {}
     }
-    return fileOrigin;
+    return fileOrigin ?? null;
   },
 
   async _tempDir() {
@@ -393,7 +412,7 @@ export const M6ETorrentHandler = {
     }
   },
 
-  async _saveToTemp(launcher, win, source) {
+  async _saveToTemp(launcher, win, origins) {
     await this._sweep;
     const dir = await this._tempDir();
     const name = Services.uuid.generateUUID().toString().slice(1, -1);
@@ -401,7 +420,7 @@ export const M6ETorrentHandler = {
     const file = new lazy.FileUtils.File(path);
 
     await this._watchDownloads();
-    this._pending.set(path, { win, source });
+    this._pending.set(path, { win, ...origins });
 
     try {
       launcher.MIMEInfo.preferredAction = Ci.nsIHandlerInfo.saveToDisk;
@@ -444,14 +463,14 @@ export const M6ETorrentHandler = {
     this._pending.delete(path);
     this._unwatchIfIdle(list);
     list.remove(download).catch(console.error);
+    const source = {
+      kind: "page",
+      origin: this._downloadOrigin(entry, download.source?.referrerInfo),
+    };
     this._open(
       entry.win,
       w => {
-        const result = w.gM6ETorrent.addTorrentFile(
-          path,
-          entry.source,
-          GO_TO_PAGE
-        );
+        const result = w.gM6ETorrent.addTorrentFile(path, source, GO_TO_PAGE);
         const remove = () =>
           IOUtils.remove(path, { ignoreAbsent: true }).catch(console.error);
         Promise.resolve(result).then(remove, remove);

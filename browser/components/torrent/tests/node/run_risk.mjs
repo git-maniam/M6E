@@ -6,13 +6,24 @@
 //   node browser/components/torrent/tests/node/run_risk.mjs
 
 import { readFileSync } from "node:fs";
+import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+// eslint-disable-next-line mozilla/reject-import-system-module-from-non-system
 import { M6ETorrentRisk } from "../../M6ETorrentRisk.sys.mjs";
+// eslint-disable-next-line mozilla/reject-import-system-module-from-non-system
 import {
   ASSESS_CASES,
+  DISPLAY_CASES,
+  EXCLUDED_CASES,
+  TEST_PUBLIC_SUFFIXES,
   TRUSTED_CASES,
+  TRUST_SITE_CASES,
   checkAssess,
+  checkDisplay,
+  checkExcluded,
+  checkRulesData,
+  checkTrustSite,
   checkTrusted,
   checkTrustedList,
 } from "../xpcshell/risk/risk_cases.sys.mjs";
@@ -22,31 +33,66 @@ const rulesPath = fileURLToPath(
 );
 const rawRules = JSON.parse(readFileSync(rulesPath, "utf8"));
 M6ETorrentRisk.setRules(rawRules);
+M6ETorrentRisk.setPublicSuffixCheck(host => TEST_PUBLIC_SUFFIXES.has(host));
 
 const assess = (...args) => M6ETorrentRisk.assess(...args);
 const isTrusted = (...args) => M6ETorrentRisk.isTrustedOrigin(...args);
 
 const failures = [];
 let count = 0;
-for (const testCase of ASSESS_CASES) {
-  count++;
-  failures.push(...checkAssess(assess, testCase));
-}
-for (const testCase of TRUSTED_CASES) {
-  count++;
-  failures.push(...checkTrusted(isTrusted, testCase));
-}
+const run = (cases, check) => {
+  for (const testCase of cases) {
+    count++;
+    failures.push(...check(testCase));
+  }
+};
+run(ASSESS_CASES, testCase => checkAssess(assess, testCase));
+run(TRUSTED_CASES, testCase => checkTrusted(isTrusted, testCase));
+run(DISPLAY_CASES, testCase =>
+  checkDisplay(M6ETorrentRisk.shortenForDisplay, testCase)
+);
+run(TRUST_SITE_CASES, testCase =>
+  checkTrustSite(M6ETorrentRisk.canTrustSite, testCase)
+);
+run(EXCLUDED_CASES, testCase =>
+  checkExcluded(M6ETorrentRisk.isExcludedHost, testCase)
+);
 
 failures.push(...checkTrustedList(M6ETorrentRisk.getTrustedSites()));
+count++;
+failures.push(...checkRulesData(rawRules, M6ETorrentRisk.isExcludedHost));
 count++;
 for (const site of rawRules.trustedSites) {
   count++;
   const page = new URL(site.page);
   if (
     page.protocol != "https:" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(site.verified || "")
+    !/^\d{4}-\d{2}-\d{2}$/.test(site.verified || "") ||
+    !isTrusted(page.origin)
   ) {
-    failures.push("trusted entry " + site.name + " needs an https page and a verified date");
+    failures.push(
+      "trusted entry " +
+        site.name +
+        " needs a trusted https page and a verified date"
+    );
+  }
+}
+
+count++;
+{
+  const files = Array.from({ length: 4000 }, (_, index) => {
+    const stem = "a" + index + ".exe";
+    return { index, path: stem + " ".repeat(240 - stem.length), length: 10 };
+  });
+  const start = performance.now();
+  assess({ name: "Tools", files }, { kind: "unknown", origin: null });
+  const elapsed = performance.now() - start;
+  if (elapsed > 500) {
+    failures.push(
+      "4000 names padded after the extension took " +
+        Math.round(elapsed) +
+        " ms, expected well under a second"
+    );
   }
 }
 
