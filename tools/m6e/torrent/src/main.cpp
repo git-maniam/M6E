@@ -244,10 +244,6 @@ int main(int argc, char** argv) {
     return badArgument("--inbox-dir and --download-dir need --sandbox",
                        inboxGiven ? inboxDir : downloadDirs.front());
   }
-  if (downloadDirs.size() > kMaxDownloadDirs) {
-    return badArgument("too many --download-dir folders",
-                       std::to_string(downloadDirs.size()));
-  }
   std::vector<std::string> saveRoots;
   for (auto const& dir : downloadDirs) {
     struct stat st;
@@ -263,6 +259,10 @@ int main(int argc, char** argv) {
         saveRoots.end()) {
       saveRoots.push_back(real);
     }
+  }
+  if (saveRoots.size() > kMaxDownloadDirs) {
+    return badArgument("more than 4 different --download-dir folders",
+                       std::to_string(saveRoots.size()));
   }
   while (profileDir.size() > 1 && profileDir.back() == '/') {
     profileDir.pop_back();
