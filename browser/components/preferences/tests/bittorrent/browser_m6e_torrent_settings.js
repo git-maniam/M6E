@@ -470,7 +470,10 @@ add_task(async function test_interface_and_kill_switch() {
     "An odd name still shows the notice"
   );
   ok(
-    !doc.getElementById("btInterfaceDown").getAttribute("heading")?.includes("<b>"),
+    !doc
+      .getElementById("btInterfaceDown")
+      .getAttribute("heading")
+      ?.includes("<b>"),
     "A name that is not plain is not put in the message"
   );
   Services.obs.notifyObservers(
