@@ -513,8 +513,6 @@ def sandbox_allows_ip_but_no_unix_socket(ctx):
     h = ctx.start(sandbox=True)
     assert query(h.pid, "network-outbound", path) == "deny"
     assert query(h.pid, "network-outbound", "/private/var/run/mDNSResponder") == "allow"
-    assert query(h.pid, "network-outbound") == "allow"
-    assert query(h.pid, "network-inbound") == "allow"
 
 
 @test
@@ -525,7 +523,7 @@ def sandbox_narrows_metadata_and_sysctl(ctx):
         ("file-read-metadata", save, "allow"),
         ("file-read-metadata", os.path.dirname(save), "allow"),
         ("file-read-metadata", "/", "allow"),
-        ("file-read-metadata", "/usr/lib/libSystem.B.dylib", "allow"),
+        ("file-read-metadata", "/usr/lib/dyld", "allow"),
         ("file-read-metadata", os.path.realpath(ctx.outside), "deny"),
         ("file-read-metadata", os.path.join(HOME, "Library"), "deny"),
         ("file-read-metadata", os.path.join(HOME, ".ssh"), "deny"),

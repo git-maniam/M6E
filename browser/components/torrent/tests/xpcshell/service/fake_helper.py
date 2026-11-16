@@ -8,15 +8,16 @@ tools/m6e/torrent/PROTOCOL.md without any engine.
 
 It is steered through files in its --profile-dir:
   fake.json      settings, read again for every request: startFail, noReady,
-                 crashOn (op), hangOn (op), rejectConfig, unsupported (keys),
-                 magnetMetadata (default true)
+                 crashOn (op), hangOn (op), rejectConfig, rejectLimits,
+                 unsupported (keys), magnetMetadata (default true),
+                 delayOn ({op: seconds} to wait before replying)
   emit.jsonl     lines to write to standard output as they are; a line
                  {"fake": "exit", "code": N} exits at once,
                  {"fake": "complete", "tid": T} finishes a torrent,
                  {"fake": "state", "tid": T, "state": S} changes its state,
                 {"fake": "goal", "tid": T} marks its seed goal as reached
 It writes requests.jsonl (every request received) and starts.jsonl (one line
-per start).
+per start, with its arguments and environment).
 """
 
 import hashlib
@@ -180,6 +181,8 @@ def handle(request):
         os._exit(7)
     if s.get("hangOn") == op:
         return
+    if op in s.get("delayOn", {}):
+        time.sleep(s["delayOn"][op])
     if op == "add":
         if "file" in a:
             try:
@@ -306,6 +309,9 @@ def handle(request):
         save_state()
         reply(rid, {"status": status(a["tid"], t)})
     elif op == "setLimits":
+        if s.get("rejectLimits"):
+            fail(rid, "bad-request", "limits refused")
+            return
         reply(rid, {})
     elif op == "setConfig":
         if s.get("rejectConfig"):
@@ -397,7 +403,7 @@ def process_due():
 
 def main():
     s = settings()
-    append("starts.jsonl", {"pid": os.getpid(), "args": args})
+    append("starts.jsonl", {"pid": os.getpid(), "args": args, "env": dict(os.environ)})
     if s.get("startFail"):
         sys.exit(3)
     if s.get("noReady"):

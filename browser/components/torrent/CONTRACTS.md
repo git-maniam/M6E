@@ -75,3 +75,11 @@ Shared by the parallel steps P8.1 to P8.6. Agents may add to this file's contrac
 - `detail().pieces.have` is read as a bitfield with the first piece in the highest bit of the first byte (BEP 3).
 - about:torrents keeps its speed history in the page (last 5 minutes, one sample per `m6e-torrent-changed`, at most one per 500 ms), never sends or stores it, and drops a torrent's samples when it goes. New tabs after Peers: Pieces, Speed, Log. The Log tab shows the service-wide log inside the detail area, so it needs a selected torrent.
 - The Files tab priority cell is a `select` named by the file name cell (`aria-labelledby`); a change calls `setFilePriority` and the page reloads the detail.
+
+## Additions (security fixes, P8.5, 2026-11-17)
+- `Source` takes an optional `"private": true` when the `.torrent` was downloaded, or the `magnet:` link clicked, in a private window. The handler sets it and `gM6ETorrent` passes it on to the service unchanged (its own `sanitizeSource` must keep it). The service keeps it in the source (`m6e-torrent-metadata` carries it) and then records no origin on the finished files: no where-from metadata, only the plain quarantine attribute.
+- The service starts the helper with only the `M6E_TORRENT_*` variables of the browser's environment (and `PATH` under automation, for the Python fake helper), not the whole environment: no `HOME`, no `SSH_AUTH_SOCK` or other agent sockets and tokens.
+- The rate prefs `downKBps`, `upKBps`, `turtle.downKBps` and `turtle.upKBps`, and `setTorrentLimits`, accept 0 to 4194304 KB/s (the helper's limit, `MAX_RATE_KBPS` of `M6ETorrentProtocol.sys.mjs`); Settings and about:torrents use the same maximum. `setLimits()` checks every value before it writes any pref.
+- Pref changes reach the helper settings first, then limits. A rejected `setLimits` fails closed like a rejected setting: the service reports `config-failed` and stops the helper. A pref changed while the helper is starting is applied once it is up.
+- `detail().files[]` may carry `existing: true` (`PROTOCOL.md`, "Additions (security fixes, P8.5)"): the file was on disk before the torrent first wanted it, and the torrent's data overwrites it. The UI can warn about it.
+- A save folder that is or contains the home folder, `~/Library` or the profile's `torrents` folder is refused with `unsafe-path`.

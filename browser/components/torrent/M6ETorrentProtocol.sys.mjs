@@ -14,6 +14,8 @@ export const MAX_MAGNET_LENGTH = 16 * 1024;
 export const MAX_DOWNLOAD_FOLDERS = 4;
 export const MIN_HELPER_IDLE_SECONDS = 90;
 export const HELPER_IDLE_MARGIN_SECONDS = 30;
+// The helper's largest rate limit (setLimits, setTorrentLimits).
+export const MAX_RATE_KBPS = 4 * 1024 * 1024;
 
 export const PREF_BRANCH = "m6e.torrent.";
 
@@ -251,7 +253,7 @@ export function validatePrefValue(name, value) {
     case "upKBps":
     case "turtle.downKBps":
     case "turtle.upKBps":
-      integer(0, 100_000_000);
+      integer(0, MAX_RATE_KBPS);
       break;
     case "maxActiveDownloads":
     case "maxActiveTorrents":
@@ -442,6 +444,29 @@ export function helperArguments({ profileDir, sandbox, folders, inboxDir }) {
   return args;
 }
 
+/**
+ * The helper's whole environment: its own M6E_TORRENT_* variables and nothing
+ * of the browser's (no HOME, no SSH_AUTH_SOCK or other agent sockets and
+ * tokens). Under automation PATH is kept for the Python fake helper.
+ */
+export function helperEnvironment(
+  parent,
+  idleSeconds,
+  { automation = false } = {}
+) {
+  const env = {};
+  for (const [name, value] of Object.entries(parent ?? {})) {
+    if (name.startsWith("M6E_TORRENT_") && typeof value == "string") {
+      env[name] = value;
+    }
+  }
+  env.M6E_TORRENT_IDLE_SECONDS = String(idleSeconds);
+  if (automation && typeof parent?.PATH == "string") {
+    env.PATH = parent.PATH;
+  }
+  return env;
+}
+
 const PRIVACY_CONFIG_KEYS = new Set([
   "encryption",
   "dht",
@@ -509,7 +534,17 @@ export function httpsOrigin(value) {
 export function sanitizeSource(source) {
   const kinds = ["page", "magnet-page", "finder", "unknown"];
   const kind = kinds.includes(source?.kind) ? source.kind : "unknown";
-  return { kind, origin: httpsOrigin(source?.origin) };
+  const clean = { kind, origin: httpsOrigin(source?.origin) };
+  if (source?.private === true) {
+    clean.private = true;
+  }
+  return clean;
+}
+
+// The origin to record as the files' where-from metadata: none for a torrent
+// opened from a private window.
+export function whereFromOrigin(source) {
+  return source && source.private !== true ? httpsOrigin(source.origin) : null;
 }
 
 // Pref names (without the branch) mapped to the part of the helper's

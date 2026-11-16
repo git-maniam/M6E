@@ -122,10 +122,10 @@ const needsProxy = {
 };
 addBoolSetting("btProxyPeers", "proxy.peers", needsProxy);
 
-addIntSetting("btDownLimit", "downKBps", 0, 100_000_000);
-addIntSetting("btUpLimit", "upKBps", 0, 100_000_000);
-addIntSetting("btTurtleDownLimit", "turtle.downKBps", 0, 100_000_000);
-addIntSetting("btTurtleUpLimit", "turtle.upKBps", 0, 100_000_000);
+addIntSetting("btDownLimit", "downKBps", 0, 4_194_304);
+addIntSetting("btUpLimit", "upKBps", 0, 4_194_304);
+addIntSetting("btTurtleDownLimit", "turtle.downKBps", 0, 4_194_304);
+addIntSetting("btTurtleUpLimit", "turtle.upKBps", 0, 4_194_304);
 addIntSetting("btMaxActiveDownloads", "maxActiveDownloads", 0, 1000);
 addIntSetting("btMaxActiveTorrents", "maxActiveTorrents", 0, 1000);
 addIntSetting("btListenPort", "listenPort", 0, 65535);

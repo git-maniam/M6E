@@ -1065,8 +1065,12 @@ json::object Engine::opConfirm(json::object const& args) {
 
   char resolved[PATH_MAX];
   if (!realpath(savePath.c_str(), resolved)) {
-    fail(errnoCode(errno),
-         "the save folder is not usable: " + std::string(std::strerror(errno)));
+    int err = errno;
+    if (auto e = checkSaveRoot(savePath)) {
+      fail(e->code, e->message);
+    }
+    fail(errnoCode(err),
+         "the save folder is not usable: " + std::string(std::strerror(err)));
   }
   std::string root = resolved;
   struct stat st;
@@ -1248,8 +1252,13 @@ std::optional<SafetyError> Engine::checkTorrentFiles(Torrent const& t) {
 
 std::optional<SafetyError> Engine::checkSaveRoot(
     std::string const& savePath) const {
+  char resolved[PATH_MAX];
+  bool hidden = !realpath(savePath.c_str(), resolved) &&
+                (errno == EPERM || errno == EACCES);
   std::string root;
-  if (auto e = canonicalRoot(savePath, &root)) {
+  if (hidden && options_.saveRoots) {
+    root = savePath;
+  } else if (auto e = canonicalRoot(savePath, &root)) {
     return options_.saveRoots ? e : std::nullopt;
   }
   for (auto const& kept : options_.protectedDirs) {
@@ -1938,7 +1947,13 @@ json::object Engine::opRestore(json::object const& args) {
         ~(lt::torrent_flags::auto_managed | lt::torrent_flags::paused |
           lt::torrent_flags::disable_dht | lt::torrent_flags::disable_pex |
           lt::torrent_flags::disable_lsd | lt::torrent_flags::upload_mode |
-          lt::torrent_flags::default_dont_download);
+          lt::torrent_flags::default_dont_download |
+          lt::torrent_flags::no_verify_files);
+    // Outside the sandbox's folders the engine may not even stat the files;
+    // such a torrent stays paused and is checked when its folder is allowed.
+    if (options_.saveRoots && checkSaveRoot(atp.save_path)) {
+      atp.flags |= lt::torrent_flags::no_verify_files;
+    }
     atp.flags |= lt::torrent_flags::update_subscribe |
                  lt::torrent_flags::apply_ip_filter |
                  lt::torrent_flags::paused | privacyFlags(atp.ti->priv());

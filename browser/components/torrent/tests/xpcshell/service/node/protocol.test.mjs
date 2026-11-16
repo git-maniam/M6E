@@ -8,6 +8,7 @@ import {
   RequestTable,
   TorrentError,
   PREF_DEFAULTS,
+  MAX_RATE_KBPS,
   MAX_TORRENT_BYTES,
   buildConfig,
   buildLimits,
@@ -15,6 +16,7 @@ import {
   classifyPref,
   encodeRequest,
   helperArguments,
+  helperEnvironment,
   helperIdleSeconds,
   httpsOrigin,
   limitsToPrefs,
@@ -33,6 +35,7 @@ import {
   sanitizeSource,
   validateMagnet,
   validatePrefValue,
+  whereFromOrigin,
 } from "../../../../M6ETorrentProtocol.sys.mjs";
 
 const enc = new TextEncoder();
@@ -629,4 +632,59 @@ test("folder selection for the sandbox", () => {
     { folders: ["/d", "/s1"], droppedSaved: [] },
     "trailing slashes and relative paths are normalised"
   );
+});
+
+test("rate limits stop at the helper's cap", () => {
+  assert.equal(MAX_RATE_KBPS, 4 * 1024 * 1024);
+  for (const name of ["downKBps", "upKBps", "turtle.downKBps", "turtle.upKBps"]) {
+    assert.equal(validatePrefValue(name, MAX_RATE_KBPS), MAX_RATE_KBPS);
+    assert.equal(code(() => validatePrefValue(name, MAX_RATE_KBPS + 1)), "bad-request");
+  }
+});
+
+test("the helper gets only its own environment", () => {
+  const parent = {
+    HOME: "/Users/someone",
+    PATH: "/usr/bin:/bin",
+    SSH_AUTH_SOCK: "/private/tmp/agent.sock",
+    GPG_AGENT_INFO: "/private/tmp/gpg",
+    DOCKER_HOST: "unix:///var/run/docker.sock",
+    TMPDIR: "/private/tmp/",
+    M6E_TORRENT_TEST_INTERFACE_GATE: "/private/tmp/gate",
+    M6E_TORRENT_IDLE_SECONDS: "5",
+  };
+  assert.deepEqual(helperEnvironment(parent, 90), {
+    M6E_TORRENT_TEST_INTERFACE_GATE: "/private/tmp/gate",
+    M6E_TORRENT_IDLE_SECONDS: "90",
+  });
+  assert.deepEqual(helperEnvironment(parent, 90, { automation: true }), {
+    M6E_TORRENT_TEST_INTERFACE_GATE: "/private/tmp/gate",
+    M6E_TORRENT_IDLE_SECONDS: "90",
+    PATH: "/usr/bin:/bin",
+  });
+  assert.deepEqual(helperEnvironment(undefined, 120), {
+    M6E_TORRENT_IDLE_SECONDS: "120",
+  });
+});
+
+test("a private window's source records no origin on the files", () => {
+  const priv = sanitizeSource({
+    kind: "page",
+    origin: "https://a.example/x",
+    private: true,
+  });
+  assert.deepEqual(priv, {
+    kind: "page",
+    origin: "https://a.example",
+    private: true,
+  });
+  assert.equal(whereFromOrigin(priv), null);
+  const normal = sanitizeSource({ kind: "page", origin: "https://a.example/x" });
+  assert.equal(whereFromOrigin(normal), "https://a.example");
+  assert.deepEqual(sanitizeSource({ kind: "page", origin: null, private: "yes" }), {
+    kind: "page",
+    origin: null,
+  });
+  assert.equal(whereFromOrigin(null), null);
+  assert.equal(whereFromOrigin({ kind: "page", origin: "http://a.example" }), null);
 });
