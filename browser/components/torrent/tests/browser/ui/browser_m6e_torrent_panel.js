@@ -419,6 +419,28 @@ add_task(async function test_interface_down_notice() {
   await closePanel(panel);
 });
 
+add_task(async function test_private_source_flag_is_kept() {
+  installMocks();
+  Assert.deepEqual(
+    gM6ETorrent.sanitizeSource({
+      kind: "page",
+      origin: "https://example.com",
+      private: true,
+    }),
+    { kind: "page", origin: "https://example.com", private: true },
+    "A private source keeps its flag"
+  );
+  Assert.deepEqual(
+    gM6ETorrent.sanitizeSource({
+      kind: "page",
+      origin: "https://example.com",
+      private: "yes",
+    }),
+    { kind: "page", origin: "https://example.com" },
+    "Only a true private flag is kept"
+  );
+});
+
 add_task(async function test_dht_forced_off_notice() {
   installMocks();
   const banner = document.getElementById("m6e-torrent-forced-off-banner");

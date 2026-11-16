@@ -88,7 +88,9 @@ var gM6ETorrent = {
     } catch (e) {
       // Not a usable origin; the source stays untrusted.
     }
-    return { kind, origin };
+    return source?.private === true
+      ? { kind, origin, private: true }
+      : { kind, origin };
   },
 
   get button() {

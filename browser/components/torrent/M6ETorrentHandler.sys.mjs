@@ -160,6 +160,9 @@ export const M6ETorrentHandler = {
       kind: principal?.isContentPrincipal ? "magnet-page" : "unknown",
       origin: httpsOriginOfPrincipal(principal),
     };
+    if (browsingContext?.usePrivateBrowsing) {
+      source.private = true;
+    }
     this._open(
       win,
       w => w.gM6ETorrent.addMagnet(uri.spec, source, GO_TO_PAGE),
@@ -467,6 +470,12 @@ export const M6ETorrentHandler = {
       kind: "page",
       origin: this._downloadOrigin(entry, download.source?.referrerInfo),
     };
+    if (
+      download.source?.isPrivate ||
+      entry.win?.gBrowser?.selectedBrowser?.browsingContext?.usePrivateBrowsing
+    ) {
+      source.private = true;
+    }
     this._open(
       entry.win,
       w => {
