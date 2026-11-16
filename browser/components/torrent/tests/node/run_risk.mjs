@@ -50,6 +50,24 @@ for (const site of rawRules.trustedSites) {
   }
 }
 
+count++;
+{
+  const files = Array.from({ length: 4000 }, (_, index) => {
+    const stem = "a" + index + ".exe";
+    return { index, path: stem + " ".repeat(240 - stem.length), length: 10 };
+  });
+  const start = performance.now();
+  assess({ name: "Tools", files }, { kind: "unknown", origin: null });
+  const elapsed = performance.now() - start;
+  if (elapsed > 500) {
+    failures.push(
+      "4000 names padded after the extension took " +
+        Math.round(elapsed) +
+        " ms, expected well under a second"
+    );
+  }
+}
+
 if (failures.length) {
   for (const failure of failures) {
     console.error("FAIL " + failure);

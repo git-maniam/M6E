@@ -96,6 +96,38 @@ export const ASSESS_CASES = [
     codes: ["windows-program", "double-extension"],
   },
   {
+    name: "trailing spaces after a program extension are not a padded name",
+    metadata: torrent(
+      "Tools",
+      many(200, i => {
+        const stem = "a" + i + ".exe";
+        return [stem + " ".repeat(240 - stem.length), 10];
+      })
+    ),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["windows-program"],
+    cap: { "windows-program": { files: 10, moreFiles: 190 } },
+  },
+  {
+    name: "a padded name needs the run of spaces before the last dot",
+    each: [
+      ["Clip.mp4     x.exe", true],
+      ["Clip.mp4 　   .exe", true],
+      ["Clip    .exe", false],
+      ["Clip.exe     ", false],
+    ].map(([file, padded]) => ({
+      metadata: torrent("Clips", [[file, 100]]),
+      source: UNKNOWN,
+      verdict: "shady",
+      trusted: false,
+      codes: padded
+        ? ["windows-program", "double-extension"]
+        : ["windows-program"],
+    })),
+  },
+  {
     name: "double extension on a macOS program",
     metadata: torrent("Album", [
       ["Album/track01.mp3", 5 * MiB],

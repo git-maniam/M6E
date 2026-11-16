@@ -67,9 +67,8 @@ function compileRules(raw) {
     audio: setOf(ext.audio),
     harmless: setOf(ext.harmless),
     decoy: setOf(ext.decoy),
-    paddedMin: raw.paddedExtensionMinSpaces,
     paddedRe: new RegExp(
-      "[\\p{Zs}\\t]{" + raw.paddedExtensionMinSpaces + ",}[^/]*\\.[^./]*$",
+      "[\\p{Zs}\\t]{" + raw.paddedExtensionMinSpaces + "}",
       "u"
     ),
     strong: setOf(raw.piracy.strong),
@@ -403,7 +402,9 @@ function analyze(rules, metadata) {
     }
 
     if (isProgram || isShortcut) {
-      const padded = rules.paddedRe.test(base);
+      const padded = rules.paddedRe.test(
+        base.slice(0, Math.max(0, base.lastIndexOf(".")))
+      );
       if (rules.decoy.has(prevExt) || padded) {
         lists["double-extension"].add(path);
       }
