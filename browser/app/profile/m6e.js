@@ -419,6 +419,6 @@ pref("m6e.torrent.trustedSites", "");
 pref("m6e.torrent.downloadDir", "");
 pref("m6e.torrent.askWhereToSave", false);
 pref("m6e.torrent.startNow", true);
-// Off until the sandbox of the helper is verified end to end (P8.1).
-pref("m6e.torrent.sandbox", false);
+// On: the helper runs in its own sandbox (verified end to end, P8.1).
+pref("m6e.torrent.sandbox", true);
 pref("m6e.torrent.sandboxFolders", "");

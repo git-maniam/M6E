@@ -32,7 +32,8 @@ test("m6e.js matches PREF_DEFAULTS", () => {
 
 test("the test profile matches PREF_DEFAULTS", () => {
   const prefs = readPrefs("testing/profiles/base/user.js", "user_pref");
-  assert.deepEqual(prefs, PREF_DEFAULTS);
+  assert.equal(prefs.sandbox, false, "tests that need the sandbox turn it on");
+  assert.deepEqual(prefs, { ...PREF_DEFAULTS, sandbox: false });
 });
 
 test("the privacy defaults of D36", () => {

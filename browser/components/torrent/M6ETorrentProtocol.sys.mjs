@@ -53,7 +53,7 @@ export const PREF_DEFAULTS = {
   downloadDir: "",
   askWhereToSave: false,
   startNow: true,
-  sandbox: false,
+  sandbox: true,
   sandboxFolders: "",
 };
 
