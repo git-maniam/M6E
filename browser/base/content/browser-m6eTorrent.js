@@ -8,7 +8,8 @@ const m6eTorrentModules = {};
 ChromeUtils.defineESModuleGetters(m6eTorrentModules, {
   Downloads: "resource://gre/modules/Downloads.sys.mjs",
   FileUtils: "resource://gre/modules/FileUtils.sys.mjs",
-  M6ETorrentRisk: "moz-src:///browser/components/torrent/M6ETorrentRisk.sys.mjs",
+  M6ETorrentRisk:
+    "moz-src:///browser/components/torrent/M6ETorrentRisk.sys.mjs",
   M6ETorrentService:
     "moz-src:///browser/components/torrent/M6ETorrentService.sys.mjs",
 });
@@ -165,9 +166,14 @@ var gM6ETorrent = {
       }
       case "m6e-torrent-network":
         try {
-          this.interfaceDown = JSON.parse(data).interfaceDown ?? null;
+          let state = JSON.parse(data);
+          this.interfaceDown = state.interfaceDown ?? null;
+          this.forcedOff = Array.isArray(state.forcedOff)
+            ? state.forcedOff
+            : [];
         } catch (e) {
           this.interfaceDown = null;
+          this.forcedOff = [];
         }
         if (this.panelShown) {
           this.renderNetwork();
@@ -214,8 +220,9 @@ var gM6ETorrent = {
     }
     let visible = this.visibleTorrents;
     let hasError = visible.some(t => t.state == "error" || t.error);
-    let count = visible.filter(t => this.RUNNING_STATES.includes(t.state))
-      .length;
+    let count = visible.filter(t =>
+      this.RUNNING_STATES.includes(t.state)
+    ).length;
     let state = "idle";
     if (hasError) {
       state = "attention";
@@ -349,6 +356,20 @@ var gM6ETorrent = {
       document.l10n.setAttributes(banner, "m6e-torrent-interface-down", {
         interface: name,
       });
+    }
+
+    let forced = this.forcedOff;
+    if (forced === undefined) {
+      try {
+        forced = this.service.getNetworkState?.().forcedOff ?? [];
+      } catch (e) {
+        forced = [];
+      }
+      this.forcedOff = forced;
+    }
+    let forcedBanner = document.getElementById("m6e-torrent-forced-off-banner");
+    if (forcedBanner) {
+      forcedBanner.hidden = !forced.includes("dht");
     }
   },
 
@@ -647,8 +668,7 @@ var gM6ETorrent = {
     document.getElementById("m6e-torrent-seed-value").hidden = goal == "never";
     let action = prefs.getStringPref(prefix + "seedAction", "stop");
     setValue("m6e-torrent-seed-action", action == "slow" ? "slow" : "stop");
-    document.getElementById("m6e-torrent-seed-action").hidden =
-      goal == "never";
+    document.getElementById("m6e-torrent-seed-action").hidden = goal == "never";
     document.getElementById("m6e-torrent-seed-action-label").hidden =
       goal == "never";
     if (goal != "never") {

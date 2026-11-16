@@ -250,6 +250,9 @@ bittorrent-interface-down =
     .heading = The interface { $interface } is down
     .message = All torrent connections are closed and none will open until it returns.
 
+bittorrent-dht-forced-off =
+    .message = DHT is off while a proxy or a bound network interface is in use, so magnet links without trackers may not find peers.
+
 ## IP filter
 
 bittorrent-ipfilter-group =

@@ -165,9 +165,7 @@ add_task(async function test_defaults_are_private() {
   is(readPref("proxy.type"), "none", "No proxy");
   is(readPref("bindInterface"), "", "No interface binding");
   ok(
-    !Services.prefs
-      .getChildList(PREFIX)
-      .some(name => /password/i.test(name)),
+    !Services.prefs.getChildList(PREFIX).some(name => /password/i.test(name)),
     "No password pref exists"
   );
 });
@@ -426,10 +424,7 @@ add_task(async function test_interface_and_kill_switch() {
   let name = doc.getElementById("btInterfaceName");
   ok(!toggle.pressed, "No interface is bound");
   ok(name.disabled, "The name field is disabled");
-  ok(
-    controlHidden(doc, "btInterfaceEmpty"),
-    "No warning while binding is off"
-  );
+  ok(controlHidden(doc, "btInterfaceEmpty"), "No warning while binding is off");
 
   toggle.click();
   await TestUtils.waitForCondition(() => !name.disabled);
@@ -486,6 +481,25 @@ add_task(async function test_interface_and_kill_switch() {
     "The state clears when the interface returns"
   );
 
+  Services.obs.notifyObservers(
+    null,
+    "m6e-torrent-network",
+    JSON.stringify({ listening: null, interfaceDown: null, forcedOff: ["dht"] })
+  );
+  await TestUtils.waitForCondition(
+    () => !controlHidden(doc, "btDhtForcedOff"),
+    "Settings says DHT is off behind a proxy or a bound interface"
+  );
+  Services.obs.notifyObservers(
+    null,
+    "m6e-torrent-network",
+    JSON.stringify({ listening: null, interfaceDown: null, forcedOff: [] })
+  );
+  await TestUtils.waitForCondition(
+    () => controlHidden(doc, "btDhtForcedOff"),
+    "The DHT notice goes when nothing holds it off"
+  );
+
   toggle.click();
   await waitForPref("bindInterface", "");
   gBrowser.removeCurrentTab();
@@ -513,10 +527,7 @@ add_task(async function test_folders_and_ip_filter() {
   doc.getElementById("btDownloadFolderReset").click();
   await waitForPref("downloadDir", "");
 
-  ok(
-    controlHidden(doc, "btIpFilterClear"),
-    "No filter, so nothing to remove"
-  );
+  ok(controlHidden(doc, "btIpFilterClear"), "No filter, so nothing to remove");
   MockFilePicker.returnValue = MockFilePicker.returnOK;
   let picked = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
   picked.initWithPath(file);

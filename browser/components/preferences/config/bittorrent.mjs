@@ -252,13 +252,10 @@ Preferences.addSetting({
     };
   },
   setup(emitChange) {
-    lazy.Downloads.getPreferredDownloadsDirectory().then(
-      dir => {
-        browserDownloadDir = dir ?? "";
-        emitChange();
-      },
-      console.error
-    );
+    lazy.Downloads.getPreferredDownloadsDirectory().then(dir => {
+      browserDownloadDir = dir ?? "";
+      emitChange();
+    }, console.error);
   },
 });
 
@@ -476,6 +473,31 @@ Preferences.addSetting({
     };
     interfaceDown =
       lazy.M6ETorrentService.getNetworkState().interfaceDown ?? null;
+    Services.obs.addObserver(observer, TOPIC_NETWORK);
+    return () => Services.obs.removeObserver(observer, TOPIC_NETWORK);
+  },
+});
+
+let dhtForcedOff = false;
+
+Preferences.addSetting({
+  id: "btDhtForcedOff",
+  visible: () => dhtForcedOff,
+  setup(emitChange) {
+    const observer = {
+      observe(_subject, _topic, data) {
+        try {
+          const list = JSON.parse(data).forcedOff;
+          dhtForcedOff = Array.isArray(list) && list.includes("dht");
+        } catch (e) {
+          dhtForcedOff = false;
+        }
+        emitChange();
+      },
+    };
+    const state = lazy.M6ETorrentService.getNetworkState();
+    dhtForcedOff =
+      Array.isArray(state.forcedOff) && state.forcedOff.includes("dht");
     Services.obs.addObserver(observer, TOPIC_NETWORK);
     return () => Services.obs.removeObserver(observer, TOPIC_NETWORK);
   },
@@ -820,6 +842,12 @@ SettingGroupManager.registerGroups({
         control: "moz-message-bar",
         l10nId: "bittorrent-interface-down",
         controlAttrs: { type: "warning", role: "alert" },
+      },
+      {
+        id: "btDhtForcedOff",
+        control: "moz-message-bar",
+        l10nId: "bittorrent-dht-forced-off",
+        controlAttrs: { type: "info" },
       },
       {
         id: "btBindEnabled",

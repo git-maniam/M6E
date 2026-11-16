@@ -48,6 +48,8 @@ m6e-torrent-error-banner = Some torrents have errors. Open the list to see which
 #     BitTorrent to, for example "utun4"; empty when the name is not plain
 m6e-torrent-interface-down = The network interface { $interface } is not available, so BitTorrent is paused and nothing connects. It continues when the interface is back.
 
+m6e-torrent-forced-off-dht = DHT is off while a proxy or a bound network interface is in use, so magnet links without trackers may not find peers.
+
 ## Torrent rows
 
 m6e-torrent-state-checking = Checking

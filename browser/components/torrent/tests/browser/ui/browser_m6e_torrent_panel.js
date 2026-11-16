@@ -419,6 +419,30 @@ add_task(async function test_interface_down_notice() {
   await closePanel(panel);
 });
 
+add_task(async function test_dht_forced_off_notice() {
+  installMocks();
+  const banner = document.getElementById("m6e-torrent-forced-off-banner");
+  const panel = await openPanel();
+  ok(banner.hidden, "No notice when nothing is held off");
+  const notify = forcedOff =>
+    Services.obs.notifyObservers(
+      null,
+      "m6e-torrent-network",
+      JSON.stringify({ listening: null, interfaceDown: null, forcedOff })
+    );
+  notify(["dht", "utp"]);
+  ok(!banner.hidden, "The panel says DHT is off");
+  await TestUtils.waitForCondition(
+    () => banner.textContent.includes("DHT is off"),
+    "The notice is worded"
+  );
+  notify(["utp"]);
+  ok(banner.hidden, "Other held-off features show no DHT notice");
+  notify([]);
+  ok(banner.hidden, "The notice goes with the proxy");
+  await closePanel(panel);
+});
+
 add_task(async function test_torrent_text_in_rows_is_not_markup() {
   const { service } = installMocks();
   const name = "Evil&#x202E;gpj.exe <b>bold</b>";
