@@ -136,6 +136,11 @@
   color: var(--text-color-error);
 }
 
+#m6e-torrent-network-banner {
+  margin: 0 0 var(--space-medium);
+  color: var(--text-color-error);
+}
+
 #m6e-torrent-list {
   list-style: none;
   margin: 0 0 var(--space-medium);

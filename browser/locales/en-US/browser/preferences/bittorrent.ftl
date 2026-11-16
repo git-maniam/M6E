@@ -99,6 +99,16 @@ bittorrent-seed-hours =
 bittorrent-seed-never-option =
     .label = Never stop
 
+bittorrent-seed-action =
+    .label = When the goal is reached
+    .description = The goal applies to each torrent on its own.
+
+bittorrent-seed-action-stop =
+    .label = Stop seeding
+
+bittorrent-seed-action-slow =
+    .label = Keep seeding at the Turtle upload rate
+
 ## Speed and queue
 
 bittorrent-speed-group =
