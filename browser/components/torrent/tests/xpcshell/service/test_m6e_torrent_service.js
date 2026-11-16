@@ -112,7 +112,10 @@ async function inboxFiles() {
 }
 
 async function newFolder(name) {
-  return IOUtils.createUniqueDirectory(PathUtils.tempDir, "m6e-torrent-" + name);
+  return IOUtils.createUniqueDirectory(
+    PathUtils.tempDir,
+    "m6e-torrent-" + name
+  );
 }
 
 function lookupEnvironment() {
@@ -127,6 +130,7 @@ function lookupEnvironment() {
 
 add_setup(async function setup() {
   do_get_profile();
+  Services.prefs.getDefaultBranch("").setBoolPref("m6e.torrent.sandbox", false);
   lookupEnvironment();
   if (!env.helper || !(await IOUtils.exists(env.helper))) {
     env.why = `no helper at "${env.helper}"`;
@@ -207,7 +211,12 @@ async function fresh(timings = {}) {
 }
 
 // A tracker and a seed on 127.0.0.1 serving one generated torrent.
-async function startSwarm({ name, kind = "multi", stall = false, hostile = false }) {
+async function startSwarm({
+  name,
+  kind = "multi",
+  stall = false,
+  hostile = false,
+}) {
   const out = await newFolder("swarm");
   const arguments_ = [
     "-I",
@@ -332,7 +341,9 @@ async function killHard(pid) {
 }
 
 add_task(function test_environment_report() {
-  info(env.ok ? `helper ${env.helper}` : `skipping the helper tests: ${env.why}`);
+  info(
+    env.ok ? `helper ${env.helper}` : `skipping the helper tests: ${env.why}`
+  );
   Assert.ok(true);
 });
 
@@ -431,7 +442,10 @@ helper_task(async function test_add_file_download_complete() {
 helper_task(async function test_add_magnet_download_complete() {
   const swarm = await startSwarm({ name: "m6e-svc-magnet" });
   const save = await newFolder("save");
-  const metadata = notification("m6e-torrent-metadata", d => d.tid == swarm.tid);
+  const metadata = notification(
+    "m6e-torrent-metadata",
+    d => d.tid == swarm.tid
+  );
   const { tid } = await M6ETorrentService.addMagnet(swarm.magnet, {
     kind: "magnet-page",
     origin: "https://example.com",
@@ -443,7 +457,11 @@ helper_task(async function test_add_magnet_download_complete() {
   Assert.deepEqual(await IOUtils.getChildren(save), [], "nothing written yet");
 
   await sleep(2000);
-  Assert.equal((await swarm.ask("stats")).requests, 0, "no payload before confirm");
+  Assert.equal(
+    (await swarm.ask("stats")).requests,
+    0,
+    "no payload before confirm"
+  );
 
   const completed = notification("m6e-torrent-completed", d => d.tid == tid);
   await M6ETorrentService.confirmAdd(tid, { savePath: save, start: true });
@@ -468,14 +486,24 @@ helper_task(async function test_selective_files() {
   await completed;
   await checkPayload(save, swarm, { skip: [1, 2] });
   const status = await waitForState(tid, DONE);
-  Assert.greaterOrEqual(status.size, 40000, "the status counts the selected files");
+  Assert.greaterOrEqual(
+    status.size,
+    40000,
+    "the status counts the selected files"
+  );
   Assert.less(status.size, 70000, "and not the others");
 });
 
 helper_task(async function test_single_file_torrent() {
-  const swarm = await startSwarm({ name: "m6e-svc-single.bin", kind: "single" });
+  const swarm = await startSwarm({
+    name: "m6e-svc-single.bin",
+    kind: "single",
+  });
   const save = await newFolder("save");
-  const { tid, metadata } = await M6ETorrentService.addFile(swarm.torrent, null);
+  const { tid, metadata } = await M6ETorrentService.addFile(
+    swarm.torrent,
+    null
+  );
   Assert.equal(metadata.files.length, 1);
   const completed = notification("m6e-torrent-completed", d => d.tid == tid);
   await M6ETorrentService.confirmAdd(tid, { savePath: save, start: true });
@@ -553,7 +581,10 @@ helper_task(async function test_helper_crash_restart_restore() {
   Assert.greater(oldPid, 0, "the helper pid is known");
   Assert.ok(await isProcessAlive(oldPid));
 
-  const exited = notification("m6e-torrent-error", d => d.code == "helper-exited");
+  const exited = notification(
+    "m6e-torrent-error",
+    d => d.code == "helper-exited"
+  );
   await killHard(oldPid);
   await exited;
   Assert.ok(!(await isProcessAlive(oldPid)), "the old helper is gone");
@@ -627,7 +658,10 @@ helper_task(async function test_idle_stop_after_timeout() {
   Assert.equal(M6ETorrentService.getNetworkState().listening, null);
 
   await M6ETorrentService.addFile(swarm.torrent, null);
-  Assert.ok(M6ETorrentService.testing.isHelperRunning(), "the next need restarts it");
+  Assert.ok(
+    M6ETorrentService.testing.isHelperRunning(),
+    "the next need restarts it"
+  );
   Assert.notEqual(M6ETorrentService.testing.helperPid(), pid);
 });
 
@@ -709,7 +743,10 @@ helper_task(async function test_bad_arguments_are_rejected() {
     "relative path"
   );
   await rejectsWithCode(
-    M6ETorrentService.addFile(PathUtils.join(torrentsDir(), "missing.torrent"), null),
+    M6ETorrentService.addFile(
+      PathUtils.join(torrentsDir(), "missing.torrent"),
+      null
+    ),
     ["io-error"],
     "missing file"
   );
@@ -741,13 +778,16 @@ async function useFakeHelper() {
 }
 
 function fakeSettings(settings) {
-  return IOUtils.writeJSON(PathUtils.join(torrentsDir(), "fake.json"), settings);
+  return IOUtils.writeJSON(
+    PathUtils.join(torrentsDir(), "fake.json"),
+    settings
+  );
 }
 
 async function fakeLog(name) {
-  const text = await IOUtils.readUTF8(PathUtils.join(torrentsDir(), name)).catch(
-    () => ""
-  );
+  const text = await IOUtils.readUTF8(
+    PathUtils.join(torrentsDir(), name)
+  ).catch(() => "");
   return text
     .split("\n")
     .filter(Boolean)
@@ -820,7 +860,11 @@ helper_task(async function test_unsupported_goal_is_reported_not_silent() {
   await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
   Assert.ok(M6ETorrentService.testing.isHelperRunning(), "not fatal");
   const reported = errors.filter(e => e.code == "unsupported-setting");
-  Assert.equal(reported.length, 1, "the unsupported seed goal is reported once");
+  Assert.equal(
+    reported.length,
+    1,
+    "the unsupported seed goal is reported once"
+  );
   Assert.ok(reported[0].message.includes("seedGoal"));
 });
 
@@ -836,7 +880,10 @@ helper_task(async function test_ip_filter_is_staged_in_the_inbox() {
   Assert.equal(configs.length, 1);
   const staged = configs[0].args.ipFilterPath;
   Assert.notEqual(staged, filter);
-  Assert.ok(staged.startsWith(inboxDir() + "/"), `staged in the inbox: ${staged}`);
+  Assert.ok(
+    staged.startsWith(inboxDir() + "/"),
+    `staged in the inbox: ${staged}`
+  );
   Assert.ok(staged.endsWith("block.p2p"), "the file name is kept");
   Assert.deepEqual(await inboxFiles(), [], "deleted after the reply");
 });
@@ -847,7 +894,10 @@ helper_task(async function test_helper_events() {
   const save = await newFolder("save");
   const { tid } = await M6ETorrentService.addFile(swarm.torrent, null);
   const staged = (await fakeLog("requests.jsonl")).find(r => r.op == "add");
-  Assert.ok(staged.args.file.startsWith(inboxDir() + "/"), "staged for the helper");
+  Assert.ok(
+    staged.args.file.startsWith(inboxDir() + "/"),
+    "staged for the helper"
+  );
   Assert.notEqual(staged.args.file, swarm.torrent);
   await M6ETorrentService.confirmAdd(tid, { savePath: save, start: true });
 
@@ -856,7 +906,13 @@ helper_task(async function test_helper_events() {
     event: "trackers",
     tid,
     trackers: [
-      { url: swarm.tracker, status: "working", seeds: 1, peers: 0, message: "" },
+      {
+        url: swarm.tracker,
+        status: "working",
+        seeds: 1,
+        peers: 0,
+        message: "",
+      },
     ],
   });
   Assert.equal((await trackers).trackers[0].url, swarm.tracker);
@@ -903,7 +959,9 @@ helper_task(async function test_sandbox_arguments_and_folder_restart() {
   const args = starts[0].args;
   Assert.ok(args.includes("--sandbox"));
   Assert.equal(args[args.indexOf("--inbox-dir") + 1], inboxDir());
-  const folders = args.flatMap((a, i) => (a == "--download-dir" ? [args[i + 1]] : []));
+  const folders = args.flatMap((a, i) =>
+    a == "--download-dir" ? [args[i + 1]] : []
+  );
   Assert.deepEqual(
     folders,
     await M6ETorrentService.testing.allowedFolders(),
@@ -913,7 +971,11 @@ helper_task(async function test_sandbox_arguments_and_folder_restart() {
 
   await M6ETorrentService.confirmAdd(tid, { savePath: save, start: true });
   starts = await fakeLog("starts.jsonl");
-  Assert.equal(starts.length, 2, "a folder outside the set restarts the helper");
+  Assert.equal(
+    starts.length,
+    2,
+    "a folder outside the set restarts the helper"
+  );
   const second = starts[1].args;
   Assert.ok(
     second.some((a, i) => a == "--download-dir" && second[i + 1] == save),
@@ -951,7 +1013,11 @@ helper_task(async function test_sandbox_restart_keeps_a_magnet() {
     pid,
     "the helper was restarted for the new folder"
   );
-  Assert.equal((await statusOf(tid)).savePath, save, "the magnet was added again");
+  Assert.equal(
+    (await statusOf(tid)).savePath,
+    save,
+    "the magnet was added again"
+  );
 });
 
 async function addFakeTorrent() {
@@ -1171,7 +1237,10 @@ helper_task(async function test_sandbox_real_helper_default_folder() {
   Assert.deepEqual(await inboxFiles(), []);
 
   await restartService();
-  Assert.ok(M6ETorrentService.testing.isHelperRunning(), "the helper restarted");
+  Assert.ok(
+    M6ETorrentService.testing.isHelperRunning(),
+    "the helper restarted"
+  );
   Assert.equal(M6ETorrentService.testing.helperSandboxed(), true);
   const status = await waitForState(tid, DONE);
   Assert.equal(status.error, null, "the torrent was restored");
@@ -1221,21 +1290,26 @@ helper_task(async function test_sandbox_real_helper_second_folder() {
   );
 });
 
-helper_task(async function test_sandbox_real_helper_missing_remembered_folder() {
-  const def = await newFolder("default");
-  await useDownloadFolder(def);
-  const gone = await newFolder("gone");
-  await IOUtils.remove(gone, { recursive: true });
-  Services.prefs.setBoolPref(PREFIX + "sandbox", true);
-  Services.prefs.setStringPref(PREFIX + "sandboxFolders", JSON.stringify([gone]));
-  const swarm = await startSwarm({ name: "m6e-svc-sbx-missing" });
+helper_task(
+  async function test_sandbox_real_helper_missing_remembered_folder() {
+    const def = await newFolder("default");
+    await useDownloadFolder(def);
+    const gone = await newFolder("gone");
+    await IOUtils.remove(gone, { recursive: true });
+    Services.prefs.setBoolPref(PREFIX + "sandbox", true);
+    Services.prefs.setStringPref(
+      PREFIX + "sandboxFolders",
+      JSON.stringify([gone])
+    );
+    const swarm = await startSwarm({ name: "m6e-svc-sbx-missing" });
 
-  const { tid } = await M6ETorrentService.addFile(swarm.torrent, null);
-  Assert.ok(tid, "the torrent was added");
-  Assert.ok(M6ETorrentService.testing.isHelperRunning());
-  Assert.equal(M6ETorrentService.testing.helperSandboxed(), true);
-  Assert.deepEqual(await M6ETorrentService.testing.allowedFolders(), [def]);
-});
+    const { tid } = await M6ETorrentService.addFile(swarm.torrent, null);
+    Assert.ok(tid, "the torrent was added");
+    Assert.ok(M6ETorrentService.testing.isHelperRunning());
+    Assert.equal(M6ETorrentService.testing.helperSandboxed(), true);
+    Assert.deepEqual(await M6ETorrentService.testing.allowedFolders(), [def]);
+  }
+);
 
 helper_task(async function test_sandbox_unconfirmed_helper_is_stopped() {
   await useFakeHelper();
@@ -1260,11 +1334,17 @@ helper_task(async function test_sandbox_more_than_four_folders_is_reported() {
   for (let i = 0; i < 6; i++) {
     const folder = await newFolder("saved" + i);
     folders.push(folder);
-    const path = PathUtils.join(torrentsDir(), `${String(i).repeat(40)}.resume`);
+    const path = PathUtils.join(
+      torrentsDir(),
+      `${String(i).repeat(40)}.resume`
+    );
     await IOUtils.writeUTF8(path, `d9:save_path${folder.length}:${folder}e`);
     await IOUtils.setModificationTime(path, 1_700_000_000_000 + i * 1000);
   }
-  const error = notification("m6e-torrent-error", d => d.code == "too-many-folders");
+  const error = notification(
+    "m6e-torrent-error",
+    d => d.code == "too-many-folders"
+  );
   await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
   const event = await error;
   const [start] = await fakeLog("starts.jsonl");
@@ -1301,7 +1381,11 @@ helper_task(async function test_helper_gets_only_its_own_environment() {
   Assert.ok(!("M6E_SECURITY_TEST_TOKEN" in start.env), "no other variable");
   Assert.ok(!("HOME" in start.env), "no home folder for the helper");
   Assert.ok(!("USER" in start.env) && !("TMPDIR" in start.env));
-  Assert.equal(start.env.M6E_TORRENT_TEST_MARK, "kept", "its own variables pass");
+  Assert.equal(
+    start.env.M6E_TORRENT_TEST_MARK,
+    "kept",
+    "its own variables pass"
+  );
   Assert.greaterOrEqual(
     Number(start.env.M6E_TORRENT_IDLE_SECONDS),
     90,
@@ -1309,43 +1393,54 @@ helper_task(async function test_helper_gets_only_its_own_environment() {
   );
 });
 
-helper_task(async function test_config_goes_first_and_a_rejected_limit_fails_closed() {
-  await useFakeHelper();
-  await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
-  const first = (await fakeLog("requests.jsonl")).map(r => r.op);
-  Assert.less(
-    first.indexOf("setConfig"),
-    first.indexOf("setLimits"),
-    "the start applies the settings before the limits"
-  );
+helper_task(
+  async function test_config_goes_first_and_a_rejected_limit_fails_closed() {
+    await useFakeHelper();
+    await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+    const first = (await fakeLog("requests.jsonl")).map(r => r.op);
+    Assert.less(
+      first.indexOf("setConfig"),
+      first.indexOf("setLimits"),
+      "the start applies the settings before the limits"
+    );
 
-  await fakeSettings({ rejectLimits: true });
-  const failed = notification("m6e-torrent-error", d => d.code == "config-failed");
-  Services.prefs.setStringPref(PREFIX + "bindInterface", "utun9");
-  Services.prefs.setIntPref(PREFIX + "downKBps", 100);
-  await failed;
-  await waitFor(
-    () => !M6ETorrentService.testing.isHelperRunning(),
-    "a rejected limit stops the helper"
-  );
-  const ops = (await fakeLog("requests.jsonl")).map(r =>
-    r.op == "setConfig" && r.args.bindInterface ? `setConfig:${r.args.bindInterface}` : r.op
-  );
-  const config = ops.lastIndexOf("setConfig:utun9");
-  Assert.greater(config, -1, "the interface change reached the helper");
-  Assert.greater(ops.lastIndexOf("setLimits"), config, "and before the limits");
+    await fakeSettings({ rejectLimits: true });
+    const failed = notification(
+      "m6e-torrent-error",
+      d => d.code == "config-failed"
+    );
+    Services.prefs.setStringPref(PREFIX + "bindInterface", "utun9");
+    Services.prefs.setIntPref(PREFIX + "downKBps", 100);
+    await failed;
+    await waitFor(
+      () => !M6ETorrentService.testing.isHelperRunning(),
+      "a rejected limit stops the helper"
+    );
+    const ops = (await fakeLog("requests.jsonl")).map(r =>
+      r.op == "setConfig" && r.args.bindInterface
+        ? `setConfig:${r.args.bindInterface}`
+        : r.op
+    );
+    const config = ops.lastIndexOf("setConfig:utun9");
+    Assert.greater(config, -1, "the interface change reached the helper");
+    Assert.greater(
+      ops.lastIndexOf("setLimits"),
+      config,
+      "and before the limits"
+    );
 
-  await Assert.rejects(
-    M6ETorrentService.setLimits({ downKBps: 4_194_305 }),
-    e => e.code == "bad-request",
-    "a rate above the helper's cap is refused"
-  );
-  await Assert.rejects(
-    M6ETorrentService.setTorrentLimits("0".repeat(40), { upKBps: 4_194_305 }),
-    e => e.code == "bad-request"
-  );
-  Assert.equal(Services.prefs.getIntPref(PREFIX + "downKBps"), 100);
-});
+    await Assert.rejects(
+      M6ETorrentService.setLimits({ downKBps: 4_194_305 }),
+      e => e.code == "bad-request",
+      "a rate above the helper's cap is refused"
+    );
+    await Assert.rejects(
+      M6ETorrentService.setTorrentLimits("0".repeat(40), { upKBps: 4_194_305 }),
+      e => e.code == "bad-request"
+    );
+    Assert.equal(Services.prefs.getIntPref(PREFIX + "downKBps"), 100);
+  }
+);
 
 helper_task(async function test_a_pref_changed_during_the_start_is_applied() {
   await useFakeHelper();
@@ -1388,7 +1483,9 @@ helper_task(async function test_a_private_window_origin_is_not_recorded() {
       start: true,
     });
     const file = PathUtils.join(save, "magnet-name", "file.bin");
-    await IOUtils.makeDirectory(PathUtils.parent(file), { createAncestors: true });
+    await IOUtils.makeDirectory(PathUtils.parent(file), {
+      createAncestors: true,
+    });
     await IOUtils.write(file, new Uint8Array(10));
     const completed = notification("m6e-torrent-completed", d => d.tid == tid);
     await fakeEmit({ fake: "complete", tid });
