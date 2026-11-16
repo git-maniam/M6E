@@ -117,6 +117,9 @@ function compileRules(raw) {
     windows: new Set(ext.windowsProgram),
     macos: new Set(ext.macosInstaller),
     bundle: new Set(ext.macosBundle),
+    bundleFolders: new Set(
+      raw.macosBundleFolders.map(name => name.toLowerCase())
+    ),
     shortcut: new Set(ext.shortcut),
     archive: new Set(ext.archive),
     diskImage: new Set(ext.diskImage),
@@ -433,9 +436,15 @@ function isSplitArchive(rules, ext) {
   return rules.splitArchive.some(re => re.test(ext));
 }
 
+// A folder with a bundle extension whose file is in one of the bundle's own
+// folders (Contents and the like). Other files in such a folder are checked
+// one by one, so a name like "Show.Complete.Bundle" hides nothing.
 function bundleOf(rules, parts) {
-  for (let i = 0; i < parts.length - 1; i++) {
-    if (rules.bundle.has(splitName(parts[i]).ext)) {
+  for (let i = 0; i + 2 < parts.length; i++) {
+    if (
+      rules.bundle.has(splitName(parts[i]).ext) &&
+      rules.bundleFolders.has(parts[i + 1].toLowerCase())
+    ) {
       return parts.slice(0, i + 1).join("/");
     }
   }

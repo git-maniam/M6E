@@ -1568,6 +1568,33 @@ export const ASSESS_CASES = [
           : ["windows-program", "double-extension"],
     })),
   },
+  {
+    name: "a folder named like a bundle without bundle contents is a folder",
+    metadata: torrent("Show.S01.Complete.Bundle", [
+      ["Show.S01.Complete.Bundle/show.s01e01.mkv", 700 * MiB],
+      ["Show.S01.Complete.Bundle/show.s01e02.mkv", 700 * MiB],
+      ["Show.S01.Complete.Bundle/player.dmg", MiB],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["macos-installer", "program-in-media"],
+    files: { "macos-installer": ["Show.S01.Complete.Bundle/player.dmg"] },
+  },
+  {
+    name: "files beside a bundle's Contents folder are checked one by one",
+    metadata: torrent("Movie.app", [
+      ["Movie.app/Contents/MacOS/Movie", 1000],
+      ["Movie.app/movie.mkv", 2 * GiB],
+      ["Movie.app/codec.zip", MiB],
+      ["Movie.app/password.txt", 20],
+    ]),
+    source: UNKNOWN,
+    verdict: "shady",
+    trusted: false,
+    codes: ["macos-installer", "password-file", "program-in-media"],
+    files: { "program-in-media": ["Movie.app", "Movie.app/codec.zip"] },
+  },
 ];
 
 export const TRUSTED_CASES = [

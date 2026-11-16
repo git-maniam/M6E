@@ -6,7 +6,8 @@
     "Not listed, because the project's own download page shows no torrent (checked 2026-11-10): CentOS (centos.org), openSUSE (opensuse.org), Tails (tails.net), FreeBSD (freebsd.org), Blender (blender.org) and the Wikimedia dumps (dumps.wikimedia.org).",
     "Piracy words: strong words count for a program, an archive, a disk image or a file without an extension, in its own name or in a folder above it, the torrent's name included. Weak words count only in the name of a program or a weakNameArchive. In a source release (sourceRelease), scripts, .jar files, files without an extension and source files are not counted. Media, documents, source files and other files are never counted by themselves.",
     "Renamed files: the helper marks a file renamed when libtorrent changed its name (it drops direction and zero-width characters, and replaces control characters); renamedFileReason is the reason it counts for.",
-    "Hidden characters: every Default_Ignorable_Code_Point plus hiddenCharacters.extra, except joiners inside a word and the sequences in hiddenCharacters.allowed."
+    "Hidden characters: every Default_Ignorable_Code_Point plus hiddenCharacters.extra, except joiners inside a word and the sequences in hiddenCharacters.allowed.",
+    "macOS bundles: a folder with a macosBundle extension counts as one program, and the files in its macosBundleFolders are not checked one by one, except Windows programs and shortcuts. Other files in it are checked like any file."
   ],
   "maxFilesPerReason": 10,
   "maxDisplayLength": 200,
@@ -340,6 +341,14 @@
       "asc"
     ]
   },
+  "macosBundleFolders": [
+    "Contents",
+    "Versions",
+    "Resources",
+    "Headers",
+    "Modules",
+    "_CodeSignature"
+  ],
   "splitArchivePatterns": ["^r\\d{2}$", "^z\\d{2}$", "^\\d{3}$"],
   "padPathPattern": "(^|/)\\.pad/\\d+$",
   "paddedExtensionMinSpaces": 5,
