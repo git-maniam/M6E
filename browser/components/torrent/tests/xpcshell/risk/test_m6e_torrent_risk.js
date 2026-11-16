@@ -21,6 +21,29 @@ const {
   checkTrustedList,
 } = ChromeUtils.importESModule("resource://test/risk_cases.sys.mjs");
 
+// Like M6ETorrentRisk: through a channel when the URL preloader is missing.
+function readRules() {
+  const uri = Services.io.newURI(
+    "moz-src:///browser/components/torrent/m6e-torrent-rules.json"
+  );
+  try {
+    return JSON.parse(Cu.readUTF8URI(uri));
+  } catch (e) {
+    const { NetUtil } = ChromeUtils.importESModule(
+      "resource://gre/modules/NetUtil.sys.mjs"
+    );
+    const stream = NetUtil.newChannel({
+      uri,
+      loadUsingSystemPrincipal: true,
+    }).open();
+    return JSON.parse(
+      NetUtil.readInputStreamToString(stream, stream.available(), {
+        charset: "UTF-8",
+      })
+    );
+  }
+}
+
 function runCases(cases, check) {
   const failures = [];
   for (const testCase of cases) {
@@ -58,13 +81,7 @@ add_task(function test_trusted_list() {
     [],
     "The bundled trusted list has no duplicates and no hosting sites"
   );
-  const raw = JSON.parse(
-    Cu.readUTF8URI(
-      Services.io.newURI(
-        "moz-src:///browser/components/torrent/m6e-torrent-rules.json"
-      )
-    )
-  );
+  const raw = readRules();
   Assert.deepEqual(
     checkRulesData(raw, host => M6ETorrentRisk.isExcludedHost(host)),
     [],

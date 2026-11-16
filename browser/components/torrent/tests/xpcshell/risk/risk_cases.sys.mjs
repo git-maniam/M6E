@@ -1930,7 +1930,6 @@ export const TEST_PUBLIC_SUFFIXES = new Set([
   "co.uk",
   "io",
   "github.io",
-  "amazonaws.com",
   "s3.amazonaws.com",
   "localhost",
 ]);

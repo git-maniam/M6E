@@ -30,7 +30,9 @@ function readRulesFile() {
       loadUsingSystemPrincipal: true,
     }).open();
     return JSON.parse(
-      NetUtil.readInputStreamToString(stream, stream.available())
+      NetUtil.readInputStreamToString(stream, stream.available(), {
+        charset: "UTF-8",
+      })
     );
   }
 }
