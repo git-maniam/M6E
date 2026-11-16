@@ -71,7 +71,7 @@ const MAX_FILTER_BYTES = 64 * 1024 * 1024;
 const IDLE_SECONDS_ENV = "M6E_TORRENT_IDLE_SECONDS";
 const QUARANTINE_ATTR = "com.apple.quarantine";
 const MAX_ORIGIN_METADATA_FILES = 20;
-const MAX_LOG_ENTRIES = 200;
+const MAX_LOG_ENTRIES = 500;
 const STDERR_TAIL_BYTES = 2048;
 const PROXY_LOGIN_ORIGIN = "chrome://m6e-torrent";
 const PROXY_LOGIN_REALM = "M6E BitTorrent proxy";
@@ -82,6 +82,7 @@ const TOPIC_ERROR = "m6e-torrent-error";
 const TOPIC_COMPLETED = "m6e-torrent-completed";
 const TOPIC_NETWORK = "m6e-torrent-network";
 const TOPIC_TRACKERS = "m6e-torrent-trackers";
+const TOPIC_GOAL = "m6e-torrent-goal-reached";
 
 const DEFAULT_TIMINGS = {
   idleStopMs: 60_000,
@@ -122,7 +123,7 @@ class M6ETorrentServiceImpl {
   #reportedUnsupported = new Set();
   #quarantined = new Set();
   #log = [];
-  #network = { listening: null, interfaceDown: null };
+  #network = { listening: null, interfaceDown: null, forcedOff: [] };
   #quitting = false;
   #initDone = false;
   #hasStartedThisSession = false;
@@ -600,7 +601,7 @@ class M6ETorrentServiceImpl {
     this.#session = null;
     this.#removeSessionHooks();
     this.#clearIdleTimer();
-    this.#network = { listening: null, interfaceDown: null };
+    this.#network = { listening: null, interfaceDown: null, forcedOff: [] };
     if (session.stopping || this.#quitting) {
       return;
     }
@@ -744,6 +745,7 @@ class M6ETorrentServiceImpl {
         await this.#send(session, "setLimits", buildLimits(prefs));
       }
       const result = await this.#send(session, "setConfig", config);
+      this.#setForcedOff(result?.forcedOff);
       const { fatal, warn } = unsupportedConfig(config, result);
       for (const key of warn) {
         if (!this.#reportedUnsupported.has(key)) {
@@ -857,6 +859,9 @@ class M6ETorrentServiceImpl {
         this.#network.interfaceDown = null;
         this.#notifyNetwork();
         break;
+      case "goalReached":
+        this.#onGoalReached(message);
+        break;
       case "error":
         this.#emitError(message.tid, message.code ?? "engine-error", message.message ?? "");
         break;
@@ -864,6 +869,33 @@ class M6ETorrentServiceImpl {
         this.#addLog(message.level ?? "info", String(message.message ?? ""));
         break;
     }
+  }
+
+  #setForcedOff(forcedOff) {
+    const list = Array.isArray(forcedOff)
+      ? forcedOff.filter(f => typeof f == "string")
+      : [];
+    if (list.join() == this.#network.forcedOff.join()) {
+      return;
+    }
+    this.#network.forcedOff = list;
+    if (list.length) {
+      this.#addLog("info", `held off by the proxy or interface: ${list.join(", ")}`);
+    }
+    this.#notifyNetwork();
+  }
+
+  #onGoalReached({ tid, action }) {
+    if (typeof tid != "string") {
+      return;
+    }
+    const status = this.#torrents.get(tid);
+    if (status) {
+      this.#torrents.set(tid, { ...status, goalReached: true });
+      this.#scheduleChanged();
+    }
+    this.#addLog("info", `${tid}: seed goal reached, ${action ?? "stop"}`);
+    this.#notify(TOPIC_GOAL, { tid, action: action == "slow" ? "slow" : "stop" });
   }
 
   #onMetadata({ tid, metadata }) {
@@ -1291,6 +1323,48 @@ class M6ETorrentServiceImpl {
     await this.#syncList();
   }
 
+  async setFilePriority(tid, files) {
+    this.#checkTid(tid);
+    if (
+      !Array.isArray(files) ||
+      !files.length ||
+      files.some(
+        f =>
+          !Number.isInteger(f?.index) ||
+          f.index < 0 ||
+          ![0, 1, 2, 3].includes(f.priority)
+      )
+    ) {
+      throw new TorrentError("bad-request", "invalid file priorities");
+    }
+    const result = await this.#call("setFilePriority", {
+      tid,
+      files: files.map(({ index, priority }) => ({ index, priority })),
+    });
+    this.#cacheStatus(result.status);
+    return result;
+  }
+
+  async setTorrentLimits(tid, limits) {
+    this.#checkTid(tid);
+    const args = { tid };
+    for (const key of ["downKBps", "upKBps"]) {
+      if (limits && key in limits) {
+        const value = limits[key];
+        if (!Number.isInteger(value) || value < 0 || value > 100_000_000) {
+          throw new TorrentError("bad-request", `${key} is out of range`);
+        }
+        args[key] = value;
+      }
+    }
+    if (Object.keys(args).length == 1) {
+      throw new TorrentError("bad-request", "no limit given");
+    }
+    const result = await this.#call("setTorrentLimits", args);
+    this.#cacheStatus(result.status);
+    return result;
+  }
+
   async #syncList() {
     const result = await this.#call("list");
     this.#replaceTorrents(result.torrents);
@@ -1402,11 +1476,11 @@ class M6ETorrentServiceImpl {
   }
 
   getNetworkState() {
-    return { ...this.#network };
+    return { ...this.#network, forcedOff: [...this.#network.forcedOff] };
   }
 
   getLog() {
-    return [...this.#log];
+    return this.#log.map(entry => ({ ...entry }));
   }
 
   async shutdown() {

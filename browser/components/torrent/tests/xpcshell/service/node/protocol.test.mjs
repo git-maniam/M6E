@@ -295,7 +295,7 @@ test("defaults map to limits and config", () => {
   assert.equal(c.listenPort, 0);
   assert.equal(c.bindInterface, null);
   assert.equal(c.ipFilterPath, null);
-  assert.deepEqual(c.seedGoal, { ratio: 1, hours: null });
+  assert.deepEqual(c.seedGoal, { ratio: 1, hours: null, action: "stop" });
   assert.equal(c.peerIdPrefix, null);
   assert.equal(c.userAgent, null);
   assert.deepEqual(c.proxy, {
@@ -330,7 +330,11 @@ test("config for changed keys only", () => {
   ]);
   assert.equal(c.proxy.password, "pw");
   assert.equal(c.proxy.type, "socks5");
-  assert.deepEqual(c.seedGoal, { ratio: null, hours: 12 });
+  assert.deepEqual(c.seedGoal, {
+    ratio: null,
+    hours: 12,
+    action: "stop",
+  });
   assert.equal(c.peerIdPrefix, "-AB1234-");
   assert.equal(c.bindInterface, "utun3");
 });
@@ -401,6 +405,22 @@ test("setConfig and setLimits arguments map to prefs", () => {
   );
   assert.throws(() => limitsToPrefs({ dht: false }), { code: "bad-request" });
   assert.throws(() => partialToPrefs(null), { code: "bad-request" });
+  assert.deepEqual(partialToPrefs({ seedGoal: { action: "slow" } }), {
+    seedAction: "slow",
+  });
+});
+
+test("the seed action", () => {
+  assert.equal(validatePrefValue("seedAction", "slow"), "slow");
+  assert.throws(() => validatePrefValue("seedAction", "x"), {
+    code: "bad-request",
+  });
+  assert.deepEqual(classifyPref("seedAction"), {
+    group: "config",
+    key: "seedGoal",
+  });
+  const p = { ...PREF_DEFAULTS, seedAction: "slow" };
+  assert.equal(buildConfig(p, ["seedGoal"]).seedGoal.action, "slow");
 });
 
 test("magnet validation", () => {

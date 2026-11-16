@@ -72,6 +72,7 @@ user_pref("m6e.torrent.maxActiveDownloads", 3);
 user_pref("m6e.torrent.maxActiveTorrents", 5);
 user_pref("m6e.torrent.seedRatioPercent", 100);
 user_pref("m6e.torrent.seedHours", 0);
+user_pref("m6e.torrent.seedAction", "stop");
 user_pref("m6e.torrent.proxy.type", "none");
 user_pref("m6e.torrent.proxy.host", "");
 user_pref("m6e.torrent.proxy.port", 1080);

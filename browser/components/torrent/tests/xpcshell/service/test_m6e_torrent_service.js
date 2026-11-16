@@ -951,3 +951,173 @@ helper_task(async function test_sandbox_restart_keeps_a_magnet() {
   );
   Assert.equal((await statusOf(tid)).savePath, save, "the magnet was added again");
 });
+
+async function addFakeTorrent() {
+  const metadata = notification("m6e-torrent-metadata");
+  const { tid } = await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  await metadata;
+  await M6ETorrentService.confirmAdd(tid, {
+    files: [{ index: 0, priority: 2 }],
+    savePath: await newFolder("save"),
+    start: true,
+  });
+  return tid;
+}
+
+helper_task(async function test_file_priority_and_torrent_limits() {
+  await useFakeHelper();
+  const tid = await addFakeTorrent();
+
+  const { status } = await M6ETorrentService.setFilePriority(tid, [
+    { index: 0, priority: 3 },
+  ]);
+  Assert.equal(status.tid, tid);
+  const detail = await M6ETorrentService.detail(tid);
+  Assert.equal(detail.files[0].priority, 3, "the priority was applied");
+  let request = (await fakeLog("requests.jsonl")).find(
+    r => r.op == "setFilePriority"
+  );
+  Assert.deepEqual(request.args, { tid, files: [{ index: 0, priority: 3 }] });
+
+  for (const files of [
+    [],
+    [{ index: 0, priority: 4 }],
+    [{ index: -1, priority: 1 }],
+    [{ index: "0", priority: 1 }],
+    "x",
+  ]) {
+    await Assert.rejects(
+      M6ETorrentService.setFilePriority(tid, files),
+      e => e.code == "bad-request",
+      "invalid priorities are refused before the helper"
+    );
+  }
+  await Assert.rejects(
+    M6ETorrentService.setFilePriority("nothex", [{ index: 0, priority: 1 }]),
+    e => e.code == "bad-request"
+  );
+
+  const limited = await M6ETorrentService.setTorrentLimits(tid, {
+    downKBps: 100,
+    upKBps: 20,
+  });
+  Assert.equal(limited.status.downLimitKBps, 100);
+  Assert.equal(limited.status.upLimitKBps, 20);
+  const cached = M6ETorrentService.testing
+    .cachedTorrents()
+    .find(t => t.tid == tid);
+  Assert.equal(cached.upLimitKBps, 20, "the new fields are cached");
+  await M6ETorrentService.setTorrentLimits(tid, { upKBps: 0 });
+  request = (await fakeLog("requests.jsonl")).filter(
+    r => r.op == "setTorrentLimits"
+  )[1];
+  Assert.deepEqual(request.args, { tid, upKBps: 0 }, "only given limits sent");
+  for (const limits of [{}, { downKBps: -1 }, { upKBps: 1.5 }, null]) {
+    await Assert.rejects(
+      M6ETorrentService.setTorrentLimits(tid, limits),
+      e => e.code == "bad-request"
+    );
+  }
+});
+
+helper_task(async function test_seed_action_reaches_the_helper() {
+  await useFakeHelper();
+  Services.prefs.setIntPref(PREFIX + "seedRatioPercent", 150);
+  await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  const goal = async () => {
+    const requests = await fakeLog("requests.jsonl");
+    return requests.filter(r => r.op == "setConfig" && r.args.seedGoal).pop()
+      ?.args.seedGoal;
+  };
+  Assert.deepEqual(await goal(), { ratio: 1.5, hours: null, action: "stop" });
+  await M6ETorrentService.setConfig({ seedAction: "slow" });
+  Assert.deepEqual(await goal(), { ratio: 1.5, hours: null, action: "slow" });
+  Assert.equal((await M6ETorrentService.getConfig()).seedAction, "slow");
+  await Assert.rejects(
+    M6ETorrentService.setConfig({ seedAction: "explode" }),
+    e => e.code == "bad-request"
+  );
+});
+
+helper_task(async function test_supported_settings_raise_no_error() {
+  await useFakeHelper();
+  Services.prefs.setIntPref(PREFIX + "seedRatioPercent", 150);
+  Services.prefs.setBoolPref(PREFIX + "randomizePeerId", true);
+  await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  Assert.equal(
+    errors.filter(e => e.code == "unsupported-setting").length,
+    0,
+    "a helper that applies every key raises nothing"
+  );
+});
+
+helper_task(async function test_goal_queued_and_forced_off_and_log() {
+  await useFakeHelper();
+  await fakeSettings({ forcedOff: ["dht", "utp"] });
+  const network = notification("m6e-torrent-network", d => d.forcedOff.length);
+  const tid = await addFakeTorrent();
+  Assert.deepEqual((await network).forcedOff, ["dht", "utp"]);
+  Assert.deepEqual(M6ETorrentService.getNetworkState().forcedOff, [
+    "dht",
+    "utp",
+  ]);
+
+  await fakeEmit({ fake: "state", tid, state: "queued" });
+  await waitFor(
+    () =>
+      M6ETorrentService.testing
+        .cachedTorrents()
+        .some(t => t.tid == tid && t.state == "queued"),
+    "the queued state"
+  );
+
+  const goal = notification("m6e-torrent-goal-reached", d => d.tid == tid);
+  await fakeEmit({ fake: "goal", tid });
+  Assert.equal((await goal).action, "stop");
+  await waitFor(
+    () =>
+      M6ETorrentService.testing
+        .cachedTorrents()
+        .some(t => t.tid == tid && t.goalReached),
+    "goalReached in the cached status"
+  );
+
+  const down = notification("m6e-torrent-network", d => d.interfaceDown);
+  await fakeEmit({ event: "interfaceDown", interface: "utun9" });
+  Assert.equal((await down).interfaceDown, "utun9");
+  const up = notification("m6e-torrent-network", d => !d.interfaceDown);
+  await fakeEmit({ event: "interfaceUp", interface: "utun9" });
+  await up;
+
+  await fakeEmit({ event: "log", level: "warn", message: "synthetic line" });
+  await waitFor(
+    () => M6ETorrentService.getLog().some(l => l.message == "synthetic line"),
+    "the log event"
+  );
+  const line = M6ETorrentService.getLog().find(
+    l => l.message == "synthetic line"
+  );
+  Assert.equal(line.level, "warn");
+  line.message = "changed";
+  Assert.ok(
+    !M6ETorrentService.getLog().some(l => l.message == "changed"),
+    "getLog returns copies"
+  );
+});
+
+helper_task(async function test_log_ring_buffer_is_bounded() {
+  await useFakeHelper();
+  await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  const events = [];
+  for (let i = 0; i < 620; i++) {
+    events.push({ event: "log", level: "info", message: `line ${i}` });
+  }
+  await fakeEmit(...events);
+  await waitFor(
+    () => M6ETorrentService.getLog().some(l => l.message == "line 619"),
+    "the last log line"
+  );
+  const log = M6ETorrentService.getLog();
+  Assert.equal(log.length, 500, "the buffer keeps 500 lines");
+  Assert.ok(!log.some(l => l.message == "line 0"), "old lines drop first");
+});

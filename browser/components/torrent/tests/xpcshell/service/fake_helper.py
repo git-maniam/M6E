@@ -13,7 +13,8 @@ It is steered through files in its --profile-dir:
   emit.jsonl     lines to write to standard output as they are; a line
                  {"fake": "exit", "code": N} exits at once,
                  {"fake": "complete", "tid": T} finishes a torrent,
-                 {"fake": "state", "tid": T, "state": S} changes its state
+                 {"fake": "state", "tid": T, "state": S} changes its state,
+                {"fake": "goal", "tid": T} marks its seed goal as reached
 It writes requests.jsonl (every request received) and starts.jsonl (one line
 per start).
 """
@@ -131,6 +132,9 @@ def status(tid, t):
         "sequential": t.get("sequential", False),
         "addedAt": t.get("addedAt", 0),
         "error": None,
+        "downLimitKBps": t.get("downLimitKBps", 0),
+        "upLimitKBps": t.get("upLimitKBps", 0),
+        "goalReached": t.get("goalReached", False),
     }
 
 
@@ -268,6 +272,39 @@ def handle(request):
                 ],
             },
         )
+    elif op == "setFilePriority":
+        t = torrents.get(a["tid"])
+        if not t:
+            fail(rid, "not-found", "no such torrent")
+            return
+        count = len(t["metadata"]["files"])
+        files = a.get("files")
+        if not isinstance(files, list) or any(
+            not isinstance(f.get("index"), int)
+            or not 0 <= f["index"] < count
+            or f.get("priority") not in (0, 1, 2, 3)
+            for f in files
+        ):
+            fail(rid, "bad-request", "bad file priorities")
+            return
+        t.setdefault("priorities", {})
+        for f in files:
+            t["priorities"][str(f["index"])] = f["priority"]
+        save_state()
+        reply(rid, {"status": status(a["tid"], t)})
+    elif op == "setTorrentLimits":
+        t = torrents.get(a["tid"])
+        if not t:
+            fail(rid, "not-found", "no such torrent")
+            return
+        for key, field in (("downKBps", "downLimitKBps"), ("upKBps", "upLimitKBps")):
+            if key in a:
+                if not isinstance(a[key], int) or a[key] < 0:
+                    fail(rid, "bad-request", "bad limit")
+                    return
+                t[field] = a[key]
+        save_state()
+        reply(rid, {"status": status(a["tid"], t)})
     elif op == "setLimits":
         reply(rid, {})
     elif op == "setConfig":
@@ -275,7 +312,14 @@ def handle(request):
             fail(rid, "bad-request", "no")
             return
         unsupported = [k for k in a if k in s.get("unsupported", [])]
-        reply(rid, {"applied": [k for k in a if k not in unsupported], "unsupported": unsupported})
+        reply(
+            rid,
+            {
+                "applied": [k for k in a if k not in unsupported],
+                "unsupported": unsupported,
+                "forcedOff": s.get("forcedOff", []),
+            },
+        )
     elif op == "restore":
         saved = load_state()
         torrents.clear()
@@ -320,6 +364,13 @@ def process_emit():
             if t:
                 t["state"] = obj["state"]
                 save_state()
+                out({"event": "progress", "torrents": [status(obj["tid"], t)]})
+        elif directive == "goal":
+            t = torrents.get(obj["tid"])
+            if t:
+                t["goalReached"] = True
+                save_state()
+                out({"event": "goalReached", "tid": obj["tid"], "action": "stop"})
                 out({"event": "progress", "torrents": [status(obj["tid"], t)]})
         else:
             out(obj)

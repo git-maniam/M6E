@@ -37,6 +37,7 @@ export const PREF_DEFAULTS = {
   maxActiveTorrents: 5,
   seedRatioPercent: 100,
   seedHours: 0,
+  seedAction: "stop",
   "proxy.type": "none",
   "proxy.host": "",
   "proxy.port": 1080,
@@ -230,6 +231,11 @@ export function validatePrefValue(name, value) {
     case "encryption":
       if (!["disabled", "enabled", "forced"].includes(value)) {
         throw new TorrentError("bad-request", "unknown encryption mode");
+      }
+      break;
+    case "seedAction":
+      if (!["stop", "slow"].includes(value)) {
+        throw new TorrentError("bad-request", "unknown seed action");
       }
       break;
     case "proxy.type":
@@ -489,6 +495,7 @@ export function classifyPref(name) {
       return { group: "config", key: "proxy" };
     case "seedRatioPercent":
     case "seedHours":
+    case "seedAction":
       return { group: "config", key: "seedGoal" };
     case "randomizePeerId":
       return { group: "config", key: "peerIdPrefix" };
@@ -560,6 +567,7 @@ export function buildConfig(p, keys = ALL_CONFIG_KEYS, extras = {}) {
         config.seedGoal = {
           ratio: p.seedRatioPercent > 0 ? p.seedRatioPercent / 100 : null,
           hours: p.seedHours > 0 ? p.seedHours : null,
+          action: p.seedAction == "slow" ? "slow" : "stop",
         };
         break;
       case "peerIdPrefix":
@@ -606,6 +614,9 @@ export function partialToPrefs(partial) {
       }
       if ("hours" in value) {
         out.seedHours = value.hours === null ? 0 : value.hours;
+      }
+      if ("action" in value) {
+        out.seedAction = value.action;
       }
     } else {
       out[key] = value;
