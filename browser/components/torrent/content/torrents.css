@@ -446,3 +446,7 @@ table {
   color: var(--text-color-deemphasized);
   font-size: var(--font-size-small);
 }
+
+#m6e-torrents-pieces-map[hidden] {
+  display: none;
+}
