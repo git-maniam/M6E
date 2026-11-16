@@ -1205,10 +1205,16 @@ helper_task(async function test_sandbox_real_helper_second_folder() {
   await restartService();
   const status = await waitForState(tid, DONE);
   Assert.equal(status.error, null, "the saved torrent's folder is allowed");
-  Assert.equal(status.savePath, other);
+  const realOther = (() => {
+    const file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+    file.initWithPath(other);
+    file.normalize();
+    return file.path;
+  })();
+  Assert.equal(status.savePath, realOther);
   Assert.deepEqual(unsafePathErrors(), []);
   Assert.ok(
-    (await M6ETorrentService.testing.allowedFolders()).includes(other),
+    (await M6ETorrentService.testing.allowedFolders()).includes(realOther),
     "the folder comes from the saved torrent"
   );
 });

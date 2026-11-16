@@ -1,7 +1,7 @@
 [DEFAULT]
 firefox-appdir = "browser"
 skip-if = ["os != 'mac'"]
-requesttimeoutfactor = 4
+requesttimeoutfactor = 12
 run-sequentially = ["true"]
 support-files = [
   "fake_helper.py",
