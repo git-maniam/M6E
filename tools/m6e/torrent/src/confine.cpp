@@ -8,6 +8,7 @@
 #include <sys/xattr.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <climits>
 #include <cstdio>
@@ -761,6 +762,118 @@ FinalizeReport finalizeRelative(std::string const& rootReal,
     return report;
   }
   return finalizeFile(rootReal, parts);
+}
+
+std::optional<SafetyError> protectFile(std::string const& rootReal,
+                                       PathComponents const& parts,
+                                       bool create, bool* existed,
+                                       std::string* warning) {
+  if (existed) {
+    *existed = false;
+  }
+  if (auto bad = checkComponentLimits(parts)) {
+    return bad;
+  }
+  SafetyError err;
+  int rootFd = openRoot(rootReal, &err);
+  if (rootFd < 0) {
+    return err;
+  }
+  int dirFd = openDirChain(rootFd, parts, parts.size() - 1, create, &err);
+  close(rootFd);
+  if (dirFd < 0) {
+    return create ? std::optional(err) : std::nullopt;
+  }
+  char const* name = parts.back().c_str();
+  constexpr int kOpen = O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK;
+  int fd = create ? openat(dirFd, name, kOpen | O_CREAT | O_EXCL, 0644) : -1;
+  bool created = fd >= 0;
+  if (fd < 0 && (!create || errno == EEXIST)) {
+    fd = openat(dirFd, name, kOpen);
+  }
+  int e = errno;
+  close(dirFd);
+  if (fd < 0) {
+    if (!create && e == ENOENT) {
+      return std::nullopt;
+    }
+    setErrno(&err, "cannot open " + parts.back(), e);
+    return err;
+  }
+  struct stat st;
+  if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode) || st.st_nlink > 1) {
+    close(fd);
+    return unsafe("not a regular file of its own: " + parts.back());
+  }
+  if (existed) {
+    *existed = !created;
+  }
+  std::string problem;
+  mode_t cleared = st.st_mode & ~(S_IXUSR | S_IXGRP | S_IXOTH);
+  if (cleared != st.st_mode && fchmod(fd, cleared & 07777) != 0) {
+    problem =
+        "could not clear the execute bit: " + std::string(std::strerror(errno));
+  }
+  if (fgetxattr(fd, kQuarantineAttr, nullptr, 0, 0, 0) < 0 &&
+      !setQuarantineXattr(fd, "M6E")) {
+    problem += (problem.empty() ? "" : "; ") +
+               std::string("could not set com.apple.quarantine: ") +
+               std::strerror(errno);
+  }
+  close(fd);
+  if (warning && !problem.empty()) {
+    *warning = problem;
+  }
+  return std::nullopt;
+}
+
+std::optional<SafetyError> removeFiles(
+    std::string const& rootReal, std::vector<PathComponents> const& files) {
+  SafetyError err;
+  int rootFd = openRoot(rootReal, &err);
+  if (rootFd < 0) {
+    return err;
+  }
+  std::optional<SafetyError> first;
+  std::set<PathComponents> folders;
+  for (auto const& parts : files) {
+    if (parts.empty() || checkComponentLimits(parts)) {
+      continue;
+    }
+    for (size_t n = 1; n < parts.size(); n++) {
+      folders.insert(PathComponents(parts.begin(), parts.begin() + n));
+    }
+    int dirFd = openDirChain(rootFd, parts, parts.size() - 1, false, &err);
+    if (dirFd < 0) {
+      continue;
+    }
+    struct stat st;
+    char const* name = parts.back().c_str();
+    if (fstatat(dirFd, name, &st, AT_SYMLINK_NOFOLLOW) == 0 &&
+        S_ISREG(st.st_mode) && unlinkat(dirFd, name, 0) != 0 &&
+        errno != ENOENT && !first) {
+      first = ioError("cannot delete " + parts.back(), errno);
+    }
+    close(dirFd);
+  }
+  std::vector<PathComponents> deepestFirst(folders.begin(), folders.end());
+  std::sort(deepestFirst.begin(), deepestFirst.end(),
+            [](auto const& a, auto const& b) { return a.size() > b.size(); });
+  for (auto const& folder : deepestFirst) {
+    int dirFd = openDirChain(rootFd, folder, folder.size() - 1, false, &err);
+    if (dirFd < 0) {
+      continue;
+    }
+    struct stat st;
+    char const* name = folder.back().c_str();
+    if (fstatat(dirFd, name, &st, AT_SYMLINK_NOFOLLOW) == 0 &&
+        S_ISDIR(st.st_mode)) {
+      unlinkat(dirFd, name, AT_REMOVEDIR);
+    }
+    close(dirFd);
+  }
+  close(rootFd);
+  return first;
 }
 
 bool enterSandbox(std::string const& profilePath,

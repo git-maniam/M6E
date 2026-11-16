@@ -1278,3 +1278,125 @@ helper_task(async function test_sandbox_more_than_four_folders_is_reported() {
     Assert.ok(event.message.includes(folder), "the dropped folders are named");
   }
 });
+
+// Security review fixes (P8.5).
+
+helper_task(async function test_helper_gets_only_its_own_environment() {
+  await useFakeHelper();
+  const set = {
+    SSH_AUTH_SOCK: "/private/tmp/m6e-test-agent.sock",
+    M6E_SECURITY_TEST_TOKEN: "secret",
+    M6E_TORRENT_TEST_MARK: "kept",
+  };
+  for (const [name, value] of Object.entries(set)) {
+    const saved = Services.env.get(name);
+    Services.env.set(name, value);
+    cleanups.push(() => Services.env.set(name, saved));
+  }
+  await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  const [start] = await fakeLog("starts.jsonl");
+  Assert.ok(!("SSH_AUTH_SOCK" in start.env), "no agent socket for the helper");
+  Assert.ok(!("M6E_SECURITY_TEST_TOKEN" in start.env), "no other variable");
+  Assert.ok(!("HOME" in start.env), "no home folder for the helper");
+  Assert.ok(!("USER" in start.env) && !("TMPDIR" in start.env));
+  Assert.equal(start.env.M6E_TORRENT_TEST_MARK, "kept", "its own variables pass");
+  Assert.greaterOrEqual(
+    Number(start.env.M6E_TORRENT_IDLE_SECONDS),
+    90,
+    "the idle exit is set"
+  );
+});
+
+helper_task(async function test_config_goes_first_and_a_rejected_limit_fails_closed() {
+  await useFakeHelper();
+  await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  const first = (await fakeLog("requests.jsonl")).map(r => r.op);
+  Assert.less(
+    first.indexOf("setConfig"),
+    first.indexOf("setLimits"),
+    "the start applies the settings before the limits"
+  );
+
+  await fakeSettings({ rejectLimits: true });
+  const failed = notification("m6e-torrent-error", d => d.code == "config-failed");
+  Services.prefs.setStringPref(PREFIX + "bindInterface", "utun9");
+  Services.prefs.setIntPref(PREFIX + "downKBps", 100);
+  await failed;
+  await waitFor(
+    () => !M6ETorrentService.testing.isHelperRunning(),
+    "a rejected limit stops the helper"
+  );
+  const ops = (await fakeLog("requests.jsonl")).map(r =>
+    r.op == "setConfig" && r.args.bindInterface ? `setConfig:${r.args.bindInterface}` : r.op
+  );
+  const config = ops.lastIndexOf("setConfig:utun9");
+  Assert.greater(config, -1, "the interface change reached the helper");
+  Assert.greater(ops.lastIndexOf("setLimits"), config, "and before the limits");
+
+  await Assert.rejects(
+    M6ETorrentService.setLimits({ downKBps: 4_194_305 }),
+    e => e.code == "bad-request",
+    "a rate above the helper's cap is refused"
+  );
+  await Assert.rejects(
+    M6ETorrentService.setTorrentLimits("0".repeat(40), { upKBps: 4_194_305 }),
+    e => e.code == "bad-request"
+  );
+  Assert.equal(Services.prefs.getIntPref(PREFIX + "downKBps"), 100);
+});
+
+helper_task(async function test_a_pref_changed_during_the_start_is_applied() {
+  await useFakeHelper();
+  await fakeSettings({ delayOn: { restore: 1.5 } });
+  const adding = M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  await waitFor(
+    async () => (await fakeLog("requests.jsonl")).some(r => r.op == "restore"),
+    "the helper to be restoring"
+  );
+  Services.prefs.setStringPref(PREFIX + "bindInterface", "utun7");
+  await adding;
+  await waitFor(
+    async () =>
+      (await fakeLog("requests.jsonl")).some(
+        r => r.op == "setConfig" && r.args.bindInterface == "utun7"
+      ),
+    "the interface changed during the start reaches the helper",
+    20_000
+  );
+});
+
+helper_task(async function test_a_private_window_origin_is_not_recorded() {
+  await useFakeHelper();
+  const WHERE_FROMS = "com.apple.metadata:kMDItemWhereFroms";
+  for (const [isPrivate, magnet] of [
+    [true, SYNTHETIC_MAGNET],
+    [false, "magnet:?xt=urn:btih:" + "1".repeat(40)],
+  ]) {
+    const save = await newFolder("save");
+    const metadata = notification("m6e-torrent-metadata");
+    const { tid } = await M6ETorrentService.addMagnet(magnet, {
+      kind: "magnet-page",
+      origin: "https://example.com",
+      private: isPrivate,
+    });
+    Assert.equal((await metadata).source.private === true, isPrivate);
+    await M6ETorrentService.confirmAdd(tid, {
+      files: [{ index: 0, priority: 2 }],
+      savePath: save,
+      start: true,
+    });
+    const file = PathUtils.join(save, "magnet-name", "file.bin");
+    await IOUtils.makeDirectory(PathUtils.parent(file), { createAncestors: true });
+    await IOUtils.write(file, new Uint8Array(10));
+    const completed = notification("m6e-torrent-completed", d => d.tid == tid);
+    await fakeEmit({ fake: "complete", tid });
+    await completed;
+    const mac = new FileUtils.File(file).QueryInterface(Ci.nsILocalFileMac);
+    Assert.ok(mac.hasXAttr(QUARANTINE_ATTR), "quarantined in both cases");
+    Assert.equal(
+      mac.hasXAttr(WHERE_FROMS),
+      !isPrivate,
+      isPrivate ? "no origin from a private window" : "the origin otherwise"
+    );
+  }
+});

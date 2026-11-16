@@ -13,7 +13,9 @@
 #     <test>/save and, when it exists, <test>/small (the disk-full volume).
 #     <test>/outside and everything else stays out of reach.
 #   privacy: <test>/<helper>/profile; the default inbox; download folder <test>
-#     (the tests create their save folders after the helper starts).
+#     (the tests create their save folders after the helper starts). The
+#     helper refuses a download folder that contains its profile, so the
+#     profile is moved to <test>.profiles/<helper> and left behind a link.
 # M6E_TORRENT_HELPER names the helper (default: build/m6e-torrent).
 set -eu
 
@@ -39,6 +41,12 @@ case ${M6E_SANDBOX_LAYOUT:-conformance} in
         ;;
     privacy)
         test=$(dirname "$(dirname "$profile")")
+        if [ ! -L "$profile" ]; then
+            store=$test.profiles/$(basename "$(dirname "$profile")")
+            mkdir -p "$store"
+            rmdir "$profile"
+            ln -s "$store" "$profile"
+        fi
         set -- "$@" --sandbox --download-dir "$test"
         ;;
     *)

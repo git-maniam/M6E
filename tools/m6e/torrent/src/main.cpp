@@ -18,6 +18,7 @@
 #include <net/if.h>
 #include <new>
 #include <poll.h>
+#include <pwd.h>
 #include <string>
 #include <string_view>
 #include <sys/stat.h>
@@ -65,6 +66,24 @@ int badArgument(char const* what, std::string const& value) {
 std::string resolvedPath(std::string const& path) {
   char buf[PATH_MAX];
   return realpath(path.c_str(), buf) ? std::string(buf) : std::string();
+}
+
+// The home folder comes from the user database, not $HOME, which the service
+// does not pass.
+std::vector<std::string> protectedFolders(std::string const& profileReal,
+                                          std::string const& inbox) {
+  std::vector<std::string> out = {profileReal};
+  auto add = [&](std::string const& path) {
+    std::string real = resolvedPath(path);
+    out.push_back(real.empty() ? path : real);
+  };
+  if (passwd const* pw = getpwuid(getuid());
+      pw && pw->pw_dir && m6e::isAbsolutePath(pw->pw_dir)) {
+    add(pw->pw_dir);
+    add(std::string(pw->pw_dir) + "/Library");
+  }
+  add(inbox);
+  return out;
 }
 
 std::string executablePath() {
@@ -285,6 +304,8 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::string inboxReal;
+  std::vector<std::string> kept = protectedFolders(
+      resolved, inboxGiven ? inboxDir : std::string(resolved) + "/inbox");
   if (sandbox) {
     if (!makeProfileDir(inboxDir) ||
         (inboxReal = resolvedPath(inboxDir)).empty()) {
@@ -292,6 +313,7 @@ int main(int argc, char** argv) {
                    inboxDir.c_str(), std::strerror(errno));
       return 1;
     }
+    kept = protectedFolders(resolved, inboxReal);
     std::vector<std::string> writable = saveRoots;
     writable.push_back(resolved);
     for (auto const& root : writable) {
@@ -300,6 +322,16 @@ int main(int argc, char** argv) {
             "--inbox-dir must not be or contain the profile or a download "
             "folder",
             inboxDir);
+      }
+    }
+    for (auto const& root : saveRoots) {
+      for (auto const& folder : kept) {
+        if (m6e::pathIsWithin(root, folder)) {
+          return badArgument(
+              "--download-dir must not be or contain the home folder, "
+              "~/Library, --profile-dir or the inbox",
+              root);
+        }
       }
     }
     std::string helper = executablePath();
@@ -348,6 +380,7 @@ int main(int argc, char** argv) {
   options.profileDir = resolved;
   options.idleExit = idleSeconds();
   options.interfacePresent = interfaceLookup();
+  options.protectedDirs = kept;
   if (sandbox) {
     options.inboxDir = inboxReal;
     options.saveRoots = saveRoots;
@@ -388,7 +421,7 @@ int main(int argc, char** argv) {
     if (n > 0 && fds[1].revents) {
       engine->processAlerts();
     }
-    if (n > 0 && (fds[0].revents & (POLLIN | POLLHUP | POLLERR))) {
+    if (n > 0 && (fds[0].revents & (POLLIN | POLLHUP | POLLERR | POLLNVAL))) {
       ssize_t got = read(STDIN_FILENO, buf, sizeof buf);
       if (got == 0 || (got < 0 && errno != EINTR && errno != EAGAIN)) {
         break;

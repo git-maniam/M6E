@@ -300,9 +300,10 @@ def live_helper_rules(ctx):
         ("file-read-data", files["outside"], "deny"),
         ("file-read-data", "/private/etc/passwd", "deny"),
         ("file-read-data", os.path.expanduser("~/Library/Keychains"), "deny"),
-        ("file-read-metadata", files["outside"], "allow"),
-        ("network-outbound", None, "allow"),
-        ("network-inbound", None, "allow"),
+        ("file-read-metadata", files["outside"], "deny"),
+        ("file-read-metadata", ctx.dir, "allow"),
+        ("network-outbound", "/private/var/run/mDNSResponder", "allow"),
+        ("network-outbound", os.path.join(ctx.save, "agent.sock"), "deny"),
         ("mach-lookup", "com.apple.PowerManagement.control", "allow"),
         ("mach-lookup", "com.apple.SystemConfiguration.configd", "allow"),
         ("mach-lookup", "com.apple.pasteboard.1", "deny"),
@@ -444,6 +445,7 @@ def plant_link(ctx, sandbox, single):
     h.call("confirm", dict(confirm_args(added["metadata"], ctx.save), tid=tid))
     planted = os.path.join(ctx.save, fx.name)
     if single:
+        os.remove(planted)
         os.symlink(sentinel, planted)
     else:
         os.rename(planted, planted + ".checked")

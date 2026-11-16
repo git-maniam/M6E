@@ -15,6 +15,7 @@ import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 import {
   PROTOCOL_VERSION,
   MAX_DOWNLOAD_FOLDERS,
+  MAX_RATE_KBPS,
   MAX_TORRENT_BYTES,
   PREF_BRANCH,
   PREF_DEFAULTS,
@@ -28,6 +29,7 @@ import {
   classifyPref,
   encodeRequest,
   helperArguments,
+  helperEnvironment,
   helperIdleSeconds,
   httpsOrigin,
   isAbsolutePosixPath,
@@ -48,6 +50,7 @@ import {
   unsupportedConfig,
   validateMagnet,
   validatePrefValue,
+  whereFromOrigin,
 } from "moz-src:///browser/components/torrent/M6ETorrentProtocol.sys.mjs";
 
 const lazy = {};
@@ -71,7 +74,6 @@ const SHUTDOWN_BLOCKER_NAME = "M6ETorrentService: stop the torrent helper";
 const INBOX_NAME = "inbox";
 const INBOX_MAX_AGE_MS = 5 * 60_000;
 const MAX_FILTER_BYTES = 64 * 1024 * 1024;
-const IDLE_SECONDS_ENV = "M6E_TORRENT_IDLE_SECONDS";
 const QUARANTINE_ATTR = "com.apple.quarantine";
 const MAX_ORIGIN_METADATA_FILES = 20;
 const MAX_LOG_ENTRIES = 500;
@@ -224,9 +226,14 @@ class M6ETorrentServiceImpl {
       clearTimeout(this.#prefTimer);
       this.#prefTimer = null;
     }
+    const session = this.#session;
+    const starting =
+      session && !session.initialized && !session.stopping && !session.closed;
+    if (starting) {
+      return;
+    }
     const dirty = this.#dirtyPrefs;
     this.#dirtyPrefs = new Set();
-    const session = this.#session;
     if (!dirty.size || !session?.initialized || session.stopping) {
       return;
     }
@@ -249,11 +256,11 @@ class M6ETorrentServiceImpl {
       }
     }
     try {
-      if (limits) {
-        await this.#send(session, "setLimits", buildLimits(this.#allPrefs()));
-      }
       if (keys.size) {
         await this.#applyConfig(session, [...keys]);
+      }
+      if (limits) {
+        await this.#applyLimits(session, this.#allPrefs());
       }
     } catch (e) {
       this.#reportError(null, e);
@@ -528,6 +535,10 @@ class M6ETorrentServiceImpl {
     this.#resumeOnStart = false;
     this.#hasStartedThisSession = true;
     this.#reportedUnsupported.clear();
+    // Every pref is read from here on; a change during the start stays dirty
+    // and is applied once the helper is initialized.
+    this.#addPrefObserver();
+    this.#dirtyPrefs.clear();
 
     const command = this.#helperPath();
     if (!(await IOUtils.exists(command))) {
@@ -549,8 +560,12 @@ class M6ETorrentServiceImpl {
           folders,
           inboxDir: this.#inboxDir,
         }),
-        environment: { [IDLE_SECONDS_ENV]: String(this.#helperIdleSeconds()) },
-        environmentAppend: true,
+        environment: helperEnvironment(
+          lazy.Subprocess.getEnvironment(),
+          this.#helperIdleSeconds(),
+          { automation: Cu.isInAutomation }
+        ),
+        environmentAppend: false,
         stderr: "pipe",
       });
     } catch (e) {
@@ -617,6 +632,9 @@ class M6ETorrentServiceImpl {
     }
     session.initialized = true;
     this.#addSessionHooks();
+    if (this.#dirtyPrefs.size) {
+      this.#flushPrefs(false).catch(e => this.#reportError(null, e));
+    }
     return session;
   }
 
@@ -825,9 +843,6 @@ class M6ETorrentServiceImpl {
         staged = await this.#stageInput(bytes, PathUtils.filename(config.ipFilterPath));
         config.ipFilterPath = staged;
       }
-      if (initial) {
-        await this.#send(session, "setLimits", buildLimits(prefs));
-      }
       const result = await this.#send(session, "setConfig", config);
       this.#setForcedOff(result?.forcedOff);
       const { fatal, warn } = unsupportedConfig(config, result);
@@ -842,6 +857,9 @@ class M6ETorrentServiceImpl {
           "config-failed",
           `the helper cannot apply ${fatal.join(" and ")}`
         );
+      }
+      if (initial) {
+        await this.#applyLimits(session, prefs);
       }
     } catch (e) {
       if (e.code == "config-failed" || e.code == "helper-exited") {
@@ -858,11 +876,31 @@ class M6ETorrentServiceImpl {
     }
   }
 
-  #addSessionHooks() {
+  // A rejected limit fails closed like a rejected setting: the caller stops
+  // the helper rather than leave it running on what it had before.
+  async #applyLimits(session, prefs) {
+    try {
+      await this.#send(session, "setLimits", buildLimits(prefs));
+    } catch (e) {
+      if (e.code == "helper-exited") {
+        throw e;
+      }
+      throw new TorrentError(
+        "config-failed",
+        `the helper rejected its limits: ${e.message}`
+      );
+    }
+  }
+
+  #addPrefObserver() {
     if (!this.#prefObserverAdded) {
       Services.prefs.addObserver(PREF_BRANCH, this.#prefObserver);
       this.#prefObserverAdded = true;
     }
+  }
+
+  #addSessionHooks() {
+    this.#addPrefObserver();
     if (!this.#blockerAdded) {
       lazy.AsyncShutdown.profileBeforeChange.addBlocker(
         SHUTDOWN_BLOCKER_NAME,
@@ -1153,7 +1191,7 @@ class M6ETorrentServiceImpl {
     const selected = new Set(
       (detail.files ?? []).filter(f => f.priority > 0).map(f => f.index)
     );
-    const origin = this.#sources.get(tid)?.origin;
+    const origin = whereFromOrigin(this.#sources.get(tid));
     const originUri = origin ? lazy.NetUtil.newURI(origin) : null;
     let withOrigin = 0;
     for (const file of metadata.files) {
@@ -1436,7 +1474,7 @@ class M6ETorrentServiceImpl {
     for (const key of ["downKBps", "upKBps"]) {
       if (limits && key in limits) {
         const value = limits[key];
-        if (!Number.isInteger(value) || value < 0 || value > 100_000_000) {
+        if (!Number.isInteger(value) || value < 0 || value > MAX_RATE_KBPS) {
           throw new TorrentError("bad-request", `${key} is out of range`);
         }
         args[key] = value;
@@ -1504,7 +1542,11 @@ class M6ETorrentServiceImpl {
    *   maxActiveDownloads and maxActiveTorrents.
    */
   async setLimits(limits) {
-    for (const [name, value] of Object.entries(limitsToPrefs(limits))) {
+    const prefs = Object.entries(limitsToPrefs(limits));
+    for (const [name, value] of prefs) {
+      validatePrefValue(name, value);
+    }
+    for (const [name, value] of prefs) {
       this.#setPref(name, value);
     }
     await this.#flushPrefs();
