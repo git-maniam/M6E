@@ -42,6 +42,9 @@ struct EngineOptions {
   std::string inboxDir;
   // Under the sandbox, the only folders (realpaths) torrents may be saved in.
   std::optional<std::vector<std::string>> saveRoots;
+  // Folders (realpaths) a save folder must neither be nor contain: the home
+  // folder, ~/Library, profileDir and the inbox.
+  std::vector<std::string> protectedDirs;
 };
 
 // The libtorrent session and every torrent in it. Single-threaded: all calls
@@ -146,6 +149,8 @@ class Engine {
     std::vector<lt::download_priority_t> priorities;
     std::vector<bool> everWanted;
     bool recheckFinish = false;
+    // Files that were already on disk when they first became wanted.
+    std::vector<bool> existing;
   };
 
   json::object opAdd(json::object const& args);
@@ -223,6 +228,9 @@ class Engine {
   json::array trackersJson(Torrent const& t) const;
   Torrent* byHandle(lt::torrent_handle const& h);
   Torrent& confirmed(std::string const& tid);
+  // The tid of a confirmed torrent with the same v1 or v2 info hash: a hybrid
+  // torrent added by a btmh magnet link is kept under its v2 id.
+  std::optional<std::string> sameTorrent(lt::info_hash_t const& ih) const;
   void refreshStatus(Torrent& t);
   lt::torrent_flags_t privacyFlags(bool isPrivate) const;
 

@@ -871,8 +871,8 @@ json::object Engine::addFile(std::string const& path) {
     fail(e->code, e->message);
   }
   std::string tid = tidOf(atp.ti->info_hashes());
-  if (torrents_.count(tid)) {
-    fail("duplicate", "the torrent is already in the list", tid);
+  if (auto known = sameTorrent(atp.ti->info_hashes())) {
+    fail("duplicate", "the torrent is already in the list", *known);
   }
   auto it = pending_.find(tid);
   if (it != pending_.end() && !it->second.fetching) {
@@ -916,8 +916,8 @@ json::object Engine::addMagnet(std::string const& uri) {
          "the magnet link names no torrent (" + ec.message() + ")");
   }
   std::string tid = tidOf(atp.info_hashes);
-  if (torrents_.count(tid)) {
-    fail("duplicate", "the torrent is already in the list", tid);
+  if (auto known = sameTorrent(atp.info_hashes)) {
+    fail("duplicate", "the torrent is already in the list", *known);
   }
   auto it = pending_.find(tid);
   if (it != pending_.end()) {
@@ -1042,6 +1042,9 @@ json::object Engine::opConfirm(json::object const& args) {
   if (p.fetching) {
     fail("bad-request", "the torrent's metadata has not arrived yet");
   }
+  if (auto known = sameTorrent(p.atp.ti->info_hashes())) {
+    fail("duplicate", "the torrent is already confirmed", *known);
+  }
   auto const* filesArg = findArg(args, "files");
   if (!filesArg || !filesArg->is_array()) {
     fail("bad-request", "files must be an array");
@@ -1080,6 +1083,7 @@ json::object Engine::opConfirm(json::object const& args) {
     fail(e->code, e->message);
   }
   std::int64_t wanted = 0;
+  std::vector<bool> existingFiles(static_cast<std::size_t>(fs.num_files()));
   for (auto i : fs.file_range()) {
     if (fs.pad_file_at(i)) {
       continue;
@@ -1091,8 +1095,11 @@ json::object Engine::opConfirm(json::object const& args) {
     std::int64_t size = fs.file_size(i);
     struct stat existing;
     std::string full = root + "/" + fs.file_path(i);
-    if (lstat(full.c_str(), &existing) == 0 && S_ISREG(existing.st_mode)) {
-      size -= std::min<std::int64_t>(size, existing.st_size);
+    if (lstat(full.c_str(), &existing) == 0) {
+      existingFiles[static_cast<std::size_t>(static_cast<int>(i))] = true;
+      if (S_ISREG(existing.st_mode)) {
+        size -= std::min<std::int64_t>(size, existing.st_size);
+      }
     }
     wanted += size;
   }
@@ -1150,6 +1157,7 @@ json::object Engine::opConfirm(json::object const& args) {
   for (auto prio : priorities) {
     t.everWanted.push_back(prio != lt::dont_download);
   }
+  t.existing = std::move(existingFiles);
   pending_.erase(it);
   auto& stored = torrents_.emplace(tid, std::move(t)).first->second;
   handles_[h] = tid;
@@ -1185,6 +1193,21 @@ void Engine::dropPending(std::string const& tid) {
   }
   pending_.erase(it);
   refreshNetwork();
+}
+
+std::optional<std::string> Engine::sameTorrent(
+    lt::info_hash_t const& ih) const {
+  for (auto const& [tid, t] : torrents_) {
+    if (!t.ti) {
+      continue;
+    }
+    auto const& other = t.ti->info_hashes();
+    if ((ih.has_v1() && other.has_v1() && ih.v1 == other.v1) ||
+        (ih.has_v2() && other.has_v2() && ih.v2 == other.v2)) {
+      return tid;
+    }
+  }
+  return std::nullopt;
 }
 
 Engine::Torrent& Engine::confirmed(std::string const& tid) {
@@ -1225,12 +1248,19 @@ std::optional<SafetyError> Engine::checkTorrentFiles(Torrent const& t) {
 
 std::optional<SafetyError> Engine::checkSaveRoot(
     std::string const& savePath) const {
-  if (!options_.saveRoots) {
-    return std::nullopt;
-  }
   std::string root;
   if (auto e = canonicalRoot(savePath, &root)) {
-    return e;
+    return options_.saveRoots ? e : std::nullopt;
+  }
+  for (auto const& kept : options_.protectedDirs) {
+    if (pathIsWithin(root, kept)) {
+      return SafetyError{"unsafe-path", "the save folder " + root +
+                                            " is or contains " + kept +
+                                            ", where torrents must not write"};
+    }
+  }
+  if (!options_.saveRoots) {
+    return std::nullopt;
   }
   for (auto const& allowed : *options_.saveRoots) {
     if (pathIsWithin(allowed, root)) {
@@ -1452,6 +1482,9 @@ json::object Engine::opDetail(json::object const& args) {
       f["progress"] =
           size > 0 ? std::clamp(done / static_cast<double>(size), 0.0, 1.0)
                    : 1.0;
+      if (k < t.existing.size() && t.existing[k]) {
+        f["existing"] = true;
+      }
       files.push_back(std::move(f));
     }
   }
@@ -1566,15 +1599,30 @@ json::object Engine::opSetFilePriority(json::object const& args) {
     enabling = enabling || (next[k] != lt::dont_download &&
                             t.priorities[k] == lt::dont_download);
   }
+  std::string savePath =
+      t.handle.status(lt::torrent_handle::query_save_path).save_path;
+  std::vector<std::size_t> foundBefore;
+  for (std::size_t k = 0; k < next.size(); k++) {
+    struct stat st;
+    if (next[k] != lt::dont_download && !t.everWanted[k] &&
+        lstat((savePath + "/" +
+               fs.file_path(lt::file_index_t{static_cast<int>(k)}))
+                  .c_str(),
+              &st) == 0) {
+      foundBefore.push_back(k);
+    }
+  }
   if (enabling && !t.userPaused && !t.completed) {
-    std::string savePath =
-        t.handle.status(lt::torrent_handle::query_save_path).save_path;
     if (auto e = checkSaveRoot(savePath)) {
       fail(e->code, e->message);
     }
     if (auto e = checkBeforeTransfer(savePath, fs, next)) {
       fail(e->code, e->message);
     }
+  }
+  t.existing.resize(next.size(), false);
+  for (auto k : foundBefore) {
+    t.existing[k] = true;
   }
   for (std::size_t k = 0; k < next.size(); k++) {
     if (next[k] != lt::dont_download) {
@@ -1841,7 +1889,9 @@ json::object Engine::opRestore(json::object const& args) {
     }
     lt::add_torrent_params atp = lt::read_resume_data(node, ec);
     if (ec || !atp.ti || !atp.ti->is_valid() ||
-        tidOf(atp.ti->info_hashes()) != tid || !isAbsolutePath(atp.save_path) ||
+        (tidOf(atp.ti->info_hashes()) != tid &&
+         v2Tid(atp.ti->info_hashes()) != tid) ||
+        sameTorrent(atp.ti->info_hashes()) || !isAbsolutePath(atp.save_path) ||
         checkLayoutComponents(*atp.ti)) {
       log("warn", "skipped invalid saved torrent " + tid);
       continue;
@@ -1903,13 +1953,17 @@ json::object Engine::opRestore(json::object const& args) {
       }
     }
     std::string wanted;
+    std::string existing;
     if (m6eState) {
       wanted = std::string(m6eState.dict_find_string_value("wanted"));
+      existing = std::string(m6eState.dict_find_string_value("existing"));
     }
     for (std::size_t k = 0; k < t.priorities.size(); k++) {
       t.everWanted.push_back(t.priorities[k] != lt::dont_download ||
                              (wanted.size() == t.priorities.size() &&
                               wanted[k] == '1'));
+      t.existing.push_back(existing.size() == t.priorities.size() &&
+                           existing[k] == '1');
     }
     atp.file_priorities = t.priorities;
     bool startNow = start && !t.userPaused && !t.completed;
@@ -2450,6 +2504,11 @@ bool Engine::writeResume(Torrent const& t, lt::add_torrent_params const& atp) {
       wanted.push_back(w ? '1' : '0');
     }
     state["wanted"] = wanted;
+    std::string existing;
+    for (bool x : t.existing) {
+      existing.push_back(x ? '1' : '0');
+    }
+    state["existing"] = existing;
   }
   lt::entry::list_type trackers;
   for (auto const& ae : t.trackers) {

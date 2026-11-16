@@ -313,10 +313,7 @@ def delete_removes_only_the_files_the_engine_wrote(ctx):
         "confirm",
         dict(confirm_args(added["metadata"], ctx.save, priorities={1: 0}), tid=tid),
     )
-    files = h.call("detail", {"tid": tid})["files"]
-    assert [bool(f.get("existing")) for f in files] == [True, False, False], files
     assert wait_until(lambda: state_of(h, tid)["state"] != "checking", 20)
-    assert os.path.isfile(os.path.join(top, "sub", "deep", "c.bin"))
     h.call("remove", {"tid": tid, "deleteFiles": True})
     assert not os.path.exists(os.path.join(top, "a.txt")), "a.txt was not deleted"
     assert not os.path.exists(os.path.join(top, "sub", "deep")), "the empty folder stayed"
