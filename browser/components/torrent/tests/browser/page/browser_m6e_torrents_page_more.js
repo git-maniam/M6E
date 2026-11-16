@@ -20,7 +20,7 @@ function fileSelects(doc) {
 function changeTo(select, value) {
   select.value = value;
   select.dispatchEvent(
-    new select.ownerGlobal.Event("change", { bubbles: true })
+    new select.ownerDocument.defaultView.Event("change", { bubbles: true })
   );
 }
 
@@ -137,14 +137,14 @@ add_task(async function test_queued_and_goal_states() {
     "The state is Queued"
   );
 
-  mock.notify([
-    syntheticStatus({
-      tid: ONE,
-      name: "synthetic-one",
-      state: "completed",
-      goalReached: true,
-    }),
-  ]);
+  const reached = syntheticStatus({
+    tid: ONE,
+    name: "synthetic-one",
+    state: "completed",
+    goalReached: true,
+  });
+  mock.details.set(ONE, syntheticDetail(reached));
+  mock.notify([reached]);
   await TestUtils.waitForCondition(
     () => note.textContent.includes("goal"),
     "A reached seeding goal is explained"
@@ -155,7 +155,9 @@ add_task(async function test_queued_and_goal_states() {
     "The goal is marked in the table"
   );
 
-  mock.notify([syntheticStatus({ tid: ONE, name: "synthetic-one" })]);
+  const plain = syntheticStatus({ tid: ONE, name: "synthetic-one" });
+  mock.details.set(ONE, syntheticDetail(plain));
+  mock.notify([plain]);
   await TestUtils.waitForCondition(() => note.hidden, "The note goes away");
   BrowserTestUtils.removeTab(tab);
 });
