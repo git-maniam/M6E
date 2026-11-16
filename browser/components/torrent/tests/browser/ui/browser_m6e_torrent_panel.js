@@ -418,3 +418,55 @@ add_task(async function test_interface_down_notice() {
   ok(banner.hidden, "The notice goes when the interface returns");
   await closePanel(panel);
 });
+
+add_task(async function test_torrent_text_in_rows_is_not_markup() {
+  const { service } = installMocks();
+  const name = "Evil&#x202E;gpj.exe <b>bold</b>";
+  const message = "cannot write " + name;
+  service.torrents = [
+    syntheticStatus({
+      name,
+      state: "error",
+      error: { code: "io-error", message },
+    }),
+  ];
+  const panel = await openPanel();
+  await TestUtils.waitForCondition(
+    () => document.querySelector("#m6e-torrent-list li"),
+    "The torrent is listed"
+  );
+  const row = document.querySelector("#m6e-torrent-list li");
+  const question = row.querySelector(".row-remove-question");
+  const error = row.querySelector(".row-error");
+  await TestUtils.waitForCondition(
+    () =>
+      question.textContent.includes("Evil") &&
+      error.textContent.includes("Evil"),
+    "The remove question and the error are translated"
+  );
+  for (const [element, what] of [
+    [question, "remove question"],
+    [error, "error"],
+  ]) {
+    ok(
+      element.textContent.includes(name),
+      `The ${what} shows the torrent's text as written`
+    );
+    is(element.querySelector("b"), null, `The ${what} gets no element from it`);
+    ok(
+      !element.textContent.includes(String.fromCodePoint(0x202e)),
+      `The ${what} gets no direction override from it`
+    );
+  }
+  is(
+    row.querySelector(".row-remove-choices").title,
+    name,
+    "The full name is a tooltip on the untranslated parent"
+  );
+  is(
+    row.querySelector(".row-details").title,
+    message,
+    "and so is the full error"
+  );
+  await closePanel(panel);
+});

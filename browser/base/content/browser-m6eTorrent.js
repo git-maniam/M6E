@@ -540,11 +540,15 @@ var gM6ETorrent = {
       document.l10n.setAttributes(goal, "m6e-torrent-row-goal");
     }
     error.hidden = !torrent.error;
+    let errorText = torrent.error
+      ? String(torrent.error.message || torrent.error.code || "")
+      : "";
     if (torrent.error) {
       document.l10n.setAttributes(error, "m6e-torrent-row-error", {
-        message: torrent.error.message || torrent.error.code || "",
+        message: this.overlaySafe(errorText),
       });
     }
+    this.setTitle(row.querySelector(".row-details"), errorText);
 
     let args = { name };
     document.l10n.setAttributes(nameButton, "m6e-torrent-row-open", args);
@@ -571,8 +575,37 @@ var gM6ETorrent = {
     document.l10n.setAttributes(
       row.querySelector(".row-remove-question"),
       "m6e-torrent-remove-question",
-      args
+      { name: this.overlaySafe(name) }
     );
+    this.setTitle(row.querySelector(".row-remove-choices"), name);
+  },
+
+  /**
+   * Fluent DOM parses a message's value as markup when it holds "<" or "&",
+   * so torrent-controlled text in a value's argument is escaped to show
+   * literally. Attributes are not parsed and take the text as it is.
+   *
+   * @param {string} text
+   * @returns {string}
+   */
+  overlaySafe(text) {
+    return String(text)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  },
+
+  // Fluent removes a title from a translated element, so the full text goes
+  // on an untranslated parent, with invisible characters made visible.
+  setTitle(element, text) {
+    if (text) {
+      element.title = text.replace(
+        /[\p{Cc}\p{Cf}\u2028\u2029]/gu,
+        ch => `<U+${ch.codePointAt(0).toString(16).toUpperCase()}>`
+      );
+    } else {
+      element.removeAttribute("title");
+    }
   },
 
   syncSettings() {

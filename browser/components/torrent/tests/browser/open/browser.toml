@@ -2,6 +2,7 @@
 head = "head.js"
 prefs = [
   "m6e.torrent.enabled=true",
+  "security.dialog_enable_delay=0",
 ]
 
 ["browser_m6e_torrent_open.js"]

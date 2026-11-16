@@ -322,8 +322,8 @@ add_task(async function test_page_download_origin() {
   pageOpenReset();
   const saved = [];
   const original = M6ETorrentHandler._saveToTemp;
-  M6ETorrentHandler._saveToTemp = async (launcher, win, source) => {
-    saved.push(source);
+  M6ETorrentHandler._saveToTemp = async (launcher, win, origins) => {
+    saved.push(origins);
   };
   registerCleanupFunction(() => {
     M6ETorrentHandler._saveToTemp = original;
@@ -338,8 +338,8 @@ add_task(async function test_page_download_origin() {
     );
     Assert.deepEqual(
       saved[0],
-      { kind: "page", origin: "https://example.com" },
-      "The page's origin is the source when the file is on the same site"
+      { fileOrigin: "https://example.com", pageOrigin: "https://example.com" },
+      "The page may vouch for a file on its own site"
     );
 
     pageOpenReset();
@@ -347,7 +347,7 @@ add_task(async function test_page_download_origin() {
     M6ETorrentHandler.handleDownload(foreign, null);
     Assert.deepEqual(
       saved[1],
-      { kind: "page", origin: "https://example.net" },
+      { fileOrigin: "https://example.net", pageOrigin: null },
       "A file from another site is credited to its own origin, not the page"
     );
 
@@ -356,7 +356,7 @@ add_task(async function test_page_download_origin() {
     M6ETorrentHandler.handleDownload(insecure, null);
     Assert.deepEqual(
       saved[2],
-      { kind: "page", origin: null },
+      { fileOrigin: null, pageOrigin: null },
       "An insecure file has no origin"
     );
 
@@ -369,6 +369,162 @@ add_task(async function test_page_download_origin() {
     ok(second.cancelled, "and the burst of page downloads is cancelled");
   });
   M6ETorrentHandler._saveToTemp = original;
+});
+
+add_task(function test_page_vouches_only_for_hosts_of_its_own() {
+  const page = {
+    currentWindowGlobal: {
+      documentPrincipal: principalFor("https://www.debian.org"),
+    },
+  };
+  const pageOf = spec =>
+    M6ETorrentHandler._pageOrigin(Services.io.newURI(spec), page);
+  is(
+    pageOf("https://cdimage.debian.org/synthetic/sample.torrent"),
+    "https://www.debian.org",
+    "A page may vouch for a file on another host of its site"
+  );
+  is(
+    pageOf("https://people.debian.org/~someone/sample.torrent"),
+    null,
+    "but not for one on a host where other people publish"
+  );
+  is(
+    pageOf("https://ftp.xx.debian.org/synthetic/sample.torrent"),
+    null,
+    "nor for one on a third-party mirror"
+  );
+  is(
+    pageOf("http://cdimage.debian.org/synthetic/sample.torrent"),
+    null,
+    "nor for an insecure file"
+  );
+  is(
+    M6ETorrentHandler._pageOrigin(
+      Services.io.newURI("https://cdimage.debian.org/synthetic/sample.torrent"),
+      {
+        currentWindowGlobal: {
+          documentPrincipal: principalFor("http://www.debian.org"),
+        },
+      }
+    ),
+    null,
+    "An insecure page vouches for nothing"
+  );
+});
+
+add_task(function test_page_counts_only_as_the_referrer() {
+  const ReferrerInfo = Components.Constructor(
+    "@mozilla.org/referrer-info;1",
+    "nsIReferrerInfo",
+    "init"
+  );
+  const from = spec =>
+    new ReferrerInfo(Ci.nsIReferrerInfo.EMPTY, true, Services.io.newURI(spec));
+  const origins = {
+    fileOrigin: "https://files.example.com",
+    pageOrigin: "https://www.example.com",
+  };
+  is(
+    M6ETorrentHandler._downloadOrigin(
+      origins,
+      from("https://www.example.com/downloads/")
+    ),
+    "https://www.example.com",
+    "A link on the page is credited to the page"
+  );
+  is(
+    M6ETorrentHandler._downloadOrigin(origins, null),
+    "https://files.example.com",
+    "A URL typed or pasted while the page is open is credited to the file"
+  );
+  is(
+    M6ETorrentHandler._downloadOrigin(
+      origins,
+      from("https://other.example.net/")
+    ),
+    "https://files.example.com",
+    "A link from another page is credited to the file"
+  );
+  is(
+    M6ETorrentHandler._downloadOrigin(
+      origins,
+      from("http://www.example.com/downloads/")
+    ),
+    "https://files.example.com",
+    "An insecure referrer is not the page"
+  );
+  is(
+    M6ETorrentHandler._downloadOrigin(
+      { fileOrigin: null, pageOrigin: null },
+      from("https://www.example.com/")
+    ),
+    null,
+    "Without an https file or page there is no origin"
+  );
+});
+
+add_task(async function test_finished_download_uses_the_referrer() {
+  const original = M6ETorrentHandler._open;
+  const listView = M6ETorrentHandler._listView;
+  const runs = [];
+  M6ETorrentHandler._open = (win, run) => runs.push(run);
+  M6ETorrentHandler._listView = null;
+  registerCleanupFunction(() => {
+    M6ETorrentHandler._open = original;
+    M6ETorrentHandler._listView = listView;
+  });
+  const ReferrerInfo = Components.Constructor(
+    "@mozilla.org/referrer-info;1",
+    "nsIReferrerInfo",
+    "init"
+  );
+  const list = { remove: async () => {} };
+  const entry = {
+    win: window,
+    fileOrigin: "https://files.example.com",
+    pageOrigin: "https://www.example.com",
+  };
+  const referrer = new ReferrerInfo(
+    Ci.nsIReferrerInfo.EMPTY,
+    true,
+    Services.io.newURI("https://www.example.com/")
+  );
+  M6ETorrentHandler._finishDownload(
+    list,
+    { source: { referrerInfo: referrer } },
+    "/mock/absent-1.torrent",
+    entry
+  );
+  M6ETorrentHandler._finishDownload(
+    list,
+    { source: { referrerInfo: null } },
+    "/mock/absent-2.torrent",
+    entry
+  );
+  M6ETorrentHandler._open = original;
+  M6ETorrentHandler._listView = listView;
+
+  const added = [];
+  const fakeWindow = {
+    gM6ETorrent: {
+      addTorrentFile: (path, source) => {
+        added.push(source);
+        return false;
+      },
+    },
+  };
+  for (const run of runs) {
+    await run(fakeWindow);
+  }
+  Assert.deepEqual(
+    added,
+    [
+      { kind: "page", origin: "https://www.example.com" },
+      { kind: "page", origin: "https://files.example.com" },
+    ],
+    "The Add dialog gets the page only for a download that the page linked"
+  );
 });
 
 add_task(async function test_magnet_goes_to_the_torrents_page_first() {
