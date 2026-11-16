@@ -57,7 +57,7 @@ Error codes: `bad-request`, `not-found`, `invalid-torrent`, `too-large`, `unsafe
 - A `.torrent` larger than 16 MiB, or with bencoding nested deeper than 64 levels, is `too-large` or `invalid-torrent`.
 - Any file path that is absolute, or has an empty, `.`, `..` or NUL component, or a `:` or `\`, is `unsafe-path`; the torrent is not added.
 - Writes happen only under the torrent's `savePath`; never follow a symlink out of it.
-- Completed files get the macOS quarantine attribute, applied by the browser side (the helper reports `completed`; it does not need to).
+- Completed files get the macOS quarantine attribute and lose their execute bits. The helper does this before it reports `completed` (a `warning` field says so if it could not); the service repeats the quarantine as a backstop.
 
 ## Clarifications (added by the lead, 2026-11-05, answering the helper agent)
 - `Metadata.files[].path` is relative to the torrent's top-level folder. On disk a multi-file torrent lives at `<savePath>/<name>/<path>`; a single-file torrent at `<savePath>/<name>`.
