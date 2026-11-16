@@ -403,6 +403,7 @@ pref("m6e.torrent.maxActiveDownloads", 3);
 pref("m6e.torrent.maxActiveTorrents", 5);
 pref("m6e.torrent.seedRatioPercent", 100);
 pref("m6e.torrent.seedHours", 0);
+pref("m6e.torrent.seedAction", "stop");
 pref("m6e.torrent.proxy.type", "none");
 pref("m6e.torrent.proxy.host", "");
 pref("m6e.torrent.proxy.port", 1080);

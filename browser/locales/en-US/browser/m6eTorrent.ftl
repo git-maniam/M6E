@@ -43,6 +43,10 @@ m6e-torrent-list =
     .aria-label = Torrents
 m6e-torrent-empty = No torrents yet. Add a torrent file or paste a magnet link. Nothing runs until you add one.
 m6e-torrent-error-banner = Some torrents have errors. Open the list to see which.
+# Variables:
+#   $interface (String) - the name of the network interface the user bound
+#     BitTorrent to, for example "utun4"; empty when the name is not plain
+m6e-torrent-interface-down = The network interface { $interface } is not available, so BitTorrent is paused and nothing connects. It continues when the interface is back.
 
 ## Torrent rows
 
@@ -92,6 +96,11 @@ m6e-torrent-row-eta = { $eta } left
 # Variables:
 #   $message (String) - the error text from the engine
 m6e-torrent-row-error = { $message }
+# Variables:
+#   $speed (String) - the speed limit of this torrent, for example "50 kB/s"
+m6e-torrent-row-limit-down = Download limit { $speed }
+m6e-torrent-row-limit-up = Upload limit { $speed }
+m6e-torrent-row-goal = Seeding goal reached
 
 ## Quick settings in the panel
 
@@ -108,6 +117,9 @@ m6e-torrent-seed-goal = Seeding goal
 m6e-torrent-seed-goal-ratio = Stop at a ratio
 m6e-torrent-seed-goal-hours = Stop after some hours
 m6e-torrent-seed-goal-never = Never stop
+m6e-torrent-seed-action = When the goal is reached
+m6e-torrent-seed-action-stop = Stop seeding
+m6e-torrent-seed-action-slow = Keep seeding at the Turtle upload rate
 m6e-torrent-seed-ratio =
     .aria-label = Ratio
 m6e-torrent-seed-hours =

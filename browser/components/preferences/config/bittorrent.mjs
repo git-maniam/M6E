@@ -43,6 +43,7 @@ Preferences.addAll(
     ["maxActiveTorrents", "int"],
     ["seedRatioPercent", "int"],
     ["seedHours", "int"],
+    ["seedAction", "string"],
     ["proxy.type", "string"],
     ["proxy.host", "string"],
     ["proxy.port", "int"],
@@ -347,6 +348,20 @@ Preferences.addSetting({
   },
 });
 
+Preferences.addSetting({
+  id: "btSeedAction",
+  pref: PREFIX + "seedAction",
+  deps: ["btSeedMode"],
+  visible: ({ btSeedMode }) => btSeedMode.value != "never",
+  set(value, _deps, setting) {
+    if (!["stop", "slow"].includes(value)) {
+      setting.emit("change");
+      return Services.prefs.getStringPref(PREFIX + "seedAction", "stop");
+    }
+    return value;
+  },
+});
+
 /* Proxy */
 
 let passwordSaved = false;
@@ -443,7 +458,10 @@ Preferences.addSetting({
   id: "btInterfaceDown",
   visible: () => interfaceDown !== null,
   getControlConfig(config) {
-    return { ...config, l10nArgs: { interface: interfaceDown ?? "" } };
+    const name = /^[A-Za-z0-9._:-]{1,32}$/.test(interfaceDown ?? "")
+      ? interfaceDown
+      : "";
+    return { ...config, l10nArgs: { interface: name } };
   },
   setup(emitChange) {
     const observer = {
@@ -621,6 +639,21 @@ SettingGroupManager.registerGroups({
             id: "btSeedModeNever",
             value: "never",
             l10nId: "bittorrent-seed-never-option",
+          },
+        ],
+      },
+      {
+        id: "btSeedAction",
+        control: "moz-select",
+        l10nId: "bittorrent-seed-action",
+        options: [
+          {
+            value: "stop",
+            l10nId: "bittorrent-seed-action-stop",
+          },
+          {
+            value: "slow",
+            l10nId: "bittorrent-seed-action-slow",
           },
         ],
       },

@@ -125,6 +125,7 @@ var gM6ETorrent = {
     this._initialized = true;
     Services.obs.addObserver(this, "m6e-torrent-changed");
     Services.obs.addObserver(this, "m6e-torrent-metadata");
+    Services.obs.addObserver(this, "m6e-torrent-network");
     Services.obs.addObserver(this, "quit-application-requested");
     Services.prefs.addObserver(this.PREF_PREFIX, this);
     window.addEventListener("unload", () => this.uninit(), { once: true });
@@ -144,6 +145,7 @@ var gM6ETorrent = {
     this._initialized = false;
     Services.obs.removeObserver(this, "m6e-torrent-changed");
     Services.obs.removeObserver(this, "m6e-torrent-metadata");
+    Services.obs.removeObserver(this, "m6e-torrent-network");
     Services.obs.removeObserver(this, "quit-application-requested");
     Services.prefs.removeObserver(this.PREF_PREFIX, this);
   },
@@ -161,6 +163,16 @@ var gM6ETorrent = {
         }
         break;
       }
+      case "m6e-torrent-network":
+        try {
+          this.interfaceDown = JSON.parse(data).interfaceDown ?? null;
+        } catch (e) {
+          this.interfaceDown = null;
+        }
+        if (this.panelShown) {
+          this.renderNetwork();
+        }
+        break;
       case "quit-application-requested":
         this.onQuitRequested(subject);
         break;
@@ -309,7 +321,35 @@ var gM6ETorrent = {
 
   renderPanel() {
     this.renderHeader();
+    this.renderNetwork();
     this.renderList();
+  },
+
+  /**
+   * Shows the notice of the kill switch while the bound network interface is
+   * missing. Only a plain interface name is passed to Fluent.
+   */
+  renderNetwork() {
+    let banner = document.getElementById("m6e-torrent-network-banner");
+    if (!banner) {
+      return;
+    }
+    let down = this.interfaceDown;
+    if (down === undefined) {
+      try {
+        down = this.service.getNetworkState?.().interfaceDown ?? null;
+      } catch (e) {
+        down = null;
+      }
+      this.interfaceDown = down;
+    }
+    banner.hidden = down === null;
+    if (down !== null) {
+      let name = /^[A-Za-z0-9._:-]{1,32}$/.test(down) ? down : "";
+      document.l10n.setAttributes(banner, "m6e-torrent-interface-down", {
+        interface: name,
+      });
+    }
   },
 
   renderHeader() {
@@ -404,6 +444,9 @@ var gM6ETorrent = {
     make("span", "row-down", details);
     make("span", "row-up", details);
     make("span", "row-eta", details);
+    make("span", "row-limit-down", details);
+    make("span", "row-limit-up", details);
+    make("span", "row-goal", details);
     make("span", "row-error", details);
 
     let actions = make("div", "row-actions", row);
@@ -476,6 +519,25 @@ var gM6ETorrent = {
       document.l10n.setAttributes(eta, "m6e-torrent-row-eta", {
         eta: this.formatDuration(torrent.etaSeconds),
       });
+    }
+    let limitDown = row.querySelector(".row-limit-down");
+    let limitUp = row.querySelector(".row-limit-up");
+    limitDown.hidden = !(torrent.downLimitKBps > 0);
+    limitUp.hidden = !(torrent.upLimitKBps > 0);
+    if (!limitDown.hidden) {
+      document.l10n.setAttributes(limitDown, "m6e-torrent-row-limit-down", {
+        speed: this.formatSpeed(torrent.downLimitKBps),
+      });
+    }
+    if (!limitUp.hidden) {
+      document.l10n.setAttributes(limitUp, "m6e-torrent-row-limit-up", {
+        speed: this.formatSpeed(torrent.upLimitKBps),
+      });
+    }
+    let goal = row.querySelector(".row-goal");
+    goal.hidden = !torrent.goalReached;
+    if (torrent.goalReached) {
+      document.l10n.setAttributes(goal, "m6e-torrent-row-goal");
     }
     error.hidden = !torrent.error;
     if (torrent.error) {
@@ -550,6 +612,12 @@ var gM6ETorrent = {
     }
     setValue("m6e-torrent-seed-goal", goal);
     document.getElementById("m6e-torrent-seed-value").hidden = goal == "never";
+    let action = prefs.getStringPref(prefix + "seedAction", "stop");
+    setValue("m6e-torrent-seed-action", action == "slow" ? "slow" : "stop");
+    document.getElementById("m6e-torrent-seed-action").hidden =
+      goal == "never";
+    document.getElementById("m6e-torrent-seed-action-label").hidden =
+      goal == "never";
     if (goal != "never") {
       setValue(
         "m6e-torrent-seed-input",
@@ -582,6 +650,12 @@ var gM6ETorrent = {
         break;
       case "m6e-torrent-encryption":
         prefs.setStringPref(prefix + "encryption", target.value);
+        break;
+      case "m6e-torrent-seed-action":
+        prefs.setStringPref(
+          prefix + "seedAction",
+          target.value == "slow" ? "slow" : "stop"
+        );
         break;
       case "m6e-torrent-seed-goal":
       case "m6e-torrent-seed-input": {

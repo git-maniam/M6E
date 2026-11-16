@@ -69,6 +69,9 @@ m6e-torrents-tab-general = General
 m6e-torrents-tab-files = Files
 m6e-torrents-tab-trackers = Trackers
 m6e-torrents-tab-peers = Peers
+m6e-torrents-tab-pieces = Pieces
+m6e-torrents-tab-speed = Speed
+m6e-torrents-tab-log = Log
 
 m6e-torrents-general-name = Name
 m6e-torrents-general-status = Status
@@ -140,3 +143,44 @@ m6e-torrents-remove-note = “Remove and delete files” also deletes the downlo
 m6e-torrents-remove-keep = Remove torrent
 m6e-torrents-remove-delete = Remove and delete files
 m6e-torrents-remove-cancel = Cancel
+
+## Queue, seed goal and limits of one torrent
+
+m6e-torrents-queued-note = This torrent is waiting for a free slot. You can change how many torrents run at once in Settings.
+m6e-torrents-goal-note = The seeding goal is reached, so this torrent has stopped sharing at full speed.
+m6e-torrents-goal-flag = Goal reached
+m6e-torrents-limited-flag = Limited
+m6e-torrents-limits-legend = Speed limits for this torrent
+m6e-torrents-limit-down = Download limit (KB/s)
+m6e-torrents-limit-up = Upload limit (KB/s)
+m6e-torrents-limits-apply = Apply limits
+m6e-torrents-limits-hint = 0 means no limit for this torrent. The limits you set in Settings still apply too.
+
+## Pieces
+
+m6e-torrents-pieces-empty = The pieces of this torrent are not known yet.
+# Variables:
+#   $have (Number) - pieces already downloaded and checked
+#   $count (Number) - all pieces
+#   $percent (String) - the share downloaded, for example "42%"
+m6e-torrents-pieces-summary =
+    { $count ->
+        [one] { $have } of 1 piece downloaded ({ $percent }).
+       *[other] { $have } of { $count } pieces downloaded ({ $percent }).
+    }
+
+## Speed
+
+m6e-torrents-speed-legend-down = Download
+m6e-torrents-speed-legend-up = Upload
+m6e-torrents-speed-none = Speed samples appear here while the page is open.
+# Variables:
+#   $downNow, $downAverage, $downPeak, $upNow, $upAverage, $upPeak (String)
+#     - speeds with their unit, for example "120 kB/s"
+m6e-torrents-speed-summary = Last 5 minutes. Download: now { $downNow }, average { $downAverage }, peak { $downPeak }. Upload: now { $upNow }, average { $upAverage }, peak { $upPeak }.
+
+## Log
+
+m6e-torrents-log-list =
+    .aria-label = Messages from the BitTorrent helper
+m6e-torrents-log-empty = There are no messages.

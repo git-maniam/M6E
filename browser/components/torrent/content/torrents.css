@@ -335,3 +335,118 @@ table {
     }
   }
 }
+
+#m6e-torrents-detail-note {
+  margin: 0 0 var(--space-small);
+  color: var(--text-color-deemphasized);
+}
+
+#m6e-torrents-files select {
+  margin: 0;
+}
+
+#m6e-torrents-limits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-small) var(--space-large);
+  margin: var(--space-large) 0 0;
+  padding: var(--space-small) var(--space-medium);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--border-radius-medium);
+
+  > label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xsmall);
+  }
+
+  > button,
+  input {
+    margin: 0;
+  }
+
+  > p {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--text-color-deemphasized);
+  }
+}
+
+#m6e-torrents-pieces-map {
+  display: block;
+  width: 100%;
+  max-width: 40em;
+  border: var(--border-width) solid var(--border-color);
+  background-color: var(--background-color-box);
+}
+
+#m6e-torrents-speed-graph {
+  display: block;
+  width: 100%;
+  max-width: 40em;
+  height: 10em;
+  border: var(--border-width) solid var(--border-color);
+  background-color: var(--background-color-box);
+
+  > polyline {
+    fill: none;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+
+  > #m6e-torrents-speed-line-down {
+    stroke: var(--color-accent-primary);
+  }
+
+  > #m6e-torrents-speed-line-up {
+    stroke: var(--text-color-error);
+    stroke-dasharray: 6 3;
+  }
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-large);
+  margin: var(--space-xsmall) 0;
+}
+
+.swatch {
+  padding-inline-start: var(--space-small);
+  border-inline-start: 0.4em solid var(--color-accent-primary);
+
+  &.up {
+    border-inline-start-style: dotted;
+    border-inline-start-color: var(--text-color-error);
+  }
+}
+
+#m6e-torrents-log-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: monospace;
+
+  > li {
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+
+    &.warn {
+      font-weight: var(--font-weight-semibold);
+    }
+
+    &.error {
+      color: var(--text-color-error);
+    }
+  }
+}
+
+#m6e-torrents-rows .flag {
+  margin-inline-start: var(--space-xsmall);
+  color: var(--text-color-deemphasized);
+  font-size: var(--font-size-small);
+}
+
+#m6e-torrents-pieces-map[hidden] {
+  display: none;
+}

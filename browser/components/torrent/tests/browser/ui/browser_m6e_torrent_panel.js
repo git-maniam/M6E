@@ -298,3 +298,123 @@ add_task(async function test_disabled_pref_blocks_adding() {
   Assert.deepEqual(service.callsTo("addFile"), [], "No file request");
   await SpecialPowers.popPrefEnv();
 });
+
+add_task(async function test_queued_limit_and_goal_indicators() {
+  const { service } = installMocks();
+  service.torrents = [
+    syntheticStatus({
+      state: "queued",
+      downKBps: 0,
+      downLimitKBps: 100,
+      upLimitKBps: 0,
+    }),
+    syntheticStatus({
+      tid: "2".repeat(40),
+      name: "second",
+      state: "completed",
+      progress: 1,
+      goalReached: true,
+      upLimitKBps: 20,
+    }),
+  ];
+  const panel = await openPanel();
+  await TestUtils.waitForCondition(
+    () => document.querySelectorAll("#m6e-torrent-list li").length == 2,
+    "Both torrents are listed"
+  );
+  const [queued, done] = document.querySelectorAll("#m6e-torrent-list li");
+  await TestUtils.waitForCondition(
+    () => queued.querySelector(".row-state").textContent == "Queued",
+    "The queued state is named"
+  );
+  is(queued.dataset.state, "queued", "The row carries the state");
+  ok(!queued.querySelector(".row-limit-down").hidden, "Download limit shown");
+  ok(queued.querySelector(".row-limit-up").hidden, "No upload limit shown");
+  ok(queued.querySelector(".row-goal").hidden, "No goal marker");
+  await TestUtils.waitForCondition(
+    () => queued.querySelector(".row-limit-down").textContent.includes("100"),
+    "The limit is written out"
+  );
+  ok(!done.querySelector(".row-goal").hidden, "The goal marker shows");
+  ok(!done.querySelector(".row-limit-up").hidden, "Upload limit shown");
+  ok(done.querySelector(".row-limit-down").hidden, "No download limit shown");
+
+  gM6ETorrent.setTorrents([syntheticStatus()]);
+  const row = document.querySelector("#m6e-torrent-list li");
+  ok(row.querySelector(".row-limit-down").hidden, "No limit, no indicator");
+  ok(row.querySelector(".row-limit-up").hidden, "No limit, no indicator");
+  await closePanel(panel);
+});
+
+add_task(async function test_seed_action_choice() {
+  installMocks();
+  await SpecialPowers.pushPrefEnv({
+    set: [
+      ["m6e.torrent.seedAction", "stop"],
+      ["m6e.torrent.seedRatioPercent", 100],
+      ["m6e.torrent.seedHours", 0],
+    ],
+  });
+  const panel = await openPanel();
+  const action = document.getElementById("m6e-torrent-seed-action");
+  ok(!action.hidden, "The action shows with a goal");
+  is(action.value, "stop", "Stop is the default");
+  is(action.options.length, 2, "Stop or slow");
+
+  action.value = "slow";
+  action.dispatchEvent(new Event("change", { bubbles: true }));
+  is(
+    Services.prefs.getStringPref("m6e.torrent.seedAction"),
+    "slow",
+    "The choice is saved"
+  );
+  action.value = "stop";
+  action.dispatchEvent(new Event("change", { bubbles: true }));
+  is(
+    Services.prefs.getStringPref("m6e.torrent.seedAction"),
+    "stop",
+    "The choice can be undone"
+  );
+
+  const goal = document.getElementById("m6e-torrent-seed-goal");
+  goal.value = "never";
+  goal.dispatchEvent(new Event("change", { bubbles: true }));
+  ok(action.hidden, "Without a goal there is no action");
+  await closePanel(panel);
+});
+
+add_task(async function test_interface_down_notice() {
+  installMocks();
+  const banner = document.getElementById("m6e-torrent-network-banner");
+  const panel = await openPanel();
+  ok(banner.hidden, "No notice while the interface is there");
+
+  const notify = interfaceDown =>
+    Services.obs.notifyObservers(
+      null,
+      "m6e-torrent-network",
+      JSON.stringify({ listening: null, interfaceDown })
+    );
+  notify("utun9");
+  ok(!banner.hidden, "The notice shows when the interface is down");
+  is(
+    JSON.parse(banner.getAttribute("data-l10n-args")).interface,
+    "utun9",
+    "A plain interface name goes in"
+  );
+  await TestUtils.waitForCondition(
+    () => banner.textContent.includes("utun9"),
+    "The notice names the interface"
+  );
+
+  notify("<b>x y</b>");
+  is(
+    JSON.parse(banner.getAttribute("data-l10n-args")).interface,
+    "",
+    "A name that is not plain is dropped"
+  );
+
+  notify(null);
+  ok(banner.hidden, "The notice goes when the interface returns");
+  await closePanel(panel);
+});

@@ -7,3 +7,5 @@ prefs = [
 ["browser_m6e_torrents_page_detail.js"]
 
 ["browser_m6e_torrents_page_list.js"]
+
+["browser_m6e_torrents_page_more.js"]

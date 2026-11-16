@@ -39,6 +39,7 @@ const CONTROL_IDS = [
   "btSeedMode",
   "btSeedRatio",
   "btSeedHours",
+  "btSeedAction",
   "btDownLimit",
   "btUpLimit",
   "btTurtle",
@@ -309,6 +310,42 @@ add_task(async function test_seeding_goal() {
   gBrowser.removeCurrentTab();
 });
 
+add_task(async function test_seeding_action() {
+  writePref("seedAction", "stop");
+  writePref("seedRatioPercent", 100);
+  writePref("seedHours", 0);
+  let doc = await openSection();
+  let action = doc.getElementById("btSeedAction");
+  is(action.value, "stop", "The default action is to stop");
+  ok(!controlHidden(doc, "btSeedAction"), "The action shows with a goal");
+  is(
+    [...action.querySelectorAll("moz-option")].length,
+    2,
+    "Stop and slow are the choices"
+  );
+
+  action.value = "slow";
+  action.dispatchEvent(new Event("change", { bubbles: true }));
+  await waitForPref("seedAction", "slow");
+  is((await M6ETorrentService.getConfig()).seedAction, "slow");
+
+  action.value = "explode";
+  action.dispatchEvent(new Event("change", { bubbles: true }));
+  await TestUtils.waitForCondition(
+    () => action.value == "slow",
+    "An unknown action is refused"
+  );
+  is(readPref("seedAction"), "slow");
+
+  doc.getElementById("btSeedModeNever").click();
+  await TestUtils.waitForCondition(
+    () => controlHidden(doc, "btSeedAction"),
+    "Without a goal there is no action to choose"
+  );
+  writePref("seedAction", "stop");
+  gBrowser.removeCurrentTab();
+});
+
 add_task(async function test_proxy_and_password() {
   Services.prefs.clearUserPref(PREFIX + "proxy.type");
   let doc = await openSection();
@@ -422,6 +459,22 @@ add_task(async function test_interface_and_kill_switch() {
   await TestUtils.waitForCondition(
     () => !controlHidden(doc, "btInterfaceDown"),
     "The kill switch state is shown when the interface is down"
+  );
+  Services.obs.notifyObservers(
+    null,
+    "m6e-torrent-network",
+    JSON.stringify({ listening: null, interfaceDown: "<b>x y</b>" })
+  );
+  await TestUtils.waitForCondition(
+    () => !controlHidden(doc, "btInterfaceDown"),
+    "An odd name still shows the notice"
+  );
+  ok(
+    !doc
+      .getElementById("btInterfaceDown")
+      .getAttribute("heading")
+      ?.includes("<b>"),
+    "A name that is not plain is not put in the message"
   );
   Services.obs.notifyObservers(
     null,
