@@ -8,36 +8,48 @@ const { M6ETorrentRisk } = ChromeUtils.importESModule(
 );
 const {
   ASSESS_CASES,
+  DISPLAY_CASES,
+  EXCLUDED_CASES,
   TRUSTED_CASES,
+  TRUST_SITE_CASES,
   checkAssess,
+  checkDisplay,
+  checkExcluded,
+  checkRulesData,
+  checkTrustSite,
   checkTrusted,
   checkTrustedList,
 } = ChromeUtils.importESModule("resource://test/risk_cases.sys.mjs");
 
-add_task(function test_assess_cases() {
+function runCases(cases, check) {
   const failures = [];
-  for (const testCase of ASSESS_CASES) {
-    failures.push(
-      ...checkAssess(
-        (...args) => M6ETorrentRisk.assess(...args),
-        testCase
-      )
-    );
+  for (const testCase of cases) {
+    failures.push(...check(testCase));
   }
-  Assert.deepEqual(failures, [], "Every assess case gives the expected result");
+  return failures;
+}
+
+add_task(function test_assess_cases() {
+  Assert.deepEqual(
+    runCases(ASSESS_CASES, testCase =>
+      checkAssess((...args) => M6ETorrentRisk.assess(...args), testCase)
+    ),
+    [],
+    "Every assess case gives the expected result"
+  );
 });
 
 add_task(function test_trusted_origins() {
-  const failures = [];
-  for (const testCase of TRUSTED_CASES) {
-    failures.push(
-      ...checkTrusted(
+  Assert.deepEqual(
+    runCases(TRUSTED_CASES, testCase =>
+      checkTrusted(
         (...args) => M6ETorrentRisk.isTrustedOrigin(...args),
         testCase
       )
-    );
-  }
-  Assert.deepEqual(failures, [], "Every origin case gives the expected result");
+    ),
+    [],
+    "Every origin case gives the expected result, with the real eTLD list"
+  );
 });
 
 add_task(function test_trusted_list() {
@@ -45,5 +57,44 @@ add_task(function test_trusted_list() {
     checkTrustedList(M6ETorrentRisk.getTrustedSites()),
     [],
     "The bundled trusted list has no duplicates and no hosting sites"
+  );
+  const raw = JSON.parse(
+    Cu.readUTF8URI(
+      Services.io.newURI(
+        "moz-src:///browser/components/torrent/m6e-torrent-rules.json"
+      )
+    )
+  );
+  Assert.deepEqual(
+    checkRulesData(raw, host => M6ETorrentRisk.isExcludedHost(host)),
+    [],
+    "The rules data has no duplicates and no excluded trusted host"
+  );
+});
+
+add_task(function test_display_and_trust_helpers() {
+  Assert.deepEqual(
+    runCases(DISPLAY_CASES, testCase =>
+      checkDisplay(
+        (text, max) => M6ETorrentRisk.shortenForDisplay(text, max),
+        testCase
+      )
+    ),
+    [],
+    "Long names are shortened in the middle"
+  );
+  Assert.deepEqual(
+    runCases(TRUST_SITE_CASES, testCase =>
+      checkTrustSite(origin => M6ETorrentRisk.canTrustSite(origin), testCase)
+    ),
+    [],
+    "Public suffixes cannot be trusted, with the real eTLD list"
+  );
+  Assert.deepEqual(
+    runCases(EXCLUDED_CASES, testCase =>
+      checkExcluded(host => M6ETorrentRisk.isExcludedHost(host), testCase)
+    ),
+    [],
+    "Hosts with other people's content are excluded"
   );
 });
