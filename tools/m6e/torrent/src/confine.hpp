@@ -109,6 +109,24 @@ FinalizeReport finalizeFile(std::string const& rootReal,
 FinalizeReport finalizeRelative(std::string const& rootReal,
                                 std::string const& relativePath);
 
+// For a file the engine writes, before and while it writes it: opens it
+// no-follow (with `create`, creating it 0644 when missing), clears its execute
+// bits and sets com.apple.quarantine when it has none. libtorrent keeps the
+// mode of an existing file, so a file prepared here never becomes executable
+// from a BEP 47 `x` attribute. A missing file without `create` is skipped
+// (`existed` false). A link or non-regular file in the way is an error; a
+// quarantine that could not be set is only reported in `warning`.
+std::optional<SafetyError> protectFile(std::string const& rootReal,
+                                       PathComponents const& parts,
+                                       bool create, bool* existed,
+                                       std::string* warning);
+
+// Deletes the regular files at `files` below rootReal without following any
+// link (a link is left alone), then the folders above them, deepest first,
+// that are left empty. Missing files are skipped.
+std::optional<SafetyError> removeFiles(std::string const& rootReal,
+                                       std::vector<PathComponents> const& files);
+
 // Applies an SBPL profile to this process (sandbox_init_with_parameters).
 // After it returns true the process can no longer exec or leave its roots.
 bool enterSandbox(std::string const& profilePath,

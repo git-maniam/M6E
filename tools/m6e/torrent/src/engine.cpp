@@ -57,6 +57,7 @@ constexpr auto kTick = 1s;
 constexpr auto kResumeSaveInterval = 30s;
 constexpr auto kProgressMinGap = 900ms;
 constexpr auto kDeleteWait = 3s;
+constexpr auto kShutdownProtectBudget = 500ms;
 
 std::int64_t nowMs() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -81,6 +82,10 @@ std::string tidOf(lt::info_hash_t const& ih) {
     return hex(ih.v1.data(), ih.v1.size());
   }
   return hex(ih.v2.data(), ih.v2.size()).substr(0, 40);
+}
+
+std::string v2Tid(lt::info_hash_t const& ih) {
+  return ih.has_v2() ? hex(ih.v2.data(), ih.v2.size()).substr(0, 40) : "";
 }
 
 lt::load_torrent_limits loadLimits() {
@@ -176,7 +181,49 @@ std::optional<SafetyError> prepareWanted(
     f.path = splitPath(fs.file_path(i));
     layout.files.push_back(std::move(f));
   }
-  return prepareDirectories(root, layout);
+  if (auto e = prepareDirectories(root, layout)) {
+    return e;
+  }
+  std::string rootReal;
+  if (auto e = canonicalRoot(root, &rootReal)) {
+    return e;
+  }
+  for (auto const& f : layout.files) {
+    if (auto e = protectFile(rootReal, f.path, true, nullptr, nullptr)) {
+      return e;
+    }
+  }
+  return std::nullopt;
+}
+
+std::vector<PathComponents> wantedPaths(lt::file_storage const& fs,
+                                        std::vector<bool> const& everWanted) {
+  std::vector<PathComponents> out;
+  for (auto i : fs.file_range()) {
+    auto k = static_cast<std::size_t>(static_cast<int>(i));
+    PathComponents parts;
+    if (fs.pad_file_at(i) || k >= everWanted.size() || !everWanted[k] ||
+        splitRelativePath(fs.file_path(i), &parts)) {
+      continue;
+    }
+    out.push_back(std::move(parts));
+  }
+  return out;
+}
+
+void protectExisting(std::string const& savePath,
+                     std::vector<PathComponents> const& files,
+                     std::optional<Clock::time_point> until = std::nullopt) {
+  std::string root;
+  if (canonicalRoot(savePath, &root)) {
+    return;
+  }
+  for (auto const& parts : files) {
+    if (until && Clock::now() >= *until) {
+      return;
+    }
+    protectFile(root, parts, false, nullptr, nullptr);
+  }
 }
 
 std::optional<SafetyError> checkBeforeTransfer(
@@ -1233,6 +1280,10 @@ json::object Engine::opPause(json::object const& args, bool pause) {
   }
   setPaused(t, pause);
   refreshStatus(t);
+  if (pause && t.ti) {
+    protectExisting(t.status.save_path,
+                    wantedPaths(t.ti->layout(), t.everWanted));
+  }
   refreshNetwork();
   updatePower(anyActive());
   json::object r;
@@ -1255,6 +1306,10 @@ json::object Engine::opPauseAll(bool pause) {
   }
   for (auto& [tid, t] : torrents_) {
     refreshStatus(t);
+    if (pause && !t.completed && t.ti) {
+      protectExisting(t.status.save_path,
+                      wantedPaths(t.ti->layout(), t.everWanted));
+    }
   }
   refreshNetwork();
   updatePower(anyActive());
@@ -1270,16 +1325,26 @@ json::object Engine::opRemove(json::object const& args) {
   }
   Torrent& t = confirmed(tid);
   lt::torrent_handle h = t.handle;
-  session_->remove_torrent(h, deleteFiles
-                                  ? lt::session_handle::delete_files
-                                  : lt::session_handle::delete_partfile);
+  std::string savePath =
+      t.handle.status(lt::torrent_handle::query_save_path).save_path;
+  std::vector<PathComponents> files;
+  if (t.ti) {
+    files = wantedPaths(t.ti->layout(), t.everWanted);
+  }
+  session_->remove_torrent(h, lt::session_handle::delete_partfile);
   handles_.erase(h);
   torrents_.erase(tid);
   deleteResume(tid);
-  if (deleteFiles) {
-    deleting_.insert(tid);
-    pumpUntil([&] { return !deleting_.count(tid); }, kDeleteWait);
-    deleting_.erase(tid);
+  deleting_.insert(tid);
+  pumpUntil([&] { return !deleting_.count(tid); }, kDeleteWait);
+  deleting_.erase(tid);
+  std::string root;
+  if (!canonicalRoot(savePath, &root)) {
+    if (!deleteFiles) {
+      protectExisting(root, files);
+    } else if (auto e = removeFiles(root, files)) {
+      emitError(tid, e->code, "could not delete the files: " + e->message);
+    }
   }
   refreshNetwork();
   updatePower(anyActive());
@@ -2189,13 +2254,17 @@ void Engine::handleAlert(lt::alert* a) {
   }
   if (auto* td = lt::alert_cast<lt::torrent_deleted_alert>(a)) {
     deleting_.erase(tidOf(td->info_hashes));
+    deleting_.erase(v2Tid(td->info_hashes));
     return;
   }
   if (auto* tdf = lt::alert_cast<lt::torrent_delete_failed_alert>(a)) {
     std::string tid = tidOf(tdf->info_hashes);
     deleting_.erase(tid);
-    emitError(tid, "io-error",
-              "could not delete the files: " + tdf->error.message());
+    deleting_.erase(v2Tid(tdf->info_hashes));
+    if (tdf->error) {
+      emitError(tid, "io-error",
+                "could not delete the part file: " + tdf->error.message());
+    }
     return;
   }
   if (auto* fe = lt::alert_cast<lt::file_error_alert>(a)) {
@@ -2563,6 +2632,14 @@ void Engine::shutdown(Clock::time_point saveBy) {
   }
   pumpUntil([&] { return outstandingSaves_ <= 0; },
             std::max<Clock::duration>(saveBy - Clock::now(), 0ms));
+  auto protectBy = std::max(saveBy, Clock::now()) + kShutdownProtectBudget;
+  for (auto& [tid, t] : torrents_) {
+    if (t.ti && t.handle.is_valid()) {
+      protectExisting(
+          t.handle.status(lt::torrent_handle::query_save_path).save_path,
+          wantedPaths(t.ti->layout(), t.everWanted), protectBy);
+    }
+  }
   updatePower(false);
   session_->set_alert_notify({});
   lt::session_proxy proxy = session_->abort();
