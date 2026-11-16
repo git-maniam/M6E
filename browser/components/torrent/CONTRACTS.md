@@ -75,3 +75,9 @@ Shared by the parallel steps P8.1 to P8.6. Agents may add to this file's contrac
 - `detail().pieces.have` is read as a bitfield with the first piece in the highest bit of the first byte (BEP 3).
 - about:torrents keeps its speed history in the page (last 5 minutes, one sample per `m6e-torrent-changed`, at most one per 500 ms), never sends or stores it, and drops a torrent's samples when it goes. New tabs after Peers: Pieces, Speed, Log. The Log tab shows the service-wide log inside the detail area, so it needs a selected torrent.
 - The Files tab priority cell is a `select` named by the file name cell (`aria-labelledby`); a change calls `setFilePriority` and the page reloads the detail.
+
+## Additions (shady-fixes, 2026-11-17)
+- `M6ETorrentRisk.sys.mjs` also exports `isExcludedHost`, `canTrustSite`, `shortenForDisplay` and `setPublicSuffixCheck` (the Node tests inject the public-suffix check; in Gecko the default uses `Services.eTLD`, so the module is no longer free of Gecko globals).
+- `getTrustedSites()` returns `[{ name, hosts, domain }]`. Trust is by exact host (`hosts`) minus the entry's `exclude` patterns; the user's own sites match exactly and public suffixes are refused.
+- Metadata file entries may carry `renamed: true` and the metadata `nameRenamed: true` when libtorrent changed the name; the risk check treats them as `bidi-override`.
+- The Add dialog keeps Add and Add anyway disabled for `security.dialog_enable_delay` after it is shown and focused.

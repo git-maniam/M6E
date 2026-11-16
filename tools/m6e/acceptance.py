@@ -2486,7 +2486,7 @@ def run_bt_session(ctx):
     rules = json.load(
         open(os.path.join(ROOT, "browser", "components", "torrent", "m6e-torrent-rules.json"))
     )
-    trusted = "https://" + rules["trustedSites"][0]["domain"]
+    trusted = "https://" + rules["trustedSites"][0]["hosts"][0]
     prefs = {
         "m6e.torrent.bindInterface": "lo0",
         "m6e.torrent.downloadDir": save,
@@ -2494,6 +2494,7 @@ def run_bt_session(ctx):
         "m6e.torrent.startNow": True,
         "m6e.torrent.confirmQuit": False,
         "m6e.torrent.resumeAtStartup": False,
+        "security.dialog_enable_delay": 0,
     }
     out = {"trustedOrigin": trusted, "save": save}
 
