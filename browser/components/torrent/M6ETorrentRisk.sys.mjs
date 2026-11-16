@@ -79,7 +79,7 @@ function compileSite(site) {
 }
 
 // Lowercase letters and digits with marks, hidden characters and look-alike
-// digits and symbols removed, so "Pa$$wörd" and "password" compare equal.
+// digits and symbols removed, so "Pa$$word" and "password" compare equal.
 function plainLetters(text, leet) {
   return text
     .replace(IGNORABLE_GLOBAL_RE, "")
@@ -517,7 +517,7 @@ function shortenUnits(units, max) {
   if (slash >= 0 && baseLength + 2 <= budget) {
     return (
       takeStart(units.slice(0, slash), budget - baseLength - 1) +
-      "…/" +
+      "\u2026/" +
       base.join("")
     );
   }
@@ -525,7 +525,7 @@ function shortenUnits(units, max) {
   const extLength = dot >= 0 ? unitsLength(base.slice(dot)) : 0;
   const tail = Math.min(Math.floor(budget / 2), Math.max(extLength + 12, 16));
   const end = takeEnd(base, tail);
-  return takeStart(base, budget - end.length) + "…" + end;
+  return takeStart(base, budget - end.length) + "\u2026" + end;
 }
 
 function describe(rules, path) {
@@ -646,8 +646,7 @@ function collect(rules, metadata, lists) {
   }
   for (const file of files) {
     const path = single || !name ? file.path : name + "/" + file.path;
-    const length =
-      Number.isFinite(file.length) ? Math.max(0, file.length) : 0;
+    const length = Number.isFinite(file.length) ? Math.max(0, file.length) : 0;
     const hidden = hasHidden(rules, file.path);
     if (hidden || file.renamed === true) {
       const program = looksLikeProgram(rules, path);

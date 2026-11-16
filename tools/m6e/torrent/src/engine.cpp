@@ -139,6 +139,104 @@ std::string relativePath(lt::file_storage const& fs, lt::file_index_t i) {
   return full;
 }
 
+// libtorrent drops the zero-width joiners too, but they are part of words in
+// Indic and Persian names, so their loss alone does not count as a rename.
+std::string withoutJoiners(std::string text) {
+  for (std::string const joiner : {"\xE2\x80\x8C", "\xE2\x80\x8D"}) {
+    for (auto at = text.find(joiner); at != std::string::npos;
+         at = text.find(joiner, at)) {
+      text.erase(at, joiner.size());
+    }
+  }
+  return text;
+}
+
+std::string joinPath(std::vector<std::string> const& parts) {
+  std::string out;
+  for (auto const& part : parts) {
+    if (!out.empty()) {
+      out += '/';
+    }
+    out += part;
+  }
+  return out;
+}
+
+void rawTreePaths(lt::bdecode_node const& node,
+                  std::vector<std::string>& prefix,
+                  std::vector<std::string>& out, int depth) {
+  if (node.type() != lt::bdecode_node::dict_t || depth > kMaxDirectoryDepth) {
+    return;
+  }
+  for (int i = 0; i < node.dict_size(); i++) {
+    auto [key, child] = node.dict_at(i);
+    if (key.empty() || child.type() != lt::bdecode_node::dict_t) {
+      continue;
+    }
+    prefix.emplace_back(key);
+    if (child.dict_size() == 1 && child.dict_at(0).first.empty()) {
+      out.push_back(joinPath(prefix));
+    } else {
+      rawTreePaths(child, prefix, out, depth + 1);
+    }
+    prefix.pop_back();
+  }
+}
+
+// The torrent's name and the paths below it as the torrent wrote them, before
+// libtorrent cleans them up, for the files that are not padding, in
+// libtorrent's order. A single-file v1 torrent's only path is empty.
+bool rawNames(lt::torrent_info const& ti, std::string* name,
+              std::vector<std::string>* paths) {
+  auto section = ti.info_section();
+  lt::error_code ec;
+  lt::bdecode_node info =
+      lt::bdecode(section, ec, nullptr, kMaxBencodeDepth, kMaxBencodeItems);
+  if (ec || info.type() != lt::bdecode_node::dict_t) {
+    return false;
+  }
+  auto nameNode = info.dict_find_string("name.utf-8");
+  if (!nameNode) {
+    nameNode = info.dict_find_string("name");
+  }
+  if (!nameNode) {
+    return false;
+  }
+  *name = std::string(nameNode.string_value());
+  auto tree = info.dict_find_dict("file tree");
+  if (tree && info.dict_find_int_value("meta version", 1) >= 2) {
+    std::vector<std::string> prefix;
+    rawTreePaths(tree, prefix, *paths, 0);
+    return true;
+  }
+  auto files = info.dict_find_list("files");
+  if (!files) {
+    paths->emplace_back();
+    return true;
+  }
+  for (int i = 0; i < files.list_size(); i++) {
+    auto entry = files.list_at(i);
+    auto list = entry.dict_find_list("path.utf-8");
+    if (!list) {
+      list = entry.dict_find_list("path");
+    }
+    if (!list) {
+      return false;
+    }
+    std::vector<std::string> parts;
+    for (int k = 0; k < list.list_size(); k++) {
+      parts.emplace_back(list.list_at(k).string_value());
+    }
+    std::string joined = joinPath(parts);
+    if (hasAttribute(entry, 'p') ||
+        joined.find("_____padding_file_") != std::string::npos) {
+      continue;
+    }
+    paths->push_back(std::move(joined));
+  }
+  return true;
+}
+
 std::optional<SafetyError> checkLayoutComponents(lt::torrent_info const& ti) {
   auto const& fs = ti.layout();
   for (auto i : fs.file_range()) {
@@ -322,15 +420,33 @@ json::object buildMetadata(std::string const& tid, lt::torrent_info const& ti,
   md["pieceLength"] = ti.piece_length();
   auto const& fs = ti.layout();
   auto const& selection = atp.file_priorities;
+  std::string rawName;
+  std::vector<std::string> rawPaths;
+  std::size_t dataFiles = 0;
+  for (auto i : fs.file_range()) {
+    dataFiles += fs.pad_file_at(i) ? 0 : 1;
+  }
+  bool const haveRaw =
+      rawNames(ti, &rawName, &rawPaths) && rawPaths.size() == dataFiles;
+  if (haveRaw && withoutJoiners(rawName) != ti.name()) {
+    md["nameRenamed"] = true;
+  }
+  std::size_t rawIndex = 0;
   json::array files;
   for (auto i : fs.file_range()) {
     json::object f;
     auto index = static_cast<int>(i);
+    std::string path = relativePath(fs, i);
     f["index"] = index;
-    f["path"] = relativePath(fs, i);
+    f["path"] = path;
     f["length"] = fs.file_size(i);
     if (fs.pad_file_at(i)) {
       f["pad"] = true;
+    } else if (haveRaw) {
+      auto const& raw = rawPaths[rawIndex++];
+      if (withoutJoiners(raw.empty() ? rawName : raw) != path) {
+        f["renamed"] = true;
+      }
     }
     if (!selection.empty()) {
       f["selected"] =

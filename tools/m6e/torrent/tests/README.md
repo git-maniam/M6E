@@ -20,3 +20,5 @@ What each test proves:
 - `idle_has_no_sockets`, `sockets_follow_active_torrents`: `lsof -nP -iTCP -iUDP -a -p PID` shows nothing before the first add or after the last removal, and `listening`/`closed` events match.
 
 Against the fake helper (engine name starting with `fake`) the checks it cannot satisfy are reported as `# fake gap:` lines instead of failures, and tests that need real transfer skip or run their non-transfer part. A target that answers a request with the error code `unsupported` makes that test skip. `ref_helper.py` is a small Python helper that really transfers from the loopback swarm; it exists to prove the harness works end to end and is not shipped.
+
+`risk/renamed_test.py --helper <path>` checks the `renamed` and `nameRenamed` metadata flags (PROTOCOL.md, P8.3) on synthetic torrents that are only added, never confirmed: v1 and v2, single files and folders, padding, `path.utf-8`, dropped direction and zero-width characters, replaced C1 controls, and joiners that do not count.

@@ -120,7 +120,7 @@ export const ASSESS_CASES = [
     name: "a padded name needs the run of spaces before the last dot",
     each: [
       ["Clip.mp4     x.exe", true],
-      ["Clip.mp4 　   .exe", true],
+      ["Clip.mp4 \u3000\u2003\u00A0\u2002.exe", true],
       ["Clip    .exe", false],
       ["Clip.exe     ", false],
     ].map(([file, padded]) => ({
@@ -286,7 +286,7 @@ export const ASSESS_CASES = [
   },
   {
     name: "right-to-left override in a name",
-    metadata: torrent("Pictures", [["Pictures/Photo‮gpj.exe", 1000]]),
+    metadata: torrent("Pictures", [["Pictures/Photo\u202Egpj.exe", 1000]]),
     source: UNKNOWN,
     verdict: "shady",
     trusted: false,
@@ -295,7 +295,7 @@ export const ASSESS_CASES = [
   },
   {
     name: "right-to-left override in a folder name",
-    metadata: torrent("Pictures", [["Pic‮txt/readme", 1000]]),
+    metadata: torrent("Pictures", [["Pic\u202Etxt/readme", 1000]]),
     source: UNKNOWN,
     verdict: "shady",
     trusted: false,
@@ -304,16 +304,16 @@ export const ASSESS_CASES = [
   {
     name: "isolates, zero width space, BOM and control characters are flagged",
     each: [
-      "a⁦b.mkv",
-      "a⁩b.mkv",
-      "a​b.mkv",
-      "a﻿b.mkv",
-      "a⁠b.mkv",
+      "a\u2066b.mkv",
+      "a\u2069b.mkv",
+      "a\u200Bb.mkv",
+      "a\uFEFFb.mkv",
+      "a\u2060b.mkv",
       "a\u0000b.mkv",
       "a\nb.mkv",
-      "a‎b.mkv",
-      "aㅤb.mkv",
-      "a؜b.mkv",
+      "a\u200Eb.mkv",
+      "a\u3164b.mkv",
+      "a\u061Cb.mkv",
     ].map(path => ({
       metadata: torrent("Video", [[path, 100]]),
       source: UNKNOWN,
@@ -325,8 +325,8 @@ export const ASSESS_CASES = [
   {
     name: "joiners inside words and emoji are not flagged",
     metadata: torrent("Music", [
-      ["Music/می‌خواهم.mp3", 100],
-      ["Music/family \u{1F468}‍\u{1F469}‍\u{1F467}.jpg", 100],
+      ["Music/می\u200Cخواهم.mp3", 100],
+      ["Music/family \u{1F468}\u200D\u{1F469}\u200D\u{1F467}.jpg", 100],
     ]),
     source: UNKNOWN,
     verdict: "ok",
@@ -335,7 +335,7 @@ export const ASSESS_CASES = [
   },
   {
     name: "joiner at the edge of a name is flagged",
-    metadata: torrent("Odd", [["Odd/‍file.txt", 100]]),
+    metadata: torrent("Odd", [["Odd/\u200Dfile.txt", 100]]),
     source: UNKNOWN,
     verdict: "shady",
     trusted: false,
@@ -927,17 +927,19 @@ export const ASSESS_CASES = [
   },
   {
     name: "invisible line and paragraph separators, braille blank and grapheme joiner are flagged",
-    each: ["a b.mkv", "a b.mkv", "a⠀b.mkv", "a͏b.mkv"].map(path => ({
-      metadata: torrent("Video", [[path, 100]]),
-      source: UNKNOWN,
-      verdict: "shady",
-      trusted: false,
-      codes: ["bidi-override"],
-    })),
+    each: ["a\u2028b.mkv", "a\u2029b.mkv", "a\u2800b.mkv", "a\u034Fb.mkv"].map(
+      path => ({
+        metadata: torrent("Video", [[path, 100]]),
+        source: UNKNOWN,
+        verdict: "shady",
+        trusted: false,
+        codes: ["bidi-override"],
+      })
+    ),
   },
   {
     name: "a right-to-left override only in the torrent name is flagged",
-    metadata: torrent("Holiday‮gpj", [["a.jpg", 100]]),
+    metadata: torrent("Holiday\u202Egpj", [["a.jpg", 100]]),
     source: UNKNOWN,
     verdict: "shady",
     trusted: false,
@@ -1144,19 +1146,19 @@ export const ASSESS_CASES = [
   {
     name: "hidden characters that libtorrent keeps are flagged",
     each: [
-      "a️b.mkv",
-      "a⁪b.mkv",
-      "a⁯b.mkv",
+      "a\uFE0Fb.mkv",
+      "a\u206Ab.mkv",
+      "a\u206Fb.mkv",
       "a\u{1D173}b.mkv",
       "a\u{1D17A}b.mkv",
-      "a᠋b.mkv",
-      "a᠎b.mkv",
+      "a\u180Bb.mkv",
+      "a\u180Eb.mkv",
       "a\u{E0067}b.mkv",
       "\u{1F3F4}\u{E0067}\u{E0062}.mkv",
       "a\u{E0100}b.mkv",
-      "a­b.mkv",
-      "aᅟb.mkv",
-      "aﾠb.mkv",
+      "a\u00ADb.mkv",
+      "a\u115Fb.mkv",
+      "a\uFFA0b.mkv",
       "a\u{1BCA0}b.mkv",
     ].map(path => ({
       metadata: torrent("Video", [[path, 100]]),
@@ -1173,12 +1175,12 @@ export const ASSESS_CASES = [
         "Mixed/\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F} England.png",
         MiB,
       ],
-      ["Mixed/❤️ love.mp3", MiB],
-      ["Mixed/1️⃣ first.mp3", MiB],
-      ["Mixed/ᠬᠠᠷ᠎ᠠ.mp3", MiB],
-      ["Mixed/ᠭ᠋ᠠ.mp3", MiB],
+      ["Mixed/❤\uFE0F love.mp3", MiB],
+      ["Mixed/1\uFE0F\u20E3 first.mp3", MiB],
+      ["Mixed/ᠬᠠᠷ\u180Eᠠ.mp3", MiB],
+      ["Mixed/ᠭ\u180Bᠠ.mp3", MiB],
       ["Mixed/葛\u{E0100}飾.jpg", MiB],
-      ["Mixed/क्‍ष.mp3", MiB],
+      ["Mixed/क\u094D\u200Dष.mp3", MiB],
     ]),
     source: UNKNOWN,
     verdict: "ok",
@@ -1187,13 +1189,15 @@ export const ASSESS_CASES = [
   },
   {
     name: "hidden characters are removed before looking for piracy words",
-    each: ["Key️gen.zip", "Cr⁯ack.rar", "Acti\u{1D173}vator.7z"].map(file => ({
-      metadata: torrent("Tools", [["Tools/" + file, MiB]]),
-      source: UNKNOWN,
-      verdict: "shady",
-      trusted: false,
-      codes: ["bidi-override", "piracy-tool-name"],
-    })),
+    each: ["Key\uFE0Fgen.zip", "Cr\u206Fack.rar", "Acti\u{1D173}vator.7z"].map(
+      file => ({
+        metadata: torrent("Tools", [["Tools/" + file, MiB]]),
+        source: UNKNOWN,
+        verdict: "shady",
+        trusted: false,
+        codes: ["bidi-override", "piracy-tool-name"],
+      })
+    ),
   },
 
   // Piracy words in other spellings (item 5).
@@ -1207,8 +1211,8 @@ export const ASSESS_CASES = [
       "k3yg3n.rar",
       "c.r.a.c.k.zip",
       "K E Y G E N.7z",
-      "сrасk.zip",
-      "κeygen.zip",
+      "\u0441r\u0430\u0441k.zip",
+      "\u03BAeygen.zip",
       "ACTIVATOR.rar",
       "Patch_and_Cr@ck.zip",
     ].map(file => ({
@@ -1275,8 +1279,8 @@ export const ASSESS_CASES = [
   {
     name: "a long name keeps its extension and programs come first",
     metadata: torrent("Pack", [
-      ...many(12, i => ["Pack/x" + i + "​note.txt", 10]),
-      ["Pack/" + "\u{1F600}".repeat(300) + "‮.exe", 10],
+      ...many(12, i => ["Pack/x" + i + "\u200Bnote.txt", 10]),
+      ["Pack/" + "\u{1F600}".repeat(300) + "\u202E.exe", 10],
     ]),
     source: UNKNOWN,
     verdict: "shady",
@@ -1438,7 +1442,7 @@ export const ASSESS_CASES = [
       "Contraseña.txt",
       "mot de passe.txt",
       "Senha.txt",
-      "пароль.txt",
+      "п\u0430роль.txt",
       "解压密码.txt",
       "unrar-password.nfo",
       "PASSWORD",
@@ -1603,8 +1607,8 @@ export const TRUSTED_CASES = [
   ["https://www.debian.org.", [], false],
   ["https://user:pw@www.debian.org", [], false],
   ["https://debian.org.invalid", [], false],
-  ["https://debian.org​.evil.com", [], false],
-  ["https://dеbian.org", [], false],
+  ["https://debian.org\u200B.evil.com", [], false],
+  ["https://d\u0435bian.org", [], false],
   ["https://people.debian.org", [], false],
   ["https://salsa.debian.org", [], false],
   ["https://bbs.archlinux.org", [], false],
@@ -1854,22 +1858,26 @@ const LONE_SURROGATE =
 export const DISPLAY_CASES = [
   ["short.exe", 20, "short.exe"],
   ["Folder/Sub/name.exe", 19, "Folder/Sub/name.exe"],
-  ["Folder/Sub/name.exe", 15, "Folde…/name.exe"],
-  ["a".repeat(40) + ".exe", 20, "a".repeat(10) + "…" + "a".repeat(5) + ".exe"],
+  ["Folder/Sub/name.exe", 15, "Folde\u2026/name.exe"],
+  [
+    "a".repeat(40) + ".exe",
+    20,
+    "a".repeat(10) + "\u2026" + "a".repeat(5) + ".exe",
+  ],
   [
     "\u{1F600}".repeat(20) + ".exe",
     21,
-    "\u{1F600}".repeat(5) + "…" + "\u{1F600}".repeat(3) + ".exe",
+    "\u{1F600}".repeat(5) + "\u2026" + "\u{1F600}".repeat(3) + ".exe",
   ],
   [
     "x/" + "b".repeat(30) + "<U+202E>.exe",
     40,
-    "b".repeat(23) + "…bbbb<U+202E>.exe",
+    "b".repeat(23) + "\u2026bbbb<U+202E>.exe",
   ],
   [
     "Pack/" + "<U+202E>".repeat(10) + ".exe",
     30,
-    "<U+202E><U+202E>…<U+202E>.exe",
+    "<U+202E><U+202E>\u2026<U+202E>.exe",
   ],
 ];
 
