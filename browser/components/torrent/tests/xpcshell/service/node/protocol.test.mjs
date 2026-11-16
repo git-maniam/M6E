@@ -23,6 +23,8 @@ import {
   parseFolderList,
   pathIsInside,
   rememberFolder,
+  savedTorrentFolder,
+  selectFolders,
   unsupportedConfig,
   parseTrustedSites,
   partialToPrefs,
@@ -559,4 +561,72 @@ test("unsupported settings are fatal when they touch the network", () => {
     fatal: [],
     warn: [],
   });
+});
+
+test("the save folder of a saved torrent", () => {
+  const resume = bencode({
+    save_path: "/Users/x/Downloads",
+    info: { name: "n" },
+  });
+  assert.equal(savedTorrentFolder(resume), "/Users/x/Downloads");
+  assert.equal(savedTorrentFolder(bencode({ save_path: "rel" })), null);
+  assert.equal(savedTorrentFolder(bencode({ x: 1 })), null);
+  assert.equal(savedTorrentFolder(enc.encode("not bencode")), null);
+  const bad = Uint8Array.from([...enc.encode("d9:save_path2:"), 0xff, 0xfe, 0x65]);
+  assert.equal(savedTorrentFolder(bad), null);
+});
+
+test("folder selection for the sandbox", () => {
+  const all = ["/d", "/s1", "/s2", "/r1", "/r2", "/n"];
+  assert.deepEqual(
+    selectFolders({
+      defaultFolder: "/d",
+      saved: ["/s1", "/s2"],
+      remembered: ["/r1", "/r2"],
+      existing: all,
+    }),
+    { folders: ["/d", "/s1", "/s2", "/r1"], droppedSaved: [] }
+  );
+  assert.deepEqual(
+    selectFolders({
+      defaultFolder: "/d",
+      saved: ["/s1", "/s2", "/s3", "/s4", "/s1"],
+      remembered: ["/r1"],
+      existing: [...all, "/s3", "/s4"],
+    }),
+    { folders: ["/d", "/s1", "/s2", "/s3"], droppedSaved: ["/s4"] }
+  );
+  assert.deepEqual(
+    selectFolders({
+      defaultFolder: "/d",
+      required: ["/n"],
+      saved: ["/s1", "/s2", "/s3"],
+      existing: [...all, "/s3"],
+    }),
+    { folders: ["/d", "/n", "/s1", "/s2"], droppedSaved: ["/s3"] },
+    "the folder just asked for beats the saved ones"
+  );
+  assert.deepEqual(
+    selectFolders({
+      defaultFolder: "/gone",
+      saved: ["/missing", "/s1"],
+      remembered: ["/also-missing", "/r1"],
+      existing: all,
+    }),
+    { folders: ["/s1", "/r1"], droppedSaved: [] },
+    "folders that do not exist are dropped"
+  );
+  assert.deepEqual(selectFolders({ defaultFolder: "", saved: [], existing: [] }), {
+    folders: [],
+    droppedSaved: [],
+  });
+  assert.deepEqual(
+    selectFolders({
+      defaultFolder: "/d/",
+      saved: ["/s1/", "rel"],
+      existing: ["/d", "/s1"],
+    }),
+    { folders: ["/d", "/s1"], droppedSaved: [] },
+    "trailing slashes and relative paths are normalised"
+  );
 });

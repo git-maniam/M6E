@@ -373,6 +373,53 @@ export function rememberFolder(remembered, folder, max = MAX_DOWNLOAD_FOLDERS - 
   return mergeFolders([folder, ...remembered], max);
 }
 
+// The save folder inside a saved torrent's resume data, or null.
+export function savedTorrentFolder(bytes) {
+  try {
+    const root = parseBencode(bytes);
+    const raw = root instanceof Map ? root.get("save_path") : null;
+    if (!(raw instanceof Uint8Array)) {
+      return null;
+    }
+    const path = new TextDecoder("utf-8", { fatal: true }).decode(raw);
+    return isAbsolutePosixPath(path) ? path : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Chooses the folders the sandboxed helper may write to, at most max. Order
+ * of priority: the default folder, the folder just asked for (required), the
+ * folders of saved torrents (saved, most recently used first, so that they
+ * are not restored paused), then the remembered ones. Only folders that exist
+ * (the existing array) are used. Returns { folders, droppedSaved }, where
+ * droppedSaved lists folders of saved torrents that did not fit.
+ */
+export function selectFolders({
+  defaultFolder,
+  required = [],
+  saved = [],
+  remembered = [],
+  existing,
+  max = MAX_DOWNLOAD_FOLDERS,
+}) {
+  const exists = new Set(mergeFolders(existing, Infinity));
+  const usable = list => mergeFolders(list, Infinity).filter(f => exists.has(f));
+  const order = mergeFolders(
+    [
+      ...usable(defaultFolder ? [defaultFolder] : []),
+      ...usable(required),
+      ...usable(saved),
+      ...usable(remembered),
+    ],
+    Infinity
+  );
+  const folders = order.slice(0, max);
+  const droppedSaved = usable(saved).filter(f => !folders.includes(f));
+  return { folders, droppedSaved: mergeFolders(droppedSaved, Infinity) };
+}
+
 // How long the helper waits before it exits on its own: longer than the
 // service's own idle stop, so that the service always stops it first.
 export function helperIdleSeconds(idleStopMs) {
