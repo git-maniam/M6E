@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <climits>
@@ -12,6 +13,8 @@
 #include <exception>
 #include <fcntl.h>
 #include <functional>
+#include <mach-o/dyld.h>
+#include <map>
 #include <net/if.h>
 #include <new>
 #include <poll.h>
@@ -20,10 +23,13 @@
 #include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
+#include <vector>
 
+#include "confine.hpp"
 #include "engine.hpp"
 #include "protocol.hpp"
 #include "safety.hpp"
+#include "sandbox_profile.hpp"
 
 namespace json = m6e::json;
 using namespace std::chrono_literals;
@@ -32,6 +38,7 @@ namespace {
 
 constexpr auto kExitDeadline = 1700ms;
 constexpr auto kResumeSaveBudget = 600ms;
+constexpr std::size_t kMaxDownloadDirs = 4;
 
 int gStopWrite = -1;
 
@@ -41,9 +48,32 @@ void onSignal(int) {
 }
 
 void usage() {
-  std::fprintf(
-      stderr,
-      "usage: m6e-torrent --protocol 1 --profile-dir <absolute path>\n");
+  std::fprintf(stderr,
+               "usage: m6e-torrent --protocol 1 --profile-dir <absolute path>\n"
+               "           [--sandbox [--inbox-dir <absolute path>]\n"
+               "            [--download-dir <absolute path>]...]  (at most %zu "
+               "download folders)\n",
+               kMaxDownloadDirs);
+}
+
+int badArgument(char const* what, std::string const& value) {
+  std::fprintf(stderr, "m6e-torrent: %s: %s\n", what, value.c_str());
+  usage();
+  return 2;
+}
+
+std::string resolvedPath(std::string const& path) {
+  char buf[PATH_MAX];
+  return realpath(path.c_str(), buf) ? std::string(buf) : std::string();
+}
+
+std::string executablePath() {
+  char buf[PATH_MAX];
+  std::uint32_t size = sizeof buf;
+  if (_NSGetExecutablePath(buf, &size) != 0) {
+    return {};
+  }
+  return resolvedPath(buf);
 }
 
 bool makeProfileDir(std::string const& path) {
@@ -180,12 +210,23 @@ bool dispatch(std::string_view line, m6e::Engine& engine, m6e::Output& out) {
 int main(int argc, char** argv) {
   std::string profileDir;
   int protocol = 0;
+  bool sandbox = false;
+  bool inboxGiven = false;
+  std::string inboxDir;
+  std::vector<std::string> downloadDirs;
   for (int i = 1; i < argc; i++) {
     std::string_view arg = argv[i];
     if (arg == "--protocol" && i + 1 < argc) {
       protocol = std::atoi(argv[++i]);
     } else if (arg == "--profile-dir" && i + 1 < argc) {
       profileDir = argv[++i];
+    } else if (arg == "--sandbox") {
+      sandbox = true;
+    } else if (arg == "--inbox-dir" && i + 1 < argc && !inboxGiven) {
+      inboxGiven = true;
+      inboxDir = argv[++i];
+    } else if (arg == "--download-dir" && i + 1 < argc) {
+      downloadDirs.push_back(argv[++i]);
     } else {
       usage();
       return 2;
@@ -199,8 +240,38 @@ int main(int argc, char** argv) {
     usage();
     return 2;
   }
+  if (!sandbox && (inboxGiven || !downloadDirs.empty())) {
+    return badArgument("--inbox-dir and --download-dir need --sandbox",
+                       inboxGiven ? inboxDir : downloadDirs.front());
+  }
+  std::vector<std::string> saveRoots;
+  for (auto const& dir : downloadDirs) {
+    struct stat st;
+    std::string real = m6e::isAbsolutePath(dir) ? resolvedPath(dir) : "";
+    if (real.empty() || real == "/" || stat(real.c_str(), &st) != 0 ||
+        !S_ISDIR(st.st_mode)) {
+      return badArgument(
+          "--download-dir must be an existing folder, given as an absolute "
+          "path, and not /",
+          dir);
+    }
+    if (std::find(saveRoots.begin(), saveRoots.end(), real) ==
+        saveRoots.end()) {
+      saveRoots.push_back(real);
+    }
+  }
+  if (saveRoots.size() > kMaxDownloadDirs) {
+    return badArgument("more than 4 different --download-dir folders",
+                       std::to_string(saveRoots.size()));
+  }
   while (profileDir.size() > 1 && profileDir.back() == '/') {
     profileDir.pop_back();
+  }
+  if (inboxGiven && !m6e::isAbsolutePath(inboxDir)) {
+    return badArgument("--inbox-dir must be an absolute path", inboxDir);
+  }
+  if (!inboxGiven) {
+    inboxDir = profileDir + "/inbox";
   }
   if (!makeProfileDir(profileDir)) {
     std::fprintf(stderr, "m6e-torrent: cannot create %s: %s\n",
@@ -212,6 +283,46 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "m6e-torrent: cannot resolve %s\n",
                  profileDir.c_str());
     return 1;
+  }
+  std::string inboxReal;
+  if (sandbox) {
+    if (!makeProfileDir(inboxDir) ||
+        (inboxReal = resolvedPath(inboxDir)).empty()) {
+      std::fprintf(stderr, "m6e-torrent: cannot create %s: %s\n",
+                   inboxDir.c_str(), std::strerror(errno));
+      return 1;
+    }
+    std::vector<std::string> writable = saveRoots;
+    writable.push_back(resolved);
+    for (auto const& root : writable) {
+      if (m6e::pathIsWithin(inboxReal, root)) {
+        return badArgument(
+            "--inbox-dir must not be or contain the profile or a download "
+            "folder",
+            inboxDir);
+      }
+    }
+    std::string helper = executablePath();
+    if (helper.empty()) {
+      std::fprintf(stderr, "m6e-torrent: cannot find its own executable\n");
+      return 1;
+    }
+    std::map<std::string, std::string> params = {
+        {"HELPER", helper},
+        {"EXEC_HELPER", "NO"},
+        {"TORRENTS_DIR", resolved},
+        {"INBOX_DIR", inboxReal},
+    };
+    for (std::size_t i = 0; i < kMaxDownloadDirs; i++) {
+      params["DOWNLOAD_" + std::to_string(i + 1)] =
+          i < saveRoots.size() ? saveRoots[i] : std::string(resolved);
+    }
+    std::string error;
+    if (!m6e::enterSandboxWithProfile(m6e::kSandboxProfile, params, &error)) {
+      std::fprintf(stderr, "m6e-torrent: cannot enter the sandbox: %s\n",
+                   error.c_str());
+      return 1;
+    }
   }
 
   std::signal(SIGPIPE, SIG_IGN);
@@ -233,10 +344,17 @@ int main(int argc, char** argv) {
 
   m6e::Output out;
   std::unique_ptr<m6e::Engine> engine;
+  m6e::EngineOptions options;
+  options.profileDir = resolved;
+  options.idleExit = idleSeconds();
+  options.interfacePresent = interfaceLookup();
+  if (sandbox) {
+    options.inboxDir = inboxReal;
+    options.saveRoots = saveRoots;
+  }
   try {
     engine = std::make_unique<m6e::Engine>(
-        m6e::EngineOptions{resolved, idleSeconds(), interfaceLookup()},
-        [&out](json::object const& e) { out.write(e); });
+        std::move(options), [&out](json::object const& e) { out.write(e); });
   } catch (std::exception const& e) {
     std::fprintf(stderr, "m6e-torrent: cannot start the engine: %s\n",
                  e.what());
@@ -246,6 +364,7 @@ int main(int argc, char** argv) {
   ready["protocol"] = 1;
   ready["engine"] = m6e::Engine::engineName();
   ready["pid"] = static_cast<std::int64_t>(getpid());
+  ready["sandbox"] = sandbox;
   out.write(ready);
 
   m6e::LineReader reader;

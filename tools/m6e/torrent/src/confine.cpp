@@ -800,4 +800,42 @@ bool enterSandbox(std::string const& profilePath,
   return true;
 }
 
+bool enterSandboxWithProfile(std::string const& profile,
+                             std::map<std::string, std::string> const& params,
+                             std::string* error) {
+  std::vector<char const*> argv;
+  for (auto const& [key, value] : params) {
+    argv.push_back(key.c_str());
+    argv.push_back(value.c_str());
+  }
+  argv.push_back(nullptr);
+  char* errbuf = nullptr;
+  if (sandbox_init_with_parameters(profile.c_str(), 0, argv.data(), &errbuf) ==
+      0) {
+    return true;
+  }
+  if (error) {
+    *error = errbuf ? errbuf : "sandbox_init failed";
+  }
+  if (errbuf) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    sandbox_free_error(errbuf);
+#pragma clang diagnostic pop
+  }
+  return false;
+}
+
+bool pathIsWithin(std::string const& rootReal, std::string const& pathReal) {
+  if (!isAbsolutePath(rootReal) || !isAbsolutePath(pathReal)) {
+    return false;
+  }
+  if (rootReal == "/" || pathReal == rootReal) {
+    return true;
+  }
+  return pathReal.size() > rootReal.size() &&
+         pathReal.compare(0, rootReal.size(), rootReal) == 0 &&
+         pathReal[rootReal.size()] == '/';
+}
+
 }  // namespace m6e

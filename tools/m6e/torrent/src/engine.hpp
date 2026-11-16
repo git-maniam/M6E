@@ -38,6 +38,10 @@ struct EngineOptions {
   // Whether the named network interface exists; the kill switch polls it
   // once a second. Defaults to if_nametoindex.
   std::function<bool(std::string const&)> interfacePresent;
+  // The folder ipFilterPath files must be in; <profileDir>/inbox when empty.
+  std::string inboxDir;
+  // Under the sandbox, the only folders (realpaths) torrents may be saved in.
+  std::optional<std::vector<std::string>> saveRoots;
 };
 
 // The libtorrent session and every torrent in it. Single-threaded: all calls
@@ -136,6 +140,12 @@ class Engine {
     // Every tracker of the torrent; UDP ones are withheld from the engine
     // while a proxy is set.
     std::vector<lt::announce_entry> trackers;
+    // The priorities last asked for (libtorrent applies them asynchronously),
+    // the files ever wanted (they may have data on disk and are finalized),
+    // and whether a newly wanted file may need finalizing at once.
+    std::vector<lt::download_priority_t> priorities;
+    std::vector<bool> everWanted;
+    bool recheckFinish = false;
   };
 
   json::object opAdd(json::object const& args);
@@ -150,6 +160,7 @@ class Engine {
   json::object opDetail(json::object const& args);
   json::object opSetLimits(json::object const& args);
   json::object opSetTorrentLimits(json::object const& args);
+  json::object opSetFilePriority(json::object const& args);
   json::object opSetConfig(json::object const& args);
   json::object opRestore(json::object const& args);
 
@@ -175,6 +186,10 @@ class Engine {
   void updatePower(bool active);
   void setPaused(Torrent& t, bool pause);
   std::optional<SafetyError> checkTorrentFiles(Torrent const& t);
+  std::optional<SafetyError> checkSaveRoot(std::string const& root) const;
+  std::vector<lt::download_priority_t> priorityArgs(
+      json::array const& files, lt::file_storage const& fs,
+      std::vector<lt::download_priority_t> priorities) const;
   void dropPending(std::string const& tid);
   void pumpUntil(std::function<bool()> const& done, Clock::duration timeout);
 

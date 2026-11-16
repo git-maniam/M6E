@@ -16,8 +16,9 @@ The helper runs M6E's torrent engine (libtorrent-rasterbar 2.1.2, D39) in its ow
 ## Run
 
     m6e-torrent --protocol 1 --profile-dir <absolute path of <profile>/torrents>
+        [--sandbox [--inbox-dir <absolute path>] [--download-dir <absolute path>]...]
 
-`M6E_TORRENT_IDLE_SECONDS` (default 60, 0 turns it off) sets the idle exit. Exit status 0 on `shutdown`, stdin end of file, SIGTERM, SIGINT, SIGHUP or the idle exit; 2 for a bad command line; 1 if the engine cannot start.
+`M6E_TORRENT_IDLE_SECONDS` (default 60, 0 turns it off) sets the idle exit. Exit status 0 on `shutdown`, stdin end of file, SIGTERM, SIGINT, SIGHUP or the idle exit; 2 for a bad command line; 1 if the engine or the sandbox cannot start. The service passes the sandbox arguments when `m6e.torrent.sandbox` is on (`browser/components/torrent/CONTRACTS.md`, "Additions (service, P8.1)"); see "Sandbox" below.
 
 ## Sources
 - `src/main.cpp`: command line, the `poll` loop over stdin, libtorrent's wake pipe and signals, request dispatch, and the exit path. A watchdog ends the process 1.7 s after `shutdown` or end of file, whatever the engine is doing.
@@ -25,7 +26,7 @@ The helper runs M6E's torrent engine (libtorrent-rasterbar 2.1.2, D39) in its ow
 - `src/protocol.{hpp,cpp}`: line framing (1 MiB limit), argument checks, UTF-8 repair of output, base64.
 - `src/json.{hpp,cpp}`: Boost.JSON, compiled header-only into `json.cpp`.
 - `src/ipfilter.{hpp,cpp}`: the PeerGuardian and eMule block list parser, into libtorrent's `ip_filter` (a set of merged address ranges).
-- `src/safety.*`, `src/confine.*` (helper-confine): the parsing and path rules; `sandbox/`: the sandbox profile, not applied yet.
+- `src/safety.*`, `src/confine.*` (helper-confine): the parsing and path rules; `sandbox/`: the sandbox profile. `src/sandbox_profile.hpp` is the helper's built-in copy of `sandbox/m6e-torrent.sb`, applied by `--sandbox`; after editing the profile, copy it there (`tests/sandbox` fails while the two differ).
 
 ## Behaviour
 - **Session settings at start:** no listen interface, no outgoing interface, DHT, local discovery, UPnP, NAT-PMP and the interface notifier off, no DHT bootstrap nodes, Peer ID prefix `-LT0000-`, an empty user agent and libtorrent's anonymous mode (so the extension handshake names no client and public trackers see `curl/7.81.0`; nothing names libtorrent, M6E or a version), `stop_tracker_timeout` 1 s, 4 MiB of queued disk writes, 2 disk threads, metadata limited to 16 MiB and 3 million bencoding tokens, `min_reconnect_time` 10 s (libtorrent's 60 s left a paused and resumed torrent without peers for a minute).
@@ -39,7 +40,9 @@ The helper runs M6E's torrent engine (libtorrent-rasterbar 2.1.2, D39) in its ow
 - **Seeding goals:** checked once a second in `tick` (`applySeedGoals`) against the ratio of `Status` and libtorrent's `seeding_duration`. `stop` pauses the torrent as `completed`; `slow` caps its upload at Turtle mode's upload rate. The reached goal is kept in the resume data.
 - **Proxy (SOCKS5):** the proxy settings are given to libtorrent only while something is active, together with the listen interfaces, because libtorrent opens its proxy UDP relay (and contacts the proxy) as soon as a peer proxy is set. With a proxy, uTP, DHT, local discovery and port mapping are off, UDP trackers are withheld from the engine (`replace_trackers`; the full list is kept in the resume data), `proxy_hostnames` sends names to the proxy, and anonymous mode stays on. libtorrent never falls back to a direct connection.
 - **Kill switch:** `watchBoundInterface` runs once a second and after `setConfig`. When the bound interface is gone it sets `stop_tracker_timeout` to 0 (no `stopped` announce), pauses the session (every peer and tracker connection closes), closes the listen sockets and keeps DHT, local discovery and port mapping off; when it returns, it reopens the listen sockets and resumes the session. libtorrent binds outgoing and listen sockets with `IP_BOUND_IF`, which macOS refuses on IPv6 sockets (EINVAL, then libtorrent only binds the source address), so the IP filter blocks all of IPv6 while an interface is bound. The lookup is injectable (`EngineOptions::interfacePresent`); `M6E_TORRENT_TEST_INTERFACE_GATE` lets the tests make the interface look gone.
-- **IP filter:** `loadIpFilter` takes a file directly in `<profile-dir>/inbox/` only, opened through `openConfined` (no link followed), parses it with `parseIpFilter` and applies it, with the IPv6 block when bound, through `set_ip_filter`. Every torrent and magnet fetch has `apply_ip_filter`, so incoming connections are filtered too.
+- **IP filter:** `loadIpFilter` takes a file directly in the inbox only (`--inbox-dir`, by default `<profile-dir>/inbox/`), opened through `openConfined` (no link followed). It reads the whole file during the `setConfig` call, parses it with `parseIpFilter` and applies it through `set_ip_filter`, with the IPv6 block when an interface is bound. Every torrent and magnet fetch has `apply_ip_filter`, so incoming connections are filtered too.
+- **File priorities:** the helper keeps the priorities last asked for (`confirm`, `setFilePriority`) itself, because libtorrent applies them on its disk thread and reports the old ones until then. `detail` reports them, and they replace libtorrent's in the resume data. The resume data also records which files were ever wanted (`m6e.wanted`). At completion every such file that exists is finalized, so a file skipped after it got data is not left without quarantine. Making a skipped file wanted resets the finished state, and once the engine has the new priorities (`file_prio_alert`) a torrent that is still complete (the file's data was already in the part file) is flushed and finalized at once.
+- **Sandbox (`--sandbox`):** after `realpath` of the profile, inbox and download folders and before the engine starts, `main` applies `kSandboxProfile` with `enterSandboxWithProfile` (`sandbox_init_with_parameters`, `EXEC_HELPER=NO`), so libtorrent runs inside it from its first call. Unused `DOWNLOAD_n` slots get `--profile-dir`. The engine also checks every save folder against the download folders (`checkSaveRoot`) and refuses others with `unsafe-path` before libtorrent would hit the sandbox.
 - **Power:** an IOKit `PreventUserIdleSystemSleep` assertion named "M6E BitTorrent transfer" is held while a confirmed torrent is active and released when none is (and at exit).
 - **Idle exit:** after `M6E_TORRENT_IDLE_SECONDS` with nothing pending, nothing active and no request.
 
@@ -47,11 +50,11 @@ The helper runs M6E's torrent engine (libtorrent-rasterbar 2.1.2, D39) in its ow
 - With a peer proxy, libtorrent keeps one UDP socket on all interfaces while a torrent is active (its SOCKS5 UDP relay endpoint). It sends nothing directly and drops datagrams that do not come from the proxy (`tests/privacy` checks that it answers nothing), but a port scan sees it as open or filtered.
 - The kill switch was tested with the real watchdog and a real interface (`lo0`) made to look gone, and with an interface that does not exist; a VPN interface (`utun`) disappearing for real was not tested, because creating one needs root.
 - With both a peer proxy and `bindInterface`, peer connections to the proxy are bound to the interface, but tracker connections to the proxy are not: libtorrent binds tracker connections to the listen socket, and its proxy listen socket has no device. The kill switch still stops them when the interface goes away.
-- The service still sends the user's own IP filter path; it must copy the file into `<profile-dir>/inbox/` first.
 - No TLS: `https://` trackers and web seeds fail.
-- The sandbox profile in `sandbox/` is not applied (see its README for what the service must provide first).
+- The sandbox is applied only with `--sandbox`, which the service passes only while the pref `m6e.torrent.sandbox` is on (default false). The open points are in `sandbox/README.md`.
 
 ## Notes for testing
 - Only the synthetic loopback fixtures in `fixtures/` (spec 8.9, D38). `tests/run_tests.py` is the conformance suite; `--slow --idle-seconds 5` includes the idle exit.
 - `tests/privacy/run.sh [helper]` runs the privacy and settings tests (encryption, limits, queue, seeding goals, SOCKS5, kill switch, IP filter, uTP, web seeds, v2, identity) against a local tracker, seed, SOCKS5 server, relay and web seed on 127.0.0.1 and ::1, in about 4 minutes.
+- `tests/sandbox/run.sh [helper] [--privacy]` runs the sandbox tests (`sandbox_tests.py`: arguments, the live helper's rules through `sandbox_check`, transfers, links planted after the check, `setConfig`, `setFilePriority`), then `run_tests.py` and, with `--privacy`, the privacy tests, both against the helper under `--sandbox` through `tests/sandbox/m6e-torrent-sandboxed`.
 - libtorrent tries uTP before TCP, so a TCP-only peer such as the fixture seed is reached about 4 s after the tracker answers.
