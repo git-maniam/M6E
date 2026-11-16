@@ -14,7 +14,7 @@ const { M6ETorrentService } = ChromeUtils.importESModule(
 );
 
 const TOPIC_CHANGED = "m6e-torrent-changed";
-const SYNTHETIC_TRACKER = "http://tracker.invalid/announce";
+const SYNTHETIC_TRACKER = "http://tracker.invalid/announce";  // eslint-disable-line sdl/no-insecure-url
 const MOCKED_METHODS = [
   "list",
   "detail",
@@ -99,6 +99,9 @@ function syntheticDetail(status, overrides = {}) {
   };
 }
 
+/**
+ *
+ */
 class MockPageService {
   constructor() {
     this.calls = [];

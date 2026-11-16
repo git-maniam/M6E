@@ -56,19 +56,19 @@ Preferences.addAll(
     ["downloadDir", "string"],
     ["askWhereToSave", "bool"],
     ["startNow", "bool"],
-  ].map(([name, type]) => ({ id: PREFIX + name, type }))
+  ].map(([prefName, type]) => ({ id: PREFIX + prefName, type }))
 );
 
 function refresh(settingId) {
   Preferences.getSetting(settingId)?.emit("change");
 }
 
-function addBoolSetting(id, name, extra = {}) {
-  Preferences.addSetting({ id, pref: PREFIX + name, ...extra });
+function addBoolSetting(id, prefName, extra = {}) {
+  Preferences.addSetting({ id, pref: PREFIX + prefName, ...extra });
 }
 
-function addIntSetting(id, name, min, max, extra = {}) {
-  const pref = PREFIX + name;
+function addIntSetting(id, prefName, min, max, extra = {}) {
+  const pref = PREFIX + prefName;
   Preferences.addSetting({
     id,
     pref,
@@ -86,8 +86,8 @@ function addIntSetting(id, name, min, max, extra = {}) {
   });
 }
 
-function addTextSetting(id, name, isValid, extra = {}) {
-  const pref = PREFIX + name;
+function addTextSetting(id, prefName, isValid, extra = {}) {
+  const pref = PREFIX + prefName;
   Preferences.addSetting({
     id,
     pref,
@@ -455,10 +455,10 @@ Preferences.addSetting({
   id: "btInterfaceDown",
   visible: () => interfaceDown !== null,
   getControlConfig(config) {
-    const name = /^[A-Za-z0-9._:-]{1,32}$/.test(interfaceDown ?? "")
+    const interfaceName = /^[A-Za-z0-9._:-]{1,32}$/.test(interfaceDown ?? "")
       ? interfaceDown
       : "";
-    return { ...config, l10nArgs: { interface: name } };
+    return { ...config, l10nArgs: { interface: interfaceName } };
   },
   setup(emitChange) {
     const observer = {

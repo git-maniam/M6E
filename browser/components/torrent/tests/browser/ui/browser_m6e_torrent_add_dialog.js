@@ -288,7 +288,7 @@ add_task(async function test_untrusted_origins_are_dropped() {
   const { service, risk } = installMocks();
   const done = gM6ETorrent.addTorrentFile("/mock/sample.torrent", {
     kind: "page",
-    origin: "http://example.org",
+    origin: "http://example.org",  // eslint-disable-line sdl/no-insecure-url
   });
   const opened = await waitForAddDialog();
   await waitForDetails(opened.doc);

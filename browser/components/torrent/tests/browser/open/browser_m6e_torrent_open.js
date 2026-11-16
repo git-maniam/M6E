@@ -112,7 +112,7 @@ add_task(async function test_magnet_from_http_page_has_no_origin() {
   pageOpenReset();
   M6ETorrentHandler.handleMagnet(
     magnetURI(),
-    principalFor("http://example.com"),
+    principalFor("http://example.com"),  // eslint-disable-line sdl/no-insecure-url
     gBrowser.selectedBrowser.browsingContext,
     false,
     true
@@ -352,7 +352,7 @@ add_task(async function test_page_download_origin() {
     );
 
     pageOpenReset();
-    const insecure = fakeLauncher("http://example.com/sample.torrent");
+    const insecure = fakeLauncher("http://example.com/sample.torrent");  // eslint-disable-line sdl/no-insecure-url
     M6ETorrentHandler.handleDownload(insecure, null);
     Assert.deepEqual(
       saved[2],
@@ -395,7 +395,7 @@ add_task(function test_page_vouches_only_for_hosts_of_its_own() {
     "nor for one on a third-party mirror"
   );
   is(
-    pageOf("http://cdimage.debian.org/synthetic/sample.torrent"),
+    pageOf("http://cdimage.debian.org/synthetic/sample.torrent"),  // eslint-disable-line sdl/no-insecure-url
     null,
     "nor for an insecure file"
   );
@@ -404,7 +404,7 @@ add_task(function test_page_vouches_only_for_hosts_of_its_own() {
       Services.io.newURI("https://cdimage.debian.org/synthetic/sample.torrent"),
       {
         currentWindowGlobal: {
-          documentPrincipal: principalFor("http://www.debian.org"),
+          documentPrincipal: principalFor("http://www.debian.org"),  // eslint-disable-line sdl/no-insecure-url
         },
       }
     ),
@@ -449,7 +449,7 @@ add_task(function test_page_counts_only_as_the_referrer() {
   is(
     M6ETorrentHandler._downloadOrigin(
       origins,
-      from("http://www.example.com/downloads/")
+      from("http://www.example.com/downloads/")  // eslint-disable-line sdl/no-insecure-url
     ),
     "https://files.example.com",
     "An insecure referrer is not the page"

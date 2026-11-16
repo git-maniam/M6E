@@ -181,8 +181,9 @@ add_task(async function test_live_updates() {
     "The speed"
   );
   is(field(doc, "progress").textContent, "50%", "The detail follows");
-  ok(
-    mock.callsTo("detail").length > detailCalls,
+  Assert.greater(
+    mock.callsTo("detail").length,
+    detailCalls,
     "The detail of the selection is refreshed"
   );
 
@@ -212,7 +213,11 @@ add_task(async function test_live_updates() {
     () => !doc.getElementById("m6e-torrents-detail-unavailable").hidden,
     "A failing detail call is reported"
   );
-  ok(mock.callsTo("detail").length > failing, "The detail was asked again");
+  Assert.greater(
+    mock.callsTo("detail").length,
+    failing,
+    "The detail was asked again"
+  );
   is(field(doc, "name").textContent, "synthetic-two", "The list data stays");
   BrowserTestUtils.removeTab(tab);
 });
@@ -253,7 +258,7 @@ add_task(async function test_untrusted_text_is_inert() {
   mock.torrents = [status];
   const detail = syntheticDetail(status);
   detail.metadata.files[0].path = "<u>dir</u>/\u202Efile.txt";
-  detail.trackers[0].url = "http://tracker.invalid/<b>x</b>\u202E";
+  detail.trackers[0].url = "http://tracker.invalid/<b>x</b>\u202E";  // eslint-disable-line sdl/no-insecure-url
   detail.trackers[0].message = "<i>message</i>";
   detail.peers[0].client = "<b>client</b>\u202E";
   mock.details.set(ONE, detail);
@@ -282,7 +287,7 @@ add_task(async function test_untrusted_text_is_inert() {
   const tracker = doc.querySelector("#m6e-torrents-trackers tbody tr");
   is(
     tracker.cells[0].textContent,
-    "http://tracker.invalid/<b>x</b><U+202E>",
+    "http://tracker.invalid/<b>x</b><U+202E>",  // eslint-disable-line sdl/no-insecure-url
     "Tracker addresses are escaped"
   );
   is(tracker.cells[4].textContent, "<i>message</i>", "Tracker messages");

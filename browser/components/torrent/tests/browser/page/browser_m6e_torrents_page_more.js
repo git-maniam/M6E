@@ -20,7 +20,7 @@ function fileSelects(doc) {
 function changeTo(select, value) {
   select.value = value;
   select.dispatchEvent(
-    new select.ownerDocument.defaultView.Event("change", { bubbles: true })
+    new select.documentGlobal.Event("change", { bubbles: true })
   );
 }
 
@@ -237,6 +237,7 @@ add_task(async function test_speed_tab() {
 add_task(async function test_speed_is_sampled_from_notifications() {
   const { mock, tab, doc, page } = await openWithOne();
   const before = page._speed.get(ONE).length;
+  // eslint-disable-next-line mozilla/no-arbitrary-setTimeout
   await new Promise(resolve => setTimeout(resolve, 600));
   mock.notify([
     syntheticStatus({ tid: ONE, name: "synthetic-one", downKBps: 77 }),

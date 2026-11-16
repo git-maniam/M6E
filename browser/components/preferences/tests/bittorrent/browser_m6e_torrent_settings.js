@@ -411,7 +411,7 @@ add_task(async function test_proxy_and_password() {
 
   doc.getElementById("btProxyPasswordClear").click();
   await TestUtils.waitForCondition(async () => {
-    return (await savedLogins()).length == 0;
+    return !(await savedLogins()).length;
   }, "The saved password is removed");
 
   toggle.click();

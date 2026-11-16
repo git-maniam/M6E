@@ -33,12 +33,14 @@ const errors = [];
 const cleanups = [];
 
 function sleep(ms) {
+  // eslint-disable-next-line mozilla/no-arbitrary-setTimeout
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function withTimeout(promise, ms, what) {
   let timer;
   const timeout = new Promise((resolve, reject) => {
+    // eslint-disable-next-line mozilla/no-arbitrary-setTimeout
     timer = setTimeout(() => reject(new Error(`timed out: ${what}`)), ms);
   });
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
@@ -548,7 +550,7 @@ helper_task(async function test_helper_crash_restart_restore() {
   await M6ETorrentService.confirmAdd(tid, { savePath: save, start: true });
   await waitForState(tid, ["downloading"]);
   const oldPid = M6ETorrentService.testing.helperPid();
-  Assert.ok(oldPid > 0, "the helper pid is known");
+  Assert.greater(oldPid, 0, "the helper pid is known");
   Assert.ok(await isProcessAlive(oldPid));
 
   const exited = notification("m6e-torrent-error", d => d.code == "helper-exited");

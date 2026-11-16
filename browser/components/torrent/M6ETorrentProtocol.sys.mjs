@@ -73,6 +73,9 @@ export function isBusyState(state) {
   return ACTIVE_STATES.has(state) || state == "pending-confirm";
 }
 
+/**
+ *
+ */
 export class TorrentError extends Error {
   constructor(code, message, extra = {}) {
     super(message || code);
@@ -88,6 +91,9 @@ export function encodeRequest(id, op, args = {}) {
 
 // Splits the helper's standard output into JSON objects. Complete lines that
 // are not a JSON object come back as { invalid } and are the caller's to log.
+/**
+ *
+ */
 export class LineFramer {
   #buffer = "";
   #maxLine;
@@ -135,6 +141,9 @@ export class LineFramer {
 }
 
 // Matches replies to requests by id and times requests out.
+/**
+ *
+ */
 export class RequestTable {
   #next = 1;
   #pending = new Map();
@@ -397,6 +406,14 @@ export function savedTorrentFolder(bytes) {
  * are not restored paused), then the remembered ones. Only folders that exist
  * (the existing array) are used. Returns { folders, droppedSaved }, where
  * droppedSaved lists folders of saved torrents that did not fit.
+ *
+ * @param {object} root0
+ * @param {string} root0.defaultFolder
+ * @param {string} root0.required
+ * @param {Array} root0.saved
+ * @param {Array} root0.remembered
+ * @param {Array} root0.existing
+ * @param {number} root0.max
  */
 export function selectFolders({
   defaultFolder,
@@ -862,7 +879,7 @@ function checkComponent(value, what) {
   if (!(value instanceof Uint8Array)) {
     throw invalid(`${what} is not a string`);
   }
-  if (value.length == 0) {
+  if (!value.length) {
     throw unsafe(what);
   }
   if (

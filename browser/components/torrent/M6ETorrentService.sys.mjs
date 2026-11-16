@@ -115,6 +115,9 @@ function deferred() {
   return d;
 }
 
+/**
+ *
+ */
 class M6ETorrentServiceImpl {
   #timings = { ...DEFAULT_TIMINGS };
   #session = null;
@@ -527,11 +530,12 @@ class M6ETorrentServiceImpl {
       clearTimeout(this.#restartTimer);
       this.#restartTimer = null;
     }
-    const restoreStart = this.#resumeOnStart
-      ? true
-      : this.#hasStartedThisSession
+    let restoreStart = this.#resumeOnStart;
+    if (!restoreStart) {
+      restoreStart = this.#hasStartedThisSession
         ? false
         : this.#pref("resumeAtStartup");
+    }
     this.#resumeOnStart = false;
     this.#hasStartedThisSession = true;
     this.#reportedUnsupported.clear();
@@ -1567,6 +1571,8 @@ class M6ETorrentServiceImpl {
    * Writes prefs by their name without "m6e.torrent.". The grouped forms of
    * the helper's setConfig ("proxy": {...}, "seedGoal": {...}) are also
    * accepted. "proxy.password" goes to the login manager.
+   *
+   * @param {object} partial
    */
   async setConfig(partial) {
     const prefs = partialToPrefs(partial);

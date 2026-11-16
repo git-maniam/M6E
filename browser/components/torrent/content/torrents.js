@@ -196,6 +196,8 @@ var gM6ETorrentsPage = {
   /**
    * Makes a name safe to show: invisible and direction-changing characters
    * become visible escapes, so a name cannot disguise itself.
+   *
+   * @param {string} name
    */
   displayName(name) {
     return String(name ?? "").replace(
@@ -316,7 +318,10 @@ var gM6ETorrentsPage = {
         let x = key(a);
         let y = key(b);
         if (x === null || y === null) {
-          return x === y ? 0 : x === null ? 1 : -1;
+          if (x === y) {
+            return 0;
+          }
+          return x === null ? 1 : -1;
         }
         let order =
           typeof x == "string"
@@ -557,6 +562,9 @@ var gM6ETorrentsPage = {
   /**
    * Shows plain text or a Fluent message (an object with id and args) in an
    * element without redoing work when nothing changed.
+   *
+   * @param {Element} el
+   * @param {object} value
    */
   setValue(el, value) {
     let key = typeof value == "string" ? "t:" + value : JSON.stringify(value);
@@ -1366,6 +1374,10 @@ var gM6ETorrentsPage = {
    * Builds a magnet link from the info hash, the name and the trackers of
    * the torrent file. A v2-only torrent is identified by the first 40
    * characters of its hash, so its link is not usable by other clients.
+   *
+   * @param {string} tid
+   * @param {string} name
+   * @param {Array} trackers
    */
   buildMagnet(tid, name, trackers) {
     let clean = String(name ?? "").replace(M6E_TORRENTS_INVISIBLE, "");

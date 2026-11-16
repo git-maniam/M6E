@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
+// eslint-disable-next-line mozilla/reject-import-system-module-from-non-system
 import { PREF_DEFAULTS } from "../../../torrent/M6ETorrentProtocol.sys.mjs";
 
 const ROOT = new URL("../../../../../", import.meta.url);
@@ -17,9 +18,9 @@ function readPrefs(path, call) {
     `^${call}\\("m6e\\.torrent\\.([^"]+)",\\s*(.+?)(?:,\\s*locked)?\\);\\s*$`,
     "gm"
   );
-  for (const [, name, value] of text.matchAll(re)) {
-    assert.ok(!(name in out), `${name} is set twice in ${path}`);
-    out[name] = JSON.parse(value);
+  for (const [, prefName, value] of text.matchAll(re)) {
+    assert.ok(!(prefName in out), `${prefName} is set twice in ${path}`);
+    out[prefName] = JSON.parse(value);
   }
   return out;
 }

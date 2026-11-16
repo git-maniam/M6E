@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
+// eslint-disable-next-line mozilla/reject-import-system-module-from-non-system
 import {
   LineFramer,
   RequestTable,
@@ -67,7 +68,7 @@ function bencode(value) {
 }
 
 function torrent(info) {
-  return bencode({ announce: "http://t.invalid/a", info });
+  return bencode({ announce: "http://t.invalid/a", info });  // eslint-disable-line sdl/no-insecure-url
 }
 
 const single = { name: "a.iso", length: 5, "piece length": 16384 };
@@ -154,7 +155,10 @@ test("unsafe paths are rejected", () => {
 
 test("dot names that are not dots pass", () => {
   precheckTorrent(
-    torrent({ name: "x", files: [{ length: 1, path: [".hidden", "...", "a.b"] }] })
+    torrent({
+      name: "x",
+      files: [{ length: 1, path: [".hidden", "...", "a.b"] }],
+    })
   );
 });
 
@@ -175,10 +179,22 @@ test("nesting limit", () => {
     enc.encode(`d4:infod4:name1:x6:lengthi1e5:extra${nest(n)}${tail}ee`);
   // Root dictionary is level 1, info is level 2, the list levels follow.
   precheckTorrent(deep(62, ""));
-  assert.equal(code(() => precheckTorrent(deep(63, ""))), "invalid-torrent");
-  assert.equal(code(() => precheckTorrent(deep(1000, ""))), "invalid-torrent");
-  assert.equal(code(() => parseBencode(enc.encode(nest(64)))), null);
-  assert.equal(code(() => parseBencode(enc.encode(nest(65)))), "invalid-torrent");
+  assert.equal(
+    code(() => precheckTorrent(deep(63, ""))),
+    "invalid-torrent"
+  );
+  assert.equal(
+    code(() => precheckTorrent(deep(1000, ""))),
+    "invalid-torrent"
+  );
+  assert.equal(
+    code(() => parseBencode(enc.encode(nest(64)))),
+    null
+  );
+  assert.equal(
+    code(() => parseBencode(enc.encode(nest(65)))),
+    "invalid-torrent"
+  );
 });
 
 test("strict bencode", () => {
@@ -213,7 +229,10 @@ test("strict bencode", () => {
 });
 
 test("missing pieces are invalid", () => {
-  assert.equal(code(() => precheckTorrent(bencode({ a: 1 }))), "invalid-torrent");
+  assert.equal(
+    code(() => precheckTorrent(bencode({ a: 1 }))),
+    "invalid-torrent"
+  );
   assert.equal(
     code(() => precheckTorrent(torrent({ name: "x" }))),
     "invalid-torrent"
@@ -222,13 +241,18 @@ test("missing pieces are invalid", () => {
     code(() => precheckTorrent(torrent({ length: 1 }))),
     "invalid-torrent"
   );
-  assert.equal(code(() => precheckTorrent(bencode([1]))), "invalid-torrent");
+  assert.equal(
+    code(() => precheckTorrent(bencode([1]))),
+    "invalid-torrent"
+  );
 });
 
 test("framing across chunks", () => {
   const f = new LineFramer(50);
   assert.deepEqual(f.push('{"event":"re'), []);
-  assert.deepEqual(f.push('ady"}\n{"id":1,'), [{ message: { event: "ready" } }]);
+  assert.deepEqual(f.push('ady"}\n{"id":1,'), [
+    { message: { event: "ready" } },
+  ]);
   assert.deepEqual(f.push('"ok":true}\n\nnot json\n[1]\n'), [
     { message: { id: 1, ok: true } },
     { invalid: "not json" },
@@ -236,7 +260,9 @@ test("framing across chunks", () => {
   ]);
   assert.throws(() => f.push("x".repeat(60)), { code: "protocol-error" });
   const g = new LineFramer(10);
-  assert.throws(() => g.push("x".repeat(20) + "\n"), { code: "protocol-error" });
+  assert.throws(() => g.push("x".repeat(20) + "\n"), {
+    code: "protocol-error",
+  });
 });
 
 test("framing keeps multibyte text", () => {
@@ -259,7 +285,10 @@ test("request table correlation", async () => {
   const b = t.add("list", 0);
   assert.notEqual(a.id, b.id);
   assert.equal(t.size, 2);
-  assert.equal(t.settle({ id: b.id, ok: true, result: { torrents: [] } }), true);
+  assert.equal(
+    t.settle({ id: b.id, ok: true, result: { torrents: [] } }),
+    true
+  );
   assert.deepEqual(await b.promise, { torrents: [] });
   assert.equal(t.settle({ id: 999, ok: true }), false);
   t.settle({
@@ -323,10 +352,14 @@ test("config for changed keys only", () => {
     randomizePeerId: true,
     bindInterface: "utun3",
   };
-  const c = buildConfig(p, ["proxy", "seedGoal", "peerIdPrefix", "bindInterface"], {
-    password: "pw",
-    peerIdPrefix: "-AB1234-",
-  });
+  const c = buildConfig(
+    p,
+    ["proxy", "seedGoal", "peerIdPrefix", "bindInterface"],
+    {
+      password: "pw",
+      peerIdPrefix: "-AB1234-",
+    }
+  );
   assert.deepEqual(Object.keys(c).sort(), [
     "bindInterface",
     "peerIdPrefix",
@@ -357,15 +390,18 @@ test("every pref is classified or deliberately local", () => {
     "sandbox",
     "sandboxFolders",
   ]);
-  for (const name of Object.keys(PREF_DEFAULTS)) {
-    assert.equal(!!classifyPref(name), !local.has(name), name);
+  for (const prefName of Object.keys(PREF_DEFAULTS)) {
+    assert.equal(!!classifyPref(prefName), !local.has(prefName), prefName);
   }
-  assert.deepEqual(classifyPref("proxy.password"), { group: "config", key: "proxy" });
+  assert.deepEqual(classifyPref("proxy.password"), {
+    group: "config",
+    key: "proxy",
+  });
 });
 
 test("pref validation", () => {
   assert.equal(validatePrefValue("downKBps", 100), 100);
-  for (const [name, value] of [
+  for (const [prefName, value] of [
     ["downKBps", -1],
     ["downKBps", 1.5],
     ["downKBps", "1"],
@@ -381,9 +417,16 @@ test("pref validation", () => {
     ["nope", 1],
     ["dht", 1],
   ]) {
-    assert.throws(() => validatePrefValue(name, value), { code: "bad-request" }, name);
+    assert.throws(
+      () => validatePrefValue(prefName, value),
+      { code: "bad-request" },
+      prefName
+    );
   }
-  assert.equal(validatePrefValue("trustedSites", '["https://a.example"]'), '["https://a.example"]');
+  assert.equal(
+    validatePrefValue("trustedSites", '["https://a.example"]'),
+    '["https://a.example"]'
+  );
   assert.equal(validatePrefValue("ipFilterPath", "/tmp/x.p2p"), "/tmp/x.p2p");
 });
 
@@ -430,12 +473,14 @@ test("the seed action", () => {
 
 test("magnet validation", () => {
   const hex = "a".repeat(40);
-  validateMagnet(`magnet:?xt=urn:btih:${hex}&dn=x&tr=http%3A%2F%2Ft.invalid%2Fa`);
+  validateMagnet(
+    `magnet:?xt=urn:btih:${hex}&dn=x&tr=http%3A%2F%2Ft.invalid%2Fa`
+  );
   validateMagnet(`MAGNET:?dn=x&xt=urn:btih:${"A2".repeat(16)}`);
   validateMagnet(`magnet:?xt=urn:btmh:1220${"b".repeat(64)}`);
   for (const bad of [
     "",
-    "http://x",
+    "http://x",  // eslint-disable-line sdl/no-insecure-url
     "magnet:?dn=x",
     `magnet:?xt=urn:btih:${"a".repeat(39)}`,
     `magnet:?xt=urn:btih:${hex}\n&dn=x`,
@@ -443,25 +488,44 @@ test("magnet validation", () => {
     `magnet:?xt=urn:btih:${hex}&dn=${"x".repeat(20000)}`,
     null,
   ]) {
-    assert.throws(() => validateMagnet(bad), TorrentError, String(bad).slice(0, 40));
+    assert.throws(
+      () => validateMagnet(bad),
+      TorrentError,
+      String(bad).slice(0, 40)
+    );
   }
 });
 
 test("sources are sanitized", () => {
-  assert.equal(httpsOrigin("https://example.org/path?q"), "https://example.org");
-  assert.equal(httpsOrigin("https://example.org:8443/x"), "https://example.org:8443");
-  assert.equal(httpsOrigin("http://example.org"), null);
+  assert.equal(
+    httpsOrigin("https://example.org/path?q"),
+    "https://example.org"
+  );
+  assert.equal(
+    httpsOrigin("https://example.org:8443/x"),
+    "https://example.org:8443"
+  );
+  assert.equal(httpsOrigin("http://example.org"), null);  // eslint-disable-line sdl/no-insecure-url
   assert.equal(httpsOrigin("file:///x"), null);
   assert.equal(httpsOrigin("garbage"), null);
-  assert.deepEqual(sanitizeSource({ kind: "page", origin: "https://a.example/x" }), {
-    kind: "page",
-    origin: "https://a.example",
-  });
-  assert.deepEqual(sanitizeSource({ kind: "evil", origin: "http://a.example" }), {
+  assert.deepEqual(
+    sanitizeSource({ kind: "page", origin: "https://a.example/x" }),
+    {
+      kind: "page",
+      origin: "https://a.example",
+    }
+  );
+  assert.deepEqual(
+    sanitizeSource({ kind: "evil", origin: "http://a.example" }),  // eslint-disable-line sdl/no-insecure-url
+    {
+      kind: "unknown",
+      origin: null,
+    }
+  );
+  assert.deepEqual(sanitizeSource(undefined), {
     kind: "unknown",
     origin: null,
   });
-  assert.deepEqual(sanitizeSource(undefined), { kind: "unknown", origin: null });
 });
 
 test("trusted sites parse", () => {
@@ -473,7 +537,10 @@ test("trusted sites parse", () => {
 
 test("peer id prefix", () => {
   assert.match(randomPeerIdPrefix(), /^-[A-Z]{2}[0-9]{4}-$/);
-  assert.equal(randomPeerIdPrefix(() => 0), "-AA0000-");
+  assert.equal(
+    randomPeerIdPrefix(() => 0),
+    "-AA0000-"
+  );
 });
 
 test("candidate file paths", () => {
@@ -483,7 +550,9 @@ test("candidate file paths", () => {
     "/save/dir/a/b",
   ]);
   const one = { name: "x.iso", files: [{ path: "x.iso" }] };
-  assert.deepEqual(candidateFilePaths("/save", one, one.files[0]), ["/save/x.iso"]);
+  assert.deepEqual(candidateFilePaths("/save", one, one.files[0]), [
+    "/save/x.iso",
+  ]);
 });
 
 test("the helper idles out later than the service stops it", () => {
@@ -494,12 +563,10 @@ test("the helper idles out later than the service stops it", () => {
 
 test("helper arguments carry the sandbox folders only when asked", () => {
   const base = { profileDir: "/p/torrents", inboxDir: "/p/torrents/inbox" };
-  assert.deepEqual(helperArguments({ ...base, sandbox: false, folders: ["/a"] }), [
-    "--protocol",
-    "1",
-    "--profile-dir",
-    "/p/torrents",
-  ]);
+  assert.deepEqual(
+    helperArguments({ ...base, sandbox: false, folders: ["/a"] }),
+    ["--protocol", "1", "--profile-dir", "/p/torrents"]
+  );
   const args = helperArguments({
     ...base,
     sandbox: true,
@@ -530,7 +597,11 @@ test("download folders", () => {
   assert.equal(pathIsInside("/a/b/", "/a/b/c/d"), true);
   assert.equal(pathIsInside("/a/b", "/a/bc"), false);
   assert.equal(pathIsInside("/a/b", "/a"), false);
-  assert.deepEqual(rememberFolder(["/1", "/2", "/3"], "/new"), ["/new", "/1", "/2"]);
+  assert.deepEqual(rememberFolder(["/1", "/2", "/3"], "/new"), [
+    "/new",
+    "/1",
+    "/2",
+  ]);
   assert.deepEqual(rememberFolder(["/1", "/2"], "/2"), ["/2", "/1"]);
   assert.throws(() => validatePrefValue("sandboxFolders", "[1]"), {
     code: "bad-request",
@@ -549,7 +620,13 @@ test("unsupported settings are fatal when they touch the network", () => {
   assert.deepEqual(
     unsupportedConfig(config, {
       applied: [],
-      unsupported: ["proxy", "ipFilterPath", "bindInterface", "seedGoal", "userAgent"],
+      unsupported: [
+        "proxy",
+        "ipFilterPath",
+        "bindInterface",
+        "seedGoal",
+        "userAgent",
+      ],
     }),
     { fatal: ["proxy", "ipFilterPath"], warn: ["seedGoal"] }
   );
@@ -575,7 +652,12 @@ test("the save folder of a saved torrent", () => {
   assert.equal(savedTorrentFolder(bencode({ save_path: "rel" })), null);
   assert.equal(savedTorrentFolder(bencode({ x: 1 })), null);
   assert.equal(savedTorrentFolder(enc.encode("not bencode")), null);
-  const bad = Uint8Array.from([...enc.encode("d9:save_path2:"), 0xff, 0xfe, 0x65]);
+  const bad = Uint8Array.from([
+    ...enc.encode("d9:save_path2:"),
+    0xff,
+    0xfe,
+    0x65,
+  ]);
   assert.equal(savedTorrentFolder(bad), null);
 });
 
@@ -619,10 +701,13 @@ test("folder selection for the sandbox", () => {
     { folders: ["/s1", "/r1"], droppedSaved: [] },
     "folders that do not exist are dropped"
   );
-  assert.deepEqual(selectFolders({ defaultFolder: "", saved: [], existing: [] }), {
-    folders: [],
-    droppedSaved: [],
-  });
+  assert.deepEqual(
+    selectFolders({ defaultFolder: "", saved: [], existing: [] }),
+    {
+      folders: [],
+      droppedSaved: [],
+    }
+  );
   assert.deepEqual(
     selectFolders({
       defaultFolder: "/d/",
@@ -636,9 +721,17 @@ test("folder selection for the sandbox", () => {
 
 test("rate limits stop at the helper's cap", () => {
   assert.equal(MAX_RATE_KBPS, 4 * 1024 * 1024);
-  for (const pref of ["downKBps", "upKBps", "turtle.downKBps", "turtle.upKBps"]) {
+  for (const pref of [
+    "downKBps",
+    "upKBps",
+    "turtle.downKBps",
+    "turtle.upKBps",
+  ]) {
     assert.equal(validatePrefValue(pref, MAX_RATE_KBPS), MAX_RATE_KBPS);
-    assert.equal(code(() => validatePrefValue(pref, MAX_RATE_KBPS + 1)), "bad-request");
+    assert.equal(
+      code(() => validatePrefValue(pref, MAX_RATE_KBPS + 1)),
+      "bad-request"
+    );
   }
 });
 
@@ -679,12 +772,21 @@ test("a private window's source records no origin on the files", () => {
     private: true,
   });
   assert.equal(whereFromOrigin(priv), null);
-  const normal = sanitizeSource({ kind: "page", origin: "https://a.example/x" });
-  assert.equal(whereFromOrigin(normal), "https://a.example");
-  assert.deepEqual(sanitizeSource({ kind: "page", origin: null, private: "yes" }), {
+  const normal = sanitizeSource({
     kind: "page",
-    origin: null,
+    origin: "https://a.example/x",
   });
+  assert.equal(whereFromOrigin(normal), "https://a.example");
+  assert.deepEqual(
+    sanitizeSource({ kind: "page", origin: null, private: "yes" }),
+    {
+      kind: "page",
+      origin: null,
+    }
+  );
   assert.equal(whereFromOrigin(null), null);
-  assert.equal(whereFromOrigin({ kind: "page", origin: "http://a.example" }), null);
+  assert.equal(
+    whereFromOrigin({ kind: "page", origin: "http://a.example" }),  // eslint-disable-line sdl/no-insecure-url
+    null
+  );
 });
