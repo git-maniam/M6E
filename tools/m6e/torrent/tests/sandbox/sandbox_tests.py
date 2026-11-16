@@ -321,6 +321,47 @@ def live_helper_rules(ctx):
         assert f.read() == "probe"
 
 
+@test
+def launcher_gives_the_harness_folders(ctx):
+    launcher = os.path.join(HERE, "m6e-torrent-sandboxed")
+    probes = {}
+    for name in ("save", "save2", "in", "outside"):
+        probes[name] = os.path.join(ctx.dir, name, "probe.txt")
+        with open(probes[name], "w") as f:
+            f.write("probe")
+    for layout, profile, rules in (
+        (
+            "conformance",
+            ctx.profile,
+            [
+                ("file-write-data", "save", "allow"),
+                ("file-write-data", "save2", "deny"),
+                ("file-write-data", "outside", "deny"),
+                ("file-read-data", "in", "allow"),
+                ("file-write-data", "in", "deny"),
+            ],
+        ),
+        (
+            "privacy",
+            os.path.join(ctx.dir, "a", "profile"),
+            [
+                ("file-write-data", "save", "allow"),
+                ("file-write-data", "outside", "allow"),
+                ("file-read-data", "in", "allow"),
+            ],
+        ),
+    ):
+        env = {"M6E_TORRENT_HELPER": OPTS.helper, "M6E_SANDBOX_LAYOUT": layout}
+        h = Helper([launcher], profile, env, os.path.join(ctx.dir, "stderr.log"))
+        ctx.helpers.append(h)
+        assert h.wait_ready().get("sandbox") is True, "%s: not sandboxed" % layout
+        for op, name, want in rules:
+            got = query(h.pid, op, probes[name])
+            assert got == want, "%s: %s %s is %s, expected %s" % (layout, op, name, got, want)
+        assert query(h.pid, "file-write-data", os.path.dirname(ctx.dir)) == "deny"
+        h.stop()
+
+
 # (3) Real transfers under the sandbox --------------------------------------
 
 
