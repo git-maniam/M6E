@@ -1121,3 +1121,154 @@ helper_task(async function test_log_ring_buffer_is_bounded() {
   Assert.equal(log.length, 500, "the buffer keeps 500 lines");
   Assert.ok(!log.some(l => l.message == "line 0"), "old lines drop first");
 });
+
+async function useDownloadFolder(folder) {
+  Services.prefs.setIntPref("browser.download.folderList", 2);
+  Services.prefs.setComplexValue(
+    "browser.download.dir",
+    Ci.nsIFile,
+    new FileUtils.File(folder)
+  );
+  cleanups.push(() => {
+    Services.prefs.clearUserPref("browser.download.folderList");
+    Services.prefs.clearUserPref("browser.download.dir");
+  });
+}
+
+async function restartService() {
+  await M6ETorrentService.shutdown();
+  await M6ETorrentService.testing.reset();
+  M6ETorrentService.testing.setTimings({ notifyIntervalMs: 200 });
+  await M6ETorrentService.init();
+}
+
+function unsafePathErrors() {
+  return errors.filter(e => e.code == "unsafe-path");
+}
+
+helper_task(async function test_sandbox_real_helper_default_folder() {
+  const def = await newFolder("default");
+  await useDownloadFolder(def);
+  Services.prefs.setBoolPref(PREFIX + "sandbox", true);
+  const swarm = await startSwarm({ name: "m6e-svc-sbx-default" });
+
+  const { tid } = await M6ETorrentService.addFile(swarm.torrent, null);
+  Assert.equal(M6ETorrentService.testing.helperSandboxed(), true);
+  Assert.deepEqual(await inboxFiles(), [], "the staged copy is deleted");
+  const pid = M6ETorrentService.testing.helperPid();
+
+  const completed = notification("m6e-torrent-completed", d => d.tid == tid);
+  await M6ETorrentService.confirmAdd(tid, { savePath: def, start: true });
+  Assert.equal(
+    M6ETorrentService.testing.helperPid(),
+    pid,
+    "the default folder needs no restart"
+  );
+  await completed;
+  await checkPayload(def, swarm);
+  Assert.deepEqual(await inboxFiles(), []);
+
+  await restartService();
+  Assert.ok(M6ETorrentService.testing.isHelperRunning(), "the helper restarted");
+  Assert.equal(M6ETorrentService.testing.helperSandboxed(), true);
+  const status = await waitForState(tid, DONE);
+  Assert.equal(status.error, null, "the torrent was restored");
+  Assert.deepEqual(unsafePathErrors(), []);
+
+  await M6ETorrentService.remove(tid, true);
+  Assert.equal(await statusOf(tid), null, "removed");
+});
+
+helper_task(async function test_sandbox_real_helper_second_folder() {
+  const def = await newFolder("default");
+  await useDownloadFolder(def);
+  Services.prefs.setBoolPref(PREFIX + "sandbox", true);
+  const swarm = await startSwarm({ name: "m6e-svc-sbx-second" });
+  const other = await newFolder("other");
+
+  const { tid } = await M6ETorrentService.addFile(swarm.torrent, null);
+  const pid = M6ETorrentService.testing.helperPid();
+  const completed = notification("m6e-torrent-completed", d => d.tid == tid);
+  await M6ETorrentService.confirmAdd(tid, { savePath: other, start: true });
+  Assert.notEqual(
+    M6ETorrentService.testing.helperPid(),
+    pid,
+    "a folder outside the set restarts the helper"
+  );
+  Assert.equal(M6ETorrentService.testing.helperSandboxed(), true);
+  await completed;
+  await checkPayload(other, swarm);
+  Assert.deepEqual(unsafePathErrors(), []);
+  Assert.deepEqual(await inboxFiles(), []);
+
+  Services.prefs.clearUserPref(PREFIX + "sandboxFolders");
+  await restartService();
+  const status = await waitForState(tid, DONE);
+  Assert.equal(status.error, null, "the saved torrent's folder is allowed");
+  Assert.equal(status.savePath, other);
+  Assert.deepEqual(unsafePathErrors(), []);
+  Assert.ok(
+    (await M6ETorrentService.testing.allowedFolders()).includes(other),
+    "the folder comes from the saved torrent"
+  );
+});
+
+helper_task(async function test_sandbox_real_helper_missing_remembered_folder() {
+  const def = await newFolder("default");
+  await useDownloadFolder(def);
+  const gone = await newFolder("gone");
+  await IOUtils.remove(gone, { recursive: true });
+  Services.prefs.setBoolPref(PREFIX + "sandbox", true);
+  Services.prefs.setStringPref(PREFIX + "sandboxFolders", JSON.stringify([gone]));
+  const swarm = await startSwarm({ name: "m6e-svc-sbx-missing" });
+
+  const { tid } = await M6ETorrentService.addFile(swarm.torrent, null);
+  Assert.ok(tid, "the torrent was added");
+  Assert.ok(M6ETorrentService.testing.isHelperRunning());
+  Assert.equal(M6ETorrentService.testing.helperSandboxed(), true);
+  Assert.deepEqual(await M6ETorrentService.testing.allowedFolders(), [def]);
+});
+
+helper_task(async function test_sandbox_unconfirmed_helper_is_stopped() {
+  await useFakeHelper();
+  Services.prefs.setBoolPref(PREFIX + "sandbox", true);
+  await fakeSettings({ sandboxLie: true });
+  await Assert.rejects(
+    M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null),
+    e => e.code == "sandbox-failed",
+    "a helper that does not report the sandbox is refused"
+  );
+  Assert.ok(!M6ETorrentService.testing.isHelperRunning());
+  const starts = await fakeLog("starts.jsonl");
+  Assert.ok(starts[0].args.includes("--sandbox"));
+});
+
+helper_task(async function test_sandbox_more_than_four_folders_is_reported() {
+  await useFakeHelper();
+  const def = await newFolder("default");
+  await useDownloadFolder(def);
+  Services.prefs.setBoolPref(PREFIX + "sandbox", true);
+  const folders = [];
+  for (let i = 0; i < 6; i++) {
+    const folder = await newFolder("saved" + i);
+    folders.push(folder);
+    const path = PathUtils.join(torrentsDir(), `${String(i).repeat(40)}.resume`);
+    await IOUtils.writeUTF8(path, `d9:save_path${folder.length}:${folder}e`);
+    await IOUtils.setModificationTime(path, 1_700_000_000_000 + i * 1000);
+  }
+  const error = notification("m6e-torrent-error", d => d.code == "too-many-folders");
+  await M6ETorrentService.addMagnet(SYNTHETIC_MAGNET, null);
+  const event = await error;
+  const [start] = await fakeLog("starts.jsonl");
+  const passed = start.args.flatMap((a, i) =>
+    a == "--download-dir" ? [start.args[i + 1]] : []
+  );
+  Assert.equal(passed.length, 4, "at most four folders");
+  Assert.equal(passed[0], def, "the default folder comes first");
+  for (const folder of folders.slice(-3)) {
+    Assert.ok(passed.includes(folder), "the most recent folders are kept");
+  }
+  for (const folder of folders.slice(0, 3)) {
+    Assert.ok(event.message.includes(folder), "the dropped folders are named");
+  }
+});

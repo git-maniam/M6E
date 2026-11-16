@@ -402,7 +402,15 @@ def main():
         sys.exit(3)
     if s.get("noReady"):
         time.sleep(3600)
-    out({"event": "ready", "protocol": 1, "engine": "fake 1.0", "pid": os.getpid()})
+    out(
+        {
+            "event": "ready",
+            "protocol": 1,
+            "engine": "fake 1.0",
+            "pid": os.getpid(),
+            "sandbox": "--sandbox" in args and not s.get("sandboxLie"),
+        }
+    )
     buf = b""
     while True:
         ready, _, _ = select.select([0], [], [], 0.05)

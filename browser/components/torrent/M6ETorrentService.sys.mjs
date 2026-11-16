@@ -14,6 +14,7 @@ import { setTimeout, clearTimeout } from "resource://gre/modules/Timer.sys.mjs";
 import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 import {
   PROTOCOL_VERSION,
+  MAX_DOWNLOAD_FOLDERS,
   MAX_TORRENT_BYTES,
   PREF_BRANCH,
   PREF_DEFAULTS,
@@ -34,6 +35,8 @@ import {
   isBusyState,
   limitsToPrefs,
   mergeFolders,
+  selectFolders,
+  savedTorrentFolder,
   parseFolderList,
   parseTrustedSites,
   partialToPrefs,
@@ -132,6 +135,7 @@ class M6ETorrentServiceImpl {
   #restartTimer = null;
   #idleTimer = null;
   #notifyTimer = null;
+  #wantedFolder = "";
   #lastNotify = 0;
   #prefTimer = null;
   #dirtyPrefs = new Set();
@@ -371,15 +375,81 @@ class M6ETorrentServiceImpl {
     }
   }
 
-  async #allowedFolders() {
-    const folders = [];
+  async #savedTorrentFolders() {
+    const found = [];
+    const children = await IOUtils.getChildren(this.#torrentsDir).catch(() => []);
+    for (const path of children) {
+      if (!path.endsWith(".resume")) {
+        continue;
+      }
+      try {
+        const { lastModified, size } = await IOUtils.stat(path);
+        if (size > MAX_TORRENT_BYTES) {
+          continue;
+        }
+        const folder = savedTorrentFolder(
+          await IOUtils.read(path, { maxBytes: MAX_TORRENT_BYTES })
+        );
+        if (folder) {
+          found.push({ folder, lastModified });
+        }
+      } catch (e) {
+        // Unreadable: the helper skips it too.
+      }
+    }
+    found.sort((a, b) => b.lastModified - a.lastModified);
+    return found.map(f => f.folder);
+  }
+
+  async #folderExists(folder) {
     try {
-      folders.push(await lazy.Downloads.getPreferredDownloadsDirectory());
+      return (await IOUtils.stat(folder)).type == "directory";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // The folders the sandboxed helper is started with: only ones that exist
+  // (the helper refuses to start otherwise). A folder of a saved torrent that
+  // does not fit in the helper's limit of four is reported as an error.
+  async #allowedFolders({ report = false } = {}) {
+    let defaultFolder = "";
+    try {
+      defaultFolder = await lazy.Downloads.getPreferredDownloadsDirectory();
     } catch (e) {
       this.#addLog("warn", `no default download folder: ${e.message}`);
     }
-    folders.push(...(parseFolderList(this.#pref("sandboxFolders")) ?? []));
-    return mergeFolders(folders);
+    const remembered = parseFolderList(this.#pref("sandboxFolders")) ?? [];
+    const saved = await this.#savedTorrentFolders();
+    const required = this.#wantedFolder ? [this.#wantedFolder] : [];
+    const candidates = mergeFolders(
+      [defaultFolder, ...required, ...saved, ...remembered],
+      Infinity
+    );
+    const existing = [];
+    for (const folder of candidates) {
+      if (await this.#folderExists(folder)) {
+        existing.push(folder);
+      } else if (report) {
+        this.#addLog("warn", `download folder ${folder} no longer exists`);
+      }
+    }
+    const { folders, droppedSaved } = selectFolders({
+      defaultFolder,
+      required,
+      saved,
+      remembered,
+      existing,
+    });
+    if (report && droppedSaved.length) {
+      this.#emitError(
+        null,
+        "too-many-folders",
+        `BitTorrent can use only ${MAX_DOWNLOAD_FOLDERS} download folders at a time; ` +
+          `torrents in ${droppedSaved.join(", ")} stay paused`
+      );
+    }
+    return folders;
   }
 
   // With the sandbox on, the helper can write only to the folders it was
@@ -389,10 +459,15 @@ class M6ETorrentServiceImpl {
     if (!this.#pref("sandbox")) {
       return;
     }
-    const allowed = await this.#allowedFolders();
+    const live = this.#session;
+    const allowed =
+      live && !live.closed && live.sandbox
+        ? live.folders
+        : await this.#allowedFolders();
     if (allowed.some(folder => pathIsInside(folder, savePath))) {
       return;
     }
+    this.#wantedFolder = savePath;
     const remembered = parseFolderList(this.#pref("sandboxFolders")) ?? [];
     this.#setPref(
       "sandboxFolders",
@@ -459,7 +534,10 @@ class M6ETorrentServiceImpl {
       throw new TorrentError("helper-missing", `no helper at ${command}`);
     }
     const sandbox = this.#pref("sandbox");
-    const folders = sandbox ? await this.#allowedFolders() : [];
+    const folders = sandbox
+      ? await this.#allowedFolders({ report: true })
+      : [];
+    this.#wantedFolder = "";
     await this.#cleanInbox();
     let proc;
     try {
@@ -518,6 +596,12 @@ class M6ETorrentServiceImpl {
         await session.ready.promise;
       } finally {
         clearTimeout(timeout);
+      }
+      if (sandbox && session.sandboxed !== true) {
+        throw new TorrentError(
+          "sandbox-failed",
+          "the helper did not confirm that its sandbox is on"
+        );
       }
       await this.#applyConfig(session, ALL_CONFIG_KEYS, true);
       const restored = await this.#send(
@@ -821,6 +905,7 @@ class M6ETorrentServiceImpl {
           );
           break;
         }
+        session.sandboxed = message.sandbox === true;
         session.engine = String(message.engine ?? "");
         session.pid = message.pid ?? session.pid;
         session.ready.resolve();
@@ -1513,6 +1598,7 @@ class M6ETorrentServiceImpl {
         this.#quarantined.clear();
         this.#log = [];
         this.#failures = 0;
+        this.#wantedFolder = "";
         this.#resumeOnStart = false;
         this.#hasStartedThisSession = false;
         this.#initDone = false;
@@ -1531,6 +1617,7 @@ class M6ETorrentServiceImpl {
       },
       isHelperRunning: () => !!this.#session && !this.#session.closed,
       helperPid: () => this.#session?.pid ?? null,
+      helperSandboxed: () => this.#session?.sandboxed ?? null,
       hasIdleTimer: () => !!this.#idleTimer,
       callHelper: (op, args) => this.#call(op, args),
       trackers: tid => this.#trackers.get(tid) ?? null,
