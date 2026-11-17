@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Print the Homebrew cask (Casks/m6e.rb of the git-maniam/homebrew-m6e tap) for
+# Print the Homebrew cask (Casks/m6e-browser.rb of the git-maniam/homebrew-m6e tap) for
 # a release DMG. The version comes from the file name and the sha256 from the
 # file, so each release regenerates the cask.
 #
@@ -49,7 +49,7 @@ sha256=$(shasum -a 256 "$dmg" | cut -d ' ' -f 1)
 
 cask() {
     sed -e "s/@VERSION@/$version/" -e "s/@SHA256@/$sha256/" <<'EOF'
-cask "m6e" do
+cask "m6e-browser" do
   version "@VERSION@"
   sha256 "@SHA256@"
 
@@ -87,7 +87,7 @@ cask "m6e" do
     normally. Click Open at the first-launch question from macOS.
 
     M6E does not update itself. Update it with:
-      brew upgrade --cask m6e
+      brew upgrade --cask m6e-browser
   EOS
 end
 EOF
