@@ -4,6 +4,8 @@
 
 M6E (said "'Am Sexy") is a fast, private and deliberately simple web browser for Macs with Apple silicon. It's built from the Firefox source code, with everything that phones home, tracks you or adds clutter removed. Like the Bangalore autorickshaw on its icon, it's meant to be nimble.
 
+It opens with an address bar and a search box, loads any address you type, and handles `http` and `https` links: macOS lists it under Default web browser (System Settings, Desktop & Dock), and its own Settings page can make it the default. It's signed with an Apple Developer ID and notarized by Apple.
+
 > M6E is an experimental release. It's built for speed and privacy, but you may run into bugs or websites that don't work.
 
 - [What's different from Firefox](#whats-different-from-firefox)
@@ -27,14 +29,12 @@ M6E (said "'Am Sexy") is a fast, private and deliberately simple web browser for
 - **Tracker Blocker:** the shield at the left of the address bar counts what was blocked on the current page. Its panel lists the blocked trackers and has a per-site switch that overrides the Privacy Shield until M6E quits, in either direction.
 - **Telemetry button:** a gauge button beside the address bar that shows page timings and size, measured on your Mac and never sent anywhere.
 - **Search:** Google by default, with Bing as the only alternative. There are no partner codes, and no way to add other engines.
-- **BitTorrent (not in 161.0a2; added on the BitTorrent branch):** a small, private torrent client built into M6E. The "BT" button beside the address bar opens a panel, `about:torrents` shows the full list, and M6E can open `.torrent` files and `magnet:` links (it offers itself for them, and becomes the default only if you choose it in Settings).
-- **Nothing runs until you add a torrent.** The engine (libtorrent) is a separate helper program, `m6e-torrent`, inside the app. It starts when you add a torrent, uses no network and opens no listening port before that, and exits when M6E quits or about a minute after the last transfer ends. A magnet link fetches only its file list, and no file data is downloaded until you click Add.
-- **Privacy defaults:** a random listening port each time, port mapping (UPnP, NAT-PMP) and local peer discovery off, DHT and peer exchange on for public torrents and never for private ones, a Peer ID that does not name M6E, a seeding goal of ratio 1.0, and the macOS quarantine attribute on every finished file. Settings has a BitTorrent section for limits, the queue, encryption, a SOCKS5 proxy, binding to one network interface (for a VPN) and an IP block list.
-- **"Shady Torrent" warning:** when a torrent holds files such as Windows programs or a double extension like `Movie.mkv.exe`, Add shows a warning with the reasons. It informs you and never blocks you. Torrents from well-known Linux and open-source download sites do not get it.
-- **No TLS yet:** the engine is built without TLS, so `https://` trackers and web seeds do not work until a later release; `http://` and `udp://` trackers do.
-- **Testing note (developers):** only the two official pages named in specification 8.9 (D38), or the synthetic loopback fixtures in `tools/m6e/torrent/fixtures`, may be used. This is not a rule for users.
-
-**Reading Mode:** strictly black text on white, 25% larger, with sidebars, ads, embeds and tracking pixels stripped. It can be opened on any web page (http or https) from the View menu.
+- **BitTorrent:** a small, private torrent client built into M6E. The "BT" button beside the address bar opens a panel, `about:torrents` shows the full list, and M6E can open `.torrent` files and `magnet:` links (it offers itself for them, and becomes the default only if you choose it in Settings).
+  - **Nothing runs until you add a torrent.** The engine (libtorrent) is a separate helper program, `m6e-torrent`, inside the app, running in its own macOS sandbox. It starts when you add a torrent, uses no network and opens no listening port before that, and exits when M6E quits or about a minute after the last transfer ends. A magnet link fetches only its file list, and no file data is downloaded until you click Add.
+  - **Privacy defaults:** a random listening port each time, port mapping (UPnP, NAT-PMP) and local peer discovery off, DHT and peer exchange on for public torrents and never for private ones, a Peer ID that does not name M6E, a seeding goal of ratio 1.0, and the macOS quarantine attribute on every finished file. Settings has a BitTorrent section for limits, the queue, encryption, a SOCKS5 proxy, binding to one network interface (for a VPN) and an IP block list.
+  - **"Shady Torrent" warning:** when a torrent holds files such as Windows programs or a double extension like `Movie.mkv.exe`, Add shows a warning with the reasons. It informs you and never blocks you. Torrents from well-known Linux and open-source download sites do not get it.
+  - **No TLS yet:** the engine is built without TLS, so `https://` trackers and web seeds do not work until a later release; `http://` and `udp://` trackers do.
+- **Reading Mode:** strictly black text on white, 25% larger, with sidebars, ads, embeds and tracking pixels stripped. It can be opened on any web page (http or https) from the View menu.
 - **Look:** a light, Safari-like interface that follows the macOS accent colour, with the M6E icon in place of every fox. The browser interface stays light even when macOS is in Dark Mode, while web pages still follow it. The home page shows the M6E splash illustration above the search box, and there's a custom "No Internet Connection" page.
 - **Also:** a bookmarks toolbar on/off switch in Settings, and push notifications delivered through macOS Notification Center.
 
@@ -64,8 +64,6 @@ M6E is signed with the Developer ID of its developer and notarized by Apple (dec
 This was checked with Apple's own Gatekeeper tool on the notarized DMG and the app inside it on the build machine; opening a freshly downloaded copy on a second Mac has not been tested yet.
 
 If macOS says "M6E is damaged and can't be opened", the download is incomplete or the app changed after signing: download it again.
-
-Notarization would remove all of this. It needs an Apple Developer ID (US$99 a year) and has not been decided.
 
 ## Using M6E
 
@@ -120,14 +118,14 @@ brew uninstall --zap --cask m6e-browser
 - No Mozilla accounts, Sync or sign-in: bookmarks and settings stay on the Mac.
 - Search is Google and Bing only, and you can't add search engines.
 - DRM video works through Widevine L3 (software), which downloads from Google when needed. Some streaming services may not play every title; the cause of the failures reported so far is still being investigated.
-- Passkeys stored on the Mac or phone do not work: Touch ID, iCloud Keychain and the iPhone QR code are unavailable, because macOS allows them only for apps with Apple's passkey entitlement, which needs a paid Apple Developer account, a provisioning profile and Apple's approval (M6E is signed ad hoc, decision D8; see D32 in the [specification](m6e_browser_agent_instructions.md)). Only USB security keys (FIDO) work. Where a site offers a choice, use a security key or a password. A site that offers only passkeys may show a generic error; if you have no security key, sign in with another browser (for example Safari) or use the site's account recovery.
+- Passkeys stored on the Mac or phone do not work yet: Touch ID, iCloud Keychain and the iPhone QR code need Apple's browser passkey entitlement (`com.apple.developer.web-browser.public-key-credential`), which Apple grants to web browsers on request. M6E is signed with a Developer ID and notarized, and the entitlement has been requested from Apple; see D32 in the [specification](m6e_browser_agent_instructions.md). Until it is granted, only USB security keys (FIDO) work. Where a site offers a choice, use a security key or a password. A site that offers only passkeys may show a generic error; if you have no security key, sign in with another browser (for example Safari) or use the site's account recovery.
 - macOS may ask again for camera, microphone and location permission after an update.
 - The Privacy Shield and strict tracking protection can break some sites, and Maximum protection more of them. Turn protection off for the site with the Tracker Blocker, or switch the Privacy Shield off.
 - Malware and phishing protection works per domain through the DNS resolver, doesn't check downloads, and stops when DoH is unavailable.
 
 ## Status
 
-Phases 0 to 6 are done. The current release is 161.0a2 (2026-11-03), built with LTO and PGO; it adds the fingerprinting policy (decision D31) and documents the passkey limit (D32). The plan has the dates, commits and test results of every step.
+Phases 0 to 6 and Phase 8 (BitTorrent) are done. The current release is [161.0a2](https://github.com/git-maniam/M6E/releases/tag/v161.0a2) (published 2026-11-18), built with LTO and PGO, signed with a Developer ID and notarized by Apple. It adds the built-in BitTorrent client, the fingerprinting policy (decision D31) and documents the passkey limit (D32). The plan has the dates, commits and test results of every step.
 
 | Phase | Scope | Status |
 |---|---|---|
@@ -138,17 +136,19 @@ Phases 0 to 6 are done. The current release is 161.0a2 (2026-11-03), built with 
 | 4 | Performance, platform removal, security hardening | Done (2026-10-24) |
 | 5 | `.dmg` packaging, signing and acceptance | Done (2026-10-24) |
 | 6 | Deleting the dormant features (VPN, Translations, generative AI, machine learning, Sync, Mozilla accounts, updater, crash reporter, Nimbus) | Done (2026-10-30) |
+| 8 | BitTorrent client, Developer ID signing and notarization | Done (2026-11-18); a real-network download and the performance measurements of the release are still to do |
 
 Measured on the packaged builds (details in [`M6E_IMPLEMENTATION_PLAN.md`](M6E_IMPLEMENTATION_PLAN.md), P6.3):
 
-| | Phase 0 (stock Nightly) | 161.0a1 | 161.0a2 |
-|---|---|---|---|
-| Acceptance (`tools/m6e/acceptance.py`) | | 15 of 15 checks | 15 of 15 checks |
-| First paint (median of 10 runs) | 785 ms | 606 and 624 ms (Phase 5: 579 ms) | 632 and 634 ms |
-| Blank-tab memory | 698 MB | 430 MB (8 processes) | 432 MB (8 processes) |
-| Speedometer 3 | | 45.46 (Phase 5: 44.7) | 44.65 |
-| Idle network (300 s, fresh profile) | 21 hosts, plus 40 looked up only over DNS | 5 hosts | acceptance check passed |
-| Release DMG | | 106.5 MiB | 105.2 MiB |
+| | Phase 0 (stock Nightly) | 161.0a1 | 161.0a2 before BitTorrent | 161.0a2 release |
+|---|---|---|---|---|
+| Acceptance (`tools/m6e/acceptance.py`) | | 15 of 15 checks | 15 of 15 checks | 24 of 24 checks (15 plus 9 BitTorrent) |
+| Unreachability check | | | | 8 of 8 checks |
+| First paint (median of 10 runs) | 785 ms | 606 and 624 ms (Phase 5: 579 ms) | 632 and 634 ms | not measured yet |
+| Blank-tab memory | 698 MB | 430 MB (8 processes) | 432 MB (8 processes) | not measured yet |
+| Speedometer 3 | | 45.46 (Phase 5: 44.7) | 44.65 | not measured yet |
+| Idle network (300 s, fresh profile) | 21 hosts, plus 40 looked up only over DNS | 5 hosts | acceptance check passed | acceptance check passed; no BitTorrent helper at idle |
+| Release DMG | | 106.5 MiB | 105.2 MiB | 107.8 MiB, notarized |
 
 The first measurement, 643 ms, was inflated by background work after a restart; two re-measurements on a quiet machine gave 606 and 624 ms. The Speedometer 3 score was not measured on the stock Phase 0 build.
 
@@ -178,7 +178,8 @@ Configure changes (`mozconfig`, `moz.configure`) rebuild everything, so batch th
 
 ### Checks
 
-- **Lint:** `./mach lint <paths>`. The clang-format, pnpm-audit and cargo-audit linters need `mach bootstrap`; for C++ use `/opt/homebrew/opt/llvm/bin/clang-format`.
+- **Lint:** `./mach lint <paths>`. The clang-format, pnpm-audit and cargo-audit linters need `mach bootstrap`; for C++ use `/opt/homebrew/opt/llvm/bin/clang-format`. `./mach lint` currently stops on an upstream linter configuration that does not parse; until that is fixed, run ESLint directly with `node_modules/.bin/eslint <files>` (set up once with `./mach eslint --setup`).
+- **BitTorrent helper:** `tools/m6e/torrent/build-helper.sh` builds it outside `./mach build`; its suites are `tools/m6e/torrent/tests/run_tests.py`, `tests/confine/run.sh`, `tests/privacy/run.sh`, `tests/security/run.sh` and `tests/sandbox/run.sh`. The torrent tests use only synthetic fixtures served on 127.0.0.1 (specification 8.9, D38).
 - **Tests:** `./mach test --headless <directory>` for one area. `tools/m6e/run_tests.sh <log directory>` runs M6E's own suites and the areas it changes, writing one log per suite. The window-based suites (`browser/components/pagetelemetry`, the Trust panel) refuse `--headless` and need an unlocked display.
 - **Acceptance:** run it on a signed, packaged app copied outside `/tmp`, on a quiet machine, with no other builds or tests running:
   ```sh
@@ -195,7 +196,7 @@ Configure changes (`mozconfig`, `moz.configure`) rebuild everything, so batch th
 tools/m6e/package/release.sh [output directory]
 ```
 
-Run it after a build. It packages the app, adds the BitTorrent helper (`install-helper.sh`: built by `tools/m6e/torrent/build-helper.sh` outside `./mach build`, or a prebuilt binary given in `M6E_TORRENT_HELPER`) as `Contents/MacOS/m6e-torrent`, signs it ad hoc (`sign-adhoc.sh`; the helper gets the hardened runtime and no entitlements), builds `M6E-<version>-macos-arm64.dmg` from the signed app (default `artifacts/release`), verifies the DMG and runs the post-signing checks (`check-signed.js`, and `check-helper.py` for the helper: signature, arm64, macOS 11.0, starts and exits within 2 s). Copy an app out of the DMG with `ditto --noextattr --norsrc`, never `cp -R`: `cp -R` carries `com.apple.FinderInfo` attributes, which make `codesign --verify --strict` fail.
+Run it after a build. It packages the app, adds the BitTorrent helper (`install-helper.sh`: built by `tools/m6e/torrent/build-helper.sh` outside `./mach build`, or a prebuilt binary given in `M6E_TORRENT_HELPER`) as `Contents/MacOS/m6e-torrent`, signs the app, builds `M6E-<version>-macos-arm64.dmg` from the signed app (default `artifacts/release`), verifies the DMG and runs the post-signing checks (`check-signed.js`, and `check-helper.py` for the helper: signature, arm64, macOS 11.0, starts and exits within 2 s). By default it signs ad hoc (`sign-adhoc.sh`). With `M6E_DEVELOPER_ID=1` it signs the app and the DMG with the Developer ID certificate in the keychain, and with `M6E_NOTARY_PROFILE=<profile>` it also notarizes and staples the DMG; the steps are in [`tools/m6e/package/NOTARIZE.md`](tools/m6e/package/NOTARIZE.md). The helper always gets the hardened runtime and no entitlements. Copy an app out of the DMG with `ditto --noextattr --norsrc`, never `cp -R`: `cp -R` carries `com.apple.FinderInfo` attributes, which make `codesign --verify --strict` fail.
 
 ### Where M6E's changes live
 
@@ -204,6 +205,7 @@ Run it after a build. It packages the app, adds the BitTorrent helper (`install-
 - branding: `browser/branding/m6e`, regenerated from `M6E-Icon.png` by `tools/m6e/branding/make-icons.sh`;
 - the Privacy Shield and Tracker Blocker: `browser/components/protections/M6EPrivacyShield.sys.mjs`;
 - the Telemetry button: `browser/components/pagetelemetry`;
+- BitTorrent: `browser/components/torrent` (service, Shady check, link and file handling, `about:torrents`), `browser/base/content/browser-m6eTorrent.js` and `m6e-torrent-add.*` (BT button, panel, Add dialog), `browser/components/preferences/config/bittorrent.mjs` (Settings), and the helper in `tools/m6e/torrent`;
 - other source edits are marked `M6E:`.
 
 Helper tools are in `tools/m6e/`:
@@ -214,7 +216,8 @@ Helper tools are in `tools/m6e/`:
 - `branding/`: icon generation, the user-visible string scan (`scan-strings.py`), the fox-artwork replacement and the DMG layout;
 - `search/`: the search configuration filter;
 - `push/` and `trackers/`: end-to-end checks;
-- `package/`: signing and the release DMG;
+- `package/`: signing, notarization and the release DMG;
+- `torrent/`: the BitTorrent helper, its build script, protocol and tests;
 - `merge/`: upstream merge tooling;
 - `platform/`: the scripts that stripped Windows, Linux and Android code.
 
@@ -242,6 +245,8 @@ Each tool's docstring has the details.
 - [`m6e_browser_agent_instructions.md`](m6e_browser_agent_instructions.md): the specification, covering what M6E is and why, the current status, and the numbered decision log.
 - [`M6E_IMPLEMENTATION_PLAN.md`](M6E_IMPLEMENTATION_PLAN.md): how it's built, with a progress log of every step and its commit, and the as-built notes and results of each phase.
 - [`tools/m6e/p6-reports/unreachability.md`](tools/m6e/p6-reports/unreachability.md): the proof that the dormant features that remain can't be reached.
+- [`tools/m6e/torrent/README.md`](tools/m6e/torrent/README.md) and [`tools/m6e/torrent/PROTOCOL.md`](tools/m6e/torrent/PROTOCOL.md): the BitTorrent helper and the messages between it and the browser.
+- [`tools/m6e/package/NOTARIZE.md`](tools/m6e/package/NOTARIZE.md): signing with the Developer ID and notarizing a release.
 - [`CLAUDE.md`](CLAUDE.md) and [`AGENTS.md`](AGENTS.md): working rules for development with Claude Code.
 
 ## Licence
