@@ -45,10 +45,12 @@ Requirements: a Mac with Apple silicon (M1 or later). There is no Intel or unive
 ### Homebrew
 
 ```sh
-brew install --cask git-maniam/m6e/m6e
+brew tap git-maniam/m6e
+brew trust --cask git-maniam/m6e/m6e-browser
+brew install --cask m6e-browser
 ```
 
-This installs the cask `m6e` from the tap `git-maniam/m6e`. Use the fully qualified name: Homebrew 7 treats third-party taps as untrusted, and installing by the full name trusts only this cask (`brew upgrade --cask m6e` then works too). To install by the short name `m6e`, run `brew trust --cask git-maniam/m6e/m6e` first.
+This installs the cask `m6e-browser` from the tap `git-maniam/m6e`. Homebrew 7 treats third-party taps as untrusted, so the `brew trust` line (needed once, and only for this cask) comes before the short-name install. Without it, `brew install --cask git-maniam/m6e/m6e-browser` installs by the full name and trusts only this cask as it goes. A copy installed earlier as `m6e` is renamed to `m6e-browser` by `brew upgrade --cask`.
 
 ### DMG
 
@@ -98,7 +100,7 @@ Notarization would remove all of this. It needs an Apple Developer ID (US$99 a y
 **Updates:** M6E has no auto-updater, so it never checks for or installs a new version by itself. Security fixes arrive only when the project merges upstream Firefox and publishes a new build. To update, install the new DMG over the old app in Applications, or run:
 
 ```sh
-brew upgrade --cask m6e
+brew upgrade --cask m6e-browser
 ```
 
 Add-on updates are also off, and only signed add-ons can be installed. Themes can't be installed.
@@ -108,7 +110,7 @@ Add-on updates are also off, and only signed add-ons can be installed. Themes ca
 **Uninstall:** quit M6E, drag M6E from Applications to the Trash, and delete `~/Library/Application Support/M6E` and `~/Library/Caches/M6E` to remove your profile and cache. With Homebrew:
 
 ```sh
-brew uninstall --zap --cask m6e
+brew uninstall --zap --cask m6e-browser
 ```
 
 
