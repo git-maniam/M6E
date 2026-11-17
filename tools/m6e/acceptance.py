@@ -2321,15 +2321,15 @@ return { reached: true };
 """
 
 JS_BT_STATE = """
-const doc = win.gM6ETorrent.lastAddDialog.dialog._frame.contentWindow.document;
-const el = id => doc.getElementById(id);
+const dialogDoc = win.gM6ETorrent.lastAddDialog.dialog._frame.contentWindow.document;
+const el = id => dialogDoc.getElementById(id);
 const shown = id => !!el(id) && !el(id).hidden;
 return {
-  ready: doc.documentElement.hasAttribute("m6e-ready"),
+  ready: dialogDoc.documentElement.hasAttribute("m6e-ready"),
   banner: shown("m6e-torrent-shady"),
   fetching: shown("m6e-torrent-add-fetching"),
   error: shown("m6e-torrent-add-error") ? el("m6e-torrent-add-error").textContent : null,
-  reasons: [...doc.querySelectorAll("#m6e-torrent-shady-reasons li")].map(li => ({
+  reasons: [...dialogDoc.querySelectorAll("#m6e-torrent-shady-reasons li")].map(li => ({
     id: li.getAttribute("data-l10n-id"), text: li.textContent,
   })),
   addAnywayDisabled: el("m6e-torrent-shady-add-anyway")?.disabled ?? null,
@@ -2340,8 +2340,8 @@ return {
 """
 
 JS_BT_CLICK = """
-const doc = win.gM6ETorrent.lastAddDialog.dialog._frame.contentWindow.document;
-const button = doc.getElementById(__ID__);
+const dialogDoc = win.gM6ETorrent.lastAddDialog.dialog._frame.contentWindow.document;
+const button = dialogDoc.getElementById(__ID__);
 if (!button || button.disabled) {
   return { clicked: false, found: !!button, disabled: button?.disabled ?? null };
 }
@@ -2876,7 +2876,7 @@ def check_bt_magnet(ctx, r):
 def check_bt_private(ctx, r):
     _, make_torrent, _ = fixtures()
     t = torrent_tests()
-    config = {"dht": True, "pex": True, "lpd": True}
+    config = {"dht": True, "pex": True}
     results = {}
     for label, private in (("public", False), ("private", True)):
         with packaged_helper(ctx, f"private-{label}", config=config) as (h, dirs):
@@ -2896,7 +2896,8 @@ def check_bt_private(ctx, r):
                     dict(t.confirm_args(added["metadata"], dirs["save"]), tid=added["tid"]),
                 )
                 t.wait_done(h, added["tid"], since, timeout=90)
-                time.sleep(1)
+                h.req("setConfig", {"lpd": True})
+                time.sleep(3)
                 taps = [peer_capabilities(tap) for tap in seed.taps if tap.received]
                 udp = [
                     line

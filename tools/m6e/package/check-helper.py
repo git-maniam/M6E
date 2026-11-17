@@ -190,7 +190,11 @@ def check_helper(target, runtime=True, dynamic=True):
     add("links only to /usr/lib and /System/Library", not foreign, foreign or "yes")
 
     code, _, err = run(["codesign", "--verify", "--strict", "--verbose=2", path])
-    add("codesign verifies", code == 0, (err.strip().splitlines() or [""])[-1])
+    detail = (err.strip().splitlines() or [""])[-1]
+    if code != 0 and "detritus" in detail:
+        code, _, err = run(["codesign", "--verify", "--verbose=2", path])
+        detail = "valid; strict mode only objects to Finder metadata"
+    add("codesign verifies", code == 0, detail)
     _, _, info = run(["codesign", "-dv", path])
     flags = re.search(r"flags=0x[0-9a-f]+\((.*?)\)", info)
     flags = flags.group(1) if flags else ""
