@@ -27,7 +27,14 @@ M6E (said "'Am Sexy") is a fast, private and deliberately simple web browser for
 - **Tracker Blocker:** the shield at the left of the address bar counts what was blocked on the current page. Its panel lists the blocked trackers and has a per-site switch that overrides the Privacy Shield until M6E quits, in either direction.
 - **Telemetry button:** a gauge button beside the address bar that shows page timings and size, measured on your Mac and never sent anywhere.
 - **Search:** Google by default, with Bing as the only alternative. There are no partner codes, and no way to add other engines.
-- **Reading Mode:** strictly black text on white, 25% larger, with sidebars, ads, embeds and tracking pixels stripped. It can be opened on any web page (http or https) from the View menu.
+- **BitTorrent (not in 161.0a2; added on the BitTorrent branch):** a small, private torrent client built into M6E. The "BT" button beside the address bar opens a panel, `about:torrents` shows the full list, and M6E can open `.torrent` files and `magnet:` links (it offers itself for them, and becomes the default only if you choose it in Settings).
+- **Nothing runs until you add a torrent.** The engine (libtorrent) is a separate helper program, `m6e-torrent`, inside the app. It starts when you add a torrent, uses no network and opens no listening port before that, and exits when M6E quits or about a minute after the last transfer ends. A magnet link fetches only its file list, and no file data is downloaded until you click Add.
+- **Privacy defaults:** a random listening port each time, port mapping (UPnP, NAT-PMP) and local peer discovery off, DHT and peer exchange on for public torrents and never for private ones, a Peer ID that does not name M6E, a seeding goal of ratio 1.0, and the macOS quarantine attribute on every finished file. Settings has a BitTorrent section for limits, the queue, encryption, a SOCKS5 proxy, binding to one network interface (for a VPN) and an IP block list.
+- **"Shady Torrent" warning:** when a torrent holds files such as Windows programs or a double extension like `Movie.mkv.exe`, Add shows a warning with the reasons. It informs you and never blocks you. Torrents from well-known Linux and open-source download sites do not get it.
+- **No TLS yet:** the engine is built without TLS, so `https://` trackers and web seeds do not work until a later release; `http://` and `udp://` trackers do.
+- **Testing note (developers):** only the two official pages named in specification 8.9 (D38), or the synthetic loopback fixtures in `tools/m6e/torrent/fixtures`, may be used. This is not a rule for users.
+
+**Reading Mode:** strictly black text on white, 25% larger, with sidebars, ads, embeds and tracking pixels stripped. It can be opened on any web page (http or https) from the View menu.
 - **Look:** a light, Safari-like interface that follows the macOS accent colour, with the M6E icon in place of every fox. The browser interface stays light even when macOS is in Dark Mode, while web pages still follow it. The home page shows the M6E splash illustration above the search box, and there's a custom "No Internet Connection" page.
 - **Also:** a bookmarks toolbar on/off switch in Settings, and push notifications delivered through macOS Notification Center.
 
@@ -185,7 +192,7 @@ Configure changes (`mozconfig`, `moz.configure`) rebuild everything, so batch th
   ./mach python tools/m6e/acceptance.py --app <path to M6E.app> --out <dir>
   ./mach python tools/m6e/unreachability_check.py --app <path to M6E.app> --out <dir>
   ```
-  `acceptance.py --list` names the 15 checks. `unreachability_check.py` observes the dormant features that stay in the tree (7 checks).
+  `acceptance.py --list` names the 15 checks and the nine BitTorrent checks BT1 to BT9 (spec 8.8; their titles say [automated], and the manual steps are printed at the end). `unreachability_check.py` observes the dormant features that stay in the tree (8 checks, the last one for the BitTorrent helper).
 - **Measurements:** `./mach python tools/m6e/measure.py --binary <app>/Contents/MacOS/m6e --out <dir>` (startup, memory, idle network) and `./mach python tools/m6e/speedometer.py --binary <exe> --out <file>` (Speedometer 3, offline). Timings need a quiet machine.
 - **Scripted checks of a running build:** `tools/m6e/chrome_eval.py`; see the plan for the Marionette pitfalls.
 
@@ -195,7 +202,7 @@ Configure changes (`mozconfig`, `moz.configure`) rebuild everything, so batch th
 tools/m6e/package/release.sh [output directory]
 ```
 
-Run it after a build. It packages the app, signs it ad hoc (`sign-adhoc.sh`), builds `M6E-<version>-macos-arm64.dmg` from the signed app (default `artifacts/release`), verifies the DMG and runs the post-signing checks. Copy an app out of the DMG with `ditto --noextattr --norsrc`, never `cp -R`: `cp -R` carries `com.apple.FinderInfo` attributes, which make `codesign --verify --strict` fail.
+Run it after a build. It packages the app, adds the BitTorrent helper (`install-helper.sh`: built by `tools/m6e/torrent/build-helper.sh` outside `./mach build`, or a prebuilt binary given in `M6E_TORRENT_HELPER`) as `Contents/MacOS/m6e-torrent`, signs it ad hoc (`sign-adhoc.sh`; the helper gets the hardened runtime and no entitlements), builds `M6E-<version>-macos-arm64.dmg` from the signed app (default `artifacts/release`), verifies the DMG and runs the post-signing checks (`check-signed.js`, and `check-helper.py` for the helper: signature, arm64, macOS 11.0, starts and exits within 2 s). Copy an app out of the DMG with `ditto --noextattr --norsrc`, never `cp -R`: `cp -R` carries `com.apple.FinderInfo` attributes, which make `codesign --verify --strict` fail.
 
 ### Where M6E's changes live
 

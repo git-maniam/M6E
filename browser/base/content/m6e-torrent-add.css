@@ -1,0 +1,183 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* M6E: the Add torrent dialog (Phase 8, D33, D35). */
+
+body {
+  width: 40em;
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-large) var(--space-xlarge);
+  box-sizing: border-box;
+}
+
+h1 {
+  margin: 0 0 var(--space-medium);
+  font-size: var(--font-size-large);
+}
+
+h2 {
+  margin: var(--space-medium) 0 var(--space-small);
+  font-size: var(--font-size-root);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-small);
+
+  > button {
+    margin: 0;
+  }
+}
+
+#m6e-torrent-shady {
+  margin-block: var(--space-medium);
+  padding: var(--space-medium) var(--space-large);
+  border: var(--border-width) solid var(--border-color-error);
+  border-radius: var(--border-radius-medium);
+  background-color: var(--background-color-box);
+
+  > h2 {
+    margin-block-start: 0;
+    color: var(--text-color-error);
+    font-size: var(--font-size-large);
+
+    &:focus-visible {
+      outline: var(--focus-outline);
+      outline-offset: var(--focus-outline-offset);
+    }
+  }
+
+  > p {
+    margin-block: 0 var(--space-small);
+  }
+
+  > ul {
+    margin-block: 0 var(--space-medium);
+    padding-inline-start: var(--space-xlarge);
+    overflow-wrap: anywhere;
+  }
+}
+
+#m6e-torrent-add-fetching {
+  > progress {
+    width: 100%;
+  }
+
+  > .note {
+    color: var(--text-color-deemphasized);
+  }
+}
+
+#m6e-torrent-add-error,
+#m6e-torrent-add-no-space {
+  color: var(--text-color-error);
+}
+
+#m6e-torrent-add-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-xsmall) var(--space-large);
+  margin: 0;
+
+  > dt {
+    color: var(--text-color-deemphasized);
+  }
+
+  > dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+#m6e-torrent-add-tree {
+  max-height: 16em;
+  overflow: auto;
+  padding: var(--space-small);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-small);
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  ul ul {
+    padding-inline-start: var(--space-xlarge);
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    min-height: 2em;
+
+    > input[type="checkbox"] {
+      flex-shrink: 0;
+      margin: 0;
+    }
+
+    > .name {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    > .size {
+      color: var(--text-color-deemphasized);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    > select {
+      margin: 0;
+      min-width: 8em;
+    }
+  }
+}
+
+#m6e-torrent-add-selection {
+  margin-block: var(--space-small);
+  color: var(--text-color-deemphasized);
+}
+
+#m6e-torrent-add-save {
+  display: flex;
+  align-items: center;
+  gap: var(--space-small);
+
+  > input {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+  }
+
+  > button {
+    margin: 0;
+  }
+}
+
+#m6e-torrent-add-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-small);
+  margin-block: var(--space-medium);
+
+  > label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+  }
+}
+
+#m6e-torrent-add-footer {
+  margin-block-start: var(--space-medium);
+}

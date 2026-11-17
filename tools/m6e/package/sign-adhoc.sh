@@ -25,12 +25,31 @@
 # validation; Mozilla only needs that for the main app and the media and
 # security-module helpers.
 #
+# The BitTorrent helper Contents/MacOS/m6e-torrent (spec 8.4, D39) is put into
+# the app by finalize-app.sh (install-helper.sh) and signed like the other
+# nested code: before the bundle, with the hardened runtime and no entitlements.
+# It needs none: it is plain C++ with libtorrent linked in statically, links
+# only system libraries (so no library validation exception), makes no JIT
+# mapping and loads no plug-in, and the app is not sandboxed, so its sockets
+# and file access need no entitlement. The script fails if it has any.
+#
+# With M6E_SIGN_IDENTITY set to the name or hash of a "Developer ID Application"
+# certificate in the keychain, the same steps sign with that identity and a
+# secure timestamp (needed for notarization). See sign-developer-id.sh.
+#
 # Sign the app before building the DMG, and sign again after any change to
 # the bundle: a modified file no longer matches its signature and is refused.
 # The script works in place. If it fails, the bundle is partly re-signed:
 # fix the cause and run it again, which is safe on an already signed app.
 
 set -eu
+
+identity=${M6E_SIGN_IDENTITY:--}
+if [ "$identity" = - ]; then
+    stamp=--timestamp=none
+else
+    stamp=--timestamp
+fi
 
 runtime=yes
 case ${1:-} in
@@ -92,6 +111,7 @@ links_bundled_libs() {
 entitlements_for() {
     case $1 in
         .) echo "$work/main.plist" ;;
+        ./Contents/MacOS/m6e-torrent) ;;
         */plugin-container.app) echo "$work/plugin-container.plist" ;;
         */media-plugin-helper.app) echo "$work/media-plugin-helper.plist" ;;
         */security-module-helper.app) echo "$work/security-module-helper.plist" ;;
@@ -122,7 +142,7 @@ is_bundle_exe() {
 sign() {
     path=$1
     ents=$(entitlements_for "$path")
-    set -- --force --sign - --timestamp=none
+    set -- --force --sign "$identity" "$stamp"
     if [ "$runtime" = yes ]; then
         set -- "$@" --options runtime
         [ -z "$ents" ] || set -- "$@" --entitlements "$ents"
@@ -194,6 +214,21 @@ while IFS= read -r path; do
     printf '  %-90s %s; %s\n' "${path#./}" "$flags" "${keys:-no entitlements}"
 done < "$work/all"
 
+helper=./Contents/MacOS/m6e-torrent
+if [ ! -x "$helper" ]; then
+    echo "error: $helper is missing" >&2
+    status=1
+else
+    if [ "$runtime" = yes ] && ! codesign -dv "$helper" 2>&1 | grep -q 'flags=.*runtime'; then
+        echo "error: $helper lacks the hardened runtime flag" >&2
+        status=1
+    fi
+    if codesign -d --entitlements - --xml "$helper" 2>/dev/null | grep -q '<key>'; then
+        echo "error: $helper has entitlements, which it must not need" >&2
+        status=1
+    fi
+fi
+
 if [ "$runtime" = yes ]; then
     for need in ./Contents/MacOS/plugin-container.app .; do
         if ! codesign -d --entitlements - --xml "$need" 2>/dev/null | grep -q 'cs.allow-jit'; then
@@ -203,5 +238,12 @@ if [ "$runtime" = yes ]; then
     done
 fi
 
-[ $status -eq 0 ] && echo && echo "Signed ad hoc and verified: $app"
+if [ $status -eq 0 ]; then
+    echo
+    if [ "$identity" = - ]; then
+        echo "Signed ad hoc and verified: $app"
+    else
+        echo "Signed with $identity and verified: $app"
+    fi
+fi
 exit $status

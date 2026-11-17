@@ -10,6 +10,10 @@ import { BrowserUtils } from "resource://gre/modules/BrowserUtils.sys.mjs";
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   EnableDelayHelper: "resource://gre/modules/PromptUtils.sys.mjs",
+  // M6E: .torrent downloads open the Add torrent dialog.
+  M6ETorrentHandler:
+    // eslint-disable-next-line mozilla/no-browser-refs-in-toolkit
+    "moz-src:///browser/components/torrent/M6ETorrentHandler.sys.mjs",
 });
 
 XPCOMUtils.defineLazyServiceGetter(
@@ -185,6 +189,11 @@ export class nsUnknownContentTypeDialog {
   //       modal, it needs to be a top level window and the way to open
   //       one of those is via that route).
   show(aLauncher, aContext, aReason) {
+    // M6E: .torrent downloads open the Add torrent dialog.
+    if (lazy.M6ETorrentHandler.handleDownload(aLauncher, aContext)) {
+      return;
+    }
+
     this.mLauncher = aLauncher;
     this.mContext = aContext;
     this.mReason = aReason;
@@ -288,6 +297,11 @@ export class nsUnknownContentTypeDialog {
     aSuggestedFileExtension,
     aForcePrompt
   ) {
+    // M6E: .torrent downloads open the Add torrent dialog.
+    if (lazy.M6ETorrentHandler.handleDownload(aLauncher, aContext)) {
+      return;
+    }
+
     var result = null;
 
     this.mLauncher = aLauncher;

@@ -407,6 +407,23 @@ const CONFIG_PANES = Object.freeze({
     module: "chrome://browser/content/preferences/config/privacy.mjs",
     replaces: "privacy",
   },
+  // M6E: the BitTorrent section (Phase 8, P8.5).
+  bittorrent: {
+    l10nId: "pane-bittorrent-section",
+    iconSrc: "chrome://browser/skin/m6e-torrent.svg",
+    groupIds: [
+      "bittorrentPrivacy",
+      "bittorrentGeneral",
+      "bittorrentDownloads",
+      "bittorrentSeeding",
+      "bittorrentSpeed",
+      "bittorrentConnections",
+      "bittorrentProxy",
+      "bittorrentInterface",
+      "bittorrentIpFilter",
+    ],
+    module: "chrome://browser/content/preferences/config/bittorrent.mjs",
+  },
   search: {
     l10nId: "search-section",
     groupIds: [

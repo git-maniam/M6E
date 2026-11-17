@@ -13,6 +13,9 @@
 #       Mozilla's Team ID. M6E builds neither helper, and ad-hoc code can
 #       never satisfy them.
 #
+# It also makes sure the BitTorrent helper is in the app (install-helper.sh):
+# the one already there is kept, else M6E_TORRENT_HELPER or a fresh build.
+#
 #   tools/m6e/package/finalize-app.sh <path to M6E.app>
 #
 # Idempotent: a plist without these keys is not rewritten. sign-adhoc.sh runs
@@ -63,5 +66,7 @@ while IFS= read -r plist; do
         fi
     done
 done < "$plists"
+
+"$(dirname "$0")/install-helper.sh" "$app"
 
 echo "Finalized $app ($removed keys removed)"

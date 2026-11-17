@@ -1,0 +1,57 @@
+#!/bin/sh
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# Runs the helper with --sandbox and the folders a test harness uses, so the
+# unchanged harness tests the sandboxed helper:
+#   run_tests.py --helper tests/sandbox/m6e-torrent-sandboxed
+#   privacy_tests.py --helper tests/sandbox/m6e-torrent-sandboxed  (with
+#   M6E_SANDBOX_LAYOUT=privacy)
+# The test folder is found from --profile-dir:
+#   conformance (default): <test>/profile*; inbox <test>/in; download folders
+#     <test>/save and, when it exists, <test>/small (the disk-full volume).
+#     <test>/outside and everything else stays out of reach.
+#   privacy: <test>/<helper>/profile; the default inbox; download folder <test>
+#     (the tests create their save folders after the helper starts). The
+#     helper refuses a download folder that contains its profile, so the
+#     profile is moved to <test>.profiles/<helper> and left behind a link.
+# M6E_TORRENT_HELPER names the helper (default: build/m6e-torrent).
+set -eu
+
+here=$(cd "$(dirname "$0")" && pwd)
+helper=${M6E_TORRENT_HELPER:-$here/../../build/m6e-torrent}
+profile=
+previous=
+for arg in "$@"; do
+    [ "$previous" = --profile-dir ] && profile=$arg
+    previous=$arg
+done
+[ -n "$profile" ] || exec "$helper" "$@"
+
+case ${M6E_SANDBOX_LAYOUT:-conformance} in
+    conformance)
+        test=$(dirname "$profile")
+        set -- "$@" --sandbox --inbox-dir "$test/in"
+        for folder in save small; do
+            if [ -d "$test/$folder" ]; then
+                set -- "$@" --download-dir "$test/$folder"
+            fi
+        done
+        ;;
+    privacy)
+        test=$(dirname "$(dirname "$profile")")
+        if [ ! -L "$profile" ]; then
+            store=$test.profiles/$(basename "$(dirname "$profile")")
+            mkdir -p "$store"
+            rmdir "$profile"
+            ln -s "$store" "$profile"
+        fi
+        set -- "$@" --sandbox --download-dir "$test"
+        ;;
+    *)
+        echo "m6e-torrent-sandboxed: unknown M6E_SANDBOX_LAYOUT" >&2
+        exit 2
+        ;;
+esac
+exec "$helper" "$@"

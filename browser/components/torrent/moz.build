@@ -1,0 +1,35 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# M6E: the BitTorrent feature (Phase 8, D33 to D37).
+# The test manifests under tests/ are registered here when they list a test:
+# the build rejects an empty manifest. Planned: xpcshell "tests/xpcshell/risk"
+# and "tests/xpcshell/service", browser chrome "tests/browser/open" and
+# "tests/browser/ui" (one per step, so parallel work does not share one).
+
+# M6E: P8.2 and P8.4 browser chrome manifests.
+BROWSER_CHROME_MANIFESTS += [
+    "tests/browser/open/browser.toml",
+    "tests/browser/page/browser.toml",
+    "tests/browser/ui/browser.toml",
+]
+
+# M6E: P8.6 about:torrents.
+JAR_MANIFESTS += ["jar.mn"]
+
+XPCSHELL_TESTS_MANIFESTS += [
+    "tests/xpcshell/risk/xpcshell.toml",
+    "tests/xpcshell/service/xpcshell.toml",
+]
+
+MOZ_SRC_FILES += [
+    "m6e-torrent-rules.json",
+    "M6ETorrentHandler.sys.mjs",
+    "M6ETorrentProtocol.sys.mjs",
+    "M6ETorrentRisk.sys.mjs",
+    "M6ETorrentService.sys.mjs",
+]
+
+with Files("**"):
+    BUG_COMPONENT = ("Firefox", "General")

@@ -1,0 +1,11 @@
+[DEFAULT]
+head = "head.js"
+prefs = [
+  "m6e.torrent.enabled=true",
+]
+
+["browser_m6e_torrents_page_detail.js"]
+
+["browser_m6e_torrents_page_list.js"]
+
+["browser_m6e_torrents_page_more.js"]

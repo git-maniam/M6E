@@ -915,6 +915,13 @@ var gBrowserInit = {
       window
     );
 
+    // M6E: the BitTorrent button state and the quit confirmation (Phase 8).
+    requestIdleCallback(() => {
+      if (!window.closed) {
+        gM6ETorrent.init();
+      }
+    });
+
     // This should always go last, since the idle tasks above execute in order.
     // Dispatch it on the same idle queue as the consumers above (the window's,
     // via requestIdleCallback) so it runs after them. Note that this observer

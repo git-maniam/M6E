@@ -219,6 +219,12 @@ XPCOMUtils.defineLazyScriptGetter(
   "gM6EPageTelemetry",
   "chrome://browser/content/browser-m6ePageTelemetry.js"
 );
+// M6E: the BitTorrent button, panel and Add dialog (Phase 8).
+XPCOMUtils.defineLazyScriptGetter(
+  this,
+  "gM6ETorrent",
+  "chrome://browser/content/browser-m6eTorrent.js"
+);
 XPCOMUtils.defineLazyScriptGetter(
   this,
   ["gGestureSupport", "gHistorySwipeAnimation"],
