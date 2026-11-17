@@ -57,18 +57,9 @@ This installs the cask `m6e` from the tap `git-maniam/m6e`. Use the fully qualif
 
 ### First launch
 
-M6E is signed ad hoc, not with an Apple Developer ID, and it is not notarized (decision D8 in the [specification](m6e_browser_agent_instructions.md)). Apple's Gatekeeper therefore treats a downloaded copy as coming from an unidentified developer the first time you open it. You do this once:
+M6E is signed with the Developer ID of its developer and notarized by Apple (decision D41 in the [specification](m6e_browser_agent_instructions.md)), so it opens like any other Mac app. The first time you open a downloaded copy, macOS shows its usual "downloaded from the internet" question: click **Open**. Nothing else is needed.
 
-1. Open M6E from Applications. macOS says it cannot verify the app ("M6E Not Opened"). Click **Done**, not Move to Trash.
-2. Open **System Settings, Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to the message about M6E. Enter your password or use Touch ID, then click **Open**. The button is available for about an hour after step 1.
-3. After that, M6E opens normally.
-
-These steps follow what the project recorded when it built the DMG; opening a freshly downloaded copy on a second Mac has not been tested yet.
-
-Alternatives:
-
-- In Terminal, remove the quarantine flag: `xattr -dr com.apple.quarantine /Applications/M6E.app`.
-- Control-click (right-click) and Open no longer bypasses the check on macOS 15 and later. On macOS 14 and earlier it is the usual way to open an app from an unidentified developer; the project has not tested this.
+This was checked with Apple's own Gatekeeper tool on the notarized DMG and the app inside it on the build machine; opening a freshly downloaded copy on a second Mac has not been tested yet.
 
 If macOS says "M6E is damaged and can't be opened", the download is incomplete or the app changed after signing: download it again.
 
@@ -128,7 +119,7 @@ brew uninstall --zap --cask m6e
 - Search is Google and Bing only, and you can't add search engines.
 - DRM video works through Widevine L3 (software), which downloads from Google when needed. Some streaming services may not play every title; the cause of the failures reported so far is still being investigated.
 - Passkeys stored on the Mac or phone do not work: Touch ID, iCloud Keychain and the iPhone QR code are unavailable, because macOS allows them only for apps with Apple's passkey entitlement, which needs a paid Apple Developer account, a provisioning profile and Apple's approval (M6E is signed ad hoc, decision D8; see D32 in the [specification](m6e_browser_agent_instructions.md)). Only USB security keys (FIDO) work. Where a site offers a choice, use a security key or a password. A site that offers only passkeys may show a generic error; if you have no security key, sign in with another browser (for example Safari) or use the site's account recovery.
-- Because the app is ad hoc signed, macOS may ask again for camera, microphone and location permission after each update.
+- macOS may ask again for camera, microphone and location permission after an update.
 - The Privacy Shield and strict tracking protection can break some sites, and Maximum protection more of them. Turn protection off for the site with the Tracker Blocker, or switch the Privacy Shield off.
 - Malware and phishing protection works per domain through the DNS resolver, doesn't check downloads, and stops when DoH is unavailable.
 

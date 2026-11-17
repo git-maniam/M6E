@@ -83,15 +83,8 @@ cask "m6e" do
   ]
 
   caveats <<~EOS
-    M6E is signed ad hoc and is not notarized by Apple, so macOS Gatekeeper
-    blocks the first launch of a downloaded copy. Do one of the following:
-
-      - open System Settings > Privacy & Security and click "Open Anyway"
-        after the first blocked launch; or
-      - on macOS 14 and earlier, open the app from Finder with
-        right-click > Open, then confirm; or
-      - remove the quarantine flag yourself:
-          xattr -dr com.apple.quarantine /Applications/M6E.app
+    M6E is signed with a Developer ID and notarized by Apple, so it opens
+    normally. Click Open at the first-launch question from macOS.
 
     M6E does not update itself. Update it with:
       brew upgrade --cask m6e
