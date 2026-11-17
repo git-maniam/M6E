@@ -188,7 +188,7 @@ async function checkHelper() {
     return h;
   }
   h.verify = await tool("/usr/bin/codesign", ["--verify", "--strict", helperPath]);
-  h.info = (await tool("/usr/bin/codesign", ["-dv", helperPath])).text;
+  h.info = (await tool("/usr/bin/codesign", ["-dvv", helperPath])).text;
   h.entitlements = (await tool("/usr/bin/codesign", ["-d", "--entitlements", "-", "--xml", helperPath])).text;
   h.archs = (await tool("/usr/bin/lipo", ["-archs", helperPath])).text.trim();
   h.minos = /minos (\S+)/.exec((await tool("/usr/bin/otool", ["-l", helperPath])).text)?.[1];
@@ -241,7 +241,7 @@ out.checks = {
   hasRdd: out.processTypes.includes("rdd"),
   hasGpu: out.processTypes.includes("gpu"),
   helperPresent: out.helper.exists === true,
-  helperSigned: out.helper.verify?.exitCode === 0 && /Signature=adhoc/.test(out.helper.info),
+  helperSigned: out.helper.verify?.exitCode === 0 && /Signature=adhoc|Authority=Developer ID Application/.test(out.helper.info),
   helperHardenedRuntime: /flags=0x[0-9a-f]+\([^)]*runtime/.test(out.helper.info ?? ""),
   helperNoEntitlements: out.helper.exists === true && !(out.helper.entitlements ?? "").includes("<key>"),
   helperArm64Only: out.helper.archs === "arm64",

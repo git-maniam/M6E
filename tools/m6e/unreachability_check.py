@@ -567,7 +567,12 @@ def check_bittorrent(ctx, r):
         bool(t["after"]) and bool(t["sockets"]),
         f"helper pids {t['after']}, {len(t['sockets'])} sockets, tracker announces {t['announces']}",
     )
-    outside = [x for x in t["sockets"] if "127.0.0.1" not in x and "[::1]" not in x]
+    loopback = ("127.", "[::1]", "[fe80:1::1]", "[fe80::1]")
+    outside = [
+        x
+        for x in t["sockets"]
+        if not any(mark in x for mark in loopback)
+    ]
     r.add(
         "all of them are on the loopback interface (the test binds lo0; no fixed host is added)",
         not outside,

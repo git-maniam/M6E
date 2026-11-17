@@ -43,7 +43,15 @@ ditto "$staged" "$work/M6E.app"
 
 tools/m6e/package/install-helper.sh "$work/M6E.app"
 
-tools/m6e/package/sign-adhoc.sh "$work/M6E.app"
+# M6E_DEVELOPER_ID=1 signs with the Developer ID certificate in the keychain (a
+# secure timestamp, for notarization); otherwise the app is signed ad hoc.
+# M6E_NOTARY_PROFILE=<name> also notarizes and staples the DMG (notarize.sh).
+if [ "${M6E_DEVELOPER_ID:-}" = 1 ]; then
+    identity=$(tools/m6e/package/sign-developer-id.sh --print-identity)
+    tools/m6e/package/sign-developer-id.sh "$work/M6E.app"
+else
+    tools/m6e/package/sign-adhoc.sh "$work/M6E.app"
+fi
 
 version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$work/M6E.app/Contents/Info.plist")
 mkdir -p "$out"
@@ -54,6 +62,14 @@ python3 tools/m6e/branding/make-dmg-layout.py build "$work/M6E.app" "$dmg"
 python3 tools/m6e/branding/make-dmg-layout.py verify --require-signed "$dmg"
 
 python3 -I tools/m6e/package/check-helper.py "$work/M6E.app"
+
+if [ "${M6E_DEVELOPER_ID:-}" = 1 ]; then
+    codesign --force --sign "$identity" --timestamp "$dmg"
+    codesign --verify --verbose=2 "$dmg"
+    if [ -n "${M6E_NOTARY_PROFILE:-}" ]; then
+        tools/m6e/package/notarize.sh "$dmg"
+    fi
+fi
 
 ./mach python tools/m6e/chrome_eval.py \
     --binary "$work/M6E.app/Contents/MacOS/m6e" \

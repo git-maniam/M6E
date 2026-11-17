@@ -195,10 +195,14 @@ def check_helper(target, runtime=True, dynamic=True):
         code, _, err = run(["codesign", "--verify", "--verbose=2", path])
         detail = "valid; strict mode only objects to Finder metadata"
     add("codesign verifies", code == 0, detail)
-    _, _, info = run(["codesign", "-dv", path])
+    _, _, info = run(["codesign", "-dvv", path])
     flags = re.search(r"flags=0x[0-9a-f]+\((.*?)\)", info)
     flags = flags.group(1) if flags else ""
-    add("signed ad hoc", "Signature=adhoc" in info, flags or "no signature")
+    add(
+        "signed (ad hoc or Developer ID)",
+        "Signature=adhoc" in info or "Authority=Developer ID Application" in info,
+        flags or "no signature",
+    )
     if runtime:
         add("hardened runtime flag", "runtime" in flags.split(","), flags)
     _, ents, _ = run(["codesign", "-d", "--entitlements", "-", "--xml", path])

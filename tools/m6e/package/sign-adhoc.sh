@@ -33,12 +33,23 @@
 # mapping and loads no plug-in, and the app is not sandboxed, so its sockets
 # and file access need no entitlement. The script fails if it has any.
 #
+# With M6E_SIGN_IDENTITY set to the name or hash of a "Developer ID Application"
+# certificate in the keychain, the same steps sign with that identity and a
+# secure timestamp (needed for notarization). See sign-developer-id.sh.
+#
 # Sign the app before building the DMG, and sign again after any change to
 # the bundle: a modified file no longer matches its signature and is refused.
 # The script works in place. If it fails, the bundle is partly re-signed:
 # fix the cause and run it again, which is safe on an already signed app.
 
 set -eu
+
+identity=${M6E_SIGN_IDENTITY:--}
+if [ "$identity" = - ]; then
+    stamp=--timestamp=none
+else
+    stamp=--timestamp
+fi
 
 runtime=yes
 case ${1:-} in
@@ -131,7 +142,7 @@ is_bundle_exe() {
 sign() {
     path=$1
     ents=$(entitlements_for "$path")
-    set -- --force --sign - --timestamp=none
+    set -- --force --sign "$identity" "$stamp"
     if [ "$runtime" = yes ]; then
         set -- "$@" --options runtime
         [ -z "$ents" ] || set -- "$@" --entitlements "$ents"
@@ -227,5 +238,12 @@ if [ "$runtime" = yes ]; then
     done
 fi
 
-[ $status -eq 0 ] && echo && echo "Signed ad hoc and verified: $app"
+if [ $status -eq 0 ]; then
+    echo
+    if [ "$identity" = - ]; then
+        echo "Signed ad hoc and verified: $app"
+    else
+        echo "Signed with $identity and verified: $app"
+    fi
+fi
 exit $status
